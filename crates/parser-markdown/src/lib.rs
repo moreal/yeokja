@@ -209,7 +209,7 @@ impl DocumentParser for MarkdownParser {
 }
 
 fn flush_block(
-    sections: &mut Vec<Section>,
+    sections: &mut [Section],
     current_block_type: &mut Option<BlockType>,
     current_text: &mut String,
     current_heading_level: &mut Option<u8>,

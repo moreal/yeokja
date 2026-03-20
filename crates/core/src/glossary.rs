@@ -23,7 +23,7 @@ pub struct Glossary {
 impl Glossary {
     pub fn load(path: &Path) -> Result<Self, GlossaryError> {
         let content = std::fs::read_to_string(path)
-            .map_err(|e| GlossaryError::Io(e))?;
+            .map_err(GlossaryError::Io)?;
         Self::from_toml(&content)
     }
 

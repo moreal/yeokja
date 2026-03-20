@@ -29,7 +29,7 @@ pub fn split_sentences(text: &str) -> Vec<String> {
             if !is_abbreviation {
                 // Check if followed by whitespace + uppercase, or end of string
                 let next_non_ws = (i + 1..len).find(|&j| !chars[j].is_whitespace());
-                let at_end = i + 1 >= len || (i + 1 < len && chars[i + 1..].iter().all(|c| c.is_whitespace()));
+                let at_end = i + 1 >= len || chars[i + 1..].iter().all(|c| c.is_whitespace());
 
                 if at_end || next_non_ws.is_some_and(|j| chars[j].is_uppercase()) {
                     let trimmed = current.trim().to_string();

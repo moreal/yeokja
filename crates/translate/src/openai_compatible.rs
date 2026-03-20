@@ -113,7 +113,7 @@ impl TranslationProvider for OpenAICompatibleProvider {
             .unwrap_or("");
 
         let translations = parse_response(reply)
-            .map_err(|e| TranslateError::Parse(e))?;
+            .map_err(TranslateError::Parse)?;
 
         Ok(TranslateResponse {
             translations,

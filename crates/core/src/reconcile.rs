@@ -1,5 +1,5 @@
 use crate::hash::context_hash;
-use crate::model::{Document, Segment, SegmentId};
+use crate::model::{Document, Segment};
 use crate::state::{SegmentState, StateFile};
 use std::collections::HashMap;
 
@@ -52,7 +52,8 @@ pub fn reconcile(document: &Document, existing: &StateFile) -> ReconcileResult {
                     id: new_seg.id.clone(),
                     source: new_seg.source.clone(),
                     source_hash: new_seg.source_hash,
-                    context_hash: *ctx_hash,
+                    // Preserve the old context_hash so compute_status can detect ContextChanged
+                    context_hash: old.context_hash,
                     translation: old.translation.clone(),
                     glossary_snapshot: old.glossary_snapshot.clone(),
                     translated_at: old.translated_at,

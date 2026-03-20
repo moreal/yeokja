@@ -44,8 +44,8 @@ pub fn parse_response(response: &str) -> Result<HashMap<usize, String>, String> 
             continue;
         }
 
-        if let Some(rest) = line.strip_prefix('[') {
-            if let Some(bracket_end) = rest.find(']') {
+        if let Some(rest) = line.strip_prefix('[')
+            && let Some(bracket_end) = rest.find(']') {
                 let idx_str = &rest[..bracket_end];
                 if let Ok(idx) = idx_str.parse::<usize>() {
                     let translation = rest[bracket_end + 1..].trim().to_string();
@@ -54,7 +54,6 @@ pub fn parse_response(response: &str) -> Result<HashMap<usize, String>, String> 
                     }
                 }
             }
-        }
     }
 
     if translations.is_empty() {
