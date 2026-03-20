@@ -169,6 +169,25 @@ trait TranslationProvider {
 - `glossary`: 세그먼트 원문에 등장하는 용어 목록
 - `source_lang`, `target_lang`
 
+### TranslateResponse
+
+```rust
+struct TranslateResponse {
+    /// 세그먼트 인덱스(요청 시 번호) → 번역된 텍스트
+    translations: HashMap<usize, String>,
+    /// API 사용량 (rate limit 조절 및 비용 추적에 활용)
+    usage: Option<TokenUsage>,
+}
+
+struct TokenUsage {
+    input_tokens: u64,
+    output_tokens: u64,
+}
+```
+
+- `translations`: 요청의 `[1]`, `[2]` 번호에 대응하는 번역 결과. 파싱 실패한 세그먼트는 map에서 누락.
+- `usage`: provider가 제공하는 토큰 사용량. provider에 따라 없을 수 있으므로 `Option`.
+
 ### 번역 응답 파싱
 
 LLM에 번역 요청 시 각 세그먼트를 번호로 구분하여 전달하고, 응답도 같은 번호 형식으로 받는다:
@@ -199,6 +218,73 @@ LLM에 번역 요청 시 각 세그먼트를 번호로 구분하여 전달하고
 - 429/rate limit 에러 시 exponential backoff + `retry-after` 헤더 존중
 - `x-ratelimit-remaining` 등 응답 헤더를 파싱하여 요청 속도 사전 조절
 
+## Translation Evaluation
+
+### Evaluator Trait
+
+번역 결과를 검증하는 trait. 기계적 검사가 주 목적이며, LLM 평가도 가능하므로 async 인터페이스.
+
+```rust
+#[async_trait]
+trait TranslationEvaluator {
+    async fn evaluate(&self, context: EvaluationContext) -> Result<EvaluationResult>;
+}
+
+struct EvaluationContext {
+    source: String,
+    translation: String,
+    glossary: HashMap<String, String>,
+    source_lang: String,
+    target_lang: String,
+}
+
+struct EvaluationResult {
+    passed: bool,
+    issues: Vec<EvaluationIssue>,
+}
+
+struct EvaluationIssue {
+    severity: IssueSeverity,  // Error, Warning
+    kind: IssueKind,
+    message: String,
+}
+```
+
+### 기본 제공 Evaluator 구현체
+
+**기계적 검사 (LLM 불필요):**
+
+- `GlossaryEvaluator` — glossary에 정의된 용어가 번역에서 올바르게 사용되었는지 검사. 예: "repository"가 "저장소"로 번역되었는지.
+- `LinkEvaluator` — 원본의 URL, 이미지 경로 등이 번역에서 유지/손상되지 않았는지 검사.
+- `FormatEvaluator` — 원본의 마크업 구조(볼드, 이탤릭, 코드 등)가 번역에서 보존되었는지 검사.
+
+**LLM 기반 검사:**
+
+- `StyleEvaluator` — 번역의 자연스러움, 문체 일관성 등을 LLM-as-judge로 평가. `TranslationProvider`를 내부적으로 사용.
+
+### 번역-평가 파이프라인
+
+번역 후 자동으로 평가하고, 실패 시 재번역을 시도하는 자동화 루프:
+
+```
+번역 요청 → 번역 결과 수신 → Evaluator 실행
+    ↑                              ↓
+    │                     ┌─ 통과 → 저장
+    └─────────────────────┤
+                          └─ 실패 → 이전 이슈를 피드백으로 포함하여 재번역 요청
+                                    (최대 N회, 설정 가능. 기본 3회)
+```
+
+- 재번역 시 Evaluator가 발견한 이슈를 LLM 프롬프트에 피드백으로 포함 (예: "repository를 저장소로 번역해야 합니다")
+- 최대 재시도 횟수 초과 시 마지막 번역 결과를 저장하되, 이슈를 상태 파일에 기록하여 수동 검토 대상으로 표시
+- 기계적 검사(Glossary, Link, Format)만 재번역 트리거. StyleEvaluator(LLM-as-judge)는 경고만 기록하고 재번역을 트리거하지 않음.
+
+### 평가 실행 모드
+
+- **자동**: 번역 파이프라인에 통합, 번역 완료 즉시 평가+재번역 루프 실행 (설정으로 활성화/비활성화)
+- **수동**: CLI에서 `yeokja evaluate ./book/`로 기존 번역 결과만 검증
+- **웹**: 세그먼트별 평가 결과 조회 및 수동 재평가 트리거 가능
+
 ## CLI / TUI / Web Interface
 
 ### CLI (clap)
@@ -208,6 +294,7 @@ yeokja translate ./book/          # 일괄 번역 실행
 yeokja status ./book/             # 번역 진행 통계
 yeokja glossary list              # 용어집 조회
 yeokja glossary set term 번역     # 용어 추가/수정
+yeokja evaluate ./book/           # 번역 결과 검증
 yeokja serve                      # 서버 모드 시작
 ```
 
