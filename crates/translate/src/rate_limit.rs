@@ -92,6 +92,45 @@ impl RateLimiter {
     }
 }
 
+impl RateLimiter {
+    /// Process an HTTP response: handle rate limiting, update remaining quota.
+    /// Returns the response if successful, or a TranslateError if rate-limited or failed.
+    pub async fn process_response(
+        &self,
+        response: reqwest::Response,
+    ) -> Result<reqwest::Response, crate::provider::TranslateError> {
+        // Check rate limit remaining headers
+        if let Some(remaining) = response
+            .headers()
+            .get("x-ratelimit-remaining")
+            .or_else(|| response.headers().get("ratelimit-remaining-requests"))
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| v.parse::<u64>().ok())
+        {
+            self.update_from_remaining(remaining).await;
+        }
+
+        let status = response.status().as_u16();
+        if status == 429 {
+            let retry_after = response
+                .headers()
+                .get("retry-after")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|v| v.parse::<u64>().ok());
+            self.report_rate_limited(retry_after).await;
+            return Err(crate::provider::TranslateError::RateLimited { retry_after });
+        }
+
+        if !response.status().is_success() {
+            let message = response.text().await.unwrap_or_default();
+            return Err(crate::provider::TranslateError::Api { status, message });
+        }
+
+        self.report_success().await;
+        Ok(response)
+    }
+}
+
 impl Default for RateLimiter {
     fn default() -> Self {
         Self::new()

@@ -1,3 +1,9 @@
+//! Segment status computation.
+//!
+//! Determines whether a segment needs (re-)translation by comparing source hashes,
+//! context hashes, and glossary snapshots. Despite the module name, this is about
+//! computing the current status of each segment, not tracking changes over time.
+
 use crate::glossary::Glossary;
 use crate::state::SegmentState;
 
@@ -17,17 +23,22 @@ pub fn compute_status(
     glossary: &Glossary,
 ) -> SegmentStatus {
     if segment.translation.is_none() {
+        tracing::trace!(id = %segment.id, status = ?SegmentStatus::Pending, "Computed segment status");
         return SegmentStatus::Pending;
     }
     if segment.source_hash != current_source_hash {
+        tracing::trace!(id = %segment.id, status = ?SegmentStatus::Stale, "Computed segment status");
         return SegmentStatus::Stale;
     }
     if glossary.is_snapshot_stale(&segment.glossary_snapshot, &segment.source) {
+        tracing::trace!(id = %segment.id, status = ?SegmentStatus::GlossaryStale, "Computed segment status");
         return SegmentStatus::GlossaryStale;
     }
     if segment.context_hash != current_context_hash {
+        tracing::trace!(id = %segment.id, status = ?SegmentStatus::ContextChanged, "Computed segment status");
         return SegmentStatus::ContextChanged;
     }
+    tracing::trace!(id = %segment.id, status = ?SegmentStatus::Translated, "Computed segment status");
     SegmentStatus::Translated
 }
 

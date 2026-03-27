@@ -2,6 +2,31 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+// --- Raw LLM completion ---
+
+/// Raw LLM completion request.
+#[derive(Debug, Clone)]
+pub struct CompletionRequest {
+    pub prompt: String,
+}
+
+/// Raw LLM completion response.
+#[derive(Debug, Clone)]
+pub struct CompletionResponse {
+    pub text: String,
+    pub usage: Option<TokenUsage>,
+}
+
+/// Low-level LLM provider that sends a prompt and returns raw text.
+/// All providers implement this trait. Higher-level concerns (prompt formatting,
+/// response parsing) are handled by `TranslationProvider`.
+#[async_trait]
+pub trait LlmProvider: Send + Sync {
+    async fn complete(&self, request: CompletionRequest) -> Result<CompletionResponse, TranslateError>;
+}
+
+// --- Translation-specific types ---
+
 #[derive(Debug, Clone)]
 pub struct TranslateRequest {
     /// Segments to translate, keyed by index (1-based, matching prompt format).
@@ -44,4 +69,20 @@ pub enum TranslateError {
 #[async_trait]
 pub trait TranslationProvider: Send + Sync {
     async fn translate(&self, request: TranslateRequest) -> Result<TranslateResponse, TranslateError>;
+}
+
+/// Blanket implementation: any `LlmProvider` is automatically a `TranslationProvider`
+/// by building a translation prompt and parsing the [N] format response.
+#[async_trait]
+impl<T: LlmProvider> TranslationProvider for T {
+    async fn translate(&self, request: TranslateRequest) -> Result<TranslateResponse, TranslateError> {
+        let prompt = crate::prompt::build_prompt(&request);
+        let response = self.complete(CompletionRequest { prompt }).await?;
+        let translations = crate::prompt::parse_response(&response.text)
+            .map_err(TranslateError::Parse)?;
+        Ok(TranslateResponse {
+            translations,
+            usage: response.usage,
+        })
+    }
 }

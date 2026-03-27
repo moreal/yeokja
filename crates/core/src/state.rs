@@ -59,7 +59,7 @@ impl StateFile {
     }
 
     pub fn state_file_path(source_path: &Path) -> std::path::PathBuf {
-        let file_name = source_path.file_name().unwrap().to_string_lossy();
+        let file_name = source_path.file_name().expect("source path must have a file name").to_string_lossy();
         source_path.with_file_name(format!("{file_name}.yeokja.json"))
     }
 

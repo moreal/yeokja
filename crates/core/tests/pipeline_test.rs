@@ -142,3 +142,84 @@ translation = "저장소"
     assert_eq!(status, SegmentStatus::GlossaryStale);
     assert!(status.needs_translation());
 }
+
+#[test]
+fn translated_segments_skipped_on_rerun() {
+    let glossary = Glossary::empty();
+
+    // 1. Document with 3 segments
+    let doc = make_document(&["First.", "Second.", "Third."]);
+    let segs = doc.translatable_segments();
+    let hashes: Vec<u64> = segs.iter().map(|s| s.source_hash).collect();
+
+    // 2. State file: first two already translated, third not
+    let mut state = StateFile::new(0);
+    for i in 0..3 {
+        let prev = if i > 0 { Some(hashes[i - 1]) } else { None };
+        let next = hashes.get(i + 1).copied();
+        let ctx = context_hash(prev, next);
+        state.segments.push(SegmentState {
+            id: SegmentId::new(0, 0, i),
+            source: segs[i].source.clone(),
+            source_hash: segs[i].source_hash,
+            context_hash: ctx,
+            translation: if i < 2 { Some(format!("translated_{i}")) } else { None },
+            glossary_snapshot: HashMap::new(),
+            translated_at: if i < 2 { Some(Utc::now()) } else { None },
+            issues: Vec::new(),
+        });
+    }
+
+    // 3. Reconcile and check statuses
+    let reconciled = yeokja_core::reconcile::reconcile_with_status(&doc, &state, &glossary);
+    assert_eq!(reconciled.len(), 3);
+
+    // First two should be Translated (skipped), third should be Pending
+    assert_eq!(reconciled[0].status, SegmentStatus::Translated);
+    assert_eq!(reconciled[1].status, SegmentStatus::Translated);
+    assert_eq!(reconciled[2].status, SegmentStatus::Pending);
+
+    assert!(!reconciled[0].status.needs_translation());
+    assert!(!reconciled[1].status.needs_translation());
+    assert!(reconciled[2].status.needs_translation());
+
+    // 4. Only the Pending segment should be selected for translation
+    let needs: Vec<usize> = reconciled.iter().enumerate()
+        .filter(|(_, rs)| rs.status.needs_translation())
+        .map(|(i, _)| i)
+        .collect();
+    assert_eq!(needs, vec![2]);
+}
+
+#[test]
+fn all_translated_means_up_to_date() {
+    let glossary = Glossary::empty();
+
+    let doc = make_document(&["Hello.", "World."]);
+    let segs = doc.translatable_segments();
+    let hashes: Vec<u64> = segs.iter().map(|s| s.source_hash).collect();
+
+    // All segments translated with correct hashes
+    let mut state = StateFile::new(0);
+    for i in 0..2 {
+        let prev = if i > 0 { Some(hashes[i - 1]) } else { None };
+        let next = hashes.get(i + 1).copied();
+        let ctx = context_hash(prev, next);
+        state.segments.push(SegmentState {
+            id: SegmentId::new(0, 0, i),
+            source: segs[i].source.clone(),
+            source_hash: segs[i].source_hash,
+            context_hash: ctx,
+            translation: Some(format!("번역_{i}")),
+            glossary_snapshot: HashMap::new(),
+            translated_at: Some(Utc::now()),
+            issues: Vec::new(),
+        });
+    }
+
+    let reconciled = yeokja_core::reconcile::reconcile_with_status(&doc, &state, &glossary);
+
+    // All Translated → nothing needs translation → "Up to date"
+    assert!(reconciled.iter().all(|rs| rs.status == SegmentStatus::Translated));
+    assert!(reconciled.iter().all(|rs| !rs.status.needs_translation()));
+}

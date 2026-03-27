@@ -1,9 +1,7 @@
-mod sentence;
-
 use pulldown_cmark::{Event, HeadingLevel, Parser, Tag, TagEnd};
-use yeokja_core::hash::content_hash;
 use yeokja_core::model::*;
 use yeokja_core::parser::{DocumentParser, TranslationMap};
+use yeokja_parser_utils::{join_segments_with_translations, make_segments};
 
 pub struct MarkdownParser;
 
@@ -180,24 +178,11 @@ impl DocumentParser for MarkdownParser {
                         let level = block.heading_level.unwrap_or(1);
                         let prefix = "#".repeat(level as usize);
                         output.push_str(&format!("{prefix} "));
-                        for seg in &block.segments {
-                            let text = translations
-                                .get(&seg.id)
-                                .unwrap_or(&seg.source);
-                            output.push_str(text);
-                        }
+                        output.push_str(&join_segments_with_translations(&block.segments, translations));
                         output.push_str("\n\n");
                     }
                     _ => {
-                        for (i, seg) in block.segments.iter().enumerate() {
-                            let text = translations
-                                .get(&seg.id)
-                                .unwrap_or(&seg.source);
-                            if i > 0 {
-                                output.push(' ');
-                            }
-                            output.push_str(text);
-                        }
+                        output.push_str(&join_segments_with_translations(&block.segments, translations));
                         output.push_str("\n\n");
                     }
                 }
@@ -225,19 +210,7 @@ fn flush_block(
 
         let raw_content = text.clone();
         let segments = if block_type.is_translatable() {
-            sentence::split_sentences(&text)
-                .into_iter()
-                .enumerate()
-                .map(|(seg_i, sent)| {
-                    let hash = content_hash(&sent);
-                    Segment {
-                        id: SegmentId::new(*section_idx, *block_idx, seg_i),
-                        source: sent,
-                        source_hash: hash,
-                        block_type,
-                    }
-                })
-                .collect()
+            make_segments(&text, block_type, *section_idx, *block_idx)
         } else {
             Vec::new()
         };

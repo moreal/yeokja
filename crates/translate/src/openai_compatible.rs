@@ -1,9 +1,8 @@
-use crate::prompt::{build_prompt, parse_response};
-use crate::provider::{TokenUsage, TranslateError, TranslateRequest, TranslateResponse, TranslationProvider};
+use crate::openai_types::{ChatRequest, ChatMessage, ChatResponse};
+use crate::provider::{CompletionRequest, CompletionResponse, LlmProvider, TokenUsage, TranslateError};
 use crate::rate_limit::RateLimiter;
 use async_trait::async_trait;
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
 
 pub struct OpenAICompatibleProvider {
     client: Client,
@@ -11,35 +10,6 @@ pub struct OpenAICompatibleProvider {
     api_key: String,
     model: String,
     rate_limiter: RateLimiter,
-}
-
-#[derive(Serialize)]
-struct ChatRequest {
-    model: String,
-    messages: Vec<ChatMessage>,
-}
-
-#[derive(Serialize, Deserialize)]
-struct ChatMessage {
-    role: String,
-    content: String,
-}
-
-#[derive(Deserialize)]
-struct ChatResponse {
-    choices: Vec<ChatChoice>,
-    usage: Option<ChatUsage>,
-}
-
-#[derive(Deserialize)]
-struct ChatChoice {
-    message: ChatMessage,
-}
-
-#[derive(Deserialize)]
-struct ChatUsage {
-    prompt_tokens: u64,
-    completion_tokens: u64,
 }
 
 impl OpenAICompatibleProvider {
@@ -55,68 +25,39 @@ impl OpenAICompatibleProvider {
 }
 
 #[async_trait]
-impl TranslationProvider for OpenAICompatibleProvider {
-    async fn translate(&self, request: TranslateRequest) -> Result<TranslateResponse, TranslateError> {
+impl LlmProvider for OpenAICompatibleProvider {
+    async fn complete(&self, request: CompletionRequest) -> Result<CompletionResponse, TranslateError> {
         self.rate_limiter.acquire().await;
 
-        let prompt = build_prompt(&request);
         let chat_request = ChatRequest {
             model: self.model.clone(),
             messages: vec![ChatMessage {
                 role: "user".to_string(),
-                content: prompt,
+                content: request.prompt,
             }],
         };
 
         let url = format!("{}/chat/completions", self.base_url.trim_end_matches('/'));
-        let response = self
-            .client
-            .post(&url)
-            .header("Authorization", format!("Bearer {}", self.api_key))
-            .json(&chat_request)
-            .send()
-            .await?;
-
-        // Check for rate limit headers
-        if let Some(remaining) = response
-            .headers()
-            .get("x-ratelimit-remaining")
-            .and_then(|v| v.to_str().ok())
-            .and_then(|v| v.parse::<u64>().ok())
-        {
-            self.rate_limiter.update_from_remaining(remaining).await;
-        }
-
-        let status = response.status().as_u16();
-        if status == 429 {
-            let retry_after = response
-                .headers()
-                .get("retry-after")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|v| v.parse::<u64>().ok());
-            self.rate_limiter.report_rate_limited(retry_after).await;
-            return Err(TranslateError::RateLimited { retry_after });
-        }
-
-        if !response.status().is_success() {
-            let message = response.text().await.unwrap_or_default();
-            return Err(TranslateError::Api { status, message });
-        }
-
-        self.rate_limiter.report_success().await;
+        tracing::debug!(model = %self.model, url = %url, "Sending OpenAI-compatible HTTP request");
+        let response = self.rate_limiter.process_response(
+            self.client
+                .post(&url)
+                .header("Authorization", format!("Bearer {}", self.api_key))
+                .json(&chat_request)
+                .send()
+                .await?,
+        ).await?;
 
         let chat_response: ChatResponse = response.json().await?;
-        let reply = chat_response
+        let text = chat_response
             .choices
             .first()
-            .map(|c| c.message.content.as_str())
-            .unwrap_or("");
+            .map(|c| c.message.content.clone())
+            .unwrap_or_default();
+        tracing::debug!(text_len = text.len(), "OpenAI-compatible response received");
 
-        let translations = parse_response(reply)
-            .map_err(TranslateError::Parse)?;
-
-        Ok(TranslateResponse {
-            translations,
+        Ok(CompletionResponse {
+            text,
             usage: chat_response.usage.map(|u| TokenUsage {
                 input_tokens: u.prompt_tokens,
                 output_tokens: u.completion_tokens,

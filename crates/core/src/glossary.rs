@@ -20,6 +20,28 @@ pub struct Glossary {
     terms: HashMap<String, String>,
 }
 
+/// Find terms from the given map that appear in the text (word boundary match).
+pub fn find_terms_in_text(terms: &HashMap<String, String>, text: &str) -> HashMap<String, String> {
+    let text_lower = text.to_lowercase();
+    let text_chars: Vec<char> = text_lower.chars().collect();
+    terms
+        .iter()
+        .filter(|(term, _)| {
+            let term_lower = term.to_lowercase();
+            text_lower
+                .match_indices(&term_lower)
+                .any(|(byte_pos, matched)| {
+                    let char_pos = text_lower[..byte_pos].chars().count();
+                    let char_end = char_pos + matched.chars().count();
+                    let before_ok = char_pos == 0 || !text_chars[char_pos - 1].is_alphanumeric();
+                    let after_ok = char_end >= text_chars.len() || !text_chars[char_end].is_alphanumeric();
+                    before_ok && after_ok
+                })
+        })
+        .map(|(k, v)| (k.clone(), v.clone()))
+        .collect()
+}
+
 impl Glossary {
     pub fn load(path: &Path) -> Result<Self, GlossaryError> {
         let content = std::fs::read_to_string(path)
@@ -47,26 +69,7 @@ impl Glossary {
     /// Find glossary terms that appear in the given text (word boundary match).
     /// Uses char-based boundary checking to handle non-ASCII (Korean, CJK) text correctly.
     pub fn find_matching_terms(&self, text: &str) -> HashMap<String, String> {
-        let text_lower = text.to_lowercase();
-        let text_chars: Vec<char> = text_lower.chars().collect();
-        self.terms
-            .iter()
-            .filter(|(term, _)| {
-                let term_lower = term.to_lowercase();
-                text_lower
-                    .match_indices(&term_lower)
-                    .any(|(byte_pos, matched)| {
-                        let char_pos = text_lower[..byte_pos].chars().count();
-                        let char_end = char_pos + matched.chars().count();
-                        let before_ok = char_pos == 0
-                            || !text_chars[char_pos - 1].is_alphanumeric();
-                        let after_ok = char_end >= text_chars.len()
-                            || !text_chars[char_end].is_alphanumeric();
-                        before_ok && after_ok
-                    })
-            })
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect()
+        find_terms_in_text(&self.terms, text)
     }
 
     /// Check if a glossary snapshot is stale compared to current glossary.

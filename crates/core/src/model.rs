@@ -20,10 +20,12 @@ impl SegmentId {
         Some((section, block, seg))
     }
 
+    /// Compute a flat index for distance comparison during reconciliation.
+    /// Invariant: section < 1000, block < 1000, seg < 1000.
     pub fn flat_index(&self) -> usize {
         self.position()
             .map(|(s, b, seg)| s * 1_000_000 + b * 1_000 + seg)
-            .unwrap_or(0)
+            .unwrap_or(0) // Safe: only used for distance comparison in reconciliation
     }
 }
 
@@ -88,8 +90,10 @@ impl Document {
     }
 
     pub fn translatable_segments(&self) -> Vec<&Segment> {
-        self.all_segments()
-            .into_iter()
+        self.sections
+            .iter()
+            .flat_map(|s| s.blocks.iter())
+            .flat_map(|b| b.segments.iter())
             .filter(|s| s.block_type.is_translatable())
             .collect()
     }

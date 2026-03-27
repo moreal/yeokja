@@ -1,0 +1,113 @@
+mod commands;
+mod provider_factory;
+mod tui;
+
+use clap::{Parser, Subcommand};
+use std::path::PathBuf;
+use tracing_subscriber::EnvFilter;
+
+#[derive(Parser)]
+#[command(name = "yeokja", about = "Document translation tool")]
+struct Cli {
+    /// Working directory (defaults to current directory)
+    #[arg(long = "working-directory", short = 'C', global = true)]
+    working_directory: Option<PathBuf>,
+
+    /// Increase log verbosity (-v: debug, -vv: trace)
+    #[arg(short = 'v', long = "verbose", action = clap::ArgAction::Count, global = true)]
+    verbose: u8,
+
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Translate documents
+    Translate {
+        /// Path to translate
+        path: String,
+        /// Show TUI progress view
+        #[arg(long)]
+        tui: bool,
+    },
+    /// Show translation status
+    Status {
+        /// Path to check
+        path: String,
+    },
+    /// Manage glossary
+    Glossary {
+        #[command(subcommand)]
+        action: GlossaryAction,
+    },
+    /// Evaluate existing translations
+    Evaluate {
+        /// Path to evaluate
+        path: String,
+    },
+    /// Start server mode
+    Serve,
+}
+
+#[derive(Subcommand)]
+enum GlossaryAction {
+    /// List all glossary terms
+    List,
+    /// Set a glossary term
+    Set {
+        /// Term in source language
+        term: String,
+        /// Translation
+        translation: String,
+    },
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let cli = Cli::parse();
+
+    let default_filter = match cli.verbose {
+        0 => "yeokja=info",
+        1 => "yeokja=debug",
+        _ => "yeokja=trace",
+    };
+
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| EnvFilter::new(default_filter))
+        )
+        .init();
+
+    if let Some(dir) = &cli.working_directory {
+        std::env::set_current_dir(dir)
+            .map_err(|e| anyhow::anyhow!("Failed to change working directory to {}: {}", dir.display(), e))?;
+    }
+
+    match cli.command {
+        Commands::Translate { path, tui: use_tui } => {
+            if use_tui {
+                println!("TUI mode not yet fully implemented");
+            }
+            commands::translate::run(&path).await?;
+        }
+        Commands::Status { path } => {
+            commands::status::run(&path)?;
+        }
+        Commands::Glossary { action } => match action {
+            GlossaryAction::List => commands::glossary::list()?,
+            GlossaryAction::Set { term, translation } => {
+                commands::glossary::set(&term, &translation)?;
+            }
+        },
+        Commands::Evaluate { path } => {
+            commands::evaluate::run(&path).await?;
+        }
+        Commands::Serve => {
+            println!("Server mode will be available in yeokja-server crate");
+        }
+    }
+
+    Ok(())
+}

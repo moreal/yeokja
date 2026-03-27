@@ -1,3 +1,5 @@
+use crate::change::{compute_status, SegmentStatus};
+use crate::glossary::Glossary;
 use crate::hash::context_hash;
 use crate::model::{Document, Segment};
 use crate::state::{SegmentState, StateFile};
@@ -7,8 +9,43 @@ pub struct ReconcileResult {
     pub segments: Vec<SegmentState>,
 }
 
+pub struct ReconciledSegment {
+    pub state: SegmentState,
+    pub status: SegmentStatus,
+    pub context_hash: u64,
+}
+
+/// Reconcile a document against existing state and compute status for each segment.
+pub fn reconcile_with_status(
+    document: &Document,
+    existing: &StateFile,
+    glossary: &Glossary,
+) -> Vec<ReconciledSegment> {
+    let result = reconcile(document, existing);
+    let segments = document.translatable_segments();
+    let hashes: Vec<u64> = segments.iter().map(|s| s.source_hash).collect();
+
+    result
+        .segments
+        .into_iter()
+        .enumerate()
+        .map(|(i, seg_state)| {
+            let prev = if i > 0 { Some(hashes[i - 1]) } else { None };
+            let next = hashes.get(i + 1).copied();
+            let ctx = context_hash(prev, next);
+            let status = compute_status(&seg_state, seg_state.source_hash, ctx, glossary);
+            ReconciledSegment {
+                state: seg_state,
+                status,
+                context_hash: ctx,
+            }
+        })
+        .collect()
+}
+
 pub fn reconcile(document: &Document, existing: &StateFile) -> ReconcileResult {
     let new_segments = document.translatable_segments();
+    tracing::trace!(segments = new_segments.len(), existing = existing.segments.len(), "Reconciling");
     let new_with_context: Vec<(&Segment, u64)> = {
         let hashes: Vec<u64> = new_segments.iter().map(|s| s.source_hash).collect();
         new_segments

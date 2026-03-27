@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 pub type TranslationMap = HashMap<SegmentId, String>;
 
-pub trait DocumentParser {
+pub trait DocumentParser: Send + Sync {
     fn parse(&self, source: &str) -> Document;
     fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String;
 }
