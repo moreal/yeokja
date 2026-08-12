@@ -135,7 +135,11 @@ impl TranslateOptions {
         Self {
             auto_evaluate: evaluation.map(|e| e.auto_evaluate).unwrap_or(true),
             max_retries: evaluation.map(|e| e.max_retries).unwrap_or(3),
-            concurrency: 4,
+            concurrency: config
+                .translation
+                .as_ref()
+                .map(|t| t.concurrency)
+                .unwrap_or_else(yeokja_core::config::default_concurrency),
         }
     }
 }

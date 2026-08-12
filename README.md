@@ -44,6 +44,11 @@ api_key_env = "ANTHROPIC_API_KEY"
 # 선택: 프롬프트 커스터마이즈. 플레이스홀더:
 # {source_lang} {target_lang} {glossary} {feedback} {context} {segments}
 # prompt_template = "..."
+
+[translation]
+# 동시에 진행할 블록 수 (기본 4). 블록 하나가 permit을 번역·평가·재시도
+# 전 구간 동안 잡고 있으므로, 프로바이더 동시 요청 수의 상한이 됩니다.
+concurrency = 4
 ```
 
 용어집 `glossary.toml`:

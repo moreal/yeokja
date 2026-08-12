@@ -11,6 +11,8 @@ pub struct ProjectConfig {
     pub server: Option<ServerConfig>,
     #[serde(default)]
     pub evaluation: Option<EvaluationConfig>,
+    #[serde(default)]
+    pub translation: Option<TranslationConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,6 +69,17 @@ pub struct EvaluationConfig {
 fn default_max_retries() -> u32 { 3 }
 fn default_auto_evaluate() -> bool { true }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TranslationConfig {
+    /// Maximum block translations in flight at once, across all files. Each
+    /// permit is held for a block's whole translate-evaluate-retry chain, so
+    /// this caps concurrent provider requests rather than CPU use.
+    #[serde(default = "default_concurrency")]
+    pub concurrency: usize,
+}
+
+pub fn default_concurrency() -> usize { 4 }
+
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
     #[error("IO error: {0}")]
@@ -115,8 +128,12 @@ port = 8080
 [evaluation]
 max_retries = 5
 auto_evaluate = false
+
+[translation]
+concurrency = 12
 "#;
         let config = ProjectConfig::from_toml(toml).unwrap();
+        assert_eq!(config.translation.as_ref().unwrap().concurrency, 12);
         assert_eq!(config.project.source_lang, "en");
         assert_eq!(config.project.target_lang, "ko");
         assert_eq!(config.sources.len(), 1);
@@ -141,5 +158,26 @@ model = "gpt-4o"
         assert_eq!(config.project.glossary, "glossary.toml");
         assert!(config.sources.is_empty());
         assert!(config.server.is_none());
+        assert!(config.translation.is_none());
+    }
+
+    #[test]
+    fn translation_section_defaults_concurrency() {
+        let toml = r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[provider]
+type = "anthropic"
+model = "claude-sonnet-5"
+
+[translation]
+"#;
+        let config = ProjectConfig::from_toml(toml).unwrap();
+        assert_eq!(
+            config.translation.unwrap().concurrency,
+            default_concurrency()
+        );
     }
 }
