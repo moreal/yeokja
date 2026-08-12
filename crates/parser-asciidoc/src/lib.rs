@@ -209,9 +209,12 @@ fn parse_list_item(content: &str) -> Option<usize> {
         '*' | '.' => rest.chars().take_while(|c| *c == first).count(),
         '-' => 1,
         _ => {
-            let dot = rest
-                .find(". ")
-                .filter(|&d| d > 0 && rest[..d].chars().all(|c| c.is_ascii_digit()))?;
+            // `1.` numbered or `A.`/`a.` alpha; asciidoctor accepts both, and a
+            // prose line like `Step 1. Write the code` neither.
+            let dot = rest.find(". ").filter(|&d| {
+                (d > 0 && rest[..d].chars().all(|c| c.is_ascii_digit()))
+                    || (d == 1 && rest.starts_with(|c: char| c.is_ascii_alphabetic()))
+            })?;
             dot + 1
         }
     };
@@ -222,6 +225,33 @@ fn parse_list_item(content: &str) -> Option<usize> {
         return None; // no space after marker → not a list item
     }
     Some(trimmed_start + marker_len + ws)
+}
+
+/// `<1> text` callout list item → byte offset of the text after the marker.
+///
+/// Callouts annotate the listing above them, and asciidoctor renders the run
+/// of them as one list. Read as plain text they look like a paragraph that
+/// happens to contain angle brackets, and joining them into one span turns the
+/// whole list into a single callout on output. The marker is a number or `.`
+/// for auto-numbering; `<<<` (page break) and `<<anchor>>` are neither.
+fn parse_callout_item(content: &str) -> Option<usize> {
+    let trimmed_start = content.len() - content.trim_start().len();
+    let rest = &content[trimmed_start..];
+
+    let inner = rest.strip_prefix('<')?;
+    let end = inner.find('>')?;
+    let label = &inner[..end];
+    if label != "." && !(!label.is_empty() && label.chars().all(|c| c.is_ascii_digit())) {
+        return None;
+    }
+
+    let after = &inner[end + 1..];
+    let ws = after.len() - after.trim_start().len();
+    if ws == 0 || after.trim().is_empty() {
+        return None; // no space after marker → not a callout
+    }
+    // `<` + label + `>` + the space that follows it.
+    Some(trimmed_start + 1 + end + 1 + ws)
 }
 
 /// `:attr: value` attribute entry line.
@@ -488,7 +518,9 @@ impl DocumentParser for AsciidocParser {
                 continue;
             }
 
-            if let Some(text_offset) = parse_list_item(content) {
+            if let Some(text_offset) =
+                parse_list_item(content).or_else(|| parse_callout_item(content))
+            {
                 state.flush_current();
                 state.current =
                     Some((BlockType::ListItem, line_start + text_offset..content_end));
@@ -636,6 +668,60 @@ mod tests {
         let segments = doc.translatable_segments();
         assert_eq!(segments.len(), 3);
         assert_eq!(segments[0].block_type, BlockType::ListItem);
+    }
+
+    #[test]
+    fn callouts_are_separate_list_items() {
+        let parser = AsciidocParser;
+        let doc = parser.parse("----\ncode\n----\n<1> First note.\n<2> Second note.\n");
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 2);
+        assert_eq!(segments[0].source, "First note.");
+        assert_eq!(segments[1].source, "Second note.");
+        assert_eq!(segments[0].block_type, BlockType::ListItem);
+    }
+
+    /// The marker stays put; only the text after it is replaced. Joining the
+    /// list into one span would leave a single callout on output.
+    #[test]
+    fn each_callout_keeps_its_own_marker() {
+        let parser = AsciidocParser;
+        let source = "<1> First note.\n<2> Second note.\n";
+        let doc = parser.parse(source);
+        let mut translations = TranslationMap::new();
+        for (i, seg) in doc.all_segments().iter().enumerate() {
+            translations.insert(seg.id.clone(), format!("번역 {i}"));
+        }
+        assert_eq!(
+            parser.reconstruct(&doc, &translations),
+            "<1> 번역 0\n<2> 번역 1\n"
+        );
+    }
+
+    #[test]
+    fn alpha_ordered_list_markers_are_list_items() {
+        assert_eq!(parse_list_item("A. Driver initialization"), Some(3));
+        assert_eq!(parse_list_item("   b. Nested item"), Some(6));
+    }
+
+    /// A wrapped sentence that happens to contain `N. ` is still a sentence.
+    #[test]
+    fn prose_leading_up_to_a_period_is_not_a_list_item() {
+        assert_eq!(parse_list_item("Step 1. Write the C code"), None);
+        assert_eq!(parse_list_item("See section 2. It explains why"), None);
+    }
+
+    #[test]
+    fn an_auto_numbered_callout_is_a_list_item() {
+        assert_eq!(parse_callout_item("<.> Note."), Some(4));
+    }
+
+    #[test]
+    fn a_page_break_and_an_anchor_are_not_callouts() {
+        assert_eq!(parse_callout_item("<<<"), None);
+        assert_eq!(parse_callout_item("<<who_is_this>> is a link"), None);
+        assert_eq!(parse_callout_item("<1>"), None); // marker with no text
+        assert_eq!(parse_callout_item("<abc> not a number"), None);
     }
 
     #[test]
