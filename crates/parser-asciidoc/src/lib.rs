@@ -204,9 +204,9 @@ fn table_cell_ranges(content: &str) -> Vec<Range<usize>> {
         let text = &content[start..end];
         let text_start = start + (text.len() - text.trim_start().len());
         let text_end = start + text.trim_end().len();
-        if text_start < text_end {
-            ranges.push(text_start..text_end);
-        }
+        // Empty cells are kept so callers can count columns. Emitting them is
+        // the caller's business; a blank span never becomes a block.
+        ranges.push(text_start..text_end.max(text_start));
     }
     ranges
 }
@@ -828,6 +828,38 @@ mod tests {
                 (0, Some("Value"), "`map`"),
                 (1, Some("Effect"), "Perf map only"),
             ]
+        );
+    }
+
+    #[test]
+    fn a_dropped_cell_does_not_shift_later_columns() {
+        // `|a|` reads as a cell specifier, so that cell yields no block. The
+        // column counter must still advance, or every later cell shifts left.
+        let parser = AsciidocParser;
+        let source = "|===\n|Type | Explanation\n|a|\tAn atom value\n|c|\tA constant value\n|===\n";
+        let doc = parser.parse(source);
+
+        let body: Vec<(usize, Option<&str>, &str)> = doc
+            .sections
+            .iter()
+            .flat_map(|s| s.blocks.iter())
+            .filter_map(|b| match &b.role {
+                BlockRole::TableCell {
+                    column,
+                    header: Some(h),
+                } => Some((*column, Some(h.as_str()), b.raw_content.trim())),
+                _ => None,
+            })
+            .collect();
+
+        assert_eq!(
+            body,
+            vec![
+                (1, Some("Explanation"), "An atom value"),
+                (0, Some("Type"), "c"),
+                (1, Some("Explanation"), "A constant value"),
+            ],
+            "explanations must stay in the Explanation column"
         );
     }
 
