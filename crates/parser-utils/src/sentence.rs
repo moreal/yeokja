@@ -37,7 +37,11 @@ pub fn split_sentences(text: &str) -> Vec<String> {
                 let next_non_ws = (i + 1..len).find(|&j| !chars[j].is_whitespace());
                 let at_end = i + 1 >= len || chars[i + 1..].iter().all(|c| c.is_whitespace());
 
-                if at_end || next_non_ws.is_some_and(|j| chars[j].is_uppercase()) {
+                // A boundary needs whitespace after the punctuation. Without it
+                // the dot sits inside a single token — `world.P"`, `` `.P` `` —
+                // and splitting there tears an identifier in half.
+                if at_end || (!continues_token && next_non_ws.is_some_and(|j| chars[j].is_uppercase()))
+                {
                     let trimmed = current.trim().to_string();
                     if !trimmed.is_empty() {
                         sentences.push(trimmed);
@@ -75,6 +79,32 @@ fn token_is_url(chars: &[char], end: usize) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn dot_inside_token_is_not_a_boundary() {
+        // The dot in `world.P"` joins one identifier; splitting there produced
+        // a `P":` fragment that the translator then "completed" into prose.
+        assert_eq!(
+            split_sentences("you get a file \"world.P\":"),
+            vec!["you get a file \"world.P\":"]
+        );
+        assert_eq!(
+            split_sentences("In the resulting `.P` file you can see more."),
+            vec!["In the resulting `.P` file you can see more."]
+        );
+    }
+
+    #[test]
+    fn boundary_still_splits_with_whitespace() {
+        assert_eq!(
+            split_sentences("See the docs. Then continue."),
+            vec!["See the docs.", "Then continue."]
+        );
+        assert_eq!(
+            split_sentences("One.\nTwo."),
+            vec!["One.", "Two."]
+        );
+    }
 
     #[test]
     fn simple_sentences() {
