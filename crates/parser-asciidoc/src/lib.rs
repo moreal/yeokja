@@ -208,6 +208,10 @@ fn parse_list_item(content: &str) -> Option<usize> {
     let marker_len = match first {
         '*' | '.' => rest.chars().take_while(|c| *c == first).count(),
         '-' => 1,
+        // Asciidoctor takes a literal bullet as a marker too. Left inside the
+        // span it becomes part of the sentence handed to the model, which drops
+        // it as often as it keeps it, and the item stops being an item.
+        '\u{2022}' => first.len_utf8(),
         _ => {
             // `1.` numbered or `A.`/`a.` alpha; asciidoctor accepts both, and a
             // prose line like `Step 1. Write the code` neither.
@@ -696,6 +700,18 @@ mod tests {
             parser.reconstruct(&doc, &translations),
             "<1> 번역 0\n<2> 번역 1\n"
         );
+    }
+
+    #[test]
+    fn a_literal_bullet_is_a_list_marker() {
+        // The bullet is three bytes, so the text offset is past all of them.
+        assert_eq!(parse_list_item("\u{2022} An item"), Some(4));
+        let parser = AsciidocParser;
+        let doc = parser.parse("\u{2022} First.\n\n\u{2022} Second.\n");
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 2);
+        assert_eq!(segments[0].source, "First.");
+        assert_eq!(segments[0].block_type, BlockType::ListItem);
     }
 
     #[test]
