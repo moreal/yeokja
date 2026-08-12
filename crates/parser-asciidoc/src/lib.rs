@@ -33,6 +33,9 @@ struct ParseState<'a> {
     /// Open table (`|===`): the trimmed delimiter that closes it. Row lines
     /// inside are parsed cell by cell; everything else stays verbatim.
     table: Option<String>,
+    /// Cell texts of the open table's first row, used to label later rows'
+    /// cells by column so selection rules can name a column by its header.
+    table_header: Option<Vec<String>>,
     /// Open container delimiters (`____`, `====`, `****`); content inside is
     /// parsed normally, `____` labels its content as BlockQuote.
     containers: Vec<String>,
@@ -51,6 +54,16 @@ impl ParseState<'_> {
 
     /// Emit a translatable block covering `span` (skipping blank spans).
     fn push_span_block(&mut self, block_type: BlockType, span: Range<usize>) {
+        self.push_span_block_with_role(block_type, span, BlockRole::None);
+    }
+
+    /// [`Self::push_span_block`], tagging the block with a structural role.
+    fn push_span_block_with_role(
+        &mut self,
+        block_type: BlockType,
+        span: Range<usize>,
+        role: BlockRole,
+    ) {
         let raw = &self.source[span.clone()];
         if raw.trim().is_empty() {
             return;
@@ -63,6 +76,8 @@ impl ParseState<'_> {
             raw_content: raw.to_string(),
             heading_level: None,
             span: Some(span),
+            translatable: block_type.is_translatable(),
+            role,
         });
     }
 
@@ -311,6 +326,7 @@ impl DocumentParser for AsciidocParser {
             current: None,
             opaque: None,
             table: None,
+            table_header: None,
             containers: Vec::new(),
             in_doc_header: false,
             seen_content: false,
@@ -340,6 +356,8 @@ impl DocumentParser for AsciidocParser {
                         raw_content: raw,
                         heading_level: None,
                         span: None,
+                        translatable: block_type.is_translatable(),
+                        role: BlockRole::None,
                     });
                     state.opaque = None;
                 }
@@ -350,11 +368,35 @@ impl DocumentParser for AsciidocParser {
             if let Some(delimiter) = &state.table {
                 if trimmed == delimiter {
                     state.table = None;
+                    state.table_header = None;
                 } else if is_table_row(trimmed) {
-                    for range in table_cell_ranges(content) {
-                        state.push_span_block(
+                    let ranges = table_cell_ranges(content);
+                    // The first row of a table names its columns; later rows'
+                    // cells carry that name so rules can select by header.
+                    let is_header_row = state.table_header.is_none();
+                    if is_header_row {
+                        state.table_header = Some(
+                            ranges
+                                .iter()
+                                .map(|r| content[r.clone()].trim().to_string())
+                                .collect(),
+                        );
+                    }
+                    for (column, range) in ranges.into_iter().enumerate() {
+                        let header = if is_header_row {
+                            None
+                        } else {
+                            state
+                                .table_header
+                                .as_ref()
+                                .and_then(|h| h.get(column))
+                                .filter(|h| !h.is_empty())
+                                .cloned()
+                        };
+                        state.push_span_block_with_role(
                             BlockType::Table,
                             line_start + range.start..line_start + range.end,
+                            BlockRole::TableCell { column, header },
                         );
                     }
                 }
@@ -413,6 +455,8 @@ impl DocumentParser for AsciidocParser {
                     raw_content: raw.to_string(),
                     heading_level: Some(level),
                     span: Some(span),
+                    translatable: BlockType::Heading.is_translatable(),
+                    role: BlockRole::None,
                 });
                 if is_doc_title {
                     state.in_doc_header = true;
@@ -688,6 +732,84 @@ mod tests {
         assert_eq!(
             output,
             "이전.\n\n|===\n|셀 A |셀 B\n\n|셋째 셀\n|===\n\n이후.\n"
+        );
+    }
+
+    /// Collect every block's role, in document order.
+    fn roles(doc: &Document) -> Vec<&BlockRole> {
+        doc.sections
+            .iter()
+            .flat_map(|s| s.blocks.iter())
+            .map(|b| &b.role)
+            .collect()
+    }
+
+    #[test]
+    fn table_cells_carry_column_and_header() {
+        let parser = AsciidocParser;
+        let source = "|===\n|Instruction |Arguments |Explanation\n|allocate |t t |Allocate stack words\n|===\n";
+        let doc = parser.parse(source);
+
+        let cells: Vec<(usize, Option<&str>)> = roles(&doc)
+            .into_iter()
+            .filter_map(|r| match r {
+                BlockRole::TableCell { column, header } => {
+                    Some((*column, header.as_deref()))
+                }
+                BlockRole::None => None,
+            })
+            .collect();
+
+        assert_eq!(
+            cells,
+            vec![
+                // Header row names the columns but carries no header itself.
+                (0, None),
+                (1, None),
+                (2, None),
+                // Body cells are labelled by the column they sit under.
+                (0, Some("Instruction")),
+                (1, Some("Arguments")),
+                (2, Some("Explanation")),
+            ]
+        );
+    }
+
+    #[test]
+    fn non_table_blocks_have_no_role() {
+        let parser = AsciidocParser;
+        let doc = parser.parse("== Heading\n\nA paragraph.\n\n* An item\n");
+        assert!(roles(&doc).iter().all(|r| **r == BlockRole::None));
+    }
+
+    #[test]
+    fn cleared_translatable_flag_keeps_source_verbatim() {
+        let parser = AsciidocParser;
+        let source = "|===\n|Instruction |Explanation\n|allocate |Allocate stack words\n|===\n";
+        let mut doc = parser.parse(source);
+
+        // Drop the "Instruction" column the way a selection rule would.
+        for block in doc.sections.iter_mut().flat_map(|s| s.blocks.iter_mut()) {
+            if matches!(&block.role, BlockRole::TableCell { column: 0, header } if header.is_some())
+            {
+                block.translatable = false;
+            }
+        }
+
+        let segments = doc.translatable_segments();
+        assert!(
+            !segments.iter().any(|s| s.source == "allocate"),
+            "excluded cell must not be offered for translation"
+        );
+
+        let mut translations = TranslationMap::new();
+        for seg in &segments {
+            translations.insert(seg.id.clone(), "번역".to_string());
+        }
+        let output = parser.reconstruct(&doc, &translations);
+        assert!(
+            output.contains("|allocate "),
+            "excluded cell keeps its source text: {output}"
         );
     }
 

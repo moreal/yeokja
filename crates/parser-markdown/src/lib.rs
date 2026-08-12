@@ -85,6 +85,8 @@ impl ParseState<'_> {
             raw_content: raw.to_string(),
             heading_level,
             span: Some(span),
+            translatable: block_type.is_translatable(),
+            role: BlockRole::None,
         });
     }
 
@@ -101,6 +103,8 @@ impl ParseState<'_> {
             raw_content: raw,
             heading_level: None,
             span: None,
+            translatable: block_type.is_translatable(),
+            role: BlockRole::None,
         });
     }
 

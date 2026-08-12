@@ -62,6 +62,23 @@ pub struct Segment {
     pub block_type: BlockType,
 }
 
+/// Where a block sits in the document's structure, beyond its type.
+///
+/// Parsers record this; they do not decide what it means. Selection rules are
+/// applied later against the role, keeping parsing independent of config.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub enum BlockRole {
+    #[default]
+    None,
+    /// One cell of a `|===` table. `column` is 0-based; `header` is the text of
+    /// the same column in the table's first row (absent for the header row
+    /// itself, and for tables whose first row could not be determined).
+    TableCell {
+        column: usize,
+        header: Option<String>,
+    },
+}
+
 #[derive(Debug, Clone)]
 pub struct Block {
     pub block_type: BlockType,
@@ -72,6 +89,12 @@ pub struct Block {
     /// Parsers that support span-based reconstruction set this; `None` means the
     /// block is reconstructed by the parser's own rendering logic.
     pub span: Option<std::ops::Range<usize>>,
+    /// Structural position, for rules to select against.
+    pub role: BlockRole,
+    /// Whether this block's segments are offered for translation. Parsers seed
+    /// it from `block_type`; selection rules may clear it. Cleared blocks keep
+    /// their source text verbatim in the output.
+    pub translatable: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -100,8 +123,8 @@ impl Document {
         self.sections
             .iter()
             .flat_map(|s| s.blocks.iter())
+            .filter(|b| b.translatable)
             .flat_map(|b| b.segments.iter())
-            .filter(|s| s.block_type.is_translatable())
             .collect()
     }
 }

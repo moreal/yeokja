@@ -79,7 +79,7 @@ pub fn splice_reconstruct(document: &Document, translations: &TranslationMap) ->
     for section in &document.sections {
         for block in &section.blocks {
             let Some(span) = &block.span else { continue };
-            if !block.block_type.is_translatable() || block.segments.is_empty() {
+            if !block.translatable || block.segments.is_empty() {
                 continue;
             }
             let any_translated = block

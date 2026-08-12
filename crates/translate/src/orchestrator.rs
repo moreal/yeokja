@@ -844,7 +844,7 @@ mod tests {
     use crate::provider::{TranslateRequest, TranslateResponse};
     use async_trait::async_trait;
     use std::sync::atomic::{AtomicUsize, Ordering};
-    use yeokja_core::model::{Block, BlockType, Section, Segment, SegmentId};
+    use yeokja_core::model::{Block, BlockRole, BlockType, Section, Segment, SegmentId};
 
     fn test_config(toml: &str) -> ProjectConfig {
         ProjectConfig::from_toml(toml).unwrap()
@@ -1007,6 +1007,8 @@ model = "test"
                         raw_content: source.to_string(),
                         heading_level: None,
                         span: Some(0..source.len()),
+                        translatable: true,
+                        role: BlockRole::None,
                     }],
                 }],
                 source: source.to_string(),

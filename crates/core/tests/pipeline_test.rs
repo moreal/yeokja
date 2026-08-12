@@ -32,6 +32,8 @@ fn make_document(texts: &[&str]) -> Document {
                 raw_content: texts.join(" "),
                 heading_level: None,
                 span: None,
+                translatable: true,
+                role: BlockRole::None,
             }],
         }],
         source: texts.join(" "),

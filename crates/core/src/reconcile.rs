@@ -140,6 +140,8 @@ mod tests {
                     raw_content: String::new(),
                     heading_level: None,
                     span: None,
+                    translatable: true,
+                    role: BlockRole::None,
                 }],
             }],
             source: String::new(),
