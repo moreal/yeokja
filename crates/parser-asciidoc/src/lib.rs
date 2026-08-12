@@ -125,6 +125,47 @@ fn opaque_delimiter(trimmed: &str) -> bool {
     all_of('-') || all_of('.') || all_of('+') || all_of('/')
 }
 
+/// A Markdown-style code fence, which asciidoctor accepts as a listing block.
+/// The opening line may carry a language (```` ```erlang ````); the marker
+/// itself is what closes it.
+fn fence_marker(trimmed: &str) -> Option<&str> {
+    let first = trimmed.chars().next().filter(|c| *c == '`' || *c == '~')?;
+    let run = trimmed.chars().take_while(|c| *c == first).count();
+    (run >= 3).then(|| &trimmed[..run])
+}
+
+/// Does `trimmed` close the opaque block that `delimiter` opened?
+///
+/// Delimited blocks close on the same line that opened them; a fence closes on
+/// a bare run of its own character, at least as long as the opening one.
+fn closes_opaque(delimiter: &str, trimmed: &str) -> bool {
+    if fence_marker(delimiter).is_some() {
+        return fence_marker(trimmed).is_some_and(|m| m == trimmed && m.len() >= delimiter.len());
+    }
+    trimmed == delimiter
+}
+
+/// Level of a two-line (setext) section title underlined by `trimmed`.
+///
+/// The same characters open delimited blocks, so two things separate a title
+/// underline from a delimiter: it sits directly under a single line of text,
+/// and it matches that line's length. Callers check the first, this checks the
+/// rest.
+fn setext_level(trimmed: &str, title_len: usize) -> Option<u8> {
+    let first = trimmed.chars().next()?;
+    let level = match first {
+        '=' => 1,
+        '-' => 2,
+        '~' => 3,
+        '^' => 4,
+        '+' => 5,
+        _ => return None,
+    };
+    let len = trimmed.chars().count();
+    (len >= 2 && trimmed.chars().all(|c| c == first) && len.abs_diff(title_len) <= 1)
+        .then_some(level)
+}
+
 /// `____`, `====`, `****` open/close container blocks parsed normally inside.
 fn container_delimiter(trimmed: &str) -> bool {
     let all_of = |c: char| trimmed.len() >= 4 && trimmed.chars().all(|x| x == c);
@@ -253,8 +294,10 @@ impl DocumentParser for AsciidocParser {
         };
 
         let mut offset = 0usize;
+        let mut last_line_start = 0usize;
         for line in source.split_inclusive('\n') {
             let line_start = offset;
+            let previous_line_start = std::mem::replace(&mut last_line_start, line_start);
             offset += line.len();
             let content = line.strip_suffix('\n').unwrap_or(line);
             let content = content.strip_suffix('\r').unwrap_or(content);
@@ -263,7 +306,7 @@ impl DocumentParser for AsciidocParser {
 
             // Inside an opaque delimited block: only the matching closer matters.
             if let Some((delimiter, start)) = &state.opaque {
-                if trimmed == delimiter {
+                if closes_opaque(delimiter, trimmed) {
                     let block_type = if delimiter.starts_with('/') {
                         BlockType::HtmlBlock
                     } else {
@@ -330,9 +373,39 @@ impl DocumentParser for AsciidocParser {
                 continue;
             }
 
-            if opaque_delimiter(trimmed) {
+            // A run of `-`, `~`, `=`, `^` or `+` directly under a single line of
+            // text underlines a two-line section title. Those characters also
+            // open delimited blocks, and reading one as a delimiter swallows
+            // the rest of the document.
+            if let Some((_, span)) = &state.current
+                && span.start >= previous_line_start
+                && let Some(level) = setext_level(trimmed, source[span.clone()].chars().count())
+            {
+                let (_, span) = state.current.take().unwrap();
+                state.start_section_if_needed(level);
+                let raw = &source[span.clone()];
+                let segments = make_segments(
+                    &normalize_inline_text(raw),
+                    BlockType::Heading,
+                    state.section_idx,
+                    state.block_idx,
+                );
+                state.push_block(Block {
+                    block_type: BlockType::Heading,
+                    segments,
+                    raw_content: raw.to_string(),
+                    heading_level: Some(level),
+                    span: Some(span),
+                    translatable: BlockType::Heading.is_translatable(),
+                    role: BlockRole::None,
+                });
+                continue;
+            }
+
+            if opaque_delimiter(trimmed) || fence_marker(trimmed).is_some() {
                 state.flush_current();
-                state.opaque = Some((trimmed.to_string(), line_start));
+                let delimiter = fence_marker(trimmed).unwrap_or(trimmed);
+                state.opaque = Some((delimiter.to_string(), line_start));
                 continue;
             }
 
@@ -653,6 +726,107 @@ mod tests {
         assert_eq!(
             output,
             "이전.\n\n|===\n|셀 A |셀 B\n\n|셋째 셀\n|===\n\n이후.\n"
+        );
+    }
+
+    #[test]
+    fn a_code_fence_is_a_listing_block() {
+        let parser = AsciidocParser;
+        let source = "Example:\n\n```erlang\ndbg:tracer().\ndbg:p(all, c).\n```\n\nAfter.\n";
+        let doc = parser.parse(source);
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|s| s.source.as_str())
+            .collect();
+        assert_eq!(sources, vec!["Example:", "After."]);
+
+        let mut translations = TranslationMap::new();
+        for seg in doc.translatable_segments() {
+            let t = if seg.source == "Example:" {
+                "예:"
+            } else {
+                "이후."
+            };
+            translations.insert(seg.id.clone(), t.to_string());
+        }
+        assert_eq!(
+            parser.reconstruct(&doc, &translations),
+            "예:\n\n```erlang\ndbg:tracer().\ndbg:p(all, c).\n```\n\n이후.\n",
+            "fenced code keeps its line breaks"
+        );
+    }
+
+    #[test]
+    fn a_tilde_fence_closes_on_its_own_marker() {
+        let parser = AsciidocParser;
+        let source = "Start:\n\n~~~\n> erl -sname server01\n~~~\n\nDone.\n";
+        let doc = parser.parse(source);
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|s| s.source.as_str())
+            .collect();
+        assert_eq!(sources, vec!["Start:", "Done."]);
+    }
+
+    #[test]
+    fn a_two_line_section_title_is_not_a_delimiter() {
+        // `Preface` + `--------` is a section title. Read as a listing block,
+        // the delimiter swallows everything up to the next matching line.
+        let parser = AsciidocParser;
+        let source = "[preface]\nPreface\n--------\n\nBody text here.\n\nAbout this book\n~~~~~~~~~~~~~~~\n\nMore body.\n";
+        let doc = parser.parse(source);
+
+        let blocks: Vec<(BlockType, Option<u8>, &str)> = doc
+            .sections
+            .iter()
+            .flat_map(|s| s.blocks.iter())
+            .map(|b| (b.block_type, b.heading_level, b.raw_content.as_str()))
+            .collect();
+        assert_eq!(
+            blocks,
+            vec![
+                (BlockType::Heading, Some(2), "Preface"),
+                (BlockType::Paragraph, None, "Body text here."),
+                (BlockType::Heading, Some(3), "About this book"),
+                (BlockType::Paragraph, None, "More body."),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_delimiter_after_a_block_attribute_still_opens_a_block() {
+        // `[source,erlang]` is not a title, so the `----` under it is a
+        // delimiter even though the line above is not blank.
+        let parser = AsciidocParser;
+        let source = "[source,erlang]\n----\nid(I) -> I.\n----\n\nAfter.\n";
+        let doc = parser.parse(source);
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|s| s.source.as_str())
+            .collect();
+        assert_eq!(sources, vec!["After."]);
+    }
+
+    #[test]
+    fn a_delimiter_of_a_different_length_is_not_a_title_underline() {
+        // A block that opens right under a line of prose still opens, because
+        // the underline of a title has to match that line's length. (A short
+        // enough line is genuinely ambiguous, and asciidoctor reads it as a
+        // title too — so this parser follows it there.)
+        let parser = AsciidocParser;
+        let source = "Then I attach gdb to the running node:\n----\nsome code\n----\n\nAfter.\n";
+        let doc = parser.parse(source);
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|s| s.source.as_str())
+            .collect();
+        assert_eq!(
+            sources,
+            vec!["Then I attach gdb to the running node:", "After."]
         );
     }
 
