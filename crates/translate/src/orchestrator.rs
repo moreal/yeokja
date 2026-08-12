@@ -546,12 +546,12 @@ impl FileTranslator {
         let output_path = resolve_output_path(file_path, &self.config);
         if block_groups.is_empty() {
             tracing::info!(file = %file_path.display(), "Up to date");
-            // Regenerate the output file if it went missing.
-            if !output_path.exists() {
-                let segments: Vec<SegmentState> =
-                    reconciled.into_iter().map(|rs| rs.state).collect();
-                self.write_output(&*parser, &doc, &segments, file_path, &output_path)?;
-            }
+            // Reconstruct even so. Nothing else ever rewrites an output whose
+            // translations are all done, so a parser that has since learned to
+            // read a construct would leave the old rendering in place forever.
+            // `write_output` leaves the file alone when the text is unchanged.
+            let segments: Vec<SegmentState> = reconciled.into_iter().map(|rs| rs.state).collect();
+            self.write_output(&*parser, &doc, &segments, file_path, &output_path)?;
             return Ok(0);
         }
 
@@ -827,6 +827,12 @@ impl FileTranslator {
         }
 
         let output_text = parser.reconstruct(doc, &translations);
+        // Rewriting identical bytes would churn the mtime of every output on
+        // every run, and this is called whether or not anything was translated.
+        if std::fs::read_to_string(output_path).is_ok_and(|on_disk| on_disk == output_text) {
+            tracing::debug!(file = %output_path.display(), "Output already current");
+            return Ok(());
+        }
         if let Some(parent) = output_path.parent() {
             std::fs::create_dir_all(parent).map_err(|e| OrchestratorError::Io {
                 path: parent.to_path_buf(),
