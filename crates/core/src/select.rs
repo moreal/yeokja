@@ -8,56 +8,97 @@ use crate::config::TableRule;
 use crate::model::{BlockRole, Document};
 use std::path::Path;
 
+/// One table found in a document: its header row, and the block indices of its
+/// body cells within the section.
+#[derive(Debug, Clone)]
+pub struct TableGroup {
+    pub headers: Vec<String>,
+    /// `(block index within the section, column index)` for each body cell.
+    pub body: Vec<(usize, usize)>,
+}
+
+/// Group a section's blocks into tables.
+///
+/// Cells arrive in document order, so a table is a run of cells whose header
+/// row (cells carrying no header of their own) precedes its body. Any non-cell
+/// block ends the run.
+pub fn table_groups(blocks: &[crate::model::Block]) -> Vec<TableGroup> {
+    let mut groups: Vec<TableGroup> = Vec::new();
+    let mut headers: Vec<String> = Vec::new();
+    let mut body: Vec<(usize, usize)> = Vec::new();
+    let mut in_header_row = false;
+
+    let flush = |groups: &mut Vec<TableGroup>, headers: &mut Vec<String>, body: &mut Vec<(usize, usize)>| {
+        if !headers.is_empty() || !body.is_empty() {
+            groups.push(TableGroup {
+                headers: std::mem::take(headers),
+                body: std::mem::take(body),
+            });
+        }
+        headers.clear();
+        body.clear();
+    };
+
+    for (idx, block) in blocks.iter().enumerate() {
+        let BlockRole::TableCell { column, header } = &block.role else {
+            flush(&mut groups, &mut headers, &mut body);
+            in_header_row = false;
+            continue;
+        };
+        match header {
+            None => {
+                // A header row after a body means a new table started.
+                if !in_header_row {
+                    flush(&mut groups, &mut headers, &mut body);
+                    in_header_row = true;
+                }
+                headers.push(block.raw_content.trim().to_string());
+            }
+            Some(_) => {
+                in_header_row = false;
+                body.push((idx, *column));
+            }
+        }
+    }
+    flush(&mut groups, &mut headers, &mut body);
+    groups
+}
+
+/// Rules that apply to `file`, in declaration order.
+pub fn rules_for<'a>(rules: &'a [TableRule], file: &Path) -> Vec<&'a TableRule> {
+    rules
+        .iter()
+        .filter(|r| r.files.as_deref().is_none_or(|g| path_matches(g, file)))
+        .collect()
+}
+
 /// Clear the `translatable` flag on blocks excluded by `rules`.
 ///
 /// Only ever narrows: a block already excluded by its type stays excluded, and
 /// a document with no matching rules is left untouched. Returns how many blocks
 /// were excluded, for reporting.
 pub fn apply_table_rules(document: &mut Document, rules: &[TableRule], file: &Path) -> usize {
-    let applicable: Vec<&TableRule> = rules
-        .iter()
-        .filter(|r| r.files.as_deref().is_none_or(|g| path_matches(g, file)))
-        .collect();
+    let applicable = rules_for(rules, file);
     if applicable.is_empty() {
         return 0;
     }
 
-    // A cell's header text identifies its column, but matching a *table*
-    // needs the whole header row. Cells are emitted in document order, so the
-    // headers of the table currently being walked are the most recent run of
-    // header-row cells (those whose own `header` is None).
     let mut excluded = 0;
     for section in &mut document.sections {
-        let mut headers: Vec<String> = Vec::new();
-        let mut in_header_row = false;
-
-        for block in &mut section.blocks {
-            let BlockRole::TableCell { column, header } = &block.role else {
-                // Any non-cell block ends the table we were walking.
-                headers.clear();
-                in_header_row = false;
+        let groups = table_groups(&section.blocks);
+        for group in groups {
+            let Some(rule) = applicable.iter().find(|r| r.matches_headers(&group.headers)) else {
                 continue;
             };
-
-            match header {
-                // Header row: collect the column names.
-                None => {
-                    if !in_header_row {
-                        headers.clear();
-                        in_header_row = true;
-                    }
-                    headers.push(block.raw_content.trim().to_string());
-                }
-                // Body cell: decide using the header row collected above.
-                Some(h) => {
-                    in_header_row = false;
-                    let Some(rule) = applicable.iter().find(|r| r.matches_headers(&headers)) else {
-                        continue;
-                    };
-                    if !rule.translates(*column, Some(h.as_str())) && block.translatable {
-                        block.translatable = false;
-                        excluded += 1;
-                    }
+            for (idx, column) in group.body {
+                let block = &mut section.blocks[idx];
+                let header = match &block.role {
+                    BlockRole::TableCell { header, .. } => header.clone(),
+                    BlockRole::None => None,
+                };
+                if !rule.translates(column, header.as_deref()) && block.translatable {
+                    block.translatable = false;
+                    excluded += 1;
                 }
             }
         }
@@ -202,6 +243,53 @@ mod tests {
         let mut other = instruction_table();
         apply_table_rules(&mut other, &rules, Path::new("chapters/gc.asciidoc"));
         assert_eq!(kept(&other).len(), 3);
+    }
+
+    #[test]
+    fn table_groups_separates_consecutive_tables() {
+        let blocks = vec![
+            cell(0, None, "Type"),
+            cell(1, None, "Explanation"),
+            cell(0, Some("Type"), "c"),
+            cell(1, Some("Explanation"), "A constant"),
+            // A second table follows directly, with a different schema.
+            cell(0, None, "Instruction"),
+            cell(1, None, "Arguments"),
+            cell(0, Some("Instruction"), "allocate"),
+            cell(1, Some("Arguments"), "t t"),
+        ];
+        let groups = table_groups(&blocks);
+        assert_eq!(groups.len(), 2);
+        assert_eq!(groups[0].headers, vec!["Type", "Explanation"]);
+        assert_eq!(groups[1].headers, vec!["Instruction", "Arguments"]);
+        assert_eq!(groups[0].body.len(), 2);
+        assert_eq!(groups[1].body.len(), 2);
+    }
+
+    #[test]
+    fn a_rule_applies_only_to_the_table_it_matches() {
+        // Two tables in one section: only the second matches the rule, so the
+        // first must come through untouched.
+        let mut doc = Document {
+            sections: vec![Section {
+                blocks: vec![
+                    cell(0, None, "Type"),
+                    cell(1, None, "Explanation"),
+                    cell(0, Some("Type"), "c"),
+                    cell(1, Some("Explanation"), "A constant"),
+                    cell(0, None, "Instruction"),
+                    cell(1, None, "Arguments"),
+                    cell(2, None, "Explanation"),
+                    cell(0, Some("Instruction"), "allocate"),
+                    cell(1, Some("Arguments"), "t t"),
+                    cell(2, Some("Explanation"), "Allocate stack words"),
+                ],
+            }],
+            source: String::new(),
+        };
+        let rules = vec![rule(vec![ColumnRef::Header("Explanation".into())], vec![])];
+        assert_eq!(apply_table_rules(&mut doc, &rules, Path::new("a.adoc")), 2);
+        assert_eq!(kept(&doc), vec!["c", "A constant", "Allocate stack words"]);
     }
 
     #[test]

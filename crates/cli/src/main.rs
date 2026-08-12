@@ -35,6 +35,11 @@ enum Commands {
         /// Path to check
         path: String,
     },
+    /// List tables and how selection rules treat them
+    Inspect {
+        /// Path to inspect
+        path: String,
+    },
     /// Manage glossary
     Glossary {
         #[command(subcommand)]
@@ -102,6 +107,9 @@ async fn main() -> anyhow::Result<()> {
             } else {
                 commands::translate::run(&path, None).await?;
             }
+        }
+        Commands::Inspect { path } => {
+            commands::inspect::run(&path)?;
         }
         Commands::Status { path } => {
             commands::status::run(&path)?;

@@ -80,6 +80,22 @@ skip = ["Arguments", 0]              # 나머지는 전부 번역
 기본값은 "전부 번역"이고 규칙은 좁히는 방향으로만 작동합니다. 헤더 행은
 항상 번역 대상입니다. 제외된 셀은 원문이 그대로 남습니다.
 
+어떤 표가 있고 현재 규칙이 어떻게 적용되는지는 `inspect`로 확인합니다.
+붙여넣을 수 있는 규칙도 함께 출력합니다:
+
+```sh
+yeokja inspect ./chapters/
+```
+
+```
+chapters/ap-beam_instructions.asciidoc
+
+  Table 2  (a rule matches this table)
+    [0] Instruction       229 cells  kept as-is    allocate · allocate_heap · …
+    [1] Arguments         222 cells  kept as-is    t t · t I t · …
+    [2] Explanation        66 cells  translated    Allocate some words on stack · …
+```
+
 용어집 `glossary.toml`:
 
 ```toml

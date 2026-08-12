@@ -1,5 +1,6 @@
 pub mod evaluate;
 pub mod glossary;
+pub mod inspect;
 pub mod serve;
 pub mod status;
 pub mod translate;
