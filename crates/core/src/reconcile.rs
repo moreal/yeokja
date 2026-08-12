@@ -139,8 +139,10 @@ mod tests {
                     segments,
                     raw_content: String::new(),
                     heading_level: None,
+                    span: None,
                 }],
             }],
+            source: String::new(),
         }
     }
 

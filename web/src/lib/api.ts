@@ -16,6 +16,18 @@ export interface Segment {
   source: string;
   translation: string | null;
   status: string;
+  issues: string[];
+}
+
+export interface TranslationJob {
+  running: boolean;
+  started_at: string | null;
+  finished_at: string | null;
+  files_total: number;
+  files_done: number;
+  segments_total: number;
+  segments_done: number;
+  errors: string[];
 }
 
 export interface GlossaryTerm {
@@ -66,7 +78,21 @@ export async function addGlossaryTerm(term: string, translation: string): Promis
   if (!res.ok) throw new Error(`Failed: ${res.status}`);
 }
 
+export async function removeGlossaryTerm(term: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/glossary/${encodeURIComponent(term)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error(`Failed: ${res.status}`);
+}
+
 export async function startTranslation(): Promise<void> {
   const res = await fetch(`${API_BASE}/api/translate/start`, { method: "POST" });
+  // 409 means a run is already in progress; surface it as a normal state.
+  if (!res.ok && res.status !== 409) throw new Error(`Failed: ${res.status}`);
+}
+
+export async function fetchTranslationJob(): Promise<TranslationJob> {
+  const res = await fetch(`${API_BASE}/api/translate/status`);
   if (!res.ok) throw new Error(`Failed: ${res.status}`);
+  return res.json();
 }

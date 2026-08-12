@@ -85,12 +85,86 @@ impl Glossary {
     }
 }
 
+/// Add or update a term in a glossary TOML file, preserving existing entries
+/// (including their `note` fields). Creates the file if it does not exist.
+pub fn upsert_term_in_file(
+    path: &Path,
+    term: &str,
+    translation: &str,
+) -> Result<(), GlossaryError> {
+    let content = if path.exists() {
+        std::fs::read_to_string(path)?
+    } else {
+        String::new()
+    };
+
+    let mut doc: toml::Table = if content.is_empty() {
+        toml::Table::new()
+    } else {
+        content
+            .parse()
+            .map_err(|e: toml::de::Error| GlossaryError::Parse(e.to_string()))?
+    };
+
+    let terms = doc
+        .entry("terms")
+        .or_insert_with(|| toml::Value::Table(toml::Table::new()));
+    if let toml::Value::Table(terms_table) = terms {
+        let entry = terms_table
+            .entry(term.to_string())
+            .or_insert_with(|| toml::Value::Table(toml::Table::new()));
+        if let toml::Value::Table(entry_table) = entry {
+            entry_table.insert(
+                "translation".to_string(),
+                toml::Value::String(translation.to_string()),
+            );
+        } else {
+            let mut entry_table = toml::Table::new();
+            entry_table.insert(
+                "translation".to_string(),
+                toml::Value::String(translation.to_string()),
+            );
+            *entry = toml::Value::Table(entry_table);
+        }
+    }
+
+    let serialized = toml::to_string_pretty(&doc)
+        .map_err(|e| GlossaryError::Serialize(e.to_string()))?;
+    std::fs::write(path, serialized)?;
+    Ok(())
+}
+
+/// Remove a term from a glossary TOML file. Returns whether the term existed.
+pub fn remove_term_in_file(path: &Path, term: &str) -> Result<bool, GlossaryError> {
+    if !path.exists() {
+        return Ok(false);
+    }
+    let content = std::fs::read_to_string(path)?;
+    let mut doc: toml::Table = content
+        .parse()
+        .map_err(|e: toml::de::Error| GlossaryError::Parse(e.to_string()))?;
+
+    let removed = match doc.get_mut("terms") {
+        Some(toml::Value::Table(terms_table)) => terms_table.remove(term).is_some(),
+        _ => false,
+    };
+
+    if removed {
+        let serialized = toml::to_string_pretty(&doc)
+            .map_err(|e| GlossaryError::Serialize(e.to_string()))?;
+        std::fs::write(path, serialized)?;
+    }
+    Ok(removed)
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum GlossaryError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
     #[error("Parse error: {0}")]
     Parse(String),
+    #[error("Serialize error: {0}")]
+    Serialize(String),
 }
 
 #[cfg(test)]
@@ -159,5 +233,48 @@ translation = "커밋"
         let g = test_glossary();
         let snapshot = HashMap::new();
         assert!(!g.is_snapshot_stale(&snapshot, "Hello world."));
+    }
+
+    #[test]
+    fn upsert_preserves_notes_and_updates() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("glossary.toml");
+        std::fs::write(
+            &path,
+            "[terms.repository]\ntranslation = \"저장소\"\nnote = \"Git 저장소\"\n",
+        )
+        .unwrap();
+
+        upsert_term_in_file(&path, "branch", "브랜치").unwrap();
+        upsert_term_in_file(&path, "repository", "리포지터리").unwrap();
+
+        let g = Glossary::load(&path).unwrap();
+        assert_eq!(g.terms().get("branch").unwrap(), "브랜치");
+        assert_eq!(g.terms().get("repository").unwrap(), "리포지터리");
+
+        // The note on the updated entry must survive.
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert!(content.contains("Git 저장소"));
+    }
+
+    #[test]
+    fn upsert_creates_file_when_missing() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("glossary.toml");
+        upsert_term_in_file(&path, "commit", "커밋").unwrap();
+        let g = Glossary::load(&path).unwrap();
+        assert_eq!(g.terms().get("commit").unwrap(), "커밋");
+    }
+
+    #[test]
+    fn remove_term_removes_and_reports() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("glossary.toml");
+        upsert_term_in_file(&path, "commit", "커밋").unwrap();
+
+        assert!(remove_term_in_file(&path, "commit").unwrap());
+        assert!(!remove_term_in_file(&path, "commit").unwrap());
+        let g = Glossary::load(&path).unwrap();
+        assert!(g.terms().is_empty());
     }
 }

@@ -41,6 +41,9 @@ output = "{dir}/{stem}.ko{ext}"
 type = "anthropic"
 model = "claude-sonnet-4-20250514"
 api_key_env = "ANTHROPIC_API_KEY"
+# 선택: 프롬프트 커스터마이즈. 플레이스홀더:
+# {source_lang} {target_lang} {glossary} {feedback} {context} {segments}
+# prompt_template = "..."
 ```
 
 용어집 `glossary.toml`:
@@ -84,16 +87,18 @@ yeokja -C /path/to/project status ./book/
 ```sh
 yeokja glossary list
 yeokja glossary set "branch" "브랜치"
+yeokja glossary remove "branch"
 ```
 
 ### 웹 인터페이스
 
 ```sh
-# API 서버
+# API 서버 (다음 중 하나)
+yeokja serve
 cargo run -p yeokja-server
 
 # 프론트엔드 (별도 터미널)
-cd web && npm install && npm run dev
+cd web && yarn install && yarn dev
 ```
 
 - 서버: http://localhost:3000

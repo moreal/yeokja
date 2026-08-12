@@ -2,37 +2,36 @@ use anyhow::Result;
 use std::path::Path;
 use yeokja_core::change::SegmentStatus;
 use yeokja_core::project::ProjectContext;
-use yeokja_core::reconcile::reconcile_with_status;
-use yeokja_core::state::StateFile;
 use yeokja_translate::evaluator::TranslationEvaluator;
 use yeokja_translate::evaluator::{EvaluationContext, IssueSeverity};
 use yeokja_translate::evaluator_format::FormatEvaluator;
 use yeokja_translate::evaluator_glossary::GlossaryEvaluator;
 use yeokja_translate::evaluator_link::LinkEvaluator;
 use yeokja_translate::evaluator_style::StyleEvaluator;
-
-use crate::provider_factory::create_evaluator_provider;
-
-use super::get_parser;
+use yeokja_translate::factory::create_evaluator_provider;
+use yeokja_translate::orchestrator::{collect_files, scan_file};
 
 pub async fn run(path: &str) -> Result<()> {
     let ctx = ProjectContext::load()?;
+    let parser_factory = super::parser_factory();
 
     let eval_provider = create_evaluator_provider(&ctx.config.provider)?;
-    let source_path = Path::new(path);
-    let files = super::status::collect_files(source_path, &ctx.config)?;
+    let files = collect_files(Path::new(path), &ctx.config)?;
 
     let glossary_evaluator = GlossaryEvaluator;
     let link_evaluator = LinkEvaluator;
     let format_evaluator = FormatEvaluator;
-    let style_evaluator = StyleEvaluator::new(eval_provider, ctx.config.project.target_lang.clone());
+    let style_evaluator = eval_provider
+        .map(|provider| StyleEvaluator::new(provider, ctx.config.project.target_lang.clone()));
 
-    let evaluators: Vec<(&str, &dyn TranslationEvaluator)> = vec![
+    let mut evaluators: Vec<(&str, &dyn TranslationEvaluator)> = vec![
         ("Glossary", &glossary_evaluator),
         ("Link", &link_evaluator),
         ("Format", &format_evaluator),
-        ("Style", &style_evaluator),
     ];
+    if let Some(style) = &style_evaluator {
+        evaluators.push(("Style", style));
+    }
 
     let mut total_segments = 0usize;
     let mut total_issues = 0usize;
@@ -40,19 +39,13 @@ pub async fn run(path: &str) -> Result<()> {
     tracing::info!(files = files.len(), "Evaluating translations");
 
     for file_path in &files {
-        let parser = get_parser(file_path, &ctx.config);
-        let source = std::fs::read_to_string(file_path)?;
-        let doc = parser.parse(&source);
-        let state_path = StateFile::state_file_path(file_path);
-
-        let existing = if state_path.exists() {
-            StateFile::load(&state_path)?
-        } else {
+        let state_path = yeokja_core::state::StateFile::state_file_path(file_path);
+        if !state_path.exists() {
             tracing::debug!(file = %file_path.display(), "No state file, skipping");
             continue;
-        };
+        }
 
-        let reconciled = reconcile_with_status(&doc, &existing, &ctx.glossary);
+        let (_, reconciled) = scan_file(file_path, &ctx.config, &ctx.glossary, &parser_factory)?;
 
         let mut file_issues = 0usize;
 

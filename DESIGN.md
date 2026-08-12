@@ -13,6 +13,7 @@ yeokja/
 │   ├── parser-utils/      # yeokja-parser-utils
 │   ├── parser-markdown/   # yeokja-parser-markdown
 │   ├── parser-asciidoc/   # yeokja-parser-asciidoc
+│   ├── parsers/           # yeokja-parsers (파서 레지스트리)
 │   ├── translate/         # yeokja-translate
 │   ├── cli/               # yeokja-cli
 │   └── server/            # yeokja-server
@@ -22,11 +23,11 @@ yeokja/
 ### 의존 관계
 
 ```
-core ← parser-utils ← parser-markdown
-                     ← parser-asciidoc
+core ← parser-utils ← parser-markdown ← parsers
+                     ← parser-asciidoc ← parsers
      ← translate
-     ← cli (+ parser-markdown, translate)
-     ← server (+ parser-markdown, translate)
+     ← server (+ parsers, translate)
+     ← cli (+ parsers, translate, server)
 ```
 
 ### 각 crate의 역할
@@ -45,43 +46,55 @@ core ← parser-utils ← parser-markdown
 - `split_sentences()`: 약어를 고려한 문장 분리
 - `make_segments()`: 텍스트를 문장 분리 후 Segment 벡터로 변환
 
-**yeokja-parser-markdown** — pulldown-cmark 기반 Markdown 파서.
+**yeokja-parser-markdown** — pulldown-cmark 기반 span 방식 Markdown 파서.
 - `DocumentParser` trait 구현
-- h1/h2에서 Section 분리, 코드 블록 번역 제외, heading level 보존
+- offset iterator로 각 블록의 인라인 콘텐츠 byte range(`Block::span`)를 기록
+- 세그먼트가 링크/볼드/인라인 코드 등 raw 마크업을 그대로 포함 → LLM과 evaluator가 마크업 보존을 검증 가능
+- reconstruct는 원본(`Document::source`)에서 번역 대상 span만 치환 → 코드 펜스 언어, 리스트 마커, 인용 접두사, front matter, 테이블 구조가 그대로 보존됨
+- h1/h2에서 Section 분리, 코드 블록·HTML·front matter 번역 제외
 
-**yeokja-parser-asciidoc** — asciidoc-parser 라이브러리 기반 Asciidoc 파서.
-- `DocumentParser` trait 구현
+**yeokja-parser-asciidoc** — asciidork 라이브러리 기반 Asciidoc 파서.
+- `DocumentParser` trait 구현 (AST 재구성 방식, span 미사용)
 - 동일한 Section/Block/Segment 모델로 변환
 
+**yeokja-parsers** — 파서 레지스트리.
+- `select_parser()`: 소스 설정의 `parser` 필드 또는 확장자로 파서 선택
+- CLI와 서버가 공유하여 파서 선택 로직 단일화
+
 **yeokja-translate** — 번역 실행 및 품질 평가.
-- `provider.rs`: `TranslationProvider` async trait, 요청/응답 타입
-- `prompt.rs`: `[N]` 번호 형식 프롬프트 생성 및 응답 파싱
+- `provider.rs`: `LlmProvider`/`TranslationProvider` async trait, 요청/응답 타입
+- `prompt.rs`: `[N]` 번호 형식 프롬프트 생성 및 응답 파싱, 커스텀 템플릿 지원
+- `factory.rs`: 설정 기반 Provider 인스턴스 생성 (CLI/서버 공유)
+- `orchestrator.rs`: 파일 수집 → 조정 → 블록 번역 → 상태 저장 → 재구성 전 과정 오케스트레이션, 진행 이벤트 채널 제공
 - `rate_limit.rs`: adaptive exponential backoff
-- `openai_compatible.rs`, `anthropic.rs`, `gemini.rs`, `translate_gemma.rs`: Provider 구현
+- `openai_compatible.rs`, `anthropic.rs`, `gemini.rs`, `translate_gemma.rs`, `claude_code.rs`, `pi.rs`: Provider 구현
 - `evaluator.rs`: `TranslationEvaluator` trait
 - `evaluator_glossary.rs`, `evaluator_link.rs`, `evaluator_format.rs`, `evaluator_style.rs`: Evaluator 구현
 - `pipeline.rs`: 번역 → 평가 → 재시도 자동화 루프
 
 **yeokja-cli** — CLI 및 TUI.
-- clap 기반 서브커맨드: translate, status, glossary, evaluate, serve
+- clap 기반 서브커맨드: translate, status, glossary(list/set/remove), evaluate, serve
 - `--working-directory` (`-C`) 글로벌 옵션으로 작업 디렉터리 지정 가능
-- ratatui 기반 실시간 번역 진행 뷰 (`--tui`)
-- `provider_factory.rs`: 설정 기반 Provider 인스턴스 생성
+- ratatui 기반 실시간 번역 진행 뷰 (`--tui`): orchestrator의 진행 이벤트를 구독하여 렌더링, `q`로 취소 가능
+- `serve`는 yeokja-server를 in-process로 실행
 
 **yeokja-server** — REST API 서버.
 - axum 기반, CORS 지원
-- `/api/status`, `/api/segments`, `/api/glossary` 등 엔드포인트
-- 세그먼트 수동 편집 (`PUT /api/segments/{file}/{id}`)
+- `GET /api/status`, `GET /api/segments`: 전체 진행 통계 및 세그먼트 목록(평가 이슈 포함)
+- `PUT /api/segments/{file}/{id}`: 세그먼트 수동 편집 (저장 후 출력 파일 즉시 갱신)
+- `GET/POST /api/glossary`, `DELETE /api/glossary/{term}`: 용어집 CRUD (glossary.toml에 영속화)
+- `POST /api/translate/start`, `GET /api/translate/status`: 백그라운드 번역 실행 및 진행 조회 (동시 실행 시 409)
 
 ## 문서 모델
 
 ```
-Document
+Document (source: 원본 전문 보존)
 ├── Section (h1/h2 기준 분리)
 │   ├── Block (paragraph, heading, list_item, code_block, ...)
+│   │   ├── span: 원본 내 번역 대상 byte range (span 기반 파서)
 │   │   ├── Segment (문장 단위)
 │   │   │   ├── id: "section:0/block:1/seg:0"
-│   │   │   ├── source: "원본 텍스트"
+│   │   │   ├── source: "원본 텍스트 (인라인 마크업 포함)"
 │   │   │   ├── source_hash: xxHash64
 │   │   │   └── block_type
 │   │   └── ...
@@ -89,7 +102,9 @@ Document
 └── ...
 ```
 
-코드 블록, thematic break, HTML 블록은 번역 대상에서 제외됩니다.
+코드 블록, thematic break, HTML 블록, front matter는 번역 대상에서 제외됩니다.
+Markdown 파서의 reconstruct는 `Document::source`에서 각 블록의 `span` 구간만
+번역으로 치환하므로, 번역 대상이 아닌 모든 텍스트는 byte 단위로 보존됩니다.
 
 ## 변경 감지
 
@@ -142,6 +157,10 @@ Document
 ```
 
 TranslateGemma는 별도 형식: `<<<source>>>en<<<target>>>ko<<<text>>>...`
+
+`[provider]`의 `prompt_template` 설정으로 프롬프트를 커스터마이즈할 수 있습니다.
+사용 가능한 플레이스홀더: `{source_lang}`, `{target_lang}`, `{glossary}`,
+`{feedback}`, `{context}`, `{segments}`
 
 ## 용어집 (Glossary)
 

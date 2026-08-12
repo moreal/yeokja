@@ -23,6 +23,30 @@ pub fn make_segments(text: &str, block_type: BlockType, section_idx: usize, bloc
         .collect()
 }
 
+/// Normalize a raw inline text span into a single line.
+/// Continuation lines lose their leading blockquote markers (`>`) and indentation,
+/// and line breaks collapse into single spaces, so segment text reads as prose.
+pub fn normalize_inline_text(raw: &str) -> String {
+    let mut lines = raw.lines();
+    let mut out = String::new();
+    if let Some(first) = lines.next() {
+        out.push_str(first.trim_end());
+    }
+    for line in lines {
+        let stripped = line
+            .trim_start_matches(|c: char| c == '>' || c.is_whitespace())
+            .trim_end();
+        if stripped.is_empty() {
+            continue;
+        }
+        if !out.is_empty() {
+            out.push(' ');
+        }
+        out.push_str(stripped);
+    }
+    out
+}
+
 /// Join segments using their translations (or source text as fallback), separated by spaces.
 pub fn join_segments_with_translations(
     segments: &[Segment],

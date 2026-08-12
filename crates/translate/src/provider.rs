@@ -39,6 +39,8 @@ pub struct TranslateRequest {
     pub target_lang: String,
     /// Optional feedback from previous evaluation failures (for retry loop).
     pub feedback: Option<String>,
+    /// Optional custom prompt template (see `prompt::build_prompt`).
+    pub prompt_template: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -71,18 +73,27 @@ pub trait TranslationProvider: Send + Sync {
     async fn translate(&self, request: TranslateRequest) -> Result<TranslateResponse, TranslateError>;
 }
 
+/// Translate by building a numbered prompt, sending it to a raw LLM provider,
+/// and parsing the `[N]` format response.
+pub async fn translate_via_prompt(
+    llm: &dyn LlmProvider,
+    request: TranslateRequest,
+) -> Result<TranslateResponse, TranslateError> {
+    let prompt = crate::prompt::build_prompt(&request);
+    let response = llm.complete(CompletionRequest { prompt }).await?;
+    let translations =
+        crate::prompt::parse_response(&response.text).map_err(TranslateError::Parse)?;
+    Ok(TranslateResponse {
+        translations,
+        usage: response.usage,
+    })
+}
+
 /// Blanket implementation: any `LlmProvider` is automatically a `TranslationProvider`
 /// by building a translation prompt and parsing the [N] format response.
 #[async_trait]
 impl<T: LlmProvider> TranslationProvider for T {
     async fn translate(&self, request: TranslateRequest) -> Result<TranslateResponse, TranslateError> {
-        let prompt = crate::prompt::build_prompt(&request);
-        let response = self.complete(CompletionRequest { prompt }).await?;
-        let translations = crate::prompt::parse_response(&response.text)
-            .map_err(TranslateError::Parse)?;
-        Ok(TranslateResponse {
-            translations,
-            usage: response.usage,
-        })
+        translate_via_prompt(self, request).await
     }
 }

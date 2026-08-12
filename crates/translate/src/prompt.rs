@@ -2,7 +2,38 @@ use crate::provider::TranslateRequest;
 use std::collections::HashMap;
 
 /// Build the translation prompt from a TranslateRequest.
+///
+/// When `request.prompt_template` is set, it is used with these placeholders:
+/// `{source_lang}`, `{target_lang}`, `{glossary}`, `{feedback}`, `{context}`,
+/// `{segments}`. Otherwise the built-in template below is used.
 pub fn build_prompt(request: &TranslateRequest) -> String {
+    let glossary_section = if request.glossary.is_empty() {
+        String::new()
+    } else {
+        let mut terms: Vec<_> = request.glossary.iter().collect();
+        terms.sort_by_key(|(k, _)| k.as_str());
+        terms
+            .iter()
+            .map(|(term, translation)| format!("- {term} → {translation}\n"))
+            .collect()
+    };
+
+    let segments_section: String = request
+        .segments
+        .iter()
+        .map(|(idx, text)| format!("[{idx}] {text}\n"))
+        .collect();
+
+    if let Some(template) = &request.prompt_template {
+        return template
+            .replace("{source_lang}", &request.source_lang)
+            .replace("{target_lang}", &request.target_lang)
+            .replace("{glossary}", glossary_section.trim_end())
+            .replace("{feedback}", request.feedback.as_deref().unwrap_or(""))
+            .replace("{context}", &request.block_context)
+            .replace("{segments}", segments_section.trim_end());
+    }
+
     let mut prompt = String::new();
 
     prompt.push_str(&format!(
@@ -10,14 +41,11 @@ pub fn build_prompt(request: &TranslateRequest) -> String {
         request.source_lang, request.target_lang
     ));
     prompt.push_str("Respond with each numbered translation in the same [N] format.\n");
+    prompt.push_str("Preserve all markup exactly: links, URLs, bold/italic markers, and inline code.\n");
 
-    if !request.glossary.is_empty() {
+    if !glossary_section.is_empty() {
         prompt.push_str("\nGlossary (use these translations for the given terms):\n");
-        let mut terms: Vec<_> = request.glossary.iter().collect();
-        terms.sort_by_key(|(k, _)| k.as_str());
-        for (term, translation) in terms {
-            prompt.push_str(&format!("- {term} → {translation}\n"));
-        }
+        prompt.push_str(&glossary_section);
     }
 
     if let Some(feedback) = &request.feedback {
@@ -27,9 +55,7 @@ pub fn build_prompt(request: &TranslateRequest) -> String {
     prompt.push_str(&format!("\nContext (full paragraph):\n{}\n", request.block_context));
 
     prompt.push_str("\nSentences to translate:\n");
-    for (idx, text) in &request.segments {
-        prompt.push_str(&format!("[{idx}] {text}\n"));
-    }
+    prompt.push_str(&segments_section);
 
     prompt
 }
@@ -81,6 +107,7 @@ mod tests {
             source_lang: "en".to_string(),
             target_lang: "ko".to_string(),
             feedback: None,
+            prompt_template: None,
         }
     }
 
@@ -103,6 +130,20 @@ mod tests {
         req.feedback = Some("repository를 저장소로 번역해야 합니다".to_string());
         let prompt = build_prompt(&req);
         assert!(prompt.contains("repository를 저장소로 번역해야 합니다"));
+    }
+
+    #[test]
+    fn build_prompt_uses_custom_template() {
+        let mut req = make_request();
+        req.prompt_template = Some(
+            "{source_lang}->{target_lang}\nTERMS:\n{glossary}\nTEXT:\n{segments}".to_string(),
+        );
+        let prompt = build_prompt(&req);
+        assert!(prompt.starts_with("en->ko\n"));
+        assert!(prompt.contains("TERMS:\n- repository → 저장소"));
+        assert!(prompt.contains("TEXT:\n[1] The repository stores all history."));
+        // The built-in template's phrasing must not leak in.
+        assert!(!prompt.contains("Translate the following sentences"));
     }
 
     #[test]

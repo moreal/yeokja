@@ -31,8 +31,10 @@ fn make_document(texts: &[&str]) -> Document {
                 segments,
                 raw_content: texts.join(" "),
                 heading_level: None,
+                span: None,
             }],
         }],
+        source: texts.join(" "),
     }
 }
 

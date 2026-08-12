@@ -42,6 +42,7 @@ impl DocumentParser for AsciidocParser {
                     segments,
                     raw_content: title_text,
                     heading_level: Some(1),
+                    span: None,
                 });
                 block_idx += 1;
             }
@@ -73,6 +74,7 @@ impl DocumentParser for AsciidocParser {
                             segments,
                             raw_content: heading_text,
                             heading_level: Some(level),
+                            span: None,
                         });
                         block_idx += 1;
                     }
@@ -92,14 +94,25 @@ impl DocumentParser for AsciidocParser {
         }
 
         sections.retain(|s| !s.blocks.is_empty());
-        Document { sections }
+        Document {
+            sections,
+            source: source.to_string(),
+        }
     }
 
     fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String {
         let mut output = String::new();
+        let mut prev_was_list_item = false;
 
         for section in &document.sections {
             for block in &section.blocks {
+                // A list only ends at a blank line in AsciiDoc; separate any
+                // following non-list block so it does not attach to the item.
+                if prev_was_list_item && block.block_type != BlockType::ListItem {
+                    output.push('\n');
+                }
+                prev_was_list_item = block.block_type == BlockType::ListItem;
+
                 match block.block_type {
                     BlockType::Heading => {
                         let level = block.heading_level.unwrap_or(1);
@@ -161,6 +174,7 @@ fn process_block(
                     segments,
                     raw_content: heading_text,
                     heading_level: Some(sec.level + 1), // asciidork uses 0-based levels
+                    span: None,
                 });
                 *block_idx += 1;
             }
@@ -187,6 +201,7 @@ fn process_block(
                     segments: Vec::new(),
                     raw_content: text,
                     heading_level: None,
+                    span: None,
                 });
             } else {
                 let segments = make_segments(&text, block_type, *section_idx, *block_idx);
@@ -195,6 +210,7 @@ fn process_block(
                     segments,
                     raw_content: text,
                     heading_level: None,
+                    span: None,
                 });
             }
             *block_idx += 1;
@@ -219,6 +235,7 @@ fn process_block(
                         segments,
                         raw_content: text,
                         heading_level: None,
+                        span: None,
                     });
                     *block_idx += 1;
                 }
@@ -233,6 +250,7 @@ fn process_block(
                 segments: Vec::new(),
                 raw_content: "'''".to_string(),
                 heading_level: None,
+                span: None,
             });
             *block_idx += 1;
         }
@@ -248,6 +266,7 @@ fn process_block(
                                 segments,
                                 raw_content: text,
                                 heading_level: None,
+                                span: None,
                             });
                             *block_idx += 1;
                         }
@@ -264,6 +283,7 @@ fn process_block(
                     segments,
                     raw_content: text,
                     heading_level: None,
+                    span: None,
                 });
                 *block_idx += 1;
             }
@@ -377,6 +397,7 @@ fn parse_fallback(source: &str) -> Document {
                 segments,
                 raw_content: text,
                 heading_level: None,
+                span: None,
             });
             *block_idx += 1;
         }
@@ -419,7 +440,7 @@ fn parse_fallback(source: &str) -> Document {
         // Headings
         if trimmed.starts_with('=') && trimmed.contains(' ') {
             let level = trimmed.chars().take_while(|c| *c == '=').count() as u8;
-            if level >= 1 && level <= 6 {
+            if (1..=6).contains(&level) {
                 flush_paragraph(&mut current_paragraph, &mut sections, section_idx, &mut block_idx);
 
                 sections.push(Section { blocks: Vec::new() });
@@ -434,6 +455,7 @@ fn parse_fallback(source: &str) -> Document {
                         segments,
                         raw_content: heading_text,
                         heading_level: Some(level),
+                        span: None,
                     });
                     block_idx += 1;
                 }
@@ -452,6 +474,7 @@ fn parse_fallback(source: &str) -> Document {
                     segments,
                     raw_content: text,
                     heading_level: None,
+                    span: None,
                 });
                 block_idx += 1;
             }
@@ -473,7 +496,10 @@ fn parse_fallback(source: &str) -> Document {
 
     flush_paragraph(&mut current_paragraph, &mut sections, section_idx, &mut block_idx);
     sections.retain(|s| !s.blocks.is_empty());
-    Document { sections }
+    Document {
+        sections,
+        source: source.to_string(),
+    }
 }
 
 #[cfg(test)]

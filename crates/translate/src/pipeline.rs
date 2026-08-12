@@ -197,6 +197,7 @@ mod tests {
             source_lang: "en".to_string(),
             target_lang: "ko".to_string(),
             feedback: None,
+            prompt_template: None,
         };
 
         let results = translate_with_evaluation(
@@ -230,6 +231,7 @@ mod tests {
             source_lang: "en".to_string(),
             target_lang: "ko".to_string(),
             feedback: None,
+            prompt_template: None,
         };
 
         let results = translate_with_evaluation(
@@ -282,6 +284,7 @@ mod tests {
             source_lang: "en".to_string(),
             target_lang: "ko".to_string(),
             feedback: None,
+            prompt_template: None,
         };
 
         let results = translate_with_evaluation(

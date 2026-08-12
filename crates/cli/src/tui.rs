@@ -1,6 +1,3 @@
-// TUI integration is pending: this module is not yet wired into the translate command.
-#![allow(dead_code, clippy::collapsible_if)]
-
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
@@ -13,8 +10,10 @@ use ratatui::{
 use std::io::stdout;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use tokio::sync::mpsc::UnboundedReceiver;
+use yeokja_translate::orchestrator::ProgressEvent;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct TranslationProgress {
     pub files: Vec<FileProgress>,
     pub current_segment: Option<String>,
@@ -27,7 +26,6 @@ pub struct FileProgress {
     pub path: String,
     pub total: usize,
     pub translated: usize,
-    pub pending: usize,
     pub status: FileStatus,
 }
 
@@ -40,15 +38,6 @@ pub enum FileStatus {
 }
 
 impl TranslationProgress {
-    pub fn new() -> Self {
-        Self {
-            files: Vec::new(),
-            current_segment: None,
-            errors: Vec::new(),
-            is_complete: false,
-        }
-    }
-
     pub fn total_segments(&self) -> usize {
         self.files.iter().map(|f| f.total).sum()
     }
@@ -61,54 +50,102 @@ impl TranslationProgress {
 pub type SharedProgress = Arc<Mutex<TranslationProgress>>;
 
 pub fn create_shared_progress() -> SharedProgress {
-    Arc::new(Mutex::new(TranslationProgress::new()))
+    Arc::new(Mutex::new(TranslationProgress::default()))
 }
 
-/// Run the TUI event loop. This blocks until translation is complete or user presses 'q'.
-pub fn run_tui(progress: SharedProgress) -> anyhow::Result<()> {
+/// Apply orchestrator progress events to the shared TUI state.
+/// Runs until the sender side (the translation run) closes the channel.
+pub async fn consume_progress_events(
+    mut rx: UnboundedReceiver<ProgressEvent>,
+    progress: SharedProgress,
+) {
+    while let Some(event) = rx.recv().await {
+        let mut p = progress.lock().unwrap();
+        match event {
+            ProgressEvent::FilesDiscovered { files } => {
+                p.files = files
+                    .into_iter()
+                    .map(|(path, pending)| FileProgress {
+                        path: path.display().to_string(),
+                        total: pending,
+                        translated: 0,
+                        status: if pending == 0 {
+                            FileStatus::Done
+                        } else {
+                            FileStatus::Waiting
+                        },
+                    })
+                    .collect();
+            }
+            ProgressEvent::FileStarted { file } => {
+                let path = file.display().to_string();
+                if let Some(f) = p.files.iter_mut().find(|f| f.path == path) {
+                    f.status = FileStatus::Translating;
+                }
+            }
+            ProgressEvent::BlockTranslated {
+                file,
+                segments,
+                current,
+            } => {
+                let path = file.display().to_string();
+                if let Some(f) = p.files.iter_mut().find(|f| f.path == path) {
+                    f.translated = (f.translated + segments).min(f.total);
+                }
+                if current.is_some() {
+                    p.current_segment = current;
+                }
+            }
+            ProgressEvent::FileCompleted { file } => {
+                let path = file.display().to_string();
+                if let Some(f) = p.files.iter_mut().find(|f| f.path == path)
+                    && f.status != FileStatus::Done {
+                        f.status = FileStatus::Done;
+                    }
+            }
+            ProgressEvent::FileFailed { file, error } => {
+                let path = file.display().to_string();
+                p.errors.push(format!("{path}: {error}"));
+                if let Some(f) = p.files.iter_mut().find(|f| f.path == path) {
+                    f.status = FileStatus::Error(error);
+                }
+            }
+            ProgressEvent::Finished { .. } => {
+                p.is_complete = true;
+                p.current_segment = None;
+            }
+        }
+    }
+    progress.lock().unwrap().is_complete = true;
+}
+
+/// Run the TUI event loop. Blocks until the user presses 'q'.
+/// Returns `true` if the user quit before the translation completed.
+pub fn run_tui(progress: SharedProgress) -> anyhow::Result<bool> {
     enable_raw_mode()?;
     stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
 
-    loop {
+    let cancelled = loop {
         terminal.draw(|frame| {
             let progress = progress.lock().unwrap();
             render_ui(frame, &progress);
         })?;
 
-        // Poll for events with timeout
-        if event::poll(Duration::from_millis(100))? {
-            if let Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q') {
-                    break;
-                }
-            }
+        // Poll for events with timeout so the view refreshes while translating.
+        if event::poll(Duration::from_millis(100))?
+            && let Event::Key(key) = event::read()?
+            && key.kind == KeyEventKind::Press
+            && key.code == KeyCode::Char('q')
+        {
+            let is_complete = progress.lock().unwrap().is_complete;
+            break !is_complete;
         }
-
-        // Check if translation is complete
-        let is_complete = progress.lock().unwrap().is_complete;
-        if is_complete {
-            // Show final state for a moment, then wait for 'q'
-            terminal.draw(|frame| {
-                let progress = progress.lock().unwrap();
-                render_ui(frame, &progress);
-            })?;
-
-            // Wait for user to press 'q' to exit
-            loop {
-                if let Event::Key(key) = event::read()? {
-                    if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q') {
-                        break;
-                    }
-                }
-            }
-            break;
-        }
-    }
+    };
 
     disable_raw_mode()?;
     stdout().execute(LeaveAlternateScreen)?;
-    Ok(())
+    Ok(cancelled)
 }
 
 fn render_ui(frame: &mut Frame, progress: &TranslationProgress) {
@@ -189,8 +226,9 @@ fn render_ui(frame: &mut Frame, progress: &TranslationProgress) {
         .current_segment
         .as_deref()
         .unwrap_or("Idle");
-    let current_text = if current.len() > 80 {
-        format!("{}...", &current[..77])
+    let current_text: String = if current.chars().count() > 80 {
+        let truncated: String = current.chars().take(77).collect();
+        format!("{truncated}...")
     } else {
         current.to_string()
     };

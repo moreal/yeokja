@@ -203,10 +203,10 @@ mod tests {
         let mut usage = None;
 
         for line in ndjson.lines() {
-            if let Ok(event) = serde_json::from_str::<PiEvent>(line) {
-                if event.event_type == "agent_end" {
-                    if let Some(messages) = &event.messages {
-                        if let Some(msg) = messages.iter().rev().find(|m| m.role.as_deref() == Some("assistant")) {
+            if let Ok(event) = serde_json::from_str::<PiEvent>(line)
+                && event.event_type == "agent_end"
+                    && let Some(messages) = &event.messages
+                        && let Some(msg) = messages.iter().rev().find(|m| m.role.as_deref() == Some("assistant")) {
                             if let Some(content) = &msg.content {
                                 text = content.iter()
                                     .filter(|c| c.content_type == "text")
@@ -221,9 +221,6 @@ mod tests {
                                 });
                             }
                         }
-                    }
-                }
-            }
         }
 
         let translations = parse_response(&text).unwrap();

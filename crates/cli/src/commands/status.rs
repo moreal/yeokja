@@ -1,17 +1,14 @@
 use anyhow::Result;
 use std::path::Path;
 use yeokja_core::change::SegmentStatus;
-use yeokja_core::config::ProjectConfig;
 use yeokja_core::project::ProjectContext;
-use yeokja_core::reconcile::reconcile_with_status;
-use yeokja_core::state::StateFile;
-
-use super::get_parser;
+use yeokja_translate::orchestrator::{collect_files, scan_file};
 
 pub fn run(path: &str) -> Result<()> {
     let ctx = ProjectContext::load()?;
+    let parser_factory = super::parser_factory();
 
-    let source_path = Path::new(path);
+    let files = collect_files(Path::new(path), &ctx.config)?;
 
     let mut total = 0usize;
     let mut translated = 0usize;
@@ -20,22 +17,9 @@ pub fn run(path: &str) -> Result<()> {
     let mut glossary_stale = 0usize;
     let mut context_changed = 0usize;
 
-    let files = collect_files(source_path, &ctx.config)?;
-
     for file_path in &files {
         tracing::debug!(file = %file_path.display(), "Processing file");
-        let parser = get_parser(file_path, &ctx.config);
-        let source = std::fs::read_to_string(file_path)?;
-        let doc = parser.parse(&source);
-        let state_path = StateFile::state_file_path(file_path);
-
-        let existing = if state_path.exists() {
-            StateFile::load(&state_path)?
-        } else {
-            StateFile::new(0)
-        };
-
-        let reconciled = reconcile_with_status(&doc, &existing, &ctx.glossary);
+        let (_, reconciled) = scan_file(file_path, &ctx.config, &ctx.glossary, &parser_factory)?;
 
         for rs in &reconciled {
             total += 1;
@@ -64,28 +48,4 @@ pub fn run(path: &str) -> Result<()> {
 
 fn percent(part: usize, total: usize) -> f64 {
     if total == 0 { 0.0 } else { (part as f64 / total as f64) * 100.0 }
-}
-
-pub fn collect_files(path: &Path, config: &ProjectConfig) -> Result<Vec<std::path::PathBuf>> {
-    let mut files = Vec::new();
-
-    if path.is_file() {
-        files.push(path.to_path_buf());
-    } else if path.is_dir() {
-        for source in &config.sources {
-            let pattern = format!("{}/{}", source.path, source.pattern);
-            for entry in glob::glob(&pattern)? {
-                files.push(entry?);
-            }
-        }
-        // If no sources configured, default to **/*.md
-        if config.sources.is_empty() {
-            let pattern = format!("{}/**/*.md", path.display());
-            for entry in glob::glob(&pattern)? {
-                files.push(entry?);
-            }
-        }
-    }
-
-    Ok(files)
 }

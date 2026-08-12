@@ -1,6 +1,6 @@
 use anyhow::Result;
 use std::path::Path;
-use yeokja_core::config::ProjectConfig;
+use yeokja_core::glossary::{remove_term_in_file, upsert_term_in_file};
 use yeokja_core::project::ProjectContext;
 
 pub fn list() -> Result<()> {
@@ -26,36 +26,20 @@ pub fn list() -> Result<()> {
 }
 
 pub fn set(term: &str, translation: &str) -> Result<()> {
-    let config_path = Path::new("yeokja.toml");
-    let config = if config_path.exists() {
-        ProjectConfig::load(config_path)?
-    } else {
-        anyhow::bail!("yeokja.toml not found in current directory");
-    };
-
-    let glossary_path = Path::new(&config.project.glossary);
-    let content = if glossary_path.exists() {
-        std::fs::read_to_string(glossary_path)?
-    } else {
-        String::new()
-    };
-
-    // Parse existing, add/update term, write back
-    let mut doc: toml::Table = if content.is_empty() {
-        toml::Table::new()
-    } else {
-        content.parse()?
-    };
-
-    let terms = doc.entry("terms").or_insert_with(|| toml::Value::Table(toml::Table::new()));
-    if let toml::Value::Table(terms_table) = terms {
-        let mut entry = toml::Table::new();
-        entry.insert("translation".to_string(), toml::Value::String(translation.to_string()));
-        terms_table.insert(term.to_string(), toml::Value::Table(entry));
-    }
-
-    std::fs::write(glossary_path, toml::to_string_pretty(&doc)?)?;
+    let ctx = ProjectContext::load()?;
+    let glossary_path = Path::new(&ctx.config.project.glossary);
+    upsert_term_in_file(glossary_path, term, translation)?;
     println!("Set: {} → {}", term, translation);
+    Ok(())
+}
 
+pub fn remove(term: &str) -> Result<()> {
+    let ctx = ProjectContext::load()?;
+    let glossary_path = Path::new(&ctx.config.project.glossary);
+    if remove_term_in_file(glossary_path, term)? {
+        println!("Removed: {}", term);
+    } else {
+        println!("Term not found: {}", term);
+    }
     Ok(())
 }

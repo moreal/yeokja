@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { Show } from "solid-js";
-import { fetchStatus } from "../lib/api";
+import { fetchStatus, fetchTranslationJob, startTranslation } from "../lib/api";
 import { usePolling } from "../hooks/usePolling";
 import { StatCard } from "../components/StatCard";
 import { ProgressBar } from "../components/ProgressBar";
@@ -9,6 +9,12 @@ export const Route = createFileRoute("/")({ component: Dashboard });
 
 function Dashboard() {
   const { data: status, refetch, lastPolled, countdown } = usePolling(fetchStatus);
+  const { data: job, refetch: refetchJob } = usePolling(fetchTranslationJob);
+
+  const handleStart = async () => {
+    await startTranslation();
+    refetchJob();
+  };
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("ko-KR", {
@@ -31,6 +37,13 @@ function Dashboard() {
             )}
           </Show>
           <button
+            onClick={handleStart}
+            disabled={job()?.running}
+            class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+          >
+            {job()?.running ? "Translating..." : "Start Translation"}
+          </button>
+          <button
             onClick={refetch}
             class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
@@ -38,6 +51,28 @@ function Dashboard() {
           </button>
         </div>
       </div>
+
+      <Show when={job()} keyed>
+        {(j) => (
+          <Show when={j.running || j.errors.length > 0}>
+            <div class="mb-4 rounded-lg border border-gray-200 bg-white p-4 text-sm">
+              <Show when={j.running}>
+                <p class="text-gray-700">
+                  번역 진행 중: 파일 {j.files_done}/{j.files_total} · 세그먼트 {j.segments_done}/
+                  {j.segments_total}
+                </p>
+              </Show>
+              <Show when={j.errors.length > 0}>
+                <ul class="mt-1 list-inside list-disc text-red-600">
+                  {j.errors.map((e) => (
+                    <li>{e}</li>
+                  ))}
+                </ul>
+              </Show>
+            </div>
+          </Show>
+        )}
+      </Show>
 
       <Show when={status.error}>
         <div class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">

@@ -1,5 +1,4 @@
 mod commands;
-mod provider_factory;
 mod tui;
 
 use clap::{Parser, Subcommand};
@@ -61,16 +60,27 @@ enum GlossaryAction {
         /// Translation
         translation: String,
     },
+    /// Remove a glossary term
+    Remove {
+        /// Term in source language
+        term: String,
+    },
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    let default_filter = match cli.verbose {
-        0 => "yeokja=info",
-        1 => "yeokja=debug",
-        _ => "yeokja=trace",
+    // The TUI owns the terminal; suppress log output so it does not corrupt the view.
+    let tui_mode = matches!(cli.command, Commands::Translate { tui: true, .. });
+    let default_filter = if tui_mode {
+        "off"
+    } else {
+        match cli.verbose {
+            0 => "yeokja=info",
+            1 => "yeokja=debug",
+            _ => "yeokja=trace",
+        }
     };
 
     tracing_subscriber::fmt()
@@ -88,9 +98,10 @@ async fn main() -> anyhow::Result<()> {
     match cli.command {
         Commands::Translate { path, tui: use_tui } => {
             if use_tui {
-                println!("TUI mode not yet fully implemented");
+                translate_with_tui(&path).await?;
+            } else {
+                commands::translate::run(&path, None).await?;
             }
-            commands::translate::run(&path).await?;
         }
         Commands::Status { path } => {
             commands::status::run(&path)?;
@@ -100,14 +111,56 @@ async fn main() -> anyhow::Result<()> {
             GlossaryAction::Set { term, translation } => {
                 commands::glossary::set(&term, &translation)?;
             }
+            GlossaryAction::Remove { term } => {
+                commands::glossary::remove(&term)?;
+            }
         },
         Commands::Evaluate { path } => {
             commands::evaluate::run(&path).await?;
         }
         Commands::Serve => {
-            println!("Server mode will be available in yeokja-server crate");
+            commands::serve::run().await?;
         }
     }
 
+    Ok(())
+}
+
+/// Run the translation with a live ratatui progress view.
+/// The translation runs as a tokio task; the TUI loop runs on a blocking
+/// thread and reads shared progress state fed by the event consumer.
+async fn translate_with_tui(path: &str) -> anyhow::Result<()> {
+    let progress = tui::create_shared_progress();
+    let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+
+    let consumer = tokio::spawn(tui::consume_progress_events(rx, progress.clone()));
+
+    let path_owned = path.to_string();
+    let translate_task =
+        tokio::spawn(async move { commands::translate::run(&path_owned, Some(tx)).await });
+
+    let tui_progress = progress.clone();
+    let cancelled = tokio::task::spawn_blocking(move || tui::run_tui(tui_progress)).await??;
+
+    if cancelled {
+        translate_task.abort();
+        println!("Translation cancelled. Completed blocks were saved and will be reused.");
+    }
+
+    match translate_task.await {
+        Ok(result) => {
+            let outcome = result?;
+            if !cancelled {
+                println!(
+                    "Translated {} segment(s) across {} file(s); {} file(s) failed.",
+                    outcome.segments_translated, outcome.files_processed, outcome.files_failed
+                );
+            }
+        }
+        Err(e) if e.is_cancelled() => {}
+        Err(e) => return Err(e.into()),
+    }
+
+    let _ = consumer.await;
     Ok(())
 }

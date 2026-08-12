@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { createResource, createSignal, For, Show } from "solid-js";
-import { fetchGlossary, addGlossaryTerm } from "../lib/api";
+import { fetchGlossary, addGlossaryTerm, removeGlossaryTerm } from "../lib/api";
 
 export const Route = createFileRoute("/glossary")({ component: Glossary });
 
@@ -69,6 +69,7 @@ function Glossary() {
                   <tr>
                     <th class="px-4 py-3">Term</th>
                     <th class="px-4 py-3">Translation</th>
+                    <th class="w-16 px-4 py-3"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -77,6 +78,18 @@ function Glossary() {
                       <tr class="border-b border-gray-100">
                         <td class="px-4 py-3 font-medium">{t.term}</td>
                         <td class="px-4 py-3">{t.translation}</td>
+                        <td class="px-4 py-3 text-right">
+                          <button
+                            onClick={async () => {
+                              await removeGlossaryTerm(t.term);
+                              refetch();
+                            }}
+                            class="text-xs text-red-500 hover:text-red-700"
+                            title="Remove term"
+                          >
+                            Delete
+                          </button>
+                        </td>
                       </tr>
                     )}
                   </For>

@@ -1,6 +1,4 @@
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/solid-router";
-import { TanStackRouterDevtools } from "@tanstack/solid-router-devtools";
-
 import { HydrationScript } from "solid-js/web";
 import { Suspense } from "solid-js";
 
@@ -26,7 +24,6 @@ function RootComponent() {
         <Suspense>
           <Header />
           <Outlet />
-          <TanStackRouterDevtools />
         </Suspense>
         <Scripts />
       </body>

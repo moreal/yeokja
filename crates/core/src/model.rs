@@ -68,6 +68,10 @@ pub struct Block {
     pub segments: Vec<Segment>,
     pub raw_content: String,
     pub heading_level: Option<u8>,
+    /// Byte range of this block's translatable content within `Document::source`.
+    /// Parsers that support span-based reconstruction set this; `None` means the
+    /// block is reconstructed by the parser's own rendering logic.
+    pub span: Option<std::ops::Range<usize>>,
 }
 
 #[derive(Debug, Clone)]
@@ -78,6 +82,9 @@ pub struct Section {
 #[derive(Debug, Clone)]
 pub struct Document {
     pub sections: Vec<Section>,
+    /// Original source text this document was parsed from.
+    /// Used by span-based reconstruction to preserve untranslated regions verbatim.
+    pub source: String,
 }
 
 impl Document {

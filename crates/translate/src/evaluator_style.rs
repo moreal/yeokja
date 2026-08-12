@@ -47,8 +47,10 @@ Then on the next line, briefly explain why (one sentence)."#,
         Ok(EvaluationResult { passed, issues })
     }
 
+    /// LLM-as-judge results only produce warnings; per the design spec they
+    /// never trigger re-translation (only mechanical checks do).
     fn triggers_retranslation(&self) -> bool {
-        true
+        false
     }
 }
 
@@ -126,13 +128,21 @@ mod tests {
     }
 
     #[test]
-    fn triggers_retranslation_on_poor() {
-        // StyleEvaluator triggers retranslation on POOR ratings (Error severity)
-        // but not on ACCEPTABLE ratings (Warning severity, passed=true)
-        let (passed, _) = parse_style_response("POOR\nBad translation");
-        assert!(!passed); // POOR -> passed=false -> will trigger retranslation
-
-        let (passed, _) = parse_style_response("ACCEPTABLE\nMinor issue");
-        assert!(passed); // ACCEPTABLE -> passed=true -> no retranslation
+    fn never_triggers_retranslation() {
+        // Per the design spec, StyleEvaluator (LLM-as-judge) only records
+        // warnings; re-translation is triggered by mechanical checks only.
+        struct Never;
+        #[async_trait]
+        impl crate::provider::LlmProvider for Never {
+            async fn complete(
+                &self,
+                _request: crate::provider::CompletionRequest,
+            ) -> Result<crate::provider::CompletionResponse, crate::provider::TranslateError>
+            {
+                unreachable!()
+            }
+        }
+        let evaluator = StyleEvaluator::new(Arc::new(Never), "ko".to_string());
+        assert!(!evaluator.triggers_retranslation());
     }
 }

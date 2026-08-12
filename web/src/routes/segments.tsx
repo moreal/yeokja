@@ -99,6 +99,11 @@ function Segments() {
                             rows={3}
                           />
                         </Show>
+                        <Show when={seg.issues.length > 0}>
+                          <ul class="mt-1 list-inside list-disc text-xs text-amber-600">
+                            <For each={seg.issues}>{(issue) => <li>{issue}</li>}</For>
+                          </ul>
+                        </Show>
                       </td>
                       <td class="px-4 py-3">
                         <StatusBadge status={seg.status} />
