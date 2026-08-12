@@ -71,7 +71,10 @@ impl ParseState<'_> {
         role: BlockRole,
     ) {
         let raw = &self.source[span.clone()];
-        if raw.trim().is_empty() {
+        // Nothing to translate in a span carrying no word — `...` in a shell
+        // transcript, a `<<<` page break. Emitting no block leaves the source
+        // untouched, rather than offering text no translation can change.
+        if !raw.chars().any(char::is_alphanumeric) {
             return;
         }
         let normalized = normalize_inline_text(raw);
@@ -145,13 +148,17 @@ fn closes_opaque(delimiter: &str, trimmed: &str) -> bool {
     trimmed == delimiter
 }
 
-/// Level of a two-line (setext) section title underlined by `trimmed`.
+/// Level of a two-line (setext) section title `title` underlined by `trimmed`.
 ///
-/// The same characters open delimited blocks, so two things separate a title
+/// The same characters open delimited blocks, so three things separate a title
 /// underline from a delimiter: it sits directly under a single line of text,
-/// and it matches that line's length. Callers check the first, this checks the
-/// rest.
-fn setext_level(trimmed: &str, title_len: usize) -> Option<u8> {
+/// that line reads as a title, and the two lengths match. Callers check the
+/// first, this checks the rest.
+///
+/// A "line that reads as a title" has to carry a word — without that test a
+/// stray `...` above a `----` claims the delimiter, and the listing block it
+/// should have opened runs on into the prose below.
+fn setext_level(trimmed: &str, title: &str) -> Option<u8> {
     let first = trimmed.chars().next()?;
     let level = match first {
         '=' => 1,
@@ -162,7 +169,10 @@ fn setext_level(trimmed: &str, title_len: usize) -> Option<u8> {
         _ => return None,
     };
     let len = trimmed.chars().count();
-    (len >= 2 && trimmed.chars().all(|c| c == first) && len.abs_diff(title_len) <= 1)
+    (len >= 2
+        && trimmed.chars().all(|c| c == first)
+        && title.chars().any(char::is_alphanumeric)
+        && len.abs_diff(title.chars().count()) <= 1)
         .then_some(level)
 }
 
@@ -379,7 +389,7 @@ impl DocumentParser for AsciidocParser {
             // the rest of the document.
             if let Some((_, span)) = &state.current
                 && span.start >= previous_line_start
-                && let Some(level) = setext_level(trimmed, source[span.clone()].chars().count())
+                && let Some(level) = setext_level(trimmed, &source[span.clone()])
             {
                 let (_, span) = state.current.take().unwrap();
                 state.start_section_if_needed(level);
@@ -827,6 +837,44 @@ mod tests {
         assert_eq!(
             sources,
             vec!["Then I attach gdb to the running node:", "After."]
+        );
+    }
+
+    #[test]
+    fn punctuation_alone_is_not_a_title_underline() {
+        // A shell transcript that opens and closes a listing block around an
+        // elided `...`. Reading the `----` under it as a title underline eats
+        // the delimiter, and every block after it pairs up wrong.
+        let parser = AsciidocParser;
+        let source = "[source,erlang]\n----\n 1> compile:options().\n----\n ...\n----\n 'E' - listing\n----\n\nAfter.\n";
+        let doc = parser.parse(source);
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|s| s.source.as_str())
+            .collect();
+        assert_eq!(sources, vec!["After."]);
+    }
+
+    #[test]
+    fn a_span_without_a_word_is_not_offered_for_translation() {
+        let parser = AsciidocParser;
+        let source = "Body text.\n\n<<<\n\n=== Acknowledgments\n";
+        let doc = parser.parse(source);
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|s| s.source.as_str())
+            .collect();
+        assert_eq!(sources, vec!["Body text.", "Acknowledgments"]);
+
+        let mut translations = TranslationMap::new();
+        for seg in doc.translatable_segments() {
+            translations.insert(seg.id.clone(), "번역".to_string());
+        }
+        assert!(
+            parser.reconstruct(&doc, &translations).contains("\n<<<\n"),
+            "the page break stays in the output"
         );
     }
 
