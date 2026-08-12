@@ -100,6 +100,33 @@ chapters/ap-beam_instructions.asciidoc
     [2] Explanation        66 cells  translated    Allocate some words on stack · …
 ```
 
+### 파서가 지나친 부분 확인
+
+파서가 문법을 못 알아보면 오류가 나지 않습니다. 블록을 안 만들 뿐이고, 그
+안의 텍스트는 번역 대상에 아예 들어가지 않습니다. 분모에 없으니 진행률은
+100%로 보입니다. `coverage`가 지나친 구간을 줄 단위로 보여줍니다:
+
+```sh
+yeokja coverage ./chapters/
+```
+
+```
+chapters/processes.asciidoc   50% of 1166 lines with text
+    L56-120            63 lines   [source,bash]
+    L716-774           59 lines   print *((Process *) 0x7fff9ed6e030)
+    L1523-1581         57 lines   [source,erlang]
+```
+
+코드 블록과 주석도 함께 나옵니다. 의도적으로 번역하지 않는 것과 파서가 못
+알아본 것을 구분해서 지우면, 정작 잡아야 할 오류 — 산문을 코드 블록으로
+착각해 통째로 삼킨 경우 — 가 같이 사라지기 때문입니다. 대신 각 구간의 첫
+줄을 미리보기로 붙였으니, `[source,erlang]`으로 시작하는 구간은 넘기고
+산문으로 읽히는 긴 구간을 보시면 됩니다.
+
+`--min-lines`로 보고 기준을 조절합니다 (기본 5줄). 선택 규칙으로 제외한
+컬럼은 의도한 선택이므로 계산에 넣지 않습니다. 규칙이 적용되기 전, 파서만
+측정합니다.
+
 용어집 `glossary.toml`:
 
 ```toml

@@ -40,6 +40,14 @@ enum Commands {
         /// Path to inspect
         path: String,
     },
+    /// Show which parts of the source the parser passed over
+    Coverage {
+        /// Path to measure
+        path: String,
+        /// Smallest run of lines worth reporting
+        #[arg(long, default_value_t = 5)]
+        min_lines: usize,
+    },
     /// Manage glossary
     Glossary {
         #[command(subcommand)]
@@ -110,6 +118,9 @@ async fn main() -> anyhow::Result<()> {
         }
         Commands::Inspect { path } => {
             commands::inspect::run(&path)?;
+        }
+        Commands::Coverage { path, min_lines } => {
+            commands::coverage::run(&path, min_lines)?;
         }
         Commands::Status { path } => {
             commands::status::run(&path)?;

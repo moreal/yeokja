@@ -1,3 +1,4 @@
+pub mod coverage;
 pub mod evaluate;
 pub mod glossary;
 pub mod inspect;

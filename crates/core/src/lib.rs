@@ -8,3 +8,4 @@ pub mod change;
 pub mod config;
 pub mod project;
 pub mod select;
+pub mod coverage;
