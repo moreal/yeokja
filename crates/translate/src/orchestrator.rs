@@ -356,7 +356,11 @@ fn group_by_block(
 
     for section in &doc.sections {
         for block in &section.blocks {
-            if !block.block_type.is_translatable() {
+            // `flat_idx` addresses `reconciled`, which is indexed over
+            // `Document::translatable_segments`. That filters on the block's
+            // own flag, not on its type, so a cell a table rule excluded still
+            // has a translatable type and would shift every index after it.
+            if !block.translatable {
                 continue;
             }
 
@@ -876,6 +880,50 @@ type = "openai_compatible"
 model = "test"
 "#,
         )
+    }
+
+    /// A block a table rule excluded still has a translatable *type*. Walking
+    /// by type here while `reconciled` is indexed by the block's own flag
+    /// shifts every index past the exclusion, so the blocks that actually need
+    /// translating are never grouped and the file reports itself up to date.
+    #[test]
+    fn an_excluded_block_does_not_shift_the_segments_after_it() {
+        fn block(text: &str, index: usize, translatable: bool) -> Block {
+            Block {
+                block_type: BlockType::Table,
+                segments: vec![Segment {
+                    id: SegmentId::new(0, index, 0),
+                    source: text.to_string(),
+                    source_hash: yeokja_core::hash::content_hash(text),
+                    block_type: BlockType::Table,
+                }],
+                raw_content: text.to_string(),
+                heading_level: None,
+                span: None,
+                role: BlockRole::None,
+                translatable,
+            }
+        }
+
+        let doc = Document {
+            sections: vec![Section {
+                blocks: vec![
+                    block("keep as-is", 0, false),
+                    block("translate me", 1, true),
+                ],
+            }],
+            source: String::new(),
+        };
+
+        // One reconciled entry, matching the single translatable segment.
+        let glossary = Glossary::from_toml("").unwrap();
+        let reconciled = reconcile_with_status(&doc, &StateFile::new(0), &glossary);
+        assert_eq!(reconciled.len(), 1);
+
+        let groups = group_by_block(&doc, &reconciled);
+        assert_eq!(groups.len(), 1);
+        assert_eq!(groups[0].0, "translate me");
+        assert_eq!(groups[0].1[0].0, 0, "index must address `reconciled`");
     }
 
     #[test]
