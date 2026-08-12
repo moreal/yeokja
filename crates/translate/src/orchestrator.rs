@@ -44,7 +44,25 @@ pub enum ProgressEvent {
     },
     FileCompleted { file: PathBuf },
     FileFailed { file: PathBuf, error: String },
+    /// The run was cancelled; already-translated blocks are kept.
+    Cancelled,
     Finished { errors: usize },
+}
+
+/// Cooperative cancellation for a translation run. Cancelling stops further
+/// block translations from starting; in-flight requests finish and their
+/// results are still saved, so a cancelled run resumes where it stopped.
+#[derive(Debug, Clone, Default)]
+pub struct CancelToken(Arc<std::sync::atomic::AtomicBool>);
+
+impl CancelToken {
+    pub fn cancel(&self) {
+        self.0.store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    pub fn is_cancelled(&self) -> bool {
+        self.0.load(std::sync::atomic::Ordering::Relaxed)
+    }
 }
 
 pub type ProgressSender = mpsc::UnboundedSender<ProgressEvent>;
@@ -306,6 +324,7 @@ pub struct Orchestrator {
     pub eval_provider: Option<Arc<dyn LlmProvider>>,
     pub parser_factory: ParserFactory,
     pub options: TranslateOptions,
+    pub cancel: CancelToken,
 }
 
 impl Orchestrator {
@@ -376,6 +395,9 @@ impl Orchestrator {
             }
         }
 
+        if self.cancel.is_cancelled() {
+            send(&progress, ProgressEvent::Cancelled);
+        }
         send(
             &progress,
             ProgressEvent::Finished {
@@ -393,6 +415,7 @@ impl Orchestrator {
             eval_provider: self.eval_provider.clone(),
             parser_factory: self.parser_factory.clone(),
             options: self.options.clone(),
+            cancel: self.cancel.clone(),
         }
     }
 }
@@ -404,6 +427,7 @@ struct FileTranslator {
     eval_provider: Option<Arc<dyn LlmProvider>>,
     parser_factory: ParserFactory,
     options: TranslateOptions,
+    cancel: CancelToken,
 }
 
 struct SegmentUpdate {
@@ -421,6 +445,10 @@ impl FileTranslator {
         semaphore: &Arc<Semaphore>,
         progress: &Option<ProgressSender>,
     ) -> Result<usize, OrchestratorError> {
+        if self.cancel.is_cancelled() {
+            return Ok(0);
+        }
+
         let parser = (self.parser_factory)(file_path, &self.config);
         let source = std::fs::read_to_string(file_path).map_err(|e| OrchestratorError::Io {
             path: file_path.to_path_buf(),
@@ -529,12 +557,16 @@ impl FileTranslator {
                 eval_provider: self.eval_provider.clone(),
                 parser_factory: self.parser_factory.clone(),
                 options: self.options.clone(),
+                cancel: self.cancel.clone(),
             };
             let tx = tx.clone();
             let semaphore = semaphore.clone();
 
             handles.push(tokio::spawn(async move {
                 let _permit = semaphore.acquire().await.expect("semaphore closed");
+                if this.cancel.is_cancelled() {
+                    return;
+                }
                 match this.translate_block(&block_context, &block_segments).await {
                     Ok(updates) => {
                         let _ = tx.send(updates).await;
@@ -681,6 +713,10 @@ impl FileTranslator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::provider::{TranslateRequest, TranslateResponse};
+    use async_trait::async_trait;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use yeokja_core::model::{Block, BlockType, Section, Segment, SegmentId};
 
     fn test_config(toml: &str) -> ProjectConfig {
         ProjectConfig::from_toml(toml).unwrap()
@@ -800,5 +836,123 @@ model = "test"
         let config = book_config();
         let files = collect_files(&file, &config).unwrap();
         assert_eq!(files, vec![file]);
+    }
+
+    /// Counts translate calls and echoes segments back.
+    struct CountingProvider(Arc<AtomicUsize>);
+
+    #[async_trait]
+    impl TranslationProvider for CountingProvider {
+        async fn translate(
+            &self,
+            request: TranslateRequest,
+        ) -> Result<TranslateResponse, crate::provider::TranslateError> {
+            self.0.fetch_add(1, Ordering::SeqCst);
+            Ok(TranslateResponse {
+                translations: request
+                    .segments
+                    .iter()
+                    .map(|(idx, text)| (*idx, format!("KO:{text}")))
+                    .collect(),
+                usage: None,
+            })
+        }
+    }
+
+    /// Minimal parser: the whole source is one paragraph block.
+    struct OneBlockParser;
+
+    impl DocumentParser for OneBlockParser {
+        fn parse(&self, source: &str) -> Document {
+            let text = source.trim().to_string();
+            let segment = Segment {
+                id: SegmentId::new(0, 0, 0),
+                source_hash: content_hash(&text),
+                source: text,
+                block_type: BlockType::Paragraph,
+            };
+            Document {
+                sections: vec![Section {
+                    blocks: vec![Block {
+                        block_type: BlockType::Paragraph,
+                        segments: vec![segment],
+                        raw_content: source.to_string(),
+                        heading_level: None,
+                        span: Some(0..source.len()),
+                    }],
+                }],
+                source: source.to_string(),
+            }
+        }
+
+        fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String {
+            let seg = &document.sections[0].blocks[0].segments[0];
+            translations
+                .get(&seg.id)
+                .cloned()
+                .unwrap_or_else(|| document.source.clone())
+        }
+    }
+
+    fn test_orchestrator(dir: &Path, calls: Arc<AtomicUsize>, cancel: CancelToken) -> Orchestrator {
+        let config = test_config(&format!(
+            r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[[sources]]
+path = "{}"
+pattern = "**/*.md"
+parser = "markdown"
+output = "{{dir}}/{{stem}}.ko{{ext}}"
+
+[provider]
+type = "openai_compatible"
+model = "test"
+"#,
+            dir.display()
+        ));
+        Orchestrator {
+            config: Arc::new(config),
+            glossary: Arc::new(Glossary::empty()),
+            provider: Arc::new(CountingProvider(calls)),
+            eval_provider: None,
+            parser_factory: Arc::new(|_, _| Box::new(OneBlockParser)),
+            options: TranslateOptions {
+                auto_evaluate: false,
+                max_retries: 0,
+                concurrency: 2,
+            },
+            cancel,
+        }
+    }
+
+    #[tokio::test]
+    async fn translate_path_translates_pending_segments() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("ch1.md"), "Hello.").unwrap();
+
+        let calls = Arc::new(AtomicUsize::new(0));
+        let orchestrator = test_orchestrator(dir.path(), calls.clone(), CancelToken::default());
+        let outcome = orchestrator.translate_path(dir.path(), None).await.unwrap();
+
+        assert_eq!(outcome.segments_translated, 1);
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+    }
+
+    #[tokio::test]
+    async fn cancelled_run_translates_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("ch1.md"), "Hello.").unwrap();
+
+        let calls = Arc::new(AtomicUsize::new(0));
+        let cancel = CancelToken::default();
+        cancel.cancel();
+        let orchestrator = test_orchestrator(dir.path(), calls.clone(), cancel);
+        let outcome = orchestrator.translate_path(dir.path(), None).await.unwrap();
+
+        assert_eq!(outcome.segments_translated, 0);
+        assert_eq!(calls.load(Ordering::SeqCst), 0);
     }
 }

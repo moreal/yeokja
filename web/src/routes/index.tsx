@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { onCleanup, onMount, Show } from "solid-js";
 import {
+  cancelTranslation,
   fetchStatus,
   fetchTranslationJob,
   startTranslation,
@@ -37,6 +38,11 @@ function Dashboard() {
     refetchJob();
   };
 
+  const handleCancel = async () => {
+    await cancelTranslation();
+    refetchJob();
+  };
+
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("ko-KR", {
       hour: "2-digit",
@@ -64,6 +70,15 @@ function Dashboard() {
           >
             {job()?.running ? "Translating..." : "Start Translation"}
           </button>
+          <Show when={job()?.running}>
+            <button
+              onClick={handleCancel}
+              disabled={job()?.cancelled}
+              class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+            >
+              {job()?.cancelled ? "Cancelling..." : "Cancel"}
+            </button>
+          </Show>
           <button
             onClick={refetch}
             class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"

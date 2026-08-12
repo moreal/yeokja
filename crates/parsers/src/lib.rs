@@ -7,12 +7,20 @@ use std::path::Path;
 use yeokja_core::config::ProjectConfig;
 use yeokja_core::parser::DocumentParser;
 
-/// Select the parser for a file, preferring the source config's `parser` field
-/// and falling back to file-extension detection.
+/// Select the parser for a file, preferring the source config whose `path` and
+/// `pattern` both match, and falling back to file-extension detection.
 pub fn select_parser(file_path: &Path, config: &ProjectConfig) -> Box<dyn DocumentParser> {
+    let file_path = file_path.strip_prefix(".").unwrap_or(file_path);
     for source in &config.sources {
         let source_dir = Path::new(&source.path);
-        if file_path.starts_with(source_dir) {
+        let source_dir = source_dir.strip_prefix(".").unwrap_or(source_dir);
+        let Ok(rel) = file_path.strip_prefix(source_dir) else {
+            continue;
+        };
+        let pattern_matches = glob::Pattern::new(&source.pattern)
+            .map(|p| p.matches_path(rel))
+            .unwrap_or(false);
+        if pattern_matches {
             return parser_by_name(&source.parser);
         }
     }
@@ -62,6 +70,43 @@ model = "gpt-4o"
         let parser = select_parser(Path::new("book/ch1.md"), &config);
         let doc = parser.parse("= Title");
         // Asciidoc parses "= Title" as a level-1 heading
+        assert_eq!(doc.sections[0].blocks[0].heading_level, Some(1));
+    }
+
+    #[test]
+    fn pattern_disambiguates_sources_sharing_a_path() {
+        let config = ProjectConfig::from_toml(
+            r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[[sources]]
+path = "docs"
+pattern = "**/*.adoc"
+parser = "asciidoc"
+output = "{dir}/{stem}.ko{ext}"
+
+[[sources]]
+path = "docs"
+pattern = "**/*.md"
+parser = "markdown"
+output = "{dir}/{stem}.ko{ext}"
+
+[provider]
+type = "openai_compatible"
+model = "gpt-4o"
+"#,
+        )
+        .unwrap();
+
+        // Both sources share `docs`; the pattern must pick the right parser.
+        let parser = select_parser(Path::new("docs/notes.md"), &config);
+        let doc = parser.parse("# Title");
+        assert_eq!(doc.sections[0].blocks[0].heading_level, Some(1));
+
+        let parser = select_parser(Path::new("docs/notes.adoc"), &config);
+        let doc = parser.parse("= Title");
         assert_eq!(doc.sections[0].blocks[0].heading_level, Some(1));
     }
 

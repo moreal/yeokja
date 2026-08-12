@@ -110,6 +110,9 @@ pub async fn consume_progress_events(
                     f.status = FileStatus::Error(error);
                 }
             }
+            ProgressEvent::Cancelled => {
+                p.current_segment = None;
+            }
             ProgressEvent::Finished { .. } => {
                 p.is_complete = true;
                 p.current_segment = None;

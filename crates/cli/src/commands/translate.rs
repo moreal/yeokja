@@ -4,7 +4,7 @@ use std::sync::Arc;
 use yeokja_core::project::ProjectContext;
 use yeokja_translate::factory::{create_evaluator_provider, create_provider};
 use yeokja_translate::orchestrator::{
-    Orchestrator, ProgressSender, TranslateOptions, TranslateOutcome,
+    CancelToken, Orchestrator, ProgressSender, TranslateOptions, TranslateOutcome,
 };
 
 /// Run a translation over `path`, reporting progress to `progress` if given.
@@ -26,6 +26,7 @@ pub async fn run(path: &str, progress: Option<ProgressSender>) -> Result<Transla
         eval_provider,
         parser_factory: super::parser_factory(),
         options,
+        cancel: CancelToken::default(),
     };
 
     let outcome = orchestrator.translate_path(Path::new(path), progress).await?;

@@ -7,7 +7,8 @@
 //! segments keep the raw inline markup (`*bold*`, `https://...[link]`, etc.).
 //! Reconstruction splices translations into the original source, preserving
 //! everything outside the translated spans byte-for-byte: attribute entries,
-//! anchors, block attribute lines, delimited blocks, comments, and tables.
+//! anchors, block attribute lines, delimited blocks, comments, and table
+//! structure (cell text inside `|===` tables is translated cell by cell).
 
 use std::ops::Range;
 use yeokja_core::model::*;
@@ -25,10 +26,13 @@ struct ParseState<'a> {
     block_idx: usize,
     /// Currently accumulating translatable run (paragraph or list item).
     current: Option<(BlockType, Range<usize>)>,
-    /// Open opaque delimited block (listing/literal/passthrough/comment/table):
+    /// Open opaque delimited block (listing/literal/passthrough/comment):
     /// the trimmed delimiter line that must appear again to close it, plus the
     /// block's starting offset.
     opaque: Option<(String, usize)>,
+    /// Open table (`|===`): the trimmed delimiter that closes it. Row lines
+    /// inside are parsed cell by cell; everything else stays verbatim.
+    table: Option<String>,
     /// Open container delimiters (`____`, `====`, `****`); content inside is
     /// parsed normally, `____` labels its content as BlockQuote.
     containers: Vec<String>,
@@ -42,6 +46,11 @@ impl ParseState<'_> {
         let Some((block_type, span)) = self.current.take() else {
             return;
         };
+        self.push_span_block(block_type, span);
+    }
+
+    /// Emit a translatable block covering `span` (skipping blank spans).
+    fn push_span_block(&mut self, block_type: BlockType, span: Range<usize>) {
         let raw = &self.source[span.clone()];
         if raw.trim().is_empty() {
             return;
@@ -89,11 +98,97 @@ impl ParseState<'_> {
     }
 }
 
-/// `----`, `....`, `++++`, `////` (comment), `|===` (table) open opaque blocks.
+/// `----`, `....`, `++++`, `////` (comment) open opaque blocks.
 fn opaque_delimiter(trimmed: &str) -> bool {
     let all_of = |c: char| trimmed.len() >= 4 && trimmed.chars().all(|x| x == c);
     all_of('-') || all_of('.') || all_of('+') || all_of('/')
-        || (trimmed.starts_with('|') && trimmed[1..].len() >= 3 && trimmed[1..].chars().all(|c| c == '='))
+}
+
+/// `|===` opens/closes a table.
+fn table_delimiter(trimmed: &str) -> bool {
+    trimmed.starts_with('|')
+        && trimmed[1..].len() >= 3
+        && trimmed[1..].chars().all(|c| c == '=')
+}
+
+/// True if `token` (the non-space run glued to a `|` separator) is an AsciiDoc
+/// cell specifier: an optional span/duplication factor (`2+`, `3*`, `.2+`),
+/// optional alignment (`<`, `^`, `>`, optionally `.<`/`.^`/`.>`), and an
+/// optional single style letter (`a`, `d`, `e`, `h`, `l`, `m`, `s`, `v`).
+fn is_cell_spec(token: &str) -> bool {
+    if token.is_empty() {
+        return false;
+    }
+    let bytes = token.as_bytes();
+    let mut i = 0;
+    let factor_end = bytes
+        .iter()
+        .take_while(|b| b.is_ascii_digit() || **b == b'.')
+        .count();
+    if factor_end > 0
+        && factor_end < bytes.len()
+        && matches!(bytes[factor_end], b'+' | b'*')
+        && bytes[..factor_end].iter().any(|b| b.is_ascii_digit())
+    {
+        i = factor_end + 1;
+    }
+    if i < bytes.len() && matches!(bytes[i], b'<' | b'^' | b'>') {
+        i += 1;
+    }
+    if i + 1 < bytes.len() && bytes[i] == b'.' && matches!(bytes[i + 1], b'<' | b'^' | b'>') {
+        i += 2;
+    }
+    if i < bytes.len() && matches!(bytes[i], b'a' | b'd' | b'e' | b'h' | b'l' | b'm' | b's' | b'v')
+    {
+        i += 1;
+    }
+    i == bytes.len()
+}
+
+/// A table row line starts with `|` or with a cell spec glued to its first `|`
+/// (`2+|Spanning`, `a|Adoc`).
+fn is_table_row(trimmed: &str) -> bool {
+    match trimmed.find('|') {
+        Some(0) => true,
+        Some(p) => is_cell_spec(&trimmed[..p]),
+        None => false,
+    }
+}
+
+/// Byte ranges of translatable cell text within a table row line (`|A |B`).
+/// Separators, cell specifiers, and surrounding whitespace stay outside.
+fn table_cell_ranges(content: &str) -> Vec<Range<usize>> {
+    let bytes = content.as_bytes();
+    let mut seps = Vec::new();
+    for (i, &b) in bytes.iter().enumerate() {
+        if b == b'|' && (i == 0 || bytes[i - 1] != b'\\') {
+            seps.push(i);
+        }
+    }
+
+    let mut ranges = Vec::new();
+    for (k, &sep) in seps.iter().enumerate() {
+        let start = sep + 1;
+        let mut end = seps.get(k + 1).copied().unwrap_or(content.len());
+        if k + 1 < seps.len() {
+            // The non-space run glued to the next `|` may be its cell spec.
+            let chunk = &content[start..end];
+            let token_start = chunk
+                .rfind(char::is_whitespace)
+                .map(|p| p + chunk[p..].chars().next().unwrap().len_utf8())
+                .unwrap_or(0);
+            if is_cell_spec(&chunk[token_start..]) {
+                end = start + token_start;
+            }
+        }
+        let text = &content[start..end];
+        let text_start = start + (text.len() - text.trim_start().len());
+        let text_end = start + text.trim_end().len();
+        if text_start < text_end {
+            ranges.push(text_start..text_end);
+        }
+    }
+    ranges
 }
 
 /// `____`, `====`, `****` open/close container blocks parsed normally inside.
@@ -165,6 +260,37 @@ fn parse_admonition(content: &str) -> Option<usize> {
     None
 }
 
+/// `Term:: description` description list item → (byte range of the term within
+/// the line, byte offset of the same-line description if present).
+///
+/// The delimiter is 2–4 colons followed by whitespace or end of line; `::`
+/// glued to a following word (`std::vector`) does not count, matching
+/// asciidoctor's behavior.
+fn parse_description_item(content: &str) -> Option<(Range<usize>, Option<usize>)> {
+    let trimmed_start = content.len() - content.trim_start().len();
+    let rest = &content[trimmed_start..];
+
+    let mut search_from = 0usize;
+    while let Some(found) = rest[search_from..].find("::") {
+        let pos = search_from + found;
+        let colons = rest[pos..].chars().take_while(|c| *c == ':').count();
+        let after = pos + colons;
+        if (2..=4).contains(&colons) && !rest[..pos].trim().is_empty() {
+            let term_end = trimmed_start + rest[..pos].trim_end().len();
+            let after_str = &rest[after..];
+            if after_str.trim().is_empty() {
+                return Some((trimmed_start..term_end, None));
+            }
+            if after_str.starts_with(char::is_whitespace) {
+                let ws = after_str.len() - after_str.trim_start().len();
+                return Some((trimmed_start..term_end, Some(trimmed_start + after + ws)));
+            }
+        }
+        search_from = after.max(pos + 1);
+    }
+    None
+}
+
 /// `.Block Title` (dot followed by non-space, non-dot) → offset of the title.
 fn parse_block_title(content: &str) -> Option<usize> {
     let rest = content.strip_prefix('.')?;
@@ -184,6 +310,7 @@ impl DocumentParser for AsciidocParser {
             block_idx: 0,
             current: None,
             opaque: None,
+            table: None,
             containers: Vec::new(),
             in_doc_header: false,
             seen_content: false,
@@ -201,9 +328,7 @@ impl DocumentParser for AsciidocParser {
             // Inside an opaque delimited block: only the matching closer matters.
             if let Some((delimiter, start)) = &state.opaque {
                 if trimmed == delimiter {
-                    let block_type = if delimiter.starts_with('|') {
-                        BlockType::Table
-                    } else if delimiter.starts_with('/') {
+                    let block_type = if delimiter.starts_with('/') {
                         BlockType::HtmlBlock
                     } else {
                         BlockType::CodeBlock
@@ -217,6 +342,21 @@ impl DocumentParser for AsciidocParser {
                         span: None,
                     });
                     state.opaque = None;
+                }
+                continue;
+            }
+
+            // Inside a table: translate row cells, keep everything else verbatim.
+            if let Some(delimiter) = &state.table {
+                if trimmed == delimiter {
+                    state.table = None;
+                } else if is_table_row(trimmed) {
+                    for range in table_cell_ranges(content) {
+                        state.push_span_block(
+                            BlockType::Table,
+                            line_start + range.start..line_start + range.end,
+                        );
+                    }
                 }
                 continue;
             }
@@ -236,6 +376,12 @@ impl DocumentParser for AsciidocParser {
             if opaque_delimiter(trimmed) {
                 state.flush_current();
                 state.opaque = Some((trimmed.to_string(), line_start));
+                continue;
+            }
+
+            if table_delimiter(trimmed) {
+                state.flush_current();
+                state.table = Some(trimmed.to_string());
                 continue;
             }
 
@@ -300,6 +446,22 @@ impl DocumentParser for AsciidocParser {
                 state.flush_current();
                 state.current =
                     Some((state.text_type(), line_start + text_offset..content_end));
+                continue;
+            }
+
+            if let Some((term_range, desc_offset)) = parse_description_item(content) {
+                state.flush_current();
+                // Term and description translate as separate spans; the `::`
+                // delimiter between them stays verbatim.
+                state.current = Some((
+                    BlockType::ListItem,
+                    line_start + term_range.start..line_start + term_range.end,
+                ));
+                state.flush_current();
+                if let Some(offset) = desc_offset {
+                    state.current =
+                        Some((BlockType::ListItem, line_start + offset..content_end));
+                }
                 continue;
             }
 
@@ -499,18 +661,76 @@ mod tests {
     }
 
     #[test]
-    fn table_preserved_verbatim() {
+    fn table_cells_translated_structure_preserved() {
         let parser = AsciidocParser;
-        let source = "Before.\n\n|===\n|Cell A |Cell B\n|===\n\nAfter.\n";
+        let source = "Before.\n\n|===\n|Cell A |Cell B\n\n|Third cell\n|===\n\nAfter.\n";
         let doc = parser.parse(source);
         let segments = doc.translatable_segments();
-        assert_eq!(segments.len(), 2);
+        let sources: Vec<&str> = segments.iter().map(|s| s.source.as_str()).collect();
+        assert_eq!(
+            sources,
+            vec!["Before.", "Cell A", "Cell B", "Third cell", "After."]
+        );
 
         let mut translations = TranslationMap::new();
-        translations.insert(segments[0].id.clone(), "이전.".to_string());
-        translations.insert(segments[1].id.clone(), "이후.".to_string());
+        for seg in &segments {
+            let t = match seg.source.as_str() {
+                "Before." => "이전.",
+                "Cell A" => "셀 A",
+                "Cell B" => "셀 B",
+                "Third cell" => "셋째 셀",
+                "After." => "이후.",
+                other => panic!("unexpected segment: {other}"),
+            };
+            translations.insert(seg.id.clone(), t.to_string());
+        }
         let output = parser.reconstruct(&doc, &translations);
-        assert_eq!(output, "이전.\n\n|===\n|Cell A |Cell B\n|===\n\n이후.\n");
+        assert_eq!(
+            output,
+            "이전.\n\n|===\n|셀 A |셀 B\n\n|셋째 셀\n|===\n\n이후.\n"
+        );
+    }
+
+    #[test]
+    fn table_cell_specs_preserved() {
+        let parser = AsciidocParser;
+        let source = "|===\n2+|Spanning cell\n|Normal a|Adoc cell\n|===\n";
+        let doc = parser.parse(source);
+        let segments = doc.translatable_segments();
+        let sources: Vec<&str> = segments.iter().map(|s| s.source.as_str()).collect();
+        assert_eq!(sources, vec!["Spanning cell", "Normal", "Adoc cell"]);
+
+        let mut translations = TranslationMap::new();
+        translations.insert(segments[0].id.clone(), "병합 셀".to_string());
+        translations.insert(segments[1].id.clone(), "일반".to_string());
+        translations.insert(segments[2].id.clone(), "Adoc 셀".to_string());
+        let output = parser.reconstruct(&doc, &translations);
+        assert_eq!(output, "|===\n2+|병합 셀\n|일반 a|Adoc 셀\n|===\n");
+    }
+
+    #[test]
+    fn table_escaped_pipe_stays_in_cell() {
+        let parser = AsciidocParser;
+        let source = "|===\n|Uses \\| pipe |Second\n|===\n";
+        let doc = parser.parse(source);
+        let segments = doc.translatable_segments();
+        let sources: Vec<&str> = segments.iter().map(|s| s.source.as_str()).collect();
+        assert_eq!(sources, vec!["Uses \\| pipe", "Second"]);
+    }
+
+    #[test]
+    fn table_non_row_lines_preserved_verbatim() {
+        let parser = AsciidocParser;
+        let source = "|===\n|Cell one\ncontinuation line\n|===\n";
+        let doc = parser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 1);
+        assert_eq!(segments[0].source, "Cell one");
+
+        let mut translations = TranslationMap::new();
+        translations.insert(segments[0].id.clone(), "첫 셀".to_string());
+        let output = parser.reconstruct(&doc, &translations);
+        assert_eq!(output, "|===\n|첫 셀\ncontinuation line\n|===\n");
     }
 
     #[test]
@@ -530,6 +750,63 @@ mod tests {
         let segments = doc.translatable_segments();
         assert_eq!(segments.len(), 1);
         assert_eq!(segments[0].source, "Visible text.");
+    }
+
+    #[test]
+    fn description_list_term_and_desc_translated() {
+        let parser = AsciidocParser;
+        let source = "CPU:: The brain of the computer.\nRAM::: Temporary storage.\n";
+        let doc = parser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 4);
+        assert_eq!(segments[0].source, "CPU");
+        assert_eq!(segments[1].source, "The brain of the computer.");
+        assert_eq!(segments[2].source, "RAM");
+        assert_eq!(segments[3].source, "Temporary storage.");
+
+        let mut translations = TranslationMap::new();
+        translations.insert(segments[0].id.clone(), "중앙 처리 장치".to_string());
+        translations.insert(segments[1].id.clone(), "컴퓨터의 두뇌.".to_string());
+        translations.insert(segments[2].id.clone(), "램".to_string());
+        translations.insert(segments[3].id.clone(), "임시 저장소.".to_string());
+        let output = parser.reconstruct(&doc, &translations);
+        assert_eq!(output, "중앙 처리 장치:: 컴퓨터의 두뇌.\n램::: 임시 저장소.\n");
+    }
+
+    #[test]
+    fn description_list_desc_on_next_line() {
+        let parser = AsciidocParser;
+        let source = "Term::\nDescription text here.\n";
+        let doc = parser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 2);
+        assert_eq!(segments[0].source, "Term");
+        assert_eq!(segments[1].source, "Description text here.");
+
+        let mut translations = TranslationMap::new();
+        translations.insert(segments[0].id.clone(), "용어".to_string());
+        translations.insert(segments[1].id.clone(), "설명 텍스트.".to_string());
+        let output = parser.reconstruct(&doc, &translations);
+        assert_eq!(output, "용어::\n설명 텍스트.\n");
+    }
+
+    #[test]
+    fn description_list_multiline_desc_joins() {
+        let parser = AsciidocParser;
+        let source = "CPU:: The brain\nof the computer.\n";
+        let doc = parser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 2);
+        assert_eq!(segments[1].source, "The brain of the computer.");
+    }
+
+    #[test]
+    fn double_colon_in_word_is_not_description_list() {
+        let parser = AsciidocParser;
+        let doc = parser.parse("Use std::vector for this.\n");
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 1);
+        assert_eq!(segments[0].source, "Use std::vector for this.");
     }
 
     #[test]

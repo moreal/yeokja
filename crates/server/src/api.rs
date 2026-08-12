@@ -20,8 +20,8 @@ use yeokja_core::state::StateFile;
 use yeokja_translate::evaluator::EvaluationContext;
 use yeokja_translate::factory::{create_evaluator_provider, create_provider};
 use yeokja_translate::orchestrator::{
-    collect_files, evaluate_translation, scan_file, standard_evaluators, Orchestrator,
-    ParserFactory, ProgressEvent, TranslateOptions,
+    collect_files, evaluate_translation, scan_file, standard_evaluators, CancelToken,
+    Orchestrator, ParserFactory, ProgressEvent, TranslateOptions,
 };
 
 use crate::state::{AppState, TranslationJob};
@@ -36,6 +36,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/glossary", post(add_glossary_term))
         .route("/api/glossary/{term}", delete(delete_glossary_term))
         .route("/api/translate/start", post(start_translation))
+        .route("/api/translate/cancel", post(cancel_translation))
         .route("/api/translate/status", get(get_translation_status))
         .route("/api/translate/events", get(translate_events))
         .layer(CorsLayer::permissive())
@@ -421,6 +422,9 @@ async fn start_translation(
         None
     };
 
+    let cancel = CancelToken::default();
+    *state.cancel.lock().await = Some(cancel.clone());
+
     let orchestrator = Orchestrator {
         config: state.config.clone(),
         glossary: Arc::new(state.glossary.read().await.clone()),
@@ -428,6 +432,7 @@ async fn start_translation(
         eval_provider,
         parser_factory: parser_factory(),
         options,
+        cancel,
     };
 
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<ProgressEvent>();
@@ -458,6 +463,7 @@ async fn start_translation(
                     job.errors.push(format!("{}: {error}", file.display()));
                 }
                 ProgressEvent::FileStarted { .. } => {}
+                ProgressEvent::Cancelled => {}
                 ProgressEvent::Finished { .. } => {}
             }
         }
@@ -474,5 +480,26 @@ async fn start_translation(
         }
     });
 
+    Ok(StatusCode::ACCEPTED)
+}
+
+/// Cancel the running translation. Blocks already in flight finish and are
+/// saved; the rest are skipped, so a later start resumes from there.
+async fn cancel_translation(
+    State(state): State<Arc<AppState>>,
+) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    let mut job = state.job.lock().await;
+    if !job.running {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ErrorResponse {
+                error: "no translation running".to_string(),
+            }),
+        ));
+    }
+    if let Some(token) = state.cancel.lock().await.as_ref() {
+        token.cancel();
+    }
+    job.cancelled = true;
     Ok(StatusCode::ACCEPTED)
 }

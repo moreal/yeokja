@@ -213,11 +213,16 @@ impl DocumentParser for MarkdownParser {
                 | Event::FootnoteReference(_) => {
                     state.extend_run(range);
                 }
-                // Breaks only extend an already-started run; they never start one.
-                Event::SoftBreak | Event::HardBreak => {
+                // Soft breaks only extend an already-started run; they never start one.
+                Event::SoftBreak => {
                     if state.run.is_some() {
                         state.extend_run(range);
                     }
+                }
+                // A hard break (trailing spaces or backslash) is semantic: end the
+                // run so the break bytes stay outside spans and survive splicing.
+                Event::HardBreak => {
+                    state.flush_run();
                 }
                 Event::Rule => {
                     state.flush_run();
@@ -451,6 +456,38 @@ mod tests {
         translations.insert(segments[1].id.clone(), "미완료.".to_string());
         let output = parser.reconstruct(&doc, &translations);
         assert_eq!(output, "- [x] 완료됨.\n- [ ] 미완료.\n");
+    }
+
+    #[test]
+    fn hard_break_preserved() {
+        let parser = MarkdownParser;
+        let source = "First line.  \nSecond line.\n";
+        let doc = parser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 2);
+        assert_eq!(segments[0].source, "First line.");
+        assert_eq!(segments[1].source, "Second line.");
+
+        let mut translations = TranslationMap::new();
+        translations.insert(segments[0].id.clone(), "첫 줄.".to_string());
+        translations.insert(segments[1].id.clone(), "둘째 줄.".to_string());
+        let output = parser.reconstruct(&doc, &translations);
+        assert_eq!(output, "첫 줄.  \n둘째 줄.\n");
+    }
+
+    #[test]
+    fn backslash_hard_break_preserved() {
+        let parser = MarkdownParser;
+        let source = "First line.\\\nSecond line.\n";
+        let doc = parser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 2);
+
+        let mut translations = TranslationMap::new();
+        translations.insert(segments[0].id.clone(), "첫 줄.".to_string());
+        translations.insert(segments[1].id.clone(), "둘째 줄.".to_string());
+        let output = parser.reconstruct(&doc, &translations);
+        assert_eq!(output, "첫 줄.\\\n둘째 줄.\n");
     }
 
     #[test]
