@@ -130,20 +130,22 @@ fn print_table(
     }
 }
 
-/// A ready-to-paste rule translating only the widest-looking column, which is
-/// the usual shape for a reference table.
+/// A rule scaffold listing every column, for the reader to prune.
+///
+/// It deliberately does not guess which columns are prose — guessing wrong is
+/// worse than not guessing, since a mistranslated identifier is silent damage
+/// while an untranslated column is visible.
 fn print_suggestion(headers: &[String], file: &Path) {
     let named: Vec<&String> = headers.iter().filter(|h| !h.is_empty()).collect();
     if named.len() < 2 {
         return;
     }
     let quoted: Vec<String> = named.iter().map(|h| format!("{h:?}")).collect();
-    let last = named.last().unwrap();
     println!();
     println!("    [[tables]]");
     println!("    files = {:?}", file.display().to_string());
     println!("    headers = [{}]", quoted.join(", "));
-    println!("    translate = [{last:?}]");
+    println!("    translate = [{}]  # keep only the prose columns", quoted.join(", "));
 }
 
 fn truncate(text: &str) -> String {
