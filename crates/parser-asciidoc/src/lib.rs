@@ -35,7 +35,12 @@ struct ParseState<'a> {
     table: Option<String>,
     /// Cell texts of the open table's first row, used to label later rows'
     /// cells by column so selection rules can name a column by its header.
+    /// Its length is the table's column count.
     table_header: Option<Vec<String>>,
+    /// Body cells emitted so far in the open table. AsciiDoc cells flow into
+    /// columns, so a cell's column is this counter modulo the column count —
+    /// which is what makes tables written one cell per line work.
+    table_cell_index: usize,
     /// Open container delimiters (`____`, `====`, `****`); content inside is
     /// parsed normally, `____` labels its content as BlockQuote.
     containers: Vec<String>,
@@ -327,6 +332,7 @@ impl DocumentParser for AsciidocParser {
             opaque: None,
             table: None,
             table_header: None,
+            table_cell_index: 0,
             containers: Vec::new(),
             in_doc_header: false,
             seen_content: false,
@@ -369,30 +375,48 @@ impl DocumentParser for AsciidocParser {
                 if trimmed == delimiter {
                     state.table = None;
                     state.table_header = None;
+                    state.table_cell_index = 0;
                 } else if is_table_row(trimmed) {
                     let ranges = table_cell_ranges(content);
-                    // The first row of a table names its columns; later rows'
-                    // cells carry that name so rules can select by header.
-                    let is_header_row = state.table_header.is_none();
-                    if is_header_row {
+                    // The first row names the columns and fixes their count;
+                    // later cells flow into those columns in order, so a table
+                    // written one cell per line lands in the right column.
+                    if state.table_header.is_none() {
                         state.table_header = Some(
                             ranges
                                 .iter()
                                 .map(|r| content[r.clone()].trim().to_string())
                                 .collect(),
                         );
+                        state.table_cell_index = 0;
+                        for (column, range) in ranges.into_iter().enumerate() {
+                            state.push_span_block_with_role(
+                                BlockType::Table,
+                                line_start + range.start..line_start + range.end,
+                                BlockRole::TableCell {
+                                    column,
+                                    header: None,
+                                },
+                            );
+                        }
+                        continue;
                     }
-                    for (column, range) in ranges.into_iter().enumerate() {
-                        let header = if is_header_row {
-                            None
-                        } else {
-                            state
-                                .table_header
-                                .as_ref()
-                                .and_then(|h| h.get(column))
-                                .filter(|h| !h.is_empty())
-                                .cloned()
-                        };
+
+                    let width = state
+                        .table_header
+                        .as_ref()
+                        .map(Vec::len)
+                        .unwrap_or(1)
+                        .max(1);
+                    for range in ranges {
+                        let column = state.table_cell_index % width;
+                        state.table_cell_index += 1;
+                        let header = state
+                            .table_header
+                            .as_ref()
+                            .and_then(|h| h.get(column))
+                            .filter(|h| !h.is_empty())
+                            .cloned();
                         state.push_span_block_with_role(
                             BlockType::Table,
                             line_start + range.start..line_start + range.end,
@@ -771,6 +795,38 @@ mod tests {
                 (0, Some("Instruction")),
                 (1, Some("Arguments")),
                 (2, Some("Explanation")),
+            ]
+        );
+    }
+
+    #[test]
+    fn cells_flow_into_columns_one_per_line() {
+        // AsciiDoc lets a row span several lines, one cell each. The header row
+        // fixes the column count and later cells flow into it.
+        let parser = AsciidocParser;
+        let source = "|===\n|Value |Effect\n\n|`true`\n|Enables everything\n\n|`map`\n|Perf map only\n|===\n";
+        let doc = parser.parse(source);
+
+        let body: Vec<(usize, Option<&str>, &str)> = doc
+            .sections
+            .iter()
+            .flat_map(|s| s.blocks.iter())
+            .filter_map(|b| match &b.role {
+                BlockRole::TableCell {
+                    column,
+                    header: Some(h),
+                } => Some((*column, Some(h.as_str()), b.raw_content.trim())),
+                _ => None,
+            })
+            .collect();
+
+        assert_eq!(
+            body,
+            vec![
+                (0, Some("Value"), "`true`"),
+                (1, Some("Effect"), "Enables everything"),
+                (0, Some("Value"), "`map`"),
+                (1, Some("Effect"), "Perf map only"),
             ]
         );
     }
