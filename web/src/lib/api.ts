@@ -19,6 +19,19 @@ export interface Segment {
   issues: string[];
 }
 
+export type BlockPhase = "translating" | "evaluating";
+
+/// A block currently held by a worker, as reported by the server snapshot.
+export interface ActiveBlock {
+  id: number;
+  file: string;
+  segments: number;
+  source: string;
+  attempt: number;
+  phase: BlockPhase;
+  started_at: string;
+}
+
 export interface TranslationJob {
   running: boolean;
   cancelled: boolean;
@@ -29,7 +42,28 @@ export interface TranslationJob {
   segments_total: number;
   segments_done: number;
   errors: string[];
+  concurrency: number;
+  queued: number;
+  active: ActiveBlock[];
+  retried: number;
 }
+
+/// Mirrors `ProgressEvent` in crates/translate/src/orchestrator.rs.
+export type ProgressEvent =
+  | { type: "run_started"; concurrency: number }
+  | { type: "files_discovered"; files: [string, number][] }
+  | { type: "file_started"; file: string }
+  | { type: "block_queued"; id: number; file: string; segments: number }
+  | { type: "block_started"; id: number; file: string; segments: number; source: string }
+  | { type: "block_attempt"; id: number; attempt: number }
+  | { type: "block_translating"; id: number; attempt: number }
+  | { type: "block_evaluated"; id: number; attempt: number; passed: boolean; issues: string[] }
+  | { type: "block_translated"; id: number | null; file: string; segments: number; current: string | null }
+  | { type: "block_failed"; id: number; file: string; error: string }
+  | { type: "file_completed"; file: string }
+  | { type: "file_failed"; file: string; error: string }
+  | { type: "cancelled" }
+  | { type: "finished"; errors: number };
 
 export interface GlossaryTerm {
   term: string;
@@ -108,6 +142,22 @@ export async function fetchTranslationJob(): Promise<TranslationJob> {
 export function subscribeTranslationEvents(onEvent: () => void): () => void {
   const source = new EventSource(`${API_BASE}/api/translate/events`);
   source.onmessage = onEvent;
+  return () => source.close();
+}
+
+/// Subscribe to the parsed progress event stream. Malformed frames are skipped
+/// rather than tearing down the subscription. Returns a cleanup function.
+export function subscribeProgressEvents(
+  onEvent: (event: ProgressEvent) => void,
+): () => void {
+  const source = new EventSource(`${API_BASE}/api/translate/events`);
+  source.onmessage = (msg) => {
+    try {
+      onEvent(JSON.parse(msg.data) as ProgressEvent);
+    } catch {
+      // Ignore frames we cannot parse; the next one will resync.
+    }
+  };
   return () => source.close();
 }
 

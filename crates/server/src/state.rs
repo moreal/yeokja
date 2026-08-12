@@ -18,6 +18,30 @@ pub struct AppState {
     pub events: broadcast::Sender<String>,
 }
 
+/// What a worker is currently doing with a block.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BlockPhase {
+    /// Waiting on the provider to answer.
+    Translating,
+    /// Provider answered; evaluators are running.
+    Evaluating,
+}
+
+/// A block currently held by a worker. Mirrors what the SSE stream reports, so
+/// a client that connects mid-run can render the live view without replaying
+/// the whole event log.
+#[derive(Debug, Clone, Serialize)]
+pub struct ActiveBlock {
+    pub id: u64,
+    pub file: PathBuf,
+    pub segments: usize,
+    pub source: String,
+    pub attempt: u32,
+    pub phase: BlockPhase,
+    pub started_at: DateTime<Utc>,
+}
+
 /// Progress of the current (or last) server-triggered translation run.
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct TranslationJob {
@@ -30,6 +54,14 @@ pub struct TranslationJob {
     pub segments_total: usize,
     pub segments_done: usize,
     pub errors: Vec<String>,
+    /// Number of worker slots (semaphore permits) for this run.
+    pub concurrency: usize,
+    /// Blocks spawned but still waiting for a permit.
+    pub queued: usize,
+    /// Blocks currently held by a worker, newest first.
+    pub active: Vec<ActiveBlock>,
+    /// Blocks that needed at least one retry after a failed evaluation.
+    pub retried: usize,
 }
 
 impl AppState {

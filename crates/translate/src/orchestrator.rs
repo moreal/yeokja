@@ -11,7 +11,7 @@ use crate::evaluator_format::FormatEvaluator;
 use crate::evaluator_glossary::GlossaryEvaluator;
 use crate::evaluator_link::LinkEvaluator;
 use crate::evaluator_style::StyleEvaluator;
-use crate::pipeline::translate_with_evaluation;
+use crate::pipeline::translate_with_evaluation_observed;
 use crate::provider::{LlmProvider, TranslateRequest, TranslationProvider};
 use chrono::Utc;
 use std::collections::{BTreeSet, HashMap, HashSet};
@@ -30,17 +30,63 @@ use yeokja_core::state::{SegmentState, StateFile};
 pub type ParserFactory =
     Arc<dyn Fn(&Path, &ProjectConfig) -> Box<dyn DocumentParser> + Send + Sync>;
 
+/// How many characters of a block's source are carried in an event, so the
+/// live view can show what is being worked on without streaming whole blocks.
+const PREVIEW_CHARS: usize = 240;
+
+fn preview(text: &str) -> String {
+    let trimmed = text.trim();
+    match trimmed.char_indices().nth(PREVIEW_CHARS) {
+        Some((cut, _)) => format!("{}…", &trimmed[..cut]),
+        None => trimmed.to_string(),
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ProgressEvent {
+    /// Emitted once before any work starts, carrying run-wide constants.
+    RunStarted { concurrency: usize },
     /// Emitted once at start: every file with its pending-segment count.
     FilesDiscovered { files: Vec<(PathBuf, usize)> },
     FileStarted { file: PathBuf },
+    /// A block task was spawned and is waiting for a concurrency permit.
+    BlockQueued {
+        id: u64,
+        file: PathBuf,
+        segments: usize,
+    },
+    /// A block acquired a permit; a worker is now on it.
+    BlockStarted {
+        id: u64,
+        file: PathBuf,
+        segments: usize,
+        source: String,
+    },
+    /// A translation request was sent to the provider.
+    BlockAttempt { id: u64, attempt: u32 },
+    /// The provider answered; evaluators are about to run.
+    BlockTranslating { id: u64, attempt: u32 },
+    /// Evaluators finished. `passed == false` means a retry follows unless
+    /// `max_retries` is exhausted.
+    BlockEvaluated {
+        id: u64,
+        attempt: u32,
+        passed: bool,
+        issues: Vec<String>,
+    },
     /// A block finished translating; `segments` segments were saved.
     BlockTranslated {
+        id: Option<u64>,
         file: PathBuf,
         segments: usize,
         current: Option<String>,
+    },
+    /// A block errored out; its segments stay untranslated.
+    BlockFailed {
+        id: u64,
+        file: PathBuf,
+        error: String,
     },
     FileCompleted { file: PathBuf },
     FileFailed { file: PathBuf, error: String },
@@ -66,6 +112,14 @@ impl CancelToken {
 }
 
 pub type ProgressSender = mpsc::UnboundedSender<ProgressEvent>;
+
+/// Monotonic block ids, unique per process, so live-view clients can pair a
+/// block's start/attempt/finish events across concurrently running files.
+static NEXT_BLOCK_ID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+
+fn next_block_id() -> u64 {
+    NEXT_BLOCK_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+}
 
 #[derive(Debug, Clone)]
 pub struct TranslateOptions {
@@ -337,6 +391,13 @@ impl Orchestrator {
         let files = collect_files(path, &self.config)?;
 
         // Pre-scan for pending counts so front-ends can show totals up front.
+        send(
+            &progress,
+            ProgressEvent::RunStarted {
+                concurrency: self.options.concurrency.max(1),
+            },
+        );
+
         let mut discovered = Vec::new();
         for file in &files {
             let pending = match scan_file(file, &self.config, &self.glossary, &self.parser_factory)
@@ -505,7 +566,7 @@ impl FileTranslator {
 
         // State writer: applies block results and saves after each block so an
         // interrupted run resumes from the last completed block.
-        let (tx, mut rx) = mpsc::channel::<Vec<SegmentUpdate>>(64);
+        let (tx, mut rx) = mpsc::channel::<(u64, Vec<SegmentUpdate>)>(64);
         let source_hash = content_hash(&source);
         let writer_segments = Arc::new(Mutex::new(initial_segments));
         let writer_segments_for_task = writer_segments.clone();
@@ -515,7 +576,7 @@ impl FileTranslator {
 
         let state_writer = tokio::spawn(async move {
             let mut translated_count = 0usize;
-            while let Some(updates) = rx.recv().await {
+            while let Some((block_id, updates)) = rx.recv().await {
                 let mut segs = writer_segments_for_task.lock().await;
                 let current = updates
                     .first()
@@ -538,6 +599,7 @@ impl FileTranslator {
                 send(
                     &progress_clone,
                     ProgressEvent::BlockTranslated {
+                        id: Some(block_id),
                         file: file_path_buf.clone(),
                         segments: updates.len(),
                         current,
@@ -547,7 +609,9 @@ impl FileTranslator {
             translated_count
         });
 
-        // Translate blocks concurrently, bounded by the shared semaphore.
+        // Translate blocks concurrently, bounded by the shared semaphore. Every
+        // block task is spawned up front and then queues on `acquire()`, so the
+        // permit is the moment a worker picks the block up.
         let mut handles = Vec::new();
         for (block_context, block_segments) in block_groups {
             let this = FileTranslator {
@@ -561,18 +625,50 @@ impl FileTranslator {
             };
             let tx = tx.clone();
             let semaphore = semaphore.clone();
+            let progress = progress.clone();
+            let block_id = next_block_id();
+            let file = file_path.to_path_buf();
+
+            send(
+                &progress,
+                ProgressEvent::BlockQueued {
+                    id: block_id,
+                    file: file.clone(),
+                    segments: block_segments.len(),
+                },
+            );
 
             handles.push(tokio::spawn(async move {
                 let _permit = semaphore.acquire().await.expect("semaphore closed");
                 if this.cancel.is_cancelled() {
                     return;
                 }
-                match this.translate_block(&block_context, &block_segments).await {
+                send(
+                    &progress,
+                    ProgressEvent::BlockStarted {
+                        id: block_id,
+                        file: file.clone(),
+                        segments: block_segments.len(),
+                        source: preview(&block_context),
+                    },
+                );
+                match this
+                    .translate_block(block_id, &block_context, &block_segments, &progress)
+                    .await
+                {
                     Ok(updates) => {
-                        let _ = tx.send(updates).await;
+                        let _ = tx.send((block_id, updates)).await;
                     }
                     Err(e) => {
                         tracing::error!(error = %e, "Block translation failed");
+                        send(
+                            &progress,
+                            ProgressEvent::BlockFailed {
+                                id: block_id,
+                                file,
+                                error: e.to_string(),
+                            },
+                        );
                     }
                 }
             }));
@@ -597,8 +693,10 @@ impl FileTranslator {
     /// evaluate-retry pipeline. Returns the resulting segment updates.
     async fn translate_block(
         &self,
+        block_id: u64,
         block_context: &str,
         block_segments: &[(usize, SegmentState)],
+        progress: &Option<ProgressSender>,
     ) -> Result<Vec<SegmentUpdate>, crate::provider::TranslateError> {
         let request_segments: Vec<(usize, String)> = block_segments
             .iter()
@@ -626,7 +724,32 @@ impl FileTranslator {
             let evaluator_refs: Vec<&dyn TranslationEvaluator> =
                 evaluators.iter().map(|e| e.as_ref()).collect();
 
-            translate_with_evaluation(
+            let observer = |event: crate::pipeline::PipelineEvent| {
+                use crate::pipeline::PipelineEvent as Pe;
+                let progress_event = match event {
+                    Pe::AttemptStarted { attempt } => ProgressEvent::BlockAttempt {
+                        id: block_id,
+                        attempt,
+                    },
+                    Pe::Translated { attempt } => ProgressEvent::BlockTranslating {
+                        id: block_id,
+                        attempt,
+                    },
+                    Pe::Evaluated {
+                        attempt,
+                        passed,
+                        issues,
+                    } => ProgressEvent::BlockEvaluated {
+                        id: block_id,
+                        attempt,
+                        passed,
+                        issues,
+                    },
+                };
+                send(progress, progress_event);
+            };
+
+            translate_with_evaluation_observed(
                 self.provider.as_ref(),
                 &evaluator_refs,
                 request,
@@ -634,6 +757,7 @@ impl FileTranslator {
                 &self.config.project.source_lang,
                 &self.config.project.target_lang,
                 self.options.max_retries,
+                &observer,
             )
             .await?
             .into_iter()

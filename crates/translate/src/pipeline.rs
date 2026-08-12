@@ -10,7 +10,27 @@ pub struct PipelineResult {
     pub attempts: u32,
 }
 
-/// Run a segment through the translate-evaluate-retry pipeline.
+/// Observable milestones inside the translate-evaluate-retry loop, so callers
+/// can surface what a block is doing while it waits on the LLM.
+#[derive(Debug, Clone)]
+pub enum PipelineEvent {
+    /// A translation request is about to be sent (`attempt` is 1-based).
+    AttemptStarted { attempt: u32 },
+    /// The LLM answered; evaluation is about to run.
+    Translated { attempt: u32 },
+    /// Evaluators finished for this attempt. `passed` is false only when an
+    /// evaluator that triggers retranslation rejected the result.
+    Evaluated {
+        attempt: u32,
+        passed: bool,
+        issues: Vec<String>,
+    },
+}
+
+/// Callback invoked on each [`PipelineEvent`].
+pub type PipelineObserver<'a> = &'a (dyn Fn(PipelineEvent) + Send + Sync);
+
+/// Run a block through the translate-evaluate-retry pipeline.
 pub async fn translate_with_evaluation(
     provider: &dyn TranslationProvider,
     evaluators: &[&dyn TranslationEvaluator],
@@ -20,6 +40,32 @@ pub async fn translate_with_evaluation(
     target_lang: &str,
     max_retries: u32,
 ) -> Result<HashMap<usize, PipelineResult>, TranslateError> {
+    translate_with_evaluation_observed(
+        provider,
+        evaluators,
+        request,
+        glossary,
+        source_lang,
+        target_lang,
+        max_retries,
+        &|_| {},
+    )
+    .await
+}
+
+/// [`translate_with_evaluation`], reporting each attempt and evaluation to
+/// `on_event` as it happens.
+#[allow(clippy::too_many_arguments)]
+pub async fn translate_with_evaluation_observed(
+    provider: &dyn TranslationProvider,
+    evaluators: &[&dyn TranslationEvaluator],
+    request: TranslateRequest,
+    glossary: &HashMap<String, String>,
+    source_lang: &str,
+    target_lang: &str,
+    max_retries: u32,
+    on_event: PipelineObserver<'_>,
+) -> Result<HashMap<usize, PipelineResult>, TranslateError> {
     let mut current_request = request;
     let mut results: HashMap<usize, PipelineResult> = HashMap::new();
     let mut attempts = 0u32;
@@ -27,11 +73,14 @@ pub async fn translate_with_evaluation(
     loop {
         attempts += 1;
         tracing::debug!(attempt = attempts, "Starting translation attempt");
+        on_event(PipelineEvent::AttemptStarted { attempt: attempts });
         let response = provider.translate(current_request.clone()).await?;
+        on_event(PipelineEvent::Translated { attempt: attempts });
 
         // Evaluate each translated segment
         let mut all_passed = true;
         let mut feedback_parts: Vec<String> = Vec::new();
+        let mut attempt_issues: Vec<String> = Vec::new();
 
         for (&idx, translation) in &response.translations {
             let source = current_request
@@ -70,6 +119,7 @@ pub async fn translate_with_evaluation(
             }
 
             tracing::debug!(idx, passed = combined_result.passed, "Evaluation result");
+            attempt_issues.extend(combined_result.issues.iter().map(|i| i.message.clone()));
             results.insert(
                 idx,
                 PipelineResult {
@@ -79,6 +129,12 @@ pub async fn translate_with_evaluation(
                 },
             );
         }
+
+        on_event(PipelineEvent::Evaluated {
+            attempt: attempts,
+            passed: all_passed,
+            issues: attempt_issues,
+        });
 
         if all_passed || attempts > max_retries {
             if !all_passed {

@@ -87,6 +87,7 @@ pub async fn consume_progress_events(
                 file,
                 segments,
                 current,
+                ..
             } => {
                 let path = file.display().to_string();
                 if let Some(f) = p.files.iter_mut().find(|f| f.path == path) {
@@ -117,6 +118,15 @@ pub async fn consume_progress_events(
                 p.is_complete = true;
                 p.current_segment = None;
             }
+            // Block-level lifecycle drives the web live view; the TUI tracks
+            // file-level progress only.
+            ProgressEvent::RunStarted { .. }
+            | ProgressEvent::BlockQueued { .. }
+            | ProgressEvent::BlockStarted { .. }
+            | ProgressEvent::BlockAttempt { .. }
+            | ProgressEvent::BlockTranslating { .. }
+            | ProgressEvent::BlockEvaluated { .. }
+            | ProgressEvent::BlockFailed { .. } => {}
         }
     }
     progress.lock().unwrap().is_complete = true;

@@ -17,6 +17,13 @@ export default function Header() {
             Dashboard
           </Link>
           <Link
+            to="/live"
+            class="text-gray-600 hover:text-gray-900"
+            activeProps={{ class: "text-blue-600" }}
+          >
+            Live
+          </Link>
+          <Link
             to="/segments"
             class="text-gray-600 hover:text-gray-900"
             activeProps={{ class: "text-blue-600" }}

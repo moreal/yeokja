@@ -24,7 +24,7 @@ use yeokja_translate::orchestrator::{
     Orchestrator, ParserFactory, ProgressEvent, TranslateOptions,
 };
 
-use crate::state::{AppState, TranslationJob};
+use crate::state::{ActiveBlock, AppState, BlockPhase, TranslationJob};
 
 pub fn create_router(state: Arc<AppState>) -> Router {
     Router::new()
@@ -448,12 +448,62 @@ async fn start_translation(
             }
             let mut job = job_for_events.lock().await;
             match event {
+                ProgressEvent::RunStarted { concurrency } => {
+                    job.concurrency = concurrency;
+                }
                 ProgressEvent::FilesDiscovered { files } => {
                     job.files_total = files.len();
                     job.segments_total = files.iter().map(|(_, pending)| pending).sum();
                 }
-                ProgressEvent::BlockTranslated { segments, .. } => {
+                ProgressEvent::BlockQueued { .. } => {
+                    job.queued += 1;
+                }
+                ProgressEvent::BlockStarted {
+                    id,
+                    file,
+                    segments,
+                    source,
+                } => {
+                    job.queued = job.queued.saturating_sub(1);
+                    job.active.insert(
+                        0,
+                        ActiveBlock {
+                            id,
+                            file,
+                            segments,
+                            source,
+                            attempt: 1,
+                            phase: BlockPhase::Translating,
+                            started_at: Utc::now(),
+                        },
+                    );
+                }
+                ProgressEvent::BlockAttempt { id, attempt } => {
+                    let mut is_retry = false;
+                    if let Some(block) = job.active.iter_mut().find(|b| b.id == id) {
+                        is_retry = attempt > block.attempt;
+                        block.attempt = attempt;
+                        block.phase = BlockPhase::Translating;
+                    }
+                    if is_retry {
+                        job.retried += 1;
+                    }
+                }
+                ProgressEvent::BlockTranslating { id, .. } => {
+                    if let Some(block) = job.active.iter_mut().find(|b| b.id == id) {
+                        block.phase = BlockPhase::Evaluating;
+                    }
+                }
+                ProgressEvent::BlockEvaluated { .. } => {}
+                ProgressEvent::BlockTranslated { id, segments, .. } => {
                     job.segments_done += segments;
+                    if let Some(id) = id {
+                        job.active.retain(|b| b.id != id);
+                    }
+                }
+                ProgressEvent::BlockFailed { id, file, error } => {
+                    job.active.retain(|b| b.id != id);
+                    job.errors.push(format!("{}: {error}", file.display()));
                 }
                 ProgressEvent::FileCompleted { .. } => {
                     job.files_done += 1;
@@ -464,7 +514,10 @@ async fn start_translation(
                 }
                 ProgressEvent::FileStarted { .. } => {}
                 ProgressEvent::Cancelled => {}
-                ProgressEvent::Finished { .. } => {}
+                ProgressEvent::Finished { .. } => {
+                    job.queued = 0;
+                    job.active.clear();
+                }
             }
         }
     });

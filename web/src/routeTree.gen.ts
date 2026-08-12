@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SegmentsRouteImport } from './routes/segments'
+import { Route as LiveRouteImport } from './routes/live'
 import { Route as GlossaryRouteImport } from './routes/glossary'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SegmentsRoute = SegmentsRouteImport.update({
   id: '/segments',
   path: '/segments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveRoute = LiveRouteImport.update({
+  id: '/live',
+  path: '/live',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GlossaryRoute = GlossaryRouteImport.update({
@@ -32,30 +38,34 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/glossary': typeof GlossaryRoute
+  '/live': typeof LiveRoute
   '/segments': typeof SegmentsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/glossary': typeof GlossaryRoute
+  '/live': typeof LiveRoute
   '/segments': typeof SegmentsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/glossary': typeof GlossaryRoute
+  '/live': typeof LiveRoute
   '/segments': typeof SegmentsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/glossary' | '/segments'
+  fullPaths: '/' | '/glossary' | '/live' | '/segments'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/glossary' | '/segments'
-  id: '__root__' | '/' | '/glossary' | '/segments'
+  to: '/' | '/glossary' | '/live' | '/segments'
+  id: '__root__' | '/' | '/glossary' | '/live' | '/segments'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   GlossaryRoute: typeof GlossaryRoute
+  LiveRoute: typeof LiveRoute
   SegmentsRoute: typeof SegmentsRoute
 }
 
@@ -66,6 +76,13 @@ declare module '@tanstack/solid-router' {
       path: '/segments'
       fullPath: '/segments'
       preLoaderRoute: typeof SegmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live': {
+      id: '/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof LiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/glossary': {
@@ -88,6 +105,7 @@ declare module '@tanstack/solid-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   GlossaryRoute: GlossaryRoute,
+  LiveRoute: LiveRoute,
   SegmentsRoute: SegmentsRoute,
 }
 export const routeTree = rootRouteImport
