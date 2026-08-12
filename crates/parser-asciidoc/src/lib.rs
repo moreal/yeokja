@@ -10,7 +10,10 @@
 //! anchors, block attribute lines, delimited blocks, comments, and table
 //! structure (cell text inside `|===` tables is translated cell by cell).
 
+mod table;
+
 use std::ops::Range;
+use table::TableReader;
 use yeokja_core::model::*;
 use yeokja_core::parser::{DocumentParser, TranslationMap};
 use yeokja_parser_utils::{make_segments, normalize_inline_text, splice_reconstruct};
@@ -30,17 +33,15 @@ struct ParseState<'a> {
     /// the trimmed delimiter line that must appear again to close it, plus the
     /// block's starting offset.
     opaque: Option<(String, usize)>,
-    /// Open table (`|===`): the trimmed delimiter that closes it. Row lines
-    /// inside are parsed cell by cell; everything else stays verbatim.
-    table: Option<String>,
-    /// Cell texts of the open table's first row, used to label later rows'
-    /// cells by column so selection rules can name a column by its header.
-    /// Its length is the table's column count.
-    table_header: Option<Vec<String>>,
-    /// Body cells emitted so far in the open table. AsciiDoc cells flow into
-    /// columns, so a cell's column is this counter modulo the column count —
-    /// which is what makes tables written one cell per line work.
-    table_cell_index: usize,
+    /// Open table (`|===`). Row lines inside are parsed cell by cell;
+    /// everything else stays verbatim.
+    table: Option<TableReader>,
+    /// Index of the open table within the document, so cells of two adjacent
+    /// tables never merge.
+    table_index: usize,
+    /// Column count from the most recent `[cols=...]` line, waiting for the
+    /// table it belongs to.
+    declared_columns: Option<usize>,
     /// Open container delimiters (`____`, `====`, `****`); content inside is
     /// parsed normally, `____` labels its content as BlockQuote.
     containers: Vec<String>,
@@ -122,93 +123,6 @@ impl ParseState<'_> {
 fn opaque_delimiter(trimmed: &str) -> bool {
     let all_of = |c: char| trimmed.len() >= 4 && trimmed.chars().all(|x| x == c);
     all_of('-') || all_of('.') || all_of('+') || all_of('/')
-}
-
-/// `|===` opens/closes a table.
-fn table_delimiter(trimmed: &str) -> bool {
-    trimmed.starts_with('|')
-        && trimmed[1..].len() >= 3
-        && trimmed[1..].chars().all(|c| c == '=')
-}
-
-/// True if `token` (the non-space run glued to a `|` separator) is an AsciiDoc
-/// cell specifier: an optional span/duplication factor (`2+`, `3*`, `.2+`),
-/// optional alignment (`<`, `^`, `>`, optionally `.<`/`.^`/`.>`), and an
-/// optional single style letter (`a`, `d`, `e`, `h`, `l`, `m`, `s`, `v`).
-fn is_cell_spec(token: &str) -> bool {
-    if token.is_empty() {
-        return false;
-    }
-    let bytes = token.as_bytes();
-    let mut i = 0;
-    let factor_end = bytes
-        .iter()
-        .take_while(|b| b.is_ascii_digit() || **b == b'.')
-        .count();
-    if factor_end > 0
-        && factor_end < bytes.len()
-        && matches!(bytes[factor_end], b'+' | b'*')
-        && bytes[..factor_end].iter().any(|b| b.is_ascii_digit())
-    {
-        i = factor_end + 1;
-    }
-    if i < bytes.len() && matches!(bytes[i], b'<' | b'^' | b'>') {
-        i += 1;
-    }
-    if i + 1 < bytes.len() && bytes[i] == b'.' && matches!(bytes[i + 1], b'<' | b'^' | b'>') {
-        i += 2;
-    }
-    if i < bytes.len() && matches!(bytes[i], b'a' | b'd' | b'e' | b'h' | b'l' | b'm' | b's' | b'v')
-    {
-        i += 1;
-    }
-    i == bytes.len()
-}
-
-/// A table row line starts with `|` or with a cell spec glued to its first `|`
-/// (`2+|Spanning`, `a|Adoc`).
-fn is_table_row(trimmed: &str) -> bool {
-    match trimmed.find('|') {
-        Some(0) => true,
-        Some(p) => is_cell_spec(&trimmed[..p]),
-        None => false,
-    }
-}
-
-/// Byte ranges of translatable cell text within a table row line (`|A |B`).
-/// Separators, cell specifiers, and surrounding whitespace stay outside.
-fn table_cell_ranges(content: &str) -> Vec<Range<usize>> {
-    let bytes = content.as_bytes();
-    let mut seps = Vec::new();
-    for (i, &b) in bytes.iter().enumerate() {
-        if b == b'|' && (i == 0 || bytes[i - 1] != b'\\') {
-            seps.push(i);
-        }
-    }
-
-    let mut ranges = Vec::new();
-    for (k, &sep) in seps.iter().enumerate() {
-        let start = sep + 1;
-        let mut end = seps.get(k + 1).copied().unwrap_or(content.len());
-        if k + 1 < seps.len() {
-            // The non-space run glued to the next `|` may be its cell spec.
-            let chunk = &content[start..end];
-            let token_start = chunk
-                .rfind(char::is_whitespace)
-                .map(|p| p + chunk[p..].chars().next().unwrap().len_utf8())
-                .unwrap_or(0);
-            if is_cell_spec(&chunk[token_start..]) {
-                end = start + token_start;
-            }
-        }
-        let text = &content[start..end];
-        let text_start = start + (text.len() - text.trim_start().len());
-        let text_end = start + text.trim_end().len();
-        // Empty cells are kept so callers can count columns. Emitting them is
-        // the caller's business; a blank span never becomes a block.
-        ranges.push(text_start..text_end.max(text_start));
-    }
-    ranges
 }
 
 /// `____`, `====`, `****` open/close container blocks parsed normally inside.
@@ -331,8 +245,8 @@ impl DocumentParser for AsciidocParser {
             current: None,
             opaque: None,
             table: None,
-            table_header: None,
-            table_cell_index: 0,
+            table_index: 0,
+            declared_columns: None,
             containers: Vec::new(),
             in_doc_header: false,
             seen_content: false,
@@ -371,59 +285,33 @@ impl DocumentParser for AsciidocParser {
             }
 
             // Inside a table: translate row cells, keep everything else verbatim.
-            if let Some(delimiter) = &state.table {
-                if trimmed == delimiter {
-                    state.table = None;
-                    state.table_header = None;
-                    state.table_cell_index = 0;
-                } else if is_table_row(trimmed) {
-                    let ranges = table_cell_ranges(content);
-                    // The first row names the columns and fixes their count;
-                    // later cells flow into those columns in order, so a table
-                    // written one cell per line lands in the right column.
-                    if state.table_header.is_none() {
-                        state.table_header = Some(
-                            ranges
-                                .iter()
-                                .map(|r| content[r.clone()].trim().to_string())
-                                .collect(),
-                        );
-                        state.table_cell_index = 0;
-                        for (column, range) in ranges.into_iter().enumerate() {
-                            state.push_span_block_with_role(
-                                BlockType::Table,
-                                line_start + range.start..line_start + range.end,
-                                BlockRole::TableCell {
-                                    column,
-                                    header: None,
-                                },
-                            );
-                        }
-                        continue;
-                    }
-
-                    let width = state
-                        .table_header
-                        .as_ref()
-                        .map(Vec::len)
-                        .unwrap_or(1)
-                        .max(1);
-                    for range in ranges {
-                        let column = state.table_cell_index % width;
-                        state.table_cell_index += 1;
-                        let header = state
-                            .table_header
-                            .as_ref()
-                            .and_then(|h| h.get(column))
-                            .filter(|h| !h.is_empty())
-                            .cloned();
+            if let Some(mut reader) = state.table.take() {
+                if reader.closes(trimmed) {
+                    continue; // table closed; `state.table` stays None
+                }
+                if table::is_row(trimmed) {
+                    let table = state.table_index;
+                    for cell in reader.read_row(content) {
+                        // The label row names the columns; body cells carry the
+                        // name of the column they sit under.
+                        let header = if cell.label_row {
+                            None
+                        } else {
+                            reader.label(cell.column)
+                        };
                         state.push_span_block_with_role(
                             BlockType::Table,
-                            line_start + range.start..line_start + range.end,
-                            BlockRole::TableCell { column, header },
+                            line_start + cell.text.start..line_start + cell.text.end,
+                            BlockRole::TableCell {
+                                table,
+                                column: cell.column,
+                                label_row: cell.label_row,
+                                header,
+                            },
                         );
                     }
                 }
+                state.table = Some(reader);
                 continue;
             }
 
@@ -431,6 +319,9 @@ impl DocumentParser for AsciidocParser {
             if trimmed.is_empty() {
                 state.flush_current();
                 state.in_doc_header = false;
+                // Block attributes attach to the block that follows them
+                // directly, so a blank line drops them.
+                state.declared_columns = None;
                 continue;
             }
 
@@ -445,9 +336,10 @@ impl DocumentParser for AsciidocParser {
                 continue;
             }
 
-            if table_delimiter(trimmed) {
+            if table::is_delimiter(trimmed) {
                 state.flush_current();
-                state.table = Some(trimmed.to_string());
+                state.table_index += 1;
+                state.table = Some(TableReader::open(trimmed, state.declared_columns.take()));
                 continue;
             }
 
@@ -494,6 +386,11 @@ impl DocumentParser for AsciidocParser {
                 || (trimmed.starts_with('[') && trimmed.ends_with(']'))
             {
                 state.flush_current();
+                if trimmed.starts_with('[') {
+                    // A `cols` here shapes the table below it; anything else
+                    // supersedes a `cols` we were holding.
+                    state.declared_columns = table::declared_columns(trimmed);
+                }
                 continue;
             }
 
@@ -777,9 +674,7 @@ mod tests {
         let cells: Vec<(usize, Option<&str>)> = roles(&doc)
             .into_iter()
             .filter_map(|r| match r {
-                BlockRole::TableCell { column, header } => {
-                    Some((*column, header.as_deref()))
-                }
+                BlockRole::TableCell { column, header, .. } => Some((*column, header.as_deref())),
                 BlockRole::None => None,
             })
             .collect();
@@ -815,6 +710,7 @@ mod tests {
                 BlockRole::TableCell {
                     column,
                     header: Some(h),
+                    ..
                 } => Some((*column, Some(h.as_str()), b.raw_content.trim())),
                 _ => None,
             })
@@ -829,6 +725,71 @@ mod tests {
                 (1, Some("Effect"), "Perf map only"),
             ]
         );
+    }
+
+    /// Every cell's `(table, column, header)`, in document order.
+    fn cell_roles(doc: &Document) -> Vec<(usize, usize, Option<&str>)> {
+        roles(doc)
+            .into_iter()
+            .filter_map(|r| match r {
+                BlockRole::TableCell {
+                    table,
+                    column,
+                    header,
+                    ..
+                } => Some((*table, *column, header.as_deref())),
+                BlockRole::None => None,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn cols_shapes_a_header_row_written_one_cell_per_line() {
+        // Without reading `cols`, the first line would fix the width at one
+        // column and every later cell would pile into column 0.
+        let parser = AsciidocParser;
+        let source = concat!(
+            "[cols=\"2,3\", options=\"header\"]\n|===\n",
+            "| Aspect\n| Interpreter\n\n",
+            "| Dispatch\n| Indirect branch\n|===\n"
+        );
+        let doc = parser.parse(source);
+
+        assert_eq!(
+            cell_roles(&doc),
+            vec![
+                (1, 0, None),
+                (1, 1, None),
+                (1, 0, Some("Aspect")),
+                (1, 1, Some("Interpreter")),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_stale_attribute_line_does_not_shape_the_next_table() {
+        // `[source,erlang]` belongs to the listing above, not to the table.
+        let parser = AsciidocParser;
+        let source = "[source,erlang]\n----\nok.\n----\n\n|===\n|A |B\n|C |D\n|===\n";
+        let doc = parser.parse(source);
+        assert_eq!(
+            cell_roles(&doc),
+            vec![
+                (1, 0, None),
+                (1, 1, None),
+                (1, 0, Some("A")),
+                (1, 1, Some("B")),
+            ]
+        );
+    }
+
+    #[test]
+    fn adjacent_tables_get_distinct_indices() {
+        let parser = AsciidocParser;
+        let source = "|===\n|A |B\n|===\n|===\n|C |D\n|===\n";
+        let doc = parser.parse(source);
+        let tables: Vec<usize> = cell_roles(&doc).into_iter().map(|(t, _, _)| t).collect();
+        assert_eq!(tables, vec![1, 1, 2, 2]);
     }
 
     #[test]
@@ -847,6 +808,7 @@ mod tests {
                 BlockRole::TableCell {
                     column,
                     header: Some(h),
+                    ..
                 } => Some((*column, Some(h.as_str()), b.raw_content.trim())),
                 _ => None,
             })
@@ -878,8 +840,10 @@ mod tests {
 
         // Drop the "Instruction" column the way a selection rule would.
         for block in doc.sections.iter_mut().flat_map(|s| s.blocks.iter_mut()) {
-            if matches!(&block.role, BlockRole::TableCell { column: 0, header } if header.is_some())
-            {
+            if matches!(
+                &block.role,
+                BlockRole::TableCell { column: 0, label_row: false, .. }
+            ) {
                 block.translatable = false;
             }
         }

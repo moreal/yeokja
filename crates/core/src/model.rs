@@ -70,11 +70,18 @@ pub struct Segment {
 pub enum BlockRole {
     #[default]
     None,
-    /// One cell of a `|===` table. `column` is 0-based; `header` is the text of
-    /// the same column in the table's first row (absent for the header row
-    /// itself, and for tables whose first row could not be determined).
+    /// One cell of a `|===` table.
     TableCell {
+        /// Index of the table within its document, so cells of two adjacent
+        /// tables are never read as one.
+        table: usize,
+        /// 0-based column, accounting for cell spans.
         column: usize,
+        /// This cell is in the first row, which names the columns. Such cells
+        /// are never excluded by a selection rule.
+        label_row: bool,
+        /// Text of this cell's column in the first row. Absent on the label row
+        /// itself, and on columns the first row left unnamed.
         header: Option<String>,
     },
 }

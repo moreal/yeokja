@@ -19,49 +19,45 @@ pub struct TableGroup {
 
 /// Group a section's blocks into tables.
 ///
-/// Cells arrive in document order, so a table is a run of cells whose header
-/// row (cells carrying no header of their own) precedes its body. Any non-cell
-/// block ends the run.
+/// Cells name the table they came from, so grouping is exact — two tables
+/// written back to back never merge, however their rows are laid out.
 pub fn table_groups(blocks: &[crate::model::Block]) -> Vec<TableGroup> {
-    let mut groups: Vec<TableGroup> = Vec::new();
-    let mut headers: Vec<String> = Vec::new();
-    let mut body: Vec<(usize, usize)> = Vec::new();
-    let mut in_header_row = false;
-
-    let flush = |groups: &mut Vec<TableGroup>, headers: &mut Vec<String>, body: &mut Vec<(usize, usize)>| {
-        if !headers.is_empty() || !body.is_empty() {
-            groups.push(TableGroup {
-                headers: std::mem::take(headers),
-                body: std::mem::take(body),
-            });
-        }
-        headers.clear();
-        body.clear();
-    };
+    let mut groups: Vec<(usize, TableGroup)> = Vec::new();
 
     for (idx, block) in blocks.iter().enumerate() {
-        let BlockRole::TableCell { column, header } = &block.role else {
-            flush(&mut groups, &mut headers, &mut body);
-            in_header_row = false;
+        let BlockRole::TableCell {
+            table,
+            column,
+            label_row,
+            ..
+        } = &block.role
+        else {
             continue;
         };
-        match header {
+        let position = match groups.iter().position(|(id, _)| id == table) {
+            Some(position) => position,
             None => {
-                // A header row after a body means a new table started.
-                if !in_header_row {
-                    flush(&mut groups, &mut headers, &mut body);
-                    in_header_row = true;
-                }
-                headers.push(block.raw_content.trim().to_string());
+                groups.push((
+                    *table,
+                    TableGroup {
+                        headers: Vec::new(),
+                        body: Vec::new(),
+                    },
+                ));
+                groups.len() - 1
             }
-            Some(_) => {
-                in_header_row = false;
-                body.push((idx, *column));
+        };
+        let group = &mut groups[position].1;
+        if *label_row {
+            if group.headers.len() <= *column {
+                group.headers.resize(column + 1, String::new());
             }
+            group.headers[*column] = block.raw_content.trim().to_string();
+        } else {
+            group.body.push((idx, *column));
         }
     }
-    flush(&mut groups, &mut headers, &mut body);
-    groups
+    groups.into_iter().map(|(_, group)| group).collect()
 }
 
 /// Rules that apply to `file`, in declaration order.
@@ -94,7 +90,7 @@ pub fn apply_table_rules(document: &mut Document, rules: &[TableRule], file: &Pa
                 let block = &mut section.blocks[idx];
                 let header = match &block.role {
                     BlockRole::TableCell { header, .. } => header.clone(),
-                    BlockRole::None => None,
+                    _ => None,
                 };
                 if !rule.translates(column, header.as_deref()) && block.translatable {
                     block.translatable = false;
@@ -126,7 +122,33 @@ mod tests {
     use crate::config::ColumnRef;
     use crate::model::{Block, BlockType, Section};
 
-    fn cell(column: usize, header: Option<&str>, text: &str) -> Block {
+    /// A body cell of table `table`, sitting under the named column.
+    fn cell(table: usize, column: usize, header: &str, text: &str) -> Block {
+        block(
+            text,
+            BlockRole::TableCell {
+                table,
+                column,
+                label_row: false,
+                header: Some(header.to_string()),
+            },
+        )
+    }
+
+    /// A cell of table `table`'s label row.
+    fn label(table: usize, column: usize, text: &str) -> Block {
+        block(
+            text,
+            BlockRole::TableCell {
+                table,
+                column,
+                label_row: true,
+                header: None,
+            },
+        )
+    }
+
+    fn block(text: &str, role: BlockRole) -> Block {
         Block {
             block_type: BlockType::Table,
             segments: Vec::new(),
@@ -134,10 +156,7 @@ mod tests {
             heading_level: None,
             span: Some(0..text.len()),
             translatable: true,
-            role: BlockRole::TableCell {
-                column,
-                header: header.map(str::to_string),
-            },
+            role,
         }
     }
 
@@ -146,12 +165,12 @@ mod tests {
         Document {
             sections: vec![Section {
                 blocks: vec![
-                    cell(0, None, "Instruction"),
-                    cell(1, None, "Arguments"),
-                    cell(2, None, "Explanation"),
-                    cell(0, Some("Instruction"), "allocate"),
-                    cell(1, Some("Arguments"), "t t"),
-                    cell(2, Some("Explanation"), "Allocate stack words"),
+                    label(1, 0, "Instruction"),
+                    label(1, 1, "Arguments"),
+                    label(1, 2, "Explanation"),
+                    cell(1, 0, "Instruction", "allocate"),
+                    cell(1, 1, "Arguments", "t t"),
+                    cell(1, 2, "Explanation", "Allocate stack words"),
                 ],
             }],
             source: String::new(),
@@ -177,7 +196,7 @@ mod tests {
             .iter()
             .flat_map(|s| s.blocks.iter())
             .filter(|b| b.translatable)
-            .filter(|b| matches!(&b.role, BlockRole::TableCell { header, .. } if header.is_some()))
+            .filter(|b| matches!(&b.role, BlockRole::TableCell { label_row: false, .. }))
             .map(|b| b.raw_content.as_str())
             .collect()
     }
@@ -209,7 +228,7 @@ mod tests {
         let headers: Vec<&str> = doc.sections[0]
             .blocks
             .iter()
-            .filter(|b| matches!(&b.role, BlockRole::TableCell { header: None, .. }))
+            .filter(|b| matches!(&b.role, BlockRole::TableCell { label_row: true, .. }))
             .filter(|b| b.translatable)
             .map(|b| b.raw_content.as_str())
             .collect();
@@ -248,15 +267,15 @@ mod tests {
     #[test]
     fn table_groups_separates_consecutive_tables() {
         let blocks = vec![
-            cell(0, None, "Type"),
-            cell(1, None, "Explanation"),
-            cell(0, Some("Type"), "c"),
-            cell(1, Some("Explanation"), "A constant"),
+            label(1, 0, "Type"),
+            label(1, 1, "Explanation"),
+            cell(1, 0, "Type", "c"),
+            cell(1, 1, "Explanation", "A constant"),
             // A second table follows directly, with a different schema.
-            cell(0, None, "Instruction"),
-            cell(1, None, "Arguments"),
-            cell(0, Some("Instruction"), "allocate"),
-            cell(1, Some("Arguments"), "t t"),
+            label(2, 0, "Instruction"),
+            label(2, 1, "Arguments"),
+            cell(2, 0, "Instruction", "allocate"),
+            cell(2, 1, "Arguments", "t t"),
         ];
         let groups = table_groups(&blocks);
         assert_eq!(groups.len(), 2);
@@ -273,16 +292,16 @@ mod tests {
         let mut doc = Document {
             sections: vec![Section {
                 blocks: vec![
-                    cell(0, None, "Type"),
-                    cell(1, None, "Explanation"),
-                    cell(0, Some("Type"), "c"),
-                    cell(1, Some("Explanation"), "A constant"),
-                    cell(0, None, "Instruction"),
-                    cell(1, None, "Arguments"),
-                    cell(2, None, "Explanation"),
-                    cell(0, Some("Instruction"), "allocate"),
-                    cell(1, Some("Arguments"), "t t"),
-                    cell(2, Some("Explanation"), "Allocate stack words"),
+                    label(1, 0, "Type"),
+                    label(1, 1, "Explanation"),
+                    cell(1, 0, "Type", "c"),
+                    cell(1, 1, "Explanation", "A constant"),
+                    label(2, 0, "Instruction"),
+                    label(2, 1, "Arguments"),
+                    label(2, 2, "Explanation"),
+                    cell(2, 0, "Instruction", "allocate"),
+                    cell(2, 1, "Arguments", "t t"),
+                    cell(2, 2, "Explanation", "Allocate stack words"),
                 ],
             }],
             source: String::new(),
@@ -295,9 +314,7 @@ mod tests {
     #[test]
     fn extra_columns_do_not_break_the_match() {
         let mut doc = instruction_table();
-        doc.sections[0]
-            .blocks
-            .insert(3, cell(3, None, "Since"));
+        doc.sections[0].blocks.insert(3, label(1, 3, "Since"));
         let rules = vec![rule(vec![ColumnRef::Header("Explanation".into())], vec![])];
         assert_eq!(apply_table_rules(&mut doc, &rules, Path::new("a.adoc")), 2);
     }
