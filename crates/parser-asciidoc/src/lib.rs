@@ -16,7 +16,10 @@ use std::ops::Range;
 use table::TableReader;
 use yeokja_core::model::*;
 use yeokja_core::parser::{DocumentParser, TranslationMap};
-use yeokja_parser_utils::{make_segments, normalize_inline_text, splice_reconstruct};
+use yeokja_parser_utils::{
+    apply_splices, collect_splices, join_segments_with_translations, make_segments,
+    normalize_inline_text,
+};
 
 pub struct AsciidocParser;
 
@@ -407,7 +410,9 @@ impl DocumentParser for AsciidocParser {
                     heading_level: Some(level),
                     span: Some(span),
                     translatable: BlockType::Heading.is_translatable(),
-                    role: BlockRole::None,
+                    role: BlockRole::SetextTitle {
+                        underline: line_start..content_end,
+                    },
                 });
                 continue;
             }
@@ -544,8 +549,43 @@ impl DocumentParser for AsciidocParser {
     }
 
     fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String {
-        splice_reconstruct(document, translations)
+        let mut splices = collect_splices(document, translations);
+        splices.extend(setext_underline_edits(document, translations));
+        apply_splices(&document.source, splices)
     }
+}
+
+/// Redraw the underline of each translated two-line section title.
+///
+/// Asciidoctor only reads the two lines as a title while their lengths are
+/// within one character of each other, counted in characters. A translation
+/// almost never keeps the original length, so leaving the underline verbatim
+/// would quietly demote the title to a paragraph.
+fn setext_underline_edits(
+    document: &Document,
+    translations: &TranslationMap,
+) -> Vec<(Range<usize>, String)> {
+    let mut edits = Vec::new();
+    for block in document.sections.iter().flat_map(|s| s.blocks.iter()) {
+        let BlockRole::SetextTitle { underline } = &block.role else {
+            continue;
+        };
+        if !block
+            .segments
+            .iter()
+            .any(|seg| translations.contains_key(&seg.id))
+        {
+            continue; // untranslated title keeps its own underline
+        }
+        let Some(marker) = document.source[underline.clone()].chars().next() else {
+            continue;
+        };
+        let width = join_segments_with_translations(&block.segments, translations)
+            .chars()
+            .count();
+        edits.push((underline.clone(), marker.to_string().repeat(width)));
+    }
+    edits
 }
 
 #[cfg(test)]
@@ -841,6 +881,42 @@ mod tests {
     }
 
     #[test]
+    fn a_translated_two_line_title_gets_its_underline_redrawn() {
+        // Asciidoctor reads the two lines as a title only while their lengths
+        // are within one character, so the underline has to follow.
+        let parser = AsciidocParser;
+        let source = "About this book\n~~~~~~~~~~~~~~~\n\nBody.\n";
+        let doc = parser.parse(source);
+
+        let title = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|s| s.source == "About this book")
+            .expect("title is a segment");
+        let mut translations = TranslationMap::new();
+        translations.insert(title.id.clone(), "이 책에 대하여".to_string());
+
+        let output = parser.reconstruct(&doc, &translations);
+        let mut lines = output.lines();
+        let translated = lines.next().unwrap();
+        let underline = lines.next().unwrap();
+        assert_eq!(translated, "이 책에 대하여");
+        assert_eq!(underline, "~".repeat(translated.chars().count()));
+    }
+
+    #[test]
+    fn an_untranslated_two_line_title_keeps_its_underline() {
+        let parser = AsciidocParser;
+        let source = "About this book\n~~~~~~~~~~~~~~~\n\nBody.\n";
+        let doc = parser.parse(source);
+        assert_eq!(
+            parser.reconstruct(&doc, &TranslationMap::new()),
+            source,
+            "with nothing translated the source comes back unchanged"
+        );
+    }
+
+    #[test]
     fn punctuation_alone_is_not_a_title_underline() {
         // A shell transcript that opens and closes a listing block around an
         // elided `...`. Reading the `----` under it as a title underline eats
@@ -897,7 +973,7 @@ mod tests {
             .into_iter()
             .filter_map(|r| match r {
                 BlockRole::TableCell { column, header, .. } => Some((*column, header.as_deref())),
-                BlockRole::None => None,
+                _ => None,
             })
             .collect();
 
@@ -960,7 +1036,7 @@ mod tests {
                     header,
                     ..
                 } => Some((*table, *column, header.as_deref())),
-                BlockRole::None => None,
+                _ => None,
             })
             .collect()
     }

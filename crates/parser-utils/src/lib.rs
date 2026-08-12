@@ -73,9 +73,21 @@ pub fn join_segments_with_translations(
 /// outside those spans — markers, delimiters, code, blank lines — is preserved
 /// byte-for-byte. Shared by all span-based parsers.
 pub fn splice_reconstruct(document: &Document, translations: &TranslationMap) -> String {
-    let source = &document.source;
-    let mut splices: Vec<(std::ops::Range<usize>, String)> = Vec::new();
+    apply_splices(
+        &document.source,
+        collect_splices(document, translations),
+    )
+}
 
+/// The replacement each translated block contributes, as `(span, text)`.
+///
+/// Split out so a parser can add edits of its own — a construct whose
+/// surroundings have to follow the translation rather than stay verbatim.
+pub fn collect_splices(
+    document: &Document,
+    translations: &TranslationMap,
+) -> Vec<(std::ops::Range<usize>, String)> {
+    let mut splices = Vec::new();
     for section in &document.sections {
         for block in &section.blocks {
             let Some(span) = &block.span else { continue };
@@ -94,7 +106,14 @@ pub fn splice_reconstruct(document: &Document, translations: &TranslationMap) ->
             splices.push((span.clone(), joined));
         }
     }
+    splices
+}
 
+/// Replace each span in `source`, keeping everything between them byte-for-byte.
+pub fn apply_splices(
+    source: &str,
+    mut splices: Vec<(std::ops::Range<usize>, String)>,
+) -> String {
     splices.sort_by_key(|(range, _)| range.start);
 
     let mut output = String::with_capacity(source.len());

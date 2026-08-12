@@ -70,6 +70,10 @@ pub struct Segment {
 pub enum BlockRole {
     #[default]
     None,
+    /// A section title written on two lines, with the byte range of its
+    /// underline. The underline's length identifies the title, so it has to
+    /// follow the translation instead of staying verbatim.
+    SetextTitle { underline: std::ops::Range<usize> },
     /// One cell of a `|===` table.
     TableCell {
         /// Index of the table within its document, so cells of two adjacent
