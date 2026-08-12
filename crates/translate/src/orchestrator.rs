@@ -30,7 +30,8 @@ use yeokja_core::state::{SegmentState, StateFile};
 pub type ParserFactory =
     Arc<dyn Fn(&Path, &ProjectConfig) -> Box<dyn DocumentParser> + Send + Sync>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum ProgressEvent {
     /// Emitted once at start: every file with its pending-segment count.
     FilesDiscovered { files: Vec<(PathBuf, usize)> },
@@ -209,6 +210,49 @@ pub fn scan_file(
     };
     let reconciled = reconcile_with_status(&doc, &existing, glossary);
     Ok((doc, reconciled))
+}
+
+/// Build the standard evaluator set: mechanical checks always, plus the
+/// LLM-as-judge StyleEvaluator when a provider is available.
+pub fn standard_evaluators(
+    style_provider: Option<Arc<dyn LlmProvider>>,
+    target_lang: &str,
+) -> Vec<Box<dyn TranslationEvaluator>> {
+    let mut evaluators: Vec<Box<dyn TranslationEvaluator>> = vec![
+        Box::new(GlossaryEvaluator),
+        Box::new(LinkEvaluator),
+        Box::new(FormatEvaluator),
+    ];
+    if let Some(provider) = style_provider {
+        evaluators.push(Box::new(StyleEvaluator::new(provider, target_lang.to_string())));
+    }
+    evaluators
+}
+
+/// Run every evaluator against one translation and combine the results.
+/// Evaluator failures (e.g. LLM errors) are logged and skipped.
+pub async fn evaluate_translation(
+    evaluators: &[Box<dyn TranslationEvaluator>],
+    context: &crate::evaluator::EvaluationContext,
+) -> crate::evaluator::EvaluationResult {
+    let mut combined = crate::evaluator::EvaluationResult {
+        passed: true,
+        issues: Vec::new(),
+    };
+    for evaluator in evaluators {
+        match evaluator.evaluate(context).await {
+            Ok(result) => {
+                if !result.passed {
+                    combined.passed = false;
+                }
+                combined.issues.extend(result.issues);
+            }
+            Err(e) => {
+                tracing::warn!(evaluator = evaluator.name(), error = %e, "Evaluator failed");
+            }
+        }
+    }
+    combined
 }
 
 /// Group segments needing translation by their containing block.
@@ -543,24 +587,16 @@ impl FileTranslator {
         };
 
         let translations: Vec<(usize, String, Vec<String>)> = if self.options.auto_evaluate {
-            let glossary_evaluator = GlossaryEvaluator;
-            let link_evaluator = LinkEvaluator;
-            let format_evaluator = FormatEvaluator;
-            let style_evaluator = self.eval_provider.clone().map(|provider| {
-                StyleEvaluator::new(provider, self.config.project.target_lang.clone())
-            });
-            let mut evaluators: Vec<&dyn TranslationEvaluator> = vec![
-                &glossary_evaluator,
-                &link_evaluator,
-                &format_evaluator,
-            ];
-            if let Some(style) = &style_evaluator {
-                evaluators.push(style);
-            }
+            let evaluators = standard_evaluators(
+                self.eval_provider.clone(),
+                &self.config.project.target_lang,
+            );
+            let evaluator_refs: Vec<&dyn TranslationEvaluator> =
+                evaluators.iter().map(|e| e.as_ref()).collect();
 
             translate_with_evaluation(
                 self.provider.as_ref(),
-                &evaluators,
+                &evaluator_refs,
                 request,
                 &glossary_terms,
                 &self.config.project.source_lang,

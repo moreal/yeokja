@@ -2,7 +2,7 @@ use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 use std::ops::Range;
 use yeokja_core::model::*;
 use yeokja_core::parser::{DocumentParser, TranslationMap};
-use yeokja_parser_utils::{join_segments_with_translations, make_segments, normalize_inline_text};
+use yeokja_parser_utils::{make_segments, normalize_inline_text, splice_reconstruct};
 
 /// Span-based Markdown parser.
 ///
@@ -242,43 +242,7 @@ impl DocumentParser for MarkdownParser {
     }
 
     fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String {
-        let source = &document.source;
-        let mut splices: Vec<(Range<usize>, String)> = Vec::new();
-
-        for section in &document.sections {
-            for block in &section.blocks {
-                let Some(span) = &block.span else { continue };
-                if !block.block_type.is_translatable() || block.segments.is_empty() {
-                    continue;
-                }
-                let any_translated = block
-                    .segments
-                    .iter()
-                    .any(|seg| translations.contains_key(&seg.id));
-                if !any_translated {
-                    // Keep the original raw text (including line wrapping) untouched.
-                    continue;
-                }
-                let joined = join_segments_with_translations(&block.segments, translations);
-                splices.push((span.clone(), joined));
-            }
-        }
-
-        splices.sort_by_key(|(range, _)| range.start);
-
-        let mut output = String::with_capacity(source.len());
-        let mut pos = 0usize;
-        for (range, text) in splices {
-            if range.start < pos {
-                // Overlapping spans should not happen; skip defensively.
-                continue;
-            }
-            output.push_str(&source[pos..range.start]);
-            output.push_str(&text);
-            pos = range.end;
-        }
-        output.push_str(&source[pos..]);
-        output
+        splice_reconstruct(document, translations)
     }
 }
 

@@ -65,3 +65,49 @@ pub fn join_segments_with_translations(
         })
         .collect()
 }
+
+/// Reconstruct a document by splicing translations into the original source.
+///
+/// Every translatable block with a `span` and at least one translation has its
+/// span replaced by the joined (translated or fallback) segments; everything
+/// outside those spans — markers, delimiters, code, blank lines — is preserved
+/// byte-for-byte. Shared by all span-based parsers.
+pub fn splice_reconstruct(document: &Document, translations: &TranslationMap) -> String {
+    let source = &document.source;
+    let mut splices: Vec<(std::ops::Range<usize>, String)> = Vec::new();
+
+    for section in &document.sections {
+        for block in &section.blocks {
+            let Some(span) = &block.span else { continue };
+            if !block.block_type.is_translatable() || block.segments.is_empty() {
+                continue;
+            }
+            let any_translated = block
+                .segments
+                .iter()
+                .any(|seg| translations.contains_key(&seg.id));
+            if !any_translated {
+                // Keep the original raw text (including line wrapping) untouched.
+                continue;
+            }
+            let joined = join_segments_with_translations(&block.segments, translations);
+            splices.push((span.clone(), joined));
+        }
+    }
+
+    splices.sort_by_key(|(range, _)| range.start);
+
+    let mut output = String::with_capacity(source.len());
+    let mut pos = 0usize;
+    for (range, text) in splices {
+        if range.start < pos {
+            // Overlapping spans should not happen; skip defensively.
+            continue;
+        }
+        output.push_str(&source[pos..range.start]);
+        output.push_str(&text);
+        pos = range.end;
+    }
+    output.push_str(&source[pos..]);
+    output
+}

@@ -1,99 +1,332 @@
-use asciidork_ast::{BlockContent, BlockContext, CellContent, DocContent};
-use asciidork_parser::prelude::SourceFile;
-use asciidork_parser::Parser;
-use bumpalo::Bump;
-use yeokja_core::model::{Block, BlockType, Document, Section};
+//! Span-based AsciiDoc parser.
+//!
+//! AsciiDoc block structure is line-oriented, so this parser scans lines while
+//! tracking byte offsets into the original source. Each translatable block
+//! records the byte range (`Block::span`) of its text content — excluding
+//! heading markers, list bullets, admonition labels, and delimiters — and
+//! segments keep the raw inline markup (`*bold*`, `https://...[link]`, etc.).
+//! Reconstruction splices translations into the original source, preserving
+//! everything outside the translated spans byte-for-byte: attribute entries,
+//! anchors, block attribute lines, delimited blocks, comments, and tables.
+
+use std::ops::Range;
+use yeokja_core::model::*;
 use yeokja_core::parser::{DocumentParser, TranslationMap};
-use yeokja_parser_utils::{join_segments_with_translations, make_segments};
+use yeokja_parser_utils::{make_segments, normalize_inline_text, splice_reconstruct};
 
 pub struct AsciidocParser;
 
+const ADMONITION_LABELS: [&str; 5] = ["NOTE:", "TIP:", "IMPORTANT:", "WARNING:", "CAUTION:"];
+
+struct ParseState<'a> {
+    source: &'a str,
+    sections: Vec<Section>,
+    section_idx: usize,
+    block_idx: usize,
+    /// Currently accumulating translatable run (paragraph or list item).
+    current: Option<(BlockType, Range<usize>)>,
+    /// Open opaque delimited block (listing/literal/passthrough/comment/table):
+    /// the trimmed delimiter line that must appear again to close it, plus the
+    /// block's starting offset.
+    opaque: Option<(String, usize)>,
+    /// Open container delimiters (`____`, `====`, `****`); content inside is
+    /// parsed normally, `____` labels its content as BlockQuote.
+    containers: Vec<String>,
+    /// Inside the document header (title author/revision lines).
+    in_doc_header: bool,
+    seen_content: bool,
+}
+
+impl ParseState<'_> {
+    fn flush_current(&mut self) {
+        let Some((block_type, span)) = self.current.take() else {
+            return;
+        };
+        let raw = &self.source[span.clone()];
+        if raw.trim().is_empty() {
+            return;
+        }
+        let normalized = normalize_inline_text(raw);
+        let segments = make_segments(&normalized, block_type, self.section_idx, self.block_idx);
+        self.push_block(Block {
+            block_type,
+            segments,
+            raw_content: raw.to_string(),
+            heading_level: None,
+            span: Some(span),
+        });
+    }
+
+    fn push_block(&mut self, block: Block) {
+        self.sections.last_mut().unwrap().blocks.push(block);
+        self.block_idx += 1;
+        self.seen_content = true;
+    }
+
+    /// Extend the current run (or start a new one of `block_type`).
+    fn extend_current(&mut self, block_type: BlockType, range: Range<usize>) {
+        match &mut self.current {
+            Some((_, span)) => span.end = range.end,
+            None => self.current = Some((block_type, range)),
+        }
+    }
+
+    /// Type for plain text at this position: BlockQuote inside `____`.
+    fn text_type(&self) -> BlockType {
+        if self.containers.iter().any(|d| d.starts_with('_')) {
+            BlockType::BlockQuote
+        } else {
+            BlockType::Paragraph
+        }
+    }
+
+    fn start_section_if_needed(&mut self, level: u8) {
+        if level <= 2 && !self.sections.last().unwrap().blocks.is_empty() {
+            self.sections.push(Section { blocks: Vec::new() });
+            self.section_idx += 1;
+            self.block_idx = 0;
+        }
+    }
+}
+
+/// `----`, `....`, `++++`, `////` (comment), `|===` (table) open opaque blocks.
+fn opaque_delimiter(trimmed: &str) -> bool {
+    let all_of = |c: char| trimmed.len() >= 4 && trimmed.chars().all(|x| x == c);
+    all_of('-') || all_of('.') || all_of('+') || all_of('/')
+        || (trimmed.starts_with('|') && trimmed[1..].len() >= 3 && trimmed[1..].chars().all(|c| c == '='))
+}
+
+/// `____`, `====`, `****` open/close container blocks parsed normally inside.
+fn container_delimiter(trimmed: &str) -> bool {
+    let all_of = |c: char| trimmed.len() >= 4 && trimmed.chars().all(|x| x == c);
+    all_of('_') || all_of('=') || all_of('*')
+}
+
+/// `= Heading` → (level, byte offset of the text within the line).
+fn parse_heading(content: &str) -> Option<(u8, usize)> {
+    let level = content.chars().take_while(|c| *c == '=').count();
+    if level == 0 || level > 6 {
+        return None;
+    }
+    let rest = &content[level..];
+    let ws = rest.len() - rest.trim_start().len();
+    if ws == 0 || rest.trim().is_empty() {
+        return None;
+    }
+    Some((level as u8, level + ws))
+}
+
+/// `* item`, `- item`, `. item`, `12. item` → byte offset of the item text.
+fn parse_list_item(content: &str) -> Option<usize> {
+    let trimmed_start = content.len() - content.trim_start().len();
+    let rest = &content[trimmed_start..];
+
+    let first = rest.chars().next()?;
+    let marker_len = match first {
+        '*' | '.' => rest.chars().take_while(|c| *c == first).count(),
+        '-' => 1,
+        _ => {
+            let dot = rest
+                .find(". ")
+                .filter(|&d| d > 0 && rest[..d].chars().all(|c| c.is_ascii_digit()))?;
+            dot + 1
+        }
+    };
+
+    let after = &rest[marker_len..];
+    let ws = after.len() - after.trim_start().len();
+    if ws == 0 || after.trim().is_empty() {
+        return None; // no space after marker → not a list item
+    }
+    Some(trimmed_start + marker_len + ws)
+}
+
+/// `:attr: value` attribute entry line.
+fn is_attribute_entry(trimmed: &str) -> bool {
+    if !trimmed.starts_with(':') {
+        return false;
+    }
+    match trimmed[1..].find(':') {
+        Some(end) => !trimmed[1..1 + end].contains(char::is_whitespace) && end > 0,
+        None => false,
+    }
+}
+
+/// `NOTE: text` → byte offset of the text after the label.
+fn parse_admonition(content: &str) -> Option<usize> {
+    for label in ADMONITION_LABELS {
+        if let Some(rest) = content.strip_prefix(label) {
+            let ws = rest.len() - rest.trim_start().len();
+            if ws > 0 && !rest.trim().is_empty() {
+                return Some(label.len() + ws);
+            }
+        }
+    }
+    None
+}
+
+/// `.Block Title` (dot followed by non-space, non-dot) → offset of the title.
+fn parse_block_title(content: &str) -> Option<usize> {
+    let rest = content.strip_prefix('.')?;
+    let first = rest.chars().next()?;
+    if first == '.' || first.is_whitespace() {
+        return None;
+    }
+    Some(1)
+}
+
 impl DocumentParser for AsciidocParser {
     fn parse(&self, source: &str) -> Document {
-        let preprocessed = preprocess(source);
-        let bump = Bump::new();
-        let parser = Parser::from_str(&preprocessed, SourceFile::Tmp, &bump);
-
-        let result = match parser.parse() {
-            Ok(r) => r,
-            Err(diagnostics) => {
-                tracing::warn!(
-                    errors = diagnostics.len(),
-                    "AsciiDoc parse failed, falling back to line-based parser"
-                );
-                for d in diagnostics.iter().take(3) {
-                    tracing::debug!(diagnostic = ?d, "Parse diagnostic");
-                }
-                return parse_fallback(source);
-            }
+        let mut state = ParseState {
+            source,
+            sections: vec![Section { blocks: Vec::new() }],
+            section_idx: 0,
+            block_idx: 0,
+            current: None,
+            opaque: None,
+            containers: Vec::new(),
+            in_doc_header: false,
+            seen_content: false,
         };
 
-        let mut sections: Vec<Section> = vec![Section { blocks: Vec::new() }];
-        let mut section_idx: usize = 0;
-        let mut block_idx: usize = 0;
+        let mut offset = 0usize;
+        for line in source.split_inclusive('\n') {
+            let line_start = offset;
+            offset += line.len();
+            let content = line.strip_suffix('\n').unwrap_or(line);
+            let content = content.strip_suffix('\r').unwrap_or(content);
+            let content_end = line_start + content.len();
+            let trimmed = content.trim();
 
-        // Handle document title (= Title) which is stored in the header
-        if let Some(title) = result.document.title() {
-            let title_text = title.main.plain_text().join("");
-            if !title_text.trim().is_empty() {
-                let segments = make_segments(&title_text, BlockType::Heading, section_idx, block_idx);
-                sections.last_mut().unwrap().blocks.push(Block {
+            // Inside an opaque delimited block: only the matching closer matters.
+            if let Some((delimiter, start)) = &state.opaque {
+                if trimmed == delimiter {
+                    let block_type = if delimiter.starts_with('|') {
+                        BlockType::Table
+                    } else if delimiter.starts_with('/') {
+                        BlockType::HtmlBlock
+                    } else {
+                        BlockType::CodeBlock
+                    };
+                    let raw = source[*start..content_end].to_string();
+                    state.push_block(Block {
+                        block_type,
+                        segments: Vec::new(),
+                        raw_content: raw,
+                        heading_level: None,
+                        span: None,
+                    });
+                    state.opaque = None;
+                }
+                continue;
+            }
+
+            // Blank line ends the current paragraph/list item (and the header).
+            if trimmed.is_empty() {
+                state.flush_current();
+                state.in_doc_header = false;
+                continue;
+            }
+
+            // Document header: skip author/revision lines after the doc title.
+            if state.in_doc_header {
+                continue;
+            }
+
+            if opaque_delimiter(trimmed) {
+                state.flush_current();
+                state.opaque = Some((trimmed.to_string(), line_start));
+                continue;
+            }
+
+            if container_delimiter(trimmed) {
+                state.flush_current();
+                if state.containers.last().map(String::as_str) == Some(trimmed) {
+                    state.containers.pop();
+                } else {
+                    state.containers.push(trimmed.to_string());
+                }
+                continue;
+            }
+
+            if let Some((level, text_offset)) = parse_heading(content) {
+                state.flush_current();
+                let is_doc_title = level == 1 && !state.seen_content;
+                state.start_section_if_needed(level);
+                let span = line_start + text_offset..content_end;
+                let raw = &source[span.clone()];
+                let segments = make_segments(
+                    &normalize_inline_text(raw),
+                    BlockType::Heading,
+                    state.section_idx,
+                    state.block_idx,
+                );
+                state.push_block(Block {
                     block_type: BlockType::Heading,
                     segments,
-                    raw_content: title_text,
-                    heading_level: Some(1),
-                    span: None,
+                    raw_content: raw.to_string(),
+                    heading_level: Some(level),
+                    span: Some(span),
                 });
-                block_idx += 1;
+                if is_doc_title {
+                    state.in_doc_header = true;
+                }
+                continue;
             }
+
+            // Comment line, attribute entry, anchor, or block attribute line.
+            if trimmed.starts_with("//")
+                || is_attribute_entry(trimmed)
+                || (trimmed.starts_with('[') && trimmed.ends_with(']'))
+            {
+                state.flush_current();
+                continue;
+            }
+
+            // List continuation marker joins blocks to an item; treat as boundary.
+            if trimmed == "+" {
+                state.flush_current();
+                continue;
+            }
+
+            if let Some(text_offset) = parse_list_item(content) {
+                state.flush_current();
+                state.current =
+                    Some((BlockType::ListItem, line_start + text_offset..content_end));
+                continue;
+            }
+
+            if let Some(text_offset) = parse_admonition(content) {
+                state.flush_current();
+                state.current =
+                    Some((state.text_type(), line_start + text_offset..content_end));
+                continue;
+            }
+
+            if state.current.is_none()
+                && let Some(text_offset) = parse_block_title(content)
+            {
+                // Block title (`.Installation`) — translatable single line.
+                state.current =
+                    Some((BlockType::Paragraph, line_start + text_offset..content_end));
+                state.flush_current();
+                continue;
+            }
+
+            // Plain text: continue the current run or start a paragraph.
+            let text_type = match &state.current {
+                Some((block_type, _)) => *block_type,
+                None => state.text_type(),
+            };
+            let start = line_start + (content.len() - content.trim_start().len());
+            state.extend_current(text_type, start..content_end);
         }
 
-        match &result.document.content {
-            DocContent::Sections(sectioned) => {
-                // Handle preamble blocks
-                if let Some(preamble) = &sectioned.preamble {
-                    for ast_block in preamble.iter() {
-                        process_block(ast_block, &mut sections, &mut section_idx, &mut block_idx, None);
-                    }
-                }
+        state.flush_current();
 
-                // Handle top-level sections
-                for ast_section in sectioned.sections.iter() {
-                    // Start a new section
-                    sections.push(Section { blocks: Vec::new() });
-                    section_idx = sections.len() - 1;
-                    block_idx = 0;
-
-                    // Add heading
-                    let heading_text = ast_section.heading.plain_text().join("");
-                    if !heading_text.trim().is_empty() {
-                        let level = ast_section.level + 1; // asciidork uses 0-based levels
-                        let segments = make_segments(&heading_text, BlockType::Heading, section_idx, block_idx);
-                        sections.last_mut().unwrap().blocks.push(Block {
-                            block_type: BlockType::Heading,
-                            segments,
-                            raw_content: heading_text,
-                            heading_level: Some(level),
-                            span: None,
-                        });
-                        block_idx += 1;
-                    }
-
-                    // Process blocks in section (may create new sections for nested headings)
-                    for ast_block in ast_section.blocks.iter() {
-                        process_block(ast_block, &mut sections, &mut section_idx, &mut block_idx, None);
-                    }
-                }
-            }
-            DocContent::Blocks(blocks) => {
-                for ast_block in blocks.iter() {
-                    process_block(ast_block, &mut sections, &mut section_idx, &mut block_idx, None);
-                }
-            }
-            _ => {}
-        }
-
+        let mut sections = state.sections;
         sections.retain(|s| !s.blocks.is_empty());
+
         Document {
             sections,
             source: source.to_string(),
@@ -101,404 +334,7 @@ impl DocumentParser for AsciidocParser {
     }
 
     fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String {
-        let mut output = String::new();
-        let mut prev_was_list_item = false;
-
-        for section in &document.sections {
-            for block in &section.blocks {
-                // A list only ends at a blank line in AsciiDoc; separate any
-                // following non-list block so it does not attach to the item.
-                if prev_was_list_item && block.block_type != BlockType::ListItem {
-                    output.push('\n');
-                }
-                prev_was_list_item = block.block_type == BlockType::ListItem;
-
-                match block.block_type {
-                    BlockType::Heading => {
-                        let level = block.heading_level.unwrap_or(1);
-                        let prefix = "=".repeat(level as usize);
-                        output.push_str(&prefix);
-                        output.push(' ');
-                        output.push_str(&join_segments_with_translations(&block.segments, translations));
-                        output.push_str("\n\n");
-                    }
-                    BlockType::CodeBlock => {
-                        output.push_str("----\n");
-                        output.push_str(&block.raw_content);
-                        output.push_str("\n----\n\n");
-                    }
-                    BlockType::BlockQuote => {
-                        output.push_str("____\n");
-                        output.push_str(&join_segments_with_translations(&block.segments, translations));
-                        output.push_str("\n____\n\n");
-                    }
-                    BlockType::ThematicBreak => {
-                        output.push_str("'''\n\n");
-                    }
-                    BlockType::ListItem => {
-                        output.push_str("* ");
-                        output.push_str(&join_segments_with_translations(&block.segments, translations));
-                        output.push('\n');
-                    }
-                    _ => {
-                        output.push_str(&join_segments_with_translations(&block.segments, translations));
-                        output.push_str("\n\n");
-                    }
-                }
-            }
-        }
-
-        output.trim_end().to_string()
-    }
-}
-
-fn process_block(
-    ast_block: &asciidork_ast::Block,
-    sections: &mut Vec<Section>,
-    section_idx: &mut usize,
-    block_idx: &mut usize,
-    block_type_override: Option<BlockType>,
-) {
-    match &ast_block.content {
-        BlockContent::Section(sec) => {
-            // Start a new section for this heading
-            sections.push(Section { blocks: Vec::new() });
-            *section_idx = sections.len() - 1;
-            *block_idx = 0;
-
-            let heading_text = sec.heading.plain_text().join("");
-            if !heading_text.trim().is_empty() {
-                let segments = make_segments(&heading_text, BlockType::Heading, *section_idx, *block_idx);
-                sections.last_mut().unwrap().blocks.push(Block {
-                    block_type: BlockType::Heading,
-                    segments,
-                    raw_content: heading_text,
-                    heading_level: Some(sec.level + 1), // asciidork uses 0-based levels
-                    span: None,
-                });
-                *block_idx += 1;
-            }
-
-            for nested in sec.blocks.iter() {
-                process_block(nested, sections, section_idx, block_idx, None);
-            }
-        }
-        BlockContent::Simple(inline_nodes) => {
-            let text = inline_nodes.plain_text().join("");
-            if text.trim().is_empty() {
-                return;
-            }
-            let block_type = block_type_override.unwrap_or(match ast_block.context {
-                BlockContext::Listing | BlockContext::Literal => BlockType::CodeBlock,
-                BlockContext::BlockQuote | BlockContext::Verse => BlockType::BlockQuote,
-                BlockContext::Passthrough => BlockType::HtmlBlock,
-                _ => BlockType::Paragraph,
-            });
-
-            if block_type == BlockType::CodeBlock || block_type == BlockType::HtmlBlock {
-                sections.last_mut().unwrap().blocks.push(Block {
-                    block_type,
-                    segments: Vec::new(),
-                    raw_content: text,
-                    heading_level: None,
-                    span: None,
-                });
-            } else {
-                let segments = make_segments(&text, block_type, *section_idx, *block_idx);
-                sections.last_mut().unwrap().blocks.push(Block {
-                    block_type,
-                    segments,
-                    raw_content: text,
-                    heading_level: None,
-                    span: None,
-                });
-            }
-            *block_idx += 1;
-        }
-        BlockContent::Compound(blocks) => {
-            // Determine if this compound block has a specific context (e.g., BlockQuote)
-            let override_type = match ast_block.context {
-                BlockContext::BlockQuote | BlockContext::Verse => Some(BlockType::BlockQuote),
-                _ => block_type_override,
-            };
-            for nested in blocks.iter() {
-                process_block(nested, sections, section_idx, block_idx, override_type);
-            }
-        }
-        BlockContent::List { items, .. } => {
-            for item in items.iter() {
-                let text = item.principle.plain_text().join("");
-                if !text.trim().is_empty() {
-                    let segments = make_segments(&text, BlockType::ListItem, *section_idx, *block_idx);
-                    sections.last_mut().unwrap().blocks.push(Block {
-                        block_type: BlockType::ListItem,
-                        segments,
-                        raw_content: text,
-                        heading_level: None,
-                        span: None,
-                    });
-                    *block_idx += 1;
-                }
-                for nested in item.blocks.iter() {
-                    process_block(nested, sections, section_idx, block_idx, None);
-                }
-            }
-        }
-        BlockContent::Empty(_) if ast_block.context == BlockContext::ThematicBreak => {
-            sections.last_mut().unwrap().blocks.push(Block {
-                block_type: BlockType::ThematicBreak,
-                segments: Vec::new(),
-                raw_content: "'''".to_string(),
-                heading_level: None,
-                span: None,
-            });
-            *block_idx += 1;
-        }
-        BlockContent::Table(table) => {
-            for row in &table.rows {
-                for cell in row.cells.iter() {
-                    if let CellContent::Default(paras) = &cell.content {
-                        let text: String = paras.iter().map(|p| p.plain_text().join("")).collect::<Vec<_>>().join(" ");
-                        if !text.trim().is_empty() {
-                            let segments = make_segments(&text, BlockType::Table, *section_idx, *block_idx);
-                            sections.last_mut().unwrap().blocks.push(Block {
-                                block_type: BlockType::Table,
-                                segments,
-                                raw_content: text,
-                                heading_level: None,
-                                span: None,
-                            });
-                            *block_idx += 1;
-                        }
-                    }
-                }
-            }
-        }
-        BlockContent::QuotedParagraph { quote, .. } => {
-            let text = quote.plain_text().join("");
-            if !text.trim().is_empty() {
-                let segments = make_segments(&text, BlockType::BlockQuote, *section_idx, *block_idx);
-                sections.last_mut().unwrap().blocks.push(Block {
-                    block_type: BlockType::BlockQuote,
-                    segments,
-                    raw_content: text,
-                    heading_level: None,
-                    span: None,
-                });
-                *block_idx += 1;
-            }
-        }
-        _ => {}
-    }
-}
-
-/// Preprocess AsciiDoc source to fix common issues that cause strict parsers to fail:
-/// - Remove standalone block anchors `[[...]]` (reattach as comments)
-/// - Replace cross-references with plain text
-/// - Fix section level skipping by inserting placeholder headings
-fn preprocess(source: &str) -> String {
-    use std::fmt::Write;
-
-    let lines: Vec<&str> = source.lines().collect();
-    let mut result = String::with_capacity(source.len());
-    let mut last_heading_level: Option<u8> = None;
-
-    for (i, line) in lines.iter().enumerate() {
-        let trimmed = line.trim();
-
-        // Remove standalone block anchors [[...]] that aren't followed by a block element
-        if trimmed.starts_with("[[") && trimmed.ends_with("]]") && !trimmed.contains(' ') {
-            // Check if next non-empty line is a heading or block delimiter
-            let next_content = lines[i + 1..].iter().find(|l| !l.trim().is_empty());
-            if let Some(next) = next_content {
-                let next = next.trim();
-                if next.starts_with('=') || next.starts_with("----") || next.starts_with("....") {
-                    // Keep it - it's attached to a block
-                    writeln!(result, "{line}").unwrap();
-                    continue;
-                }
-            }
-            // Remove unattached anchor
-            continue;
-        }
-
-        // Fix section level skipping: if we see === without a preceding ==, add dummy ==
-        if trimmed.starts_with('=') && !trimmed.starts_with("==== ") {
-            let level = trimmed.chars().take_while(|c| *c == '=').count() as u8;
-            if level >= 2 {
-                if let Some(last) = last_heading_level {
-                    // Insert missing intermediate levels
-                    for missing in (last + 1)..level {
-                        let prefix = "=".repeat(missing as usize);
-                        writeln!(result, "{prefix} _").unwrap();
-                        writeln!(result).unwrap();
-                    }
-                }
-                last_heading_level = Some(level);
-            }
-        }
-
-        // Replace cross-references <<target>> and xref:target[] with plain text
-        let mut processed_line = line.to_string();
-        // Handle <<Target Text>> style
-        while let Some(start) = processed_line.find("<<") {
-            if let Some(end) = processed_line[start..].find(">>") {
-                let inner = &processed_line[start + 2..start + end];
-                // Use the display text if provided (<<target,display>>), otherwise use target
-                let display = if let Some(comma) = inner.find(',') {
-                    inner[comma + 1..].trim()
-                } else {
-                    inner
-                };
-                processed_line = format!("{}{}{}", &processed_line[..start], display, &processed_line[start + end + 2..]);
-            } else {
-                break;
-            }
-        }
-        // Handle xref:target[display] style
-        while let Some(start) = processed_line.find("xref:") {
-            if let Some(bracket_start) = processed_line[start..].find('[') {
-                if let Some(bracket_end) = processed_line[start + bracket_start..].find(']') {
-                    let display = &processed_line[start + bracket_start + 1..start + bracket_start + bracket_end];
-                    let display = if display.is_empty() {
-                        &processed_line[start + 5..start + bracket_start]
-                    } else {
-                        display
-                    };
-                    processed_line = format!("{}{}{}", &processed_line[..start], display, &processed_line[start + bracket_start + bracket_end + 1..]);
-                } else {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-
-        writeln!(result, "{processed_line}").unwrap();
-    }
-
-    result
-}
-
-/// Simple line-based fallback parser for AsciiDoc files that the strict parser can't handle.
-fn parse_fallback(source: &str) -> Document {
-    let mut sections: Vec<Section> = vec![Section { blocks: Vec::new() }];
-    let mut section_idx = 0usize;
-    let mut block_idx = 0usize;
-    let mut in_code_block = false;
-    let mut current_paragraph = String::new();
-
-    let flush_paragraph = |para: &mut String, sections: &mut Vec<Section>, section_idx: usize, block_idx: &mut usize| {
-        let text = para.trim().to_string();
-        if !text.is_empty() {
-            let segments = make_segments(&text, BlockType::Paragraph, section_idx, *block_idx);
-            sections.last_mut().unwrap().blocks.push(Block {
-                block_type: BlockType::Paragraph,
-                segments,
-                raw_content: text,
-                heading_level: None,
-                span: None,
-            });
-            *block_idx += 1;
-        }
-        para.clear();
-    };
-
-    for line in source.lines() {
-        let trimmed = line.trim();
-
-        // Toggle code blocks
-        if trimmed.starts_with("----") || trimmed.starts_with("....") {
-            if in_code_block {
-                in_code_block = false;
-            } else {
-                flush_paragraph(&mut current_paragraph, &mut sections, section_idx, &mut block_idx);
-                in_code_block = true;
-            }
-            continue;
-        }
-
-        if in_code_block {
-            continue;
-        }
-
-        // Skip block metadata like [[anchor]], [source,erlang], etc.
-        if trimmed.starts_with("[[") || trimmed.starts_with("[") && trimmed.ends_with("]") {
-            continue;
-        }
-
-        // Skip include directives
-        if trimmed.starts_with("include::") {
-            continue;
-        }
-
-        // Skip image macros
-        if trimmed.starts_with("image::") || trimmed.starts_with("image:") {
-            continue;
-        }
-
-        // Headings
-        if trimmed.starts_with('=') && trimmed.contains(' ') {
-            let level = trimmed.chars().take_while(|c| *c == '=').count() as u8;
-            if (1..=6).contains(&level) {
-                flush_paragraph(&mut current_paragraph, &mut sections, section_idx, &mut block_idx);
-
-                sections.push(Section { blocks: Vec::new() });
-                section_idx = sections.len() - 1;
-                block_idx = 0;
-
-                let heading_text = trimmed[level as usize..].trim().to_string();
-                if !heading_text.is_empty() {
-                    let segments = make_segments(&heading_text, BlockType::Heading, section_idx, block_idx);
-                    sections.last_mut().unwrap().blocks.push(Block {
-                        block_type: BlockType::Heading,
-                        segments,
-                        raw_content: heading_text,
-                        heading_level: Some(level),
-                        span: None,
-                    });
-                    block_idx += 1;
-                }
-                continue;
-            }
-        }
-
-        // List items
-        if trimmed.starts_with("* ") || trimmed.starts_with(". ") {
-            flush_paragraph(&mut current_paragraph, &mut sections, section_idx, &mut block_idx);
-            let text = trimmed[2..].trim().to_string();
-            if !text.is_empty() {
-                let segments = make_segments(&text, BlockType::ListItem, section_idx, block_idx);
-                sections.last_mut().unwrap().blocks.push(Block {
-                    block_type: BlockType::ListItem,
-                    segments,
-                    raw_content: text,
-                    heading_level: None,
-                    span: None,
-                });
-                block_idx += 1;
-            }
-            continue;
-        }
-
-        // Empty line → flush paragraph
-        if trimmed.is_empty() {
-            flush_paragraph(&mut current_paragraph, &mut sections, section_idx, &mut block_idx);
-            continue;
-        }
-
-        // Accumulate paragraph text
-        if !current_paragraph.is_empty() {
-            current_paragraph.push(' ');
-        }
-        current_paragraph.push_str(trimmed);
-    }
-
-    flush_paragraph(&mut current_paragraph, &mut sections, section_idx, &mut block_idx);
-    sections.retain(|s| !s.blocks.is_empty());
-    Document {
-        sections,
-        source: source.to_string(),
+        splice_reconstruct(document, translations)
     }
 }
 
@@ -540,7 +376,7 @@ mod tests {
         for seg in &translatable {
             assert_ne!(seg.block_type, BlockType::CodeBlock);
         }
-        assert!(translatable.len() >= 2);
+        assert_eq!(translatable.len(), 2);
     }
 
     #[test]
@@ -569,7 +405,7 @@ mod tests {
         let mut translations = TranslationMap::new();
         translations.insert(segments[0].id.clone(), "안녕하세요.".to_string());
         let output = parser.reconstruct(&doc, &translations);
-        assert!(output.contains("안녕하세요."));
+        assert_eq!(output, "안녕하세요.");
     }
 
     #[test]
@@ -603,5 +439,113 @@ mod tests {
         assert_eq!(headings[0].heading_level, Some(1));
         assert_eq!(headings[1].heading_level, Some(2));
         assert_eq!(headings[2].heading_level, Some(3));
+    }
+
+    #[test]
+    fn segments_keep_inline_markup() {
+        let parser = AsciidocParser;
+        let doc = parser.parse("The *bold* text links to https://example.com[the site].");
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 1);
+        assert_eq!(
+            segments[0].source,
+            "The *bold* text links to https://example.com[the site]."
+        );
+    }
+
+    #[test]
+    fn reconstruct_preserves_structure() {
+        let parser = AsciidocParser;
+        let source = "= Title\nAuthor Name <author@example.com>\n:toc:\n\n[[intro]]\n== Intro\n\nBody text.\n\n[source,python]\n----\nprint(\"hi\")\n----\n\n* Item one.\n* Item two.\n";
+        let doc = parser.parse(source);
+        let segments = doc.translatable_segments();
+        // Author line, attributes, anchors, and code must not be segments.
+        assert!(segments.iter().all(|s| !s.source.contains("Author")));
+        assert!(segments.iter().all(|s| !s.source.contains("print")));
+
+        let mut translations = TranslationMap::new();
+        for seg in &segments {
+            let t = match seg.source.as_str() {
+                "Title" => "제목",
+                "Intro" => "소개",
+                "Body text." => "본문.",
+                "Item one." => "항목 하나.",
+                "Item two." => "항목 둘.",
+                other => panic!("unexpected segment: {other}"),
+            };
+            translations.insert(seg.id.clone(), t.to_string());
+        }
+
+        let output = parser.reconstruct(&doc, &translations);
+        assert_eq!(
+            output,
+            "= 제목\nAuthor Name <author@example.com>\n:toc:\n\n[[intro]]\n== 소개\n\n본문.\n\n[source,python]\n----\nprint(\"hi\")\n----\n\n* 항목 하나.\n* 항목 둘.\n"
+        );
+    }
+
+    #[test]
+    fn admonition_label_preserved() {
+        let parser = AsciidocParser;
+        let source = "NOTE: Remember this fact.\n";
+        let doc = parser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 1);
+        assert_eq!(segments[0].source, "Remember this fact.");
+
+        let mut translations = TranslationMap::new();
+        translations.insert(segments[0].id.clone(), "이 사실을 기억해주세요.".to_string());
+        let output = parser.reconstruct(&doc, &translations);
+        assert_eq!(output, "NOTE: 이 사실을 기억해주세요.\n");
+    }
+
+    #[test]
+    fn table_preserved_verbatim() {
+        let parser = AsciidocParser;
+        let source = "Before.\n\n|===\n|Cell A |Cell B\n|===\n\nAfter.\n";
+        let doc = parser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 2);
+
+        let mut translations = TranslationMap::new();
+        translations.insert(segments[0].id.clone(), "이전.".to_string());
+        translations.insert(segments[1].id.clone(), "이후.".to_string());
+        let output = parser.reconstruct(&doc, &translations);
+        assert_eq!(output, "이전.\n\n|===\n|Cell A |Cell B\n|===\n\n이후.\n");
+    }
+
+    #[test]
+    fn multiline_paragraph_joins() {
+        let parser = AsciidocParser;
+        let doc = parser.parse("This is one\nwrapped sentence.\n");
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 1);
+        assert_eq!(segments[0].source, "This is one wrapped sentence.");
+    }
+
+    #[test]
+    fn comment_block_preserved() {
+        let parser = AsciidocParser;
+        let source = "////\nhidden comment\n////\n\nVisible text.\n";
+        let doc = parser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 1);
+        assert_eq!(segments[0].source, "Visible text.");
+    }
+
+    #[test]
+    fn numbered_and_nested_lists() {
+        let parser = AsciidocParser;
+        let source = "1. First step.\n2. Second step.\n\n** Nested bullet.\n";
+        let doc = parser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 3);
+        assert!(segments.iter().all(|s| s.block_type == BlockType::ListItem));
+
+        let mut translations = TranslationMap::new();
+        translations.insert(segments[0].id.clone(), "첫째.".to_string());
+        translations.insert(segments[1].id.clone(), "둘째.".to_string());
+        translations.insert(segments[2].id.clone(), "중첩.".to_string());
+        let output = parser.reconstruct(&doc, &translations);
+        assert_eq!(output, "1. 첫째.\n2. 둘째.\n\n** 중첩.\n");
     }
 }

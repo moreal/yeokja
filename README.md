@@ -129,7 +129,7 @@ crates/
 ├── core/              # 도메인 모델, 변경 감지, 용어집, 설정
 ├── parser-utils/      # 공용 문장 분리
 ├── parser-markdown/   # Markdown 파서 (pulldown-cmark)
-├── parser-asciidoc/   # Asciidoc 파서 (asciidoc-parser)
+├── parser-asciidoc/   # Asciidoc 파서 (라인 기반 span 방식)
 ├── translate/         # LLM 연동, 평가, 파이프라인
 ├── cli/               # CLI + TUI
 └── server/            # REST API (axum)

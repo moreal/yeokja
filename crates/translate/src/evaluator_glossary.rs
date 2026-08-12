@@ -37,6 +37,10 @@ impl TranslationEvaluator for GlossaryEvaluator {
     fn triggers_retranslation(&self) -> bool {
         true
     }
+
+    fn name(&self) -> &'static str {
+        "Glossary"
+    }
 }
 
 #[cfg(test)]

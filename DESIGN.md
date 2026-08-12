@@ -43,8 +43,10 @@ core ← parser-utils ← parser-markdown ← parsers
 - `config.rs`: `yeokja.toml` 설정 파일 역직렬화
 
 **yeokja-parser-utils** — 파서 간 공유 유틸리티.
-- `split_sentences()`: 약어를 고려한 문장 분리
+- `split_sentences()`: 약어와 URL 내 마침표를 고려한 문장 분리
 - `make_segments()`: 텍스트를 문장 분리 후 Segment 벡터로 변환
+- `normalize_inline_text()`: 여러 줄 span을 한 줄 문장으로 정규화
+- `splice_reconstruct()`: span 기반 파서 공용 재구성 (원본에 번역 치환)
 
 **yeokja-parser-markdown** — pulldown-cmark 기반 span 방식 Markdown 파서.
 - `DocumentParser` trait 구현
@@ -53,9 +55,13 @@ core ← parser-utils ← parser-markdown ← parsers
 - reconstruct는 원본(`Document::source`)에서 번역 대상 span만 치환 → 코드 펜스 언어, 리스트 마커, 인용 접두사, front matter, 테이블 구조가 그대로 보존됨
 - h1/h2에서 Section 분리, 코드 블록·HTML·front matter 번역 제외
 
-**yeokja-parser-asciidoc** — asciidork 라이브러리 기반 Asciidoc 파서.
-- `DocumentParser` trait 구현 (AST 재구성 방식, span 미사용)
-- 동일한 Section/Block/Segment 모델로 변환
+**yeokja-parser-asciidoc** — 자체 라인 기반 span 방식 Asciidoc 파서.
+- `DocumentParser` trait 구현
+- AsciiDoc의 라인 지향 블록 구조를 스캔하며 각 블록의 텍스트 byte range를 기록
+- 헤딩 마커, 리스트 불릿, admonition 라벨(NOTE: 등), 구분자(`----`, `____`)는 span에서 제외
+- 저자/개정 라인, attribute entry(`:toc:`), 앵커(`[[id]]`), 블록 속성(`[source,python]`),
+  주석, 테이블(`|===`)은 번역 대상에서 제외하고 그대로 보존
+- reconstruct는 Markdown 파서와 동일한 splice 방식 공유 (`parser-utils::splice_reconstruct`)
 
 **yeokja-parsers** — 파서 레지스트리.
 - `select_parser()`: 소스 설정의 `parser` 필드 또는 확장자로 파서 선택
@@ -84,6 +90,8 @@ core ← parser-utils ← parser-markdown ← parsers
 - `PUT /api/segments/{file}/{id}`: 세그먼트 수동 편집 (저장 후 출력 파일 즉시 갱신)
 - `GET/POST /api/glossary`, `DELETE /api/glossary/{term}`: 용어집 CRUD (glossary.toml에 영속화)
 - `POST /api/translate/start`, `GET /api/translate/status`: 백그라운드 번역 실행 및 진행 조회 (동시 실행 시 409)
+- `GET /api/translate/events`: 번역 진행 이벤트 SSE 스트림 (broadcast 채널 기반, 웹 대시보드가 구독)
+- `POST /api/segments/{file}/{id}/evaluate`: 단일 세그먼트 수동 재평가 (결과를 상태 파일에 영속화)
 
 ## 문서 모델
 
@@ -191,5 +199,5 @@ TranslateGemma는 별도 형식: `<<<source>>>en<<<target>>>ko<<<text>>>...`
 | 설정 | TOML |
 | 상태 저장 | JSON (파일 기반) |
 | Markdown 파싱 | pulldown-cmark |
-| Asciidoc 파싱 | asciidoc-parser |
+| Asciidoc 파싱 | 자체 라인 기반 span 파서 |
 | 해시 | xxHash64 |

@@ -63,6 +63,10 @@ impl TranslationEvaluator for FormatEvaluator {
     fn triggers_retranslation(&self) -> bool {
         true
     }
+
+    fn name(&self) -> &'static str {
+        "Format"
+    }
 }
 
 fn count_pattern(text: &str, pattern: &str) -> usize {

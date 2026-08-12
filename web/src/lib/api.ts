@@ -96,3 +96,30 @@ export async function fetchTranslationJob(): Promise<TranslationJob> {
   if (!res.ok) throw new Error(`Failed: ${res.status}`);
   return res.json();
 }
+
+/// Subscribe to live translation progress (SSE). Returns a cleanup function.
+export function subscribeTranslationEvents(onEvent: () => void): () => void {
+  const source = new EventSource(`${API_BASE}/api/translate/events`);
+  source.onmessage = onEvent;
+  return () => source.close();
+}
+
+export interface EvaluationIssue {
+  severity: "Error" | "Warning";
+  kind: string;
+  message: string;
+}
+
+export interface EvaluateResult {
+  passed: boolean;
+  issues: EvaluationIssue[];
+}
+
+export async function evaluateSegment(file: string, segmentId: string): Promise<EvaluateResult> {
+  const res = await fetch(
+    `${API_BASE}/api/segments/${encodeURIComponent(file)}/${encodeURIComponent(segmentId)}/evaluate`,
+    { method: "POST" },
+  );
+  if (!res.ok) throw new Error(`Failed: ${res.status}`);
+  return res.json();
+}

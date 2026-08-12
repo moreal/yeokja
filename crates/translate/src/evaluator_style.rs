@@ -52,6 +52,10 @@ Then on the next line, briefly explain why (one sentence)."#,
     fn triggers_retranslation(&self) -> bool {
         false
     }
+
+    fn name(&self) -> &'static str {
+        "Style"
+    }
 }
 
 fn parse_style_response(response: &str) -> (bool, Vec<EvaluationIssue>) {

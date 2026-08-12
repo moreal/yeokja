@@ -1,21 +1,27 @@
 use axum::{
     extract::State,
     http::StatusCode,
+    response::sse::{Event, KeepAlive, Sse},
     routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use std::convert::Infallible;
 use std::path::Path;
 use std::sync::Arc;
+use tokio_stream::wrappers::BroadcastStream;
+use tokio_stream::{Stream, StreamExt};
 use tower_http::cors::CorsLayer;
 use yeokja_core::change::SegmentStatus;
 use yeokja_core::glossary::{remove_term_in_file, upsert_term_in_file};
 use yeokja_core::reconcile::reconcile;
 use yeokja_core::state::StateFile;
+use yeokja_translate::evaluator::EvaluationContext;
 use yeokja_translate::factory::{create_evaluator_provider, create_provider};
 use yeokja_translate::orchestrator::{
-    collect_files, scan_file, Orchestrator, ParserFactory, ProgressEvent, TranslateOptions,
+    collect_files, evaluate_translation, scan_file, standard_evaluators, Orchestrator,
+    ParserFactory, ProgressEvent, TranslateOptions,
 };
 
 use crate::state::{AppState, TranslationJob};
@@ -25,11 +31,13 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/status", get(get_status))
         .route("/api/segments", get(get_segments))
         .route("/api/segments/{file}/{segment_id}", put(update_segment))
+        .route("/api/segments/{file}/{segment_id}/evaluate", post(evaluate_segment))
         .route("/api/glossary", get(get_glossary))
         .route("/api/glossary", post(add_glossary_term))
         .route("/api/glossary/{term}", delete(delete_glossary_term))
         .route("/api/translate/start", post(start_translation))
         .route("/api/translate/status", get(get_translation_status))
+        .route("/api/translate/events", get(translate_events))
         .layer(CorsLayer::permissive())
         .with_state(state)
 }
@@ -284,6 +292,95 @@ async fn get_translation_status(State(state): State<Arc<AppState>>) -> Json<Tran
     Json(state.job.lock().await.clone())
 }
 
+/// Stream translation progress events as SSE. Events are the JSON-serialized
+/// `ProgressEvent`s of the currently running (or next) translation.
+async fn translate_events(
+    State(state): State<Arc<AppState>>,
+) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+    let rx = state.events.subscribe();
+    let stream = BroadcastStream::new(rx).filter_map(|msg| match msg {
+        Ok(json) => Some(Ok(Event::default().data(json))),
+        // A lagged subscriber just skips missed events.
+        Err(_) => None,
+    });
+    Sse::new(stream).keep_alive(KeepAlive::default())
+}
+
+#[derive(Serialize)]
+struct EvaluateSegmentResponse {
+    passed: bool,
+    issues: Vec<yeokja_translate::evaluator::EvaluationIssue>,
+}
+
+/// Re-run the evaluators on one translated segment and persist the issues.
+async fn evaluate_segment(
+    State(state): State<Arc<AppState>>,
+    axum::extract::Path((file, segment_id)): axum::extract::Path<(String, String)>,
+) -> Result<Json<EvaluateSegmentResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let source_path = Path::new(&file);
+    let state_path = StateFile::state_file_path(source_path);
+    if !state_path.exists() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse {
+                error: "no translation state for this file".to_string(),
+            }),
+        ));
+    }
+
+    let mut state_file = StateFile::load(&state_path).map_err(|e| internal_error(e.to_string()))?;
+    let segment = state_file
+        .segments
+        .iter_mut()
+        .find(|s| s.id.0 == segment_id)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "segment not found".to_string(),
+                }),
+            )
+        })?;
+
+    let translation = segment.translation.clone().ok_or_else(|| {
+        (
+            StatusCode::CONFLICT,
+            Json(ErrorResponse {
+                error: "segment has no translation to evaluate".to_string(),
+            }),
+        )
+    })?;
+
+    // Style evaluation needs a provider; fall back to mechanical checks when
+    // the configured provider cannot act as a judge (e.g. missing API key).
+    let eval_provider = create_evaluator_provider(&state.config.provider).unwrap_or_else(|e| {
+        tracing::warn!(error = %e, "Evaluator provider unavailable; running mechanical checks only");
+        None
+    });
+    let evaluators = standard_evaluators(eval_provider, &state.config.project.target_lang);
+
+    let glossary = state.glossary.read().await.terms().clone();
+    let context = EvaluationContext {
+        source: segment.source.clone(),
+        translation,
+        glossary,
+        source_lang: state.config.project.source_lang.clone(),
+        target_lang: state.config.project.target_lang.clone(),
+    };
+
+    let result = evaluate_translation(&evaluators, &context).await;
+
+    segment.issues = result.issues.iter().map(|i| i.message.clone()).collect();
+    state_file
+        .save(&state_path)
+        .map_err(|e| internal_error(e.to_string()))?;
+
+    Ok(Json(EvaluateSegmentResponse {
+        passed: result.passed,
+        issues: result.issues,
+    }))
+}
+
 async fn start_translation(
     State(state): State<Arc<AppState>>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
@@ -335,10 +432,15 @@ async fn start_translation(
 
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<ProgressEvent>();
 
-    // Progress consumer keeps the job snapshot up to date for /api/translate/status.
+    // Progress consumer keeps the job snapshot up to date for
+    // /api/translate/status and fans events out to SSE subscribers.
     let job_for_events = state.job.clone();
+    let sse_events = state.events.clone();
     tokio::spawn(async move {
         while let Some(event) = rx.recv().await {
+            if let Ok(json) = serde_json::to_string(&event) {
+                let _ = sse_events.send(json);
+            }
             let mut job = job_for_events.lock().await;
             match event {
                 ProgressEvent::FilesDiscovered { files } => {

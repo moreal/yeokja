@@ -2,14 +2,9 @@ use anyhow::Result;
 use std::path::Path;
 use yeokja_core::change::SegmentStatus;
 use yeokja_core::project::ProjectContext;
-use yeokja_translate::evaluator::TranslationEvaluator;
 use yeokja_translate::evaluator::{EvaluationContext, IssueSeverity};
-use yeokja_translate::evaluator_format::FormatEvaluator;
-use yeokja_translate::evaluator_glossary::GlossaryEvaluator;
-use yeokja_translate::evaluator_link::LinkEvaluator;
-use yeokja_translate::evaluator_style::StyleEvaluator;
 use yeokja_translate::factory::create_evaluator_provider;
-use yeokja_translate::orchestrator::{collect_files, scan_file};
+use yeokja_translate::orchestrator::{collect_files, scan_file, standard_evaluators};
 
 pub async fn run(path: &str) -> Result<()> {
     let ctx = ProjectContext::load()?;
@@ -18,20 +13,7 @@ pub async fn run(path: &str) -> Result<()> {
     let eval_provider = create_evaluator_provider(&ctx.config.provider)?;
     let files = collect_files(Path::new(path), &ctx.config)?;
 
-    let glossary_evaluator = GlossaryEvaluator;
-    let link_evaluator = LinkEvaluator;
-    let format_evaluator = FormatEvaluator;
-    let style_evaluator = eval_provider
-        .map(|provider| StyleEvaluator::new(provider, ctx.config.project.target_lang.clone()));
-
-    let mut evaluators: Vec<(&str, &dyn TranslationEvaluator)> = vec![
-        ("Glossary", &glossary_evaluator),
-        ("Link", &link_evaluator),
-        ("Format", &format_evaluator),
-    ];
-    if let Some(style) = &style_evaluator {
-        evaluators.push(("Style", style));
-    }
+    let evaluators = standard_evaluators(eval_provider, &ctx.config.project.target_lang);
 
     let mut total_segments = 0usize;
     let mut total_issues = 0usize;
@@ -70,7 +52,7 @@ pub async fn run(path: &str) -> Result<()> {
                 target_lang: ctx.config.project.target_lang.clone(),
             };
 
-            for (name, evaluator) in &evaluators {
+            for evaluator in &evaluators {
                 match evaluator.evaluate(&eval_ctx).await {
                     Ok(result) => {
                         for issue in &result.issues {
@@ -82,7 +64,7 @@ pub async fn run(path: &str) -> Result<()> {
                             tracing::info!(
                                 file = %file_path.display(),
                                 segment = %rs.state.id,
-                                evaluator = name,
+                                evaluator = evaluator.name(),
                                 level,
                                 "{}", issue.message
                             );
@@ -90,7 +72,7 @@ pub async fn run(path: &str) -> Result<()> {
                     }
                     Err(e) => {
                         tracing::warn!(
-                            evaluator = name,
+                            evaluator = evaluator.name(),
                             error = %e,
                             "Evaluator failed"
                         );

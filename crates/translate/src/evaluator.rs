@@ -49,6 +49,11 @@ pub trait TranslationEvaluator: Send + Sync {
     fn triggers_retranslation(&self) -> bool {
         true
     }
+
+    /// Human-readable name for logs and API responses.
+    fn name(&self) -> &'static str {
+        "Evaluator"
+    }
 }
 
 #[derive(Debug, thiserror::Error)]

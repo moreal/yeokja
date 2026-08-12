@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/solid-router";
-import { Show } from "solid-js";
-import { fetchStatus, fetchTranslationJob, startTranslation } from "../lib/api";
+import { onCleanup, onMount, Show } from "solid-js";
+import {
+  fetchStatus,
+  fetchTranslationJob,
+  startTranslation,
+  subscribeTranslationEvents,
+} from "../lib/api";
 import { usePolling } from "../hooks/usePolling";
 import { StatCard } from "../components/StatCard";
 import { ProgressBar } from "../components/ProgressBar";
@@ -10,6 +15,22 @@ export const Route = createFileRoute("/")({ component: Dashboard });
 function Dashboard() {
   const { data: status, refetch, lastPolled, countdown } = usePolling(fetchStatus);
   const { data: job, refetch: refetchJob } = usePolling(fetchTranslationJob);
+
+  // Live progress: every SSE event refreshes the job snapshot; polling stays
+  // as fallback when the stream is unavailable.
+  onMount(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = subscribeTranslationEvents(() => {
+      refetchJob();
+      // Debounce the heavier full-status refresh.
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(refetch, 500);
+    });
+    onCleanup(() => {
+      if (timer) clearTimeout(timer);
+      unsubscribe();
+    });
+  });
 
   const handleStart = async () => {
     await startTranslation();

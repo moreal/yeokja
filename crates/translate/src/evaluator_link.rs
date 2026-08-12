@@ -35,6 +35,10 @@ impl TranslationEvaluator for LinkEvaluator {
     fn triggers_retranslation(&self) -> bool {
         true
     }
+
+    fn name(&self) -> &'static str {
+        "Link"
+    }
 }
 
 /// Simple URL extraction — finds http:// and https:// URLs

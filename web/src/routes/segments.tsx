@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { createResource, createSignal, For, Show } from "solid-js";
-import { fetchSegments, updateSegment } from "../lib/api";
+import { evaluateSegment, fetchSegments, updateSegment } from "../lib/api";
 import type { Segment } from "../lib/api";
 import { StatusBadge } from "../components/StatusBadge";
 import { FilterPill } from "../components/FilterPill";
@@ -36,6 +36,18 @@ function Segments() {
     await updateSegment(file, id, editValue());
     setEditKey(null);
     refetch();
+  };
+
+  const [evaluating, setEvaluating] = createSignal<string | null>(null);
+
+  const reEvaluate = async (seg: Segment) => {
+    setEvaluating(`${seg.file}::${seg.id}`);
+    try {
+      await evaluateSegment(seg.file, seg.id);
+      refetch();
+    } finally {
+      setEvaluating(null);
+    }
   };
 
   return (
@@ -112,12 +124,24 @@ function Segments() {
                         <Show
                           when={editing()}
                           fallback={
-                            <button
-                              onClick={() => startEdit(seg)}
-                              class="rounded bg-gray-100 px-3 py-1 text-xs hover:bg-gray-200"
-                            >
-                              Edit
-                            </button>
+                            <div class="flex gap-1">
+                              <button
+                                onClick={() => startEdit(seg)}
+                                class="rounded bg-gray-100 px-3 py-1 text-xs hover:bg-gray-200"
+                              >
+                                Edit
+                              </button>
+                              <Show when={seg.translation}>
+                                <button
+                                  onClick={() => reEvaluate(seg)}
+                                  disabled={evaluating() === key()}
+                                  class="rounded bg-indigo-50 px-3 py-1 text-xs text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+                                  title="Re-run evaluators on this segment"
+                                >
+                                  {evaluating() === key() ? "..." : "Evaluate"}
+                                </button>
+                              </Show>
+                            </div>
                           }
                         >
                           <div class="flex gap-1">

@@ -26,7 +26,13 @@ pub fn split_sentences(text: &str) -> Vec<String> {
             let current_lower = current.to_lowercase();
             let is_abbreviation = abbreviations.iter().any(|abbr| current_lower.ends_with(abbr));
 
-            if !is_abbreviation {
+            // A dot inside a URL token (e.g. "https://example.com/v1.Get") is
+            // not a sentence boundary. Only applies when the token continues
+            // after the punctuation; a URL followed by whitespace ends normally.
+            let continues_token = i + 1 < len && !chars[i + 1].is_whitespace();
+            let inside_url = continues_token && token_is_url(&chars, i);
+
+            if !is_abbreviation && !inside_url {
                 // Check if followed by whitespace + uppercase, or end of string
                 let next_non_ws = (i + 1..len).find(|&j| !chars[j].is_whitespace());
                 let at_end = i + 1 >= len || chars[i + 1..].iter().all(|c| c.is_whitespace());
@@ -54,6 +60,16 @@ pub fn split_sentences(text: &str) -> Vec<String> {
     }
 
     sentences
+}
+
+/// Whether the whitespace-delimited token containing position `end` looks like a URL.
+fn token_is_url(chars: &[char], end: usize) -> bool {
+    let mut start = end;
+    while start > 0 && !chars[start - 1].is_whitespace() {
+        start -= 1;
+    }
+    let token: String = chars[start..=end].iter().collect();
+    token.contains("://") || token.to_lowercase().starts_with("www.")
 }
 
 #[cfg(test)]
@@ -94,5 +110,43 @@ mod tests {
     fn no_punctuation() {
         let result = split_sentences("No ending punctuation");
         assert_eq!(result, vec!["No ending punctuation"]);
+    }
+
+    #[test]
+    fn url_with_inner_dot_not_split() {
+        let result = split_sentences("Call https://api.example.com/v1.Get to fetch data.");
+        assert_eq!(
+            result,
+            vec!["Call https://api.example.com/v1.Get to fetch data."]
+        );
+    }
+
+    #[test]
+    fn sentence_ending_with_url_still_splits() {
+        let result = split_sentences("Visit https://example.com. Next sentence here.");
+        assert_eq!(
+            result,
+            vec!["Visit https://example.com.", "Next sentence here."]
+        );
+    }
+
+    #[test]
+    fn www_url_not_split() {
+        let result = split_sentences("See www.example.com/a.Bpage for details.");
+        assert_eq!(result, vec!["See www.example.com/a.Bpage for details."]);
+    }
+
+    #[test]
+    fn markdown_link_url_not_split() {
+        let result = split_sentences(
+            "Read [the guide](https://docs.example.com/guide.V2) carefully. Then start.",
+        );
+        assert_eq!(
+            result,
+            vec![
+                "Read [the guide](https://docs.example.com/guide.V2) carefully.",
+                "Then start."
+            ]
+        );
     }
 }
