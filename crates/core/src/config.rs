@@ -13,6 +13,10 @@ pub struct ProjectConfig {
     pub evaluation: Option<EvaluationConfig>,
     #[serde(default)]
     pub translation: Option<TranslationConfig>,
+    /// Rules narrowing what gets translated. Everything is translated by
+    /// default; each rule only ever removes content from that set.
+    #[serde(default)]
+    pub tables: Vec<TableRule>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -79,6 +83,83 @@ pub struct TranslationConfig {
 }
 
 pub fn default_concurrency() -> usize { 4 }
+
+/// A rule selecting which columns of which tables are translated.
+///
+/// Tables are matched by the text of their header row, not by position, so a
+/// rule keeps working when a table moves or gains rows, and one rule covers
+/// every table sharing that schema.
+///
+/// ```toml
+/// [[tables]]
+/// files = "chapters/*.asciidoc"
+/// headers = ["Instruction", "Arguments", "Explanation"]
+/// translate = ["Explanation"]
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TableRule {
+    /// Glob restricting the rule to matching source paths. Absent means every
+    /// file.
+    #[serde(default)]
+    pub files: Option<String>,
+    /// Header cells identifying the table. A table matches when its first row
+    /// contains all of these, in order; extra columns are allowed.
+    pub headers: Vec<String>,
+    /// Columns to translate, named by header text or by 0-based index. Columns
+    /// left out are kept verbatim. Mutually exclusive with `skip`.
+    #[serde(default)]
+    pub translate: Vec<ColumnRef>,
+    /// Columns to keep verbatim; everything else is translated. Mutually
+    /// exclusive with `translate`.
+    #[serde(default)]
+    pub skip: Vec<ColumnRef>,
+}
+
+/// A column named either by its header text or by 0-based index.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ColumnRef {
+    Index(usize),
+    Header(String),
+}
+
+impl ColumnRef {
+    /// Whether this reference designates the column at `index` headed `header`.
+    pub fn matches(&self, index: usize, header: Option<&str>) -> bool {
+        match self {
+            ColumnRef::Index(i) => *i == index,
+            ColumnRef::Header(h) => header.is_some_and(|actual| actual.eq_ignore_ascii_case(h)),
+        }
+    }
+}
+
+impl TableRule {
+    /// Whether `headers` (a table's first row) satisfies this rule's matcher.
+    pub fn matches_headers(&self, headers: &[String]) -> bool {
+        if self.headers.is_empty() {
+            return false;
+        }
+        // Subsequence match in order, so extra columns do not break the rule.
+        let mut wanted = self.headers.iter();
+        let mut current = wanted.next();
+        for actual in headers {
+            if let Some(w) = current
+                && actual.eq_ignore_ascii_case(w)
+            {
+                current = wanted.next();
+            }
+        }
+        current.is_none()
+    }
+
+    /// Whether the column at `index` headed `header` should be translated.
+    pub fn translates(&self, index: usize, header: Option<&str>) -> bool {
+        if !self.translate.is_empty() {
+            return self.translate.iter().any(|c| c.matches(index, header));
+        }
+        !self.skip.iter().any(|c| c.matches(index, header))
+    }
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {

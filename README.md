@@ -51,6 +51,35 @@ api_key_env = "ANTHROPIC_API_KEY"
 concurrency = 4
 ```
 
+### 테이블 컬럼 선택
+
+레퍼런스 표에는 번역하면 안 되는 컬럼이 섞여 있습니다. `[[tables]]` 규칙으로
+어떤 컬럼만 번역할지 지정할 수 있습니다:
+
+```toml
+[[tables]]
+files = "chapters/*.asciidoc"        # 생략하면 모든 파일
+headers = ["Instruction", "Arguments", "Explanation"]
+translate = ["Explanation"]          # 나머지 컬럼은 원문 유지
+```
+
+표는 **위치가 아니라 헤더 행의 텍스트로** 찾습니다. 표가 이동하거나 행이
+늘어도 규칙이 유지되고, 같은 스키마의 표가 여러 개면 규칙 하나가 전부
+덮습니다. 헤더가 순서대로 들어 있으면 매칭되므로 컬럼이 추가돼도 깨지지
+않습니다.
+
+컬럼은 헤더 이름 또는 0-기반 인덱스로 지정합니다. 반대로 제외할 컬럼만
+적어도 됩니다:
+
+```toml
+[[tables]]
+headers = ["Instruction", "Arguments", "Explanation"]
+skip = ["Arguments", 0]              # 나머지는 전부 번역
+```
+
+기본값은 "전부 번역"이고 규칙은 좁히는 방향으로만 작동합니다. 헤더 행은
+항상 번역 대상입니다. 제외된 셀은 원문이 그대로 남습니다.
+
 용어집 `glossary.toml`:
 
 ```toml

@@ -22,6 +22,7 @@ use yeokja_core::config::ProjectConfig;
 use yeokja_core::glossary::Glossary;
 use yeokja_core::hash::content_hash;
 use yeokja_core::model::Document;
+use yeokja_core::select::apply_table_rules;
 use yeokja_core::parser::{DocumentParser, TranslationMap};
 use yeokja_core::reconcile::{reconcile_with_status, ReconciledSegment};
 use yeokja_core::state::{SegmentState, StateFile};
@@ -277,7 +278,9 @@ pub fn scan_file(
         path: file_path.to_path_buf(),
         source: e,
     })?;
-    let doc = parser.parse(&source);
+    let mut doc = parser.parse(&source);
+    apply_table_rules(&mut doc, &config.tables, file_path);
+    let doc = doc;
     let state_path = StateFile::state_file_path(file_path);
     let existing = if state_path.exists() {
         StateFile::load(&state_path)?
@@ -519,7 +522,12 @@ impl FileTranslator {
             path: file_path.to_path_buf(),
             source: e,
         })?;
-        let doc = parser.parse(&source);
+        let mut doc = parser.parse(&source);
+        let excluded = apply_table_rules(&mut doc, &self.config.tables, file_path);
+        if excluded > 0 {
+            tracing::debug!(file = %file_path.display(), excluded, "Table rules excluded cells");
+        }
+        let doc = doc;
         let state_path = StateFile::state_file_path(file_path);
 
         let existing = if state_path.exists() {
