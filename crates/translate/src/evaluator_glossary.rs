@@ -14,9 +14,17 @@ impl TranslationEvaluator for GlossaryEvaluator {
 
         let matching_terms = find_terms_in_text(&context.glossary, &context.source);
 
+        // The source is read without regard to case, so the translation is too.
+        // Demanding the glossary's spelling starts a retry that cannot converge:
+        // theBeamBook writes "the beam file format" and "erlang:md5/1" in its
+        // own prose, and a translator that keeps the author's spelling gives the
+        // same answer however many times it is asked. Case is a house-style
+        // question, and this evaluator is the wrong place to have it — it costs
+        // a whole block's retranslation per disagreement.
+        let translation = context.translation.to_lowercase();
+
         for (term, expected_translation) in &matching_terms {
-            // Check if translation contains the expected translation
-            if !context.translation.contains(expected_translation.as_str()) {
+            if !translation.contains(&expected_translation.to_lowercase()) {
                 issues.push(EvaluationIssue {
                     severity: IssueSeverity::Error,
                     kind: IssueKind::GlossaryMismatch,
@@ -88,6 +96,19 @@ mod tests {
         assert!(!result.passed);
         assert_eq!(result.issues.len(), 1);
         assert_eq!(result.issues[0].kind, IssueKind::GlossaryMismatch);
+    }
+
+    /// A term the source itself spells in another case. The glossary says to
+    /// leave "Erlang" alone, and a translation that left `erlang:md5/1` alone
+    /// did exactly that.
+    #[tokio::test]
+    async fn passes_when_the_case_is_the_source_author_s() {
+        let ctx = make_context(
+            "The key is scrambled using erlang:md5/1.",
+            "키는 erlang:md5/1을 사용하여 스크램블됩니다.",
+            vec![("Erlang", "Erlang")],
+        );
+        assert!(GlossaryEvaluator.evaluate(&ctx).await.unwrap().passed);
     }
 
     #[tokio::test]
