@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::ops::Range;
 use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,26 +21,111 @@ pub struct Glossary {
     terms: HashMap<String, String>,
 }
 
-/// Find terms from the given map that appear in the text (word boundary match).
+/// Find terms from the given map that the text uses as prose.
+///
+/// A term only counts where a translator could act on it. Inside a code span,
+/// a URL, or a longer identifier it is a name being quoted, and the translation
+/// has to leave it exactly as it stands — so asking for the glossary rendering
+/// there fails a translation that is correct, and the block is translated again
+/// and fails again. Of the 229 segments theBeamBook's glossary check rejected,
+/// 204 were this.
 pub fn find_terms_in_text(terms: &HashMap<String, String>, text: &str) -> HashMap<String, String> {
     let text_lower = text.to_lowercase();
-    let text_chars: Vec<char> = text_lower.chars().collect();
+    let chars: Vec<char> = text_lower.chars().collect();
+    let verbatim = verbatim_spans(&chars);
     terms
         .iter()
         .filter(|(term, _)| {
-            let term_lower = term.to_lowercase();
-            text_lower
-                .match_indices(&term_lower)
-                .any(|(byte_pos, matched)| {
-                    let char_pos = text_lower[..byte_pos].chars().count();
-                    let char_end = char_pos + matched.chars().count();
-                    let before_ok = char_pos == 0 || !text_chars[char_pos - 1].is_alphanumeric();
-                    let after_ok = char_end >= text_chars.len() || !text_chars[char_end].is_alphanumeric();
-                    before_ok && after_ok
-                })
+            let term_chars: Vec<char> = term.to_lowercase().chars().collect();
+            occurrences(&chars, &term_chars).any(|start| {
+                let end = start + term_chars.len();
+                !verbatim.iter().any(|s| s.start < end && start < s.end)
+                    && (start == 0 || !is_word_char(chars[start - 1]))
+                    && (end >= chars.len() || !is_word_char(chars[end]))
+            })
         })
         .map(|(k, v)| (k.clone(), v.clone()))
         .collect()
+}
+
+/// Every position in `haystack` where `needle` starts.
+fn occurrences<'a>(haystack: &'a [char], needle: &'a [char]) -> impl Iterator<Item = usize> + 'a {
+    let last = haystack.len().checked_sub(needle.len());
+    last.filter(|_| !needle.is_empty())
+        .into_iter()
+        .flat_map(move |last| (0..=last).filter(move |&i| haystack[i..i + needle.len()] == *needle))
+}
+
+/// What a term has to be free of on both sides to be a word of its own.
+///
+/// Underscore belongs here even though it is not alphanumeric: `min_heap_size`
+/// is one identifier, not a sentence containing "heap". This is also how
+/// Asciidoctor reads a word — its `\p{Word}` covers `_`.
+fn is_word_char(c: char) -> bool {
+    c.is_alphanumeric() || c == '_'
+}
+
+/// Char ranges of `chars` that a reader sees exactly as written: inline code
+/// spans and the targets of URLs and macros.
+///
+/// The link *text* is deliberately left out — `link:https://…[ERTS Reference]`
+/// carries prose after the `[` that a translator may well render.
+fn verbatim_spans(chars: &[char]) -> Vec<Range<usize>> {
+    let mut spans = Vec::new();
+    let mut i = 0;
+    while i < chars.len() {
+        if let Some(end) = code_span_end(chars, i).or_else(|| target_end(chars, i)) {
+            spans.push(i..end);
+            i = end;
+        } else {
+            i += 1;
+        }
+    }
+    spans
+}
+
+/// Where the code span opening at `at` ends, if one does. Both markups write it
+/// between two runs of backticks of the same length, so `` ``x`` `` closes on
+/// the pair and not on the first backtick of it.
+fn code_span_end(chars: &[char], at: usize) -> Option<usize> {
+    let run = |from: usize| chars[from..].iter().take_while(|c| **c == '`').count();
+    let open = run(at);
+    if open == 0 {
+        return None;
+    }
+    let mut from = at + open;
+    loop {
+        let offset = chars[from..].iter().position(|c| *c == '`')?;
+        let close = from + offset;
+        let len = run(close);
+        if len == open {
+            return Some(close + len);
+        }
+        from = close + len;
+    }
+}
+
+/// Where the URL or macro target starting at `at` ends, if one does. A target
+/// runs to the whitespace or the `[` that ends it; a Markdown one to its `)`.
+fn target_end(chars: &[char], at: usize) -> Option<usize> {
+    const SCHEMES: [&str; 9] = [
+        "http://", "https://", "ftp://", "mailto:", "link:", "xref:", "image:", "video:", "audio:",
+    ];
+    // Markdown writes the target after the link text, with no scheme of its own.
+    if chars[at] == ']' && chars.get(at + 1) == Some(&'(') {
+        let offset = chars[at + 2..].iter().position(|c| *c == ')')?;
+        return Some(at + 2 + offset + 1);
+    }
+    if at > 0 && is_word_char(chars[at - 1]) {
+        return None;
+    }
+    let starts_with = |s: &str| chars[at..].iter().copied().take(s.chars().count()).eq(s.chars());
+    SCHEMES.iter().any(|s| starts_with(s)).then(|| {
+        at + chars[at..]
+            .iter()
+            .position(|c| c.is_whitespace() || *c == '[')
+            .unwrap_or(chars.len() - at)
+    })
 }
 
 impl Glossary {
@@ -66,7 +152,7 @@ impl Glossary {
         &self.terms
     }
 
-    /// Find glossary terms that appear in the given text (word boundary match).
+    /// Find glossary terms the given text uses as prose.
     /// Uses char-based boundary checking to handle non-ASCII (Korean, CJK) text correctly.
     pub fn find_matching_terms(&self, text: &str) -> HashMap<String, String> {
         find_terms_in_text(&self.terms, text)
@@ -203,6 +289,82 @@ translation = "커밋"
         let g = test_glossary();
         let matches = g.find_matching_terms("repositoryName is set");
         assert!(matches.is_empty());
+    }
+
+    fn beam_glossary() -> Glossary {
+        Glossary::from_toml(
+            r#"
+[terms.Erlang]
+translation = "Erlang"
+
+[terms.heap]
+translation = "힙"
+
+[terms.compiler]
+translation = "컴파일러"
+"#,
+        )
+        .unwrap()
+    }
+
+    /// The case this was written for. `erlang:processes/0` has to survive the
+    /// translation as it stands, so a glossary rendering can never appear for
+    /// it — and every retry produced the same text and the same complaint.
+    #[test]
+    fn a_term_inside_a_code_span_is_a_name() {
+        let g = beam_glossary();
+        assert!(g.find_matching_terms("Call `erlang:processes/0` to list them.").is_empty());
+        assert!(g.find_matching_terms("Set ``min_heap_size`` on spawn.").is_empty());
+        // …but the same term outside one is still prose.
+        let both = g.find_matching_terms("In Erlang, call `erlang:processes/0`.");
+        assert_eq!(both.get("Erlang").unwrap(), "Erlang");
+    }
+
+    #[test]
+    fn a_term_inside_a_url_is_a_name() {
+        let g = beam_glossary();
+        for text in [
+            "See https://www.erlang.org/doc/apps/compiler/index.html for details.",
+            "See link:https://erlang.org/x[the docs] for details.",
+            "See [the docs](https://erlang.org/compiler) for details.",
+        ] {
+            assert!(g.find_matching_terms(text).is_empty(), "{text:?}");
+        }
+    }
+
+    /// A macro's link text is prose and gets translated, so it is not masked
+    /// along with the target.
+    #[test]
+    fn link_text_is_still_prose() {
+        let g = beam_glossary();
+        let matches = g.find_matching_terms("link:https://x.example/a[The Erlang compiler]");
+        assert_eq!(matches.get("Erlang").unwrap(), "Erlang");
+        assert_eq!(matches.get("compiler").unwrap(), "컴파일러");
+    }
+
+    /// Underscore joins a word rather than breaking it, which is also how
+    /// Asciidoctor reads one.
+    #[test]
+    fn an_identifier_is_one_word() {
+        let g = beam_glossary();
+        assert!(g.find_matching_terms("The allocate_heap_zero instruction.").is_empty());
+        assert_eq!(
+            g.find_matching_terms("The heap grows.").get("heap").unwrap(),
+            "힙"
+        );
+    }
+
+    /// A backtick with nothing to pair with opens no span, and the prose after
+    /// it still counts.
+    #[test]
+    fn a_lone_backtick_masks_nothing() {
+        let g = beam_glossary();
+        assert_eq!(
+            g.find_matching_terms("A ` and the heap after it")
+                .get("heap")
+                .unwrap(),
+            "힙"
+        );
     }
 
     #[test]
