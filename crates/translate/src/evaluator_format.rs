@@ -34,6 +34,57 @@ impl TranslationEvaluator for FormatEvaluator {
             }
         }
 
+        // Closing somewhere is not closing where the source closed. Asciidoctor
+        // does not give up on a pair whose closing mark a letter follows — it
+        // keeps looking and closes on a later mark instead, so `_it_는 and
+        // _other_ 사이` renders as one emphasis over `it_는 and _other`. The
+        // prose in the middle is swallowed and the pairs after it are eaten, yet
+        // nothing is left unclosed and the run count still matches. What gives it
+        // away is how many pairs actually form.
+        for &(mark, unconstrained) in constrained_marks(context.markup) {
+            let source = pair_up(&chars(&context.source), mark);
+            // A source that leaves a pair open has no count worth matching, and
+            // demanding the translation match it would reject the rewrite that
+            // fixes it. `chapters/type_system.asciidoc` writes `` `{...}`` ``.
+            if !source.unclosable.is_empty() {
+                continue;
+            }
+            let in_source = source.formed;
+            let in_translation = pair_up(&chars(&context.translation), mark).formed;
+            if in_source != in_translation {
+                issues.push(EvaluationIssue {
+                    severity: IssueSeverity::Error,
+                    kind: IssueKind::FormatLost,
+                    message: format!(
+                        "Inline pairs of {mark} do not line up: the source forms {in_source}, \
+                         the translation {in_translation}. A pair whose closing mark a letter \
+                         follows closes on a later mark instead, swallowing the text between \
+                         and absorbing the pairs after it. Write each marked-up term a suffix \
+                         follows as {unconstrained}, doubling the mark at BOTH ends."
+                    ),
+                });
+            }
+        }
+
+        // AsciiDoc's curved quotes are constrained the same way, and there is no
+        // doubled form to escape to: `"`term`"를` prints its marks as themselves.
+        if context.markup == Markup::Asciidoc {
+            let quotes = unclosable_quotes(&context.translation);
+            if !quotes.is_empty() && unclosable_quotes(&context.source).is_empty() {
+                issues.push(EvaluationIssue {
+                    severity: IssueSeverity::Error,
+                    kind: IssueKind::FormatLost,
+                    message: format!(
+                        "{} never closes: a curved-quote pair cannot close against a letter \
+                         either, and it has no doubled form. Write the quotation marks \
+                         themselves — “term” — or put a space or punctuation after the \
+                         closing mark.",
+                        quotes.join(", "),
+                    ),
+                });
+            }
+        }
+
         // A constrained pair has to close next to a non-word character, and
         // Korean writes its particles straight onto the word before them.
         let unclosable = unclosable_pairs(&context.translation, context.markup);
@@ -93,19 +144,48 @@ impl TranslationEvaluator for FormatEvaluator {
 
 /// How many times `mark` opens or closes an inline pair, counting a run of
 /// them once.
+///
+/// Curved quotes borrow the backtick — `"`term`"` is a quotation, not code — so
+/// those marks are not counted. The only way to write a quotation whose closing
+/// mark a Korean particle follows is to give up the construct and write “term”
+/// outright, and counting the borrowed marks would read that fix as two code
+/// markers dropped.
 fn mark_runs(text: &str, mark: char) -> usize {
+    let chars = chars(text);
+    let borrowed: std::collections::HashSet<usize> = if mark == '`' {
+        curved_quotes(&chars)
+            .into_iter()
+            .flat_map(|(open, close)| [open, close])
+            .collect()
+    } else {
+        std::collections::HashSet::new()
+    };
+    let counts = |at: usize| chars[at] == mark && !borrowed.contains(&at);
+
     let mut runs = 0;
-    let mut chars = text.chars().peekable();
-    while let Some(c) = chars.next() {
-        if c != mark {
+    let mut i = 0;
+    while i < chars.len() {
+        if !counts(i) {
+            i += 1;
             continue;
         }
         runs += 1;
-        while chars.peek() == Some(&mark) {
-            chars.next();
+        while i < chars.len() && counts(i) {
+            i += 1;
         }
     }
     runs
+}
+
+/// What a mark does across a stretch of text: how many pairs it actually forms,
+/// and every pair it opens without being able to close.
+///
+/// The two answer different questions. A swallowed pair is closed — just not
+/// where the source closed it — so only `formed` tells it apart from prose.
+#[derive(Default)]
+struct Pairing {
+    formed: usize,
+    unclosable: Vec<std::ops::Range<usize>>,
 }
 
 /// An inline pair that cannot close: the offending text as written, and the
@@ -125,19 +205,12 @@ struct Unclosable {
 /// themselves, and the opening one keeps looking for a partner, swallowing the
 /// text up to the next mark in the paragraph.
 ///
-/// Markdown shares the rule only for `_`, where CommonMark rules out intraword
-/// emphasis. Its code spans and `*` emphasis close against a word just fine, so
-/// checking them there would fail translations that are correct.
+/// Which marks that covers is `constrained_marks`.
 fn unclosable_pairs(text: &str, markup: Markup) -> Vec<Unclosable> {
-    let marks: &[(char, &'static str)] = match markup {
-        Markup::Asciidoc => &[('`', "``code``"), ('*', "**bold**"), ('_', "__italic__")],
-        // `__italic__` is bold in Markdown, so the way out is the other mark.
-        Markup::Markdown => &[('_', "*italic*")],
-    };
-    let chars: Vec<char> = text.chars().collect();
+    let chars = chars(text);
     let mut found = Vec::new();
-    for &(mark, unconstrained) in marks {
-        for span in unclosable_spans(&chars, mark) {
+    for &(mark, unconstrained) in constrained_marks(markup) {
+        for span in pair_up(&chars, mark).unclosable {
             found.push(Unclosable {
                 text: chars[span].iter().collect(),
                 unconstrained,
@@ -145,6 +218,78 @@ fn unclosable_pairs(text: &str, markup: Markup) -> Vec<Unclosable> {
         }
     }
     found
+}
+
+fn chars(text: &str) -> Vec<char> {
+    text.chars().collect()
+}
+
+/// The marks that open a constrained pair, each with the unconstrained form to
+/// rewrite it as.
+///
+/// Markdown shares the rule only for `_`, where CommonMark rules out intraword
+/// emphasis. Its code spans and `*` emphasis close against a word just fine, so
+/// checking them there would fail translations that are correct. And
+/// `__italic__` is bold in Markdown, so the way out is the other mark.
+fn constrained_marks(markup: Markup) -> &'static [(char, &'static str)] {
+    match markup {
+        Markup::Asciidoc => &[('`', "``code``"), ('*', "**bold**"), ('_', "__italic__")],
+        Markup::Markdown => &[('_', "*italic*")],
+    }
+}
+
+/// Every AsciiDoc curved-quote pair `text` opens but cannot close.
+///
+/// `"`term`"` is constrained like the rest, so a Korean particle against its
+/// closing mark holds it open. Unlike `` `code` `` it has no doubled form to
+/// escape to — the way out is to write “term” with the quotation marks
+/// themselves, which is what the pair would have rendered as.
+fn unclosable_quotes(text: &str) -> Vec<String> {
+    let chars = chars(text);
+    curved_quotes(&chars)
+        .into_iter()
+        .filter(|&(_, close)| chars.get(close + 2).is_some_and(|c| is_word(*c)))
+        .map(|(open, close)| chars[open - 1..close + 2].iter().collect())
+        .collect()
+}
+
+/// Every AsciiDoc curved-quote pair in `chars`, as the indices of the two
+/// backticks it borrows.
+///
+/// The pair opens on `` "` `` and closes on the mirrored `` `" ``, and only
+/// there — `'` behaves the same way for single quotes.
+fn curved_quotes(chars: &[char]) -> Vec<(usize, usize)> {
+    let mut found = Vec::new();
+    let mut i = 0;
+    while i + 1 < chars.len() {
+        let quote = chars[i];
+        if (quote != '"' && quote != '\'') || chars[i + 1] != '`' {
+            i += 1;
+            continue;
+        }
+        let mut at = i + 2;
+        let mut close = None;
+        while at + 1 < chars.len() {
+            if chars[at] == '`' && chars[at + 1] == quote {
+                close = Some(at);
+                break;
+            }
+            at += 1;
+        }
+        match close {
+            Some(close) => {
+                found.push((i + 1, close));
+                i = close + 2;
+            }
+            None => i += 1,
+        }
+    }
+    found
+}
+
+/// Asciidoctor's `\p{Word}`, which every Hangul syllable satisfies.
+fn is_word(c: char) -> bool {
+    c.is_alphanumeric() || c == '_'
 }
 
 /// Pair up runs of `mark` the way AsciiDoc reads them, and report each pair
@@ -157,13 +302,13 @@ fn unclosable_pairs(text: &str, markup: Markup) -> Vec<Unclosable> {
 /// character, not a quote, not another mark. So half-doubling a pair —
 /// `` `Atom``이라는 `` — closes neither way, and that is exactly what a
 /// translator reaches for first on being told to double the marks.
-fn unclosable_spans(chars: &[char], mark: char) -> Vec<std::ops::Range<usize>> {
+fn pair_up(chars: &[char], mark: char) -> Pairing {
     // Asciidoctor's own flanking test, which is why `'` is in here: it turns
     // `` `Atom`'s `` into a curly quote and no code span at all.
     let blocked = |c: char| c.is_alphanumeric() || c == '_' || c == '"' || c == '\'' || c == mark;
     let run_len = |at: usize| chars[at..].iter().take_while(|c| **c == mark).count();
 
-    let mut spans = Vec::new();
+    let mut pairing = Pairing::default();
     let mut i = 0;
     while i < chars.len() {
         if chars[i] != mark {
@@ -205,16 +350,19 @@ fn unclosable_spans(chars: &[char], mark: char) -> Vec<std::ops::Range<usize>> {
             from = close + close_len;
         };
         match (closes_at, first_candidate) {
-            (Some(end), _) => i = end,
+            (Some(end), _) => {
+                pairing.formed += 1;
+                i = end;
+            }
             // A mark with nothing after it to pair with is text, not markup.
             (None, None) => break,
             (None, Some(end)) => {
-                spans.push(i..(end + 1).min(chars.len()));
+                pairing.unclosable.push(i..(end + 1).min(chars.len()));
                 i = end;
             }
         }
     }
-    spans
+    pairing
 }
 
 /// The block construct `text` would open if it sat at the start of a line, or
@@ -465,5 +613,114 @@ mod tests {
         let ctx = make_context("Use `func()` here.", "여기서 func()를 사용하세요.");
         let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
         assert!(!result.passed);
+    }
+
+    /// Shipped in theBeamBook and read as correct by every earlier check: the
+    /// first pair cannot close against 의, so Asciidoctor closes it on the mark
+    /// that should have opened the second one. One emphasis covers
+    /// `erl_process.c_의 _check_balance`, and both marks stay unclosed and
+    /// nothing is missing, so neither the run count nor the unclosable check
+    /// sees it.
+    #[tokio::test]
+    async fn fails_when_a_pair_closes_on_a_later_mark_and_swallows_the_prose() {
+        let ctx = make_context(
+            "This is done by the function _check_balance_ in _erl_process.c_.",
+            "이는 _erl_process.c_의 _check_balance_ 함수에 의해 수행됩니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed);
+        assert!(
+            result.issues.iter().any(|i| i.message.contains("do not line up")),
+            "{:?}",
+            result.issues
+        );
+    }
+
+    /// The same thing happens to code spans, and costs more: this one shipped
+    /// in theBeamBook as a single span reading `io:format`은 … `recon_trace`,
+    /// with the prose between it set as code.
+    #[tokio::test]
+    async fn fails_when_a_code_span_closes_on_a_later_mark() {
+        let ctx = make_context(
+            "`io:format` offers a quick method, whereas `erl_tracer` and `recon_trace` \
+             provide deeper insights.",
+            "`io:format`은 빠른 방법을 제공하는 반면, `erl_tracer`와 `recon_trace` 같은 \
+             도구는 더 깊은 통찰을 제공합니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed);
+        assert!(
+            result.issues.iter().any(|i| i.message.contains("do not line up")),
+            "{:?}",
+            result.issues
+        );
+    }
+
+    /// The same segment written the way it has to be written passes.
+    #[tokio::test]
+    async fn passes_when_both_ends_are_doubled() {
+        let ctx = make_context(
+            "This is done by the function _check_balance_ in _erl_process.c_.",
+            "이는 __erl_process.c__의 __check_balance__ 함수에 의해 수행됩니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    /// A mark with a word against its left opens nothing, so this emphasis is
+    /// never opened rather than never closed — the asterisks print as themselves.
+    #[tokio::test]
+    async fn fails_when_a_suffix_swallows_the_opening_mark() {
+        let ctx = make_context(
+            "two or more processes that *can* execute independently",
+            "서로 독립적으로 실행*될 수 있는* 둘 이상의 프로세스",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed, "{:?}", result.issues);
+    }
+
+    /// Curved quotes are constrained too, and have no doubled form to escape to.
+    #[tokio::test]
+    async fn fails_when_a_curved_quote_cannot_close() {
+        let ctx = make_context(
+            "BEAM uses the GCC extension \"`labels as values`\".",
+            "BEAM은 GCC 확장 기능인 \"`labels as values`\"를 사용합니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed);
+        assert!(
+            result.issues.iter().any(|i| i.message.contains("curved-quote")),
+            "{:?}",
+            result.issues
+        );
+    }
+
+    /// Writing the quotation marks outright is the only way out, so it must not
+    /// read as two code markers dropped.
+    #[tokio::test]
+    async fn passes_when_a_curved_quote_becomes_the_quotation_marks() {
+        let ctx = make_context(
+            "BEAM uses the GCC extension \"`labels as values`\".",
+            "BEAM은 GCC 확장 기능인 “labels as values”를 사용합니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    /// A quotation the source itself leaves open is the source's business.
+    #[tokio::test]
+    async fn passes_when_the_source_quote_cannot_close_either() {
+        let ctx = make_context("the \"`term`\"s here", "여기 \"`term`\"의");
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    /// Curved quotes borrow the backtick but are not code, so a quotation the
+    /// translation keeps as a quotation is not a code span gained.
+    #[test]
+    fn curved_quote_marks_are_not_counted_as_code_markers() {
+        assert_eq!(mark_runs("the \"`term`\" here", '`'), 0);
+        assert_eq!(mark_runs("the `code` here", '`'), 2);
+        assert_eq!(mark_runs("\"`quoted`\" and `code`", '`'), 2);
     }
 }
