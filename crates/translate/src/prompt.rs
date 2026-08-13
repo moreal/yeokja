@@ -116,6 +116,36 @@ pub fn parse_response(response: &str) -> Result<HashMap<usize, String>, String> 
     }
 }
 
+/// Parse a response against the segments it answers.
+///
+/// A block holding one sentence gets one sentence back, and a model handed a
+/// single sentence often answers with the translation alone: the `[N]` it was
+/// asked to echo tells apart nothing when there is nothing to tell apart. That
+/// answer is complete and can only belong to the one segment asked about, so
+/// take it. Rejecting it costs that segment its translation for the whole run —
+/// the prose is gone from the output, not merely marked up wrong.
+///
+/// With two or more segments a bare answer stays an error: there is no way to
+/// know which sentence it translates, or whether the rest were dropped.
+pub fn parse_response_for(
+    response: &str,
+    segments: &[(usize, String)],
+) -> Result<HashMap<usize, String>, String> {
+    match parse_response(response) {
+        Ok(translations) => Ok(translations),
+        Err(err) => match segments {
+            [(idx, _)] => {
+                let bare = response.trim();
+                if bare.is_empty() {
+                    return Err(err);
+                }
+                Ok(HashMap::from([(*idx, bare.to_string())]))
+            }
+            _ => Err(err),
+        },
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -220,5 +250,40 @@ mod tests {
     fn parse_response_no_brackets_fails() {
         let result = parse_response("Just some text without any numbered translations.");
         assert!(result.is_err());
+    }
+
+    /// Observed against theBeamBook: a one-sentence bullet came back translated
+    /// correctly but without its `[0]`, and the block failed outright.
+    #[test]
+    fn parse_response_for_takes_a_bare_answer_when_one_segment_was_asked() {
+        let segments = vec![(3, "It was called 6 times.".to_string())];
+        let result = parse_response_for("여섯 번 호출되었습니다.", &segments).unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[&3], "여섯 번 호출되었습니다.");
+    }
+
+    #[test]
+    fn parse_response_for_prefers_the_numbered_answer() {
+        let segments = vec![(3, "It was called 6 times.".to_string())];
+        let result = parse_response_for("[3] 여섯 번 호출되었습니다.", &segments).unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[&3], "여섯 번 호출되었습니다.");
+    }
+
+    /// Which sentence a bare answer translates is a guess once there are two,
+    /// and a wrong guess writes the answer under the wrong segment.
+    #[test]
+    fn parse_response_for_rejects_a_bare_answer_when_several_segments_were_asked() {
+        let segments = vec![
+            (1, "The repository stores all history.".to_string()),
+            (2, "Each commit represents a snapshot.".to_string()),
+        ];
+        assert!(parse_response_for("저장소는 모든 이력을 저장합니다.", &segments).is_err());
+    }
+
+    #[test]
+    fn parse_response_for_rejects_an_empty_answer() {
+        let segments = vec![(3, "It was called 6 times.".to_string())];
+        assert!(parse_response_for("   \n  ", &segments).is_err());
     }
 }

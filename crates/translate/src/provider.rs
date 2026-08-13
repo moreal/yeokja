@@ -84,8 +84,8 @@ pub async fn translate_via_prompt(
 ) -> Result<TranslateResponse, TranslateError> {
     let prompt = crate::prompt::build_prompt(&request);
     let response = llm.complete(CompletionRequest { prompt }).await?;
-    let translations =
-        crate::prompt::parse_response(&response.text).map_err(TranslateError::Parse)?;
+    let translations = crate::prompt::parse_response_for(&response.text, &request.segments)
+        .map_err(TranslateError::Parse)?;
     Ok(TranslateResponse {
         translations,
         usage: response.usage,
