@@ -15,7 +15,7 @@ mod table;
 use std::ops::Range;
 use table::TableReader;
 use yeokja_core::model::*;
-use yeokja_core::parser::{DocumentParser, TranslationMap};
+use yeokja_core::parser::{DocumentParser, Markup, TranslationMap};
 use yeokja_parser_utils::{
     apply_splices, collect_splices, join_segments_with_translations, make_segments,
     normalize_inline_text,
@@ -324,6 +324,10 @@ fn parse_block_title(content: &str) -> Option<usize> {
 }
 
 impl DocumentParser for AsciidocParser {
+    fn markup(&self) -> Markup {
+        Markup::Asciidoc
+    }
+
     fn parse(&self, source: &str) -> Document {
         let mut state = ParseState {
             source,

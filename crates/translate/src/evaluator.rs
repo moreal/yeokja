@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+pub use yeokja_core::parser::Markup;
 
 #[derive(Debug, Clone)]
 pub struct EvaluationContext {
@@ -9,6 +10,10 @@ pub struct EvaluationContext {
     pub glossary: HashMap<String, String>,
     pub source_lang: String,
     pub target_lang: String,
+    /// The markup the translation will be read back as. Two markups disagree
+    /// about what counts as valid inline formatting, so a check that asks
+    /// "does this still parse?" has to know which one is asking.
+    pub markup: Markup,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

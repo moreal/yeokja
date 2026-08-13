@@ -61,6 +61,7 @@ mod tests {
                 .collect(),
             source_lang: "en".to_string(),
             target_lang: "ko".to_string(),
+            markup: Markup::Asciidoc,
         }
     }
 

@@ -28,6 +28,7 @@ pub async fn run(path: &str) -> Result<()> {
         }
 
         let (_, reconciled) = scan_file(file_path, &ctx.config, &ctx.glossary, &parser_factory)?;
+        let markup = parser_factory(file_path, &ctx.config).markup();
 
         let mut file_issues = 0usize;
 
@@ -50,6 +51,7 @@ pub async fn run(path: &str) -> Result<()> {
                 glossary: ctx.glossary.terms().clone(),
                 source_lang: ctx.config.project.source_lang.clone(),
                 target_lang: ctx.config.project.target_lang.clone(),
+                markup,
             };
 
             for evaluator in &evaluators {

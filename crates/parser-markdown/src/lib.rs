@@ -1,7 +1,7 @@
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 use std::ops::Range;
 use yeokja_core::model::*;
-use yeokja_core::parser::{DocumentParser, TranslationMap};
+use yeokja_core::parser::{DocumentParser, Markup, TranslationMap};
 use yeokja_parser_utils::{make_segments, normalize_inline_text, splice_reconstruct};
 
 /// Span-based Markdown parser.
@@ -130,6 +130,10 @@ fn heading_level_num(level: HeadingLevel) -> u8 {
 }
 
 impl DocumentParser for MarkdownParser {
+    fn markup(&self) -> Markup {
+        Markup::Markdown
+    }
+
     fn parse(&self, source: &str) -> Document {
         let mut options = Options::empty();
         options.insert(Options::ENABLE_TABLES);

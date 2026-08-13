@@ -42,6 +42,7 @@ pub fn build_prompt(request: &TranslateRequest) -> String {
     ));
     prompt.push_str("Respond with each numbered translation in the same [N] format.\n");
     prompt.push_str("Preserve all markup exactly: links, URLs, bold/italic markers, and inline code.\n");
+    prompt.push_str(closing_rule(request.markup));
 
     if !glossary_section.is_empty() {
         prompt.push_str("\nGlossary (use these translations for the given terms):\n");
@@ -58,6 +59,31 @@ pub fn build_prompt(request: &TranslateRequest) -> String {
     prompt.push_str(&segments_section);
 
     prompt
+}
+
+/// The rule about inline pairs that `markup` actually has.
+///
+/// A language that attaches a suffix to the word before it — Korean and its
+/// particles, Japanese and its — writes `` `heap`에 ``, and in AsciiDoc that
+/// pair never closes: a closing mark against a word character is not a closing
+/// mark. Saying so here costs one line and saves a rejected translation.
+///
+/// Markdown only shares the rule for `_`, and its way out is the other
+/// emphasis mark rather than a doubled one: `__x__` is bold, not italic.
+fn closing_rule(markup: yeokja_core::parser::Markup) -> &'static str {
+    use yeokja_core::parser::Markup;
+    match markup {
+        Markup::Asciidoc => {
+            "A closing `, * or _ that a letter follows does not close the pair. When the \
+             translation puts a suffix straight after a marked-up term, double the marks \
+             so the pair still closes: `heap` → ``heap``에, *bold* → **bold**를.\n"
+        }
+        Markup::Markdown => {
+            "A closing _ that a letter follows does not close the pair. When the translation \
+             puts a suffix straight after an italicised term, use * instead: _arity_ → \
+             *arity*는.\n"
+        }
+    }
 }
 
 /// Parse a translation response in [N] format.
@@ -92,6 +118,7 @@ pub fn parse_response(response: &str) -> Result<HashMap<usize, String>, String> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use yeokja_core::parser::Markup;
 
     fn make_request() -> TranslateRequest {
         let mut glossary = HashMap::new();
@@ -106,6 +133,7 @@ mod tests {
             glossary,
             source_lang: "en".to_string(),
             target_lang: "ko".to_string(),
+            markup: Markup::Markdown,
             feedback: None,
             prompt_template: None,
         }
@@ -130,6 +158,23 @@ mod tests {
         req.feedback = Some("repository를 저장소로 번역해야 합니다".to_string());
         let prompt = build_prompt(&req);
         assert!(prompt.contains("repository를 저장소로 번역해야 합니다"));
+    }
+
+    /// The rule differs by markup, and getting it wrong is worse than silence:
+    /// `__x__` is bold in Markdown, so telling it to double `_` would change
+    /// what the sentence means.
+    #[test]
+    fn build_prompt_states_the_closing_rule_of_its_markup() {
+        let mut req = make_request();
+        req.markup = Markup::Asciidoc;
+        let asciidoc = build_prompt(&req);
+        assert!(asciidoc.contains("``heap``에"));
+        assert!(asciidoc.contains("**bold**를"));
+
+        req.markup = Markup::Markdown;
+        let markdown = build_prompt(&req);
+        assert!(markdown.contains("*arity*는"));
+        assert!(!markdown.contains("``heap``"));
     }
 
     #[test]

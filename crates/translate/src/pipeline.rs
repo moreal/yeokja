@@ -1,4 +1,4 @@
-use crate::evaluator::{EvaluationContext, EvaluationResult, TranslationEvaluator};
+use crate::evaluator::{EvaluationContext, EvaluationResult, Markup, TranslationEvaluator};
 use crate::provider::{TranslateError, TranslateRequest, TranslationProvider};
 use std::collections::HashMap;
 
@@ -31,6 +31,7 @@ pub enum PipelineEvent {
 pub type PipelineObserver<'a> = &'a (dyn Fn(PipelineEvent) + Send + Sync);
 
 /// Run a block through the translate-evaluate-retry pipeline.
+#[allow(clippy::too_many_arguments)]
 pub async fn translate_with_evaluation(
     provider: &dyn TranslationProvider,
     evaluators: &[&dyn TranslationEvaluator],
@@ -38,6 +39,7 @@ pub async fn translate_with_evaluation(
     glossary: &HashMap<String, String>,
     source_lang: &str,
     target_lang: &str,
+    markup: Markup,
     max_retries: u32,
 ) -> Result<HashMap<usize, PipelineResult>, TranslateError> {
     translate_with_evaluation_observed(
@@ -47,6 +49,7 @@ pub async fn translate_with_evaluation(
         glossary,
         source_lang,
         target_lang,
+        markup,
         max_retries,
         &|_| {},
     )
@@ -63,6 +66,7 @@ pub async fn translate_with_evaluation_observed(
     glossary: &HashMap<String, String>,
     source_lang: &str,
     target_lang: &str,
+    markup: Markup,
     max_retries: u32,
     on_event: PipelineObserver<'_>,
 ) -> Result<HashMap<usize, PipelineResult>, TranslateError> {
@@ -96,6 +100,7 @@ pub async fn translate_with_evaluation_observed(
                 glossary: glossary.clone(),
                 source_lang: source_lang.to_string(),
                 target_lang: target_lang.to_string(),
+                markup,
             };
 
             let mut combined_result = EvaluationResult {
@@ -252,6 +257,7 @@ mod tests {
             glossary: HashMap::new(),
             source_lang: "en".to_string(),
             target_lang: "ko".to_string(),
+            markup: Markup::Markdown,
             feedback: None,
             prompt_template: None,
         };
@@ -263,6 +269,7 @@ mod tests {
             &HashMap::new(),
             "en",
             "ko",
+            Markup::Markdown,
             3,
         )
         .await
@@ -286,6 +293,7 @@ mod tests {
             glossary: HashMap::new(),
             source_lang: "en".to_string(),
             target_lang: "ko".to_string(),
+            markup: Markup::Markdown,
             feedback: None,
             prompt_template: None,
         };
@@ -297,6 +305,7 @@ mod tests {
             &HashMap::new(),
             "en",
             "ko",
+            Markup::Markdown,
             3,
         )
         .await
@@ -339,6 +348,7 @@ mod tests {
             glossary: HashMap::new(),
             source_lang: "en".to_string(),
             target_lang: "ko".to_string(),
+            markup: Markup::Markdown,
             feedback: None,
             prompt_template: None,
         };
@@ -350,6 +360,7 @@ mod tests {
             &HashMap::new(),
             "en",
             "ko",
+            Markup::Markdown,
             3,
         )
         .await

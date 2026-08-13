@@ -23,7 +23,7 @@ use yeokja_core::glossary::Glossary;
 use yeokja_core::hash::content_hash;
 use yeokja_core::model::Document;
 use yeokja_core::select::apply_table_rules;
-use yeokja_core::parser::{DocumentParser, TranslationMap};
+use yeokja_core::parser::{DocumentParser, Markup, TranslationMap};
 use yeokja_core::reconcile::{reconcile_with_status, ReconciledSegment};
 use yeokja_core::state::{SegmentState, StateFile};
 
@@ -629,6 +629,7 @@ impl FileTranslator {
         // block task is spawned up front and then queues on `acquire()`, so the
         // permit is the moment a worker picks the block up.
         let mut handles = Vec::new();
+        let markup = parser.markup();
         for (block_context, block_segments) in block_groups {
             let this = FileTranslator {
                 config: self.config.clone(),
@@ -669,7 +670,7 @@ impl FileTranslator {
                     },
                 );
                 match this
-                    .translate_block(block_id, &block_context, &block_segments, &progress)
+                    .translate_block(block_id, &block_context, &block_segments, markup, &progress)
                     .await
                 {
                     Ok(updates) => {
@@ -712,6 +713,7 @@ impl FileTranslator {
         block_id: u64,
         block_context: &str,
         block_segments: &[(usize, SegmentState)],
+        markup: Markup,
         progress: &Option<ProgressSender>,
     ) -> Result<Vec<SegmentUpdate>, crate::provider::TranslateError> {
         let request_segments: Vec<(usize, String)> = block_segments
@@ -728,6 +730,7 @@ impl FileTranslator {
             glossary: glossary_terms.clone(),
             source_lang: self.config.project.source_lang.clone(),
             target_lang: self.config.project.target_lang.clone(),
+            markup,
             feedback: None,
             prompt_template: self.config.provider.prompt_template.clone(),
         };
@@ -772,6 +775,7 @@ impl FileTranslator {
                 &glossary_terms,
                 &self.config.project.source_lang,
                 &self.config.project.target_lang,
+                markup,
                 self.options.max_retries,
                 &observer,
             )
@@ -1053,6 +1057,10 @@ model = "test"
     struct OneBlockParser;
 
     impl DocumentParser for OneBlockParser {
+        fn markup(&self) -> Markup {
+            Markup::Markdown
+        }
+
         fn parse(&self, source: &str) -> Document {
             let text = source.trim().to_string();
             let segment = Segment {

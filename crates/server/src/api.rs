@@ -367,6 +367,7 @@ async fn evaluate_segment(
         glossary,
         source_lang: state.config.project.source_lang.clone(),
         target_lang: state.config.project.target_lang.clone(),
+        markup: yeokja_parsers::select_parser(source_path, &state.config).markup(),
     };
 
     let result = evaluate_translation(&evaluators, &context).await;

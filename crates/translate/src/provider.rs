@@ -37,6 +37,9 @@ pub struct TranslateRequest {
     pub glossary: HashMap<String, String>,
     pub source_lang: String,
     pub target_lang: String,
+    /// The markup the segments are written in, so the prompt can state the
+    /// rules that markup actually has.
+    pub markup: yeokja_core::parser::Markup,
     /// Optional feedback from previous evaluation failures (for retry loop).
     pub feedback: Option<String>,
     /// Optional custom prompt template (see `prompt::build_prompt`).
