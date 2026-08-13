@@ -75,8 +75,9 @@ fn closing_rule(markup: yeokja_core::parser::Markup) -> &'static str {
     match markup {
         Markup::Asciidoc => {
             "A closing `, * or _ that a letter follows does not close the pair. When the \
-             translation puts a suffix straight after a marked-up term, double the marks \
-             so the pair still closes: `heap` → ``heap``에, *bold* → **bold**를.\n"
+             translation puts a suffix straight after a marked-up term, double the mark at \
+             BOTH ends so the pair still closes: `heap` → ``heap``에, *bold* → **bold**를. \
+             Doubling one end only (`heap``에) closes neither way and prints the marks.\n"
         }
         Markup::Markdown => {
             "A closing _ that a letter follows does not close the pair. When the translation \

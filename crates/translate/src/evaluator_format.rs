@@ -48,12 +48,12 @@ impl TranslationEvaluator for FormatEvaluator {
                 severity: IssueSeverity::Error,
                 kind: IssueKind::FormatLost,
                 message: format!(
-                    "A letter follows the closing mark in {}, so {} pair never closes: \
-                     the marks print as themselves and the run swallows the text after \
-                     them. Write each as {} — the doubled form closes anywhere — or put \
-                     a space or punctuation after the closing mark.",
+                    "{} never closes: the marks print as themselves and the run swallows \
+                     the text after them. Write {} as {}, doubling the mark at BOTH ends \
+                     — doubling the closing one alone closes neither way — or put a space \
+                     or punctuation after the closing mark.",
                     shown.join(", "),
-                    if shown.len() == 1 { "the" } else { "each" },
+                    if shown.len() == 1 { "it" } else { "each" },
                     unconstrained,
                 ),
             });
@@ -147,11 +147,22 @@ fn unclosable_pairs(text: &str, markup: Markup) -> Vec<Unclosable> {
     found
 }
 
-/// Pair up `mark` the way a constrained pair is read, and report each pair that
-/// opens without being able to close — as the span of the pair plus the letter
-/// that holds it open.
+/// Pair up runs of `mark` the way AsciiDoc reads them, and report each pair
+/// that opens without being able to close — as the span of the pair plus the
+/// character holding it open.
+///
+/// A run of two marks is the unconstrained form and pairs with another run of
+/// two, anywhere. A lone mark is the constrained form and pairs with another
+/// lone mark, but only when nothing sits against either end: not a word
+/// character, not a quote, not another mark. So half-doubling a pair —
+/// `` `Atom``이라는 `` — closes neither way, and that is exactly what a
+/// translator reaches for first on being told to double the marks.
 fn unclosable_spans(chars: &[char], mark: char) -> Vec<std::ops::Range<usize>> {
-    let is_word = |c: char| c.is_alphanumeric() || c == '_';
+    // Asciidoctor's own flanking test, which is why `'` is in here: it turns
+    // `` `Atom`'s `` into a curly quote and no code span at all.
+    let blocked = |c: char| c.is_alphanumeric() || c == '_' || c == '"' || c == '\'' || c == mark;
+    let run_len = |at: usize| chars[at..].iter().take_while(|c| **c == mark).count();
+
     let mut spans = Vec::new();
     let mut i = 0;
     while i < chars.len() {
@@ -159,37 +170,48 @@ fn unclosable_spans(chars: &[char], mark: char) -> Vec<std::ops::Range<usize>> {
             i += 1;
             continue;
         }
-        // Doubled marks are the unconstrained form, which closes anywhere.
-        if chars.get(i + 1) == Some(&mark) {
-            while i < chars.len() && chars[i] == mark {
-                i += 1;
-            }
-            continue;
-        }
-        // A mark with a word on its left never opens anything: the underscores
-        // in `min_heap_size` are text, not markup.
-        let opens = (i == 0 || !is_word(chars[i - 1]))
-            && chars.get(i + 1).is_some_and(|c| !c.is_whitespace());
+        let open_len = run_len(i);
+        let after_open = i + open_len;
+        // A lone mark with a word against its left opens nothing: the
+        // underscores in `min_heap_size` are text, not markup.
+        let opens = open_len > 1
+            || ((i == 0 || !blocked(chars[i - 1]))
+                && chars.get(after_open).is_some_and(|c| !c.is_whitespace()));
         if !opens {
-            i += 1;
+            i = after_open;
             continue;
         }
-        // The closing mark is the next one that a space does not precede.
-        let mut from = i + 1;
-        loop {
+        // Look for a run that can close this one. AsciiDoc keeps looking past
+        // a candidate it cannot use, which is why `_temp_alloc_ is` closes on
+        // the trailing underscore rather than giving up on the one inside the
+        // identifier. Failing to look past it called the English source broken
+        // too, and a check that rejects the source rejects nothing.
+        let mut from = after_open;
+        let mut first_candidate = None;
+        let closes_at = loop {
             let Some(offset) = chars[from..].iter().position(|c| *c == mark) else {
-                return spans; // opened at the end of the text; nothing to pair with
+                break None;
             };
             let close = from + offset;
-            if chars[close - 1].is_whitespace() {
-                from = close + 1;
-                continue;
+            let close_len = run_len(close);
+            first_candidate.get_or_insert(close + close_len);
+            let usable = close_len == open_len
+                && (open_len > 1
+                    || (!chars[close - 1].is_whitespace()
+                        && !chars.get(close + 1).is_some_and(|c| blocked(*c))));
+            if usable {
+                break Some(close + close_len);
             }
-            if chars.get(close + 1).is_some_and(|c| is_word(*c)) {
-                spans.push(i..close + 2);
+            from = close + close_len;
+        };
+        match (closes_at, first_candidate) {
+            (Some(end), _) => i = end,
+            // A mark with nothing after it to pair with is text, not markup.
+            (None, None) => break,
+            (None, Some(end)) => {
+                spans.push(i..(end + 1).min(chars.len()));
+                i = end;
             }
-            i = close + 1;
-            break;
         }
     }
     spans
@@ -388,6 +410,38 @@ mod tests {
         let found = unclosable_pairs(text, Markup::Asciidoc);
         let shown: Vec<&str> = found.iter().map(|u| u.text.as_str()).collect();
         assert_eq!(shown, vec!["`allocate`와", "`NIL`로"]);
+    }
+
+    /// Doubling only one end is the first thing a translator tries on being
+    /// told to double the marks, and it renders as nothing either way.
+    #[test]
+    fn a_half_doubled_pair_closes_neither_way() {
+        for text in [
+            "청크 `Atom``이라는 이름을 씁니다.",
+            "청크 ``Atom`이라는 이름을 씁니다.",
+        ] {
+            assert!(
+                !unclosable_pairs(text, Markup::Asciidoc).is_empty(),
+                "{text:?} closes neither as a constrained nor an unconstrained pair"
+            );
+        }
+    }
+
+    /// AsciiDoc looks past a closer it cannot use. `_temp_alloc_` closes on
+    /// its trailing underscore, not on the one inside the identifier — so the
+    /// English reads fine and only the Korean, which glues 은 to the end, does
+    /// not. Calling both broken would have switched the check off for the pair.
+    #[test]
+    fn a_closer_is_sought_past_the_one_that_cannot_close() {
+        assert!(unclosable_pairs("The allocator _temp_alloc_ is used.", Markup::Asciidoc).is_empty());
+        assert!(!unclosable_pairs("할당자 _temp_alloc_은 임시 할당에 씁니다.", Markup::Asciidoc).is_empty());
+    }
+
+    /// Asciidoctor blocks a closing mark on a quote as well as on a letter.
+    #[test]
+    fn a_quote_against_the_closing_mark_blocks_it() {
+        assert!(!unclosable_pairs("the `Atom`\"quoted\" chunk", Markup::Asciidoc).is_empty());
+        assert!(unclosable_pairs("the `Atom`. chunk", Markup::Asciidoc).is_empty());
     }
 
     #[tokio::test]
