@@ -11,6 +11,44 @@ pattern = "**/*.asciidoc"
 parser = "asciidoc"
 output = "ko/chapters/{path}"
 
+[derive]
+base = "upstream"
+
+# 번역 미러: 원본이 사라진 번역(고아)은 트리에 얹지 않고 보고합니다.
+[[derive.overlay]]
+path = "ko"
+require_base = true
+
+# 한국어판 전용 추가물: PDF 테마와 한글 폰트 (OFL).
+[[derive.overlay]]
+path = "assets"
+
+# 순수 오버레이로 표현 못 하는 원본 수정: PDF 테마 전환 + Index 앞 빈 줄 보정.
+[[derive.step]]
+kind = "patch"
+file = "patches/online-book-ko.patch"
+
+# make html이 요구하는 기여자 표. 원본 Makefile 규칙과 같되 git 히스토리를
+# submodule에서 읽습니다(트리는 git 저장소가 아닙니다). gh 조회는 뺐습니다 —
+# 네트워크 없이 결정적으로 조립되게.
+[[derive.step]]
+kind = "generate"
+command = '''
+{ echo '[cols="3*",frame=none,grid=none]'; echo '|==='; \
+  git -C "$YEOKJA_ROOT/upstream" --no-pager log \
+  | git -C "$YEOKJA_ROOT/upstream" --no-pager shortlog -s -n \
+  | awk '{$1=""; sub(/^ /, ""); print}' \
+  | grep -Ev "happi|Erik Stenman|Your Name" \
+  | sort -u \
+  | paste - - - | sed 's/^\(.*\)\t\(.*\)\t\(.*\)$/| \1 | \2 | \3/' \
+  | sed 's/\t/|/g' | sed 's/| */| /g'; \
+  echo '|==='; } > chapters/contributors.txt
+'''
+
+[build]
+command = 'sh "$YEOKJA_ROOT/build-html.sh"'
+outputs = ["site"]
+
 [provider]
 type = "claude_code"
 model = "claude-sonnet-5"
