@@ -1,11 +1,18 @@
 #!/bin/sh
 # 조립된 트리 안에서 실행됩니다 (`yeokja build`가 cwd를 트리로 잡습니다).
 #
-# 툴체인은 이 머신 기준입니다: HTML은 시스템 ruby 2.6의 asciidoctor,
-# ditaa 다이어그램은 keg-only openjdk 21이 필요합니다.
+# macOS 로컬 툴체인은 있을 때만 얹습니다: HTML은 시스템 ruby 2.6의
+# asciidoctor, ditaa 다이어그램은 keg-only openjdk 21. CI(리눅스)에서는
+# PATH의 asciidoctor/java를 그대로 씁니다.
 set -e
-export JAVA_HOME=/opt/homebrew/opt/openjdk@21
-export PATH="$HOME/.gem/ruby/2.6.0/bin:$JAVA_HOME/bin:$PATH"
+if [ -d /opt/homebrew/opt/openjdk@21 ]; then
+    export JAVA_HOME=/opt/homebrew/opt/openjdk@21
+    PATH="$JAVA_HOME/bin:$PATH"
+fi
+if [ -d "$HOME/.gem/ruby/2.6.0/bin" ]; then
+    PATH="$HOME/.gem/ruby/2.6.0/bin:$PATH"
+fi
+export PATH
 
 make html
 

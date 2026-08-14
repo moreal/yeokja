@@ -1,0 +1,102 @@
+# 번역 프로젝트들을 GitHub Pages로 배포합니다.
+#
+# 번역은 CI에서 일어나지 않습니다: 커밋된 state/에서 출력을 재구성만 하고
+# (완역 상태라 provider 호출이 0회), `status --check`가 미번역 세그먼트를
+# 발견하면 영어 문장이 섞인 판을 조용히 배포하는 대신 실패합니다.
+name: Deploy Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      # contributors 표가 git 히스토리 전체를 요구합니다. actions/checkout이
+      # 서브모듈을 얕게 받았을 때만 --unshallow가 의미가 있고, 아니면 no-op.
+      - name: Unshallow submodules for the contributors table
+        run: git submodule foreach 'git fetch --unshallow || true'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Install the Asciidoctor toolchain
+        run: gem install asciidoctor asciidoctor-diagram rouge
+
+      - name: Build yeokja
+        run: cargo build --release -p yeokja-cli
+
+      - name: Rebuild translated sources from committed state
+        working-directory: projects/thebeambook
+        run: |
+          ../../target/release/yeokja translate upstream/chapters
+          ../../target/release/yeokja status --check upstream/chapters
+
+      - name: Build theBeamBook HTML
+        working-directory: projects/thebeambook
+        run: ../../target/release/yeokja build
+
+      - name: Stage the Pages tree
+        run: |
+          mkdir -p _site
+          cp -r projects/thebeambook/dist/site _site/theBeamBook
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="ko">
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>yeokja 번역 프로젝트</title>
+          <body style="font-family: sans-serif; max-width: 40rem; margin: 4rem auto; padding: 0 1rem;">
+          <h1>yeokja 번역 프로젝트</h1>
+          <ul>
+            <li><a href="theBeamBook/">The BEAM Book 한국어판</a>
+              — 원문 <a href="https://github.com/happi/theBeamBook">happi/theBeamBook</a> (CC BY 4.0)</li>
+          </ul>
+          </body>
+          </html>
+          HTML
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

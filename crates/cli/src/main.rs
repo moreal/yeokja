@@ -34,6 +34,9 @@ enum Commands {
     Status {
         /// Path to check
         path: String,
+        /// Exit nonzero if any segment still needs translation (CI gate)
+        #[arg(long)]
+        check: bool,
     },
     /// List tables and how selection rules treat them
     Inspect {
@@ -132,8 +135,8 @@ async fn main() -> anyhow::Result<()> {
         Commands::Coverage { path, min_lines } => {
             commands::coverage::run(&path, min_lines)?;
         }
-        Commands::Status { path } => {
-            commands::status::run(&path)?;
+        Commands::Status { path, check } => {
+            commands::status::run(&path, check)?;
         }
         Commands::Glossary { action } => match action {
             GlossaryAction::List => commands::glossary::list()?,

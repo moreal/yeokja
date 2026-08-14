@@ -4,7 +4,7 @@ use yeokja_core::change::SegmentStatus;
 use yeokja_core::project::ProjectContext;
 use yeokja_translate::orchestrator::{collect_files, scan_file};
 
-pub fn run(path: &str) -> Result<()> {
+pub fn run(path: &str, check: bool) -> Result<()> {
     let ctx = ProjectContext::load()?;
     let parser_factory = super::parser_factory();
 
@@ -42,6 +42,17 @@ pub fn run(path: &str) -> Result<()> {
     println!("Stale:            {}", stale);
     println!("Glossary stale:   {}", glossary_stale);
     println!("Context changed:  {}", context_changed);
+
+    // The CI gate: publishing a build with untranslated segments would
+    // silently ship English prose in the translated edition. Orphans are
+    // deliberately not counted — a kept orphan (a chapter upstream may
+    // revive) is not untranslated work.
+    if check && pending + stale + glossary_stale + context_changed > 0 {
+        anyhow::bail!(
+            "{} segment(s) still need translation",
+            pending + stale + glossary_stale + context_changed
+        );
+    }
 
     // Orphans are project-wide (they have no source to fall under `path`),
     // so they are reported regardless of the filter.
