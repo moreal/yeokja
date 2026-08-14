@@ -30,8 +30,9 @@ jobs:
 
       # contributors 표가 git 히스토리 전체를 요구합니다. actions/checkout이
       # 서브모듈을 얕게 받았을 때만 --unshallow가 의미가 있고, 아니면 no-op.
-      - name: Unshallow submodules for the contributors table
-        run: git submodule foreach 'git fetch --unshallow || true'
+      # theBeamBook만 풉니다 — pypy 히스토리는 크고 여기서는 필요 없습니다.
+      - name: Unshallow theBeamBook for the contributors table
+        run: git -C projects/thebeambook/upstream fetch --unshallow || true
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -60,10 +61,36 @@ jobs:
         working-directory: projects/thebeambook
         run: ../../target/release/yeokja build
 
+      # PyPy 문서의 conf.py는 py2 문법인 pypy.config를 임포트하므로 공식
+      # 환경(.readthedocs.yaml)과 같은 Python 2.7이 필요합니다.
+      - name: Install Python 2.7 for the PyPy docs
+        uses: actions/setup-python@v5
+        with:
+          python-version: 'pypy2.7'
+
+      - name: Install the PyPy docs Sphinx toolchain
+        run: pip install 'sphinx<2' 'docutils==0.11' 'sphinx-issues==1.2.0' 'sphinx_rtd_theme<1' py
+
+      # 번역된 파일만 재구성합니다 — 상태가 없는 문서는 영어 원문 그대로
+      # 오버레이 트리에 남는 것이 의도된 동작입니다.
+      - name: Rebuild PyPy translations from committed state
+        working-directory: projects/pypy
+        run: |
+          for s in $(find state -name '*.yeokja.json'); do
+            src="${s#state/}"; src="${src%.yeokja.json}"
+            ../../target/release/yeokja translate "$src"
+            ../../target/release/yeokja status --check "$src"
+          done
+
+      - name: Build the PyPy docs HTML
+        working-directory: projects/pypy
+        run: ../../target/release/yeokja build
+
       - name: Stage the Pages tree
         run: |
           mkdir -p _site
           cp -r projects/thebeambook/dist/site _site/theBeamBook
+          cp -r projects/pypy/dist/pypy/doc/_build/html _site/pypy
           cat > _site/index.html <<'HTML'
           <!doctype html>
           <html lang="ko">
@@ -75,6 +102,8 @@ jobs:
           <ul>
             <li><a href="theBeamBook/">The BEAM Book 한국어판</a>
               — 원문 <a href="https://github.com/happi/theBeamBook">happi/theBeamBook</a> (CC BY 4.0)</li>
+            <li><a href="pypy/">PyPy 문서 한국어판</a> (번역 진행 중)
+              — 원문 <a href="https://github.com/pypy/pypy">pypy/pypy</a> (MIT)</li>
           </ul>
           </body>
           </html>
