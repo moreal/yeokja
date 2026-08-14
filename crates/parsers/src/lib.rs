@@ -26,6 +26,7 @@ pub fn select_parser(file_path: &Path, config: &ProjectConfig) -> Box<dyn Docume
     }
     match file_path.extension().and_then(|e| e.to_str()) {
         Some("adoc" | "asciidoc" | "asc") => Box::new(yeokja_parser_asciidoc::AsciidocParser),
+        Some("rst" | "rest") => Box::new(yeokja_parser_rst::RstParser),
         _ => Box::new(yeokja_parser_markdown::MarkdownParser),
     }
 }
@@ -33,6 +34,7 @@ pub fn select_parser(file_path: &Path, config: &ProjectConfig) -> Box<dyn Docume
 fn parser_by_name(name: &str) -> Box<dyn DocumentParser> {
     match name {
         "asciidoc" => Box::new(yeokja_parser_asciidoc::AsciidocParser),
+        "rst" => Box::new(yeokja_parser_rst::RstParser),
         _ => Box::new(yeokja_parser_markdown::MarkdownParser),
     }
 }

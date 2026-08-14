@@ -74,6 +74,13 @@ pub enum BlockRole {
     /// underline. The underline's length identifies the title, so it has to
     /// follow the translation instead of staying verbatim.
     SetextTitle { underline: std::ops::Range<usize> },
+    /// An RST section title, adorned by an underline and possibly a matching
+    /// overline. Both must cover the title's display width, so they are redrawn
+    /// to follow the translation.
+    AdornedTitle {
+        underline: std::ops::Range<usize>,
+        overline: Option<std::ops::Range<usize>>,
+    },
     /// One cell of a `|===` table.
     TableCell {
         /// Index of the table within its document, so cells of two adjacent

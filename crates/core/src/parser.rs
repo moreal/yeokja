@@ -13,6 +13,7 @@ pub type TranslationMap = HashMap<SegmentId, String>;
 pub enum Markup {
     Markdown,
     Asciidoc,
+    Rst,
 }
 
 pub trait DocumentParser: Send + Sync {
