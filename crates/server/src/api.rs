@@ -176,7 +176,7 @@ async fn update_segment(
         return Err(StatusCode::NOT_FOUND);
     }
 
-    let state_path = StateFile::state_file_path(source_path);
+    let state_path = StateFile::state_file_path(source_path, state.config.state_dir());
 
     // If no state file exists yet, create one by parsing and reconciling
     let mut state_file = if state_path.exists() {
@@ -319,7 +319,7 @@ async fn evaluate_segment(
     axum::extract::Path((file, segment_id)): axum::extract::Path<(String, String)>,
 ) -> Result<Json<EvaluateSegmentResponse>, (StatusCode, Json<ErrorResponse>)> {
     let source_path = Path::new(&file);
-    let state_path = StateFile::state_file_path(source_path);
+    let state_path = StateFile::state_file_path(source_path, state.config.state_dir());
     if !state_path.exists() {
         return Err((
             StatusCode::NOT_FOUND,

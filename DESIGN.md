@@ -178,10 +178,12 @@ TranslateGemma는 별도 형식: `<<<source>>>en<<<target>>>ko<<<text>>>...`
 
 원본 파일 옆에 `.yeokja.json` 사이드카 파일로 저장합니다. Atomic write (임시 파일 + rename)로 crash safety를 보장합니다. 상태 파일에는 각 세그먼트의 원문, 해시, 번역, glossary snapshot, 타임스탬프를 기록합니다.
 
+`[project] state_dir`를 지정하면 사이드카 대신 그 디렉터리 아래에 원본의 프로젝트 상대 경로를 그대로 미러링해 저장합니다 (`upstream/chapters/x.asciidoc` → `state/upstream/chapters/x.asciidoc.yeokja.json`). 원본 트리를 읽기 전용으로 유지해야 할 때 — 예를 들어 원본이 git submodule일 때 — 사용합니다. 프로젝트 밖의 절대 경로 파일은 계속 사이드카 방식을 따릅니다.
+
 ## 설정
 
 `yeokja.toml`로 프로젝트 설정을 관리합니다:
-- `[project]`: 소스/타겟 언어, 용어집 경로
+- `[project]`: 소스/타겟 언어, 용어집 경로, 상태 파일 디렉터리(`state_dir`)
 - `[[sources]]`: 번역 대상 파일 패턴, 파서 종류, 출력 경로 템플릿
 - `[provider]`: LLM 프로바이더 종류, 모델, API 키 환경변수
 - `[evaluation]`: 자동 평가 활성화, 최대 재시도 횟수

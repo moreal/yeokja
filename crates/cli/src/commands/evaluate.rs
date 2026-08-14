@@ -21,7 +21,8 @@ pub async fn run(path: &str) -> Result<()> {
     tracing::info!(files = files.len(), "Evaluating translations");
 
     for file_path in &files {
-        let state_path = yeokja_core::state::StateFile::state_file_path(file_path);
+        let state_path =
+            yeokja_core::state::StateFile::state_file_path(file_path, ctx.config.state_dir());
         if !state_path.exists() {
             tracing::debug!(file = %file_path.display(), "No state file, skipping");
             continue;

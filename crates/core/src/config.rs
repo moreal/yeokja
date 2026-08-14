@@ -25,6 +25,11 @@ pub struct ProjectSettings {
     pub target_lang: String,
     #[serde(default = "default_glossary_path")]
     pub glossary: String,
+    /// Directory collecting `.yeokja.json` state files, mirroring each source's
+    /// project-relative path. Absent keeps the sidecar-next-to-source layout.
+    /// Lets the source tree (e.g. a git submodule) stay pristine.
+    #[serde(default)]
+    pub state_dir: Option<String>,
 }
 
 fn default_glossary_path() -> String {
@@ -170,6 +175,10 @@ pub enum ConfigError {
 }
 
 impl ProjectConfig {
+    pub fn state_dir(&self) -> Option<&Path> {
+        self.project.state_dir.as_deref().map(Path::new)
+    }
+
     pub fn load(path: &Path) -> Result<Self, ConfigError> {
         let content = std::fs::read_to_string(path)?;
         Self::from_toml(&content)
@@ -240,6 +249,23 @@ model = "gpt-4o"
         assert!(config.sources.is_empty());
         assert!(config.server.is_none());
         assert!(config.translation.is_none());
+        assert!(config.state_dir().is_none());
+    }
+
+    #[test]
+    fn parse_state_dir() {
+        let toml = r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+state_dir = "state"
+
+[provider]
+type = "anthropic"
+model = "claude-sonnet-5"
+"#;
+        let config = ProjectConfig::from_toml(toml).unwrap();
+        assert_eq!(config.state_dir(), Some(Path::new("state")));
     }
 
     #[test]

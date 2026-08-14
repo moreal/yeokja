@@ -281,7 +281,7 @@ pub fn scan_file(
     let mut doc = parser.parse(&source);
     apply_table_rules(&mut doc, &config.tables, file_path);
     let doc = doc;
-    let state_path = StateFile::state_file_path(file_path);
+    let state_path = StateFile::state_file_path(file_path, config.state_dir());
     let existing = if state_path.exists() {
         StateFile::load(&state_path)?
     } else {
@@ -532,7 +532,7 @@ impl FileTranslator {
             tracing::debug!(file = %file_path.display(), excluded, "Table rules excluded cells");
         }
         let doc = doc;
-        let state_path = StateFile::state_file_path(file_path);
+        let state_path = StateFile::state_file_path(file_path, self.config.state_dir());
 
         let existing = if state_path.exists() {
             StateFile::load(&state_path)?
