@@ -6,6 +6,7 @@ pub mod state;
 pub mod reconcile;
 pub mod change;
 pub mod config;
+pub mod orphans;
 pub mod project;
 pub mod select;
 pub mod coverage;

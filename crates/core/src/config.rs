@@ -17,6 +17,71 @@ pub struct ProjectConfig {
     /// default; each rule only ever removes content from that set.
     #[serde(default)]
     pub tables: Vec<TableRule>,
+    #[serde(default)]
+    pub derive: Option<DeriveConfig>,
+    #[serde(default)]
+    pub build: Option<BuildConfig>,
+}
+
+/// How the buildable tree is derived: a base layer (typically an upstream
+/// submodule) with overlays stacked on top, then patch/generate steps for
+/// whatever a pure overlay cannot express. The tree is disposable — it is
+/// assembled from scratch every time and atomically swapped into place.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeriveConfig {
+    /// Layer 0, linked in verbatim (minus `.git`).
+    pub base: String,
+    /// Where the assembled tree lands.
+    #[serde(default = "default_derive_target")]
+    pub target: String,
+    /// Later overlays win over earlier ones and over the base.
+    #[serde(default)]
+    pub overlay: Vec<OverlayConfig>,
+    /// Run in order after the overlays, inside the tree.
+    #[serde(default)]
+    pub step: Vec<DeriveStep>,
+}
+
+fn default_derive_target() -> String {
+    "build/tree".to_string()
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OverlayConfig {
+    pub path: String,
+    /// Only overlay files whose base counterpart exists. The safety net for
+    /// translation mirrors: an output whose source upstream deleted is skipped
+    /// and reported instead of haunting the tree.
+    #[serde(default)]
+    pub require_base: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum DeriveStep {
+    /// Apply a unified diff (project-root-relative path) with `git apply`.
+    /// Files it touches are materialized from links into real copies first,
+    /// so a patch can never write through into an overlay or the base.
+    Patch { file: String },
+    /// Run a shell command with the tree as its working directory and
+    /// `YEOKJA_ROOT` pointing back at the project root.
+    Generate { command: String },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BuildConfig {
+    /// Shell command run inside the assembled tree, `YEOKJA_ROOT` set.
+    pub command: String,
+    /// Tree-relative paths copied (dereferencing links) into `dist` after a
+    /// successful build.
+    #[serde(default)]
+    pub outputs: Vec<String>,
+    #[serde(default = "default_dist")]
+    pub dist: String,
+}
+
+fn default_dist() -> String {
+    "dist".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -250,6 +315,53 @@ model = "gpt-4o"
         assert!(config.server.is_none());
         assert!(config.translation.is_none());
         assert!(config.state_dir().is_none());
+    }
+
+    #[test]
+    fn parse_derive_and_build() {
+        let toml = r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[provider]
+type = "claude_code"
+model = "claude-sonnet-5"
+
+[derive]
+base = "upstream"
+
+[[derive.overlay]]
+path = "ko"
+require_base = true
+
+[[derive.overlay]]
+path = "assets"
+
+[[derive.step]]
+kind = "patch"
+file = "patches/fix.patch"
+
+[[derive.step]]
+kind = "generate"
+command = "echo hi > marker.txt"
+
+[build]
+command = "make html"
+outputs = ["site"]
+"#;
+        let config = ProjectConfig::from_toml(toml).unwrap();
+        let derive = config.derive.unwrap();
+        assert_eq!(derive.base, "upstream");
+        assert_eq!(derive.target, "build/tree");
+        assert_eq!(derive.overlay.len(), 2);
+        assert!(derive.overlay[0].require_base);
+        assert!(!derive.overlay[1].require_base);
+        assert!(matches!(&derive.step[0], DeriveStep::Patch { file } if file == "patches/fix.patch"));
+        assert!(matches!(&derive.step[1], DeriveStep::Generate { .. }));
+        let build = config.build.unwrap();
+        assert_eq!(build.outputs, vec!["site"]);
+        assert_eq!(build.dist, "dist");
     }
 
     #[test]

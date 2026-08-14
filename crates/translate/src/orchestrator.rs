@@ -265,6 +265,145 @@ pub fn resolve_output_path(source_path: &Path, config: &ProjectConfig) -> PathBu
     source_path.with_file_name(format!("{stem}.ko{ext}"))
 }
 
+/// The fraction of a new file's segment hashes an orphaned state must cover
+/// to count as that file's previous life under another name.
+const RENAME_OVERLAP_THRESHOLD: f64 = 0.5;
+
+/// An orphaned state file, paired with the collected source file that looks
+/// like its rename destination when one exists.
+#[derive(Debug)]
+pub struct OrphanReport {
+    pub orphan: yeokja_core::orphans::OrphanState,
+    pub renamed_to: Option<PathBuf>,
+}
+
+/// Match orphaned state files against collected files that have no state yet.
+/// Pure report — nothing is moved. A match means either the whole-file hash
+/// is identical (pure rename) or most segment hashes carry over (rename plus
+/// edits).
+pub fn match_orphans(
+    files: &[PathBuf],
+    config: &ProjectConfig,
+    parser_factory: &ParserFactory,
+) -> Vec<OrphanReport> {
+    let orphans = yeokja_core::orphans::find_orphan_states(config);
+    if orphans.is_empty() {
+        return Vec::new();
+    }
+
+    // Only files with no state of their own can be a rename destination.
+    let stateless: Vec<&PathBuf> = files
+        .iter()
+        .filter(|f| !StateFile::state_file_path(f, config.state_dir()).exists())
+        .collect();
+
+    let mut claimed: HashSet<usize> = HashSet::new();
+    let mut renamed_to: HashMap<usize, PathBuf> = HashMap::new();
+
+    for file in stateless {
+        let Ok(source) = std::fs::read_to_string(file) else {
+            continue;
+        };
+        let file_hash = content_hash(&source);
+        let mut segment_hashes: Option<HashSet<u64>> = None;
+
+        let mut best: Option<(usize, f64)> = None;
+        for (idx, orphan) in orphans.iter().enumerate() {
+            if claimed.contains(&idx) {
+                continue;
+            }
+            let Ok(state) = StateFile::load(&orphan.state_path) else {
+                continue;
+            };
+            if state.source_hash == file_hash {
+                best = Some((idx, 1.0));
+                break;
+            }
+            let hashes = segment_hashes.get_or_insert_with(|| {
+                let parser = parser_factory(file, config);
+                let mut doc = parser.parse(&source);
+                apply_table_rules(&mut doc, &config.tables, file);
+                doc.translatable_segments()
+                    .iter()
+                    .map(|s| s.source_hash)
+                    .collect()
+            });
+            if hashes.is_empty() {
+                continue;
+            }
+            let matched = state
+                .segments
+                .iter()
+                .filter(|s| hashes.contains(&s.source_hash))
+                .map(|s| s.source_hash)
+                .collect::<HashSet<u64>>()
+                .len();
+            let overlap = matched as f64 / hashes.len() as f64;
+            if overlap >= RENAME_OVERLAP_THRESHOLD
+                && best.is_none_or(|(_, prev)| overlap > prev)
+            {
+                best = Some((idx, overlap));
+            }
+        }
+
+        if let Some((idx, _)) = best {
+            claimed.insert(idx);
+            renamed_to.insert(idx, file.clone());
+        }
+    }
+
+    orphans
+        .into_iter()
+        .enumerate()
+        .map(|(idx, orphan)| OrphanReport {
+            renamed_to: renamed_to.get(&idx).cloned(),
+            orphan,
+        })
+        .collect()
+}
+
+/// Move each matched orphan's state to its rename destination, so the
+/// translations carry over instead of being paid for again. Returns the
+/// `(from, to)` moves performed. Unmatched orphans are left alone — deleting
+/// state is reserved for an explicit clean.
+pub fn adopt_renamed_states(
+    files: &[PathBuf],
+    config: &ProjectConfig,
+    parser_factory: &ParserFactory,
+) -> Vec<(PathBuf, PathBuf)> {
+    let mut moves = Vec::new();
+    for report in match_orphans(files, config, parser_factory) {
+        let Some(new_source) = report.renamed_to else {
+            continue;
+        };
+        let dest = StateFile::state_file_path(&new_source, config.state_dir());
+        if let Some(parent) = dest.parent()
+            && !parent.as_os_str().is_empty()
+            && std::fs::create_dir_all(parent).is_err()
+        {
+            continue;
+        }
+        match std::fs::rename(&report.orphan.state_path, &dest) {
+            Ok(()) => {
+                tracing::info!(
+                    from = %report.orphan.expected_source.display(),
+                    to = %new_source.display(),
+                    "Adopted state across a rename"
+                );
+                moves.push((report.orphan.state_path, dest));
+            }
+            Err(e) => {
+                tracing::warn!(
+                    state = %report.orphan.state_path.display(),
+                    error = %e,
+                    "Failed to adopt orphaned state"
+                );
+            }
+        }
+    }
+    moves
+}
+
 /// Parse a file and reconcile it against its saved state.
 /// Shared by the status command, the server API, and the translation run.
 pub fn scan_file(
@@ -400,6 +539,13 @@ impl Orchestrator {
         progress: Option<ProgressSender>,
     ) -> Result<TranslateOutcome, OrchestratorError> {
         let files = collect_files(path, &self.config)?;
+
+        // A renamed source whose translations exist under the old name would
+        // otherwise be retranslated from zero.
+        let adopted = adopt_renamed_states(&files, &self.config, &self.parser_factory);
+        if !adopted.is_empty() {
+            tracing::info!(count = adopted.len(), "Adopted orphaned state across renames");
+        }
 
         // Pre-scan for pending counts so front-ends can show totals up front.
         send(
@@ -1139,6 +1285,124 @@ model = "test"
 
         assert_eq!(outcome.segments_translated, 1);
         assert_eq!(calls.load(Ordering::SeqCst), 1);
+    }
+
+    #[tokio::test]
+    async fn a_renamed_file_reuses_its_translations_instead_of_repaying() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("ch1.md"), "Hello.").unwrap();
+
+        let calls = Arc::new(AtomicUsize::new(0));
+        let orchestrator = test_orchestrator(dir.path(), calls.clone(), CancelToken::default());
+        orchestrator.translate_path(dir.path(), None).await.unwrap();
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+
+        // Upstream renames the chapter; the derived output is cleaned up.
+        std::fs::rename(dir.path().join("ch1.md"), dir.path().join("ch2.md")).unwrap();
+        std::fs::remove_file(dir.path().join("ch1.ko.md")).unwrap();
+
+        let outcome = orchestrator.translate_path(dir.path(), None).await.unwrap();
+        assert_eq!(outcome.segments_translated, 0);
+        assert_eq!(calls.load(Ordering::SeqCst), 1, "no retranslation after rename");
+        assert!(dir.path().join("ch2.md.yeokja.json").exists());
+        assert!(!dir.path().join("ch1.md.yeokja.json").exists());
+        assert_eq!(
+            std::fs::read_to_string(dir.path().join("ch2.ko.md")).unwrap(),
+            "KO:Hello."
+        );
+    }
+
+    /// One segment per line, so rename detection has hashes to overlap.
+    struct LineParser;
+
+    impl DocumentParser for LineParser {
+        fn markup(&self) -> Markup {
+            Markup::Markdown
+        }
+
+        fn parse(&self, source: &str) -> Document {
+            let blocks = source
+                .lines()
+                .enumerate()
+                .map(|(i, line)| Block {
+                    block_type: BlockType::Paragraph,
+                    segments: vec![Segment {
+                        id: SegmentId::new(0, i, 0),
+                        source_hash: content_hash(line),
+                        source: line.to_string(),
+                        block_type: BlockType::Paragraph,
+                    }],
+                    raw_content: line.to_string(),
+                    heading_level: None,
+                    span: None,
+                    role: BlockRole::None,
+                    translatable: true,
+                })
+                .collect();
+            Document {
+                sections: vec![Section { blocks }],
+                source: source.to_string(),
+            }
+        }
+
+        fn reconstruct(&self, document: &Document, _translations: &TranslationMap) -> String {
+            document.source.clone()
+        }
+    }
+
+    #[test]
+    fn a_rename_with_edits_still_matches_by_segment_overlap() {
+        let dir = tempfile::tempdir().unwrap();
+        let old_lines = ["One.", "Two.", "Three.", "Four."];
+        // Renamed and edited: three of four lines survive.
+        std::fs::write(dir.path().join("new.md"), "One.\nTwo.\nThree.\nCHANGED.").unwrap();
+
+        let mut state = StateFile::new(content_hash("does-not-match-whole-file"));
+        for (i, line) in old_lines.iter().enumerate() {
+            state.segments.push(SegmentState {
+                id: yeokja_core::model::SegmentId::new(0, i, 0),
+                source: line.to_string(),
+                source_hash: content_hash(line),
+                context_hash: 0,
+                translation: Some(format!("KO:{line}")),
+                glossary_snapshot: HashMap::new(),
+                translated_at: None,
+                issues: Vec::new(),
+            });
+        }
+        state
+            .save(&dir.path().join("old.md.yeokja.json"))
+            .unwrap();
+
+        let config = test_config(&format!(
+            r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[[sources]]
+path = "{}"
+pattern = "**/*.md"
+parser = "markdown"
+output = "{{dir}}/{{stem}}.ko{{ext}}"
+
+[provider]
+type = "openai_compatible"
+model = "test"
+"#,
+            dir.path().display()
+        ));
+        let factory: ParserFactory = Arc::new(|_, _| Box::new(LineParser));
+
+        let files = vec![dir.path().join("new.md")];
+        let reports = match_orphans(&files, &config, &factory);
+        assert_eq!(reports.len(), 1);
+        assert_eq!(reports[0].renamed_to.as_deref(), Some(files[0].as_path()));
+
+        let moves = adopt_renamed_states(&files, &config, &factory);
+        assert_eq!(moves.len(), 1);
+        assert!(dir.path().join("new.md.yeokja.json").exists());
+        assert!(!dir.path().join("old.md.yeokja.json").exists());
     }
 
     #[tokio::test]

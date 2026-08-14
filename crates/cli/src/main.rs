@@ -58,6 +58,16 @@ enum Commands {
         /// Path to evaluate
         path: String,
     },
+    /// Assemble the buildable tree from base, overlays, and steps
+    Assemble,
+    /// Assemble, run the build command, and copy outputs to dist
+    Build,
+    /// List state files whose source is gone; optionally delete them
+    Orphans {
+        /// Delete unmatched orphans and their derived outputs
+        #[arg(long)]
+        delete: bool,
+    },
     /// Start server mode
     Serve,
 }
@@ -136,6 +146,15 @@ async fn main() -> anyhow::Result<()> {
         },
         Commands::Evaluate { path } => {
             commands::evaluate::run(&path).await?;
+        }
+        Commands::Assemble => {
+            commands::assemble::run()?;
+        }
+        Commands::Build => {
+            commands::build::run()?;
+        }
+        Commands::Orphans { delete } => {
+            commands::orphans::run(delete)?;
         }
         Commands::Serve => {
             commands::serve::run().await?;

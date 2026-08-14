@@ -1,5 +1,8 @@
+pub mod assemble;
+pub mod build;
 pub mod coverage;
 pub mod evaluate;
+pub mod orphans;
 pub mod glossary;
 pub mod inspect;
 pub mod serve;

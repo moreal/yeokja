@@ -43,6 +43,27 @@ pub fn run(path: &str) -> Result<()> {
     println!("Glossary stale:   {}", glossary_stale);
     println!("Context changed:  {}", context_changed);
 
+    // Orphans are project-wide (they have no source to fall under `path`),
+    // so they are reported regardless of the filter.
+    let orphans = yeokja_translate::orchestrator::match_orphans(&files, &ctx.config, &parser_factory);
+    if !orphans.is_empty() {
+        println!("Orphaned state:   {}", orphans.len());
+        for report in &orphans {
+            match &report.renamed_to {
+                Some(to) => println!(
+                    "  {} → looks renamed to {}; `yeokja translate` will adopt it",
+                    report.orphan.expected_source.display(),
+                    to.display()
+                ),
+                None => println!(
+                    "  {} (state kept at {})",
+                    report.orphan.expected_source.display(),
+                    report.orphan.state_path.display()
+                ),
+            }
+        }
+    }
+
     Ok(())
 }
 

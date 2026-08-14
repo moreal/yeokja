@@ -41,6 +41,12 @@ core ← parser-utils ← parser-markdown ← parsers
 - `reconcile.rs`: 기존 번역 상태와 새 파싱 결과 간 매칭 (greedy nearest-match)
 - `change.rs`: 세그먼트별 상태 계산 (Translated, Pending, Stale, GlossaryStale, ContextChanged)
 - `config.rs`: `yeokja.toml` 설정 파일 역직렬화
+- `orphans.rs`: 원본이 사라진 상태 파일(고아) 탐지 — 보고만 하고 삭제하지 않습니다
+
+**yeokja-assemble** — `[derive]` 설정이 기술하는 빌드 트리 조립 엔진.
+- base 레이어 심링크 + 오버레이 겹침 + patch/generate 스텝 실행
+- 임시 디렉터리에 조립해 성공 시에만 원자 교체, 실패 시 기존 트리 보존
+- 산출물 반출용 `copy_dereferenced` (심링크 관통 복사)
 
 **yeokja-parser-utils** — 파서 간 공유 유틸리티.
 - `split_sentences()`: 약어와 URL 내 마침표를 고려한 문장 분리
@@ -188,6 +194,26 @@ TranslateGemma는 별도 형식: `<<<source>>>en<<<target>>>ko<<<text>>>...`
 - `[provider]`: LLM 프로바이더 종류, 모델, API 키 환경변수
 - `[evaluation]`: 자동 평가 활성화, 최대 재시도 횟수
 - `[server]`: 서버 포트
+- `[derive]`: 빌드 트리 조립 — base 레이어, 오버레이 목록, patch/generate 스텝
+- `[build]`: 트리 안에서 실행할 빌드 명령과 dist로 꺼낼 산출물
+
+## 파생 트리 (assemble/build)
+
+`yeokja assemble`은 base(보통 upstream submodule) 위에 오버레이(번역 미러,
+프로젝트 자산)를 겹치고 patch/generate 스텝을 실행해 빌드 가능한 트리를
+심링크로 조립합니다. 번역 출력이 원본과 같은 상대 경로 구조를 미러링하므로
+`book-ko.asciidoc` 같은 진입점 래퍼가 필요 없고, upstream의 빌드 스크립트가
+무수정으로 번역판을 만듭니다.
+
+트리는 언제나 처음부터 다시 조립되어 원자적으로 교체되는 일회용 산출물입니다.
+어떤 스텝이든 실패하면 기존 트리가 그대로 남습니다 — 청소는 수리가 아니라
+재조립입니다. `require_base` 오버레이는 원본이 사라진 번역(고아)을 트리에
+얹지 않고 보고합니다. `yeokja build`는 조립 후 `[build].command`를 트리에서
+실행하고 선언된 산출물만 심링크를 관통 복사해 dist로 꺼냅니다.
+
+upstream 리네임으로 고아가 된 상태는 `yeokja translate`가 전체 파일 해시 또는
+세그먼트 해시 중첩(≥50%)으로 새 파일에 입양시켜 재번역 비용을 막습니다.
+고아 삭제만은 자동화하지 않습니다 — `yeokja orphans --delete`로만 지웁니다.
 
 ## 기술 스택
 
