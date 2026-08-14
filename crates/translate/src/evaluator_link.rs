@@ -26,6 +26,28 @@ impl TranslationEvaluator for LinkEvaluator {
             }
         }
 
+        // A reStructuredText named reference is its own key: `phrase`_ links
+        // to the `.. _phrase:` target elsewhere in the file, and targets stay
+        // verbatim. Translating the phrase leaves the reference dangling and
+        // the backticks printing as themselves.
+        if context.markup == Markup::Rst {
+            for named in rst_named_references(&context.source) {
+                if !context.translation.contains(&named.check) {
+                    issues.push(EvaluationIssue {
+                        severity: IssueSeverity::Error,
+                        kind: IssueKind::LinkBroken,
+                        message: format!(
+                            "{} names the target it links to, so the phrase has to \
+                             survive the translation. Keep it verbatim, or translate the \
+                             visible text with an embedded alias: `번역한 텍스트 <{}_>`_",
+                            named.shown,
+                            named.check.trim_end_matches('_'),
+                        ),
+                    });
+                }
+            }
+        }
+
         Ok(EvaluationResult {
             passed: issues.is_empty(),
             issues,
@@ -39,6 +61,88 @@ impl TranslationEvaluator for LinkEvaluator {
     fn name(&self) -> &'static str {
         "Link"
     }
+}
+
+/// Every named-reference phrase in reStructuredText `text`: the content of
+/// `` `phrase`_ `` spans and bare `word_` references.
+///
+/// One trailing underscore only — two make the reference anonymous, targeted
+/// by position rather than by name. A span holding `<` embeds its own target,
+/// so its text is free; and a double-backtick span is a literal, skipped
+/// wholesale so the identifiers inside it are never mistaken for references.
+struct NamedReference {
+    /// What the translation must contain. For a phrase reference the phrase
+    /// itself; for a bare-word reference the word with its underscore, since
+    /// the word alone appears in any translation of the sentence.
+    check: String,
+    /// The reference as the source wrote it, for the message.
+    shown: String,
+}
+
+fn rst_named_references(text: &str) -> Vec<NamedReference> {
+    let chars: Vec<char> = text.chars().collect();
+    let mut found: Vec<NamedReference> = Vec::new();
+    let mut push = |check: String, shown: String| {
+        if !found.iter().any(|f| f.check == check) {
+            found.push(NamedReference { check, shown });
+        }
+    };
+    let mut i = 0;
+    while i < chars.len() {
+        let c = chars[i];
+        if c == '`' {
+            let run = chars[i..].iter().take_while(|c| **c == '`').count();
+            let content_start = i + run;
+            // Find the closing run of the same length.
+            let mut j = content_start;
+            let close = loop {
+                let Some(offset) = chars[j..].iter().position(|c| *c == '`') else {
+                    break None;
+                };
+                let at = j + offset;
+                let len = chars[at..].iter().take_while(|c| **c == '`').count();
+                if len == run {
+                    break Some(at);
+                }
+                j = at + len;
+            };
+            let Some(close) = close else {
+                i = content_start;
+                continue;
+            };
+            if run == 1
+                && chars.get(close + 1) == Some(&'_')
+                && chars.get(close + 2) != Some(&'_')
+            {
+                let content: String = chars[content_start..close].iter().collect();
+                if !content.contains('<') {
+                    push(content.clone(), format!("`{content}`_"));
+                }
+            }
+            i = close + run;
+        } else if c.is_ascii_alphanumeric() {
+            // A bare word ending in a single underscore is a reference too:
+            // Python_ in prose links to `.. _Python:`.
+            let end = chars[i..]
+                .iter()
+                .take_while(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '+' | '-' | '_'))
+                .count();
+            let word: String = chars[i..i + end].iter().collect();
+            // Sentence punctuation rides along in the token ("Python_." at a
+            // sentence's end); the reference stops at the underscore.
+            let word = word.trim_end_matches(['.', '+', '-']);
+            if let Some(name) = word.strip_suffix('_')
+                && !name.is_empty()
+                && !name.ends_with('_')
+            {
+                push(word.to_string(), word.to_string());
+            }
+            i += end;
+        } else {
+            i += 1;
+        }
+    }
+    found
 }
 
 /// Simple URL extraction — finds http:// and https:// URLs
@@ -110,5 +214,81 @@ mod tests {
         let urls = extract_urls("See [link](https://example.com) and https://other.com.");
         assert!(urls.contains(&"https://example.com".to_string()));
         assert!(urls.contains(&"https://other.com".to_string()));
+    }
+
+    fn rst_context(source: &str, translation: &str) -> EvaluationContext {
+        EvaluationContext {
+            source: source.to_string(),
+            translation: translation.to_string(),
+            glossary: HashMap::new(),
+            source_lang: "en".to_string(),
+            target_lang: "ko".to_string(),
+            markup: Markup::Rst,
+        }
+    }
+
+    /// The case this was written for: `Development bug/feature tracker`_ came
+    /// back as `개발 버그/기능 트래커`_ and no longer named its target.
+    #[tokio::test]
+    async fn rst_fails_when_a_named_reference_is_translated() {
+        let ctx = rst_context(
+            "`Development bug/feature tracker`_",
+            "`개발 버그/기능 트래커`_",
+        );
+        let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed);
+        assert!(
+            result.issues[0].message.contains("Development bug/feature tracker"),
+            "{}",
+            result.issues[0].message
+        );
+    }
+
+    #[tokio::test]
+    async fn rst_passes_when_the_reference_is_kept_or_aliased() {
+        for translation in [
+            "`Development bug/feature tracker`_\\ 를 보세요",
+            "`개발 버그/기능 트래커 <Development bug/feature tracker_>`_\\ 를 보세요",
+        ] {
+            let ctx = rst_context("`Development bug/feature tracker`_", translation);
+            let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
+            assert!(result.passed, "{translation:?}: {:?}", result.issues);
+        }
+    }
+
+    /// A bare word reference keeps its underscore; the word alone appears in
+    /// any translation of the sentence and proves nothing.
+    #[tokio::test]
+    async fn rst_fails_when_a_bare_reference_loses_its_underscore() {
+        let ctx = rst_context(
+            "an implementation of Python_ produced with it",
+            "그것으로 만들어진 Python 구현입니다",
+        );
+        let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed);
+
+        let kept = rst_context(
+            "an implementation of Python_ produced with it",
+            "그것으로 만들어진 Python_\\ 의 구현입니다",
+        );
+        assert!(LinkEvaluator.evaluate(&kept).await.unwrap().passed);
+    }
+
+    #[test]
+    fn named_references_are_extracted_precisely() {
+        let names: Vec<String> = rst_named_references(
+            "See `the docs`_, the ``literal_`` span, an anonymous `one`__, \
+             an embedded `text <https://x.example>`_, and Python_.",
+        )
+        .into_iter()
+        .map(|r| r.shown)
+        .collect();
+        assert_eq!(names, vec!["`the docs`_", "Python_"]);
+    }
+
+    /// Interpreted-text roles end without an underscore and are not references.
+    #[test]
+    fn roles_are_not_named_references() {
+        assert!(rst_named_references(":ref:`contact` and :doc:`intro`").is_empty());
     }
 }

@@ -84,6 +84,14 @@ fn closing_rule(markup: yeokja_core::parser::Markup) -> &'static str {
              puts a suffix straight after an italicised term, use * instead: _arity_ → \
              *arity*는.\n"
         }
+        Markup::Rst => {
+            "A closing `, ``, * or ** that a letter follows is not recognized: \
+             reStructuredText requires whitespace or punctuation after it, and doubling the \
+             marks does not help. Separate the suffix with a backslash-escaped space, which \
+             renders as nothing: ``heap`` → ``heap``\\ 에, **bold** → **bold**\\ 를, \
+             `link`_ → `link`_\\ 를. The same applies before an opening marker glued to the \
+             end of a word: 실행\\ **될** rather than 실행**될**.\n"
+        }
     }
 }
 
@@ -206,6 +214,14 @@ mod tests {
         let markdown = build_prompt(&req);
         assert!(markdown.contains("*arity*는"));
         assert!(!markdown.contains("``heap``"));
+
+        // RST has no doubled form to escape to; the rule names the
+        // backslash-escaped space instead.
+        req.markup = Markup::Rst;
+        let rst = build_prompt(&req);
+        assert!(rst.contains("``heap``\\ 에"));
+        assert!(rst.contains("**bold**\\ 를"));
+        assert!(!rst.contains("**bold**를"));
     }
 
     #[test]

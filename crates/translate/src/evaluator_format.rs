@@ -85,6 +85,29 @@ impl TranslationEvaluator for FormatEvaluator {
             }
         }
 
+        // reStructuredText recognizes an opening marker only when no word
+        // character precedes it and a closing one only when none follows, and
+        // there is no doubled form to escape to — the way out is a
+        // backslash-escaped space, which renders as nothing.
+        if context.markup == Markup::Rst {
+            let broken = rst_broken_pairs(&context.translation);
+            if !broken.is_empty() && rst_broken_pairs(&context.source).is_empty() {
+                let shown: Vec<&str> = broken.iter().map(String::as_str).collect();
+                issues.push(EvaluationIssue {
+                    severity: IssueSeverity::Error,
+                    kind: IssueKind::FormatLost,
+                    message: format!(
+                        "{} is not recognized as markup: reStructuredText requires \
+                         whitespace or punctuation on the outside of each marker, and \
+                         doubling the marks does not help. Separate the word from the \
+                         marker with a backslash-escaped space, which renders as \
+                         nothing: ``heap``\\ 에, **bold**\\ 를, 실행\\ **될**.",
+                        shown.join(", "),
+                    ),
+                });
+            }
+        }
+
         // A constrained pair has to close next to a non-word character, and
         // Korean writes its particles straight onto the word before them.
         let unclosable = unclosable_pairs(&context.translation, context.markup);
@@ -235,6 +258,10 @@ fn constrained_marks(markup: Markup) -> &'static [(char, &'static str)] {
     match markup {
         Markup::Asciidoc => &[('`', "``code``"), ('*', "**bold**"), ('_', "__italic__")],
         Markup::Markdown => &[('_', "*italic*")],
+        // reStructuredText pairs are checked by `rst_broken_pairs`: every one
+        // of its marker forms is constrained, so the doubled-form advice these
+        // entries carry would be wrong there.
+        Markup::Rst => &[],
     }
 }
 
@@ -365,6 +392,80 @@ fn pair_up(chars: &[char], mark: char) -> Pairing {
     pairing
 }
 
+/// Every reStructuredText inline pair `text` writes against a word character.
+///
+/// Docutils recognizes an opening marker only when whitespace or punctuation
+/// precedes it, and a closing one only when whitespace or punctuation follows
+/// it — and a Hangul syllable is a letter. The natural translation of "on the
+/// ``heap``" ends `` ``heap``에 ``, which renders with both marker runs
+/// printed as themselves. Unlike AsciiDoc there is no unconstrained form:
+/// doubling is a different construct under the same rule. The way out is a
+/// backslash-escaped space (`` ``heap``\ 에 ``), which renders as nothing.
+///
+/// Reference suffixes (`` `name`_ ``, `` `name`__ ``) belong to the closing
+/// marker, so the rule applies after the underscores.
+fn rst_broken_pairs(text: &str) -> Vec<String> {
+    let chars = chars(text);
+    let run_len = |at: usize, mark: char| chars[at..].iter().take_while(|c| **c == mark).count();
+    let mut found = Vec::new();
+
+    for mark in ['`', '*'] {
+        // (start index, run length) of the currently open marker, if any.
+        let mut open: Option<(usize, usize)> = None;
+        let mut i = 0;
+        while i < chars.len() {
+            if chars[i] != mark {
+                i += 1;
+                continue;
+            }
+            let len = run_len(i, mark);
+            match open {
+                None => {
+                    // An opener needs text right after it; a run followed by
+                    // whitespace is prose (`2 * 3`).
+                    if !chars.get(i + len).is_some_and(|c| !c.is_whitespace()) {
+                        i += len;
+                        continue;
+                    }
+                    let blocked = i > 0 && is_word(chars[i - 1]);
+                    if !blocked {
+                        open = Some((i, len));
+                    } else if chars[i + len..].iter().any(|c| *c == mark) {
+                        // A word glued to the front (`실행**될 수 있는**`)
+                        // keeps the pair from opening — but only call it a
+                        // pair when a partner run exists; `2*3` is arithmetic.
+                        let end = (i + len + 1).min(chars.len());
+                        found.push(chars[i.saturating_sub(1)..end].iter().collect());
+                    }
+                    i += len;
+                }
+                Some((oi, olen)) => {
+                    // Only a run of the opener's own length closes it: `` and
+                    // ` are different constructs in reStructuredText.
+                    if len != olen || chars[i - 1].is_whitespace() {
+                        i += len;
+                        continue;
+                    }
+                    // `_` and `__` after a closing backtick are the reference
+                    // suffix; the rule applies to the character after them.
+                    let mut end = i + len;
+                    if mark == '`' {
+                        while chars.get(end).is_some_and(|c| *c == '_') {
+                            end += 1;
+                        }
+                    }
+                    if chars.get(end).is_some_and(|c| is_word(*c)) {
+                        found.push(chars[oi..end + 1].iter().collect());
+                    }
+                    open = None;
+                    i += len;
+                }
+            }
+        }
+    }
+    found
+}
+
 /// The block construct `text` would open if it sat at the start of a line, or
 /// `None` for ordinary prose.
 ///
@@ -378,6 +479,12 @@ fn pair_up(chars: &[char], mark: char) -> Pairing {
 /// knows which file it belongs to.
 fn line_start_construct(text: &str) -> Option<&'static str> {
     let text = text.trim_start();
+    // `..` opens a comment, directive, or hyperlink target in
+    // reStructuredText, and a nested ordered list in AsciiDoc; `...` is an
+    // ellipsis and reads as prose.
+    if text == ".." || text.starts_with(".. ") {
+        return Some("an explicit-markup start (`..`)");
+    }
     let mut chars = text.chars();
     let first = chars.next()?;
     let rest = chars.as_str();
@@ -713,6 +820,97 @@ mod tests {
         let ctx = make_context("the \"`term`\"s here", "여기 \"`term`\"의");
         let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
         assert!(result.passed, "{:?}", result.issues);
+    }
+
+    /// The RST counterpart of the particle problem: docutils wants whitespace
+    /// or punctuation after a closing marker, and a Hangul particle is neither.
+    #[tokio::test]
+    async fn rst_fails_when_a_particle_follows_a_closing_marker() {
+        let ctx = context_in(
+            Markup::Rst,
+            "Objects are allocated on the ``heap``.",
+            "객체는 ``heap``에 할당됩니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed);
+        assert!(
+            result.issues.iter().any(|i| i.message.contains("backslash-escaped")),
+            "{:?}",
+            result.issues
+        );
+    }
+
+    /// The documented escape — a backslash-escaped space — must pass, and so
+    /// must the marker counts it leaves behind.
+    #[tokio::test]
+    async fn rst_passes_with_a_backslash_escaped_space() {
+        let ctx = context_in(
+            Markup::Rst,
+            "Objects are allocated on the ``heap``.",
+            "객체는 ``heap``\\ 에 할당됩니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    /// Doubling is not an escape in RST — `` and ` are different constructs
+    /// under the same recognition rule.
+    #[tokio::test]
+    async fn rst_doubled_markers_do_not_escape() {
+        let ctx = context_in(
+            Markup::Rst,
+            "two or more processes that **can** execute independently",
+            "서로 독립적으로 실행**될 수 있는** 둘 이상의 프로세스",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed, "{:?}", result.issues);
+    }
+
+    /// `` `name`_ `` carries its reference suffix outside the backticks; the
+    /// recognition rule applies after the underscores.
+    #[test]
+    fn rst_reference_suffix_is_part_of_the_marker() {
+        assert!(rst_broken_pairs("consult the `PyPy website`_ for details").is_empty());
+        assert_eq!(
+            rst_broken_pairs("`PyPy website`_를 참고하십시오"),
+            vec!["`PyPy website`_를"]
+        );
+        assert!(rst_broken_pairs("`PyPy website`_\\ 를 참고하십시오").is_empty());
+    }
+
+    #[test]
+    fn rst_prose_is_not_markup() {
+        for text in [
+            "결과는 2 * 3 입니다.",
+            "the value 2*3 appears once",
+            ":ref:`contact` 부분을 보십시오.",
+            "``code`` 다음에 공백이 있습니다.",
+            "인용 부호 “안”의 텍스트.",
+        ] {
+            assert!(
+                rst_broken_pairs(text).is_empty(),
+                "{text:?} carries no broken pair"
+            );
+        }
+    }
+
+    #[test]
+    fn rst_role_content_against_a_particle_is_broken() {
+        assert_eq!(
+            rst_broken_pairs(":ref:`contact`를 보십시오"),
+            vec!["`contact`를"]
+        );
+    }
+
+    /// A translation must not begin with `..`: at the start of a line it opens
+    /// a comment and swallows what follows.
+    #[test]
+    fn explicit_markup_start_is_recognised() {
+        assert_eq!(
+            line_start_construct(".. 참고하십시오"),
+            Some("an explicit-markup start (`..`)")
+        );
+        assert_eq!(line_start_construct("... 그리고 계속됩니다"), None);
     }
 
     /// Curved quotes borrow the backtick but are not code, so a quotation the
