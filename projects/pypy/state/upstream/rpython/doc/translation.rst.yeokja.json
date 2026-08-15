@@ -1,0 +1,2250 @@
+{
+  "version": 1,
+  "source_hash": 10650358104905567908,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "The RPython Toolchain",
+      "source_hash": 17316596681017506231,
+      "context_hash": 8119385908163223557,
+      "translation": "RPython 툴체인",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-15T09:21:06.400939Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:2/seg:0",
+      "source": "This document describes the toolchain that we have developed to analyze and \"compile\" RPython programs (like PyPy itself) to various target platforms.",
+      "source_hash": 5684860414288524011,
+      "context_hash": 4211640018845846034,
+      "translation": "이 문서는 RPython 프로그램(PyPy 자체와 같은)을 다양한 대상 플랫폼에 맞춰 분석하고 \"컴파일\"하기 위해 우리가 개발한 툴체인을 설명합니다.",
+      "glossary_snapshot": {
+        "RPython": "RPython",
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-15T09:21:15.515942Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:3/seg:0",
+      "source": "It consists of three broad sections: a slightly simplified overview, a brief introduction to each of the major components of our toolchain and then a more comprehensive section describing how the pieces fit together.",
+      "source_hash": 9546647534236692959,
+      "context_hash": 9700400321919652153,
+      "translation": "이 문서는 크게 세 부분으로 구성되어 있습니다: 다소 단순화된 개요, 저희 툴체인의 주요 구성 요소 각각에 대한 간략한 소개, 그리고 각 구성 요소가 어떻게 맞물리는지를 더 포괄적으로 설명하는 절입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:21:24.225565Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:3/seg:1",
+      "source": "If you are reading this document for the first time, the Overview_ is likely to be most useful, if you are trying to refresh your PyPy memory then the `How It Fits Together`_ is probably what you want.",
+      "source_hash": 371456014564330158,
+      "context_hash": 383783789308315387,
+      "translation": "이 문서를 처음 읽으신다면 `개요`_\\ 가 가장 유용할 것이고, PyPy에 대한 기억을 되살리려는 것이라면 `어떻게 맞물려 동작하는가`_\\ 절이 원하시는 내용일 것입니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-15T09:21:24.225566Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Overview",
+      "source_hash": 11777448466030057203,
+      "context_hash": 17857391214994431887,
+      "translation": "개요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:21:08.231838Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "The job of the translation toolchain is to translate RPython programs into an efficient version of that program for one of various target platforms, generally one that is considerably lower-level than Python.",
+      "source_hash": 16327219486143046194,
+      "context_hash": 12112941252569778428,
+      "translation": "번역(translation) 툴체인의 역할은 RPython 프로그램을 다양한 대상 플랫폼 중 하나를 위한 효율적인 버전으로 번역하는 것이며, 이 플랫폼은 일반적으로 Python보다 훨씬 저수준입니다.",
+      "glossary_snapshot": {
+        "RPython": "RPython",
+        "translation": "번역(translation)"
+      },
+      "translated_at": "2026-08-15T09:21:32.456651Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "It divides this task into several steps, and the purpose of this document is to introduce them.",
+      "source_hash": 2513873790835690958,
+      "context_hash": 11723873277537565660,
+      "translation": "이 작업은 여러 단계로 나뉘며, 이 문서의 목적은 그 단계들을 소개하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:21:32.456652Z",
+      "issues": [
+        "\"It divides\"의 주어(무엇이 나누는지)가 생략되고 \"여러 단계로 나뉘며\"라는 피동형으로 바뀌어 미묘한 의미 차이가 있지만, 자연스럽고 전체 의미는 잘 전달됩니다."
+      ]
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "To start with we describe the process of translating an :ref:`RPython <language>` program into C (which is the default and original target).",
+      "source_hash": 17072657786778793870,
+      "context_hash": 18245322846172172344,
+      "translation": "먼저 :ref:`RPython <language>` 프로그램을 C(기본이자 원래 대상)로 번역(translation)하는 과정을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:21:26.175646Z",
+      "issues": [
+        "정확하고 정중체(-습니다)를 잘 지켰으나, \"번역(translation)\"처럼 이미 명확한 단어에 불필요한 영어 병기를 추가해 자연스러움이 다소 떨어집니다."
+      ]
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "The RPython translation toolchain never sees Python source code or syntax trees, but rather starts with the *code objects* that define the behaviour of the function objects one gives it as input.",
+      "source_hash": 12255836116826886325,
+      "context_hash": 15106645563708098705,
+      "translation": "RPython 번역(translation) 도구 체인은 Python 소스 코드나 구문 트리를 전혀 보지 않으며, 대신 입력으로 주어진 함수 객체의 동작을 정의하는 *코드 객체*\\ 에서 시작합니다.",
+      "glossary_snapshot": {
+        "translation": "번역(translation)",
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-15T09:24:56.767704Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:1",
+      "source": "The :ref:`flow graph builder<flow-graphs>` works through these code objects using `abstract interpretation`_ to produce a control flow graph (one per function): yet another representation of the source program, but one which is suitable for applying type inference and translation techniques and which is the fundamental data structure most of the translation steps operate on.",
+      "source_hash": 476362247678505868,
+      "context_hash": 3305965264553543844,
+      "translation": "이 코드 객체들은 :ref:`플로우 그래프 빌더<flow-graphs>`\\ 가 `추상 해석`_\\ 을 사용하여 처리한 결과, 제어 흐름 그래프(함수당 하나씩)로 만들어집니다: 이는 소스 프로그램의 또 다른 표현이지만, 타입 추론과 번역(translation) 기법을 적용하기에 적합하며, 대부분의 번역(translation) 단계가 다루는 근본적인 자료구조입니다.",
+      "glossary_snapshot": {
+        "translation": "번역(translation)"
+      },
+      "translated_at": "2026-08-15T09:24:56.767704Z",
+      "issues": [
+        "`abstract interpretation`_ names the target it links to, so the phrase has to survive the translation. Keep it verbatim, or translate the visible text with an embedded alias: `번역한 텍스트 <abstract interpretation_>`_"
+      ]
+    },
+    {
+      "id": "section:1/block:4/seg:0",
+      "source": "It is helpful to consider translation as being made up of the following steps (see also the figure below):",
+      "source_hash": 9499797565024115400,
+      "context_hash": 2034156505458672482,
+      "translation": "번역(translation)을 다음 단계들로 구성된 것으로 생각하면 도움이 됩니다(아래 그림도 참고하십시오):",
+      "glossary_snapshot": {
+        "translation": "번역(translation)"
+      },
+      "translated_at": "2026-08-15T09:21:27.803375Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:5/seg:0",
+      "source": "The complete program is imported, at which time arbitrary run-time initialization can be performed.",
+      "source_hash": 1425587630547436691,
+      "context_hash": 7604879687681910888,
+      "translation": "전체 프로그램이 임포트되며, 이 시점에 임의의 실행 시점 초기화를 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:21:45.793146Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:5/seg:1",
+      "source": "Once this is done, the program must be present in memory as a form that is \"static enough\" in the sense of :doc:`RPython <rpython>`.",
+      "source_hash": 12923473708627292593,
+      "context_hash": 17805465542454428858,
+      "translation": "이 작업이 끝나면, 프로그램은 :doc:`RPython <rpython>`\\ 의 의미에서 \"충분히 정적인\" 형태로 메모리에 존재해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:21:45.793147Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:6/seg:0",
+      "source": "The Annotator_ performs a global analysis starting from a specified entry point to deduce type and other information about what each variable can contain at run-time, :ref:`building flow graphs <flow-graphs>` as it encounters them.",
+      "source_hash": 12881447048802452297,
+      "context_hash": 12418209948600395509,
+      "translation": "Annotator_\\ 는 지정된 진입점에서 시작해 전역 분석을 수행하여, 각 변수가 실행 시점에 담을 수 있는 타입 및 기타 정보를 추론하며, 그 과정에서 마주치는 대로 :ref:`흐름 그래프를 구축합니다 <flow-graphs>`.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:21:46.331429Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:7/seg:0",
+      "source": "The :ref:`RPython Typer <rtyper>` (or RTyper) uses the high-level information inferred by the Annotator to turn the operations in the control flow graphs into low-level operations.",
+      "source_hash": 11447284920910176066,
+      "context_hash": 14071737740223869573,
+      "translation": "제어 흐름 그래프의 연산을 저수준 연산으로 변환하기 위해, :ref:`RPython Typer <rtyper>` (또는 RTyper)는 Annotator가 추론한 고수준 정보를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:05.023764Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:8/seg:0",
+      "source": "After the RTyper there are several optional `optimizations`_ which can be applied and are intended to make the resulting program go faster.",
+      "source_hash": 13477337634187171075,
+      "context_hash": 5239865824686290036,
+      "translation": "RTyper 이후에는 적용할 수 있는 여러 선택적 `optimizations`_\\ 이 있으며, 이는 결과 프로그램을 더 빠르게 만들기 위한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:21:37.066549Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:9/seg:0",
+      "source": "The next step is `preparing the graphs for source generation`_, which involves computing the names that the various functions and types in the program will have in the final source and applying transformations which insert explicit exception handling and memory management operations.",
+      "source_hash": 1328745884454738448,
+      "context_hash": 12573540692931560686,
+      "translation": "다음 단계는 `preparing the graphs for source generation`_\\ 이며, 이는 프로그램 내의 다양한 함수와 타입이 최종 소스에서 갖게 될 이름을 계산하고, 명시적인 예외 처리와 메모리 관리 연산을 삽입하는 변환을 적용하는 과정을 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:21:44.468859Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:10/seg:0",
+      "source": "`The C backend`_ (colloquially known as \"GenC\") produces a number of C source files (as noted above, we are ignoring the other backends for now).",
+      "source_hash": 12772505532196060660,
+      "context_hash": 11474801171178734010,
+      "translation": "`C 백엔드`_ (속칭 \"GenC\"라고 불림)은 다수의 C 소스 파일을 생성합니다(위에서 언급했듯이, 지금은 다른 백엔드들은 무시합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:06.302238Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:11/seg:0",
+      "source": "These source files are compiled to produce an executable.",
+      "source_hash": 1993903067607748385,
+      "context_hash": 13519119189547736035,
+      "translation": "이 소스 파일들은 컴파일되어 실행 파일을 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:21:52.707967Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:12/seg:0",
+      "source": "(although these steps are not quite as distinct as you might think from this presentation).",
+      "source_hash": 14850618888961676256,
+      "context_hash": 845884666960427667,
+      "translation": "(다만 이 단계들은 이 설명에서 여러분이 생각하는 것만큼 뚜렷하게 구분되지는 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:21:54.144180Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:13/seg:0",
+      "source": "There is an :ref:`interactive interface <try-out-the-translator>` called :source:`rpython/bin/translatorshell.py` to the translation process which allows you to interactively work through these stages.",
+      "source_hash": 3239158584725695596,
+      "context_hash": 5204046913838875784,
+      "translation": "번역(translation) 과정에는 이 단계들을 대화식으로 진행할 수 있게 해주는 :source:`rpython/bin/translatorshell.py`\\ 라는 :ref:`대화형 인터페이스 <try-out-the-translator>`\\ 가 있습니다.",
+      "glossary_snapshot": {
+        "translation": "번역(translation)"
+      },
+      "translated_at": "2026-08-15T09:22:16.120260Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:14/seg:0",
+      "source": "The following figure gives a simplified overview (`PDF color version`_):",
+      "source_hash": 1859025966151354432,
+      "context_hash": 12487405283426134966,
+      "translation": "다음 그림은 단순화된 개요를 보여줍니다(`PDF color version`_):",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:01.230246Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Building Flow Graphs",
+      "source_hash": 6096389617852434944,
+      "context_hash": 1427639394565340228,
+      "translation": "흐름 그래프(Flow Graph) 구축",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:01.474947Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Introduction",
+      "source_hash": 17143975622463353612,
+      "context_hash": 914168557269241965,
+      "translation": "소개",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:01.238418Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "The task of the flow graph builder (the source is at :source:`rpython/flowspace/`) is to generate a control-flow graph from a function.",
+      "source_hash": 12143502617439448441,
+      "context_hash": 11144563427091552538,
+      "translation": "흐름 그래프 빌더(소스는 :source:`rpython/flowspace/`\\ 에 있습니다)의 역할은 함수로부터 제어 흐름 그래프를 생성하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:23.939948Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "This graph will also contain a trace of the individual operations, so that it is actually just an alternate representation for the function.",
+      "source_hash": 18084890743177739994,
+      "context_hash": 12593275102672403951,
+      "translation": "이 그래프는 개별 연산들의 트레이스도 담고 있으므로, 실제로는 해당 함수에 대한 또 다른 표현 방식에 불과합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:23.939949Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "The basic idea is that if an interpreter is given a function, e.g.",
+      "source_hash": 3975762653838490751,
+      "context_hash": 15056589160793860775,
+      "translation": "기본 아이디어는 인터프리터에 함수가 주어졌을 때, 예를 들어",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-15T09:22:10.074404Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "it will compile it to bytecode and then execute it on its VM.",
+      "source_hash": 1774483391274149391,
+      "context_hash": 3106659172028719941,
+      "translation": "그것을 바이트코드로 컴파일한 다음 자신의 VM에서 실행합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-15T09:22:36.932022Z",
+      "issues": [
+        "의미와 문체(~합니다체)는 정확하나, \"그것을\"이라는 대명사 사용이 다소 어색하며 기술 문서에서는 \"이를\" 또는 대명사 생략이 더 자연스럽습니다."
+      ]
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "Instead, the flow graph builder contains an `abstract interpreter`_ which takes the bytecode and performs whatever stack-shuffling and variable juggling is needed, but merely records any actual operation performed on a Python object into a structure called a basic block.",
+      "source_hash": 14105683157922465256,
+      "context_hash": 12494499749359582896,
+      "translation": "대신, 흐름 그래프 빌더는 바이트코드를 받아 필요한 스택 조작과 변수 처리를 수행하지만, Python 객체에 대해 실제로 수행되는 연산은 기본 블록(basic block)이라 불리는 구조에 기록하기만 하는 `abstract interpreter`_\\ 를 포함합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-15T09:22:36.932024Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:2",
+      "source": "The result of the operation is represented by a placeholder value that can appear in further operations.",
+      "source_hash": 17891824603280649176,
+      "context_hash": 10876153309157084705,
+      "translation": "연산의 결과는 이후 연산에 나타날 수 있는 자리 표시자(placeholder) 값으로 표현됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:36.932025Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "For example, if the placeholder ``v1`` is given as the argument to the above function, the bytecode interpreter will call ``v2 = space.mul(space.wrap(3), v1)`` and then ``v3 = space.add(v2, space.wrap(2))`` and return ``v3`` as the result.",
+      "source_hash": 9680433166180056394,
+      "context_hash": 13434372540336180453,
+      "translation": "예를 들어 위 함수의 인자로 플레이스홀더 ``v1``\\ 이 주어지면, 바이트코드 인터프리터는 ``v2 = space.mul(space.wrap(3), v1)``\\ 을 호출한 다음 ``v3 = space.add(v2, space.wrap(2))``\\ 을 호출하고 ``v3``\\ 를 결과로 반환합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-15T09:22:24.404651Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "During these calls, the following block is recorded",
+      "source_hash": 10523614497322626515,
+      "context_hash": 17561228247655464170,
+      "translation": "이러한 호출 중에 다음 블록이 기록됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:24.404653Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "Abstract interpretation",
+      "source_hash": 13076305775809085018,
+      "context_hash": 12884977087705994733,
+      "translation": "추상 해석",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:13.711617Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "``build_flow()`` works by recording all operations issued by the bytecode interpreter into basic blocks.",
+      "source_hash": 8335182722350203741,
+      "context_hash": 7864176275432149572,
+      "translation": "``build_flow()``\\ 는 바이트코드 인터프리터가 실행한 모든 연산을 기본 블록(basic block)으로 기록하는 방식으로 동작합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-15T09:22:37.925930Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:1",
+      "source": "A basic block ends in one of two cases: when the bytecode interpreters calls ``is_true()``, or when a joinpoint is reached.",
+      "source_hash": 16230213670177026218,
+      "context_hash": 14383211021463447950,
+      "translation": "기본 블록은 다음 두 경우 중 하나가 발생하면 종료됩니다: 바이트코드 인터프리터가 ``is_true()``\\ 를 호출하는 경우, 또는 조인포인트(joinpoint)에 도달하는 경우입니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-15T09:22:37.925931Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "A joinpoint occurs when the next operation is about to be recorded into the current block, but there is already another block that records an operation for the same bytecode position.",
+      "source_hash": 14778247658604376074,
+      "context_hash": 5095627719849175124,
+      "translation": "다음 연산이 현재 블록에 막 기록되려는 시점에, 동일한 바이트코드 위치에 대한 연산을 이미 기록하고 있는 다른 블록이 존재하는 경우 조인포인트(joinpoint)가 발생합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-15T09:22:58.209362Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:1",
+      "source": "This means that the bytecode interpreter has closed a loop and is interpreting already-seen code again.",
+      "source_hash": 10847116979876914491,
+      "context_hash": 7839160459883660852,
+      "translation": "이는 바이트코드 인터프리터가 루프를 닫고 이미 살펴본 코드를 다시 해석하고 있음을 의미합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-15T09:22:58.209364Z",
+      "issues": [
+        "\"루프를 닫고\"는 원문의 기술 용어(\"closed a loop\")를 직역한 것으로 의미는 정확하지만, 일반 독자에게는 다소 생소하게 느껴질 수 있어 자연스러움이 약간 떨어집니다."
+      ]
+    },
+    {
+      "id": "section:2/block:10/seg:2",
+      "source": "In this situation, we interrupt the bytecode interpreter and we make a link from the end of the current block back to the previous block, thus closing the loop in the flow graph as well.  (Note that this occurs only when an operation is about to be recorded, which allows some amount of constant-folding.)",
+      "source_hash": 1555329883788063687,
+      "context_hash": 9643815752128507152,
+      "translation": "이 상황에서는 바이트코드 인터프리터를 중단시키고, 현재 블록의 끝에서 이전 블록으로 되돌아가는 링크를 만들어 흐름 그래프(flow graph)에서도 루프를 닫습니다. (이는 연산이 막 기록되려는 시점에만 발생하며, 이를 통해 어느 정도의 상수 폴딩(constant-folding)이 가능해집니다.)",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-15T09:22:58.209365Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:0",
+      "source": "If the bytecode interpreter calls ``is_true()``, the abstract interpreter doesn't generally know if the answer should be True or False, so it puts a conditional jump and generates two successor blocks for the current basic block.",
+      "source_hash": 15837615093472612186,
+      "context_hash": 17233412936642259330,
+      "translation": "바이트코드 인터프리터가 ``is_true()``\\ 를 호출하면, 추상 인터프리터는 일반적으로 답이 True여야 할지 False여야 할지 알 수 없으므로, 조건부 점프를 배치하고 현재 기본 블록에 대해 두 개의 후속 블록을 생성합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-15T09:22:47.562406Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:1",
+      "source": "There is some trickery involved so that the bytecode interpreter is fooled into thinking that ``is_true()`` first returns False (and the subsequent operations are recorded in the first successor block), and later the *same* call to ``is_true()`` also returns True (and the subsequent operations go this time to the other successor block).",
+      "source_hash": 14904168942461776389,
+      "context_hash": 4374199374682986934,
+      "translation": "바이트코드 인터프리터를 속여서 ``is_true()``\\ 가 처음에는 False를 반환한다고(그리고 이어지는 연산들이 첫 번째 후속 블록에 기록된다고) 생각하게 만들고, 이후에는 *같은* ``is_true()`` 호출이 True도 반환한다고(그리고 이번에는 이어지는 연산들이 다른 후속 블록으로 간다고) 생각하게 만드는 일종의 트릭이 사용됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-15T09:22:47.562408Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:0",
+      "source": "(This section to be extended...)",
+      "source_hash": 17215680631896207910,
+      "context_hash": 16309046643420904898,
+      "translation": "(이 절은 추후 보강될 예정입니다...)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:32.183879Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "The Flow Model",
+      "source_hash": 12092238291247226139,
+      "context_hash": 6397758662824951263,
+      "translation": "흐름 모델(Flow Model)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:31.676336Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Here we describe the data structures produced by ``build_flow()``, which are the basic data structures of the translation process.",
+      "source_hash": 10941537579139136669,
+      "context_hash": 6261693506172007084,
+      "translation": "여기서는 ``build_flow()``\\ 가 생성하는 데이터 구조에 대해 설명하며, 이는 번역(translation) 과정의 기본 데이터 구조입니다.",
+      "glossary_snapshot": {
+        "translation": "번역(translation)"
+      },
+      "translated_at": "2026-08-15T09:22:45.930434Z",
+      "issues": [
+        "번역 자체는 정확하지만 \"번역(translation)\"처럼 이미 한국어로 옮긴 용어에 영어 원어를 괄호로 병기한 부분이 부자연스럽고 불필요해 보입니다."
+      ]
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "All these types are defined in :source:`rpython/flowspace/model.py` (which is a rather important module in the PyPy source base, to reinforce the point).",
+      "source_hash": 12624444546871202418,
+      "context_hash": 1623167164069835871,
+      "translation": "이 모든 타입은 :source:`rpython/flowspace/model.py`\\ 에 정의되어 있습니다(다시 한번 강조하자면, 이는 PyPy 소스 베이스에서 상당히 중요한 모듈입니다).",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-15T09:22:41.870359Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "The flow graph of a function is represented by the class ``FunctionGraph``.",
+      "source_hash": 16814473792359805913,
+      "context_hash": 16015838298474838120,
+      "translation": "함수의 흐름 그래프(flow graph)는 ``FunctionGraph`` 클래스로 표현됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:55.473096Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "It contains a reference to a collection of ``Block``\\ s connected by ``Link``\\ s.",
+      "source_hash": 5980605052110705643,
+      "context_hash": 13865749056257576578,
+      "translation": "이는 ``Link``\\ 로 연결된 ``Block``\\ 들의 컬렉션에 대한 참조를 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:55.473096Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "A ``Block`` contains a list of ``SpaceOperation``\\ s.",
+      "source_hash": 14782881962819051306,
+      "context_hash": 3787217845592841379,
+      "translation": "``Block``\\ 은 ``SpaceOperation``\\ 들의 목록을 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:10.964190Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:1",
+      "source": "Each ``SpaceOperation`` has an ``opname`` and a list of ``args`` and ``result``, which are either ``Variable``\\ s or ``Constant``\\ s.",
+      "source_hash": 11765512814488048586,
+      "context_hash": 15213571293099535485,
+      "translation": "각 ``SpaceOperation``\\ 은 ``opname``\\ 과 ``args`` 목록, ``result``\\ 를 가지며, 이는 ``Variable``\\ 이거나 ``Constant``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:10.964190Z",
+      "issues": [
+        "전체적으로 정확하지만 \"이는\"이 \"args 목록\"과 \"result\" 중 무엇을 가리키는지 모호하여, \"args의 각 요소와 result가 각각 Variable이거나 Constant\"라는 원문의 의미가 명확히 전달되지 않습니다."
+      ]
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "We have an extremely useful PyGame viewer, which allows you to visually inspect the graphs at various stages of the translation process (very useful to try to work out why things are breaking).",
+      "source_hash": 18035579678601798465,
+      "context_hash": 680333197351578258,
+      "translation": "저희에게는 매우 유용한 PyGame 뷰어가 있는데, 이를 이용하면 번역(translation) 과정의 다양한 단계에서 그래프를 시각적으로 살펴볼 수 있습니다(문제가 발생하는 이유를 파악하는 데 매우 유용합니다).",
+      "glossary_snapshot": {
+        "translation": "번역(translation)"
+      },
+      "translated_at": "2026-08-15T09:22:58.331705Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "It looks like this:",
+      "source_hash": 7764474231507474090,
+      "context_hash": 616359414348840139,
+      "translation": "이는 다음과 같은 모습입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:58.331706Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "It is recommended to play with ``python bin/translatorshell.py`` on a few examples to get an idea of the structure of flow graphs.",
+      "source_hash": 14217053570229733373,
+      "context_hash": 16942172060841289448,
+      "translation": "흐름 그래프(flow graph)의 구조에 대한 감을 잡으려면 몇 가지 예제에서 ``python bin/translatorshell.py``\\ 를 사용해 보는 것을 권장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:01.469602Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:1",
+      "source": "The following describes the types and their attributes in some detail:",
+      "source_hash": 4606958617107851263,
+      "context_hash": 13726914673863328588,
+      "translation": "다음은 타입과 그 속성을 좀 더 자세히 설명합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:01.469603Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "``FunctionGraph``",
+      "source_hash": 1925822299900128525,
+      "context_hash": 9774387685253810315,
+      "translation": "``FunctionGraph``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:55.473547Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "A container for one graph (corresponding to one function).",
+      "source_hash": 14873522979563886650,
+      "context_hash": 832775463470035941,
+      "translation": "하나의 그래프(하나의 함수에 대응)를 담는 컨테이너입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:22:55.113515Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:0",
+      "source": "function is called.",
+      "source_hash": 12265580799467492576,
+      "context_hash": 4796163872186237099,
+      "translation": "함수가 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:16.501963Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:1",
+      "source": "The input arguments of the startblock are the function's arguments.",
+      "source_hash": 161651441224887091,
+      "context_hash": 18181630235587648820,
+      "translation": "startblock의 입력 인자는 함수의 인자입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:16.501964Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:2",
+      "source": "If the function takes a ``*args`` argument, the ``args`` tuple is given as the last input argument of the startblock.",
+      "source_hash": 5395797426362454047,
+      "context_hash": 6768467727094437466,
+      "translation": "함수가 ``*args`` 인자를 받는 경우, ``args`` 튜플이 startblock의 마지막 입력 인자로 주어집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:16.501964Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:11/seg:0",
+      "source": "empty, not actually containing any ``return`` operation; the return is implicit.",
+      "source_hash": 6588973477791781774,
+      "context_hash": 1380942523998328745,
+      "translation": "비어 있으며, 실제로 어떤 ``return`` 연산도 포함하지 않습니다. 반환은 암묵적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:13.566958Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:11/seg:1",
+      "source": "The returned value is the unique input variable of the returnblock.",
+      "source_hash": 3484839256600901372,
+      "context_hash": 2445143418737053681,
+      "translation": "반환된 값은 returnblock의 유일한 입력 변수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:13.566959Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:12/seg:0",
+      "source": "function.",
+      "source_hash": 12809850292614478572,
+      "context_hash": 11810348592450622566,
+      "translation": "함수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:25.397700Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:12/seg:1",
+      "source": "The two input variables are the exception class and the exception value, respectively.  (No other block will actually link to the exceptblock if the function does not explicitly raise exceptions.)",
+      "source_hash": 1355577623974049922,
+      "context_hash": 3703721753179887392,
+      "translation": "두 입력 변수는 각각 예외 클래스와 예외 값입니다. (함수가 명시적으로 예외를 발생시키지 않으면, 다른 어떤 블록도 실제로 exceptblock에 연결되지 않습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:25.397701Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:0",
+      "source": "``Block``",
+      "source_hash": 6771311494976824819,
+      "context_hash": 15540485937693355758,
+      "translation": "``Block``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:07.385103Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:14/seg:0",
+      "source": "A basic block, containing a list of operations and ending in jumps to other basic blocks.",
+      "source_hash": 5895175471339477102,
+      "context_hash": 15728393650618932686,
+      "translation": "기본 블록(basic block)은 연산 목록을 포함하며, 다른 기본 블록으로의 점프로 끝납니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:33.371835Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:14/seg:1",
+      "source": "All the values that are \"live\" during the execution of the block are stored in Variables.",
+      "source_hash": 14326558510274610847,
+      "context_hash": 714164332103403637,
+      "translation": "블록이 실행되는 동안 \"활성\" 상태인 모든 값은 Variable에 저장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:33.371836Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:14/seg:2",
+      "source": "Each basic block uses its own distinct Variables.",
+      "source_hash": 16613679302852530848,
+      "context_hash": 16766901554078605190,
+      "translation": "각 기본 블록은 자신만의 고유한 Variable을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:33.371836Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:0",
+      "source": "values that can enter this block from any of the previous blocks.",
+      "source_hash": 11209970701165150243,
+      "context_hash": 17588972809927730413,
+      "translation": "이전 블록들 중 어느 것에서든 이 블록으로 들어올 수 있는 값들입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:10.597046Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:16/seg:0",
+      "source": "basic block to the beginning of other basic blocks.",
+      "source_hash": 3083756036925835687,
+      "context_hash": 11669457032519874234,
+      "translation": "기본 블록에서 다른 기본 블록의 시작 부분으로",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:18.580749Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:0",
+      "source": "Each Block ends in one of the following ways:",
+      "source_hash": 18094968021688596627,
+      "context_hash": 12953661436216097383,
+      "translation": "각 Block\\ 은 다음 방법 중 하나로 종료됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:21.007424Z",
+      "issues": [
+        "Translation has style or naturalness issues"
+      ]
+    },
+    {
+      "id": "section:3/block:18/seg:0",
+      "source": "unconditional jump: exitswitch is None, exits contains a single Link.",
+      "source_hash": 12954453545904623202,
+      "context_hash": 3334164474779436359,
+      "translation": "무조건 점프: exitswitch\\ 는 None이고, exits\\ 는 단일 Link를 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:23.906459Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:19/seg:0",
+      "source": "conditional jump: exitswitch is one of the Variables that appear in the Block, and exits contains one or more Links (usually 2).",
+      "source_hash": 3981451768748344797,
+      "context_hash": 16598326399342309437,
+      "translation": "조건부 점프: exitswitch는 Block에 나타나는 Variables 중 하나이며, exits는 하나 이상의 Links(보통 2개)를 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:46.232240Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:19/seg:1",
+      "source": "Each Link's exitcase gives a concrete value.",
+      "source_hash": 15951491297331028759,
+      "context_hash": 3914392071401058330,
+      "translation": "각 Link의 exitcase는 구체적인 값을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:46.232241Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:19/seg:2",
+      "source": "This is the equivalent of a \"switch\": the control follows the Link whose exitcase matches the run-time value of the exitswitch Variable.",
+      "source_hash": 6726534150371393961,
+      "context_hash": 16478600997992478761,
+      "translation": "이는 \"switch\"에 해당하는 것으로, 제어 흐름은 exitcase가 exitswitch Variable의 런타임 값과 일치하는 Link를 따라갑니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:46.232241Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:19/seg:3",
+      "source": "It is a run-time error if the Variable doesn't match any exitcase.",
+      "source_hash": 7700098797565681007,
+      "context_hash": 13523684231526936301,
+      "translation": "Variable이 어떤 exitcase와도 일치하지 않으면 런타임 오류입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:46.232241Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:20/seg:0",
+      "source": "exception catching: exitswitch is ``Constant(last_exception)``.",
+      "source_hash": 12205180967323144521,
+      "context_hash": 1765672069198000622,
+      "translation": "예외 포착(exception catching): exitswitch는 ``Constant(last_exception)``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:57.602598Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:20/seg:1",
+      "source": "The first Link has exitcase set to None and represents the non-exceptional path.",
+      "source_hash": 2782345561477192115,
+      "context_hash": 1692013441374225315,
+      "translation": "첫 번째 Link는 exitcase가 None으로 설정되어 있으며, 예외가 발생하지 않는 경로를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:57.602599Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:20/seg:2",
+      "source": "The next Links have exitcase set to a subclass of Exception, and are taken when the *last* operation of the basic block raises a matching exception. (Thus the basic block must not be empty, and only the last operation is protected by the handler.)",
+      "source_hash": 1538836441315678606,
+      "context_hash": 10219195234638588084,
+      "translation": "다음 Link들은 exitcase가 Exception의 서브클래스로 설정되어 있으며, 기본 블록(basic block)의 *마지막* 연산이 일치하는 예외를 발생시킬 때 선택됩니다. (따라서 기본 블록은 비어 있으면 안 되며, 마지막 연산만 핸들러에 의해 보호됩니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:57.602599Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:21/seg:0",
+      "source": "return or except: the returnblock and the exceptblock have operations set to an empty tuple, exitswitch to None, and exits empty.",
+      "source_hash": 9803709065038071013,
+      "context_hash": 8708526007928201591,
+      "translation": "return 또는 except: returnblock과 exceptblock은 operations는 빈 튜플로, exitswitch는 None으로, exits는 비어 있게 설정되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:35.646051Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:22/seg:0",
+      "source": "``Link``",
+      "source_hash": 11675020289655664903,
+      "context_hash": 1666186713138842289,
+      "translation": "``링크``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:31.200457Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:23/seg:0",
+      "source": "A link from one basic block to another.",
+      "source_hash": 5652150448435424034,
+      "context_hash": 14813784902455280986,
+      "translation": "하나의 기본 블록에서 다른 기본 블록으로의 링크입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:31.750539Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:24/seg:0",
+      "source": "target Block's inputargs, which gives all the values passed into the next block.  (Note that each Variable used in the prevblock may appear zero, one or more times in the ``args`` list.)",
+      "source_hash": 8273296187618607729,
+      "context_hash": 8257944755023481235,
+      "translation": "target Block의 inputargs이며, 다음 블록에 전달되는 모든 값을 제공합니다. (prevblock에서 사용된 각 Variable이 ``args`` 목록에 0번, 1번 또는 그 이상 나타날 수 있다는 점에 유의하십시오.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:56.644875Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:25/seg:0",
+      "source": "Note that ``args`` uses Variables from the prevblock, which are matched to the target block's ``inputargs`` by position, as in a tuple assignment or function call would do.",
+      "source_hash": 1002678200189844769,
+      "context_hash": 6164868083616633164,
+      "translation": "``args``\\ 는 prevblock의 Variable을 사용하며, 이는 튜플 할당이나 함수 호출에서와 마찬가지로 위치에 따라 대상 블록의 ``inputargs``\\ 와 매칭된다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:43.052773Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:26/seg:0",
+      "source": "If the link is an exception-catching one, the ``last_exception`` and ``last_exc_value`` are set to two fresh Variables that are considered to be created when the link is entered; at run-time, they will hold the exception class and value, respectively.",
+      "source_hash": 4152097778560581849,
+      "context_hash": 7348792776822885409,
+      "translation": "링크가 예외를 포착하는 링크라면, ``last_exception``\\ 과 ``last_exc_value``\\ 는 링크에 진입할 때 생성되는 것으로 간주되는 두 개의 새로운 Variable로 설정됩니다. 실행 시점에는 각각 예외 클래스와 값을 담게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:01.942635Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:26/seg:1",
+      "source": "These two new variables can only be used in the same link's ``args`` list, to be passed to the next block (as usual, they may actually not appear at all, or appear several times in ``args``).",
+      "source_hash": 16941916278061019109,
+      "context_hash": 6951180331528843282,
+      "translation": "이 두 개의 새로운 변수는 같은 링크의 ``args`` 목록에서만 사용될 수 있으며, 다음 블록으로 전달됩니다(평소와 같이 실제로는 전혀 나타나지 않거나 ``args``\\ 에 여러 번 나타날 수도 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:01.942636Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:27/seg:0",
+      "source": "``SpaceOperation``",
+      "source_hash": 6413247601663793289,
+      "context_hash": 5364180176093170625,
+      "translation": "``SpaceOperation``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:40.923622Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:28/seg:0",
+      "source": "A recorded (or otherwise generated) basic operation.",
+      "source_hash": 4821266675846408054,
+      "context_hash": 6314330190398021068,
+      "translation": "기록된(또는 다른 방식으로 생성된) 기본 연산(basic operation)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:45.998879Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:29/seg:0",
+      "source": "from the list in ``rpython.flowspace.operation``, but later the names can be changed arbitrarily.",
+      "source_hash": 4897316365663874379,
+      "context_hash": 10204799936627453920,
+      "translation": "``rpython.flowspace.operation``\\ 의 목록에서 가져오지만, 이후에는 이름을 임의로 변경할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:50.973053Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:30/seg:0",
+      "source": "previously in the basic block.",
+      "source_hash": 14781400838583942136,
+      "context_hash": 12286862245853162297,
+      "translation": "이전에 기본 블록(basic block)에서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:56.452570Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:31/seg:0",
+      "source": "Note that operations usually cannot implicitly raise exceptions at run-time; so for example, code generators can assume that a ``getitem`` operation on a list is safe and can be performed without bound checking.",
+      "source_hash": 5165956684322632743,
+      "context_hash": 11556525277995993224,
+      "translation": "연산은 보통 실행 시점에 암묵적으로 예외를 발생시킬 수 없다는 점에 유의하십시오. 예를 들어 코드 생성기는 리스트에 대한 ``getitem`` 연산이 안전하며 경계 검사 없이 수행될 수 있다고 가정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:28.323208Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:31/seg:1",
+      "source": "The exceptions to this rule are: (1) if the operation is the last in the block, which ends with ``exitswitch == Constant(last_exception)``, then the implicit exceptions must be checked for, generated, and caught appropriately; (2) calls to other functions, as per ``simple_call`` or ``call_args``, can always raise whatever the called function can raise --- and such exceptions must be passed through to the parent unless they are caught as above.",
+      "source_hash": 6334275921551291963,
+      "context_hash": 3395175803730828982,
+      "translation": "이 규칙의 예외는 다음과 같습니다: (1) 연산이 블록의 마지막 연산이면서 ``exitswitch == Constant(last_exception)``\\ 으로 끝나는 경우, 암묵적 예외를 확인하고 생성하여 적절히 처리해야 합니다; (2) ``simple_call``\\ 이나 ``call_args``\\ 에 따른 다른 함수 호출은 호출된 함수가 발생시킬 수 있는 예외를 항상 발생시킬 수 있으며, 이러한 예외는 위에서 설명한 대로 포착되지 않는 한 상위 호출자에게 전달되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:28.323209Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:32/seg:0",
+      "source": "``Variable``",
+      "source_hash": 5244293315774107864,
+      "context_hash": 2582481730269148502,
+      "translation": "``Variable``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:23:55.309986Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:33/seg:0",
+      "source": "A placeholder for a run-time value.",
+      "source_hash": 1494596833869206945,
+      "context_hash": 916628615711963734,
+      "translation": "런타임(run-time) 값을 위한 자리 표시자(placeholder)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:06.213054Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:33/seg:1",
+      "source": "There is mostly debugging stuff here.",
+      "source_hash": 2716472729313734786,
+      "context_hash": 4464322814607614559,
+      "translation": "여기에는 대부분 디버깅 관련 내용이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:06.213055Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:34/seg:0",
+      "source": "``name`` attribute to reference a value, although the ``name`` is guaranteed unique.",
+      "source_hash": 763118229998411963,
+      "context_hash": 5865661149015858479,
+      "translation": "값을 참조하기 위한 ``name`` 속성, 비록 그 ``name``\\ 이 고유함이 보장되기는 하지만",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:12.078323Z",
+      "issues": [
+        "의미는 정확하게 전달되지만 \"비록 ... 보장되기는 하지만\" 구조가 다소 번역투로 어색하며, \"고유함이 보장되다\"보다는 \"고유성이 보장되다\" 또는 \"유일함이 보장되다\"가 더 자연스럽습니다."
+      ]
+    },
+    {
+      "id": "section:3/block:35/seg:0",
+      "source": "``Constant``",
+      "source_hash": 8114143541275633106,
+      "context_hash": 17367452729985507919,
+      "translation": "``상수``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:04.937041Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:36/seg:0",
+      "source": "A constant value used as argument to a SpaceOperation, or as value to pass across a Link to initialize an input Variable in the target Block.",
+      "source_hash": 12392619709251378311,
+      "context_hash": 15293981760541549399,
+      "translation": "SpaceOperation의 인자로 사용되거나, 대상 Block에서 입력 Variable을 초기화하기 위해 Link를 통해 전달할 값으로 사용되는 상수 값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:29.998391Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:37/seg:0",
+      "source": "A Constant can occasionally store a mutable Python object.",
+      "source_hash": 15449502203329511475,
+      "context_hash": 4617342440943709721,
+      "translation": "Constant는 간혹 변경 가능한(mutable) Python 객체를 저장할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:23.894494Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:37/seg:1",
+      "source": "It represents a static, pre-initialized, read-only version of that object.",
+      "source_hash": 15509165491249449741,
+      "context_hash": 5682701397683742694,
+      "translation": "이는 해당 객체의 정적이고 미리 초기화된, 읽기 전용 버전을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:23.894495Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:37/seg:2",
+      "source": "The flow graph should not attempt to actually mutate such Constants.",
+      "source_hash": 3252400432868972922,
+      "context_hash": 10403961716261385577,
+      "translation": "흐름 그래프(flow graph)는 이러한 Constant를 실제로 변경하려고 시도해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:23.894495Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "The Annotation Pass",
+      "source_hash": 16622829283542383824,
+      "context_hash": 12260735249652887534,
+      "translation": "어노테이션(Annotation) 패스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:12.424971Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "We describe briefly below how a control flow graph can be \"annotated\" to discover the types of the objects.",
+      "source_hash": 3151227411468921000,
+      "context_hash": 9802736212138939628,
+      "translation": "아래에서는 제어 흐름 그래프에 어떻게 \"주석을 달아(annotated)\" 객체들의 타입을 알아낼 수 있는지 간략히 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:09.155941Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "This annotation pass is a form of type inference.",
+      "source_hash": 6085012596260016485,
+      "context_hash": 4694179488358676301,
+      "translation": "이 주석 처리 과정(annotation pass)은 타입 추론의 한 형태입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:09.155942Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "It operates on the control flow graphs built by the Flow Object Space.",
+      "source_hash": 16742816517834519186,
+      "context_hash": 14009552785593660369,
+      "translation": "이는 Flow 객체 공간(object space)이 만든 제어 흐름 그래프에서 동작합니다.",
+      "glossary_snapshot": {
+        "object space": "객체 공간(object space)"
+      },
+      "translated_at": "2026-08-15T09:25:09.155942Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "For a more comprehensive description of the annotation process, see the corresponding section of our `EU report about translation`_.",
+      "source_hash": 10387431738322632622,
+      "context_hash": 1307278126946640426,
+      "translation": "어노테이션 과정에 대한 더 포괄적인 설명은 저희의 `EU report about translation`_\\ 의 해당 절을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:18.717865Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "The major goal of the annotator is to \"annotate\" each variable that appears in a flow graph.",
+      "source_hash": 9814159784511779220,
+      "context_hash": 5124978560352150637,
+      "translation": "어노테이터(annotator)의 주요 목표는 흐름 그래프에 나타나는 각 변수를 \"어노테이트\"하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:42.346974Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "An \"annotation\" describes all the possible Python objects that this variable could contain at run-time, based on a whole-program analysis of all the flow graphs -- one per function.",
+      "source_hash": 1899396803466917699,
+      "context_hash": 151436969316002996,
+      "translation": "\"어노테이션\"은 함수당 하나씩 존재하는 모든 흐름 그래프에 대한 전체 프로그램 분석을 바탕으로, 이 변수가 실행 시점에 담을 수 있는 모든 가능한 Python 객체를 기술합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:42.346975Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "An \"annotation\" is an instance of a subclass of ``SomeObject``.",
+      "source_hash": 16805626301101797826,
+      "context_hash": 10598326814719573491,
+      "translation": "\"annotation\"은 ``SomeObject``\\ 의 서브클래스의 인스턴스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:33.462175Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:1",
+      "source": "Each subclass that represents a specific family of objects.",
+      "source_hash": 14936859080950716685,
+      "context_hash": 5228268798076854973,
+      "translation": "각 서브클래스는 특정 객체 계열을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:33.462176Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "Here is an overview (see ``pypy/annotation/model/``):",
+      "source_hash": 6196508947929578108,
+      "context_hash": 11311398973322916122,
+      "translation": "다음은 개요입니다 (``pypy/annotation/model/``\\ 참조):",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:33.021053Z",
+      "issues": [
+        "RST 문법(``\\ `` 이스케이프)은 올바르게 유지했으나, 여는 괄호 앞 띄어쓰기가 한국어 문서 관례상 다소 어색합니다."
+      ]
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "``SomeObject`` is the base class.",
+      "source_hash": 17891856495969663833,
+      "context_hash": 17851116685434956507,
+      "translation": "``SomeObject``\\ 는 기본 클래스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:46.547596Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:1",
+      "source": "An instance of ``SomeObject()`` represents any Python object, and as such usually means that the input program was not fully RPython.",
+      "source_hash": 18015394319232170949,
+      "context_hash": 3735605246419798568,
+      "translation": "``SomeObject()``\\ 의 인스턴스는 임의의 Python 객체를 나타내며, 이는 대개 입력 프로그램이 완전한 RPython이 아니었음을 의미합니다.",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-15T09:24:46.547597Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "``SomeInteger()`` represents any integer.  ``SomeInteger(nonneg=True)`` represent a non-negative integer (``>=0``).",
+      "source_hash": 11643779723071950502,
+      "context_hash": 15329214208160075320,
+      "translation": "``SomeInteger()``\\ 는 임의의 정수를 나타냅니다. ``SomeInteger(nonneg=True)``\\ 는 음이 아닌 정수(``>=0``)를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:39.761840Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "``SomeString()`` represents any string; ``SomeChar()`` a string of length 1.",
+      "source_hash": 13084380522614543098,
+      "context_hash": 12476773360789043625,
+      "translation": "``SomeString()``\\ 은 임의의 문자열을 나타내고, ``SomeChar()``\\ 는 길이가 1인 문자열을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:40.790413Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "``SomeTuple([s1,s2,..,sn])`` represents a tuple of length ``n``.",
+      "source_hash": 9122586594867597576,
+      "context_hash": 4499362981968906773,
+      "translation": "``SomeTuple([s1,s2,..,sn])``\\ 는 길이가 ``n``\\ 인 튜플을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:15.335222Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:1",
+      "source": "The elements in this tuple are themselves constrained by the given list of annotations.",
+      "source_hash": 12545450736693972583,
+      "context_hash": 12075878017085463929,
+      "translation": "이 튜플의 요소들은 각각 주어진 annotation 목록에 의해 제약됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:15.335223Z",
+      "issues": [
+        "\"themselves\"를 \"각각\"(each)으로 옮겨 원문의 재귀적 강조(\"요소들 자체가\")가 \"개별적으로\"라는 뉘앙스로 미묘하게 바뀌었으나 전체 의미는 자연스럽게 전달됩니다."
+      ]
+    },
+    {
+      "id": "section:4/block:9/seg:2",
+      "source": "For example, ``SomeTuple([SomeInteger(), SomeString()])`` represents a tuple with two items: an integer and a string.",
+      "source_hash": 15682512201039836475,
+      "context_hash": 8432748272301140748,
+      "translation": "예를 들어, ``SomeTuple([SomeInteger(), SomeString()])``\\ 는 정수와 문자열이라는 두 항목을 가진 튜플을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:15.335223Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "The result of the annotation pass is essentially a large dictionary mapping ``Variable``\\ s to annotations.",
+      "source_hash": 5616513694899801962,
+      "context_hash": 15243242155535989512,
+      "translation": "어노테이션(annotation) 패스의 결과는 본질적으로 ``Variable``\\ 들을 어노테이션에 매핑하는 큰 딕셔너리입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:43.005435Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "All the ``SomeXxx`` instances are immutable.",
+      "source_hash": 16489641423074739577,
+      "context_hash": 8585984790107430589,
+      "translation": "모든 ``SomeXxx`` 인스턴스는 불변입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:06.858313Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:1",
+      "source": "If the annotator needs to revise its belief about what a Variable can contain, it does so creating a new annotation, not mutating the existing one.",
+      "source_hash": 10351503463526417338,
+      "context_hash": 9352449235905122323,
+      "translation": "annotator가 Variable이 무엇을 담을 수 있는지에 대한 자신의 판단을 수정해야 할 경우, 기존 주석을 변경하는 것이 아니라 새로운 주석을 생성하여 그렇게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:06.858314Z",
+      "issues": [
+        "문장 구조와 어투는 자연스럽지만, \"annotation\"을 단순히 \"주석\"(comment)으로 번역해 RPython 애너테이터의 \"타입 추론 기록\"이라는 기술적 의미가 모호해질 수 있습니다."
+      ]
+    },
+    {
+      "id": "section:4/block:12/seg:0",
+      "source": "Mutable Values and Containers",
+      "source_hash": 17006027941004090359,
+      "context_hash": 11827785780881727667,
+      "translation": "가변 값과 컨테이너",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:48.634027Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:0",
+      "source": "Mutable objects need special treatment during annotation, because the annotation of contained values needs to be possibly updated to account for mutation operations, and consequently the annotation information reflown through the relevant parts of the flow graphs.",
+      "source_hash": 13891548440972500248,
+      "context_hash": 15898740135301968057,
+      "translation": "가변(mutable) 객체는 어노테이션 과정에서 특별한 처리가 필요합니다. 포함된 값들의 어노테이션이 변경 연산(mutation operations)을 반영하기 위해 갱신되어야 할 수 있고, 그 결과 어노테이션 정보가 흐름 그래프(flow graph)의 관련 부분들에 다시 흘러 들어가야 하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:58.258915Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:0",
+      "source": "``SomeList`` stands for a list of homogeneous type (i.e. all the elements of the list are represented by a single common ``SomeXxx`` annotation).",
+      "source_hash": 10796729749206121755,
+      "context_hash": 181638484173615484,
+      "translation": "``SomeList``\\ 는 동종(homogeneous) 타입의 리스트를 나타냅니다(즉, 리스트의 모든 원소는 단일한 공통 ``SomeXxx`` 어노테이션으로 표현됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:57.130800Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:15/seg:0",
+      "source": "``SomeDict`` stands for a homogeneous dictionary (i.e. all keys have the same ``SomeXxx`` annotation, and so have all values).",
+      "source_hash": 16654352370960395591,
+      "context_hash": 9056710389963302870,
+      "translation": "``SomeDict``\\ 는 동종(homogeneous) 딕셔너리를 나타냅니다 (즉, 모든 키가 동일한 ``SomeXxx`` 애노테이션을 가지며, 모든 값도 마찬가지입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:02.170463Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:16/seg:0",
+      "source": "User-defined Classes and Instances",
+      "source_hash": 11476700097512736719,
+      "context_hash": 2971107742324403855,
+      "translation": "사용자 정의 클래스와 인스턴스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:24:59.040170Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:17/seg:0",
+      "source": "``SomeInstance`` stands for an instance of the given class or any subclass of it.",
+      "source_hash": 14487287491543764600,
+      "context_hash": 16382192140791456080,
+      "translation": "``SomeInstance``\\ 는 주어진 클래스 또는 그 서브클래스의 인스턴스를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:33.895082Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:17/seg:1",
+      "source": "For each user-defined class seen by the annotator, we maintain a ClassDef (``pypy.annotation.classdef``) describing the attributes of the instances of the class; essentially, a ClassDef gives the set of all class-level and instance-level attributes, and for each one, a corresponding ``SomeXxx`` annotation.",
+      "source_hash": 7856877526901934477,
+      "context_hash": 6577885300264044978,
+      "translation": "애노테이터가 확인한 사용자 정의 클래스마다, 그 클래스의 인스턴스가 갖는 속성을 기술하는 ClassDef(``pypy.annotation.classdef``)를 유지합니다. 본질적으로 ClassDef는 모든 클래스 수준 및 인스턴스 수준 속성의 집합을 제공하며, 각각에 대해 대응하는 ``SomeXxx`` 애노테이션을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:33.895082Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:0",
+      "source": "Instance-level attributes are discovered progressively as the annotation progresses.",
+      "source_hash": 15452081745854360565,
+      "context_hash": 2377740383042062882,
+      "translation": "인스턴스 수준 속성은 어노테이션(annotation)이 진행됨에 따라 점진적으로 발견됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:17.339053Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:1",
+      "source": "Assignments like",
+      "source_hash": 4585434378596325691,
+      "context_hash": 1730581466522966605,
+      "translation": "다음과 같은 할당문은",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:17.339054Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:20/seg:0",
+      "source": "update the ClassDef of the given instance to record that the given attribute exists and can be as general as the given value.",
+      "source_hash": 14438297930227932210,
+      "context_hash": 12295330397798596161,
+      "translation": "주어진 인스턴스의 ClassDef를 갱신하여, 주어진 속성이 존재하고 주어진 값만큼 일반적일 수 있음을 기록합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:08.512556Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:21/seg:0",
+      "source": "For every attribute, the ClassDef also records all the positions where the attribute is *read*.",
+      "source_hash": 1016454943290657409,
+      "context_hash": 2404144997882769758,
+      "translation": "각 속성에 대해, ClassDef는 해당 속성이 *읽히는* 모든 위치도 기록합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:24.322652Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:21/seg:1",
+      "source": "If, at some later time, we discover an assignment that forces the annotation about the attribute to be generalized, then all the places that read the attribute so far are marked as invalid and the annotator will restart its analysis from there.",
+      "source_hash": 9744837664017258599,
+      "context_hash": 17846474157031004073,
+      "translation": "이후 어느 시점에 해당 속성에 대한 어노테이션을 일반화하도록 강제하는 대입을 발견하면, 지금까지 해당 속성을 읽은 모든 위치가 무효로 표시되고 어노테이터는 그 지점부터 분석을 재시작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:24.322653Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:22/seg:0",
+      "source": "The distinction between instance-level and class-level attributes is thin; class-level attributes are essentially considered as initial values for instance-level attributes.",
+      "source_hash": 2672014347387829047,
+      "context_hash": 2990190705830692697,
+      "translation": "인스턴스 수준 속성과 클래스 수준 속성의 구분은 미미합니다; 클래스 수준 속성은 본질적으로 인스턴스 수준 속성의 초기값으로 간주됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:29.755298Z",
+      "issues": [
+        "의미는 정확하게 전달되었고 문체(높임체)도 일관되지만, 한국어 문장에서 세미콜론을 그대로 사용한 것은 다소 부자연스러워 두 문장으로 나누거나 접속어(예: \"즉\", \"왜냐하면\")로 연결하는 것이 더 자연스럽습니다."
+      ]
+    },
+    {
+      "id": "section:4/block:22/seg:1",
+      "source": "Methods are not special in this respect, except that they are bound to the instance (i.e. ``self = SomeInstance(cls)``) when considered as the initial value for the instance.",
+      "source_hash": 901332388255725688,
+      "context_hash": 11408919321252330633,
+      "translation": "메서드는 인스턴스의 초기값으로 간주될 때 인스턴스에 바인딩된다는 점(즉, ``self = SomeInstance(cls)``)을 제외하면 이런 점에서 특별하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:29.755299Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:23/seg:0",
+      "source": "The inheritance rules are as follows: the union of two ``SomeInstance`` annotations is the ``SomeInstance`` of the most precise common base class.",
+      "source_hash": 10844676489624499269,
+      "context_hash": 5216161704158496461,
+      "translation": "상속 규칙은 다음과 같습니다: 두 ``SomeInstance`` 어노테이션의 합집합은 가장 정밀한 공통 기반 클래스의 ``SomeInstance``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:51.533324Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:23/seg:1",
+      "source": "If an attribute is considered (i.e. read or written) through a ``SomeInstance`` of a parent class, then we assume that all subclasses also have the same attribute, and that the same annotation applies to them all (so code like ``return self.x`` in a method of a parent class forces the parent class and all its subclasses to have an attribute ``x``, whose annotation is general enough to contain all the values that all the subclasses might want to store in ``x``).",
+      "source_hash": 16736410305624973197,
+      "context_hash": 4084232892213978812,
+      "translation": "부모 클래스의 ``SomeInstance``\\ 를 통해 어떤 속성이 고려된다면(즉, 읽히거나 쓰인다면), 우리는 모든 서브클래스도 동일한 속성을 가지며 동일한 어노테이션이 그 모두에 적용된다고 가정합니다(따라서 부모 클래스의 메서드에 있는 ``return self.x`` 같은 코드는 부모 클래스와 그 모든 서브클래스가 속성 ``x``\\ 를 가지도록 강제하며, 그 어노테이션은 모든 서브클래스가 ``x``\\ 에 저장하고자 할 수도 있는 모든 값을 포함할 만큼 충분히 일반적입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:51.533324Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:23/seg:2",
+      "source": "However, distinct subclasses can have attributes of the same names with different, unrelated annotations if they are not used in a general way through the parent class.",
+      "source_hash": 13514971402870987757,
+      "context_hash": 309080184362700178,
+      "translation": "그러나 서로 다른 서브클래스들은 부모 클래스를 통해 일반적인 방식으로 사용되지 않는 경우, 서로 다르고 관련 없는 어노테이션을 가진 동일한 이름의 속성을 가질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:51.533324Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "The RPython Typer",
+      "source_hash": 13823210444797399169,
+      "context_hash": 13797755943676509889,
+      "translation": "RPython 타이퍼(Typer)",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-15T09:25:19.121679Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "See :doc:`rtyper`.",
+      "source_hash": 14217884201501123400,
+      "context_hash": 3129407000988383745,
+      "translation": "자세한 내용은 :doc:`rtyper`\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:41.162831Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Backend Optimizations",
+      "source_hash": 8983163285540139883,
+      "context_hash": 2043161129046644603,
+      "translation": "백엔드 최적화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:22.781953Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The point of the backend optimizations are to make the compiled program run faster.",
+      "source_hash": 16362036618208497339,
+      "context_hash": 9911354547786090115,
+      "translation": "백엔드 최적화의 목적은 컴파일된 프로그램을 더 빠르게 실행되도록 만드는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:32.609233Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "Compared to many parts of the PyPy translator, which are very unlike a traditional compiler, most of these will be fairly familiar to people who know how compilers work.",
+      "source_hash": 11702599114699237222,
+      "context_hash": 5190936569681874630,
+      "translation": "전통적인 컴파일러와는 매우 다른 PyPy 번역기(translator)의 많은 부분과 비교하면, 이들 중 대부분은 컴파일러의 작동 방식을 아는 사람들에게 상당히 익숙할 것입니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-15T09:25:32.609235Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "Function Inlining",
+      "source_hash": 11006658951585908628,
+      "context_hash": 18016178821396610920,
+      "translation": "함수 인라이닝",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:26.860554Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "To reduce the overhead of the many function calls that occur when running the PyPy interpreter we implemented function inlining.",
+      "source_hash": 10149998608184456194,
+      "context_hash": 17875456822921427054,
+      "translation": "PyPy 인터프리터를 실행할 때 발생하는 많은 함수 호출의 오버헤드를 줄이기 위해, 함수 인라이닝(inlining)을 구현했습니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-15T09:26:02.872732Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "This is an optimization which takes a flow graph and a callsite and inserts a copy of the flow graph into the graph of the calling function, renaming occurring variables as appropriate.",
+      "source_hash": 15877412138162928417,
+      "context_hash": 12784584915846720556,
+      "translation": "이는 흐름 그래프(flow graph)와 호출 지점(callsite)을 받아, 흐름 그래프의 사본을 호출하는 함수의 그래프에 삽입하고, 등장하는 변수의 이름을 적절히 바꾸는 최적화입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:02.872733Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:2",
+      "source": "This leads to problems if the original function was surrounded by a ``try: ... except: ...`` guard.",
+      "source_hash": 8414593524536361825,
+      "context_hash": 3090597250762952923,
+      "translation": "원래 함수가 ``try: ... except: ...`` 가드(guard)로 둘러싸여 있는 경우 문제가 발생합니다.",
+      "glossary_snapshot": {
+        "guard": "가드(guard)"
+      },
+      "translated_at": "2026-08-15T09:26:02.872734Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:3",
+      "source": "In this case inlining is not always possible.",
+      "source_hash": 2431598354107560862,
+      "context_hash": 8421921732981607572,
+      "translation": "이 경우 인라이닝이 항상 가능한 것은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:02.872735Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:4",
+      "source": "If the called function is not directly raising an exception (but an exception is potentially raised by further called functions) inlining is safe, though.",
+      "source_hash": 1080144560790525820,
+      "context_hash": 13401005423894929182,
+      "translation": "그러나 호출된 함수가 직접 예외를 발생시키지 않는 경우(하지만 더 깊이 호출되는 함수에서 예외가 발생할 가능성이 있는 경우)에는 인라이닝이 안전합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:02.872735Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "In addition we also implemented heuristics which function to inline where.",
+      "source_hash": 12342008259237139978,
+      "context_hash": 16067576691873944230,
+      "translation": "추가로 어디에 인라인할지를 결정하는 휴리스틱도 구현했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:01.808139Z",
+      "issues": [
+        "소스 문장 자체가 문법적으로 불완전(\"heuristics which function to inline where\")하여 원문 의도가 모호하지만, 번역은 \"어디에 인라인할지 결정하는 휴리스틱\"이라는 합리적 해석으로 자연스럽게 표현했습니다."
+      ]
+    },
+    {
+      "id": "section:6/block:4/seg:1",
+      "source": "For this purpose we assign every function a \"size\".",
+      "source_hash": 5557605084619890744,
+      "context_hash": 13131475023894785623,
+      "translation": "이를 위해 모든 함수에 \"크기\"를 할당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:01.808140Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:2",
+      "source": "This size should roughly correspond to the increase in code-size which is to be expected should the function be inlined somewhere.",
+      "source_hash": 13779580663625412093,
+      "context_hash": 3098427836305648599,
+      "translation": "이 크기는 해당 함수가 어딘가에 인라인될 경우 예상되는 코드 크기 증가량에 대략 대응해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:01.808140Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:3",
+      "source": "This estimate is the sum of two numbers: for one every operations is assigned a specific weight, the default being a weight of one.",
+      "source_hash": 9204496822361790252,
+      "context_hash": 14592901263121540636,
+      "translation": "이 추정치는 두 수의 합입니다. 하나는 모든 연산에 특정 가중치가 할당되는 것이며, 기본값은 가중치 1입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:01.808140Z",
+      "issues": [
+        "Translation is acceptable but could be improved"
+      ]
+    },
+    {
+      "id": "section:6/block:4/seg:4",
+      "source": "Some operations are considered to be more effort than others, e.g. memory allocation and calls; others are considered to be no effort at all (casts...).",
+      "source_hash": 5633113628680100003,
+      "context_hash": 2037937856303012255,
+      "translation": "일부 연산은 다른 연산보다 더 많은 비용이 드는 것으로 간주됩니다(예: 메모리 할당과 호출). 반면 다른 연산은 전혀 비용이 들지 않는 것으로 간주됩니다(캐스트 등).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:01.808141Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:5",
+      "source": "The size estimate is for one the sum of the weights of all operations occurring in the graph.",
+      "source_hash": 18084441020688504271,
+      "context_hash": 12631082301024304012,
+      "translation": "크기 추정치는 우선 그래프에 나타나는 모든 연산의 가중치 합입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:01.808141Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:6",
+      "source": "This is called the \"static instruction count\".",
+      "source_hash": 14250185927623827611,
+      "context_hash": 8975211954438935886,
+      "translation": "이를 \"정적 명령어 수\"라고 부릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:01.808141Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:7",
+      "source": "The other part of the size estimate of a graph is the \"median execution cost\".",
+      "source_hash": 5177910093579007489,
+      "context_hash": 3763772916280360920,
+      "translation": "그래프 크기 추정치의 나머지 부분은 \"중간 실행 비용\"입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:01.808141Z",
+      "issues": [
+        "\"median\"을 통계적 의미가 분명한 \"중앙값\"이나 \"중간값\" 대신 \"중간\"으로 옮겨 다소 모호하지만, 전체 문장의 의미와 문체(정중체)는 자연스럽게 전달됩니다."
+      ]
+    },
+    {
+      "id": "section:6/block:4/seg:8",
+      "source": "This is again the sum of the weight of all operations in the graph, but this time weighted with a guess how often the operation is executed.",
+      "source_hash": 12879503280387087163,
+      "context_hash": 6526658362443403308,
+      "translation": "이 역시 그래프의 모든 연산 가중치 합이지만, 이번에는 해당 연산이 얼마나 자주 실행되는지에 대한 추정치로 가중됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:01.808141Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:9",
+      "source": "To arrive at this guess we assume that at every branch we take both paths equally often, except for branches that are the end of loops, where the jump back to the end of the loop is considered more likely.",
+      "source_hash": 17696034321182814353,
+      "context_hash": 16411980715592359374,
+      "translation": "이 추정치를 얻기 위해 모든 분기에서 두 경로를 동일한 빈도로 택한다고 가정하되, 루프의 끝에 해당하는 분기는 예외로 하여 루프 끝으로 되돌아가는 점프가 더 가능성이 높은 것으로 간주합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:01.808141Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:10",
+      "source": "This leads to a system of equations which can be solved to get approximate weights for all operations.",
+      "source_hash": 2971041348017777599,
+      "context_hash": 6024049030404130261,
+      "translation": "이로부터 연립 방정식이 도출되며, 이를 풀면 모든 연산에 대한 근사 가중치를 얻을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:01.808142Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "After the size estimate for all function has been determined, functions are being inlined into their callsites, starting from the smallest functions.",
+      "source_hash": 16460187837855239819,
+      "context_hash": 8098716612084116526,
+      "translation": "모든 함수에 대한 크기 추정이 결정된 후, 가장 작은 함수부터 시작하여 함수들이 호출 지점(callsite)으로 인라인됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:56.186236Z",
+      "issues": [
+        "의미는 정확하게 전달되지만 \"크기 추정이 결정된 후\"라는 표현이 다소 어색하며(추정치가 산출/계산된 후가 더 자연스러움), 나머지 부분은 자연스럽고 정확합니다."
+      ]
+    },
+    {
+      "id": "section:6/block:5/seg:1",
+      "source": "Every time a function is being inlined into another function, the size of the outer function is recalculated.",
+      "source_hash": 8939150098615036028,
+      "context_hash": 17410221211698916722,
+      "translation": "함수가 다른 함수로 인라인될 때마다, 바깥쪽 함수의 크기가 다시 계산됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:56.186238Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:2",
+      "source": "This is done until the remaining functions all have a size greater than a predefined limit.",
+      "source_hash": 12718681830252968974,
+      "context_hash": 12516465665617152326,
+      "translation": "이 과정은 남은 함수들이 모두 미리 정해진 한계값보다 큰 크기를 가질 때까지 계속됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:56.186238Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "Malloc Removal",
+      "source_hash": 9176630449744013554,
+      "context_hash": 9966075072808447669,
+      "translation": "Malloc 제거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:39.493122Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "Since RPython is a garbage collected language there is a lot of heap memory allocation going on all the time, which would either not occur at all in a more traditional explicitly managed language or results in an object which dies at a time known in advance and can thus be explicitly deallocated.",
+      "source_hash": 13190717738279467949,
+      "context_hash": 2667862134264698738,
+      "translation": "RPython은 가비지 컬렉션을 사용하는 언어이기 때문에 항상 힙 메모리 할당이 많이 발생하는데, 이는 좀 더 전통적인 명시적 메모리 관리 언어라면 아예 발생하지 않거나, 소멸 시점을 미리 알 수 있어 명시적으로 해제 가능한 객체를 만들어냈을 것입니다.",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-15T09:26:13.828678Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:1",
+      "source": "For example a loop of the following form",
+      "source_hash": 71305345441678602,
+      "context_hash": 8671443221507552439,
+      "translation": "예를 들어 다음과 같은 형태의 루프는",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:13.828680Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "which simply iterates over all numbers from 0 to n - 1 is equivalent to the following in Python",
+      "source_hash": 10539642456746716643,
+      "context_hash": 13763715047842419567,
+      "translation": "0부터 n - 1까지의 모든 숫자를 단순히 순회하는 것으로, Python에서는 다음과 동등합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:46.966391Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:11/seg:0",
+      "source": "Which means that three memory allocations are executed: The range object, the iterator for the range object and the StopIteration instance, which ends the loop.",
+      "source_hash": 17233835181762257272,
+      "context_hash": 15788859305628475183,
+      "translation": "이는 세 번의 메모리 할당이 실행된다는 것을 의미합니다: range 객체, range 객체의 반복자(iterator), 그리고 루프를 종료시키는 StopIteration 인스턴스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:49.983479Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:12/seg:0",
+      "source": "After a small bit of inlining all these three objects are never even passed as arguments to another function and are also not stored into a globally reachable position.",
+      "source_hash": 13903940432923694739,
+      "context_hash": 8122195119690324608,
+      "translation": "약간의 인라이닝 이후, 이 세 객체는 다른 함수의 인자로 전달되는 일도 전혀 없으며 전역적으로 도달 가능한 위치에 저장되지도 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:00.642337Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:12/seg:1",
+      "source": "In such a situation the object can be removed (since it would die anyway after the function returns) and can be replaced by its contained values.",
+      "source_hash": 2776714048039471971,
+      "context_hash": 17244336055288951049,
+      "translation": "이러한 상황에서는 (어차피 함수가 반환된 후 소멸할 것이므로) 해당 객체를 제거하고 그것이 담고 있는 값들로 대체할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:00.642338Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:13/seg:0",
+      "source": "This pattern (an allocated object never leaves the current function and thus dies after the function returns) occurs quite often, especially after some inlining has happened.",
+      "source_hash": 1668782638320188448,
+      "context_hash": 16749157065199012955,
+      "translation": "이러한 패턴(할당된 객체가 현재 함수를 벗어나지 않고 함수가 반환된 후 소멸하는 경우)은 특히 인라이닝이 일어난 후에 상당히 자주 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:05.785718Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:13/seg:1",
+      "source": "Therefore we implemented an optimization which \"explodes\" objects and thus saves one allocation in this simple (but quite common) situation.",
+      "source_hash": 15102339334695107679,
+      "context_hash": 9897448894345597277,
+      "translation": "따라서 저희는 이 단순하지만 상당히 흔한 상황에서 객체를 \"폭발(explode)\"시켜 할당 한 번을 절약하는 최적화를 구현했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:05.785719Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:14/seg:0",
+      "source": "Escape Analysis and Stack Allocation",
+      "source_hash": 1115611925045975997,
+      "context_hash": 9403987168343780413,
+      "translation": "탈출 분석(Escape Analysis)과 스택 할당",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:25:57.525874Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:15/seg:0",
+      "source": "Another technique to reduce the memory allocation penalty is to use stack allocation for objects that can be proved not to life longer than the stack frame they have been allocated in.",
+      "source_hash": 14898063889290218592,
+      "context_hash": 16139779448346989538,
+      "translation": "메모리 할당 부담을 줄이는 또 다른 기법은 자신이 할당된 스택 프레임보다 오래 살아남지 않는다고 증명할 수 있는 객체에 대해 스택 할당을 사용하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:10.026407Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:15/seg:1",
+      "source": "This proved not to really gain us any speed, so over time it was removed again.",
+      "source_hash": 14287429575622830434,
+      "context_hash": 11219408559571418539,
+      "translation": "이는 실제로 속도 향상을 가져오지 않는 것으로 판명되어, 시간이 지나면서 다시 제거되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:10.026408Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Preparation for Source Generation",
+      "source_hash": 6734350539169461268,
+      "context_hash": 5630926400577367952,
+      "translation": "소스 생성을 위한 준비",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:04.114965Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "This, perhaps slightly vaguely named, stage is the most recent to appear as a separate step.",
+      "source_hash": 14499918846260271625,
+      "context_hash": 5433315210306297795,
+      "translation": "다소 모호하게 이름 붙여졌을 수도 있는 이 단계는, 별도의 단계로 등장한 것 중 가장 최근의 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:24.580896Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "Its job is to make the final implementation decisions before source generation -- experience has shown that you really don't want to be doing *any* thinking at the same time as actually generating source code.",
+      "source_hash": 2691324820835486725,
+      "context_hash": 2456431555684513873,
+      "translation": "이 단계의 역할은 소스 생성 이전에 최종 구현 결정을 내리는 것입니다 -- 실제로 소스 코드를 생성하는 것과 동시에 *어떤* 사고 작업이라도 수행하는 것은 결코 바람직하지 않다는 것이 경험상 밝혀졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:24.580896Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:2",
+      "source": "For the C backend, this step does three things:",
+      "source_hash": 13263094709372386093,
+      "context_hash": 2748895088727675643,
+      "translation": "C 백엔드의 경우, 이 단계는 세 가지 일을 수행합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:24.580897Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "inserts explicit exception handling,",
+      "source_hash": 1748777017587095323,
+      "context_hash": 16227131344387736973,
+      "translation": "명시적 예외 처리를 삽입합니다,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:09.623833Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "inserts explicit memory management operations,",
+      "source_hash": 14885958687143635586,
+      "context_hash": 17500398404463972761,
+      "translation": "명시적인 메모리 관리 연산을 삽입하며,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:13.225872Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "decides on the names functions and types will have in the final source (this mapping of objects to names is sometimes referred to as the \"low-level database\").",
+      "source_hash": 12804090448090578829,
+      "context_hash": 8036870603246764461,
+      "translation": "최종 소스에서 함수와 타입이 갖게 될 이름을 결정합니다(객체와 이름 사이의 이러한 매핑은 때때로 \"저수준 데이터베이스\"라고 불립니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:12.876715Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "Making Exception Handling Explicit",
+      "source_hash": 4259585103154108700,
+      "context_hash": 16699824173473849787,
+      "translation": "예외 처리를 명시적으로 만들기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:14.129738Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "RPython code is free to use exceptions in much the same way as unrestricted Python, but the final result is a C program, and C has no concept of exceptions.",
+      "source_hash": 7801066255167895822,
+      "context_hash": 1001137943431331648,
+      "translation": "RPython 코드는 제약 없는 Python과 거의 같은 방식으로 예외를 자유롭게 사용할 수 있지만, 최종 결과물은 C 프로그램이며 C에는 예외라는 개념이 없습니다.",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-15T09:26:27.835976Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:1",
+      "source": "The exception transformer implements exception handling in a similar way to CPython: exceptions are indicated by special return values and the current exception is stored in a global data structure.",
+      "source_hash": 16440692766559128087,
+      "context_hash": 737307899413690561,
+      "translation": "예외 변환기(exception transformer)는 CPython과 비슷한 방식으로 예외 처리를 구현합니다: 예외는 특수한 반환값으로 표시되며 현재 예외는 전역 자료구조에 저장됩니다.",
+      "glossary_snapshot": {
+        "CPython": "CPython"
+      },
+      "translated_at": "2026-08-15T09:26:27.835977Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "In a sense the input to the exception transformer is a program in terms of the :term:`lltypesystem` with exceptions and the output is a program in terms of the bare lltypesystem.",
+      "source_hash": 10330360479474649513,
+      "context_hash": 855556091871249162,
+      "translation": "어떤 의미에서 예외 변환기(exception transformer)의 입력은 예외가 포함된 :term:`lltypesystem`\\ 을 기준으로 한 프로그램이고, 출력은 순수한 lltypesystem을 기준으로 한 프로그램입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:28.818763Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "Memory Management Details",
+      "source_hash": 15354258396648169812,
+      "context_hash": 11752376528381103189,
+      "translation": "메모리 관리 세부 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:20.262323Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:0",
+      "source": "As well as featuring exceptions, RPython is a garbage collected language; again, C is not.",
+      "source_hash": 14147800780929351321,
+      "context_hash": 7205881270324119683,
+      "translation": "예외를 특징으로 할 뿐만 아니라, RPython은 가비지 컬렉션되는 언어입니다. 다시 말하지만 C는 그렇지 않습니다.",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-15T09:26:48.326614Z",
+      "issues": [
+        "번역은 의미를 정확히 전달하지만 \"예외를 특징으로 할 뿐만 아니라\"라는 표현이 다소 번역투로 어색하며, \"예외 처리를 지원할 뿐만 아니라\"처럼 더 자연스럽게 표현할 수 있습니다."
+      ]
+    },
+    {
+      "id": "section:7/block:9/seg:1",
+      "source": "To square this circle, decisions about memory management must be made.",
+      "source_hash": 1101917119102537633,
+      "context_hash": 1019883658120523911,
+      "translation": "이 모순을 해결하기 위해, 메모리 관리에 관한 결정이 내려져야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:48.326616Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:2",
+      "source": "In keeping with PyPy's approach to flexibility, there is freedom to change how to do it.",
+      "source_hash": 10541690608082389349,
+      "context_hash": 1131219968948098413,
+      "translation": "유연성에 대한 PyPy의 접근 방식에 맞게, 이를 수행하는 방법을 자유롭게 변경할 수 있습니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-15T09:26:48.326617Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:3",
+      "source": "There are three approaches implemented today:",
+      "source_hash": 2571968916937252902,
+      "context_hash": 8422820314848111074,
+      "translation": "오늘날 구현된 접근 방식은 세 가지입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:48.326618Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:0",
+      "source": "reference counting (deprecated, too slow)",
+      "source_hash": 11964953806144374118,
+      "context_hash": 11224431539765916671,
+      "translation": "참조 카운팅(사용 중단됨, 너무 느림)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:22.240116Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:11/seg:0",
+      "source": "using the `Boehm-Demers-Weiser conservative garbage collector`_",
+      "source_hash": 8473598827877388228,
+      "context_hash": 3694713461962629853,
+      "translation": "`Boehm-Demers-Weiser conservative garbage collector`_\\ 를 사용하여",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:24.752888Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:12/seg:0",
+      "source": "using one of our custom :doc:`exact GCs implemented in RPython <garbage_collection>`",
+      "source_hash": 9823548966716311408,
+      "context_hash": 9441028857712624500,
+      "translation": "저희의 커스텀 :doc:`RPython으로 구현된 정확한 GC <garbage_collection>` 중 하나를 사용하여",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:49.146935Z",
+      "issues": [
+        "정확한 의미는 잘 전달되지만 “저희의 커스텀 RPython으로 구현된 정확한 GC”처럼 수식어가 길게 겹쳐 있어 다소 어색하게 읽힙니다."
+      ]
+    },
+    {
+      "id": "section:7/block:13/seg:0",
+      "source": "Almost all application-level Python code allocates objects at a very fast rate; this means that the memory management implementation is critical to the performance of the PyPy interpreter.",
+      "source_hash": 14642851602405408281,
+      "context_hash": 5768712551880003667,
+      "translation": "거의 모든 애플리케이션 수준의 Python 코드는 매우 빠른 속도로 객체를 할당합니다. 이는 메모리 관리 구현이 PyPy 인터프리터의 성능에 결정적이라는 것을 의미합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-15T09:26:33.931057Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "The C Backend",
+      "source_hash": 10104554045273815357,
+      "context_hash": 16294612914545754138,
+      "translation": "C 백엔드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:32.056569Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": ":source:`rpython/translator/c/`",
+      "source_hash": 17800991448124196384,
+      "context_hash": 12116972211701823833,
+      "translation": ":source:`rpython/translator/c/`",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:31.830326Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "This is currently the sole code generation backend.",
+      "source_hash": 15397418560222839637,
+      "context_hash": 7053427272076378901,
+      "translation": "이는 현재 유일한 코드 생성 백엔드입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:36.160256Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "A Historical Note",
+      "source_hash": 2008548886901696430,
+      "context_hash": 16605994960214036515,
+      "translation": "역사적 참고 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:41.500591Z",
+      "issues": [
+        "\"역사적 참고 사항\"은 의미는 통하지만, 제목으로 쓰기엔 \"참고 사항\"이 목록형 안내문처럼 느껴져 원문의 서술적 뉘앙스(\"역사적 배경\" 또는 \"역사 노트\" 등)와 다소 어긋납니다."
+      ]
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "As this document has shown, the translation step is divided into more steps than one might at first expect.",
+      "source_hash": 10966192571845885047,
+      "context_hash": 13635248475856401098,
+      "translation": "이 문서에서 보여주었듯이, 번역(translation) 단계는 처음에 예상했을 법한 것보다 더 많은 단계로 나뉘어 있습니다.",
+      "glossary_snapshot": {
+        "translation": "번역(translation)"
+      },
+      "translated_at": "2026-08-15T09:27:08.990330Z",
+      "issues": [
+        "번역 자체는 정확하고 자연스럽지만, \"번역(translation)\"처럼 이미 명확한 용어에 원어를 병기한 것이 불필요하고 문장 흐름을 어색하게 만듭니다."
+      ]
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "It is certainly divided into more steps than we expected when the project started; the very first version of GenC operated on the high-level flow graphs and the output of the annotator, and even the concept of the RTyper didn't exist yet.",
+      "source_hash": 6376755660651740230,
+      "context_hash": 3492911325364852892,
+      "translation": "프로젝트가 시작될 당시 예상했던 것보다 확실히 더 많은 단계로 나뉘어 있습니다. GenC의 최초 버전은 고수준 흐름 그래프(flow graph)와 애노테이터(annotator)의 출력을 대상으로 동작했으며, RTyper라는 개념조차 아직 존재하지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:08.990333Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "More recently, the fact that preparing the graphs for source generation (\"databasing\") and actually generating the source are best considered separately has become clear.",
+      "source_hash": 15009921838397631260,
+      "context_hash": 16295817520327362953,
+      "translation": "최근 들어서는, 소스 생성을 위해 그래프를 준비하는 것(\"데이터베이스화\")과 실제로 소스를 생성하는 것을 별도로 고려하는 편이 낫다는 사실이 분명해졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:08.990334Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "How It Fits Together",
+      "source_hash": 11241540037600506470,
+      "context_hash": 8855628931599011692,
+      "translation": "어떻게 맞물려 동작하는가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:48.349449Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "As should be clear by now, the translation toolchain of PyPy is a flexible and complicated beast, formed from many separate components.",
+      "source_hash": 14502691472127198531,
+      "context_hash": 11411091520230386521,
+      "translation": "지금까지 살펴본 바와 같이, PyPy의 번역(translation) 툴체인은 여러 개별 구성 요소로 이루어진 유연하면서도 복잡한 존재입니다.",
+      "glossary_snapshot": {
+        "translation": "번역(translation)",
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-15T09:26:46.435362Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "graph [fontname = \"Sans-Serif\", size=\"6.00\"] node [fontname = \"Sans-Serif\"] edge [fontname = \"Sans-Serif\"]",
+      "source_hash": 9005608794437905184,
+      "context_hash": 2159074628212274129,
+      "translation": "graph [fontname = \"Sans-Serif\", size=\"6.00\"] node [fontname = \"Sans-Serif\"] edge [fontname = \"Sans-Serif\"]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:44.825022Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "subgraph legend {",
+      "source_hash": 2011564195361918908,
+      "context_hash": 1256195112665653282,
+      "translation": "subgraph legend {",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:26:49.268607Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "\"Input or Output\" [shape=ellipse, style=filled] \"Transformation Step\" [shape=box, style=\"rounded,filled\"] // Invisible edge to make sure they are placed vertically \"Input or Output\" -> \"Transformation Step\" [style=invis]",
+      "source_hash": 467798119223271715,
+      "context_hash": 4261933442981444989,
+      "translation": "\"입력 또는 출력\" [shape=ellipse, style=filled] \"변환 단계\" [shape=box, style=\"rounded,filled\"] // 수직으로 배치되도록 하기 위한 보이지 않는 엣지 \"입력 또는 출력\" -> \"변환 단계\" [style=invis]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:07.246824Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "\"Input Program\" [shape=ellipse] \"Flow Analysis\" [shape=box, style=rounded] \"Annotator\" [shape=box, style=rounded] \"RTyper\" [shape=box, style=rounded] \"Backend Optimizations (optional)\" [shape=box, style=rounded] \"Exception Transformer\" [shape=box, style=rounded] \"GC Transformer\" [shape=box, style=rounded] \"GenC\" [shape=box, style=rounded] \"ANSI C code\" [shape=ellipse]",
+      "source_hash": 12350689885991320266,
+      "context_hash": 11689544279460951102,
+      "translation": "\"입력 프로그램\" [shape=ellipse] \"흐름 분석\" [shape=box, style=rounded] \"Annotator\" [shape=box, style=rounded] \"RTyper\" [shape=box, style=rounded] \"백엔드 최적화 (선택 사항)\" [shape=box, style=rounded] \"예외 변환기\" [shape=box, style=rounded] \"GC 변환기\" [shape=box, style=rounded] \"GenC\" [shape=box, style=rounded] \"ANSI C 코드\" [shape=ellipse]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:03.540302Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "\"Input Program\" -> \"Flow Analysis\" -> \"Annotator\" -> \"RTyper\" -> \"Backend Optimizations (optional)\" -> \"Exception Transformer\" -> \"GC Transformer\" \"RTyper\" -> \"Exception Transformer\" [style=dotted] \"GC Transformer\" -> \"GenC\" -> \"ANSI C code\" // \"GC Transformer\" -> \"GenLLVM\" -> \"LLVM IR\"",
+      "source_hash": 9217752500218606168,
+      "context_hash": 324339867980134372,
+      "translation": "\"입력 프로그램\" -> \"흐름 분석\" -> \"애노테이터\" -> \"RTyper\" -> \"백엔드 최적화 (선택 사항)\" -> \"예외 변환기\" -> \"GC 변환기\" \"RTyper\" -> \"예외 변환기\" [style=dotted] \"GC 변환기\" -> \"GenC\" -> \"ANSI C 코드\" // \"GC 변환기\" -> \"GenLLVM\" -> \"LLVM IR\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:27:10.318320Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "A detail that has not yet been emphasized is the interaction of the various components.",
+      "source_hash": 5076089739176523239,
+      "context_hash": 2191290078058970898,
+      "translation": "아직 강조되지 않은 세부 사항 하나는 여러 구성 요소 간의 상호작용입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:28:07.719681Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:1",
+      "source": "It makes for a nice presentation to say that after the annotator has finished the RTyper processes the graphs and then the exception handling is made explicit and so on, but it's not entirely true.",
+      "source_hash": 2519515291785009301,
+      "context_hash": 3963193499488858144,
+      "translation": "어노테이터가 작업을 마친 후 RTyper가 그래프를 처리하고, 그다음 예외 처리가 명시적으로 이루어지는 식이라고 말하면 발표하기에는 그럴듯하지만, 완전한 사실은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:28:07.719682Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:2",
+      "source": "For example, the RTyper inserts calls to many :term:`low-level helper`\\ s which must first be annotated, and the GC transformer can use inlining (one of the `backend optimizations`_) of some of its small helper functions to improve performance.",
+      "source_hash": 12272923090571331261,
+      "context_hash": 18332465818353962790,
+      "translation": "예를 들어 RTyper는 먼저 annotate되어야 하는 많은 :term:`저수준 헬퍼`\\ 에 대한 호출을 삽입하며, GC 트랜스포머는 성능을 향상시키기 위해 자신의 작은 헬퍼 함수 일부에 인라이닝(`백엔드 최적화`_ 중 하나)을 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-15T09:28:07.719683Z",
+      "issues": [
+        "정확하게 의미를 전달하지만 \"헬퍼 함수 일부에 인라이닝을 사용할 수 있습니다\" 부분이 다소 부자연스러우며 \"일부 헬퍼 함수에 인라이닝을 적용할 수 있습니다\" 등으로 표현하면 더 매끄럽습니다."
+      ]
+    },
+    {
+      "id": "section:10/block:7/seg:3",
+      "source": "The following picture attempts to summarize the components involved in performing each step of the default translation process:",
+      "source_hash": 2690896662077028114,
+      "context_hash": 6339361033210618131,
+      "translation": "다음 그림은 기본 번역(translation) 과정의 각 단계를 수행하는 데 관련된 구성 요소를 요약하려고 합니다:",
+      "glossary_snapshot": {
+        "translation": "번역(translation)"
+      },
+      "translated_at": "2026-08-15T09:28:07.719683Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "A component not mentioned before is the \"MixLevelAnnotator\"; it provides a convenient interface for a \"late\" (after RTyping) translation step to declare that it needs to be able to call each of a collection of functions (which may refer to each other in a mutually recursive fashion) and annotate and rtype them all at once.",
+      "source_hash": 10480878061875691433,
+      "context_hash": 18325192680703414836,
+      "translation": "앞서 언급하지 않은 구성 요소로 \"MixLevelAnnotator\"가 있습니다. 이는 \"늦은\"(RTyping 이후) 번역(translation) 단계에서, (서로 상호 재귀적으로 참조할 수 있는) 함수들의 집합 각각을 호출할 수 있어야 한다고 선언하고 이들을 한꺼번에 annotate 및 rtype할 수 있도록 편리한 인터페이스를 제공합니다.",
+      "glossary_snapshot": {
+        "translation": "번역(translation)"
+      },
+      "translated_at": "2026-08-15T09:21:28.194067Z",
+      "issues": [
+        "The meaning is accurately conveyed and technical terms (annotate, rtype) are appropriately kept in English as method names, but the redundant gloss \"번역(translation)\" is unnecessary since 번역 already means translation, and the sentence structure is somewhat convoluted for Korean readability."
+      ]
+    }
+  ]
+}
