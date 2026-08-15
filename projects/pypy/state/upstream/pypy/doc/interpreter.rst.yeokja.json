@@ -1,0 +1,1372 @@
+{
+  "version": 1,
+  "source_hash": 13984333094572447782,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Bytecode Interpreter",
+      "source_hash": 7968860789265921832,
+      "context_hash": 13770023106944638905,
+      "translation": "바이트코드 인터프리터",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:17:28.933481Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Introduction and Overview",
+      "source_hash": 16010335237611979993,
+      "context_hash": 16052825756469685173,
+      "translation": "소개 및 개요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:17:40.287323Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This document describes the implementation of PyPy's Bytecode Interpreter and related Virtual Machine functionalities.",
+      "source_hash": 9787967197769694179,
+      "context_hash": 8219066935008601091,
+      "translation": "이 문서는 PyPy의 바이트코드 인터프리터와 관련 가상 머신 기능들의 구현을 설명합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터",
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T21:17:44.342843Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "PyPy's bytecode interpreter has a structure reminiscent of CPython's Virtual Machine: It processes code objects parsed and compiled from Python source code.",
+      "source_hash": 11107292319195718471,
+      "context_hash": 4313585734027534662,
+      "translation": "PyPy의 바이트코드 인터프리터는 CPython의 가상 머신을 연상시키는 구조를 가지고 있습니다: 이는 Python 소스 코드로부터 파싱되고 컴파일된 코드 객체를 처리합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "PyPy": "PyPy",
+        "CPython": "CPython",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-14T21:18:17.323495Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "It is implemented in the :source:`pypy/interpreter/` directory.",
+      "source_hash": 9561796806269812364,
+      "context_hash": 7343574872516735016,
+      "translation": "이는 :source:`pypy/interpreter/` 디렉터리에 구현되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:17.323496Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:2",
+      "source": "People familiar with the CPython implementation will easily recognize similar concepts there.",
+      "source_hash": 11070658664936223003,
+      "context_hash": 4807722878023858264,
+      "translation": "CPython 구현에 익숙한 사람들은 그곳에서 유사한 개념을 쉽게 알아볼 수 있을 것입니다.",
+      "glossary_snapshot": {
+        "CPython": "CPython"
+      },
+      "translated_at": "2026-08-14T21:18:17.323496Z",
+      "issues": [
+        "\"그곳에서\"(that place)는 추상적인 구현 맥락을 가리키기에는 다소 어색하며, \"그 안에서\" 또는 \"거기서도\"처럼 더 자연스러운 표현이 나을 것입니다."
+      ]
+    },
+    {
+      "id": "section:1/block:2/seg:3",
+      "source": "The major differences are the overall usage of the :doc:`object space <objspace>` indirection to perform operations on objects, and the organization of the built-in modules (described :ref:`here <modules>`).",
+      "source_hash": 10264719409400942294,
+      "context_hash": 18072588150455165880,
+      "translation": "주요 차이점은 객체에 대한 연산을 수행하기 위한 :doc:`객체 공간(object space) <objspace>` 간접화(indirection)의 전반적인 사용과, 내장 모듈의 구성 방식(:ref:`여기 <modules>`\\ 에서 설명됨)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:17.323496Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "Code objects are a nicely preprocessed, structured representation of source code, and their main content is *bytecode*.",
+      "source_hash": 8776434850109374693,
+      "context_hash": 11823530456930277773,
+      "translation": "코드 객체는 소스 코드를 잘 전처리하여 구조화한 표현이며, 그 주요 내용은 *바이트코드*\\ 입니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-14T21:18:22.959660Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:1",
+      "source": "We use the same compact bytecode format as CPython 2.7, with minor differences in the bytecode set.",
+      "source_hash": 1417218350645000570,
+      "context_hash": 1699120781830570057,
+      "translation": "우리는 CPython 2.7과 동일한 압축 바이트코드 형식을 사용하며, 바이트코드 집합에 약간의 차이가 있습니다.",
+      "glossary_snapshot": {
+        "CPython": "CPython",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-14T21:18:22.959660Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:2",
+      "source": "Our bytecode compiler is implemented as a chain of flexible passes (tokenizer, lexer, parser, abstract syntax tree builder and bytecode generator).",
+      "source_hash": 18348788405278163252,
+      "context_hash": 5200607467962574116,
+      "translation": "우리의 바이트코드 컴파일러는 토크나이저, 렉서, 파서, 추상 구문 트리 빌더, 바이트코드 생성기로 이어지는 유연한 패스들의 연쇄로 구현되어 있습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-14T21:18:22.959660Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:3",
+      "source": "The latter passes are based on the ``compiler`` package from the standard library of CPython, with various improvements and bug fixes.",
+      "source_hash": 7089769427264283923,
+      "context_hash": 15190837919131828316,
+      "translation": "후자의 패스들은 CPython 표준 라이브러리의 ``compiler``\\ 패키지를 기반으로 하며, 다양한 개선 사항과 버그 수정이 적용되었습니다.",
+      "glossary_snapshot": {
+        "CPython": "CPython"
+      },
+      "translated_at": "2026-08-14T21:18:22.959660Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:4",
+      "source": "The bytecode compiler (living under :source:`pypy/interpreter/astcompiler/`) is now integrated and is translated with the rest of PyPy.",
+      "source_hash": 16732606088551332639,
+      "context_hash": 5163161447258134411,
+      "translation": "바이트코드 컴파일러(:source:`pypy/interpreter/astcompiler/`\\ 에 위치)는 이제 통합되어 PyPy의 나머지 부분과 함께 번역(translation)됩니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-14T21:18:22.959661Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:0",
+      "source": "Code objects contain condensed information about their respective functions, class and module body source codes.",
+      "source_hash": 5084671055866542177,
+      "context_hash": 3759727681597032844,
+      "translation": "코드 객체는 각각의 함수, 클래스, 모듈 본문 소스 코드에 대한 압축된 정보를 담고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:40:47.487859Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:1",
+      "source": "Interpreting such code objects means instantiating and initializing a `Frame class`_ and then calling its ``frame.eval()`` method.",
+      "source_hash": 4176049437840983541,
+      "context_hash": 8251658786058207319,
+      "translation": "이러한 코드 객체를 인터프리트한다는 것은 `Frame class`_\\ 를 인스턴스화하고 초기화한 다음 그 ``frame.eval()``\\ 메서드를 호출하는 것을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:40:47.487860Z",
+      "issues": [
+        "번역 자체는 자연스럽고 의미도 정확하게 전달하지만, RST 이스케이프 처리가 일관되지 않습니다 — `Frame class`_\\ 를 는 백슬래시 뒤에 공백을 두어 올바르게 처리했지만, ``frame.eval()``\\ 메서드 는 백슬래시 뒤 공백이 빠져 있어 렌더링 시 문제가 생길 수 있습니다."
+      ]
+    },
+    {
+      "id": "section:1/block:4/seg:2",
+      "source": "This main entry point initialize appropriate namespaces and then interprets each bytecode instruction.",
+      "source_hash": 9631137956387490598,
+      "context_hash": 9892596575453101017,
+      "translation": "이 주요 진입점은 적절한 네임스페이스를 초기화한 다음 각 바이트코드 명령어를 인터프리트합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-14T21:40:47.487860Z",
+      "issues": [
+        "정확하게 의미를 전달하고 문체(합니다체)도 일관되지만, \"인터프리트하다\"는 다소 어색한 외래어 직역으로 \"해석합니다\"나 \"실행합니다\"가 더 자연스러운 한국어 표현입니다."
+      ]
+    },
+    {
+      "id": "section:1/block:4/seg:3",
+      "source": "Python's standard library contains the :source:`lib-python/2.7/dis.py` module which allows to inspection of the virtual machine's bytecode instructions",
+      "source_hash": 12381760472205466241,
+      "context_hash": 14013698468688125568,
+      "translation": "Python의 표준 라이브러리에는 가상 머신의 바이트코드 명령어를 검사할 수 있게 해주는 :source:`lib-python/2.7/dis.py` 모듈이 포함되어 있습니다",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-14T21:40:47.487861Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:6/seg:0",
+      "source": "CPython and PyPy are stack-based virtual machines, i.e. they don't have registers but instead push object to and pull objects from a stack.",
+      "source_hash": 3042921678242777376,
+      "context_hash": 3828435697888486617,
+      "translation": "CPython과 PyPy는 스택 기반 가상 머신입니다. 즉, 레지스터를 가지지 않고 대신 스택에 객체를 밀어 넣고 스택에서 객체를 꺼냅니다.",
+      "glossary_snapshot": {
+        "CPython": "CPython",
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T21:40:57.147524Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:6/seg:1",
+      "source": "The bytecode interpreter is only responsible for implementing control flow and pushing and pulling black box objects to and from this value stack.",
+      "source_hash": 17817002845625123245,
+      "context_hash": 10615433732687151102,
+      "translation": "바이트코드 인터프리터는 오직 제어 흐름을 구현하고 이 값 스택에 블랙박스 객체를 밀어 넣고 꺼내는 일만을 담당합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:40:57.147525Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:6/seg:2",
+      "source": "The bytecode interpreter does not know how to perform operations on those black box (:ref:`wrapped <wrapped>`) objects for which it delegates to the :doc:`object space <objspace>`.",
+      "source_hash": 6816109155293850602,
+      "context_hash": 472379774220850567,
+      "translation": "바이트코드 인터프리터는 이러한 블랙박스(:ref:`감싸진 <wrapped>`) 객체에 대한 연산을 수행하는 방법을 알지 못하며, 이를 :doc:`객체 공간 <objspace>`\\ 에 위임합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:40:57.147526Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:6/seg:3",
+      "source": "In order to implement a conditional branch in a program's execution, however, it needs to gain minimal knowledge about a wrapped object.",
+      "source_hash": 6517902340653234580,
+      "context_hash": 8651802071332601389,
+      "translation": "하지만 프로그램 실행에서 조건 분기를 구현하려면, 감싸진(wrapped) 객체에 대한 최소한의 지식을 얻어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:40:57.147526Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:6/seg:4",
+      "source": "Thus, each object space has to offer a ``is_true(w_obj)`` operation which returns an interpreter-level boolean value.",
+      "source_hash": 9136917879547589616,
+      "context_hash": 12870148679181890374,
+      "translation": "따라서 각 객체 공간(object space)은 인터프리터 수준의 불리언 값을 반환하는 ``is_true(w_obj)`` 연산을 제공해야 합니다.",
+      "glossary_snapshot": {
+        "object space": "객체 공간(object space)",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:40:57.147527Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:7/seg:0",
+      "source": "For the understanding of the interpreter's inner workings it is crucial to recognize the concepts of :ref:`interpreter-level and application-level <interpreter-level>` code.",
+      "source_hash": 17483393284166966236,
+      "context_hash": 17217008258746532600,
+      "translation": "인터프리터의 내부 동작을 이해하려면 :ref:`인터프리터 레벨과 애플리케이션 레벨 <interpreter-level>` 코드라는 개념을 이해하는 것이 중요합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:40:45.411569Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:7/seg:1",
+      "source": "In short, interpreter-level is executed directly on the machine and invoking application-level functions leads to an bytecode interpretation indirection.",
+      "source_hash": 12228668029292122593,
+      "context_hash": 6368122924788282912,
+      "translation": "간단히 말해, 인터프리터 레벨은 기계에서 직접 실행되며, 애플리케이션 레벨 함수를 호출하면 바이트코드 해석이라는 간접 단계를 거치게 됩니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:40:45.411570Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:7/seg:2",
+      "source": "However, special care must be taken regarding exceptions because application level exceptions are wrapped into ``OperationErrors`` which are thus distinguished from plain interpreter-level exceptions.",
+      "source_hash": 12693607339429518202,
+      "context_hash": 7500200859545609802,
+      "translation": "그러나 예외에 관해서는 특별한 주의가 필요한데, 애플리케이션 레벨 예외는 ``OperationErrors``\\ 로 감싸지기 때문에 일반 인터프리터 레벨 예외와는 구분됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:40:45.411571Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:7/seg:3",
+      "source": "See :ref:`application level exceptions <applevel-exceptions>` for some more information on ``OperationErrors``.",
+      "source_hash": 17708021540740433810,
+      "context_hash": 4880459458556770410,
+      "translation": "``OperationErrors``\\ 에 대한 더 자세한 정보는 :ref:`애플리케이션 레벨 예외 <applevel-exceptions>`\\ 를 참고하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:40:45.411571Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:8/seg:0",
+      "source": "The interpreter implementation offers mechanisms to allow a caller to be unaware of whether a particular function invocation leads to bytecode interpretation or is executed directly at interpreter-level.",
+      "source_hash": 6420360089144183623,
+      "context_hash": 1520582517712569644,
+      "translation": "인터프리터 구현은 호출자가 특정 함수 호출이 바이트코드 해석으로 이어지는지, 아니면 인터프리터 수준에서 직접 실행되는지를 알 필요가 없도록 하는 메커니즘을 제공합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-14T21:17:42.820065Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:8/seg:1",
+      "source": "The two basic kinds of `Gateway classes`_ expose either an interpreter-level function to application-level execution (``interp2app``) or allow transparent invocation of application-level helpers (``app2interp``) at interpreter-level.",
+      "source_hash": 8208642895011445702,
+      "context_hash": 17578987992293586917,
+      "translation": "두 가지 기본적인 `게이트웨이 클래스`_\\ 는 인터프리터 수준 함수를 애플리케이션 수준 실행에 노출하거나(``interp2app``), 애플리케이션 수준 헬퍼를 인터프리터 수준에서 투명하게 호출할 수 있도록(``app2interp``) 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:17:42.820065Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:9/seg:0",
+      "source": "Another task of the bytecode interpreter is to care for exposing its basic code, frame, module and function objects to application-level code.",
+      "source_hash": 3629185311359136558,
+      "context_hash": 5463511349785169218,
+      "translation": "바이트코드 인터프리터의 또 다른 임무는 기본적인 코드, 프레임, 모듈, 함수 객체를 애플리케이션 레벨 코드에 노출하는 일을 담당하는 것입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-14T21:18:18.243534Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:9/seg:1",
+      "source": "Such runtime introspection and modification abilities are implemented via `interpreter descriptors`_ (also see Raymond Hettingers `how-to guide for descriptors`_ in Python, PyPy uses this model extensively).",
+      "source_hash": 9090255709505298469,
+      "context_hash": 12509342106140307128,
+      "translation": "이러한 런타임 자기 성찰(introspection) 및 수정 기능은 `interpreter descriptors`_\\ 를 통해 구현됩니다(Raymond Hettinger의 Python `how-to guide for descriptors`_\\ 도 참고하시기 바랍니다. PyPy는 이 모델을 광범위하게 사용합니다).",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T21:18:18.243534Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:10/seg:0",
+      "source": "A significant complexity lies in `function argument parsing`_.",
+      "source_hash": 5110109176446731688,
+      "context_hash": 11132412064753339206,
+      "translation": "`function argument parsing`_\\ 에는 상당한 복잡성이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:19.350027Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:10/seg:1",
+      "source": "Python as a language offers flexible ways of providing and receiving arguments for a particular function invocation.",
+      "source_hash": 17289739866254341420,
+      "context_hash": 4597726594996464168,
+      "translation": "언어로서 Python은 특정 함수 호출에 대해 인자를 제공하고 받는 유연한 방법을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:19.350028Z",
+      "issues": [
+        "어순이 다소 번역투(\"언어로서 Python은\")이며 \"제공하고\"와 \"제공합니다\"가 한 문장에서 중복되어 자연스러움이 떨어지지만, 의미는 정확하게 전달됩니다."
+      ]
+    },
+    {
+      "id": "section:1/block:10/seg:2",
+      "source": "Not only does it take special care to get this right, it also presents difficulties for the :ref:`annotation pass <rpython:annotator>` which performs a whole-program analysis on the bytecode interpreter, argument parsing and gatewaying code in order to infer the types of all values flowing across function calls.",
+      "source_hash": 13062713526276851504,
+      "context_hash": 205184617919010953,
+      "translation": "이를 올바르게 처리하기 위해 특별한 주의가 필요할 뿐만 아니라, 함수 호출 전반에 걸쳐 흐르는 모든 값의 타입을 추론하기 위해 바이트코드 인터프리터, 인자 파싱, 게이트웨이 코드에 대한 전체 프로그램 분석을 수행하는 :ref:`annotation pass <rpython:annotator>`\\ 에도 어려움을 줍니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:18:19.350028Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:11/seg:0",
+      "source": "It is for this reason that PyPy resorts to generate specialized frame classes and functions at :ref:`initialization time <rpython:initialization-time>` in order to let the annotator only see rather static program flows with homogeneous name-value assignments on function invocations.",
+      "source_hash": 213397906992279630,
+      "context_hash": 6989813510099668550,
+      "translation": "바로 이런 이유로 PyPy는 애노테이터(annotator)가 함수 호출 시 동질적인 이름-값 할당을 갖는 비교적 정적인 프로그램 흐름만을 보도록 하기 위해, :ref:`초기화 시점 <rpython:initialization-time>`\\ 에 특수화된 프레임 클래스와 함수를 생성하는 방식에 의존합니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T21:18:04.519795Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Bytecode Interpreter Implementation Classes",
+      "source_hash": 1869830742300258628,
+      "context_hash": 5557826071485085159,
+      "translation": "바이트코드 인터프리터 구현 클래스",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-14T21:17:48.243774Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Frame classes",
+      "source_hash": 6535026429748727413,
+      "context_hash": 11957421154503305801,
+      "translation": "프레임 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:44.257379Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "The concept of Frames is pervasive in executing programs and on virtual machines in particular.",
+      "source_hash": 8019766254245844577,
+      "context_hash": 16389456913111769787,
+      "translation": "Frame이라는 개념은 프로그램 실행 전반, 특히 가상 머신에서 널리 쓰입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:47.564157Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "They are sometimes called *execution frame* because they hold crucial information regarding the execution of a Code_ object, which in turn is often directly related to a Python `Function`_.",
+      "source_hash": 2189879985065716605,
+      "context_hash": 16336223698669745522,
+      "translation": "이들은 Code_\\ 객체의 실행에 관한 중요한 정보를 담고 있기 때문에 때때로 *execution frame*\\ 이라고 불리는데, 이 객체는 다시 Python `Function`_\\ 과 직접적으로 관련되는 경우가 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:47.564158Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "Frame instances hold the following state:",
+      "source_hash": 6292973898441049721,
+      "context_hash": 16765425266051615439,
+      "translation": "Frame 인스턴스는 다음과 같은 상태를 가집니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:47.564158Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "the local scope holding name-value bindings, usually implemented via a \"fast scope\" which is an array of wrapped objects",
+      "source_hash": 2621151865699212596,
+      "context_hash": 5419945668273907124,
+      "translation": "이름-값 바인딩을 보관하는 지역 스코프로, 보통 래핑된 객체의 배열인 \"고속 스코프(fast scope)\"를 통해 구현됩니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:20:18.853030Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "a blockstack containing (nested) information regarding the control flow of a function (such as ``while`` and ``try`` constructs)",
+      "source_hash": 4088443102948287536,
+      "context_hash": 3501935740483294725,
+      "translation": "함수의 제어 흐름(``while``\\ 이나 ``try`` 구문 등)에 관한 (중첩된) 정보를 담고 있는 블록스택",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:37:47.252922Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "a value stack where bytecode interpretation pulls object from and puts results on.  (``locals_stack_w`` is actually a single list containing both the local scope and the value stack.)",
+      "source_hash": 13867111249777379308,
+      "context_hash": 14480498204335977173,
+      "translation": "바이트코드 해석이 객체를 꺼내 오고 결과를 넣는 값 스택입니다.  (``locals_stack_w``\\ 는 실제로 지역 스코프와 값 스택을 모두 포함하는 단일 리스트입니다.)",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-14T21:17:35.503829Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "a reference to the *globals* dictionary, containing module-level name-value bindings",
+      "source_hash": 7381721010163552415,
+      "context_hash": 14329470408630461283,
+      "translation": "모듈 수준의 이름-값 바인딩을 담고 있는 *globals* 딕셔너리에 대한 참조",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:45.300212Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "debugging information from which a current line-number and file location can be constructed for tracebacks",
+      "source_hash": 14418946256527170634,
+      "context_hash": 8433528625660509846,
+      "translation": "트레이스백을 위해 현재 줄 번호와 파일 위치를 구성할 수 있는 디버깅 정보",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:51.039160Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "Moreover the Frame class itself has a number of methods which implement the actual bytecodes found in a code object.",
+      "source_hash": 10423949097849201820,
+      "context_hash": 7211810603158078931,
+      "translation": "더욱이 Frame 클래스 자체는 코드 객체에서 발견되는 실제 바이트코드를 구현하는 다수의 메서드를 가지고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:52.448668Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:1",
+      "source": "The methods of the ``PyFrame`` class are added in various files:",
+      "source_hash": 18109981911986773333,
+      "context_hash": 6544022882283581904,
+      "translation": "``PyFrame``\\ 클래스의 메서드는 여러 파일에 추가됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:52.448668Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "the class ``PyFrame`` is defined in :source:`pypy/interpreter/pyframe.py`.",
+      "source_hash": 13712688489728000668,
+      "context_hash": 12265023334655291019,
+      "translation": "``PyFrame`` 클래스는 :source:`pypy/interpreter/pyframe.py`\\ 에 정의되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:53.554009Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "the file :source:`pypy/interpreter/pyopcode.py` add support for all Python opcode.",
+      "source_hash": 4901133509711060894,
+      "context_hash": 5711878921457171875,
+      "translation": "파일 :source:`pypy/interpreter/pyopcode.py`\\ 는 모든 Python opcode에 대한 지원을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:20:14.965920Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:0",
+      "source": "Code Class",
+      "source_hash": 905198191847085188,
+      "context_hash": 10854581348335038767,
+      "translation": "Code 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:56.816904Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:0",
+      "source": "PyPy's code objects contain the same information found in CPython's code objects.",
+      "source_hash": 12239973962785005900,
+      "context_hash": 57777903199441790,
+      "translation": "PyPy의 코드 객체는 CPython의 코드 객체에서 찾을 수 있는 것과 동일한 정보를 담고 있습니다.",
+      "glossary_snapshot": {
+        "CPython": "CPython",
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T21:17:58.129176Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:1",
+      "source": "They differ from Function_ objects in that they are only immutable representations of source code and don't contain execution state or references to the execution environment found in `Frames`.",
+      "source_hash": 8772356249885405332,
+      "context_hash": 417961783652822768,
+      "translation": "이것들은 소스 코드의 불변 표현일 뿐이며, 실행 상태나 `Frames`\\ 에서 찾을 수 있는 실행 환경에 대한 참조를 포함하지 않는다는 점에서 Function_ 객체와 다릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:17:58.129176Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:2",
+      "source": "Frames and Functions have references to a code object.",
+      "source_hash": 15607901365860069007,
+      "context_hash": 17183089819855612443,
+      "translation": "Frame과 Function은 코드 객체에 대한 참조를 가지고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:17:58.129177Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:3",
+      "source": "Here is a list of Code attributes:",
+      "source_hash": 15144503826276034600,
+      "context_hash": 3779204801244719947,
+      "translation": "다음은 Code 속성 목록입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:17:58.129177Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:0",
+      "source": "``co_flags`` flags if this code object has nested scopes/generators/etc.",
+      "source_hash": 14790431396593318390,
+      "context_hash": 7959221496892837477,
+      "translation": "``co_flags``\\ 는 이 코드 객체가 중첩된 스코프/제너레이터 등을 가지고 있는지 여부를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:55.426072Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:14/seg:0",
+      "source": "``co_stacksize`` the maximum depth the stack can reach while executing the code",
+      "source_hash": 9878472824296114068,
+      "context_hash": 5295997335618200775,
+      "translation": "``co_stacksize`` 코드를 실행하는 동안 스택이 도달할 수 있는 최대 깊이",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:03.220491Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:15/seg:0",
+      "source": "``co_code`` the actual bytecode string",
+      "source_hash": 4642570975814416125,
+      "context_hash": 18327694983994564202,
+      "translation": "``co_code``\\ 는 실제 바이트코드 문자열",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-14T21:18:59.612006Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:16/seg:0",
+      "source": "``co_argcount`` number of arguments this code object expects",
+      "source_hash": 6544165868838289354,
+      "context_hash": 4935336834852849646,
+      "translation": "``co_argcount``\\ 은 이 코드 객체가 기대하는 인자의 개수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:20:08.032891Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:17/seg:0",
+      "source": "``co_varnames`` a tuple of all argument names pass to this code object",
+      "source_hash": 13652831483810522001,
+      "context_hash": 6512302282097509876,
+      "translation": "``co_varnames``\\ 는 이 코드 객체에 전달되는 모든 인자 이름의 튜플입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:20:01.615153Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:18/seg:0",
+      "source": "``co_nlocals`` number of local variables",
+      "source_hash": 12310130099690122554,
+      "context_hash": 15955299449550361419,
+      "translation": "``co_nlocals``\\ 는 지역 변수의 개수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:20:13.724342Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:19/seg:0",
+      "source": "``co_names`` a tuple of all names used in the code object",
+      "source_hash": 14471591773661693572,
+      "context_hash": 10789444401049755238,
+      "translation": "``co_names``\\ 는 코드 객체에서 사용된 모든 이름의 튜플입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:17:39.300421Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:20/seg:0",
+      "source": "``co_consts`` a tuple of prebuilt constant objects (\"literals\") used in the code object",
+      "source_hash": 16561257378695171626,
+      "context_hash": 3574199532862924210,
+      "translation": "``co_consts`` 코드 객체에서 사용되는 미리 만들어진 상수 객체(\"리터럴\")의 튜플입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:37:28.693255Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:21/seg:0",
+      "source": "``co_cellvars`` a tuple of Cells containing values for access from nested scopes",
+      "source_hash": 17516625531466272091,
+      "context_hash": 9956411710069290766,
+      "translation": "``co_cellvars``\\ 는 중첩된 스코프에서의 접근을 위한 값을 담은 Cell들의 튜플입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:20:18.703073Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:22/seg:0",
+      "source": "``co_freevars`` a tuple of Cell names from \"above\" scopes",
+      "source_hash": 15324113235396733525,
+      "context_hash": 2998441863920938199,
+      "translation": "``co_freevars``\\ 는 \"위쪽\" 스코프에서 온 셀(Cell) 이름들의 튜플입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:37:36.565486Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:23/seg:0",
+      "source": "``co_filename`` source file this code object was compiled from",
+      "source_hash": 4882941139584356751,
+      "context_hash": 6726491921620021635,
+      "translation": "``co_filename``\\ 는 이 코드 객체가 컴파일된 소스 파일입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:37:41.013911Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:24/seg:0",
+      "source": "``co_firstlineno`` the first linenumber of the code object in its source file",
+      "source_hash": 7319296920185687201,
+      "context_hash": 18420496444068017799,
+      "translation": "``co_firstlineno``\\ 는 소스 파일에서 코드 객체의 첫 번째 줄 번호입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:37:36.617661Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:25/seg:0",
+      "source": "``co_name`` name of the code object (often the function name)",
+      "source_hash": 3808211396748151108,
+      "context_hash": 1956634149146855754,
+      "translation": "``co_name``\\ 코드 객체의 이름(주로 함수 이름)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:37:34.296830Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:26/seg:0",
+      "source": "``co_lnotab`` a helper table to compute the line-numbers corresponding to bytecodes",
+      "source_hash": 7527596033397321961,
+      "context_hash": 1345977548249201684,
+      "translation": "``co_lnotab``\\ 는 바이트코드에 대응하는 줄 번호를 계산하기 위한 보조 테이블입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:20:17.822854Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:27/seg:0",
+      "source": "Function and Method classes",
+      "source_hash": 8862206062569152136,
+      "context_hash": 17364376282370594083,
+      "translation": "함수와 메서드 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:37:28.470595Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:28/seg:0",
+      "source": "The PyPy ``Function`` class (in :source:`pypy/interpreter/function.py`) represents a Python function.",
+      "source_hash": 2486766579877100952,
+      "context_hash": 1794075153295179329,
+      "translation": "PyPy의 ``Function`` 클래스(:source:`pypy/interpreter/function.py`\\ 에 있음)는 Python 함수를 나타냅니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T21:37:53.017527Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:28/seg:1",
+      "source": "A ``Function`` carries the following main attributes:",
+      "source_hash": 5836629679142718844,
+      "context_hash": 17378429108599634527,
+      "translation": "``Function``\\ 은 다음과 같은 주요 속성을 가집니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:37:53.017528Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:29/seg:0",
+      "source": "``func_doc`` the docstring (or None)",
+      "source_hash": 12592798357735504027,
+      "context_hash": 13344608509105536090,
+      "translation": "``func_doc``\\ 은 독스트링(또는 None)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:37:57.123993Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:30/seg:0",
+      "source": "``func_name`` the name of the function",
+      "source_hash": 770973476786671544,
+      "context_hash": 15297849481907592060,
+      "translation": "``func_name``\\ 는 함수의 이름입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:37:53.558018Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:31/seg:0",
+      "source": "``func_code`` the Code_ object representing the function source code",
+      "source_hash": 17014914938658311089,
+      "context_hash": 16318619695042811055,
+      "translation": "``func_code``\\ 는 함수 소스 코드를 나타내는 Code_ 객체입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:37:59.162030Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:32/seg:0",
+      "source": "``func_defaults`` default values for the function (built at function definition time)",
+      "source_hash": 1922475998072753658,
+      "context_hash": 11981386437842853236,
+      "translation": "``func_defaults``\\ 는 함수의 기본값(함수 정의 시점에 생성됨)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:37:57.087981Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:33/seg:0",
+      "source": "``func_dict`` dictionary for additional (user-defined) function attributes",
+      "source_hash": 17624572978057161982,
+      "context_hash": 11996290492319111851,
+      "translation": "추가(사용자 정의) 함수 속성을 위한 ``func_dict`` 딕셔너리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:17:35.326726Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:34/seg:0",
+      "source": "``func_globals`` reference to the globals dictionary",
+      "source_hash": 12769297602129789233,
+      "context_hash": 924848244788599481,
+      "translation": "전역 딕셔너리를 가리키는 ``func_globals`` 참조",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:12.700391Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:35/seg:0",
+      "source": "``func_closure`` a tuple of Cell references",
+      "source_hash": 17104923852335294524,
+      "context_hash": 4294244093586211701,
+      "translation": "``func_closure``\\ 는 Cell 참조들의 튜플입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:10.709031Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:36/seg:0",
+      "source": "``Functions`` classes also provide a ``__get__`` descriptor which creates a Method object holding a binding to an instance or a class.",
+      "source_hash": 8278379838551209456,
+      "context_hash": 12892837278982343417,
+      "translation": "``Functions``\\ 클래스는 인스턴스나 클래스에 대한 바인딩을 갖는 Method 객체를 생성하는 ``__get__`` 디스크립터도 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:05.161475Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:36/seg:1",
+      "source": "Finally, ``Functions`` and ``Methods`` both offer a ``call_args()`` method which executes the function given an `Arguments`_ class instance.",
+      "source_hash": 8636320797525494361,
+      "context_hash": 6799061846274564268,
+      "translation": "마지막으로, ``Functions``\\ 와 ``Methods``\\ 는 모두 `Arguments`_\\ 클래스 인스턴스가 주어지면 함수를 실행하는 ``call_args()`` 메서드를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:05.161475Z",
+      "issues": [
+        "The semantic translation is accurate and natural, but the RST escape `` `Arguments`_\\ 클래스`` swallows the space (per the project convention that backslash-space is the escape-for-no-space), likely rendering as \"Arguments클래스\" without a space, which is awkward — it should probably use a plain space (no backslash) since 클래스 is a full word, not a particle like 와/는."
+      ]
+    },
+    {
+      "id": "section:2/block:37/seg:0",
+      "source": "Arguments Class",
+      "source_hash": 6359429021713675496,
+      "context_hash": 3302186994578725319,
+      "translation": "Arguments 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:20.146168Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:38/seg:0",
+      "source": "The Argument class (in :source:`pypy/interpreter/argument.py`) is responsible for parsing arguments passed to functions.",
+      "source_hash": 2017768812470403669,
+      "context_hash": 17777013019944207504,
+      "translation": "Argument 클래스(:source:`pypy/interpreter/argument.py`\\ 에 있음)는 함수에 전달된 인자를 파싱하는 역할을 담당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:30.326119Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:38/seg:1",
+      "source": "Python has rather complex argument-passing concepts:",
+      "source_hash": 11784655497523801956,
+      "context_hash": 2897786635711185551,
+      "translation": "Python은 상당히 복잡한 인자 전달 개념을 가지고 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:30.326119Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:39/seg:0",
+      "source": "positional arguments",
+      "source_hash": 183130782215845705,
+      "context_hash": 12945768626243213022,
+      "translation": "위치 인수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:20.566791Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:40/seg:0",
+      "source": "keyword arguments specified by name",
+      "source_hash": 1512828323582326243,
+      "context_hash": 17738562235855685394,
+      "translation": "이름으로 지정된 키워드 인자",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:17:57.260401Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:41/seg:0",
+      "source": "default values for positional arguments, defined at function definition time",
+      "source_hash": 17200980802042108052,
+      "context_hash": 12551312376144915091,
+      "translation": "함수 정의 시점에 정의되는, 위치 인자에 대한 기본값",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:06.282868Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:42/seg:0",
+      "source": "\"star args\" allowing a function to accept remaining positional arguments",
+      "source_hash": 122099953290174524,
+      "context_hash": 9426316600203487012,
+      "translation": "함수가 나머지 위치 인자를 받을 수 있게 하는 \"star args\"(별표 인자)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:40.291365Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:43/seg:0",
+      "source": "\"star keyword args\" allow a function to accept additional arbitrary name-value bindings",
+      "source_hash": 6667384989268749812,
+      "context_hash": 13021835406685430333,
+      "translation": "\"star keyword args\"는 함수가 임의의 추가 이름-값 바인딩을 받아들일 수 있게 합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:40.202606Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:44/seg:0",
+      "source": "Moreover, a Function_ object can get bound to a class or instance in which case the first argument to the underlying function becomes the bound object.",
+      "source_hash": 8940879065137105347,
+      "context_hash": 1901590391450691623,
+      "translation": "게다가, Function_ 객체는 클래스나 인스턴스에 바인딩될 수 있으며, 이 경우 기반 함수의 첫 번째 인자가 바인딩된 객체가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:50.255807Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:44/seg:1",
+      "source": "The ``Arguments`` provides means to allow all this argument parsing and also cares for error reporting.",
+      "source_hash": 16526274081363403227,
+      "context_hash": 3917583666467288547,
+      "translation": "``Arguments``\\ 는 이러한 인자 파싱을 모두 처리할 수 있는 수단을 제공하며, 오류 보고도 담당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:50.255808Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:45/seg:0",
+      "source": "Module Class",
+      "source_hash": 210330204700432312,
+      "context_hash": 11638359056773026259,
+      "translation": "모듈 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:54.016262Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:46/seg:0",
+      "source": "A ``Module`` instance represents execution state usually constructed from executing the module's source file.",
+      "source_hash": 4185232415391321814,
+      "context_hash": 2733774287190435446,
+      "translation": "``Module``\\ 인스턴스는 일반적으로 모듈의 소스 파일을 실행하여 구성되는 실행 상태를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:20:06.151725Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:46/seg:1",
+      "source": "In addition to such a module's global ``__dict__`` dictionary it has the following application level attributes:",
+      "source_hash": 692890157866460152,
+      "context_hash": 7800401767371908223,
+      "translation": "이러한 모듈의 전역 ``__dict__``\\ 딕셔너리 외에도 다음과 같은 애플리케이션 수준 속성을 가집니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:20:06.151726Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:47/seg:0",
+      "source": "``__doc__`` the docstring of the module",
+      "source_hash": 2572462505233699668,
+      "context_hash": 15669883428086439035,
+      "translation": "``__doc__``\\ 은 모듈의 독스트링입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:20:18.866257Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:48/seg:0",
+      "source": "``__file__`` the source filename from which this module was instantiated",
+      "source_hash": 3054790737978960625,
+      "context_hash": 1618657631171906517,
+      "translation": "``__file__`` — 이 모듈이 인스턴스화된 소스 파일명",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:17:33.010956Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:49/seg:0",
+      "source": "``__path__`` state used for relative imports",
+      "source_hash": 9596009382527816140,
+      "context_hash": 6306569947276486494,
+      "translation": "상대 임포트에 사용되는 ``__path__``\\ 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:30.856089Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:50/seg:0",
+      "source": "Apart from the basic Module used for importing application-level files there is a more refined ``MixedModule`` class (see :source:`pypy/interpreter/mixedmodule.py`) which allows to define name-value bindings both at application level and at interpreter level.",
+      "source_hash": 1464142556939920615,
+      "context_hash": 3950565483222285406,
+      "translation": "애플리케이션 레벨 파일을 임포트하는 데 사용되는 기본 Module 외에도, 애플리케이션 레벨과 인터프리터 레벨 양쪽에서 이름-값 바인딩을 정의할 수 있게 해주는 더 정교한 ``MixedModule`` 클래스(:source:`pypy/interpreter/mixedmodule.py` 참조)가 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:18:50.610442Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:50/seg:1",
+      "source": "See the ``__builtin__`` module's :source:`pypy/module/__builtin__/__init__.py` file for an example and the higher level :ref:`chapter on Modules in the coding guide <modules>`.",
+      "source_hash": 1644535056336711906,
+      "context_hash": 9508205695025857385,
+      "translation": "예를 들어 ``__builtin__`` 모듈의 :source:`pypy/module/__builtin__/__init__.py` 파일을 참조하고, 더 상위 수준의 내용은 :ref:`코딩 가이드의 모듈 챕터 <modules>`\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:50.610442Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:51/seg:0",
+      "source": "Gateway classes",
+      "source_hash": 10109314983528029282,
+      "context_hash": 15746856542635736091,
+      "translation": "게이트웨이 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:28.353887Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:52/seg:0",
+      "source": "A unique PyPy property is the ability to easily cross the barrier between interpreted and machine-level code (often referred to as the difference between :ref:`interpreter-level and application-level <interpreter-level>`).",
+      "source_hash": 11360899184108397662,
+      "context_hash": 10116048740691852187,
+      "translation": "PyPy만의 독특한 특성 중 하나는 인터프리트된 코드와 머신 레벨 코드 사이의 장벽을 쉽게 넘나들 수 있다는 점입니다(흔히 :ref:`인터프리터 레벨과 애플리케이션 레벨 <interpreter-level>`\\ 의 차이라고 언급됩니다).",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T21:18:55.073830Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:52/seg:1",
+      "source": "Be aware that the according code (in :source:`pypy/interpreter/gateway.py`) for crossing the barrier in both directions is somewhat involved, mostly due to the fact that the type-inferring annotator needs to keep track of the types of objects flowing across those barriers.",
+      "source_hash": 1636050768320198062,
+      "context_hash": 8110699447420933181,
+      "translation": "양방향으로 장벽을 넘나드는 데 사용되는 해당 코드(:source:`pypy/interpreter/gateway.py`\\ 에 있음)는 다소 복잡하다는 점에 유의하십시오. 이는 주로 타입을 추론하는 애노테이터가 이 장벽을 넘나드는 객체의 타입을 추적해야 하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:55.073832Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:53/seg:0",
+      "source": "Making interpreter-level functions available at application-level",
+      "source_hash": 14936580516550920281,
+      "context_hash": 18181329845149555694,
+      "translation": "인터프리터\\ 수준 함수를 애플리케이션\\ 수준에서 사용할 수 있도록 만들기",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:18:34.928649Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:54/seg:0",
+      "source": "In order to make an interpreter-level function available at application level, one invokes ``pypy.interpreter.gateway.interp2app(func)``.",
+      "source_hash": 17448998647185167941,
+      "context_hash": 10662514741548944334,
+      "translation": "인터프리터 수준 함수를 애플리케이션 수준에서 사용할 수 있게 하려면 ``pypy.interpreter.gateway.interp2app(func)``\\ 를 호출합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:19:43.955205Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:54/seg:1",
+      "source": "Such a function usually takes a ``space`` argument and any number of positional arguments.",
+      "source_hash": 1392343174870538174,
+      "context_hash": 18101328559362609605,
+      "translation": "이러한 함수는 보통 ``space`` 인자와 임의 개수의 위치 인자를 받습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:43.955206Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:54/seg:2",
+      "source": "Additionally, such functions can define an ``unwrap_spec`` telling the ``interp2app`` logic how application-level provided arguments should be unwrapped before the actual interpreter-level function is invoked.",
+      "source_hash": 10890045006590453336,
+      "context_hash": 8052770950943386563,
+      "translation": "또한 이러한 함수는 실제 인터프리터 수준 함수가 호출되기 전에 애플리케이션 수준에서 제공된 인자들이 어떻게 언랩(unwrap)되어야 하는지를 ``interp2app`` 로직에 알려주는 ``unwrap_spec``\\ 을 정의할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:19:43.955206Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:54/seg:3",
+      "source": "For example, `interpreter descriptors`_ such as the ``Module.__new__`` method for allocating and constructing a Module instance are defined with such code",
+      "source_hash": 16625625641741758566,
+      "context_hash": 16639715063188725596,
+      "translation": "예를 들어, Module 인스턴스를 할당하고 생성하는 ``Module.__new__`` 메서드와 같은 `interpreter descriptors`_\\ 는 이러한 코드로 정의됩니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:19:43.955206Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:56/seg:0",
+      "source": "The actual ``Module.descr_module__new__`` interpreter-level method referenced from the ``__new__`` keyword argument above is defined like this",
+      "source_hash": 4130612880716394854,
+      "context_hash": 3832004555956337778,
+      "translation": "위의 ``__new__`` 키워드 인자에서 참조되는 실제 ``Module.descr_module__new__`` 인터프리터 레벨 메서드는 다음과 같이 정의됩니다",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:18:43.912289Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:58/seg:0",
+      "source": "Summarizing, the ``interp2app`` mechanism takes care to route an application level access or call to an internal interpreter-level object appropriately to the descriptor, providing enough precision and hints to keep the type-inferring annotator happy.",
+      "source_hash": 2353615946151509650,
+      "context_hash": 13220172326309917387,
+      "translation": "정리하면, ``interp2app``\\ 메커니즘은 애플리케이션 수준의 접근이나 호출을 디스크립터를 통해 내부 인터프리터 수준 객체로 적절히 라우팅하며, 타입을 추론하는 애노테이터가 만족할 만큼 충분한 정밀도와 힌트를 제공합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:18:42.957785Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:59/seg:0",
+      "source": "Calling into application level code from interpreter-level",
+      "source_hash": 70832495591262662,
+      "context_hash": 5413639531047416305,
+      "translation": "인터프리터 레벨에서 애플리케이션 레벨 코드 호출하기",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:20:05.887311Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:60/seg:0",
+      "source": "Application level code is :ref:`often preferable <app-preferable>`.",
+      "source_hash": 5668350131617887548,
+      "context_hash": 15212303240975134537,
+      "translation": "애플리케이션 레벨 코드가 :ref:`종종 선호됩니다 <app-preferable>`.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:38:08.581216Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:60/seg:1",
+      "source": "Therefore, we often like to invoke application level code from interpreter-level.",
+      "source_hash": 12558680813522887750,
+      "context_hash": 4767727953183035265,
+      "translation": "따라서 인터프리터 레벨에서 애플리케이션 레벨 코드를 호출하는 것을 종종 선호합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:38:08.581217Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:60/seg:2",
+      "source": "This is done via the Gateway's ``app2interp`` mechanism which we usually invoke at definition time in a module.",
+      "source_hash": 12972133954640856953,
+      "context_hash": 14113657675371777326,
+      "translation": "이는 모듈에서 보통 정의 시점에 호출하는 Gateway의 ``app2interp`` 메커니즘을 통해 이루어집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:38:08.581217Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:60/seg:3",
+      "source": "It generates a hook which looks like an interpreter-level function accepting a space and an arbitrary number of arguments.",
+      "source_hash": 9907491693915661086,
+      "context_hash": 12296471767235420841,
+      "translation": "이는 객체 공간(object space)과 임의 개수의 인자를 받는 인터프리터 레벨 함수처럼 보이는 훅(hook)을 생성합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:38:08.581217Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:60/seg:4",
+      "source": "When calling a function at interpreter-level the caller side does usually not need to be aware if its invoked function is run through the PyPy interpreter or if it will directly execute on the machine (after translation).",
+      "source_hash": 12383312616349783510,
+      "context_hash": 5388794199905363725,
+      "translation": "인터프리터 레벨에서 함수를 호출할 때, 호출하는 쪽은 보통 호출된 함수가 PyPy 인터프리터를 통해 실행되는지 아니면 (번역(translation) 후) 기계에서 직접 실행되는지 알 필요가 없습니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy",
+        "interpreter": "인터프리터",
+        "translation": "번역(translation)"
+      },
+      "translated_at": "2026-08-14T21:38:08.581217Z",
+      "issues": [
+        "전반적으로 의미는 정확하게 전달되지만 \"(번역(translation) 후)\"처럼 괄호 안에 괄호를 중첩시킨 표기가 부자연스러워 가독성을 해칩니다."
+      ]
+    },
+    {
+      "id": "section:2/block:61/seg:0",
+      "source": "Here is an example showing how we implement the Metaclass finding algorithm of the Python language in PyPy",
+      "source_hash": 3484349123200345615,
+      "context_hash": 2912862066239877971,
+      "translation": "다음은 PyPy에서 Python 언어의 메타클래스(Metaclass) 탐색 알고리즘을 구현하는 방법을 보여주는 예시입니다",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T21:20:08.033797Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:63/seg:0",
+      "source": "The ``find_metaclass`` interpreter-level hook is invoked with five arguments from the ``BUILD_CLASS`` opcode implementation in :source:`pypy/interpreter/pyopcode.py`",
+      "source_hash": 3837290786064261754,
+      "context_hash": 4227036024640891014,
+      "translation": "``find_metaclass``\\ 인터프리터 수준 훅은 :source:`pypy/interpreter/pyopcode.py`\\ 의 ``BUILD_CLASS`` 옵코드 구현에서 다섯 개의 인자와 함께 호출됩니다",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:20:03.034671Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:65/seg:0",
+      "source": "Note that at a later point we can rewrite the ``find_metaclass`` implementation at interpreter-level and we would not have to modify the calling side at all.",
+      "source_hash": 15678414603874354449,
+      "context_hash": 9656579354883490651,
+      "translation": "나중에 인터프리터 레벨에서 ``find_metaclass`` 구현을 다시 작성하더라도 호출하는 측을 전혀 수정할 필요가 없다는 점에 유의하십시오.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:37:55.309413Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:66/seg:0",
+      "source": "Introspection and Descriptors",
+      "source_hash": 9211948815965059120,
+      "context_hash": 8318619327914046151,
+      "translation": "인트로스펙션과 디스크립터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:37:43.903438Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:67/seg:0",
+      "source": "Python traditionally has a very far-reaching introspection model for bytecode interpreter related objects.",
+      "source_hash": 4229194469571670883,
+      "context_hash": 17522581542716748280,
+      "translation": "Python은 전통적으로 바이트코드 인터프리터 관련 객체에 대해 매우 광범위한 인트로스펙션 모델을 가지고 있습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:40:35.276033Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:67/seg:1",
+      "source": "In PyPy and in CPython read and write accesses to such objects are routed to descriptors.",
+      "source_hash": 12005819390457347431,
+      "context_hash": 7608991110900739268,
+      "translation": "PyPy와 CPython 모두에서 이러한 객체에 대한 읽기 및 쓰기 접근은 디스크립터(descriptor)로 라우팅됩니다.",
+      "glossary_snapshot": {
+        "CPython": "CPython",
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T21:40:35.276035Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:67/seg:2",
+      "source": "Of course, in CPython those are implemented in ``C`` while in PyPy they are implemented in interpreter-level Python code.",
+      "source_hash": 3405938549033244290,
+      "context_hash": 13458754525911345003,
+      "translation": "물론 CPython에서는 이 디스크립터들이 ``C``\\ 로 구현되어 있고, PyPy에서는 인터프리터 수준의 Python 코드로 구현되어 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "PyPy": "PyPy",
+        "CPython": "CPython"
+      },
+      "translated_at": "2026-08-14T21:40:35.276035Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:68/seg:0",
+      "source": "All instances of a Function_, Code_, Frame_ or Module_ classes are also ``W_Root`` instances which means they can be represented at application level.",
+      "source_hash": 924418400074629023,
+      "context_hash": 13603708932259924350,
+      "translation": "Function_, Code_, Frame_ 또는 Module_\\ 클래스의 모든 인스턴스는 ``W_Root``\\ 인스턴스이기도 하며, 이는 애플리케이션 레벨에서 표현될 수 있음을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:18:10.566924Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:68/seg:1",
+      "source": "These days, a PyPy object space needs to work with a basic descriptor lookup when it encounters accesses to an interpreter-level object:  an object space asks a wrapped object for its type via a ``getclass`` method and then calls the type's ``lookup(name)`` function in order to receive a descriptor function.",
+      "source_hash": 6347959690413596918,
+      "context_hash": 1977821638743973043,
+      "translation": "요즘 PyPy 객체 공간(object space)은 인터프리터 레벨 객체에 대한 접근을 마주쳤을 때 기본적인 디스크립터 조회를 처리해야 합니다: 객체 공간은 ``getclass`` 메서드를 통해 래핑된 객체에 그 타입을 물어본 다음, 디스크립터 함수를 받기 위해 그 타입의 ``lookup(name)`` 함수를 호출합니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy",
+        "interpreter": "인터프리터",
+        "object space": "객체 공간(object space)"
+      },
+      "translated_at": "2026-08-14T21:18:10.566925Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:68/seg:2",
+      "source": "Most of PyPy's internal object descriptors are defined at the end of :source:`pypy/interpreter/typedef.py`.",
+      "source_hash": 15626479029004953604,
+      "context_hash": 4810126423899329163,
+      "translation": "PyPy의 내부 객체 디스크립터 대부분은 :source:`pypy/interpreter/typedef.py`\\ 의 끝부분에 정의되어 있습니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T21:18:10.566926Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:68/seg:3",
+      "source": "You can use these definitions as a reference for the exact attributes of interpreter classes visible at application level.",
+      "source_hash": 2825970690171172400,
+      "context_hash": 2462306567480553890,
+      "translation": "이 정의들을 애플리케이션 레벨에서 보이는 인터프리터 클래스의 정확한 속성에 대한 참조로 사용할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T21:18:10.566926Z",
+      "issues": []
+    }
+  ]
+}

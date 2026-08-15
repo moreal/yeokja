@@ -1,0 +1,899 @@
+{
+  "version": 1,
+  "source_hash": 11504183754738291181,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Ordering finalizers in the MiniMark GC",
+      "source_hash": 15676001585157839184,
+      "context_hash": 1787686577020894115,
+      "translation": "MiniMark GC\\ 에서 파이널라이저(finalizer) 순서 지정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:00:21.863995Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "RPython interface",
+      "source_hash": 8383305421025874054,
+      "context_hash": 9112349683934122391,
+      "translation": "RPython 인터페이스",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-14T15:00:11.818011Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "In RPython programs like PyPy, we need a fine-grained method of controlling the RPython- as well as the app-level ``__del__()``.",
+      "source_hash": 11469076735558209808,
+      "context_hash": 10843000445552501646,
+      "translation": "PyPy와 같은 RPython 프로그램에서는, RPython 레벨뿐 아니라 앱 레벨의 ``__del__()``\\ 도 세밀하게 제어할 방법이 필요합니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy",
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-14T15:09:32.520275Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "To make it possible, the RPython interface is now the following one (from May 2016):",
+      "source_hash": 10255490684084102521,
+      "context_hash": 5760068369758234733,
+      "translation": "이를 가능하게 하기 위해, RPython 인터페이스는 이제 다음과 같습니다(2016년 5월 기준):",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-14T15:09:32.520276Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "RPython objects can have ``__del__()``.",
+      "source_hash": 2976349738802739514,
+      "context_hash": 5369391979377376375,
+      "translation": "RPython 객체는 ``__del__()``\\ 을 가질 수 있습니다.",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-14T15:09:18.910839Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "These are called immediately by the GC when the last reference to the object goes away, like in CPython.",
+      "source_hash": 3030132043368649111,
+      "context_hash": 1191254433090724227,
+      "translation": "CPython에서와 마찬가지로, 객체에 대한 마지막 참조가 사라지면 GC가 이를 즉시 호출합니다.",
+      "glossary_snapshot": {
+        "CPython": "CPython"
+      },
+      "translated_at": "2026-08-14T15:09:18.910839Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:2",
+      "source": "However, the long-term goal is that all ``__del__()`` methods should only contain simple enough code.",
+      "source_hash": 17237862614967445913,
+      "context_hash": 2863028217046567850,
+      "translation": "하지만 장기적인 목표는 모든 ``__del__()`` 메서드가 충분히 단순한 코드만 포함하도록 하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:18.910839Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:3",
+      "source": "If they do, we call them \"destructors\".",
+      "source_hash": 7377405893231435315,
+      "context_hash": 2295535187053068031,
+      "translation": "그렇게 하면, 우리는 이를 \"소멸자(destructor)\"라고 부릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:18.910840Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:4",
+      "source": "They can't use operations that would resurrect the object, for example.",
+      "source_hash": 2658273869572039587,
+      "context_hash": 3171872658883651449,
+      "translation": "예를 들어, 이들은 객체를 부활시키는 연산을 사용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:18.910840Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:5",
+      "source": "Use the decorator ``@rgc.must_be_light_finalizer`` to ensure they are destructors.",
+      "source_hash": 14358227859591756612,
+      "context_hash": 17010317671197473538,
+      "translation": "이들이 소멸자임을 보장하려면 ``@rgc.must_be_light_finalizer`` 데코레이터를 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:18.910840Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "RPython-level ``__del__()`` that are not passing the destructor test are supported for backward compatibility, but deprecated.",
+      "source_hash": 10765925984507391829,
+      "context_hash": 13134323231322645327,
+      "translation": "소멸자 테스트를 통과하지 못하는 RPython 수준의 ``__del__()``\\ 는 하위 호환성을 위해 지원되지만, 사용이 권장되지 않습니다(deprecated).",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-14T15:00:25.853971Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:1",
+      "source": "The rest of this document assumes that ``__del__()`` are all destructors.",
+      "source_hash": 16038281040041893412,
+      "context_hash": 18256348150514363721,
+      "translation": "이 문서의 나머지 부분에서는 ``__del__()``\\ 가 모두 소멸자라고 가정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:00:25.853972Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:0",
+      "source": "For any more advanced usage --- in particular for any app-level object with a __del__ --- we don't use the RPython-level ``__del__()`` method.",
+      "source_hash": 9515516315691270798,
+      "context_hash": 16932486867172470222,
+      "translation": "더 발전된 사용법의 경우 --- 특히 __del__을 가진 앱 레벨 객체의 경우 --- RPython 레벨의 ``__del__()`` 메서드를 사용하지 않습니다.",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-14T15:00:28.890699Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:1",
+      "source": "Instead we use ``rgc.FinalizerController.register_finalizer()``.",
+      "source_hash": 13874432731641244468,
+      "context_hash": 1532976455466143533,
+      "translation": "대신 ``rgc.FinalizerController.register_finalizer()``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:00:28.890700Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:2",
+      "source": "This allows us to attach a finalizer method to the object, giving more control over the ordering than just an RPython ``__del__()``.",
+      "source_hash": 4621418005999908456,
+      "context_hash": 8052233972262451504,
+      "translation": "이를 통해 객체에 파이널라이저(finalizer) 메서드를 붙일 수 있어, 단순한 RPython ``__del__()``\\ 보다 순서에 대해 더 많은 제어권을 가질 수 있습니다.",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-14T15:00:28.890700Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:5/seg:0",
+      "source": "We try to consistently call ``__del__()`` a destructor, to distinguish it from a finalizer.",
+      "source_hash": 15485826664543334161,
+      "context_hash": 16387710671918053502,
+      "translation": "우리는 파이널라이저(finalizer)와 구분하기 위해 ``__del__()``\\ 를 일관되게 소멸자(destructor)라고 부르려고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:26:56.794412Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:5/seg:1",
+      "source": "A finalizer runs earlier, and in topological order; care must be taken that the object might still be reachable at this point if we're clever enough.",
+      "source_hash": 9521555256660491988,
+      "context_hash": 16858606679903701906,
+      "translation": "파이널라이저(finalizer)는 더 일찍, 그리고 위상학적 순서(topological order)로 실행됩니다. 이 시점에는 충분히 영리하게 처리한다면 객체가 여전히 도달 가능할 수 있다는 점에 주의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:26:56.794412Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:5/seg:2",
+      "source": "A destructor on the other hand runs last; nothing can be done with the object any more, and the GC frees it immediately.",
+      "source_hash": 9637854290751418997,
+      "context_hash": 10991540360455110231,
+      "translation": "반면 소멸자(destructor)는 마지막에 실행됩니다. 이 시점에는 객체에 대해 더 이상 아무것도 할 수 없으며, GC가 즉시 이를 해제합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:26:56.794413Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Destructors",
+      "source_hash": 16926861836883490498,
+      "context_hash": 5972539594675433597,
+      "translation": "소멸자(Destructor)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:00:12.824832Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "A destructor is an RPython ``__del__()`` method that is called directly by the GC when it is about to free the memory.",
+      "source_hash": 5819468318176785991,
+      "context_hash": 6258201903429678454,
+      "translation": "소멸자(destructor)는 GC가 메모리를 해제하려고 할 때 직접 호출하는 RPython ``__del__()`` 메서드입니다.",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-14T15:00:36.519963Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Intended for objects that just need to free an extra block of raw memory.",
+      "source_hash": 12395158998913971520,
+      "context_hash": 6704379031669786840,
+      "translation": "추가로 raw 메모리 블록 하나만 해제하면 되는 객체를 위한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:00:36.519964Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "There are restrictions on the kind of code you can put in ``__del__()``, including all other functions called by it.",
+      "source_hash": 17338062767134883851,
+      "context_hash": 3751606244792090844,
+      "translation": "``__del__()``\\ 안에 넣을 수 있는 코드의 종류에는 제약이 있으며, 이는 그것이 호출하는 다른 모든 함수에도 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:24.787365Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "These restrictions are checked.",
+      "source_hash": 14166225247441412261,
+      "context_hash": 18397037382395983579,
+      "translation": "이 제약은 검사됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:24.787365Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "In particular you cannot access fields containing GC objects.",
+      "source_hash": 10079966568180877714,
+      "context_hash": 15892497323945952006,
+      "translation": "특히 GC 객체를 담고 있는 필드에는 접근할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:24.787365Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:3",
+      "source": "Right now you can't call any external C function either.",
+      "source_hash": 13507567809696711491,
+      "context_hash": 12862485823255324926,
+      "translation": "현재는 외부 C 함수도 호출할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:24.787365Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Destructors are called precisely when the GC frees the memory of the object.",
+      "source_hash": 16514750585148040090,
+      "context_hash": 8697214370968213673,
+      "translation": "소멸자는 GC가 객체의 메모리를 해제하는 시점에 정확히 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:14.210457Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "As long as the object exists (even in some finalizer queue or anywhere), its destructor is not called.",
+      "source_hash": 10432067188203454169,
+      "context_hash": 13168553222108884309,
+      "translation": "객체가 (파이널라이저 큐든 어디든) 존재하는 한, 그 소멸자는 호출되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:14.210458Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Register_finalizer",
+      "source_hash": 2459646432673549190,
+      "context_hash": 11311512782921951477,
+      "translation": "Register_finalizer",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:00:36.256471Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "The interface for full finalizers is made with PyPy in mind, but should be generally useful.",
+      "source_hash": 2147359621046369867,
+      "context_hash": 3659840043268230940,
+      "translation": "완전한 종료자(finalizer)를 위한 인터페이스는 PyPy를 염두에 두고 만들어졌지만, 일반적으로도 유용할 것입니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T15:09:20.745572Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "The idea is that you subclass the ``rgc.FinalizerQueue`` class:",
+      "source_hash": 17368570101955937709,
+      "context_hash": 8456562561227179745,
+      "translation": "이 아이디어는 ``rgc.FinalizerQueue`` 클래스를 서브클래싱하는 것입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:28.606514Z",
+      "issues": [
+        "\"이 아이디어는\" 부분이 다소 어색합니다(원문 \"The idea is...\"는 새로운 개념을 소개하는 문맥이라 \"이\"보다 \"핵심 아이디어는\" 또는 \"여기서 아이디어는\"이 더 자연스럽습니다); 나머지 번역은 정확하고 존댓말 스타일도 일관됩니다."
+      ]
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "You must give a class-level attribute ``base_class``, which is the base class of all instances with a finalizer.  (If you need finalizers on several unrelated classes, you need several unrelated ``FinalizerQueue`` subclasses.)",
+      "source_hash": 16660492229465422088,
+      "context_hash": 17002704231983682808,
+      "translation": "클래스 수준 속성 ``base_class``\\ 를 지정해야 하며, 이는 파이널라이저가 있는 모든 인스턴스의 기반 클래스입니다. (서로 무관한 여러 클래스에 파이널라이저가 필요하다면, 서로 무관한 여러 ``FinalizerQueue`` 서브클래스가 필요합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:24.043184Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "You override the ``finalizer_trigger()`` method; see below.",
+      "source_hash": 1028590289505126685,
+      "context_hash": 5979404732614426767,
+      "translation": "``finalizer_trigger()``\\ 메서드를 오버라이드합니다. 아래를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:20.990038Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "Then you create one global (or space-specific) instance of this subclass; call it ``fin``.",
+      "source_hash": 11740553033440636418,
+      "context_hash": 14552487469655141628,
+      "translation": "그런 다음 이 서브클래스의 전역(또는 공간별) 인스턴스를 하나 생성합니다. 이를 ``fin``\\ 이라고 부릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:02.882926Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "At runtime, you call ``fin.register_finalizer(obj)`` for every instance ``obj`` that needs a finalizer.",
+      "source_hash": 11018097667993177350,
+      "context_hash": 9868657825873164451,
+      "translation": "런타임에는 파이널라이저가 필요한 모든 인스턴스 ``obj``\\ 에 대해 ``fin.register_finalizer(obj)``\\ 를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:02.882927Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:2",
+      "source": "Each ``obj`` must be an instance of ``fin.base_class``, but not every such instance needs to have a finalizer registered; typically we try to register a finalizer on as few objects as possible (e.g. only if it is an object which has an app-level ``__del__()`` method).",
+      "source_hash": 9708521533004542880,
+      "context_hash": 8379473528574006437,
+      "translation": "각 ``obj``\\ 는 ``fin.base_class``\\ 의 인스턴스여야 하지만, 그런 인스턴스 모두가 파이널라이저를 등록해야 하는 것은 아닙니다. 일반적으로 우리는 가능한 한 적은 수의 객체에만 파이널라이저를 등록하려고 합니다(예: 앱 레벨 ``__del__()``\\ 메서드가 있는 객체인 경우에만).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:02.882927Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "After a major collection, the GC finds all objects ``obj`` on which a finalizer was registered and which are unreachable, and mark them as reachable again, as well as all objects they depend on.",
+      "source_hash": 13301821638099335825,
+      "context_hash": 14929065058364643108,
+      "translation": "메이저 컬렉션 후, GC는 파이널라이저가 등록되어 있으면서 도달 불가능한 모든 객체 ``obj``\\ 를 찾아, 그 객체들이 의존하는 모든 객체와 함께 다시 도달 가능하도록 표시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:55.846567Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:1",
+      "source": "It then picks a topological ordering (breaking cycles randomly, if any) and enqueues the objects and their registered finalizer functions in that order, in a queue specific to the prebuilt ``fin`` instance.",
+      "source_hash": 16615932448096761263,
+      "context_hash": 14666389115529057338,
+      "translation": "그런 다음 위상 정렬(순환이 있으면 무작위로 끊습니다)을 선택하고, 그 순서대로 객체와 등록된 파이널라이저 함수를 미리 만들어진(prebuilt) ``fin`` 인스턴스 전용 큐에 넣습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:55.846569Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:2",
+      "source": "Finally, when the major collection is done, it calls ``fin.finalizer_trigger()``.",
+      "source_hash": 16842676822705290361,
+      "context_hash": 1004551709380273660,
+      "translation": "마지막으로 메이저 컬렉션이 끝나면 ``fin.finalizer_trigger()``\\ 를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:55.846570Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "This method ``finalizer_trigger()`` can either do some work directly, or delay it to be done later (e.g. between two bytecodes).",
+      "source_hash": 274420415971112147,
+      "context_hash": 7938066176046693557,
+      "translation": "이 ``finalizer_trigger()`` 메서드는 직접 작업을 수행하거나, 나중에(예: 두 바이트코드 사이에서) 수행하도록 지연시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:45.643607Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:1",
+      "source": "If it does work directly, note that it cannot (directly or indirectly) cause the GIL to be released.",
+      "source_hash": 12385498124180138774,
+      "context_hash": 14511034372049669688,
+      "translation": "직접 작업을 수행하는 경우, (직접적으로든 간접적으로든) GIL이 해제되도록 할 수 없다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:45.643608Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "To find the queued items, call ``fin.next_dead()`` repeatedly.",
+      "source_hash": 11508248633956826143,
+      "context_hash": 5646626399901311909,
+      "translation": "대기 중인 항목을 찾으려면 ``fin.next_dead()``\\ 를 반복적으로 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:41.457415Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:1",
+      "source": "It returns the next queued item, or ``None`` when the queue is empty.",
+      "source_hash": 13179014117365721279,
+      "context_hash": 5255894955835603778,
+      "translation": "이 함수는 큐에 있는 다음 항목을 반환하며, 큐가 비어 있으면 ``None``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:41.457415Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "In theory, it would kind of work if you cumulate several different ``FinalizerQueue`` instances for objects of the same class, and (always in theory) the same ``obj`` could be registered several times in the same queue, or in several queues.",
+      "source_hash": 17430013554592518835,
+      "context_hash": 5311312736673104852,
+      "translation": "이론상으로는, 같은 클래스의 객체에 대해 여러 개의 서로 다른 ``FinalizerQueue`` 인스턴스를 누적시키면 어느 정도 작동할 것이며, (역시 이론상으로는) 같은 ``obj``\\ 가 같은 큐에 여러 번, 혹은 여러 개의 큐에 등록될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:58.711227Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:1",
+      "source": "This is not tested though.",
+      "source_hash": 9648478573304704833,
+      "context_hash": 11742633117589079458,
+      "translation": "하지만 이는 테스트되지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:58.711228Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:2",
+      "source": "For now the untranslated emulation does not support registering the same object several times.",
+      "source_hash": 16208262611216516449,
+      "context_hash": 12216670634179490580,
+      "translation": "현재로서는 번역(translation)되지 않은 에뮬레이션이 같은 객체를 여러 번 등록하는 것을 지원하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:58.711229Z",
+      "issues": [
+        "의미는 정확히 전달되지만 \"번역(translation)\"처럼 이미 번역된 용어 뒤에 원어를 병기한 것이 문서체 번역문으로서는 부자연스럽고 불필요합니다."
+      ]
+    },
+    {
+      "id": "section:3/block:10/seg:0",
+      "source": "Note that the Boehm garbage collector, used in ``rpython -O0``, completely ignores ``register_finalizer()``.",
+      "source_hash": 15038429160392023567,
+      "context_hash": 16962109957507030026,
+      "translation": "``rpython -O0``\\ 에서 사용되는 Boehm 가비지 컬렉터는 ``register_finalizer()``\\ 를 완전히 무시한다는 점에 유의하시기 바랍니다.",
+      "glossary_snapshot": {
+        "garbage collector": "가비지 컬렉터"
+      },
+      "translated_at": "2026-08-14T15:09:39.894169Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Ordering of finalizers",
+      "source_hash": 5994505849914133535,
+      "context_hash": 5490293250551669088,
+      "translation": "파이널라이저(finalizer)의 순서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:38.875088Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "After a collection, the MiniMark GC should call the finalizers on *some* of the objects that have one and that have become unreachable.",
+      "source_hash": 7595589026212807632,
+      "context_hash": 1569278051688144627,
+      "translation": "컬렉션이 끝난 후, MiniMark GC는 파이널라이저를 가지고 있으며 도달 불가능해진 객체 중 *일부*\\ 에 대해서만 파이널라이저를 호출해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:10:01.085307Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "Basically, if there is a reference chain from an object a to an object b then it should not call the finalizer for b immediately, but just keep b alive and try again to call its finalizer after the next collection.",
+      "source_hash": 597278102577880526,
+      "context_hash": 15802115182164117676,
+      "translation": "기본적으로, 객체 a에서 객체 b로 이어지는 참조 체인이 있다면 b의 파이널라이저를 즉시 호출해서는 안 되며, 대신 b를 살아있는 상태로 유지한 뒤 다음 컬렉션 이후에 다시 그 파이널라이저 호출을 시도해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:10:01.085308Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "(Note that this creates rare but annoying issues as soon as the program creates chains of objects with finalizers more quickly than the rate at which major collections go (which is very slow).",
+      "source_hash": 607889152604667449,
+      "context_hash": 11696439703688723867,
+      "translation": "(프로그램이 파이널라이저(finalizer)가 있는 객체 체인을 메이저 컬렉션이 진행되는 속도(매우 느림)보다 더 빠르게 생성하는 즉시, 이는 드물지만 성가신 문제를 일으킨다는 점에 유의하시기 바랍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:26:58.465221Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "In August 2013 we tried instead to call all finalizers of all objects found unreachable at a major collection.",
+      "source_hash": 11900167052607762481,
+      "context_hash": 12818553066995512008,
+      "translation": "2013년 8월에는 그 대신 메이저 컬렉션에서 도달 불가능한 것으로 발견된 모든 객체의 모든 파이널라이저를 호출하도록 시도했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:26:58.465222Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "That branch, ``gc-del``, was never merged.",
+      "source_hash": 14833848068024892296,
+      "context_hash": 17530877099792868269,
+      "translation": "그 브랜치인 ``gc-del``\\ 은 결코 병합되지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:26:58.465223Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:3",
+      "source": "It is still unclear what the real consequences would be on programs in the wild.)",
+      "source_hash": 17307976198830050554,
+      "context_hash": 1744264741129362727,
+      "translation": "실제 환경에서 사용되는 프로그램들에 어떤 실질적인 결과를 가져올지는 여전히 불분명합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:26:58.465224Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "The basic idea fails in the presence of cycles.",
+      "source_hash": 15407642879469878625,
+      "context_hash": 6143683152054061981,
+      "translation": "기본 아이디어는 순환(cycle)이 있을 때 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:09.855876Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "It's not a good idea to keep the objects alive forever or to never call any of the finalizers.",
+      "source_hash": 6984971691422140473,
+      "context_hash": 16642718758056194016,
+      "translation": "객체를 영원히 살아있게 하거나 파이널라이저(finalizer)를 전혀 호출하지 않는 것은 좋은 생각이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:09.855876Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:2",
+      "source": "The model we came up with is that in this case, we could just call the finalizer of one of the objects in the cycle -- but only, of course, if there are no other objects outside the cycle that has a finalizer and a reference to the cycle.",
+      "source_hash": 14265080622001801088,
+      "context_hash": 17535868405016890610,
+      "translation": "우리가 생각해낸 모델은 이 경우 순환 안의 객체 중 하나의 파이널라이저(finalizer)만 호출하면 된다는 것입니다 -- 단, 물론 순환 밖에 파이널라이저를 가지고 있으면서 그 순환에 대한 참조를 가진 다른 객체가 없는 경우에만 그렇습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:09.855876Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "More precisely, given the graph of references between objects",
+      "source_hash": 14759150623496367462,
+      "context_hash": 11714180647369560472,
+      "translation": "더 정확히 말하면, 객체 간 참조 그래프가 주어졌을 때",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:54.170892Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Algorithm",
+      "source_hash": 1302133540553668709,
+      "context_hash": 16334379969666530889,
+      "translation": "알고리즘",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:10:02.348439Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "During deal_with_objects_with_finalizers(), each object x can be in 4 possible states",
+      "source_hash": 17162468750188940718,
+      "context_hash": 10433530862568365066,
+      "translation": "deal_with_objects_with_finalizers() 실행 중에는 각 객체 x가 4가지 가능한 상태 중 하나에 있을 수 있습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:10:03.550085Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "Initially, objects are in state 0 or 3 depending on whether they have been copied or not by the regular sweep done just before.",
+      "source_hash": 85846754229414532,
+      "context_hash": 557259791001765311,
+      "translation": "초기에는 객체가 바로 직전에 수행된 일반 스윕(sweep)에 의해 복사되었는지 여부에 따라 상태 0 또는 3에 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:10:11.666168Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "The invariant is that if there is a reference from x to y, then state[y] >= state[x].",
+      "source_hash": 136790493475214722,
+      "context_hash": 16555016309455763407,
+      "translation": "불변조건은 x에서 y로의 참조가 있다면 state[y] >= state[x]라는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:10:11.666169Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "The state 2 is used for objects that are reachable from a finalizer but that may be in the same strongly connected component than the finalizer.",
+      "source_hash": 7221372378279560324,
+      "context_hash": 10215867598126659779,
+      "translation": "상태 2는 파이널라이저(finalizer)에서 도달 가능하지만, 파이널라이저와 같은 강한 연결 요소(strongly connected component)에 속할 수도 있는 객체에 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:09.371443Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:1",
+      "source": "The state of these objects goes to 3 when we prove that they can be reached from a finalizer which is definitely not in the same strongly connected component.",
+      "source_hash": 10461238575633326255,
+      "context_hash": 9330117954913517446,
+      "translation": "이러한 객체들의 상태는, 그것들이 확실히 같은 강한 연결 요소에 속하지 않는 파이널라이저에서 도달 가능하다는 것이 증명되면 3으로 바뀝니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:09.371443Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:2",
+      "source": "Finalizers on objects with state 3 must not be called.",
+      "source_hash": 11732820770578529532,
+      "context_hash": 16718145601971152796,
+      "translation": "상태가 3인 객체의 파이널라이저는 호출되어서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:09.371443Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "Let closure(x) be the list of objects reachable from x, including x itself.",
+      "source_hash": 2413552453632066820,
+      "context_hash": 426453116657268974,
+      "translation": "closure(x)를 x 자신을 포함하여 x로부터 도달 가능한 객체들의 목록이라고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:00.145580Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:1",
+      "source": "Pseudo-code (high-level) to get the list of marked objects",
+      "source_hash": 10749779341414238197,
+      "context_hash": 10625721989198607914,
+      "translation": "마킹된 객체 목록을 얻기 위한 의사 코드(고수준)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:00.145581Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "This does the right thing independently on the order in which the objects_with_finalizers are enumerated.",
+      "source_hash": 6998820125407029831,
+      "context_hash": 6512978800627820601,
+      "translation": "이는 objects_with_finalizers가 열거되는 순서와 무관하게 올바르게 동작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:14.242676Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:1",
+      "source": "First assume that [x1, .., xn] are all in the same unreachable strongly connected component; no object with finalizer references this strongly connected component from outside.",
+      "source_hash": 16062023713061901224,
+      "context_hash": 12868812874472732095,
+      "translation": "먼저 [x1, .., xn]이 모두 동일한 도달 불가능한 강한 연결 요소(strongly connected component)에 속해 있다고 가정합니다. 파이널라이저(finalizer)를 가진 어떤 객체도 외부에서 이 강한 연결 요소를 참조하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:14.242676Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:2",
+      "source": "Then:",
+      "source_hash": 16560168177423422923,
+      "context_hash": 10015431168880131295,
+      "translation": "그러면:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:14.242676Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "when x1 is processed, state[x1] == .. == state[xn] == 0 independently of whatever else we did before.",
+      "source_hash": 17982287464241801331,
+      "context_hash": 6325889440725898705,
+      "translation": "x1이 처리될 때, 이전에 무엇을 했든 상관없이 state[x1] == .. == state[xn] == 0입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:26:58.081912Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:1",
+      "source": "So x1 gets marked and we set state[x1] = .. = state[xn] = 2.",
+      "source_hash": 2006003226352371687,
+      "context_hash": 957771591654997561,
+      "translation": "따라서 x1이 마킹되고, state[x1] = .. = state[xn] = 2로 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:26:58.081913Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "when x2, ... xn are processed, their state is != 0 so we do nothing.",
+      "source_hash": 14806227299722485698,
+      "context_hash": 15198314347042780755,
+      "translation": "x2, ... xn이 처리될 때, 그들의 상태가 0이 아니므로 아무것도 하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:09:54.400628Z",
+      "issues": [
+        "\"그들의\"는 사람이 아닌 대상(x2...xn)을 가리키는 데 다소 부자연스러운 대명사 사용이며, \"이들의\" 또는 생략하는 편이 한국어 기술 문서에서 더 자연스럽습니다."
+      ]
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "in the final loop, only x1 is marked and state[x1] == 2 so it stays marked.",
+      "source_hash": 13118234849191975939,
+      "context_hash": 9318413515500652159,
+      "translation": "마지막 루프에서는 x1만 마크되어 있고 state[x1] == 2이므로 마크된 상태로 남습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:08.788546Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "Now, let's assume that x1 and x2 are not in the same strongly connected component and there is a reference path from x1 to x2.",
+      "source_hash": 6330076151425674597,
+      "context_hash": 15435678578936158020,
+      "translation": "이제 x1과 x2가 동일한 강한 연결 요소(strongly connected component)에 속하지 않고, x1에서 x2로의 참조 경로가 존재한다고 가정하겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T22:30:23.615653Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:1",
+      "source": "Then:",
+      "source_hash": 16560168177423422923,
+      "context_hash": 10527634010271362731,
+      "translation": "그러면:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:23.904525Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "if x1 is enumerated before x2, then x2 is in closure(x1) and so its state gets at least >= 2 when we process x1.",
+      "source_hash": 88146616823910984,
+      "context_hash": 13203254989010032936,
+      "translation": "x1이 x2보다 먼저 열거되면, x2는 closure(x1)에 속하며, 따라서 x1을 처리할 때 x2의 상태는 최소한 >= 2가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:27.575625Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:1",
+      "source": "When we process x2 later we just skip it (\"continue\" line) and so it doesn't get marked.",
+      "source_hash": 16372770308353823500,
+      "context_hash": 13103868536750985660,
+      "translation": "나중에 x2를 처리할 때는 그냥 건너뛰기 때문에(\"continue\" 줄) 표시되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:27.575627Z",
+      "issues": [
+        "정확하고 정중한 문체(~습니다)를 사용했으나, \"건너뛰기 때문에(\\\"continue\\\" 줄)\"처럼 괄호 앞에 공백이 없어 어색하게 읽히고 원문의 \"it\"(x2를 가리킴)이 다소 생략되어 자연스러움이 약간 떨어집니다."
+      ]
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "if x2 is enumerated before x1, then when we process x2 we mark it and set its state to >= 2 (before x2 is in closure(x2)), and then when we process x1 we set state[x2] == 3.",
+      "source_hash": 2733511524077067944,
+      "context_hash": 14693361946546775022,
+      "translation": "x2가 x1보다 먼저 열거되면, x2를 처리할 때 이를 표시하고 상태를 2 이상으로 설정합니다(x2가 closure(x2)에 포함되기 전에). 그리고 x1을 처리할 때 state[x2] == 3으로 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:14.131644Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:1",
+      "source": "So in the final loop x2 gets removed from the \"marked\" list.",
+      "source_hash": 14047529960387494499,
+      "context_hash": 217625063883531373,
+      "translation": "따라서 마지막 루프에서 x2는 \"marked\" 리스트에서 제거됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:14.131645Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "I think that it proves that the algorithm is doing what we want.",
+      "source_hash": 1652379053443879880,
+      "context_hash": 5402197239596057538,
+      "translation": "저는 이것이 알고리즘이 우리가 원하는 대로 동작하고 있음을 증명한다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:13.169069Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "The next step is to remove the use of closure() in the algorithm in such a way that the new algorithm has a reasonable performance -- linear in the number of objects whose state it manipulates",
+      "source_hash": 18378289967670388890,
+      "context_hash": 11488849295424183949,
+      "translation": "다음 단계는 새로운 알고리즘이 합리적인 성능 -- 즉 상태를 조작하는 객체 수에 대해 선형인 성능 -- 을 갖도록, 알고리즘에서 closure()\\ 의 사용을 제거하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:19.603955Z",
+      "issues": [
+        "The meaning is accurately conveyed and the restructuring (즉 ~인 성능) works, but the stray backslash before \"의\" (closure()\\ 의) is an unnatural artifact that shouldn't appear in the rendered Korean text."
+      ]
+    },
+    {
+      "id": "section:5/block:17/seg:0",
+      "source": "In this algorithm we follow the children of each object at most 3 times, when the state of the object changes from 0 to 1 to 2 to 3.",
+      "source_hash": 15566204263174101359,
+      "context_hash": 16037848051235813018,
+      "translation": "이 알고리즘에서는 객체의 상태가 0에서 1, 2, 3으로 변할 때, 각 객체의 자식을 최대 3번까지 따라갑니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:29.308769Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:1",
+      "source": "In a visit that doesn't change the state of an object, we don't follow its children recursively.",
+      "source_hash": 177647319380436948,
+      "context_hash": 13127254227785276664,
+      "translation": "객체의 상태를 변경하지 않는 방문에서는 자식을 재귀적으로 따라가지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:29.308771Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:18/seg:0",
+      "source": "In practice, in the MiniMark GCs, we can encode the 4 states with a combination of two bits in the header:",
+      "source_hash": 10618663956422625129,
+      "context_hash": 706806959568490351,
+      "translation": "실제로 MiniMark GC에서는 헤더 안의 두 비트 조합으로 4가지 상태를 인코딩할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:27:24.564913Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:20/seg:0",
+      "source": "So the loop above that does the transition from state 1 to state 2 is really just a recursive visit.",
+      "source_hash": 3199449210146834993,
+      "context_hash": 11703297669055559449,
+      "translation": "따라서 위에서 상태 1에서 상태 2로의 전이를 수행하는 루프는 사실상 재귀적 방문일 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:00:19.861272Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:20/seg:1",
+      "source": "We must also clear the FINALIZATION_ORDERING bit at the end (state 2 to state 3) to clean up before the next collection.",
+      "source_hash": 1827348007637396318,
+      "context_hash": 8887954873617326775,
+      "translation": "또한 다음 컬렉션 전에 정리하기 위해, 마지막에(상태 2에서 상태 3으로) FINALIZATION_ORDERING 비트도 지워야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:00:19.861273Z",
+      "issues": []
+    }
+  ]
+}

@@ -1,0 +1,1556 @@
+{
+  "version": 1,
+  "source_hash": 17767355339151424271,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Designing thread pickling or \"the Essence of Stackless Python\"",
+      "source_hash": 235159585610781725,
+      "context_hash": 7927112076899412350,
+      "translation": "스레드 피클링(pickling) 설계, 또는 \"Stackless Python의 본질\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:35:03.335989Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:1/seg:0",
+      "source": "Note from 2007-07-22: This document is slightly out of date and should be turned into a description of pickling.",
+      "source_hash": 11634056865617324762,
+      "context_hash": 9886725454028555673,
+      "translation": "2007-07-22 작성 참고: 이 문서는 다소 오래되었으며, pickling에 대한 설명으로 바뀌어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:50:55.865476Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:1/seg:1",
+      "source": "Some research is necessary to get rid of explicit resume points, etc...",
+      "source_hash": 11091250258738493811,
+      "context_hash": 13650828203032562633,
+      "translation": "명시적인 재개 지점(resume point) 등을 없애려면 추가적인 조사가 필요합니다...",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:50:55.865479Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:2/seg:0",
+      "source": "Thread pickling is a unique feature in Stackless Python and should be implemented for PyPy pretty soon.",
+      "source_hash": 11061263656639564561,
+      "context_hash": 6714386967572112548,
+      "translation": "스레드 피클링(Thread pickling)은 Stackless Python의 고유한 기능이며, PyPy에도 조만간 구현될 예정입니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T15:44:12.814314Z",
+      "issues": [
+        "\"Should be implemented\"(당위/전망의 뉘앙스)가 \"구현될 예정입니다\"(확정된 계획)로 약간 강하게 번역되었으나, 전반적으로 자연스럽고 문체도 일관됩니다."
+      ]
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "What is meant by pickling?",
+      "source_hash": 2792434584541843164,
+      "context_hash": 16366616248527923185,
+      "translation": "피클링(pickling)이란 무엇을 의미합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:08.037401Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "I'd like to define thread pickling as a restartable subset of a running program.",
+      "source_hash": 4247076808704350384,
+      "context_hash": 10496738903845128523,
+      "translation": "저는 스레드 피클링(thread pickling)을 실행 중인 프로그램의 재시작 가능한 부분 집합으로 정의하고자 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:35.284870Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "The re-runnable part should be based upon Python frame chains, represented by coroutines, tasklets or any other application level switchable subcontext.",
+      "source_hash": 5798140841829638238,
+      "context_hash": 136526160025843220,
+      "translation": "재실행 가능한 부분은 코루틴(coroutine), 태스크릿(tasklet) 또는 다른 애플리케이션 수준의 전환 가능한 서브컨텍스트로 표현되는 파이썬 프레임 체인을 기반으로 해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:35.284870Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "It is surely possible to support pickling of arbitrary interplevel state, but this seems to be not mandatory as long as we consider Stackless as the reference implementation.",
+      "source_hash": 2668446528080635980,
+      "context_hash": 10777040691519569957,
+      "translation": "임의의 인터프리터 레벨 상태(interplevel state)의 피클링을 지원하는 것도 물론 가능하지만, Stackless를 참조 구현으로 간주하는 한 이는 필수는 아닌 것으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:35.284870Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:3",
+      "source": "Extensions of this might be considered when the basic task is fulfilled.",
+      "source_hash": 11645097799277153399,
+      "context_hash": 16507086171623310468,
+      "translation": "기본 작업이 완료되면 이에 대한 확장을 고려할 수 있을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:35.284870Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "Pickling should create a re-startable coroutine-alike thing that can run on a different machine, same Python version, but not necessarily the same PyPy translation.",
+      "source_hash": 7500928142624290517,
+      "context_hash": 13450858799758542460,
+      "translation": "피클링(pickling)은 동일한 파이썬 버전이지만 반드시 동일한 PyPy 번역(translation)은 아닌 다른 머신에서 실행될 수 있는, 재시작 가능한 코루틴 유사 객체를 만들어야 합니다.",
+      "glossary_snapshot": {
+        "translation": "번역(translation)",
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T15:44:27.823524Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "This belongs to the harder parts.",
+      "source_hash": 5652858309253638758,
+      "context_hash": 5557802271798247423,
+      "translation": "이는 더 어려운 부분에 속합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:27.823529Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "What is not meant by pickling?",
+      "source_hash": 14693295011207959962,
+      "context_hash": 16237934718247603771,
+      "translation": "피클링(pickling)이 의미하지 않는 것은 무엇입니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:40.998771Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Saving the whole memory state and writing a loader that reconstructs the whole binary with its state im memory is not what I consider a real solution.",
+      "source_hash": 12964543782793621823,
+      "context_hash": 682854747229820829,
+      "translation": "전체 메모리 상태를 저장하고, 메모리에 있는 상태와 함께 전체 바이너리를 재구성하는 로더를 작성하는 것은 제가 생각하는 진정한 해결책이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:31.450259Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "In some sense, this can be a fall-back if we fail in every other case, but I consider it really nasty for the C backend.",
+      "source_hash": 11346725523802393605,
+      "context_hash": 3882337048634484057,
+      "translation": "어떤 의미에서는 다른 모든 경우에 실패했을 때 사용할 대안이 될 수는 있지만, C 백엔드에게는 정말 골치 아픈 방법이라고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:31.450260Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "If we had a dynamic backend that supports direct creation of the program and its state (example: a Forth backend), I would see it as a valid solution, since it is relocatable.",
+      "source_hash": 16967559697798169506,
+      "context_hash": 5229991735590655842,
+      "translation": "프로그램과 그 상태를 직접 생성하는 것을 지원하는 동적 백엔드(예: Forth 백엔드)가 있다면, 이는 재배치 가능하므로 유효한 해결책으로 볼 수 있을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:30.538141Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "It is of course a possible fall-back to write such a backend of we fail otherwise.",
+      "source_hash": 1558786479731071625,
+      "context_hash": 145542476927467455,
+      "translation": "다른 방법으로 실패할 경우, 그러한 백엔드를 작성하는 것은 물론 가능한 대안입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:30.538141Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "There are some simple steps and some more difficult ones.",
+      "source_hash": 15236685911377328305,
+      "context_hash": 10589487034689790826,
+      "translation": "몇 가지 간단한 단계와 좀 더 어려운 단계가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:37.020586Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "Let's start with the simple.",
+      "source_hash": 16255660199857900927,
+      "context_hash": 8137781427073291944,
+      "translation": "간단한 것부터 시작해\\ 보겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:37.020586Z",
+      "issues": [
+        "번역 자체(간단한 것부터 시작해 보겠습니다)는 자연스럽고 정확하지만, \"시작해\\ 보겠습니다\"처럼 백슬래시가 텍스트에 그대로 노출되어 있어(RST 이스케이프용으로 보이나 렌더링되지 않은 상태) 가독성을 해칩니다."
+      ]
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Basic necessities",
+      "source_hash": 11289825153420096706,
+      "context_hash": 10557440268007164239,
+      "translation": "기본 필수 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:29.733021Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Pickling of a running thread involves a bit more than normal object pickling, because there exist many objects which don't have a pickling interface, and people would not care about pickling them at all.",
+      "source_hash": 4970711520142901305,
+      "context_hash": 2469121807095030409,
+      "translation": "실행 중인 스레드를 피클링하는 것은 일반적인 객체 피클링보다 조금 더 복잡한데, 피클링 인터페이스를 갖지 않은 객체가 많이 존재하며 사람들은 그것들을 피클링하는 데에 전혀 신경 쓰지 않기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:49.088230Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "But with thread pickling, these objects simply exist as local variables and are needed to restore the current runtime environment, and the user should not have to know what goes into the pickle.",
+      "source_hash": 8419708679436494154,
+      "context_hash": 17732261028224776187,
+      "translation": "하지만 스레드 피클링에서는 이러한 객체들이 단순히 지역 변수로 존재하며 현재 런타임 환경을 복원하는 데 필요하므로, 사용자는 피클에 무엇이 들어가는지 알 필요가 없어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:49.088230Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Examples are",
+      "source_hash": 7084553759368474487,
+      "context_hash": 14017644901803771104,
+      "translation": "예를 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:39.204683Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "generators",
+      "source_hash": 8796290617793979974,
+      "context_hash": 11396160398877256351,
+      "translation": "제너레이터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:07.201454Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "frames",
+      "source_hash": 3441840333528661125,
+      "context_hash": 10167096574129537643,
+      "translation": "프레임",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:23.968950Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "cells",
+      "source_hash": 18307517639602716116,
+      "context_hash": 1699853658284395975,
+      "translation": "셀",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:25.027352Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "iterators",
+      "source_hash": 3605882564078205850,
+      "context_hash": 5498862770209179740,
+      "translation": "이터레이터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:27.803793Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "tracebacks",
+      "source_hash": 10893277845165855377,
+      "context_hash": 399334287940415537,
+      "translation": "트레이스백",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:17:09.129385Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "to name just a few.",
+      "source_hash": 11376549251622637352,
+      "context_hash": 5325223103275080795,
+      "translation": "몇 가지만 예를 들자면.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:50:50.098297Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:1",
+      "source": "Fortunately most of these objects already have got a pickling implementation in Stackless Python, namely the prickelpit.c file.",
+      "source_hash": 2768647857673026858,
+      "context_hash": 16682459050127948110,
+      "translation": "다행히 이런 객체 대부분은 이미 Stackless Python에 pickling 구현이 있습니다. 바로 prickelpit.c 파일입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:50:50.098298Z",
+      "issues": [
+        "자연스럽고 문체(합니다체)도 적절하지만, \"namely the file\"을 \"바로 파일입니다\"로 옮겨 구현이 그 파일에 있다는 의미가 아니라 파일 자체가 구현인 것처럼 읽혀 원문 뉘앙스가 약간 달라졌습니다."
+      ]
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "It should be simple and straightforward to redo these implementations.",
+      "source_hash": 8721739611515505252,
+      "context_hash": 2741691624701311238,
+      "translation": "이 구현들을 다시 만드는 것은 간단하고 직관적이어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:50:54.932119Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:1",
+      "source": "Nevertheless there is a complication.",
+      "source_hash": 7687164482433388301,
+      "context_hash": 5495197743104479034,
+      "translation": "그럼에도 불구하고 복잡한 문제가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:50:54.932120Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:2",
+      "source": "The most natural way to support pickling is providing a __getstate__/__setstate__ method pair.",
+      "source_hash": 15094333650690561931,
+      "context_hash": 9306015418195794351,
+      "translation": "피클링을 지원하는 가장 자연스러운 방법은 __getstate__/__setstate__ 메서드 쌍을 제공하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:50:54.932121Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:3",
+      "source": "This is ok for extension types like coroutines/tasklets which we can control, but it should be avoided for existing types.",
+      "source_hash": 16811071701364171259,
+      "context_hash": 13236322905799792264,
+      "translation": "이것은 우리가 제어할 수 있는 coroutines/tasklets와 같은 확장 타입에는 괜찮지만, 기존 타입에는 피해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:50:54.932121Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:0",
+      "source": "Consider for instance frames.",
+      "source_hash": 12600649990958044942,
+      "context_hash": 4974835325372906791,
+      "translation": "예를 들어 프레임을 생각해 보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T22:29:43.981027Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:1",
+      "source": "We would have to add a __getstate__ and a __setstate__ method, which is an interface change.",
+      "source_hash": 4564475665427543818,
+      "context_hash": 13624912396700790431,
+      "translation": "__getstate__와 __setstate__ 메서드를 추가해야 하는데, 이는 인터페이스 변경입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:51:04.149818Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:2",
+      "source": "Furthermore, we would need to support creation of frames by calling the frame type, which is not really intended.",
+      "source_hash": 13323710572404277241,
+      "context_hash": 3739126134219867760,
+      "translation": "게다가, 프레임 타입을 호출해서 프레임을 생성하는 것도 지원해야 하는데, 이는 실제로 의도된 것이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:51:04.149818Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:11/seg:0",
+      "source": "For other types with are already callable, things get more complicated because we need to make sure that creating new instances does not interfere with existing ways to call the type.",
+      "source_hash": 405680350206272795,
+      "context_hash": 11013806675060092094,
+      "translation": "이미 호출 가능한 다른 타입의 경우, 새 인스턴스를 생성하는 것이 해당 타입을 호출하는 기존 방식과 충돌하지 않도록 해야 하므로 상황이 더 복잡해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:50:48.414677Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:12/seg:0",
+      "source": "Directly adding a pickling interface to existing types is quite likely to produce overlaps in the calling interface.",
+      "source_hash": 7411768790724344807,
+      "context_hash": 7224054382512846193,
+      "translation": "기존 타입에 피클링 인터페이스를 직접 추가하면 호출 인터페이스에서 중복이 발생할 가능성이 매우 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:24.082343Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:12/seg:1",
+      "source": "This happened for instance, when the module type became callable, and the signature was different from what Stackless added before.",
+      "source_hash": 3014225512694265316,
+      "context_hash": 17089653026697509529,
+      "translation": "예를 들어 모듈 타입이 호출 가능해졌을 때 이런 일이 발생했는데, 그 시그니처가 이전에 Stackless가 추가한 것과 달랐습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:24.082343Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:0",
+      "source": "For Stackless, I used the copyreg module, instead, and created special surrogate objects as placeholders, which replace the type of the object after unpickling with the right type pointer.",
+      "source_hash": 6041550941198577436,
+      "context_hash": 9712808082340843124,
+      "translation": "Stackless의 경우, 대신 copyreg 모듈을 사용했고, 언피클링 후 객체의 타입을 올바른 타입 포인터로 교체하는 자리표시자 역할의 특수한 대리(surrogate) 객체를 만들었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:08.804975Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:1",
+      "source": "For details, see the prickelpit.c file in the Stackless distribution.",
+      "source_hash": 1388967210859231320,
+      "context_hash": 12105990258483010526,
+      "translation": "자세한 내용은 Stackless 배포판에 있는 prickelpit.c 파일을 참고하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:08.804975Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:14/seg:0",
+      "source": "As a conclusion, pickling of tasklets is an addition to Stackless, but not meant to be an extension to Python.",
+      "source_hash": 13508368287181458604,
+      "context_hash": 8181671266759551978,
+      "translation": "결론적으로, tasklet의 피클링(pickling)은 Stackless에 대한 추가 기능이며, Python의 확장을 의도한 것은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:29.118537Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:14/seg:1",
+      "source": "The need to support pickling of certain objects should not change the interface.",
+      "source_hash": 6317230224187946130,
+      "context_hash": 2754628884856326860,
+      "translation": "특정 객체의 피클링 지원 필요성이 인터페이스를 변경해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:29.118538Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:14/seg:2",
+      "source": "It is better to decouple this and to use surrogate types for pickling which cannot collide with future additions to Python.",
+      "source_hash": 15501020815896420143,
+      "context_hash": 1943744499257563535,
+      "translation": "이를 분리하여, Python의 향후 추가 사항과 충돌할 수 없는 대리(surrogate) 타입을 피클링에 사용하는 편이 더 좋습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:29.118538Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "The real problem",
+      "source_hash": 15247365455084425677,
+      "context_hash": 8163799067525788275,
+      "translation": "진짜 문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:07.643069Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "There are currently some crucial differences between Stackless Python (SLP for now) and the PyPy Stackless support (PyPy for now) as far as it is grown.",
+      "source_hash": 3643880650475624579,
+      "context_hash": 5985702340166121260,
+      "translation": "현재 Stackless Python(이하 SLP)과 PyPy의 Stackless 지원(이하 PyPy) 간에는 지금까지의 발전 정도에서 몇 가지 중요한 차이가 있습니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T16:16:50.055643Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "When CPython does a call to a Python function, there are several helper functions involved for adjusting parameters, unpacking methods and some more.",
+      "source_hash": 16727678920144492610,
+      "context_hash": 3231485986796056371,
+      "translation": "CPython이 Python 함수를 호출할 때, 매개변수를 조정하고 메서드를 언패킹하는 등의 작업을 위해 여러 헬퍼 함수가 관여합니다.",
+      "glossary_snapshot": {
+        "CPython": "CPython"
+      },
+      "translated_at": "2026-08-14T16:16:50.055644Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "SLP takes a hard time to remove all these C functions from the C stack before starting the Python interpreter for the function.",
+      "source_hash": 13320540945899086669,
+      "context_hash": 17077738863060227606,
+      "translation": "SLP는 해당 함수를 위한 Python 인터프리터를 시작하기 전에 이 모든 C 함수를 C 스택에서 제거하기 위해 많은 노력을 기울입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T16:16:50.055644Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:3",
+      "source": "This change of behavior is done manually for all the helper functions by figuring out, which variables are still needed after the call.",
+      "source_hash": 17892929571095479489,
+      "context_hash": 966457447171009511,
+      "translation": "이러한 동작 변경은 호출 이후에도 어떤 변수가 여전히 필요한지 파악하여 모든 헬퍼 함수에 대해 수동으로 이루어집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:50.055644Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:4",
+      "source": "It turns out that in most cases, it is possible to let all the helper functions finish their work and return form the function call before the interpreter is started at all.",
+      "source_hash": 15578381513640772830,
+      "context_hash": 2247460338870414605,
+      "translation": "결국 대부분의 경우, 인터프리터가 시작되기 전에 모든 헬퍼 함수가 작업을 마치고 함수 호출로부터 반환되도록 하는 것이 가능한 것으로 나타났습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-14T16:16:50.055644Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "This is the major difference which needs to be tackled for PyPy.",
+      "source_hash": 8473487640139967278,
+      "context_hash": 16017990126221106731,
+      "translation": "이는 PyPy를 위해 반드시 다뤄야 할 주요한 차이점입니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T16:34:59.367399Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "Whenever we run a Python function, quite a number of functions incarnate on the C stack, and they get *not* finished before running the new frame.",
+      "source_hash": 4899278572449803677,
+      "context_hash": 9734989265062471700,
+      "translation": "Python 함수를 실행할 때마다 상당수의 함수가 C 스택에 구체화되며, 새 프레임을 실행하기 전에 완료되지 *않은* 채로 남습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:59.367400Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "In case of a coroutine switch, we just save the whole chain of activation records - c function entrypoints with the saved block variables.",
+      "source_hash": 14335803971399434679,
+      "context_hash": 6457407519951410602,
+      "translation": "코루틴 전환의 경우, 우리는 그저 활성화 레코드의 전체 체인 - 저장된 블록 변수를 가진 C 함수 진입점들 - 을 저장할 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:59.367400Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:3",
+      "source": "This is ok for coroutine switching, but in the sense of SLP, it is rather incomplete and not stackless at all.",
+      "source_hash": 17870689471190785835,
+      "context_hash": 1113202673825477399,
+      "translation": "이것은 코루틴 전환에는 괜찮지만, SLP의 관점에서는 오히려 불완전하며 전혀 스택리스(stackless)하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:59.367401Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:4",
+      "source": "The stack still exists, we can unwind and rebuild it, but it is a problem.",
+      "source_hash": 7979301172058484342,
+      "context_hash": 5172803779670362911,
+      "translation": "스택은 여전히 존재하며, 우리는 그것을 풀고(unwind) 다시 만들 수 있지만, 이것이 문제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:59.367401Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Why a problem?",
+      "source_hash": 1907496240094270026,
+      "context_hash": 3389679019106386605,
+      "translation": "왜 문제인가?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:17:04.974136Z",
+      "issues": [
+        "Accurate and natural as a heading, but it uses the plain-form ending \"인가?\" rather than the polite \"~합니까?/~일까요?\" style noted as the project's preferred documentation style."
+      ]
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "In an ideal world, thread pickling would just be building chains of pickled frames and nothing else.",
+      "source_hash": 11552763910577007295,
+      "context_hash": 1615130268682934331,
+      "translation": "이상적인 세계에서는, 스레드 피클링은 피클된 프레임의 체인을 구축하는 것일 뿐, 그 외에는 아무것도 아닐 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:43.748752Z",
+      "issues": [
+        "문장 구조는 정확하지만 \"~것일 뿐, 그 외에는 아무것도 아닐 것입니다\"라는 표현이 다소 중복되어 어색하게 읽히며, \"스레드 피클링은 ~구축할 뿐일 것입니다\"처럼 더 간결하게 다듬을 수 있습니다."
+      ]
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "For every different extra activation record like mentioned above, we have the problem of how to save this information.",
+      "source_hash": 9031144613153283759,
+      "context_hash": 11510825898495480763,
+      "translation": "위에서 언급한 것과 같은 서로 다른 추가 활성화 레코드마다, 이 정보를 어떻게 저장할지의 문제가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:43.748754Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "We need a representation which is not machine or compiler dependent.",
+      "source_hash": 12253942471460201478,
+      "context_hash": 3701966588192176944,
+      "translation": "우리는 머신이나 컴파일러에 종속되지 않는 표현이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:43.748754Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:3",
+      "source": "Right now, PyPy is quite unstable in terms of which blocks it will produce, what gets inlined, etc. The best solution possible is to try to get completely rid of these extra structures.",
+      "source_hash": 14606469894727689612,
+      "context_hash": 11038241522775520533,
+      "translation": "현재 PyPy는 어떤 블록을 생성할지, 무엇이 인라인될지 등의 측면에서 상당히 불안정합니다. 가능한 최선의 해결책은 이러한 추가 구조를 완전히 제거하려고 시도하는 것입니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T16:34:43.748755Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Unfortunately this is not even possible with SLP, because there are different flavors of state which make it hard to go without extra information.",
+      "source_hash": 3607881867482447613,
+      "context_hash": 4629222375976615543,
+      "translation": "안타깝게도 이것은 SLP로도 불가능한데, 상태(state)에는 여러 형태가 있어서 추가 정보 없이는 진행하기 어렵게 만들기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:52.778981Z",
+      "issues": [
+        "번역은 의미를 정확히 전달하지만, \"있어서 ~ 때문입니다\"처럼 인과 관계 표현이 중첩되어 다소 어색하게 읽힙니다."
+      ]
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "SLP switching strategies",
+      "source_hash": 15251222909810963075,
+      "context_hash": 13392449067379271838,
+      "translation": "SLP 전환 전략",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:06.626911Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "SLP has undergone several rewrites.",
+      "source_hash": 2021841160285619212,
+      "context_hash": 14884632695681383770,
+      "translation": "SLP는 여러 차례 재작성을 거쳤습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:57.727143Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "The first implementation was aiming at complete collaboration.",
+      "source_hash": 2509036571812291915,
+      "context_hash": 1913972381946751926,
+      "translation": "첫 번째 구현은 완전한 협업을 목표로 했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:57.727144Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:2",
+      "source": "A new frame's execution was deferred until all the preparational C function calls had left the C stack.",
+      "source_hash": 6605493456919037015,
+      "context_hash": 9932352757451913444,
+      "translation": "새 프레임의 실행은 모든 준비용 C 함수 호출이 C 스택을 벗어날 때까지 지연되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:57.727144Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:3",
+      "source": "There was no extra state to be saved.",
+      "source_hash": 4311762654390259277,
+      "context_hash": 8984244731772697769,
+      "translation": "저장해야 할 추가 상태는 없었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:57.727144Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "Well, this is only partially true - there are a couple of situations where a recursive call could not be avoided, since the necessary support would require heavy rewriting of the implementation.",
+      "source_hash": 9413389996232382840,
+      "context_hash": 6894706333707698451,
+      "translation": "음, 이는 부분적으로만 사실입니다 - 재귀 호출을 피할 수 없는 몇 가지 상황이 있는데, 필요한 지원을 위해서는 구현을 대대적으로 다시 작성해야 하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:46.397955Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "Examples are",
+      "source_hash": 7084553759368474487,
+      "context_hash": 9746590370126030485,
+      "translation": "예시는 다음과 같습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:48.565193Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "map is a stateful implementation of iterating over a sequence of operations.",
+      "source_hash": 17821498038335576117,
+      "context_hash": 9534689187980364680,
+      "translation": "map은 일련의 연산을 순회하는 상태 유지(stateful) 구현입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:49.559420Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:1",
+      "source": "It can be made non-recursive if the map operation creates its own frame to keep state.",
+      "source_hash": 118094015057528144,
+      "context_hash": 14255904151123356024,
+      "translation": "map 연산이 상태를 유지하기 위해 자체 프레임을 생성한다면 비재귀적으로 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:49.559421Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "__init__ looks trivial, but the semantics is that the return value of __init__ is supposed to be None, and CPy has a special check for this after the call.",
+      "source_hash": 17338365937833305733,
+      "context_hash": 1912926280766786357,
+      "translation": "__init__은 사소해 보이지만, __init__의 반환값은 None이어야 한다는 의미론이 있으며, CPy는 호출 후 이에 대한 특별한 검사를 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:51.728438Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:1",
+      "source": "This might simply be ignored, but it is a simple example for a case that cannot be handled automatically.",
+      "source_hash": 5027639810983034896,
+      "context_hash": 14183105453907950334,
+      "translation": "이는 단순히 무시될 수도 있지만, 자동으로 처리될 수 없는 경우를 보여주는 간단한 예시입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:51.728440Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "things like operator.__add__ can theoretically generate a wild pattern of recursive calls while CPy tries to figure out if it is a numeric add or a sequence add, and other callbacks may occur when methods like __coerce__ get involved.",
+      "source_hash": 1376401889876777364,
+      "context_hash": 11827649954501601348,
+      "translation": "operator.__add__ 같은 것들은 CPy가 그것이 숫자 덧셈인지 시퀀스 덧셈인지 판별하려는 동안 이론적으로 걷잡을 수 없는 재귀 호출 패턴을 만들어낼 수 있으며, __coerce__ 같은 메서드가 관여하면 다른 콜백들이 발생할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:55.525487Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:1",
+      "source": "This will never be solved for SLP, but might get a solution by the strategy outlined below.",
+      "source_hash": 8137264566855714513,
+      "context_hash": 18201957879796215302,
+      "translation": "이는 SLP에서는 결코 해결되지 않겠지만, 아래에 설명된 전략으로 해결책을 얻을 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:55.525487Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "The second implementation took a radically different approach.",
+      "source_hash": 13229001269251219434,
+      "context_hash": 11327629105644640365,
+      "translation": "두 번째 구현은 근본적으로 다른 접근 방식을 취했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:50:49.167045Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:1",
+      "source": "Context switches were done by hijacking parts of the C stack, storing them away and replacing them by the stack fragment that the target needs.",
+      "source_hash": 12888068906639154434,
+      "context_hash": 17893187229150503755,
+      "translation": "컨텍스트 전환은 C 스택의 일부를 가로채어 따로 저장한 다음, 목표가 필요로 하는 스택 조각으로 교체하는 방식으로 이루어졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:50:49.167045Z",
+      "issues": [
+        "The translation is accurate and reads smoothly overall, but \"목표\" (goal) is an unusual word choice for \"target\" in this technical context — \"대상\" would be more natural and precise for referring to the target stack/coroutine being switched to."
+      ]
+    },
+    {
+      "id": "section:6/block:7/seg:2",
+      "source": "This is very powerful and allows to switch even in the context of foreign code.",
+      "source_hash": 15446031896286577546,
+      "context_hash": 12633038773519944082,
+      "translation": "이 방식은 매우 강력하며, 외부 코드의 컨텍스트 안에서도 전환할 수 있게 해줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:50:49.167046Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:3",
+      "source": "With a little risk, I was even able to add concurrency to foreign Fortran code.",
+      "source_hash": 9900059401053074948,
+      "context_hash": 13051284187697879966,
+      "translation": "약간의 위험을 감수하면, 외부 Fortran 코드에도 동시성을 추가할 수 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:50:49.167046Z",
+      "issues": [
+        "자연스럽고 문체는 적절하나, \"감수하면\"이 원문의 과거 진술(\"was able to\")을 조건문(\"~하면\")으로 바꿔 뉘앙스가 약간 달라졌습니다."
+      ]
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "The above concept is called Hard (switching), the collaborative Soft (switching).",
+      "source_hash": 527504814765347732,
+      "context_hash": 13644794579361183464,
+      "translation": "위에서 설명한 개념은 하드(Hard) 전환이라 부르고, 협력적인 방식은 소프트(Soft) 전환이라 부릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:51:17.171947Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:1",
+      "source": "Note that an improved version of Hard is still the building block for greenlets, which makes them not really green - I'd name it yellow.",
+      "source_hash": 6834861103723600248,
+      "context_hash": 108661713797088969,
+      "translation": "개선된 버전의 Hard가 여전히 그린렛(greenlets)의 구성 요소라는 점에 유의합니다. 이 때문에 그린렛은 사실 그린(green)이라 할 수 없는데, 저라면 옐로(yellow)라고 부르겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:51:17.171949Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "The latest SLP rewrites combine both ideas, trying to use Soft whenever possible, but using Hard when nested interpreters are in the way.",
+      "source_hash": 1792746297607200077,
+      "context_hash": 6886276758639944146,
+      "translation": "최신 SLP 재작성은 두 아이디어를 결합하여, 가능한 한 Soft를 사용하려고 시도하지만, 중첩된 인터프리터가 방해가 될 때는 Hard를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:12.378070Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:0",
+      "source": "Notabene, it was never tried to pickle tasklets when Hard was involved.",
+      "source_hash": 12116960048282938306,
+      "context_hash": 4324796653452013635,
+      "translation": "주의할 점은, Hard가 관여된 경우에는 태스클릿(tasklet)을 피클링하는 시도가 전혀 없었다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:41.457535Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:1",
+      "source": "In SLP, pickling works with Soft.",
+      "source_hash": 10090245003731366278,
+      "context_hash": 7288581926206489573,
+      "translation": "SLP에서는 피클링이 Soft와 함께 동작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:41.457537Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:2",
+      "source": "To gather more pickleable situations, you need to invent new frame types or write replacement Python code and switch it using Soft.",
+      "source_hash": 10288771058134567574,
+      "context_hash": 8490950417197891960,
+      "translation": "피클 가능한 상황을 더 많이 모으려면, 새로운 프레임 타입을 고안하거나 대체 Python 코드를 작성한 뒤 Soft를 사용해 전환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:41.457537Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Analogies between SLP and PyPy",
+      "source_hash": 2224180371828330210,
+      "context_hash": 2084461682967690398,
+      "translation": "SLP와 PyPy 간의 유사점",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T15:44:17.673306Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Right now, PyPy saves C state of functions in tiny activation records: the alive variables of a block, together with the entry point of the function that was left.",
+      "source_hash": 16725483390047023878,
+      "context_hash": 12870781892111921393,
+      "translation": "현재 PyPy는 함수의 C 상태를 작은 활성화 레코드에 저장합니다: 블록의 생존 변수들과, 벗어난 함수의 진입점을 함께 저장합니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T15:44:41.886919Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "This is an improvement over storing raw stack slices, but the pattern is similar: The C stack state gets restored when we switch.",
+      "source_hash": 895836705472133938,
+      "context_hash": 9095755107148130623,
+      "translation": "이는 원시 스택 슬라이스를 저장하는 방식보다 개선된 것이지만, 패턴은 비슷합니다: 전환할 때 C 스택 상태가 복원됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:41.886921Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "In this sense, it was the astonishing resume when Richard and I discussed this last week: PyPy essentially does a variant of Hard switching!",
+      "source_hash": 11176407955133089537,
+      "context_hash": 14463078707325106369,
+      "translation": "이런 의미에서, 지난주 리처드와 이 문제를 논의했을 때 놀라운 결론이 나왔습니다: PyPy는 본질적으로 Hard switching의 변형을 수행하고 있습니다!",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T15:44:37.731455Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "At least it does a compromise that does not really help with pickling.",
+      "source_hash": 12915044774759559507,
+      "context_hash": 8374198952757473319,
+      "translation": "적어도 pickling에 실제로는 도움이 되지 않는 타협을 하고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:37.731457Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "On the other hand, this approach is half the way.",
+      "source_hash": 15934322790111047280,
+      "context_hash": 377992482977266263,
+      "translation": "반면, 이 접근 방식은 절반의 해법일 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:11.398171Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "It turns out to be an improvement over SLP not to have to avoid recursions in the first place.",
+      "source_hash": 17020809549266553298,
+      "context_hash": 606665441976525119,
+      "translation": "애초에 재귀를 피할 필요가 없다는 점에서, 이는 SLP보다 개선된 방식으로 드러납니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:11.398172Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:2",
+      "source": "Instead, it seems to be even more elegant and efficient to get rid of unnecessary state right in the context of a switch and no earlier!",
+      "source_hash": 17936682568757918905,
+      "context_hash": 16814890915746485624,
+      "translation": "오히려, 그 이전이 아니라 전환(switch)이 일어나는 바로 그 시점에서만 불필요한 상태를 제거하는 것이 더 우아하고 효율적인 것으로 보입니다!",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:11.398173Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Ways to handle the problem in a minimalistic way",
+      "source_hash": 13825332473344558131,
+      "context_hash": 17411796786352792765,
+      "translation": "문제를 최소한으로 처리하는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:30.931793Z",
+      "issues": [
+        "\"최소한으로\"는 \"minimalistic\"의 뉘앙스(간결하고 단순한 접근 방식)보다는 \"최소한의 노력만 들여서\"라는 의미로 읽혀 원문의 미니멀리즘적 함의가 다소 약화됩니다."
+      ]
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Comparing the different approaches of SLP and PyPy, it appears to be not necessary to change the interpreter in the first place.",
+      "source_hash": 165045208361362340,
+      "context_hash": 16443869607361016970,
+      "translation": "SLP와 PyPy의 서로 다른 접근 방식을 비교해보면, 애초에 인터프리터를 변경할 필요가 없어 보입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T16:00:05.034769Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "PyPy does not need to change its calling behavior in order to be cooperative.",
+      "source_hash": 15114200066544975332,
+      "context_hash": 16395324763605454564,
+      "translation": "PyPy는 협조적으로 동작하기 위해 호출 방식을 변경할 필요가 없습니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T16:00:05.034771Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "The key point is to find out which activation records need to be stored at all.",
+      "source_hash": 18157867049996658176,
+      "context_hash": 14984523254129872854,
+      "translation": "핵심은 어떤 활성화 레코드(activation record)가 애초에 저장되어야 하는지 알아내는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:05.034772Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:3",
+      "source": "This should be possible to identify as a part of the stackless transform.",
+      "source_hash": 10822243193673126792,
+      "context_hash": 6051414871184366090,
+      "translation": "이는 스택리스 변환(stackless transform)의 일부로서 식별할 수 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:05.034772Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Consider the simple most common case of calling a normal Python function.",
+      "source_hash": 4813773976899002158,
+      "context_hash": 2924731248834431508,
+      "translation": "일반적인 Python 함수를 호출하는 가장 단순하고 흔한 경우를 생각해\\ 보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T22:29:41.518188Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "There are several calls to functions involved, which do preparational steps.",
+      "source_hash": 13469950703034423321,
+      "context_hash": 449028360461897808,
+      "translation": "여기에는 준비 작업을 수행하는 여러 함수 호출이 관여합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:06.869822Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:2",
+      "source": "Without trying to be exact (this is part of the work to be done), involved steps are",
+      "source_hash": 5145430428118512427,
+      "context_hash": 2360479400944605262,
+      "translation": "정확하게 기술하려 하지 않고(이는 앞으로 해야 할 작업의 일부입니다), 관련된 단계들은 다음과 같습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:06.869822Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "decode the arguments of the function",
+      "source_hash": 11428913252134267596,
+      "context_hash": 18176608663418333216,
+      "translation": "함수의 인자를 디코딩합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:38.971698Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "prepare a new frame",
+      "source_hash": 13801442077016388973,
+      "context_hash": 4106944931680402674,
+      "translation": "새 프레임\\ 을 준비합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:46.394559Z",
+      "issues": [
+        "Translation has style or naturalness issues"
+      ]
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "store the arguments in the frame",
+      "source_hash": 10818817015036249199,
+      "context_hash": 11962650994804012946,
+      "translation": "프레임에 인자를 저장합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:46.118933Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "execute the frame",
+      "source_hash": 2481799297417382890,
+      "context_hash": 9478465217416081050,
+      "translation": "프레임을 실행합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:59:55.939744Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "return the result",
+      "source_hash": 14628680866157171732,
+      "context_hash": 7452491553268445461,
+      "translation": "결과를 반환합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:59:55.513460Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:0",
+      "source": "Now assume that we do not execute the frame, but do a context switch instead, then right now a sequence of activation records is stored on the heap.",
+      "source_hash": 10606307793824473324,
+      "context_hash": 17691049950736323913,
+      "translation": "이제 프레임을 실행하지 않고 대신 컨텍스트 스위치를 수행한다고 가정하면, 지금 이 순간 일련의 활성화 레코드(activation record)가 힙에 저장되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T22:29:49.942858Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:1",
+      "source": "If we want to re-activate this chain of activation records, what do we really need to restore before we can do the function call?",
+      "source_hash": 16577773173066183024,
+      "context_hash": 15666066709294432542,
+      "translation": "이 활성화 레코드 연쇄를 다시 활성화하려면, 함수 호출을 수행하기 전에 실제로 무엇을 복원해야 할까요?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:20.941250Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:0",
+      "source": "the argument decoding is done, already, and the fact that we could have done the function call shows, that no exception occurred.",
+      "source_hash": 8719518137190866174,
+      "context_hash": 6167221453167869565,
+      "translation": "인자 디코딩은 이미 완료되었으며, 함수 호출을 수행할 수 있었다는 사실은 예외가 발생하지 않았음을 보여줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:12.480243Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:1",
+      "source": "We can ignore the rest of this activation record and do the housekeeping.",
+      "source_hash": 7490970728848515948,
+      "context_hash": 7014680030285952761,
+      "translation": "이 활성화 레코드의 나머지 부분은 무시하고 뒷정리를 수행하면 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:12.480244Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:0",
+      "source": "the frame is prepared, and arguments are stored in it.",
+      "source_hash": 7862224592757939950,
+      "context_hash": 104360091571209297,
+      "translation": "프레임이 준비되고, 인자가 그 안에 저장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:14.689218Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:1",
+      "source": "The operation succeeded, and we have the frame.",
+      "source_hash": 16269139222314125838,
+      "context_hash": 63278821933125556,
+      "translation": "연산이 성공했고, 프레임을 얻었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:14.689219Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:2",
+      "source": "We can ignore exception handling and just do housekeeping by getting rid of references.",
+      "source_hash": 18030938312505652694,
+      "context_hash": 17587192504705380630,
+      "translation": "예외 처리는 무시하고 참조를 제거하는 정리 작업만 하면 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:14.689220Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:11/seg:0",
+      "source": "for executing the frame, we need a special function that executes frames.",
+      "source_hash": 9364620833483345036,
+      "context_hash": 107022395126716486,
+      "translation": "프레임을 실행하기 위해서는 프레임을 실행하는 특수한 함수가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:26.941785Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:11/seg:1",
+      "source": "It is possible that we need different flavors due to contexts.",
+      "source_hash": 3317513559668033389,
+      "context_hash": 12248725439979410573,
+      "translation": "컨텍스트에 따라 서로 다른 종류가 필요할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:26.941787Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:11/seg:2",
+      "source": "SLP does this by using different registered functions which operate on a frame, depending on the frame's state (first entry, reentry after call, returning, yielding etc)",
+      "source_hash": 219986166721318050,
+      "context_hash": 202503223805820718,
+      "translation": "SLP는 프레임의 상태(최초 진입, 호출 후 재진입, 반환, yielding 등)에 따라 프레임에서 동작하는 서로 다른 등록 함수를 사용하여 이를 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:26.941787Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:12/seg:0",
+      "source": "after executing the frame, exceptions need to be handled in the usual way, and we should return to the issuer of the call.",
+      "source_hash": 6742580079755807346,
+      "context_hash": 3857192596596152219,
+      "translation": "프레임 실행 후에는 예외를 일반적인 방식으로 처리해야 하며, 호출자에게 복귀해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T15:44:14.157140Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:13/seg:0",
+      "source": "Some deeper analysis is needed to get these things correct.",
+      "source_hash": 6122514576875461534,
+      "context_hash": 11728806554544008026,
+      "translation": "이러한 것들을 정확하게 처리하려면 좀 더 깊은 분석이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:29.628353Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:13/seg:1",
+      "source": "But it should have become quite clear, that after all the preparational steps have been done, there is no other state necessary than what we have in the Python frames: bound arguments, instruction pointer, that's it.",
+      "source_hash": 13544472225213233787,
+      "context_hash": 6116531437882851739,
+      "translation": "하지만 모든 준비 단계가 끝나면, Python 프레임에 있는 것 외에는 다른 상태가 필요하지 않다는 점이 꽤 명확해졌을 것입니다: 바인딩된 인자, 명령어 포인터, 그게 전부입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:29.628354Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:14/seg:0",
+      "source": "My proposal is now to do such an analysis by hand, identify the different cases to be handled, and then trying to find an algorithm that automatically identifies the blocks in the whole program, where the restoring of the C stack can be avoided, and we can jump back to the previous caller, directly.",
+      "source_hash": 11218029155575448996,
+      "context_hash": 15984040172745533855,
+      "translation": "제 제안은, 이제 이러한 분석을 손수 수행하여 처리해야 할 여러 경우를 식별한 다음, 전체 프로그램에서 C 스택 복원을 피할 수 있고 이전 호출자로 곧바로 되돌아갈 수 있는 블록들을 자동으로 식별해내는 알고리즘을 찾아보는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:24.561658Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:15/seg:0",
+      "source": "A rough sketch of the necessary analysis:",
+      "source_hash": 15934400583262788076,
+      "context_hash": 6259729638579559034,
+      "translation": "필요한 분석에 대한 대략적인 스케치입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:22.470833Z",
+      "issues": [
+        "\"스케치\"라는 외래어 사용과 문장 끝에 콜론이 오는 어색한 구조로 인해 자연스러움이 다소 떨어지지만, 의미는 정확하게 전달됩니다."
+      ]
+    },
+    {
+      "id": "section:8/block:16/seg:0",
+      "source": "for every block in an RPython function that can reach unwind: Analyze control flow.",
+      "source_hash": 17725745747332546325,
+      "context_hash": 1054935739945511404,
+      "translation": "unwind에 도달할 수 있는 RPython 함수의 모든 블록에 대해: 제어 흐름을 분석합니다.",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-14T16:16:17.676076Z",
+      "issues": [
+        "\"unwind에 도달할 수 있는\"이 \"RPython 함수\"를 수식하는 것처럼 읽혀, 원문에서 \"블록\"(block)이 unwind에 도달한다는 의미가 모호해지는 문제가 있습니다."
+      ]
+    },
+    {
+      "id": "section:8/block:16/seg:1",
+      "source": "It should be immediately leading to the return block with only one output variable.",
+      "source_hash": 15174886718043795423,
+      "context_hash": 8552452704782158102,
+      "translation": "이는 출력 변수가 하나뿐인 반환 블록으로 곧바로 이어져야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:17.676077Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:16/seg:2",
+      "source": "All other alive variables should have ended their liveness in this block.",
+      "source_hash": 9929733488542834300,
+      "context_hash": 11366556547601496459,
+      "translation": "그 외의 모든 생존 변수는 이 블록에서 생존 기간이 종료되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:17.676078Z",
+      "issues": [
+        "자연스럽고 문법적으로 무난하지만, 원문의 \"should have ended\"라는 완료 시제 뉘앙스(이미 종료되어 있어야 함)가 \"종료되어야 합니다\"로 번역되어 단순 미래/당위 표현으로 다소 약화되었습니다."
+      ]
+    },
+    {
+      "id": "section:8/block:17/seg:0",
+      "source": "I think this will not work in the first place.",
+      "source_hash": 2641145106464360612,
+      "context_hash": 14538186886897670697,
+      "translation": "애초에 이것은 작동하지 않을 것이라고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:39.172297Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:17/seg:1",
+      "source": "For the bound frame arguments for instance, I think we need some notation that these are held by the frame, and we can drop their liveness before doing the call, hence we don't need to save these variables in the activation record, and hence the whole activation record can be removed.",
+      "source_hash": 18087493821878593398,
+      "context_hash": 12146867489086948925,
+      "translation": "예를 들어 바인딩된 프레임 인자의 경우, 이들이 프레임에 의해 유지된다는 것을 나타내는 어떤 표기법이 필요하다고 생각하며, 호출을 수행하기 전에 이들의 활성 상태(liveness)를 제거할 수 있으므로, 이 변수들을 활성화 레코드(activation record)에 저장할 필요가 없고, 따라서 전체 활성화 레코드를 제거할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:39.172297Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:18/seg:0",
+      "source": "As a conclusion of this incomplete first analysis, it seems to be necessary to identify useless activation records in order to support pickling.",
+      "source_hash": 16844219352072026993,
+      "context_hash": 9721488815027496856,
+      "translation": "이 불완전한 첫 번째 분석의 결론으로, 피클링(pickling)을 지원하려면 쓸모없는 활성화 레코드(activation record)를 식별할 필요가 있어 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:16.237370Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:18/seg:1",
+      "source": "The remaining, irreducible activation records should then be those which hold a reference to a Python frame.",
+      "source_hash": 5521006941001111245,
+      "context_hash": 1644291884070992525,
+      "translation": "그렇다면 남는, 더 이상 줄일 수 없는 활성화 레코드는 Python 프레임에 대한 참조를 가지고 있는 것들이어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:16.237370Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:18/seg:2",
+      "source": "Such a chain is pickleable if its root points back to the context switching code of the interp-level implementation of coroutines.",
+      "source_hash": 10680630470631609208,
+      "context_hash": 17976419939833218172,
+      "translation": "이러한 체인은 그 루트가 코루틴(coroutine)의 인터프리터 레벨 구현에 있는 컨텍스트 전환 코드로 다시 이어질 경우 피클링 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:16.237370Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:19/seg:0",
+      "source": "As an observation, this transform not only enables pickling, but also is an optimization, if we can avoid saving many activation records.",
+      "source_hash": 6094605366156293848,
+      "context_hash": 4260175378874977355,
+      "translation": "하나의 관찰로서, 이 변환은 피클링을 가능하게 할 뿐만 아니라, 많은 활성화 레코드 저장을 피할 수 있다면 최적화이기도 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:39.201708Z",
+      "issues": [
+        "\"하나의 관찰로서\"라는 도입부가 다소 어색한 직역투이지만(예: \"참고로\" 또는 \"한 가지 짚어보면\" 등이 더 자연스러움), 나머지 문장은 원문의 의미와 논리 구조를 정확하게 전달하고 있습니다."
+      ]
+    },
+    {
+      "id": "section:8/block:20/seg:0",
+      "source": "Another possible observation which I hope to be able to prove is this: The remaining irreducible activation records which don't just hold a Python frame are those which should be considered special.",
+      "source_hash": 4358914692462551810,
+      "context_hash": 17237987392870843515,
+      "translation": "제가 증명할 수 있기를 바라는 또 다른 가능한 관찰은 다음과 같습니다: Python 프레임만 담고 있는 것이 아닌, 나머지 축약 불가능한 활성화 레코드들이 특별하게 취급되어야 할 것들입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:25.353914Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:20/seg:1",
+      "source": "They should be turned into something like special frames, and they would be the key to make PyPy completely stackless, a goal which is practically impossible for SLP!",
+      "source_hash": 11304622240335533392,
+      "context_hash": 11298860654971085249,
+      "translation": "이들은 특별한 프레임과 같은 것으로 바뀌어야 하며, PyPy를 완전히 스택리스(stackless)로 만드는 핵심이 될 것입니다. 이는 SLP로는 사실상 불가능한 목표입니다!",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T16:16:25.353915Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:20/seg:2",
+      "source": "These activation records would need to become part of the official interface and need to get naming support for their necessary functions.",
+      "source_hash": 17711977147493132870,
+      "context_hash": 11608144175406581927,
+      "translation": "이러한 활성화 레코드들은 공식 인터페이스의 일부가 되어야 하며, 필요한 함수들에 대한 네이밍 지원을 받아야 할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:25.353915Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:21/seg:0",
+      "source": "I wish to stop this paper here.",
+      "source_hash": 11912083653133770758,
+      "context_hash": 13891178791304903803,
+      "translation": "이 논문은 여기서 멈추고자 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:22.415563Z",
+      "issues": [
+        "주어가 바뀌어 \"논문이 스스로 멈추고자 한다\"는 의도치 않은 의인화가 발생했습니다 — 원문은 저자(I)가 논문을 멈추려는 의도이므로 \"나는 이 논문을 여기서 멈추고자 합니다\"가 더 정확합니다."
+      ]
+    },
+    {
+      "id": "section:8/block:21/seg:1",
+      "source": "I believe everything else needs to be tried in an implementation, and this is so far all I can do just with imagination.",
+      "source_hash": 12699251870180347473,
+      "context_hash": 5506166766084868808,
+      "translation": "나머지는 모두 실제 구현\\ 에서 시도해 보아야 한다고 생각하며, 이는 지금까지 상상만으로 제가 할 수 있는 전부입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:00:22.415565Z",
+      "issues": [
+        "번역 자체는 의미를 정확히 전달하지만 \"구현\\ 에서\"에 불필요한 백슬래시가 그대로 노출되어 있어 자연스러운 한국어 문장으로 보이지 않습니다."
+      ]
+    },
+    {
+      "id": "section:8/block:22/seg:0",
+      "source": "best - chris",
+      "source_hash": 2323417095499375455,
+      "context_hash": 9646982437466085531,
+      "translation": "안부 전하며 - 크리스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:59.934304Z",
+      "issues": [
+        "The translation naturally renders an email sign-off but expands \"best\" into a fuller phrase (\"안부 전하며\"/\"sending regards\"), which is a reasonable interpretive choice for this context but not a literal match to the terse original."
+      ]
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Just an addition after some more thinking",
+      "source_hash": 6691745341032490073,
+      "context_hash": 7111695152659650109,
+      "translation": "좀 더 생각해 본 후 덧붙이는 내용입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:16:54.886570Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Actually it struck me after checking this in, that the problem of determining which blocks need to save state and which not it not really a Stackless problem.",
+      "source_hash": 7470069145090582347,
+      "context_hash": 3772125251273453591,
+      "translation": "사실 이것을 커밋한 후에 문득 든 생각인데, 어떤 블록이 상태를 저장해야 하고 어떤 블록은 그렇지 않은지를 판단하는 문제는 사실 Stackless만의 문제가 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:17:09.885895Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "It is a system-immanent problem of a missing optimization that we still did not try to solve.",
+      "source_hash": 8187327717827235635,
+      "context_hash": 14481780978789558428,
+      "translation": "이는 우리가 아직 해결을 시도하지 않은, 시스템에 내재된 최적화 부재의 문제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:17:09.885895Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "Speaking in terms of GC transform, and especially the refcounting, it is probably easy to understand what I mean.",
+      "source_hash": 7186912021572368436,
+      "context_hash": 9773729632155477479,
+      "translation": "GC 변환(GC transform), 특히 참조 카운팅(refcounting)의 관점에서 말씀드리면, 제가 의도하는 바를 이해하시기는 아마 쉬울 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:17:05.039956Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "Our current refcounting implementation is naive, in the sense that we do not try to do the optimizations which every extension writer does by hand: We do not try to save references.",
+      "source_hash": 2085801999532672231,
+      "context_hash": 5417498768106093898,
+      "translation": "현재 저희의 참조 카운팅 구현은 나이브(naive)한데, 이는 모든 확장 모듈 작성자가 수동으로 수행하는 최적화를 시도하지 않는다는 의미입니다: 저희는 참조를 저장하려 하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:17:05.039957Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "This is also why I'm always arguing that refcounting can be and effectively *is* efficient, because CPython does it very well.",
+      "source_hash": 2318587622985600486,
+      "context_hash": 1892024061609106861,
+      "translation": "이것이 또한 제가 참조 카운팅(refcounting)이 효율적일 수 있고 실제로 *효율적*\\ 이라고 항상 주장하는 이유이기도 한데, CPython이 이를 매우 잘 수행하기 때문입니다.",
+      "glossary_snapshot": {
+        "CPython": "CPython"
+      },
+      "translated_at": "2026-08-14T16:34:30.021858Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "Our refcounting is not aware of variable lifeness, it does not track references which are known to be held by other objects.",
+      "source_hash": 9663442454893158458,
+      "context_hash": 568998249191741463,
+      "translation": "우리의 참조 카운팅은 변수의 수명(liveness)을 인식하지 못하며, 다른 객체가 보유하고 있다고 알려진 참조는 추적하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:36.607937Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:1",
+      "source": "Optimizing that would do two things: The refcounting would become very efficient, since we would save some 80 % of it.",
+      "source_hash": 8988708813502589472,
+      "context_hash": 3816319389916988135,
+      "translation": "이를 최적화하면 두 가지 효과를 얻을 수 있습니다. 참조 카운팅이 매우 효율적이게 될 것인데, 그중 약 80%를 절약할 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:36.607938Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:2",
+      "source": "The second part, which is relevant to the pickling problem is this: By doing a proper analysis, we already would have lost references to all the variables which we don't need to save any longer, because we know that they are held in, for instance, frames.",
+      "source_hash": 157940999726993488,
+      "context_hash": 15769504712359119125,
+      "translation": "피클링 문제와 관련된 두 번째 부분은 다음과 같습니다. 적절한 분석을 수행하면, 더 이상 저장할 필요가 없는 모든 변수에 대한 참조를 이미 잃은 상태가 될 것입니다. 왜냐하면 예를 들어 그것들이 프레임에 보유되어 있다는 것을 알기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:36.607938Z",
+      "issues": [
+        "전반적으로 의미는 정확히 전달되지만 \"이미 잃은 상태가 될 것입니다\"라는 표현이 다소 어색하고, \"because\"절의 인과관계 연결이 매끄럽지 못해 문장이 약간 부자연스럽습니다."
+      ]
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "I hope you understand that: If we improve the life-time analysis of variables, the sketched problem of above about which blocks need to save state and which don't, should become trivial and should just vanish.",
+      "source_hash": 5613199905362044420,
+      "context_hash": 9310676352811430274,
+      "translation": "이 점을 이해해 주시기 바랍니다: 변수의 수명 분석을 개선하면, 어떤 블록이 상태를 저장해야 하고 어떤 블록은 그럴 필요가 없는지에 대해 위에서 개략적으로 설명한 문제는 사소한 것이 되어 그냥 사라져야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:54.800935Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:1",
+      "source": "Doing this correctly will solve the pickling problem quasi automatically, leading to a more efficient implementation at the same time.",
+      "source_hash": 10985750638093358986,
+      "context_hash": 1312259793820834641,
+      "translation": "이를 올바르게 수행하면 피클링 문제가 거의 자동으로 해결되는 동시에 더 효율적인 구현으로 이어질 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:34:54.800936Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "I hope I told the truth and will try to prove it.",
+      "source_hash": 7175703654392738134,
+      "context_hash": 9697025126627804075,
+      "translation": "저는 진실을 말했기를 바라며 그것을 증명하려 노력하겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T16:35:01.886048Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "ciao - chris",
+      "source_hash": 16459359755020451810,
+      "context_hash": 7836218803290094500,
+      "translation": "차오 - chris",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T22:29:48.393572Z",
+      "issues": []
+    }
+  ]
+}

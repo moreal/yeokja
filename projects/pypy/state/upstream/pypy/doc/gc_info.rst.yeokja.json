@@ -1,0 +1,1555 @@
+{
+  "version": 1,
+  "source_hash": 3045818184691304990,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Garbage collector documentation and configuration",
+      "source_hash": 5049147538701185236,
+      "context_hash": 636082749663597177,
+      "translation": "가비지 컬렉터 문서 및 설정",
+      "glossary_snapshot": {
+        "garbage collector": "가비지 컬렉터"
+      },
+      "translated_at": "2026-08-14T21:02:12.282797Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Incminimark",
+      "source_hash": 13758198073979661983,
+      "context_hash": 15984420934188860534,
+      "translation": "Incminimark",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:01:47.609583Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "PyPy's default garbage collector is called incminimark - it's an incremental, generational moving collector.",
+      "source_hash": 10412445297125661986,
+      "context_hash": 3850613961735440715,
+      "translation": "PyPy의 기본 가비지 컬렉터는 incminimark라고 불리며, 점진적(incremental)이고 세대별(generational)로 이동하는 컬렉터입니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy",
+        "garbage collector": "가비지 컬렉터"
+      },
+      "translated_at": "2026-08-14T21:02:01.040062Z",
+      "issues": [
+        "\"세대별로 이동하는\"이 \"generational\"과 \"moving\"이라는 두 개의 독립적인 특성을 하나로 합쳐버려(\"세대별 이동\" 방식으로 오해될 수 있음), 원문의 세 가지 병렬적 특성(incremental·generational·moving)이 명확히 전달되지 않습니다."
+      ]
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "Here we hope to explain a bit how it works and how it can be tuned to suit the workload.",
+      "source_hash": 5932987723874979461,
+      "context_hash": 4705797100011628819,
+      "translation": "여기서는 이것이 어떻게 동작하는지, 그리고 작업 부하에 맞게 어떻게 조정할 수 있는지 간단히 설명하고자 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:01.040063Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "Incminimark first allocates objects in so called *nursery* - place for young objects, where allocation is very cheap, being just a pointer bump.",
+      "source_hash": 11284327155797412784,
+      "context_hash": 13581679926207042540,
+      "translation": "Incminimark은 먼저 객체를 이른바 *nursery*(어린 객체를 위한 장소)에 할당하는데, 이곳에서는 할당이 단순히 포인터를 증가시키는 것에 지나지 않으므로 매우 저렴합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:52.730008Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "The nursery size is a very crucial variable - depending on your workload (one or many processes) and cache sizes you might want to experiment with it via *PYPY_GC_NURSERY* environment variable.",
+      "source_hash": 9185054829463523911,
+      "context_hash": 7209261476357508027,
+      "translation": "nursery 크기는 매우 중요한 변수입니다 - 작업 부하(프로세스가 하나인지 여럿인지)와 캐시 크기에 따라 *PYPY_GC_NURSERY* 환경 변수로 이 값을 실험해보고 싶을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:52.730009Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:2",
+      "source": "When the nursery is full, a minor collection is performed.",
+      "source_hash": 9420575571608453680,
+      "context_hash": 15834251670641249756,
+      "translation": "nursery가 가득 차면 마이너 컬렉션(minor collection)이 수행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:52.730010Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:3",
+      "source": "Freed objects are no longer referenceable and just die, just by not being referenced any more; on the other hand, objects found to still be alive must survive and are copied from the nursery to the old generation.",
+      "source_hash": 7166485332320544789,
+      "context_hash": 16042198481435039223,
+      "translation": "해제된 객체는 더 이상 참조할 수 없게 되어, 단지 더 이상 참조되지 않음으로써 소멸합니다. 반면, 아직 살아 있는 것으로 확인된 객체는 살아남아야 하며 nursery에서 구세대(old generation)로 복사됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:52.730010Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:4",
+      "source": "Either to arenas, which are collections of objects of the same size, or directly allocated with malloc if they're larger.  (A third category, the very large objects, are initially allocated outside the nursery and never move.)",
+      "source_hash": 17249872346059881248,
+      "context_hash": 17403922510065870315,
+      "translation": "이때 동일한 크기의 객체들의 집합인 아레나(arena)로 복사되거나, 더 큰 경우에는 malloc으로 직접 할당됩니다. (세 번째 범주인 매우 큰 객체는 처음부터 nursery 밖에 할당되며 결코 이동하지 않습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:52.730010Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "Since Incminimark is an incremental GC, the major collection is incremental: the goal is not to have any pause longer than 1ms, but in practice it depends on the size and characteristics of the heap: occasionally, there can be pauses between 10-100ms.",
+      "source_hash": 15315608649664873789,
+      "context_hash": 259735889125284557,
+      "translation": "Incminimark은 점진적 GC이므로 주요 수집(major collection)도 점진적으로 이루어집니다: 목표는 1ms보다 긴 일시 정지가 없도록 하는 것이지만, 실제로는 힙(heap)\\ 의 크기와 특성에 따라 달라지며, 간혹 10-100ms 사이의 일시 정지가 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:01:50.909607Z",
+      "issues": [
+        "번역 자체는 자연스럽고 정확하지만 \"힙(heap)\\ 의\"에서 불필요한 백슬래시가 노출되어(아마 RST 이스케이프 아티팩트) 가독성과 완성도를 해칩니다."
+      ]
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Semi-manual GC management",
+      "source_hash": 12287998676902976123,
+      "context_hash": 14952502304684257116,
+      "translation": "반\\ 수동 가비지 컬렉션 관리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:04.082549Z",
+      "issues": [
+        "Translation is acceptable but could be improved"
+      ]
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "If there are parts of the program where it is important to have a low latency, you might want to control precisely when the GC runs, to avoid unexpected pauses.",
+      "source_hash": 11426564270138537067,
+      "context_hash": 10131371114439429315,
+      "translation": "프로그램에서 낮은 지연 시간이 중요한 부분이 있다면, 예상치 못한 멈춤을 피하기 위해 GC가 실행되는 시점을 정확히 제어하고 싶을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:17.136760Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Note that this has effect only on major collections, while minor collections continue to work as usual.",
+      "source_hash": 9849865977719266134,
+      "context_hash": 8363916261611233000,
+      "translation": "이는 메이저 컬렉션(major collection)에만 영향을 미치며, 마이너 컬렉션(minor collection)은 평소처럼 계속 동작한다는 점에 유의하시기 바랍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:17.136762Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "As explained above, a full major collection consists of ``N`` steps, where ``N`` depends on the size of the heap; generally speaking, it is not possible to predict how many steps will be needed to complete a collection.",
+      "source_hash": 5305001810981269126,
+      "context_hash": 14692649016908056541,
+      "translation": "위에서 설명했듯이, 전체 메이저 컬렉션은 ``N``\\ 단계로 구성되며, ``N``\\ 은 힙의 크기에 따라 달라집니다. 일반적으로 말해, 컬렉션을 완료하는 데 몇 단계가 필요할지 예측하는 것은 불가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:01:58.698854Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "``gc.enable()`` and ``gc.disable()`` control whether the GC runs collection steps automatically.",
+      "source_hash": 15824267031785412863,
+      "context_hash": 4899819423204913661,
+      "translation": "``gc.enable()``\\ 와 ``gc.disable()``\\ 은 GC가 자동으로 수집 단계를 실행할지 여부를 제어합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:20.747038Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "When the GC is disabled the memory usage will grow indefinitely, unless you manually call ``gc.collect()`` and ``gc.collect_step()``.",
+      "source_hash": 14821173145459164585,
+      "context_hash": 14398807546577406444,
+      "translation": "GC가 비활성화되면, ``gc.collect()``\\ 와 ``gc.collect_step()``\\ 을 수동으로 호출하지 않는 한 메모리 사용량이 무한정 증가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:20.747039Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "``gc.collect()`` runs a full major collection.",
+      "source_hash": 1445939390484792146,
+      "context_hash": 9720588184275660624,
+      "translation": "``gc.collect()``\\ 는 전체 메이저 컬렉션을 실행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:11.226365Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "``gc.collect_step()`` runs a single collection step.",
+      "source_hash": 13076865174855349980,
+      "context_hash": 7200599908149749127,
+      "translation": "``gc.collect_step()``\\ 는 단일 수집 단계를 실행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:18.957480Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "It returns an object of type GcCollectStepStats_, the same which is passed to the corresponding `GC Hooks`_.",
+      "source_hash": 3875903429987136998,
+      "context_hash": 2283256177572903635,
+      "translation": "이것은 해당 `가비지 컬렉터 훅`_\\ 에 전달되는 것과 동일한 GcCollectStepStats_\\ 타입의 객체를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:18.957482Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:2",
+      "source": "The following code is roughly equivalent to a ``gc.collect()``",
+      "source_hash": 2860901778386069676,
+      "context_hash": 5051248204992164591,
+      "translation": "다음 코드는 대략 ``gc.collect()``\\ 와 동등합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:18.957482Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "For a real-world example of usage of this API, you can look at the 3rd-party module `pypytools.gc.custom`_, which also provides a ``with customgc.nogc()`` context manager to mark sections where the GC is forbidden.",
+      "source_hash": 8068293294352055909,
+      "context_hash": 14721086643790248357,
+      "translation": "이 API의 실제 사용 예시로, GC가 금지된 영역을 표시하기 위한 ``with customgc.nogc()`` 컨텍스트 관리자도 제공하는 서드파티 모듈 `pypytools.gc.custom`_\\ 을 참고할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:21.229126Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Fragmentation",
+      "source_hash": 10504169152166618559,
+      "context_hash": 14994583409544245614,
+      "translation": "단편화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:09.976316Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Before we discuss issues of \"fragmentation\", we need a bit of precision.",
+      "source_hash": 11927642907301552682,
+      "context_hash": 2065229389542640042,
+      "translation": "\"파편화(fragmentation)\" 문제를 논의하기 전에, 약간의 정확한 정의가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:01:57.328052Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "There are two kinds of related but distinct issues:",
+      "source_hash": 14358686741125227792,
+      "context_hash": 11618155964456096293,
+      "translation": "서로 관련되어 있지만 구별되는 두 가지 종류의 문제가 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:01:57.328053Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "If the program allocates a lot of memory, and then frees it all by dropping all references to it, then we might expect to see the RSS to drop.  (RSS = Resident Set Size on Linux, as seen by \"top\"; it is an approximation of the actual memory usage from the OS's point of view.) This might not occur: the RSS may remain at its highest value.",
+      "source_hash": 388216343561328052,
+      "context_hash": 10116353746854666838,
+      "translation": "프로그램이 많은 메모리를 할당한 다음, 모든 참조를 제거하여 이를 전부 해제하면, RSS가 감소할 것이라고 예상할 수 있습니다. (RSS = 리눅스에서 \"top\"으로 볼 수 있는 Resident Set Size로, OS 관점에서 실제 메모리 사용량의 근사치입니다.) 이런 일이 일어나지 않을 수도 있습니다: RSS가 최고값에 머물러 있을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:39.037966Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "This issue is more precisely caused by the process not returning \"free\" memory to the OS.",
+      "source_hash": 10397568473213033182,
+      "context_hash": 10141577307905862235,
+      "translation": "이 문제는 더 정확히는 프로세스가 \"free\" 메모리를 OS에 반환하지 않기 때문에 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:39.037967Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "We call this case \"unreturned memory\".",
+      "source_hash": 6868607847229381479,
+      "context_hash": 3865327021840307029,
+      "translation": "우리는 이 경우를 \"반환되지 않은 메모리(unreturned memory)\"라고 부릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:39.037968Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "After doing the above, if the RSS didn't go down, then at least future allocations should not cause the RSS to grow more.",
+      "source_hash": 10807306912364889996,
+      "context_hash": 17688320986482706976,
+      "translation": "위 작업을 수행한 후 RSS가 줄어들지 않았다면, 적어도 이후의 할당이 RSS를 더 증가시키지는 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:34.245834Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "That is, the process should reuse unreturned memory as long as it has got some left.",
+      "source_hash": 15812637018034529162,
+      "context_hash": 16793658406699984005,
+      "translation": "즉, 프로세스는 반환되지 않은 메모리가 남아 있는 한 이를 재사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:34.245835Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:2",
+      "source": "If this does not occur, the RSS grows even larger and we have real fragmentation issues.",
+      "source_hash": 9951308221725057772,
+      "context_hash": 5132578339434435719,
+      "translation": "만약 이런 일이 일어나지 않는다면 RSS는 더욱 커지게 되고, 실질적인 단편화 문제가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:34.245835Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "gc.get_stats",
+      "source_hash": 875793139866374255,
+      "context_hash": 13985589855802371042,
+      "translation": "gc.get_stats",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:35.030923Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "There is a special function in the ``gc`` module called ``get_stats(memory_pressure=False)``.",
+      "source_hash": 9289378593671560286,
+      "context_hash": 1218590840848391095,
+      "translation": "``gc`` 모듈에는 ``get_stats(memory_pressure=False)``\\ 라는 특별한 함수가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:31.277235Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "``memory_pressure`` controls whether or not to report memory pressure from objects allocated outside of the GC, which requires walking the entire heap, so it's disabled by default due to its cost. Enable it when debugging mysterious memory disappearance.",
+      "source_hash": 9576430908016043333,
+      "context_hash": 2321706434309373511,
+      "translation": "``memory_pressure``\\ 는 GC 외부에 할당된 객체로부터의 메모리 압력을 보고할지 여부를 제어하는데, 이는 전체 힙을 순회해야 하므로 비용 때문에 기본적으로 비활성화되어 있습니다. 원인 모를 메모리 소실을 디버깅할 때 이를 활성화하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:36.486034Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Example call looks like that",
+      "source_hash": 4439944011465500699,
+      "context_hash": 11211100330719539900,
+      "translation": "예제 호출은 다음과 같습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:29.443689Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "In this particular case, which is just at startup, GC consumes relatively little memory and there is even less unused, but allocated memory.",
+      "source_hash": 4625759618306630723,
+      "context_hash": 6997084303830097036,
+      "translation": "시작 직후인 이 특정 경우, 가비지 컬렉터는 비교적 적은 메모리를 소비하며, 할당되었지만 사용되지 않은 메모리는 그보다 더욱 적습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:25.587050Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:1",
+      "source": "In case there is a lot of unreturned memory or actual fragmentation, the \"allocated\" can be much higher than \"used\".",
+      "source_hash": 243933454852841093,
+      "context_hash": 2972387481833087779,
+      "translation": "반환되지 않은 메모리가 많거나 실제 단편화가 있는 경우, \"allocated\"가 \"used\"보다 훨씬 높을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:25.587050Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:2",
+      "source": "Generally speaking, \"peak\" will more closely resemble the actual memory consumed as reported by RSS.",
+      "source_hash": 4286966513855863236,
+      "context_hash": 8741986804749428927,
+      "translation": "일반적으로 \"peak\"는 RSS로 보고되는 실제 소비 메모리에 더 가깝습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:25.587050Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:3",
+      "source": "Indeed, returning memory to the OS is a hard and not solved problem.",
+      "source_hash": 1125814633160408002,
+      "context_hash": 798945623050499781,
+      "translation": "실제로 메모리를 OS에 반환하는 것은 어렵고 아직 해결되지 않은 문제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:25.587050Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:4",
+      "source": "In PyPy, it occurs only if an arena is entirely free---a contiguous block of 64 pages of 4 or 8 KB each.",
+      "source_hash": 10886080405552196893,
+      "context_hash": 763051847360697136,
+      "translation": "PyPy에서는 아레나(각각 4 또는 8 KB인 페이지 64개로 이루어진 연속 블록)가 완전히 비어 있을 때만 발생합니다.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T21:03:25.587051Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:5",
+      "source": "It is also rare for the \"rawmalloced\" category, at least for common system implementations of ``malloc()``.",
+      "source_hash": 2501655072088524502,
+      "context_hash": 6753759463112255667,
+      "translation": "이는 \"rawmalloced\" 카테고리에서도 마찬가지로 드문데, 적어도 일반적인 시스템 ``malloc()``\\ 구현에서는 그렇습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:25.587051Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "The details of various fields:",
+      "source_hash": 17126274024009669071,
+      "context_hash": 910318524723727373,
+      "translation": "다양한 필드의 세부 사항:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:41.534848Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "GC in arenas - small old objects held in arenas.",
+      "source_hash": 16936328009522999705,
+      "context_hash": 1117543129488380913,
+      "translation": "아레나(arena) 내 GC - 작은 오래된 객체들이 아레나에 보관됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:10.778822Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:1",
+      "source": "If the amount \"allocated\" is much higher than the amount \"used\", we have unreturned memory.",
+      "source_hash": 10983095171339506315,
+      "context_hash": 15088559772422430737,
+      "translation": "\"할당된(allocated)\" 양이 \"사용된(used)\" 양보다 훨씬 많다면, 반환되지 않은 메모리가 있는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:10.778823Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:2",
+      "source": "It is possible but unlikely that we have internal fragmentation here.",
+      "source_hash": 7525237782468514642,
+      "context_hash": 3303412840100710422,
+      "translation": "여기서 내부 단편화가 발생할 가능성이 있지만 흔하지는 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:10.778823Z",
+      "issues": [
+        "\"흔하지는 않습니다\" (not common) subtly shifts \"unlikely\" (a probability judgment about this specific case) toward frequency/generality, but the sentence otherwise reads naturally and conveys the core meaning well."
+      ]
+    },
+    {
+      "id": "section:4/block:7/seg:3",
+      "source": "However, this unreturned memory cannot be reused for any ``malloc()``, including the memory from the \"rawmalloced\" section.",
+      "source_hash": 2915386955417813520,
+      "context_hash": 11494059119378368861,
+      "translation": "하지만 이 반환되지 않은 메모리는 \"rawmalloced\" 섹션의 메모리를 포함하여 어떤 ``malloc()``\\ 에도 재사용될 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:10.778823Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "GC rawmalloced - large objects allocated with malloc.",
+      "source_hash": 5232247132421462230,
+      "context_hash": 9467030668851722251,
+      "translation": "GC rawmalloced - malloc으로 할당된 대형 객체입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:43.419408Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:1",
+      "source": "This is gives the current (first block of text) and peak (second block of text) memory allocated with ``malloc()``.",
+      "source_hash": 16067831468296044816,
+      "context_hash": 3687094133087729682,
+      "translation": "이는 ``malloc()``\\ 으로 할당된 현재(첫 번째 텍스트 블록)와 최대(두 번째 텍스트 블록) 메모리를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:43.419409Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:2",
+      "source": "The amount of unreturned memory or fragmentation caused by ``malloc()`` cannot easily be reported.",
+      "source_hash": 8360693424375643924,
+      "context_hash": 9861706079932810846,
+      "translation": "``malloc()``\\ 으로 인해 발생한 미반환 메모리 또는 단편화의 양은 쉽게 보고될 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:43.419409Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:3",
+      "source": "Usually you can guess there is some if the RSS is much larger than the total memory reported for \"GC allocated\", but do keep in mind that this total does not include malloc'ed memory not known to PyPy's GC at all.",
+      "source_hash": 15523571033615618119,
+      "context_hash": 15275878094983148040,
+      "translation": "보통 RSS가 \"GC allocated\"로 보고된 총 메모리보다 훨씬 크다면 이런 메모리가 있다고 추측할 수 있지만, 이 총량에는 PyPy의 가비지 컬렉터가 전혀 알지 못하는 malloc된 메모리는 포함되지 않는다는 점을 유념하십시오.",
+      "glossary_snapshot": {
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T21:03:43.419409Z",
+      "issues": [
+        "전반적으로 의미는 정확히 전달되지만, \"이런 메모리가 있다고\"에서 \"이런\"이 가리키는 대상이 문맥 없이는 다소 모호하여 자연스러운 흐름을 약간 해칩니다."
+      ]
+    },
+    {
+      "id": "section:4/block:8/seg:4",
+      "source": "If you guess there is some, consider using `jemalloc`_ as opposed to system malloc.",
+      "source_hash": 260779745173303148,
+      "context_hash": 7257058033514351755,
+      "translation": "그런 것이 있다고 추측된다면, 시스템 malloc 대신 `jemalloc`_\\ 을 사용하는 것을 고려하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:43.419409Z",
+      "issues": [
+        "\"추측된다면\"이라는 피동 표현이 다소 어색하며, \"그런 것이 있다고 생각되면\" 등 더 자연스러운 표현이 가능하지만 전체적인 의미 전달과 RST 참조 형식은 정확합니다."
+      ]
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "nursery - amount of memory allocated for nursery, fixed at startup, controlled via an environment variable",
+      "source_hash": 15841103939751911358,
+      "context_hash": 14157106860373879756,
+      "translation": "nursery - nursery를 위해 할당된 메모리 양으로, 시작 시 고정되며 환경 변수를 통해 제어됩니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:53.365702Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "raw assembler allocated - amount of assembler memory that JIT feels responsible for",
+      "source_hash": 18290946601166601467,
+      "context_hash": 817564595306630131,
+      "translation": "raw assembler allocated - JIT\\ 가 책임지고 있다고 인식하는 어셈블러 메모리의 양",
+      "glossary_snapshot": {
+        "JIT": "JIT"
+      },
+      "translated_at": "2026-08-14T21:02:53.367425Z",
+      "issues": [
+        "번역 자체는 원문의 의미(“JIT가 책임진다고 인식하는 어셈블러 메모리 양”)를 정확히 전달하지만, \"JIT\\ 가\"처럼 이스케이프용 백슬래시가 그대로 노출되어 있어 렌더링 전 텍스트만 보면 부자연스럽게 보입니다 (렌더링 후에는 \"JIT 가\"로 정상 출력될 것으로 예상됨)."
+      ]
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "memory pressure, if asked for - amount of memory we think got allocated via external malloc (eg loading cert store in SSL contexts) that is kept alive by GC objects, but not accounted in the GC",
+      "source_hash": 4105548187478947613,
+      "context_hash": 3581664657797198930,
+      "translation": "메모리 압박(memory pressure), 요청 시 - GC 객체에 의해 살아있게 유지되지만 GC에서는 계산되지 않는, 외부 malloc(예: SSL 컨텍스트에서 인증서 저장소 로딩)을 통해 할당되었다고 생각되는 메모리의 양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:00.757067Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "GC Hooks",
+      "source_hash": 7621557651963992725,
+      "context_hash": 4531422188599155102,
+      "translation": "가비지 컬렉터 훅",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:50.392647Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "GC hooks are user-defined functions which are called whenever a specific GC event occur, and can be used to monitor GC activity and pauses.",
+      "source_hash": 5510171393511574225,
+      "context_hash": 17575866991673532202,
+      "translation": "GC 훅은 특정 GC 이벤트가 발생할 때마다 호출되는 사용자 정의 함수이며, GC 활동과 일시 정지를 모니터링하는 데 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:06.685329Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "You can install the hooks by setting the following attributes:",
+      "source_hash": 13614851864931610639,
+      "context_hash": 8906473784780258042,
+      "translation": "다음 속성들을 설정하여 훅을 설치할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:06.685331Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "``gc.hooks.on_gc_minor``",
+      "source_hash": 15668897260898106492,
+      "context_hash": 15672044459934243987,
+      "translation": "``gc.hooks.on_gc_minor``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:00.083954Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "Called whenever a minor collection occurs.",
+      "source_hash": 14486156947753916245,
+      "context_hash": 6984349343244353261,
+      "translation": "마이너 컬렉션이 발생할 때마다 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:17.123086Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "It corresponds to ``gc-minor`` sections inside ``PYPYLOG``.",
+      "source_hash": 16777894855224226088,
+      "context_hash": 5065567901424352872,
+      "translation": "이는 ``PYPYLOG`` 내의 ``gc-minor`` 섹션에 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:17.123087Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "``gc.hooks.on_gc_collect_step``",
+      "source_hash": 2718149606094619248,
+      "context_hash": 7613870285202713237,
+      "translation": "``gc.hooks.on_gc_collect_step``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:02.041336Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "Called whenever an incremental step of a major collection occurs.",
+      "source_hash": 15803237030748636710,
+      "context_hash": 16496701801039820389,
+      "translation": "메이저 컬렉션(major collection)의 증분 단계(incremental step)가 발생할 때마다 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:18.725549Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:1",
+      "source": "It corresponds to ``gc-collect-step`` sections inside ``PYPYLOG``.",
+      "source_hash": 798720454756097992,
+      "context_hash": 12128445708263736624,
+      "translation": "이는 ``PYPYLOG`` 내부의 ``gc-collect-step`` 섹션에 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:18.725550Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "``gc.hooks.on_gc_collect``",
+      "source_hash": 17115286200353135807,
+      "context_hash": 6498224669602033688,
+      "translation": "``gc.hooks.on_gc_collect``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:09.284799Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "Called after the last incremental step, when a major collection is fully done.",
+      "source_hash": 82206737581486975,
+      "context_hash": 16313517049264487233,
+      "translation": "마지막 증분 단계 이후, 메이저 컬렉션이 완전히 끝났을 때 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:25.918662Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:1",
+      "source": "It corresponds to ``gc-collect-done`` sections inside ``PYPYLOG``.",
+      "source_hash": 17045672986930103949,
+      "context_hash": 4483378570046384854,
+      "translation": "이는 ``PYPYLOG`` 내의 ``gc-collect-done`` 섹션에 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:25.918662Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "To uninstall a hook, simply set the corresponding attribute to ``None``.",
+      "source_hash": 17443899728661925067,
+      "context_hash": 1130244046955652078,
+      "translation": "훅을 제거하려면 해당 속성을 ``None``\\ 으로 설정하면 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:33.005640Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:1",
+      "source": "To install all hooks at once, you can call ``gc.hooks.set(obj)``, which will look for methods ``on_gc_*`` on ``obj``.",
+      "source_hash": 15421205591875057938,
+      "context_hash": 2117355368372821951,
+      "translation": "모든 훅을 한 번에 설치하려면 ``gc.hooks.set(obj)``\\ 를 호출할 수 있으며, 이는 ``obj``\\ 에서 ``on_gc_*`` 메서드를 찾습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:33.005641Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:2",
+      "source": "To uninstall all the hooks at once, you can call ``gc.hooks.reset()``.",
+      "source_hash": 288806713448400264,
+      "context_hash": 14065529998497449138,
+      "translation": "모든 훅을 한 번에 제거하려면 ``gc.hooks.reset()``\\ 을 호출할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:33.005641Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "The functions called by the hooks receive a single ``stats`` argument, which contains various statistics about the event.",
+      "source_hash": 16813536457912138214,
+      "context_hash": 17364745044630919439,
+      "translation": "훅(hook)에 의해 호출되는 함수들은 이벤트에 대한 다양한 통계를 담고 있는 단일 ``stats`` 인자를 받습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:20.977191Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "Note that PyPy cannot call the hooks immediately after a GC event, but it has to wait until it reaches a point in which the interpreter is in a known state and calling user-defined code is harmless.",
+      "source_hash": 1936932292009856576,
+      "context_hash": 14436921287573124111,
+      "translation": "PyPy는 GC 이벤트 직후에는 훅(hook)을 호출할 수 없고, 인터프리터가 알려진 상태에 있으며 사용자 정의 코드를 호출해도 무해한 지점에 도달할 때까지 기다려야 한다는 점에 유의하십시오.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T22:24:28.461007Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:1",
+      "source": "It might happen that multiple events occur before the hook is invoked: in this case, you can inspect the value ``stats.count`` to know how many times the event occurred since the last time the hook was called.",
+      "source_hash": 7095076899686075455,
+      "context_hash": 13226836890540524296,
+      "translation": "훅이 호출되기 전에 여러 이벤트가 발생할 수 있습니다. 이 경우 ``stats.count`` 값을 확인하면 마지막으로 훅이 호출된 이후 이벤트가 몇 번 발생했는지 알 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:00.422274Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:2",
+      "source": "Similarly, ``stats.duration`` contains the **total** time spent by the GC for this specific event since the last time the hook was called.",
+      "source_hash": 10402694824382820715,
+      "context_hash": 14592743697533298117,
+      "translation": "마찬가지로, ``stats.duration``\\ 은 마지막으로 훅이 호출된 이후 이 특정 이벤트에 대해 GC가 소비한 **총**\\ 시간을 담고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:00.422274Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "On the other hand, all the other fields of the ``stats`` object are relative only to the **last** event of the series.",
+      "source_hash": 15428730157016375693,
+      "context_hash": 520197246421908162,
+      "translation": "반면에, ``stats`` 객체의 다른 모든 필드는 시리즈의 **마지막** 이벤트에만 상대적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:46.843532Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "The attributes for ``GcMinorStats`` in the ``on_gc_minor`` hook are:",
+      "source_hash": 14014898090916215919,
+      "context_hash": 7005215481309550378,
+      "translation": "``on_gc_minor``\\ 훅에서 ``GcMinorStats``\\ 의 속성은 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:31.292374Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "``count``",
+      "source_hash": 1330439084948972582,
+      "context_hash": 15262880162027059009,
+      "translation": "``count``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:31.933145Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "The number of minor collections occurred since the last hook call.",
+      "source_hash": 16902282841518994033,
+      "context_hash": 7721024508834915439,
+      "translation": "마지막 훅(hook) 호출 이후 발생한 마이너 컬렉션(minor collection)의 개수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:38.025444Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "``duration``",
+      "source_hash": 1122147730872087497,
+      "context_hash": 1494361342308351670,
+      "translation": "``duration``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:37.473662Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:0",
+      "source": "The total time spent inside minor collections since the last hook call, in seconds.",
+      "source_hash": 16642318924232091596,
+      "context_hash": 6253600623301908391,
+      "translation": "이전 후크 호출 이후 마이너 컬렉션 내부에서 소요된 총 시간(초 단위)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:41.747659Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:0",
+      "source": "``duration_min``",
+      "source_hash": 1653382120040836308,
+      "context_hash": 7950965919162484990,
+      "translation": "``duration_min``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:40.323701Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:18/seg:0",
+      "source": "The duration of the fastest minor collection since the last hook call.",
+      "source_hash": 2105116039609845355,
+      "context_hash": 2697191559644174593,
+      "translation": "마지막 훅 호출 이후 가장 빠른 마이너 컬렉션의 소요 시간입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:42.265376Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:19/seg:0",
+      "source": "``duration_max``",
+      "source_hash": 17943189555023549162,
+      "context_hash": 16102398167842894044,
+      "translation": "``duration_max``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:47.227864Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:20/seg:0",
+      "source": "The duration of the slowest minor collection since the last hook call.",
+      "source_hash": 8182725198374568530,
+      "context_hash": 4546438132945397896,
+      "translation": "마지막 훅(hook) 호출 이후 가장 느렸던 마이너 컬렉션(minor collection)의 소요 시간입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:48.368760Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:21/seg:0",
+      "source": "``total_memory_used``",
+      "source_hash": 13919510000420759376,
+      "context_hash": 3736824807034733947,
+      "translation": "``total_memory_used``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:48.223778Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:22/seg:0",
+      "source": "The amount of memory used at the end of the minor collection, in bytes.",
+      "source_hash": 17516767566692423838,
+      "context_hash": 9940709357783296872,
+      "translation": "마이너 컬렉션이 끝날 때 사용된 메모리 양(바이트 단위)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:08.492200Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:22/seg:1",
+      "source": "This include the memory used in arenas (for GC-managed memory) and raw-malloced memory (e.g., the content of numpy arrays).",
+      "source_hash": 10603745428168870289,
+      "context_hash": 7076730572053077313,
+      "translation": "여기에는 아레나에서 사용된 메모리(가비지 컬렉터가 관리하는 메모리용)와 raw-malloc으로 할당된 메모리(예: numpy 배열의 내용)가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:08.492201Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:23/seg:0",
+      "source": "``pinned_objects``",
+      "source_hash": 4134608552762436747,
+      "context_hash": 4637292199366150513,
+      "translation": "``pinned_objects``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:50.373817Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:24/seg:0",
+      "source": "the number of pinned objects.",
+      "source_hash": 11181150308165972239,
+      "context_hash": 14697187757929350844,
+      "translation": "고정된(pinned) 객체의 수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:51.147659Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:25/seg:0",
+      "source": "The attributes for ``GcCollectStepStats`` in the ``on_gc_collect_step`` hook are:",
+      "source_hash": 8449808365629064787,
+      "context_hash": 14144714261319202691,
+      "translation": "``on_gc_collect_step`` 훅의 ``GcCollectStepStats``\\ 에 대한 속성은 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:01.336598Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:26/seg:0",
+      "source": "``count``, ``duration``, ``duration_min``, ``duration_max``",
+      "source_hash": 995867456363825600,
+      "context_hash": 7560465973138404059,
+      "translation": "``count``\\ , ``duration``\\ , ``duration_min``\\ , ``duration_max``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:02.571022Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:27/seg:0",
+      "source": "See above.",
+      "source_hash": 7641642914900963734,
+      "context_hash": 14983384637499734311,
+      "translation": "위 내용을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:02:20.487182Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:28/seg:0",
+      "source": "``oldstate``, ``newstate``",
+      "source_hash": 3216928180349615378,
+      "context_hash": 6351132365416293413,
+      "translation": "``oldstate``, ``newstate``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:57.917750Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:29/seg:0",
+      "source": "Integers which indicate the state of the GC before and after the step.",
+      "source_hash": 13040479442129890908,
+      "context_hash": 8666362366054079481,
+      "translation": "단계 전후의 GC 상태를 나타내는 정수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:58.602545Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:30/seg:0",
+      "source": "``major_is_done``",
+      "source_hash": 4538939845890342164,
+      "context_hash": 1592125181113523353,
+      "translation": "``major_is_done``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:00.243625Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:31/seg:0",
+      "source": "Boolean which indicate whether this was the last step of the major collection",
+      "source_hash": 446045193200046467,
+      "context_hash": 12076759274771571874,
+      "translation": "이것이 메이저(major) 컬렉션의 마지막 단계였는지 여부를 나타내는 불리언입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:10.017623Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:32/seg:0",
+      "source": "The value of ``oldstate`` and ``newstate`` is one of these constants, defined inside ``gc.GcCollectStepStats``: ``STATE_SCANNING``, ``STATE_MARKING``, ``STATE_SWEEPING``, ``STATE_FINALIZING``, ``STATE_USERDEL``.",
+      "source_hash": 6485519320385383675,
+      "context_hash": 5870507328464221558,
+      "translation": "``oldstate``\\ 와 ``newstate``\\ 의 값은 ``gc.GcCollectStepStats`` 내부에 정의된 다음 상수 중 하나입니다: ``STATE_SCANNING``, ``STATE_MARKING``, ``STATE_SWEEPING``, ``STATE_FINALIZING``, ``STATE_USERDEL``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:21.271255Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:32/seg:1",
+      "source": "It is possible to get a string representation of it by indexing the ``GC_STATES`` tuple.",
+      "source_hash": 12236117665057671337,
+      "context_hash": 17645705845854101965,
+      "translation": "``GC_STATES`` 튜플의 인덱스를 사용해 그 문자열 표현을 얻을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:21.271255Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:33/seg:0",
+      "source": "The attributes for ``GcCollectStats`` in the ``on_gc_collect`` hook are:",
+      "source_hash": 5480950809134541517,
+      "context_hash": 4178565553435852413,
+      "translation": "``on_gc_collect`` 훅에서 ``GcCollectStats``\\ 의 속성은 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:11.246110Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:34/seg:0",
+      "source": "``count``",
+      "source_hash": 1330439084948972582,
+      "context_hash": 17421564194821395584,
+      "translation": "``count``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:09.087586Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:35/seg:0",
+      "source": "See above.",
+      "source_hash": 7641642914900963734,
+      "context_hash": 12614744318179368221,
+      "translation": "위 내용을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:11.536653Z",
+      "issues": [
+        "\"See above.\"를 \"위 내용을 참조하십시오\"로 번역한 것은 의미상 정확하지만, 원문의 간결한 명령형 톤에 비해 다소 격식체로 확장되어 문체가 약간 무겁게 느껴집니다."
+      ]
+    },
+    {
+      "id": "section:5/block:36/seg:0",
+      "source": "``num_major_collects``",
+      "source_hash": 5829405365916287167,
+      "context_hash": 12705859215920097686,
+      "translation": "``num_major_collects``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:10.602605Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:37/seg:0",
+      "source": "The total number of major collections which have been done since the start.",
+      "source_hash": 7847463937062093970,
+      "context_hash": 1425740379756913485,
+      "translation": "시작 이후 지금까지 수행된 주요 컬렉션의 총 횟수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:26.161617Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:37/seg:1",
+      "source": "Contrarily to ``count``, this is an always-growing counter and it's not reset between invocations.",
+      "source_hash": 1936486392719620123,
+      "context_hash": 16995524027609193247,
+      "translation": "``count``\\ 와 달리, 이 값은 항상 증가하는 카운터이며 호출 사이에 초기화되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:26.161617Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:38/seg:0",
+      "source": "``arenas_count_before``, ``arenas_count_after``",
+      "source_hash": 10094575999202339774,
+      "context_hash": 1772525668244093880,
+      "translation": "``arenas_count_before``, ``arenas_count_after``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:17.317847Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:39/seg:0",
+      "source": "Number of arenas used before and after the major collection.",
+      "source_hash": 11676479772055797520,
+      "context_hash": 13191079529572904779,
+      "translation": "메이저 컬렉션 전후에 사용된 아레나(arena)의 수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:19.782497Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:40/seg:0",
+      "source": "``arenas_bytes``",
+      "source_hash": 8112566986706699419,
+      "context_hash": 6278475744904549625,
+      "translation": "``arenas_bytes``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:19.787557Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:41/seg:0",
+      "source": "Total number of bytes used by GC-managed objects.",
+      "source_hash": 14254519417334238788,
+      "context_hash": 12396643131589734442,
+      "translation": "가비지 컬렉션\\ 이 관리하는 객체가 사용하는 총 바이트 수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:28.449241Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:42/seg:0",
+      "source": "``rawmalloc_bytes_before``, ``rawmalloc_bytes_after``",
+      "source_hash": 2620175087935020316,
+      "context_hash": 8541643097160578910,
+      "translation": "``rawmalloc_bytes_before``\\ , ``rawmalloc_bytes_after``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:23.879646Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:43/seg:0",
+      "source": "Total number of bytes used by raw-malloced objects, before and after the major collection.",
+      "source_hash": 8088842689682932058,
+      "context_hash": 2470242360545305418,
+      "translation": "메이저 컬렉션 전후에 raw-malloc으로 할당된 객체가 사용하는 총 바이트 수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:25.607745Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:44/seg:0",
+      "source": "``pinned_objects``",
+      "source_hash": 4134608552762436747,
+      "context_hash": 4008590710263415794,
+      "translation": "``pinned_objects``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:25.874358Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:45/seg:0",
+      "source": "the number of pinned objects.",
+      "source_hash": 11181150308165972239,
+      "context_hash": 6580399653023662964,
+      "translation": "고정(pinned)된 객체의 개수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:28.809873Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:46/seg:0",
+      "source": "Note that ``GcCollectStats`` does **not** have a ``duration`` field.",
+      "source_hash": 3193137121804718336,
+      "context_hash": 2610051802896085745,
+      "translation": "``GcCollectStats``\\ 는 ``duration`` 필드를 가지고 있지 **않다**\\ 는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:49.455206Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:46/seg:1",
+      "source": "This is because all the GC work is done inside ``gc-collect-step``: ``gc-collect-done`` is used only to give additional stats, but doesn't do any actual work.",
+      "source_hash": 16557489621478464471,
+      "context_hash": 10679598438517048725,
+      "translation": "이는 모든 GC 작업이 ``gc-collect-step`` 내부에서 수행되기 때문입니다: ``gc-collect-done``\\ 은 추가적인 통계만 제공할 뿐, 실제 작업은 전혀 수행하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:49.455207Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:47/seg:0",
+      "source": "Here is an example of GC hooks in use",
+      "source_hash": 11733391238182186676,
+      "context_hash": 2527195824056559269,
+      "translation": "다음은 GC 후크를 사용하는 예시입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:30.580896Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Environment variables",
+      "source_hash": 10459783888609022034,
+      "context_hash": 4062544466449621119,
+      "translation": "환경 변수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:03:55.291257Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "PyPy's default ``incminimark`` garbage collector is configurable through several environment variables:",
+      "source_hash": 15476253360273323784,
+      "context_hash": 9127186274172044099,
+      "translation": "PyPy의 기본 ``incminimark`` 가비지 컬렉터는 여러 환경 변수를 통해 설정할 수 있습니다:",
+      "glossary_snapshot": {
+        "garbage collector": "가비지 컬렉터",
+        "PyPy": "PyPy"
+      },
+      "translated_at": "2026-08-14T21:04:44.061016Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "``PYPY_GC_NURSERY``",
+      "source_hash": 8167551465371087541,
+      "context_hash": 6957835576211538261,
+      "translation": "``PYPY_GC_NURSERY``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:33.602403Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "The nursery size.",
+      "source_hash": 12060684429675809339,
+      "context_hash": 10022125637780501427,
+      "translation": "너서리(nursery) 크기입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:58.986552Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "Defaults to 1/2 of your last-level cache, ``4M`` if unknown, or ``4M`` if the last-level cache is too small.",
+      "source_hash": 15573928725614545755,
+      "context_hash": 17240320167093583661,
+      "translation": "기본값은 최종 레벨 캐시의 1/2이며, 알 수 없는 경우 ``4M``\\ 이고, 최종 레벨 캐시가 너무 작은 경우에도 ``4M``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:58.986553Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:2",
+      "source": "Small values (like 1 or 1KB) are useful for debugging.",
+      "source_hash": 9876371403017403814,
+      "context_hash": 9881291966267207962,
+      "translation": "작은 값(예: 1 또는 1KB)은 디버깅에 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:58.986553Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "``PYPY_GC_NURSERY_DEBUG``",
+      "source_hash": 12258121888420993884,
+      "context_hash": 17248766775416365708,
+      "translation": "``PYPY_GC_NURSERY_DEBUG``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:38.163808Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "If set to non-zero, will fill nursery with garbage, to help debugging.",
+      "source_hash": 16522213366874596602,
+      "context_hash": 10479413005360745988,
+      "translation": "0이 아닌 값으로 설정하면, 디버깅에 도움이 되도록 너서리(nursery)를 가비지로 채웁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:42.088321Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "``PYPY_GC_INCREMENT_STEP``",
+      "source_hash": 537257893497407878,
+      "context_hash": 2331312422041757632,
+      "translation": "``PYPY_GC_INCREMENT_STEP``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:39.377288Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "The size of memory marked during the marking step.",
+      "source_hash": 1895000385444549070,
+      "context_hash": 1574077360336553697,
+      "translation": "마킹 단계에서 마킹되는 메모리의 크기입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:15.402885Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:1",
+      "source": "Default is size of nursery times 2.",
+      "source_hash": 285535294077191140,
+      "context_hash": 3853872571181738523,
+      "translation": "기본값은 nursery 크기의 2배입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:15.402886Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:2",
+      "source": "If you mark it too high your GC is not incremental at all.",
+      "source_hash": 5259584701009603635,
+      "context_hash": 12404963038641316863,
+      "translation": "너무 높게 설정하면 GC가 전혀 점진적(incremental)이지 않게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:15.402886Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:3",
+      "source": "The minimum is set to size that survives minor collection times 1.5 so we reclaim anything all the time.",
+      "source_hash": 2891145127025196480,
+      "context_hash": 3687247158933529864,
+      "translation": "최솟값은 마이너 컬렉션에서 살아남는 크기의 1.5배로 설정되어 있어, 항상 무언가를 회수하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:15.402886Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "``PYPY_GC_MAJOR_COLLECT``",
+      "source_hash": 7332202917280867809,
+      "context_hash": 18139049886278827486,
+      "translation": "``PYPY_GC_MAJOR_COLLECT``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:42.816837Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "Major collection memory factor.",
+      "source_hash": 9782462483775862036,
+      "context_hash": 6082153303419502570,
+      "translation": "메이저 컬렉션 메모리 계수.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:02.741966Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:1",
+      "source": "Default is ``1.82``, which means trigger a major collection when the memory consumed equals 1.82 times the memory really used at the end of the previous major collection.",
+      "source_hash": 984139237242168491,
+      "context_hash": 17479378448874948671,
+      "translation": "기본값은 ``1.82``\\ 이며, 이는 이전 메이저 컬렉션이 끝난 시점에 실제로 사용된 메모리의 1.82배에 해당하는 메모리가 소비되면 메이저 컬렉션을 트리거한다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:02.741967Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:0",
+      "source": "``PYPY_GC_GROWTH``",
+      "source_hash": 2775216295547355406,
+      "context_hash": 5908967694829451591,
+      "translation": "``PYPY_GC_GROWTH``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:32.399610Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:11/seg:0",
+      "source": "Major collection threshold's max growth rate.",
+      "source_hash": 554590645943697857,
+      "context_hash": 12315639306426692598,
+      "translation": "메이저 컬렉션 임계값의 최대 증가율입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:14.096530Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:11/seg:1",
+      "source": "Default is ``1.4``.",
+      "source_hash": 4793529156149033346,
+      "context_hash": 12185611681272205403,
+      "translation": "기본값은 ``1.4``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:14.096531Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:11/seg:2",
+      "source": "Useful to collect more often than normally on sudden memory growth, e.g. when there is a temporary peak in memory usage.",
+      "source_hash": 4475128201873624180,
+      "context_hash": 1945715399262332378,
+      "translation": "메모리 사용량이 일시적으로 급증하는 경우처럼 메모리가 갑자기 증가할 때 평소보다 더 자주 컬렉션을 수행하는 데 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:14.096531Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:12/seg:0",
+      "source": "``PYPY_GC_MAX``",
+      "source_hash": 495887295857522492,
+      "context_hash": 1807999555635291871,
+      "translation": "``PYPY_GC_MAX``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:51.465095Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:13/seg:0",
+      "source": "The max heap size.",
+      "source_hash": 11958862588483041903,
+      "context_hash": 14482929266229723513,
+      "translation": "최대 힙(heap) 크기입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:20.819412Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:13/seg:1",
+      "source": "If coming near this limit, it will first collect more often, then raise an RPython MemoryError, and if that is not enough, crash the program with a fatal error.",
+      "source_hash": 9828381236275704290,
+      "context_hash": 3967000913068772399,
+      "translation": "이 한계에 가까워지면 먼저 더 자주 수집하고, 그래도 부족하면 RPython MemoryError를 발생시키며, 그것마저 충분하지 않으면 치명적 오류로 프로그램을 종료합니다.",
+      "glossary_snapshot": {
+        "RPython": "RPython"
+      },
+      "translated_at": "2026-08-14T21:05:20.819413Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:13/seg:2",
+      "source": "Try values like ``1.6GB``.",
+      "source_hash": 6051620111071248526,
+      "context_hash": 3532807807260952657,
+      "translation": "``1.6GB``\\ 와 같은 값을 시도해 보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:20.819413Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:14/seg:0",
+      "source": "``PYPY_GC_MAX_DELTA``",
+      "source_hash": 10371594885462894522,
+      "context_hash": 9571897206990554761,
+      "translation": "``PYPY_GC_MAX_DELTA``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:04:56.824983Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:15/seg:0",
+      "source": "The major collection threshold will never be set to more than ``PYPY_GC_MAX_DELTA`` the amount really used after a collection.",
+      "source_hash": 14118315279664408691,
+      "context_hash": 7512267325502211645,
+      "translation": "메이저 컬렉션 임계값은 컬렉션 이후 실제로 사용된 양보다 ``PYPY_GC_MAX_DELTA``\\ 만큼 더 큰 값으로 설정되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:19.080280Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:15/seg:1",
+      "source": "Defaults to 1/8th of the total RAM size (which is constrained to be at most 2/3/4GB on 32-bit systems).",
+      "source_hash": 10482052097761556291,
+      "context_hash": 14397150972412443653,
+      "translation": "전체 RAM 크기의 1/8을 기본값으로 사용합니다(32비트 시스템에서는 최대 2/3/4GB로 제한됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:19.080282Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:15/seg:2",
+      "source": "Try values like ``200MB``.",
+      "source_hash": 14228268188012283196,
+      "context_hash": 7507868436823927941,
+      "translation": "``200MB``\\ 와 같은 값을 시도해 보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T22:24:14.842281Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:16/seg:0",
+      "source": "``PYPY_GC_MIN``",
+      "source_hash": 160600735196285818,
+      "context_hash": 2506488129089654450,
+      "translation": "``PYPY_GC_MIN``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:06.616028Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:17/seg:0",
+      "source": "Don't collect while the memory size is below this limit.",
+      "source_hash": 8143059668578665542,
+      "context_hash": 195663920762573227,
+      "translation": "메모리 크기가 이 한계보다 작을 때는 수집하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:21.802715Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:17/seg:1",
+      "source": "Useful to avoid spending all the time in the GC in very small programs. Defaults to 8 times the nursery.",
+      "source_hash": 460171458034892201,
+      "context_hash": 15095744496075218095,
+      "translation": "매우 작은 프로그램에서 GC에 모든 시간을 소비하지 않도록 하는 데 유용합니다. 기본값은 너서리(nursery) 크기의 8배입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:21.802716Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:18/seg:0",
+      "source": "``PYPY_GC_DEBUG``",
+      "source_hash": 4000274300382336869,
+      "context_hash": 7248189880996303181,
+      "translation": "``PYPY_GC_DEBUG``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:00.303188Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:19/seg:0",
+      "source": "Enable extra checks around collections that are too slow for normal use.",
+      "source_hash": 11100425459973794767,
+      "context_hash": 5239518921926684438,
+      "translation": "일반적인 사용에는 너무 느린 수집(collection) 관련 추가 검사를 활성화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:06:14.270828Z",
+      "issues": [
+        "정확한 의미는 전달되지만 \"너무 느린\"이 \"수집(collection)\"을 수식하는 것으로 오독될 여지가 있고(\"검사가 느리다\"가 아니라 \"수집이 느리다\"로 읽힘), 완성된 문서에 \"(collection)\"과 같은 원어 병기를 그대로 남긴 것은 스타일 일관성 측면에서 어색합니다."
+      ]
+    },
+    {
+      "id": "section:6/block:19/seg:1",
+      "source": "Values are ``0`` (off), ``1`` (on major collections) or ``2`` (also on minor collections).",
+      "source_hash": 5020572053273777669,
+      "context_hash": 1265566472129968421,
+      "translation": "값은 ``0`` (끄기), ``1`` (주요 수집(major collection) 시) 또는 ``2`` (부수 수집(minor collection) 시에도)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:06:14.270830Z",
+      "issues": [
+        "가비지 컬렉션 맥락에서 \"major/minor collection\"을 \"주요 수집/부수 수집\"으로 직역한 것이 다소 어색하며, 이 분야에서는 \"메이저/마이너 컬렉션\"이라는 음역이 더 자연스럽게 통용됩니다 (의미 전달 자체는 정확함)."
+      ]
+    },
+    {
+      "id": "section:6/block:20/seg:0",
+      "source": "``PYPY_GC_MAX_PINNED``",
+      "source_hash": 13945538168720381080,
+      "context_hash": 7132058907695802560,
+      "translation": "``PYPY_GC_MAX_PINNED``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:05:10.823585Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:21/seg:0",
+      "source": "The maximal number of pinned objects at any point in time.",
+      "source_hash": 3507106616666963815,
+      "context_hash": 8353777163463511570,
+      "translation": "임의의 시점에 고정(pinned)된 객체의 최대 개수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:01:59.521286Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:21/seg:1",
+      "source": "Defaults to a conservative value depending on nursery size and maximum object size inside the nursery.",
+      "source_hash": 5185160449681002026,
+      "context_hash": 560582341443924692,
+      "translation": "기본값은 너서리(nursery) 크기와 너서리 내 최대 객체 크기에 따라 결정되는 보수적인 값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:01:59.521288Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:21/seg:2",
+      "source": "Useful for debugging by setting it to 0.",
+      "source_hash": 6861415160102384197,
+      "context_hash": 9839191088790881492,
+      "translation": "0으로 설정하면 디버깅에 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-14T21:01:59.521288Z",
+      "issues": []
+    }
+  ]
+}
