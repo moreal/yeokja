@@ -48,6 +48,27 @@ impl TranslationEvaluator for LinkEvaluator {
             }
         }
 
+        // Anonymous references pair with their `.. __:` targets by position
+        // and count, file-wide. One reference lost in translation — a bare
+        // here__ absorbed into prose — breaks every anonymous link in the
+        // file, so the count has to survive even though the text may change.
+        if context.markup == Markup::Rst {
+            let in_source = rst_anonymous_references(&context.source);
+            let in_translation = rst_anonymous_references(&context.translation);
+            if in_source != in_translation {
+                issues.push(EvaluationIssue {
+                    severity: IssueSeverity::Error,
+                    kind: IssueKind::LinkBroken,
+                    message: format!(
+                        "Anonymous reference count changed: source has {in_source} \
+                         `text`__ / word__ reference(s), translation has {in_translation}. \
+                         They pair with their targets by count, so keep exactly as many — \
+                         the text before __ may be translated: here__ → `여기`__."
+                    ),
+                });
+            }
+        }
+
         Ok(EvaluationResult {
             passed: issues.is_empty(),
             issues,
@@ -143,6 +164,62 @@ fn rst_named_references(text: &str) -> Vec<NamedReference> {
         }
     }
     found
+}
+
+/// How many anonymous references `text` carries: `` `phrase`__ `` spans and
+/// bare `word__` tokens. Double-backtick literals are skipped wholesale, so a
+/// ``dunder.__init__()`` never counts.
+fn rst_anonymous_references(text: &str) -> usize {
+    let chars: Vec<char> = text.chars().collect();
+    let mut count = 0;
+    let mut i = 0;
+    while i < chars.len() {
+        let c = chars[i];
+        if c == '`' {
+            let run = chars[i..].iter().take_while(|c| **c == '`').count();
+            let mut j = i + run;
+            let close = loop {
+                let Some(offset) = chars[j..].iter().position(|c| *c == '`') else {
+                    break None;
+                };
+                let at = j + offset;
+                let len = chars[at..].iter().take_while(|c| **c == '`').count();
+                if len == run {
+                    break Some(at);
+                }
+                j = at + len;
+            };
+            let Some(close) = close else {
+                i += run;
+                continue;
+            };
+            if run == 1
+                && chars.get(close + 1) == Some(&'_')
+                && chars.get(close + 2) == Some(&'_')
+                && chars.get(close + 3) != Some(&'_')
+            {
+                count += 1;
+            }
+            i = close + run;
+        } else if c.is_alphanumeric() {
+            let end = chars[i..]
+                .iter()
+                .take_while(|c| c.is_alphanumeric() || matches!(c, '.' | '+' | '-' | '_'))
+                .count();
+            let word: String = chars[i..i + end].iter().collect();
+            let word = word.trim_end_matches(['.', '+', '-']);
+            if let Some(name) = word.strip_suffix("__")
+                && !name.is_empty()
+                && !name.ends_with('_')
+            {
+                count += 1;
+            }
+            i += end;
+        } else {
+            i += 1;
+        }
+    }
+    count
 }
 
 /// Simple URL extraction — finds http:// and https:// URLs
@@ -290,5 +367,43 @@ mod tests {
     #[test]
     fn roles_are_not_named_references() {
         assert!(rst_named_references(":ref:`contact` and :doc:`intro`").is_empty());
+    }
+
+    /// The extradoc case: the bare here__ was absorbed into Korean prose, one
+    /// anonymous reference short of the file's targets, and every anonymous
+    /// link in the file went dark.
+    #[tokio::test]
+    async fn rst_fails_when_an_anonymous_reference_is_absorbed() {
+        let ctx = rst_context(
+            "The complete list is here__ (in alphabetical order).",
+            "전체 목록은 여기에서 확인할 수 있습니다 (알파벳 순).",
+        );
+        let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed);
+        assert!(
+            result.issues[0].message.contains("Anonymous"),
+            "{}",
+            result.issues[0].message
+        );
+    }
+
+    /// The display text of an anonymous reference is free — only the count
+    /// has to hold.
+    #[tokio::test]
+    async fn rst_passes_when_the_anonymous_reference_is_translated() {
+        let ctx = rst_context(
+            "The complete list is here__ (in alphabetical order).",
+            "전체 목록은 `여기`__\\ 에서 확인할 수 있습니다 (알파벳 순).",
+        );
+        let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[test]
+    fn anonymous_references_are_counted_precisely() {
+        assert_eq!(rst_anonymous_references("see `the docs`__ and here__"), 2);
+        assert_eq!(rst_anonymous_references("calls ``cont.__init__()`` twice"), 0);
+        assert_eq!(rst_anonymous_references("a named `ref`_ is not anonymous"), 0);
+        assert_eq!(rst_anonymous_references("`여기`__\\ 에서"), 1);
     }
 }

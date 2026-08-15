@@ -454,7 +454,13 @@ fn rst_broken_pairs(text: &str) -> Vec<String> {
                             end += 1;
                         }
                     }
-                    if chars.get(end).is_some_and(|c| is_word(*c)) {
+                    // Docutils accepts whitespace or closing punctuation after
+                    // an end-string; a word character or an opening bracket
+                    // (`` ``x``(y) ``, dropped space and all) blocks it.
+                    if chars
+                        .get(end)
+                        .is_some_and(|c| is_word(*c) || matches!(c, '(' | '[' | '{' | '<'))
+                    {
                         found.push(chars[oi..end + 1].iter().collect());
                     }
                     open = None;
