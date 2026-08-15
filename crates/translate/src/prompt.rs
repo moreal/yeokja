@@ -44,6 +44,17 @@ pub fn build_prompt(request: &TranslateRequest) -> String {
     prompt.push_str("Preserve all markup exactly: links, URLs, bold/italic markers, and inline code.\n");
     prompt.push_str(closing_rule(request.markup));
 
+    // Korean drifts between registers unless the register is named: the same
+    // model writes ~합니다 in one block and ~한다 in the next, and a document
+    // assembled block by block ends up speaking in three voices.
+    if request.target_lang.starts_with("ko") {
+        prompt.push_str(
+            "Write formal written Korean (합쇼체) throughout: declarative sentences end in \
+             ~합니다/~입니다, imperatives in ~하십시오. Never end a sentence in the plain \
+             ~다/~이다 register or the polite ~요 register.\n",
+        );
+    }
+
     if !glossary_section.is_empty() {
         prompt.push_str("\nGlossary (use these translations for the given terms):\n");
         prompt.push_str(&glossary_section);
@@ -87,10 +98,13 @@ fn closing_rule(markup: yeokja_core::parser::Markup) -> &'static str {
         Markup::Rst => {
             "A closing `, ``, * or ** that a letter follows is not recognized: \
              reStructuredText requires whitespace or punctuation after it, and doubling the \
-             marks does not help. Separate the suffix with a backslash-escaped space, which \
-             renders as nothing: ``heap`` → ``heap``\\ 에, **bold** → **bold**\\ 를, \
-             `link`_ → `link`_\\ 를. The same applies before an opening marker glued to the \
-             end of a word: 실행\\ **될** rather than 실행**될**.\n"
+             marks does not help. When a particle (조사) attaches straight to a marked-up \
+             term, separate it with a backslash-escaped space, which renders as nothing: \
+             ``heap`` → ``heap``\\ 에, **bold** → **bold**\\ 를, `link`_ → `link`_\\ 를. \
+             Reserve that escape for particles — an independent word keeps its ordinary \
+             space: ``__pypy__`` module → ``__pypy__`` 모듈, not ``__pypy__``\\ 모듈. The \
+             escape also applies before an opening marker glued to the end of a word: \
+             실행\\ **될** rather than 실행**될**.\n"
         }
     }
 }

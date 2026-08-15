@@ -11,6 +11,7 @@ pub mod translate_gemma;
 pub mod claude_code;
 pub mod pi;
 pub mod evaluator;
+pub mod evaluator_ending;
 pub mod evaluator_glossary;
 pub mod evaluator_style;
 pub mod evaluator_link;

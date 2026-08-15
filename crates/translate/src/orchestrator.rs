@@ -10,6 +10,7 @@ use crate::evaluator::TranslationEvaluator;
 use crate::evaluator_format::FormatEvaluator;
 use crate::evaluator_glossary::GlossaryEvaluator;
 use crate::evaluator_link::LinkEvaluator;
+use crate::evaluator_ending::EndingEvaluator;
 use crate::evaluator_style::StyleEvaluator;
 use crate::pipeline::translate_with_evaluation_observed;
 use crate::provider::{LlmProvider, TranslateRequest, TranslationProvider};
@@ -440,6 +441,7 @@ pub fn standard_evaluators(
         Box::new(GlossaryEvaluator),
         Box::new(LinkEvaluator),
         Box::new(FormatEvaluator),
+        Box::new(EndingEvaluator),
     ];
     if let Some(provider) = style_provider {
         evaluators.push(Box::new(StyleEvaluator::new(provider, target_lang.to_string())));
