@@ -10,7 +10,8 @@ state/          # 번역 상태 (*.yeokja.json) — 진실의 원천, 커밋 대
 ko/             # 번역 출력 — state/에서 재구성되는 파생 산출물, gitignore
 assets/         # 한국어판 전용 추가물: PDF 테마, 나눔고딕 폰트(OFL)
 patches/        # upstream 원본에 가하는 최소 수정 (Index 빈 줄, PDF 테마 전환)
-build-html.sh   # HTML 빌드 (이 머신의 ruby/openjdk 툴체인 가정)
+build-html.sh   # HTML 빌드 (이 머신의 ruby 2.6/openjdk 툴체인 가정)
+build-pdf.sh    # PDF 빌드 (asdf ruby 3.4.2 + asciidoctor-pdf, 로컬 전용)
 build/tree/     # 조립된 빌드 트리 — 일회용, gitignore
 dist/           # 빌드 산출물 (site/) — gitignore
 yeokja.toml     # 프로젝트 설정
@@ -28,7 +29,8 @@ glossary.toml   # 용어집
 ```sh
 yeokja status upstream/chapters      # 번역 진행 상황 + 고아 상태 보고
 yeokja translate upstream/chapters   # 번역 + ko/ 재생성 (리네임 입양 포함)
-yeokja build                         # 트리 조립 + make html → dist/site
+yeokja build html                    # 트리 조립 + make html → dist/site
+yeokja build pdf                     # 트리 조립 + asciidoctor-pdf → dist/beam-book-ko-a4.pdf
 ```
 
 ## upstream 범프
@@ -37,7 +39,7 @@ yeokja build                         # 트리 조립 + make html → dist/site
 git -C upstream fetch origin && git -C upstream checkout <새 커밋>
 yeokja status upstream/chapters      # 신규/stale/고아 확인
 yeokja translate upstream/chapters   # 증분 재번역
-yeokja build                         # 패치가 안 맞으면 여기서 시끄럽게 실패합니다
+yeokja build html                    # 패치가 안 맞으면 여기서 시끄럽게 실패합니다
 ```
 
 서브모듈 해시, 상태 변화, 패치 수정을 한 커밋으로 묶으면 범프 전체를 커밋 하나로 되돌릴 수 있습니다.
