@@ -64,7 +64,10 @@ enum Commands {
     /// Assemble the buildable tree from base, overlays, and steps
     Assemble,
     /// Assemble, run the build command, and copy outputs to dist
-    Build,
+    Build {
+        /// Target to build when [build] names several (e.g. html, pdf)
+        target: Option<String>,
+    },
     /// List state files whose source is gone; optionally delete them
     Orphans {
         /// Delete unmatched orphans and their derived outputs
@@ -153,8 +156,8 @@ async fn main() -> anyhow::Result<()> {
         Commands::Assemble => {
             commands::assemble::run()?;
         }
-        Commands::Build => {
-            commands::build::run()?;
+        Commands::Build { target } => {
+            commands::build::run(target.as_deref())?;
         }
         Commands::Orphans { delete } => {
             commands::orphans::run(delete)?;

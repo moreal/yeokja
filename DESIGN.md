@@ -195,7 +195,8 @@ TranslateGemma는 별도 형식: `<<<source>>>en<<<target>>>ko<<<text>>>...`
 - `[evaluation]`: 자동 평가 활성화, 최대 재시도 횟수
 - `[server]`: 서버 포트
 - `[derive]`: 빌드 트리 조립 — base 레이어, 오버레이 목록, patch/generate 스텝
-- `[build]`: 트리 안에서 실행할 빌드 명령과 dist로 꺼낼 산출물
+- `[build]`: 트리 안에서 실행할 빌드 명령과 dist로 꺼낼 산출물.
+  `[build.html]`·`[build.pdf]`처럼 이름 붙은 타깃 여럿을 둘 수 있습니다
 
 ## 파생 트리 (assemble/build)
 
@@ -210,6 +211,12 @@ TranslateGemma는 별도 형식: `<<<source>>>en<<<target>>>ko<<<text>>>...`
 재조립입니다. `require_base` 오버레이는 원본이 사라진 번역(고아)을 트리에
 얹지 않고 보고합니다. `yeokja build`는 조립 후 `[build].command`를 트리에서
 실행하고 선언된 산출물만 심링크를 관통 복사해 dist로 꺼냅니다.
+
+빌드 타깃이 여럿이면 — 같은 트리에서 HTML과 PDF를 따로 뽑는 경우 —
+`[build.<name>]` 서브테이블로 선언하고 `yeokja build <name>`으로 고릅니다.
+타깃이 하나뿐이면 이름 유무와 무관하게 `yeokja build`만으로 충분하고,
+여럿인데 이름을 안 주면 목록을 보여주며 거부합니다. 트리 조립은 타깃과
+무관하게 동일합니다 — 타깃은 트리 안에서 실행할 명령의 선택일 뿐입니다.
 
 upstream 리네임으로 고아가 된 상태는 `yeokja translate`가 전체 파일 해시 또는
 세그먼트 해시 중첩(≥50%)으로 새 파일에 입양시켜 재번역 비용을 막습니다.

@@ -6,10 +6,14 @@ use yeokja_core::project::ProjectContext;
 /// Assemble the tree, run the build command inside it, and copy the declared
 /// outputs into dist. The tree is reassembled every time — it is disposable
 /// by design, so a build never runs against a stale or hand-edited tree.
-pub fn run() -> Result<()> {
+pub fn run(target: Option<&str>) -> Result<()> {
     let ctx = ProjectContext::load()?;
-    let Some(build) = ctx.config.build.clone() else {
+    let Some(section) = &ctx.config.build else {
         bail!("no [build] section in yeokja.toml");
+    };
+    let build = match section.select(target) {
+        Ok(build) => build.clone(),
+        Err(message) => bail!("{message}"),
     };
 
     let report = yeokja_assemble::assemble(Path::new("."), &ctx.config)?;

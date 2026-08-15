@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,7 +21,7 @@ pub struct ProjectConfig {
     #[serde(default)]
     pub derive: Option<DeriveConfig>,
     #[serde(default)]
-    pub build: Option<BuildConfig>,
+    pub build: Option<BuildSection>,
 }
 
 /// How the buildable tree is derived: a base layer (typically an upstream
@@ -68,7 +69,56 @@ pub enum DeriveStep {
     Generate { command: String },
 }
 
+/// The `[build]` section: one anonymous target, or several named ones
+/// (`[build.html]`, `[build.pdf]`) selected with `yeokja build <name>`.
+/// One tree serves them all — each target is just a different command run
+/// inside it.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum BuildSection {
+    /// `[build]` carrying `command` directly.
+    Single(BuildConfig),
+    /// Sub-tables keyed by target name.
+    Named(BTreeMap<String, BuildConfig>),
+}
+
+impl BuildSection {
+    /// The target `name` designates, or the only target when `name` is absent.
+    /// Errors name the available targets so the caller can print them as-is.
+    pub fn select(&self, name: Option<&str>) -> Result<&BuildConfig, String> {
+        let available = |targets: &BTreeMap<String, BuildConfig>| {
+            targets.keys().cloned().collect::<Vec<_>>().join(", ")
+        };
+        match (self, name) {
+            (BuildSection::Single(build), None) => Ok(build),
+            (BuildSection::Single(_), Some(name)) => Err(format!(
+                "[build] defines a single unnamed target; there is no target named {name}"
+            )),
+            (BuildSection::Named(targets), None) => match targets.len() {
+                0 => Err("[build] defines no targets".to_string()),
+                1 => Ok(targets.values().next().unwrap()),
+                _ => Err(format!(
+                    "[build] defines several targets; pick one of: {}",
+                    available(targets)
+                )),
+            },
+            (BuildSection::Named(targets), Some(name)) => {
+                targets.get(name).ok_or_else(|| {
+                    format!(
+                        "no build target named {name} (available: {})",
+                        available(targets)
+                    )
+                })
+            }
+        }
+    }
+}
+
+// `deny_unknown_fields` keeps the untagged forms unambiguous: without it,
+// `[build] command = ...` next to `[build.pdf]` would match Single and
+// silently drop the named target.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct BuildConfig {
     /// Shell command run inside the assembled tree, `YEOKJA_ROOT` set.
     pub command: String,
@@ -360,8 +410,79 @@ outputs = ["site"]
         assert!(matches!(&derive.step[0], DeriveStep::Patch { file } if file == "patches/fix.patch"));
         assert!(matches!(&derive.step[1], DeriveStep::Generate { .. }));
         let build = config.build.unwrap();
-        assert_eq!(build.outputs, vec!["site"]);
-        assert_eq!(build.dist, "dist");
+        let target = build.select(None).unwrap();
+        assert_eq!(target.outputs, vec!["site"]);
+        assert_eq!(target.dist, "dist");
+        assert!(build.select(Some("pdf")).is_err());
+    }
+
+    #[test]
+    fn parse_named_build_targets() {
+        let toml = r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[provider]
+type = "claude_code"
+model = "claude-sonnet-5"
+
+[build.html]
+command = "make html"
+outputs = ["site"]
+
+[build.pdf]
+command = "make pdf"
+outputs = ["book.pdf"]
+"#;
+        let config = ProjectConfig::from_toml(toml).unwrap();
+        let build = config.build.unwrap();
+        assert_eq!(build.select(Some("html")).unwrap().outputs, vec!["site"]);
+        assert_eq!(build.select(Some("pdf")).unwrap().outputs, vec!["book.pdf"]);
+        // Several targets: the caller must name one, and a wrong name lists them.
+        assert!(build.select(None).unwrap_err().contains("html, pdf"));
+        assert!(build.select(Some("epub")).unwrap_err().contains("html, pdf"));
+    }
+
+    #[test]
+    fn lone_named_build_target_needs_no_name() {
+        let toml = r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[provider]
+type = "anthropic"
+model = "claude-sonnet-5"
+
+[build.html]
+command = "make html"
+"#;
+        let config = ProjectConfig::from_toml(toml).unwrap();
+        let build = config.build.unwrap();
+        assert_eq!(build.select(None).unwrap().command, "make html");
+    }
+
+    #[test]
+    fn mixed_build_forms_do_not_parse() {
+        // An unnamed command next to a named target must be rejected, not
+        // silently collapsed into the unnamed form.
+        let toml = r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[provider]
+type = "anthropic"
+model = "claude-sonnet-5"
+
+[build]
+command = "make html"
+
+[build.pdf]
+command = "make pdf"
+"#;
+        assert!(ProjectConfig::from_toml(toml).is_err());
     }
 
     #[test]
