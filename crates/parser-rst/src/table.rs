@@ -125,6 +125,33 @@ fn trim_fragments(mut fragments: Vec<String>) -> Vec<String> {
     fragments
 }
 
+/// A cell whose raw slices carry block structure — a paragraph break, or
+/// lines at different indents (a field list with an indented body, a nested
+/// list) — cannot be joined into one prose run and wrapped back. `None`
+/// makes the whole table fall back to verbatim.
+fn flat_cell(raw: &[&str]) -> Option<Vec<String>> {
+    let mut indent = None;
+    let mut seen_text = false;
+    let mut blank_run = false;
+    for slice in raw {
+        if slice.trim().is_empty() {
+            blank_run = seen_text;
+            continue;
+        }
+        if blank_run {
+            return None; // a paragraph break inside the cell
+        }
+        let this = slice.len() - slice.trim_start().len();
+        if *indent.get_or_insert(this) != this {
+            return None; // an indented body under a first line
+        }
+        seen_text = true;
+    }
+    Some(trim_fragments(
+        raw.iter().map(|s| s.trim().to_string()).collect(),
+    ))
+}
+
 fn parse_grid(lines: &[&str], indent: usize) -> Option<Table> {
     let content: Option<Vec<&str>> = lines.iter().map(|l| strip_indent(l, indent)).collect();
     let content = content?;
@@ -204,14 +231,11 @@ fn parse_grid(lines: &[&str], indent: usize) -> Option<Table> {
                 }
                 let cells = (0..boundaries.len() - 1)
                     .map(|i| {
-                        let fragments: Option<Vec<String>> = current
+                        let raw: Option<Vec<&str>> = current
                             .iter()
-                            .map(|l| {
-                                col_slice(l, boundaries[i] + 1, Some(boundaries[i + 1]))
-                                    .map(|s| s.trim().to_string())
-                            })
+                            .map(|l| col_slice(l, boundaries[i] + 1, Some(boundaries[i + 1])))
                             .collect();
-                        let fragments = trim_fragments(fragments?);
+                        let fragments = flat_cell(&raw?)?;
                         Some(Cell {
                             text: normalize_fragments(&fragments),
                             fragments,
@@ -328,12 +352,15 @@ fn parse_simple(lines: &[&str], indent: usize) -> Option<Table> {
 
         let head = pieces[0].trim();
         if head.is_empty() {
-            // Continuation of the current row.
+            if pending_blank {
+                return None; // a paragraph break inside a row's cells
+            }
+            // Continuation of the current row. Slices stay untrimmed so the
+            // flattening pass can see indented structure inside a cell.
             let row = rows.last_mut()?;
             for (cell, piece) in row.cells.iter_mut().zip(&pieces) {
-                cell.fragments.push(piece.trim().to_string());
+                cell.fragments.push(piece.to_string());
             }
-            pending_blank = false;
             continue;
         }
         // `..` marks a new row whose first cell is empty; anything else is the
@@ -343,7 +370,7 @@ fn parse_simple(lines: &[&str], indent: usize) -> Option<Table> {
             .iter()
             .map(|p| Cell {
                 text: String::new(),
-                fragments: vec![p.trim().to_string()],
+                fragments: vec![p.to_string()],
             })
             .collect();
         cells[0].fragments[0] = first_cell.to_string();
@@ -360,7 +387,8 @@ fn parse_simple(lines: &[&str], indent: usize) -> Option<Table> {
     }
     for row in &mut rows {
         for cell in &mut row.cells {
-            cell.fragments = trim_fragments(std::mem::take(&mut cell.fragments));
+            let raw = std::mem::take(&mut cell.fragments);
+            cell.fragments = flat_cell(&raw.iter().map(|s| s.as_str()).collect::<Vec<_>>())?;
             cell.text = normalize_fragments(&cell.fragments);
         }
     }
@@ -714,5 +742,32 @@ jit    all on";
     fn text_bleeding_into_a_gap_is_rejected() {
         let source = "===  ===\nfoo bar x\n===  ===";
         assert!(parse(source).is_none());
+    }
+
+    #[test]
+    fn a_cell_with_block_structure_is_rejected() {
+        // A field list with an indented body cannot be joined into one prose
+        // run and wrapped back (rpython/doc/jit/overview.rst's :NOTE: box).
+        let fielded = "\
++----------------------+
+| :NOTE:               |
+|                      |
+|   An indented body   |
+|   over two lines.    |
++----------------------+";
+        assert!(parse(fielded).is_none());
+
+        // A paragraph break inside a grid cell is structure too.
+        let paragraphs = "\
++----------------------+
+| First paragraph.     |
+|                      |
+| Second paragraph.    |
++----------------------+";
+        assert!(parse(paragraphs).is_none());
+
+        // And a simple-table row continued across a blank line.
+        let simple = "==  ==========\naa  first part\n\n    second part\n==  ==========";
+        assert!(parse(simple).is_none());
     }
 }
