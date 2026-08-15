@@ -33,10 +33,11 @@ pypy -m pip install --user 'virtualenv==16.7.12'
 pypy -m virtualenv ~/.venvs/pypy-doc-py2
 ~/.venvs/pypy-doc-py2/bin/pip install 'sphinx<2' docutils==0.11 \
     sphinx-issues==1.2.0 'sphinx_rtd_theme<1' py
-PATH=~/.venvs/pypy-doc-py2/bin:$PATH yeokja build
+PATH=~/.venvs/pypy-doc-py2/bin:$PATH yeokja build html
 ```
 
 rpython 임포트가 플랫폼 프로브(.o 컴파일)를 발동하며 소스 루트를 realpath로
 검증하므로, 링크 트리에서는 단언이 깨집니다. `yeokja.toml`의 generate 스텝이
 `rpython/`을 실사본으로 구체화해 해결합니다. 성공 시 경고는 4건(Mercurial
-정보 등)이며 산출물은 `dist/pypy/doc/_build/html`입니다.
+정보 등)이며 산출물은 `dist/site`입니다(Pages 규약 — 모든 프로젝트의
+`[build.html]`이 HTML을 `site/`로 내놓습니다).

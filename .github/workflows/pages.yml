@@ -51,16 +51,6 @@ jobs:
       - name: Build yeokja
         run: cargo build --release -p yeokja-cli
 
-      - name: Rebuild translated sources from committed state
-        working-directory: projects/thebeambook
-        run: |
-          ../../target/release/yeokja translate upstream/chapters
-          ../../target/release/yeokja status --check upstream/chapters
-
-      - name: Build theBeamBook HTML
-        working-directory: projects/thebeambook
-        run: ../../target/release/yeokja build html
-
       # PyPy 문서의 conf.py는 py2 문법인 pypy.config를 임포트하므로 공식
       # 환경(.readthedocs.yaml)과 같은 Python 2.7이 필요합니다.
       - name: Install Python 2.7 for the PyPy docs
@@ -71,26 +61,35 @@ jobs:
       - name: Install the PyPy docs Sphinx toolchain
         run: pip install 'sphinx<2' 'docutils==0.11' 'sphinx-issues==1.2.0' 'sphinx_rtd_theme<1' py
 
-      # 번역된 파일만 재구성합니다 — 상태가 없는 문서는 영어 원문 그대로
-      # 오버레이 트리에 남는 것이 의도된 동작입니다.
-      - name: Rebuild PyPy translations from committed state
-        working-directory: projects/pypy
+      # 상태 파일이 있는 문서만 재구성·검사합니다. 상태가 없는 문서는 영어
+      # 원문 그대로 트리에 남는 것이 의도된 동작이고(부분 번역 프로젝트),
+      # 상태 파일 단위로 돌기 때문에 CI가 provider를 부를 일도 없습니다.
+      - name: Rebuild translated sources from committed state
         run: |
-          for s in $(find state -name '*.yeokja.json'); do
-            src="${s#state/}"; src="${src%.yeokja.json}"
-            ../../target/release/yeokja translate "$src"
-            ../../target/release/yeokja status --check "$src"
+          for project in projects/*/; do
+            (
+              cd "$project"
+              for s in $(find state -name '*.yeokja.json'); do
+                src="${s#state/}"; src="${src%.yeokja.json}"
+                ../../target/release/yeokja translate "$src"
+                ../../target/release/yeokja status --check "$src"
+              done
+            )
           done
 
-      - name: Build the PyPy docs HTML
-        working-directory: projects/pypy
-        run: ../../target/release/yeokja build
+      # 규약: 모든 프로젝트는 [build.html] 타깃이 Pages에 실릴 HTML을
+      # dist/site로 내놓습니다. pdf 같은 다른 타깃은 로컬 전용입니다.
+      - name: Build every project's HTML
+        run: |
+          for project in projects/*/; do
+            (cd "$project" && ../../target/release/yeokja build html)
+          done
 
       - name: Stage the Pages tree
         run: |
           mkdir -p _site
           cp -r projects/thebeambook/dist/site _site/theBeamBook
-          cp -r projects/pypy/dist/pypy/doc/_build/html _site/pypy
+          cp -r projects/pypy/dist/site _site/pypy
           cat > _site/index.html <<'HTML'
           <!doctype html>
           <html lang="ko">
