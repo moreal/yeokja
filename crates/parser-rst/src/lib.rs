@@ -12,6 +12,8 @@
 //! byte-for-byte; title underlines and overlines are redrawn to the
 //! translation's display width, since docutils requires them to cover it.
 
+mod table;
+
 use std::ops::Range;
 use yeokja_core::model::*;
 use yeokja_core::parser::{DocumentParser, Markup, TranslationMap};
@@ -101,6 +103,9 @@ struct ParseState<'a> {
     /// Set when a flushed paragraph ended with `::`: the column its text
     /// started at. The next block indented past it is a literal block.
     pending_literal: Option<usize>,
+    /// Tables whose geometry parsed, in document order. Reconstruction counts
+    /// its anchors the same way, so the index in a cell's role finds them.
+    table_idx: usize,
 }
 
 impl ParseState<'_> {
@@ -150,6 +155,72 @@ impl ParseState<'_> {
             translatable: false,
             role: BlockRole::None,
         });
+    }
+
+    /// Emit a table whose geometry parsed as an anchor block plus one block
+    /// per prose cell; a table the geometry cannot lay out stays one opaque
+    /// verbatim block, exactly as before cell translation existed.
+    ///
+    /// The anchor is untranslatable but keeps the table's span, which is what
+    /// `table_edits` redraws over; cells carry no span of their own, since a
+    /// translated cell moves every border around it.
+    fn push_table(&mut self, range: Range<usize>) {
+        let raw = &self.source[range.clone()];
+        let Some(geometry) = table::parse(raw) else {
+            self.push_opaque_block(BlockType::Table, range);
+            return;
+        };
+        let table = self.table_idx;
+        self.table_idx += 1;
+        self.push_block(Block {
+            block_type: BlockType::Table,
+            segments: Vec::new(),
+            raw_content: raw.to_string(),
+            heading_level: None,
+            span: Some(range),
+            translatable: false,
+            role: BlockRole::None,
+        });
+
+        let labels: Vec<Option<String>> = match geometry.rows.iter().find(|r| r.label) {
+            Some(row) => row
+                .cells
+                .iter()
+                .map(|c| (!c.text.is_empty()).then(|| c.text.clone()))
+                .collect(),
+            None => Vec::new(),
+        };
+        for row in &geometry.rows {
+            for (column, cell) in row.cells.iter().enumerate() {
+                if !table::cell_is_translatable(&cell.text) {
+                    continue;
+                }
+                let segments = make_segments(
+                    &cell.text,
+                    BlockType::Table,
+                    self.section_idx,
+                    self.block_idx,
+                );
+                self.push_block(Block {
+                    block_type: BlockType::Table,
+                    segments,
+                    raw_content: cell.text.clone(),
+                    heading_level: None,
+                    span: None,
+                    translatable: BlockType::Table.is_translatable(),
+                    role: BlockRole::TableCell {
+                        table,
+                        column,
+                        label_row: row.label,
+                        header: if row.label {
+                            None
+                        } else {
+                            labels.get(column).cloned().flatten()
+                        },
+                    },
+                });
+            }
+        }
     }
 
     fn push_block(&mut self, block: Block) {
@@ -392,6 +463,7 @@ impl DocumentParser for RstParser {
             run: None,
             styles: Vec::new(),
             pending_literal: None,
+            table_idx: 0,
         };
 
         let mut i = 0;
@@ -543,7 +615,9 @@ impl DocumentParser for RstParser {
                 continue;
             }
 
-            // Grid table: consecutive `+--+` / `| … |` lines, kept verbatim.
+            // Grid table: consecutive `+--+` / `| … |` lines. Cells whose
+            // geometry parses are offered for translation; the rest of the
+            // table stays verbatim until reconstruction redraws it.
             if state.run.is_none() && is_grid_border(trimmed) {
                 let mut end = i;
                 while end + 1 < lines.len() {
@@ -554,7 +628,7 @@ impl DocumentParser for RstParser {
                         break;
                     }
                 }
-                state.push_opaque_block(BlockType::Table, line.start..lines[end].end());
+                state.push_table(line.start..lines[end].end());
                 i = end + 1;
                 continue;
             }
@@ -572,7 +646,7 @@ impl DocumentParser for RstParser {
                     }
                 }
                 if let Some(end) = end {
-                    state.push_opaque_block(BlockType::Table, line.start..lines[end].end());
+                    state.push_table(line.start..lines[end].end());
                     i = end + 1;
                     continue;
                 }
@@ -639,6 +713,7 @@ impl DocumentParser for RstParser {
     fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String {
         let mut splices = collect_splices(document, translations);
         splices.extend(adornment_edits(document, translations));
+        splices.extend(table_edits(document, translations));
         apply_splices(&document.source, splices)
     }
 }
@@ -697,6 +772,73 @@ fn adornment_edits(
         if let Some(over) = overline {
             edits.push((over.clone(), drawn));
         }
+    }
+    edits
+}
+
+/// Redraw each table that has a translated cell. The anchor block keeps the
+/// table's span; its geometry is re-read from the source (the same `parse`
+/// that emitted the cell blocks, so both enumerate cells identically), the
+/// translated texts are laid into it, and the whole span is replaced —
+/// borders, padding, and wrapping follow the cells' display widths.
+fn table_edits(
+    document: &Document,
+    translations: &TranslationMap,
+) -> Vec<(Range<usize>, String)> {
+    let blocks: Vec<&Block> = document
+        .sections
+        .iter()
+        .flat_map(|s| s.blocks.iter())
+        .collect();
+
+    let mut edits = Vec::new();
+    let mut table_idx = 0usize;
+    for block in &blocks {
+        if block.block_type != BlockType::Table || block.translatable || block.span.is_none() {
+            continue;
+        }
+        let Some(span) = block.span.clone() else { continue };
+        let index = table_idx;
+        table_idx += 1;
+
+        let cells: Vec<&&Block> = blocks
+            .iter()
+            .filter(|b| matches!(&b.role, BlockRole::TableCell { table, .. } if *table == index))
+            .collect();
+        if !cells.iter().any(|b| {
+            b.segments
+                .iter()
+                .any(|seg| translations.contains_key(&seg.id))
+        }) {
+            continue;
+        }
+        let Some(geometry) = table::parse(&document.source[span.clone()]) else {
+            continue;
+        };
+
+        // Pair geometry cells with their blocks in the shared row-major order.
+        let mut remaining = cells.iter();
+        let mut texts: Vec<Vec<Option<String>>> = Vec::with_capacity(geometry.rows.len());
+        let mut aligned = true;
+        for row in &geometry.rows {
+            let mut row_texts = Vec::with_capacity(row.cells.len());
+            for cell in &row.cells {
+                if !table::cell_is_translatable(&cell.text) {
+                    row_texts.push(None);
+                    continue;
+                }
+                match remaining.next() {
+                    Some(b) => row_texts
+                        .push(Some(join_segments_with_translations(&b.segments, translations))),
+                    None => aligned = false,
+                }
+            }
+            texts.push(row_texts);
+        }
+        if !aligned || remaining.next().is_some() {
+            continue; // cells and geometry disagree; keep the table verbatim
+        }
+        edits.push((span, table::render(&geometry, &texts)));
     }
     edits
 }
@@ -989,21 +1131,122 @@ mod tests {
     }
 
     #[test]
-    fn grid_table_is_opaque() {
+    fn grid_table_cells_become_segments() {
         let source = "+----+----+\n| a  | b  |\n+====+====+\n| c  | d  |\n+----+----+\n\nAfter.\n";
         let doc = RstParser.parse(source);
         let segments = doc.translatable_segments();
-        assert_eq!(segments.len(), 1);
-        assert_eq!(segments[0].source, "After.");
+        let sources: Vec<&str> = segments.iter().map(|s| s.source.as_str()).collect();
+        assert_eq!(sources, vec!["a", "b", "c", "d", "After."]);
+
+        let cells: Vec<&Block> = doc
+            .sections
+            .iter()
+            .flat_map(|s| &s.blocks)
+            .filter(|b| matches!(b.role, BlockRole::TableCell { .. }))
+            .collect();
+        assert_eq!(cells.len(), 4);
+        assert!(matches!(
+            &cells[0].role,
+            BlockRole::TableCell { table: 0, column: 0, label_row: true, header: None }
+        ));
+        assert!(matches!(
+            &cells[3].role,
+            BlockRole::TableCell { table: 0, column: 1, label_row: false, header: Some(h) }
+                if h == "b"
+        ));
     }
 
     #[test]
-    fn simple_table_is_opaque() {
+    fn translated_grid_table_is_redrawn_to_display_width() {
+        let source = "+----+----+\n| a  | b  |\n+====+====+\n| c  | d  |\n+----+----+\n\nAfter.\n";
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[("a", "가나"), ("b", "b"), ("c", "c"), ("d", "d"), ("After.", "이후.")],
+        );
+        assert_eq!(
+            output,
+            "+------+----+\n| 가나 | b  |\n+======+====+\n| c    | d  |\n+------+----+\n\n이후.\n"
+        );
+    }
+
+    #[test]
+    fn untranslated_table_stays_byte_for_byte() {
+        let source = "+----+----+\n| a  | b  |\n+----+----+\n\nAfter.\n";
+        let doc = RstParser.parse(source);
+        let mut translations = TranslationMap::new();
+        for seg in doc.translatable_segments() {
+            if seg.source == "After." {
+                translations.insert(seg.id.clone(), "이후.".to_string());
+            }
+        }
+        assert_eq!(
+            RstParser.reconstruct(&doc, &translations),
+            "+----+----+\n| a  | b  |\n+----+----+\n\n이후.\n"
+        );
+    }
+
+    #[test]
+    fn simple_table_cells_become_segments() {
         let source = "=====  =====\ncol A  col B\n=====  =====\nx      y\n=====  =====\n\nAfter.\n";
+        let doc = RstParser.parse(source);
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|s| s.source.as_str())
+            .collect();
+        assert_eq!(sources, vec!["col A", "col B", "x", "y", "After."]);
+    }
+
+    #[test]
+    fn translated_simple_table_is_redrawn() {
+        let source = "=====  =====\ncol A  col B\n=====  =====\nx      y\n=====  =====\n\nAfter.\n";
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[("col A", "열 하나"), ("col B", "col B"), ("x", "x"), ("y", "y")],
+        );
+        assert_eq!(
+            output,
+            "=======  =====\n열 하나  col B\n=======  =====\nx        y\n=======  =====\n\nAfter.\n"
+        );
+    }
+
+    #[test]
+    fn spanned_table_falls_back_to_verbatim() {
+        // A column span the geometry cannot redraw: the table stays one
+        // opaque block with no translatable cells, as before.
+        let source = "+----+----+\n| spanning |\n+----+----+\n\nAfter.\n";
         let doc = RstParser.parse(source);
         let segments = doc.translatable_segments();
         assert_eq!(segments.len(), 1);
         assert_eq!(segments[0].source, "After.");
+        let output = translate_all(&RstParser, source, &[("After.", "이후.")]);
+        assert_eq!(output, "+----+----+\n| spanning |\n+----+----+\n\n이후.\n");
+    }
+
+    #[test]
+    fn two_tables_get_distinct_indices() {
+        let source = "==  ==\na1  b1\n==  ==\n\n==  ==\na2  b2\n==  ==\n\nAfter.\n";
+        let doc = RstParser.parse(source);
+        let tables: Vec<usize> = doc
+            .sections
+            .iter()
+            .flat_map(|s| &s.blocks)
+            .filter_map(|b| match &b.role {
+                BlockRole::TableCell { table, .. } => Some(*table),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(tables, vec![0, 0, 1, 1]);
+
+        // Translating a cell of the second table redraws only that table; the
+        // last column is unbounded, so its border keeps the original length.
+        let output = translate_all(&RstParser, source, &[("b2", "둘째")]);
+        assert_eq!(
+            output,
+            "==  ==\na1  b1\n==  ==\n\n==  ==\na2  둘째\n==  ==\n\nAfter.\n"
+        );
     }
 
     #[test]

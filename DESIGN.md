@@ -66,8 +66,21 @@ core ← parser-utils ← parser-markdown ← parsers
 - AsciiDoc의 라인 지향 블록 구조를 스캔하며 각 블록의 텍스트 byte range를 기록
 - 헤딩 마커, 리스트 불릿, admonition 라벨(NOTE: 등), 구분자(`----`, `____`)는 span에서 제외
 - 저자/개정 라인, attribute entry(`:toc:`), 앵커(`[[id]]`), 블록 속성(`[source,python]`),
-  주석, 테이블(`|===`)은 번역 대상에서 제외하고 그대로 보존
+  주석은 번역 대상에서 제외하고 그대로 보존
+- 테이블(`|===`)은 셀 단위로 번역: 셀마다 `BlockRole::TableCell{table, column,
+  label_row, header}` 블록이 생기고, `[[tables]]` 규칙이 header 기준으로 열을
+  선별합니다. 셀 구분자는 span 밖이라 재구성은 splice만으로 충분합니다
 - reconstruct는 Markdown 파서와 동일한 splice 방식 공유 (`parser-utils::splice_reconstruct`)
+
+**yeokja-parser-rst** — 자체 라인 기반 span 방식 reStructuredText 파서.
+- 들여쓰기가 구조인 문법이라 같은 들여쓰기의 줄만 런으로 잇고, `::` 리터럴
+  블록·디렉티브·타깃·주석·doctest는 span 밖에 보존
+- 제목 밑줄/윗줄은 번역의 표시 폭(한글=2칸)으로 다시 그림 (`adornment_edits`)
+- 그리드/심플 테이블도 셀 단위로 번역: 지오메트리(`table.rs`)가 파싱되면
+  AsciiDoc과 같은 `TableCell` role 블록을 만들고, 재구성 때 번역된 셀이 있는
+  테이블 전체를 표시 폭 기준으로 다시 그립니다(열 폭 재계산, 원본 폭으로 줄바꿈,
+  심플 테이블 마지막 열은 무한 열이라 경계 불확장). docutils가 정렬을 표시 폭으로
+  세는 것을 실측으로 확인했습니다. 셀 병합 등 못 그리는 표는 통째로 verbatim 폴백
 
 **yeokja-parsers** — 파서 레지스트리.
 - `select_parser()`: 소스 설정의 `parser` 필드 또는 확장자로 파서 선택
