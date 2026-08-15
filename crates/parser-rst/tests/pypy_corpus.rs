@@ -11,10 +11,17 @@ use std::path::{Path, PathBuf};
 use yeokja_core::parser::{DocumentParser, TranslationMap};
 use yeokja_parser_rst::RstParser;
 
-fn corpus_dir() -> Option<PathBuf> {
-    let dir = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../projects/pypy/upstream/pypy/doc");
-    dir.is_dir().then_some(dir)
+fn corpus_dirs() -> Vec<PathBuf> {
+    // The PyPy repository carries two documentation trees; both are corpus.
+    ["pypy/doc", "rpython/doc"]
+        .iter()
+        .map(|sub| {
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../projects/pypy/upstream")
+                .join(sub)
+        })
+        .filter(|dir| dir.is_dir())
+        .collect()
 }
 
 fn rst_files(dir: &Path, out: &mut Vec<PathBuf>) {
@@ -30,9 +37,14 @@ fn rst_files(dir: &Path, out: &mut Vec<PathBuf>) {
 
 #[test]
 fn self_translation_reparses_to_the_same_segments() {
-    let Some(dir) = corpus_dir() else { return };
+    let dirs = corpus_dirs();
+    if dirs.is_empty() {
+        return;
+    }
     let mut files = Vec::new();
-    rst_files(&dir, &mut files);
+    for dir in &dirs {
+        rst_files(dir, &mut files);
+    }
     assert!(files.len() > 100, "corpus should hold the PyPy docs");
 
     let parser = RstParser;
@@ -64,9 +76,10 @@ fn self_translation_reparses_to_the_same_segments() {
 
 #[test]
 fn reconstruction_without_translations_is_identity() {
-    let Some(dir) = corpus_dir() else { return };
     let mut files = Vec::new();
-    rst_files(&dir, &mut files);
+    for dir in corpus_dirs() {
+        rst_files(&dir, &mut files);
+    }
 
     let parser = RstParser;
     for path in files {
