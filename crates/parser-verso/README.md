@@ -52,6 +52,12 @@ manifest 생성은 번역 프로젝트가 담당합니다. FP in Lean에서는
 `projects/fp-lean/scripts/update-verso-spans.sh`가 정확한 upstream Lake 환경에서
 extractor를 빌드·실행합니다.
 
+재구성 시 upstream이 명시한 tag는 그대로 유지합니다. tag가 없는 번역된 `#doc`
+제목에는 소스 경로에서 만든 안정적인 ASCII tag를 metadata에 추가하고, 영어 자동
+tag를 쓰도록 지정한 절의 `tag := none`도 소스 경로와 순번 기반 tag로 바꿉니다.
+Verso의 slug 변환은 한글 글자마다 같은 `___`를 사용하므로, 이 보완이 없으면 길이가
+같은 서로 다른 한국어 제목이 최종 manual 조립 단계에서 충돌할 수 있습니다.
+
 ## AST 투영 규칙
 
 | 공식 AST | Yeokja block | 처리 |

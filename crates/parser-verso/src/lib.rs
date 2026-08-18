@@ -210,7 +210,92 @@ impl DocumentParser for VersoParser {
     }
 
     fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String {
-        splice_reconstruct(document, translations)
+        let mut reconstructed = splice_reconstruct(document, translations);
+        if document_title_is_translated(document, translations) {
+            ensure_document_tag(&mut reconstructed, &self.source_path);
+            replace_disabled_part_tags(&mut reconstructed, &self.source_path);
+        }
+        reconstructed
+    }
+}
+
+fn document_title_is_translated(document: &Document, translations: &TranslationMap) -> bool {
+    document
+        .sections
+        .iter()
+        .flat_map(|section| &section.blocks)
+        .filter(|block| block.block_type == BlockType::Heading && block.heading_level == Some(1))
+        .min_by_key(|block| {
+            block
+                .span
+                .as_ref()
+                .map(|span| span.start)
+                .unwrap_or(usize::MAX)
+        })
+        .is_some_and(|block| {
+            block
+                .segments
+                .iter()
+                .any(|segment| translations.contains_key(&segment.id))
+        })
+}
+
+/// Give translated `#doc` parts a stable ASCII tag when upstream did not.
+///
+/// Verso auto-tags mangle every non-ASCII character to `___`, so unrelated
+/// Korean titles of the same length collide when independently elaborated
+/// parts are assembled. Explicit upstream tags remain authoritative. For the
+/// few documents without one, a source-path hash is stable across translations
+/// and unique within a project.
+fn ensure_document_tag(reconstructed: &mut String, source_path: &Path) {
+    let Some(doc_start) = reconstructed.find("#doc ") else {
+        return;
+    };
+    let Some(relative_line_end) = reconstructed[doc_start..].find('\n') else {
+        return;
+    };
+    let body_start = doc_start + relative_line_end + 1;
+    let first_content = reconstructed[body_start..]
+        .find(|ch: char| !ch.is_whitespace())
+        .map(|offset| body_start + offset)
+        .unwrap_or(reconstructed.len());
+    let tag = format!(
+        "yeokja-doc-{:016x}",
+        fnv1a64(&source_path.to_string_lossy())
+    );
+
+    if reconstructed[first_content..].starts_with("%%%") {
+        let metadata_body = first_content + 3;
+        let Some(relative_close) = reconstructed[metadata_body..].find("\n%%%") else {
+            return;
+        };
+        let close = metadata_body + relative_close;
+        if reconstructed[metadata_body..close].contains("tag :=") {
+            return;
+        }
+        reconstructed.insert_str(close, &format!("\ntag := \"{tag}\""));
+    } else {
+        reconstructed.insert_str(body_start, &format!("%%%\ntag := \"{tag}\"\n%%%\n"));
+    }
+}
+
+/// Replace `tag := none` on translated parts with stable, unique ASCII tags.
+///
+/// Upstream uses `none` when an English heading's auto-generated tag is good
+/// enough. Korean characters all mangle to the same `___`, so two unrelated
+/// headings with the same character count can receive the same internal tag
+/// when separately elaborated documents are combined.
+fn replace_disabled_part_tags(reconstructed: &mut String, source_path: &Path) {
+    let path_hash = fnv1a64(&source_path.to_string_lossy());
+    let mut search_from = 0;
+    let mut index = 0usize;
+    while let Some(relative) = reconstructed[search_from..].find("tag := none") {
+        let start = search_from + relative;
+        let end = start + "tag := none".len();
+        let replacement = format!("tag := \"yeokja-part-{path_hash:016x}-{index}\"");
+        reconstructed.replace_range(start..end, &replacement);
+        search_from = start + replacement.len();
+        index += 1;
     }
 }
 
@@ -407,8 +492,87 @@ mod tests {
         translations.insert(segments[2].id.clone(), "본문입니다.".to_string());
         let output = parser.reconstruct(&document, &translations);
         assert!(output.contains("#doc (Manual) \"제목\" =>"));
+        assert!(output.contains("tag := \"yeokja-doc-"));
         assert!(output.contains("본문입니다."));
         assert!(output.contains("# Section"));
+    }
+
+    #[test]
+    fn translated_document_title_merges_a_tag_into_existing_metadata() {
+        let source = "#doc (Manual) \"Title\" =>\n%%%\nauthors := [\"Author\"]\n%%%\n\nBody.\n";
+        let title = source.find("Title").unwrap();
+        let body = source.find("Body.").unwrap();
+        let fixture = Fixture::new(
+            source,
+            &[
+                ("heading", title, title + 5, Some(1)),
+                ("paragraph", body, body + 5, None),
+            ],
+        );
+        let parser = fixture.parser();
+        let document = parser.parse_checked(&fixture.source).unwrap();
+        let title_id = document.translatable_segments()[0].id.clone();
+        let output = parser.reconstruct(
+            &document,
+            &TranslationMap::from([(title_id, "제목".to_string())]),
+        );
+
+        assert!(output.contains("authors := [\"Author\"]\ntag := \"yeokja-doc-"));
+        assert_eq!(output.matches("%%%").count(), 2);
+    }
+
+    #[test]
+    fn an_explicit_document_tag_remains_authoritative() {
+        let source = "#doc (Manual) \"Title\" =>\n%%%\ntag := \"upstream-tag\"\n%%%\n\nBody.\n";
+        let title = source.find("Title").unwrap();
+        let body = source.find("Body.").unwrap();
+        let fixture = Fixture::new(
+            source,
+            &[
+                ("heading", title, title + 5, Some(1)),
+                ("paragraph", body, body + 5, None),
+            ],
+        );
+        let parser = fixture.parser();
+        let document = parser.parse_checked(&fixture.source).unwrap();
+        let title_id = document.translatable_segments()[0].id.clone();
+        let output = parser.reconstruct(
+            &document,
+            &TranslationMap::from([(title_id, "제목".to_string())]),
+        );
+
+        assert!(output.contains("tag := \"upstream-tag\""));
+        assert!(!output.contains("yeokja-doc-"));
+        assert_eq!(output.matches("tag :=").count(), 1);
+    }
+
+    #[test]
+    fn translated_parts_replace_disabled_auto_tags_with_stable_tags() {
+        let source = "#doc (Manual) \"Title\" =>\n%%%\ntag := \"doc-tag\"\n%%%\n\n# One\n%%%\ntag := none\n%%%\n\n# Two\n%%%\ntag := none\n%%%\n";
+        let title = source.find("Title").unwrap();
+        let one = source.find("One").unwrap();
+        let two = source.find("Two").unwrap();
+        let fixture = Fixture::new(
+            source,
+            &[
+                ("heading", title, title + 5, Some(1)),
+                ("heading", one, one + 3, Some(1)),
+                ("heading", two, two + 3, Some(1)),
+            ],
+        );
+        let parser = fixture.parser();
+        let document = parser.parse_checked(&fixture.source).unwrap();
+        let translations = document
+            .translatable_segments()
+            .iter()
+            .map(|segment| (segment.id.clone(), format!("번역-{}", segment.id)))
+            .collect();
+        let output = parser.reconstruct(&document, &translations);
+
+        assert!(!output.contains("tag := none"));
+        assert_eq!(output.matches("tag := \"yeokja-part-").count(), 2);
+        assert!(output.contains("-0\""));
+        assert!(output.contains("-1\""));
     }
 
     #[test]
