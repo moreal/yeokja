@@ -99,11 +99,15 @@ jobs:
             )
           done
 
-      # 규약: 모든 프로젝트는 [build.html] 타깃이 Pages에 실릴 HTML을
-      # dist/site로 내놓습니다. pdf 같은 다른 타깃은 로컬 전용입니다.
-      - name: Build every project's HTML
+      # Pages에 실릴 프로젝트는 [build.html] 타깃으로 HTML을 dist/site에
+      # 내놓습니다. 소스 수집 절차만 담은 recipe-only 프로젝트는 건너뜁니다.
+      - name: Build every deployable project's HTML
         run: |
           for project in projects/*/; do
+            if ! grep -q '^\[build\.html\]' "$project/yeokja.toml"; then
+              echo "Skipping $project (no [build.html] target)"
+              continue
+            fi
             (cd "$project" && ../../target/release/yeokja build html)
           done
 
