@@ -1,0 +1,1318 @@
+{
+  "version": 1,
+  "source_hash": 17961908662038922482,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Combining IO and Reader",
+      "source_hash": 17013388434572164024,
+      "context_hash": 10088890651335053865,
+      "translation": "IO와 Reader 결합하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:46.529354Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:1/seg:0",
+      "source": "One case where a reader monad can be useful is when there is some notion of the “current configuration” of the application that is passed through many recursive calls.",
+      "source_hash": 15942539442653741845,
+      "context_hash": 12343440104041507107,
+      "translation": "리더 모나드가 유용하게 쓰이는 한 가지 경우는 애플리케이션의 \"현재 구성\"이라는 개념이 있어 이것이 많은 재귀 호출을 거쳐 전달되는 경우입니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T14:51:47.557966Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:2/seg:0",
+      "source": "An example of such a program is {lit}`tree`, which recursively prints the files in the current directory and its subdirectories, indicating their tree structure using characters.",
+      "source_hash": 5344919931941131220,
+      "context_hash": 9673686829971159288,
+      "translation": "이러한 프로그램의 한 예로 {lit}`tree`가 있는데, 이는 현재 디렉터리와 그 하위 디렉터리에 있는 파일을 재귀적으로 출력하며 문자를 사용해 트리 구조를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:48.939634Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:3/seg:0",
+      "source": "The version of {lit}`tree` in this chapter, called {lit}`doug` after the mighty Douglas Fir tree that adorns the west coast of North America, provides the option of Unicode box-drawing characters or their ASCII equivalents when indicating directory structure.",
+      "source_hash": 6723900324851287987,
+      "context_hash": 8845828008944676511,
+      "translation": "이 장에서 다루는 {lit}`tree`의 버전은 북미 서해안을 장식하는 웅장한 더글러스 전나무(Douglas Fir)를 기려 {lit}`doug`라 불리며, 디렉터리 구조를 표시할 때 유니코드 박스 그리기 문자나 이에 대응하는 ASCII 문자를 선택할 수 있는 옵션을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:49.530536Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:4/seg:0",
+      "source": "For example, the following commands create a directory structure and some empty files in a directory called {lit}`doug-demo`:",
+      "source_hash": 8586999832951967031,
+      "context_hash": 13347826766723497877,
+      "translation": "예를 들어, 다음 명령은 {lit}`doug-demo`라는 디렉터리에 디렉터리 구조와 몇 개의 빈 파일을 생성합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:49.175232Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:5/seg:0",
+      "source": "Running {lit}`doug` results in the following:",
+      "source_hash": 18249109846972458116,
+      "context_hash": 30965440654655707,
+      "translation": "{lit}`doug`를 실행하면 다음과 같은 결과가 나타납니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:49.498576Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 3651691533559606975,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:49.752037Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Internally, {lit}`doug` passes a configuration value downwards as it recursively traverses the directory structure.",
+      "source_hash": 12525169298754252681,
+      "context_hash": 4365267856779773515,
+      "translation": "내부적으로 {lit}`doug`는 디렉터리 구조를 재귀적으로 순회하면서 설정 값을 아래로 전달합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:50.465984Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "This configuration contains two fields: {anchorName Config}`useASCII` determines whether to use Unicode box-drawing characters or ASCII vertical line and dash characters to indicate structure, and {anchorName Config}`currentPrefix` contains a string to prepend to each line of output.",
+      "source_hash": 7708648332640979166,
+      "context_hash": 6296853161107810565,
+      "translation": "이 설정에는 두 개의 필드가 있습니다: {anchorName Config}`useASCII`는 구조를 나타내기 위해 유니코드 상자 그리기 문자를 사용할지 ASCII 수직선과 대시 문자를 사용할지를 결정하며, {anchorName Config}`currentPrefix`는 출력의 각 줄 앞에 붙일 문자열을 담고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:52.196034Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "As the current directory deepens, the prefix string accumulates indicators of being in a directory.",
+      "source_hash": 12341106311326702532,
+      "context_hash": 7424175692570295660,
+      "translation": "현재 디렉터리가 깊어질수록, 접두사 문자열에는 디렉터리 안에 있음을 나타내는 표시가 누적됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:52.995328Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:0",
+      "source": "The configuration is a structure:",
+      "source_hash": 12653209935033708535,
+      "context_hash": 14086498633600412572,
+      "translation": "설정은 구조체입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:52.896954Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:5/seg:0",
+      "source": "This structure has default definitions for both fields.",
+      "source_hash": 2466533782873475540,
+      "context_hash": 17528182762583751007,
+      "translation": "이 구조체에는 두 필드 모두에 대한 기본 정의가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:53.952135Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:6/seg:0",
+      "source": "The default {anchorName Config}`Config` uses Unicode display with no prefix.",
+      "source_hash": 1877343532242945101,
+      "context_hash": 6179883007948135629,
+      "translation": "기본 {anchorName Config}`Config`는 접두사 없이 유니코드 표시를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:54.585713Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:7/seg:0",
+      "source": "Users who invoke {lit}`doug` will need to be able to provide command-line arguments.",
+      "source_hash": 9827304161645301951,
+      "context_hash": 7158018541055502930,
+      "translation": "{lit}`doug`를 호출하는 사용자는 명령줄 인자를 제공할 수 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:53.795104Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:8/seg:0",
+      "source": "The usage information is as follows:",
+      "source_hash": 14113319119991680354,
+      "context_hash": 14046832619972639555,
+      "translation": "사용법 정보는 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:54.469186Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:9/seg:0",
+      "source": "Accordingly, a configuration can be constructed by examining a list of command-line arguments:",
+      "source_hash": 11489301535630380074,
+      "context_hash": 7800794918201212872,
+      "translation": "따라서 명령줄 인수 목록을 검사하여 설정을 구성할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:54.822528Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:10/seg:0",
+      "source": "The {anchorName OldMain}`main` function is a wrapper around an inner worker, called {anchorName OldMain}`dirTree`, that shows the contents of a directory using a configuration.",
+      "source_hash": 15426918790685899076,
+      "context_hash": 18102153860073649090,
+      "translation": "{anchorName OldMain}`main` 함수는 설정을 사용하여 디렉터리의 내용을 보여 주는 {anchorName OldMain}`dirTree`라는 내부 워커를 감싸는 래퍼입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:56.446274Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:11/seg:0",
+      "source": "Before calling {anchorName OldMain}`dirTree`, {anchorName OldMain}`main` is responsible for processing command-line arguments.",
+      "source_hash": 1546342151410236120,
+      "context_hash": 4964221782078370949,
+      "translation": "{anchorName OldMain}`dirTree`를 호출하기 전, {anchorName OldMain}`main`은 명령줄 인자를 처리할 책임이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:56.845176Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:12/seg:0",
+      "source": "It must also return the appropriate exit code to the operating system:",
+      "source_hash": 3277815146559885890,
+      "context_hash": 17760164569581970879,
+      "translation": "또한 운영 체제에 적절한 종료 코드를 반환해야 합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:57.065605Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:13/seg:0",
+      "source": "{anchorName OldMain}`IO.eprintln` is a version of {anchorName OldShowFile}`IO.println` that outputs to standard error.",
+      "source_hash": 7219828902404364204,
+      "context_hash": 14912169201022812359,
+      "translation": "{anchorName OldMain}`IO.eprintln`은 표준 오류로 출력하는 {anchorName OldShowFile}`IO.println`의 버전입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:57.930155Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:14/seg:0",
+      "source": "Not all paths should be shown in the directory tree.",
+      "source_hash": 6244279496766233609,
+      "context_hash": 12541986751762915262,
+      "translation": "모든 경로가 디렉터리 트리에 표시되어야 하는 것은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:59.057211Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:15/seg:0",
+      "source": "In particular, files named {lit}`.` or {lit}`..` should be skipped, as they are actually features used for navigation rather than files _per se_.",
+      "source_hash": 18092810895491075152,
+      "context_hash": 15733588522348519504,
+      "translation": "특히, {lit}`.` 또는 {lit}`..`라는 이름의 파일은 건너뛰어야 합니다. 이들은 사실상 파일 *자체*라기보다는 탐색에 사용되는 기능이기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:59.130037Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:16/seg:0",
+      "source": "Of those files that should be shown, there are two kinds: ordinary files and directories:",
+      "source_hash": 2166585786090269545,
+      "context_hash": 1090208729379845292,
+      "translation": "표시되어야 하는 파일 중에는 일반 파일과 디렉터리라는 두 종류가 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:58.638189Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:17/seg:0",
+      "source": "To determine whether a file should be shown, along with which kind of entry it is, {lit}`doug` uses {anchorName toEntry}`toEntry`:",
+      "source_hash": 15829673232209549996,
+      "context_hash": 8560211472240674634,
+      "translation": "파일을 표시해야 하는지 여부와 어떤 종류의 항목인지를 결정하기 위해, {lit}`doug`는 {anchorName toEntry}`toEntry`를 사용합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:59.501615Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:18/seg:0",
+      "source": "{anchorName names}`System.FilePath.components` converts a path into a list of path components, splitting the name at directory separators.",
+      "source_hash": 7696514078921879326,
+      "context_hash": 8861743266875129151,
+      "translation": "{anchorName names}`System.FilePath.components`는 경로를 경로 구성 요소들의 목록으로 변환하며, 디렉터리 구분자를 기준으로 이름을 분할합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:52:00.728937Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:19/seg:0",
+      "source": "If there is no last component, then the path is the root directory.",
+      "source_hash": 12267716782738669194,
+      "context_hash": 13326228357998717343,
+      "translation": "마지막 구성 요소가 없으면 해당 경로는 루트 디렉터리입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:13.074967Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:20/seg:0",
+      "source": "If the last component is a special navigation file ({lit}`.` or {lit}`..`), then the file should be excluded.",
+      "source_hash": 8295578145021728891,
+      "context_hash": 6276812308005174524,
+      "translation": "마지막 구성 요소가 특수 탐색 파일({lit}`.` 또는 {lit}`..`)인 경우, 해당 파일은 제외해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:15.452455Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:21/seg:0",
+      "source": "Otherwise, directories and files are wrapped in the corresponding constructors.",
+      "source_hash": 15204306860690777914,
+      "context_hash": 4172917433583852067,
+      "translation": "그렇지 않으면 디렉터리와 파일은 해당 생성자로 감싸집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:15.457759Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:22/seg:0",
+      "source": "Lean's logic has no way to know that directory trees are finite.",
+      "source_hash": 4138717964608996735,
+      "context_hash": 8521504763117047002,
+      "translation": "Lean의 논리에는 디렉터리 트리가 유한하다는 것을 알 수 있는 방법이 없습니다.",
+      "glossary_snapshot": {
+        "Lean": "Lean"
+      },
+      "translated_at": "2026-08-18T14:59:17.871568Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:23/seg:0",
+      "source": "Indeed, some systems allow the construction of circular directory structures.",
+      "source_hash": 3482224997834795319,
+      "context_hash": 4873682003975857225,
+      "translation": "실제로 일부 시스템에서는 순환 디렉터리 구조의 생성을 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:18.835962Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:24/seg:0",
+      "source": "Thus, {anchorName OldDirTree}`dirTree` is declared {kw}`partial`:",
+      "source_hash": 739270011518188795,
+      "context_hash": 18094222409138996665,
+      "translation": "따라서 {anchorName OldDirTree}`dirTree`는 {kw}`partial`로 선언됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:19.468412Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:25/seg:0",
+      "source": "The call to {anchorName OldDirTree}`toEntry` is a {ref \"nested-actions\"}[nested action]—the parentheses are optional in positions where the arrow couldn't have any other meaning, such as {kw}`match`.",
+      "source_hash": 1388584885904959012,
+      "context_hash": 4161094586110779403,
+      "translation": "{anchorName OldDirTree}`toEntry` 호출은 {ref \"nested-actions\"}[중첩 액션]으로, {kw}`match`처럼 화살표가 다른 의미를 가질 수 없는 위치에서는 괄호가 선택적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:27.958096Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:26/seg:0",
+      "source": "When the filename doesn't correspond to an entry in the tree (e.g. because it is {lit}`..`), {anchorName OldDirTree}`dirTree` does nothing.",
+      "source_hash": 12272010982235100041,
+      "context_hash": 10602962083116950992,
+      "translation": "파일 이름이 트리 항목에 대응하지 않는 경우(예를 들어 {lit}`..`이기 때문인 경우), {anchorName OldDirTree}`dirTree`는 아무 일도 하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:22.418759Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:27/seg:0",
+      "source": "When the filename points to an ordinary file, {anchorName OldDirTree}`dirTree` calls a helper to show it with the current configuration.",
+      "source_hash": 7458341141664931453,
+      "context_hash": 3761032000539456488,
+      "translation": "파일 이름이 일반 파일을 가리키는 경우, {anchorName OldDirTree}`dirTree`는 현재 설정으로 이를 보여 주기 위해 도우미를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:23.805100Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:28/seg:0",
+      "source": "When the filename points to a directory, it is shown with a helper, and then its contents are recursively shown in a new configuration in which the prefix has been extended to account for being in a new directory.",
+      "source_hash": 13674867328316262466,
+      "context_hash": 5641020207302190570,
+      "translation": "파일 이름이 디렉터리를 가리키는 경우, 이는 헬퍼와 함께 표시되며, 이후 새로운 디렉터리 안에 있음을 고려하여 접두사가 확장된 새로운 설정에서 그 내용이 재귀적으로 표시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:24.220566Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:29/seg:0",
+      "source": "The contents of the directory are sorted in order to make the output deterministic, compared according to {anchorName compareEntries'}`dirLT`.",
+      "source_hash": 16973621533351826361,
+      "context_hash": 7123208227320307780,
+      "translation": "디렉터리의 내용은 출력을 결정적으로 만들기 위해 정렬되며, {anchorName compareEntries'}`dirLT`에 따라 비교됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:26.063483Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:30/seg:0",
+      "source": "Showing the names of files and directories is achieved with {anchorName OldShowFile}`showFileName` and {anchorName OldShowFile}`showDirName`:",
+      "source_hash": 12590044285881780390,
+      "context_hash": 13125649323366954412,
+      "translation": "파일과 디렉터리의 이름을 보여주는 것은 {anchorName OldShowFile}`showFileName`과 {anchorName OldShowFile}`showDirName`으로 이루어집니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:28.182725Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:31/seg:0",
+      "source": "Both of these helpers delegate to functions on {anchorName filenames}`Config` that take the ASCII vs Unicode setting into account:",
+      "source_hash": 4727458508648041898,
+      "context_hash": 11292481544947264373,
+      "translation": "이 두 헬퍼는 모두 ASCII 대 유니코드 설정을 고려하는 {anchorName filenames}`Config`의 함수들에 위임합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:29.229414Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:32/seg:0",
+      "source": "Similarly, {anchorName inDirectory}`Config.inDirectory` extends the prefix with a directory marker:",
+      "source_hash": 1739996323585272778,
+      "context_hash": 17952111889422068262,
+      "translation": "마찬가지로, {anchorName inDirectory}`Config.inDirectory`는 디렉터리 마커로 접두사를 확장합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:28.939903Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:33/seg:0",
+      "source": "Iterating an IO action over a list of directory contents is achieved using {anchorName doList}`doList`.",
+      "source_hash": 13823532090963281158,
+      "context_hash": 11078568834110182314,
+      "translation": "디렉터리 내용 목록에 대해 IO 액션을 반복 실행하는 것은 {anchorName doList}`doList`를 사용하여 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:30.927241Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:34/seg:0",
+      "source": "Because {anchorName doList}`doList` carries out all the actions in a list and does not base control-flow decisions on the values returned by any of the actions, the full power of {anchorName ConfigIO}`Monad` is not necessary, and it will work for any {anchorName doList}`Applicative`:",
+      "source_hash": 9400026782965907524,
+      "context_hash": 4310549520194016499,
+      "translation": "{anchorName doList}`doList`는 리스트에 있는 모든 동작을 실행할 뿐 그 동작들이 반환하는 값을 바탕으로 제어 흐름을 결정하지 않기 때문에, {anchorName ConfigIO}`Monad`가 지닌 완전한 힘까지는 필요하지 않으며, 어떤 {anchorName doList}`Applicative`에 대해서도 동작합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:33.185898Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Using a Custom Monad",
+      "source_hash": 17915305019571676028,
+      "context_hash": 9139222363545828631,
+      "translation": "사용자 정의 모나드 사용하기",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T14:59:32.251095Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "While this implementation of {lit}`doug` works, manually passing the configuration around is verbose and error-prone.",
+      "source_hash": 12580883412467634495,
+      "context_hash": 595529571899367947,
+      "translation": "{lit}`doug`의 이 구현은 작동하지만, 설정을 수동으로 전달하는 것은 장황하고 오류가 발생하기 쉽습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:33.326428Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "The type system will not catch it if the wrong configuration is passed downwards, for instance.",
+      "source_hash": 13397857096733609654,
+      "context_hash": 8889343418572176988,
+      "translation": "예를 들어, 잘못된 설정이 아래로 전달되더라도 타입 시스템은 이를 잡아내지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:35.419799Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "A reader effect ensures that the same configuration is passed to all recursive calls, unless it is manually overridden, and it helps make the code less verbose.",
+      "source_hash": 7383707843079349387,
+      "context_hash": 5855253978132216990,
+      "translation": "리더 이펙트는 수동으로 재정의하지 않는 한 모든 재귀 호출에 동일한 설정이 전달되도록 보장하며, 코드를 더 간결하게 만드는 데 도움을 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:36.930827Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "To create a version of {anchorName ConfigIO}`IO` that is also a reader of {anchorName ConfigIO}`Config`, first define the type and its {anchorName ConfigIO}`Monad` instance, following the recipe from {ref \"custom-environments\"}[the evaluator example]:",
+      "source_hash": 17213831030998955411,
+      "context_hash": 17742574928255100354,
+      "translation": "{anchorName ConfigIO}`Config`의 리더이기도 한 {anchorName ConfigIO}`IO`의 버전을 만들려면, {ref \"custom-environments\"}[평가기 예제]의 레시피를 따라 먼저 해당 타입과 그 {anchorName ConfigIO}`Monad` 인스턴스를 정의합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:37.859465Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "The difference between this {anchorName ConfigIO}`Monad` instance and the one for {anchorName Reader (module := Examples.Monads.Class)}`Reader` is that this one uses {kw}`do`-notation in the {anchorName ConfigIO}`IO` monad as the body of the function that {anchorName ConfigIO}`bind` returns, rather than applying {anchorName ConfigIO}`next` directly to the value returned from {anchorName ConfigIO}`result`.",
+      "source_hash": 3147073620320658231,
+      "context_hash": 10597401337484496577,
+      "translation": "이 {anchorName ConfigIO}`Monad` 인스턴스와 {anchorName Reader (module := Examples.Monads.Class)}`Reader`에 대한 인스턴스의 차이점은, {anchorName ConfigIO}`result`에서 반환된 값에 {anchorName ConfigIO}`next`를 직접 적용하는 대신, {anchorName ConfigIO}`bind`가 반환하는 함수의 본문에서 {anchorName ConfigIO}`IO` 모나드의 {kw}`do`-표기법을 사용한다는 것입니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T14:59:38.483718Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Any {anchorName ConfigIO}`IO` effects performed by {anchorName ConfigIO}`result` must occur before {anchorName ConfigIO}`next` is invoked, which is ensured by the {anchorName ConfigIO}`IO` monad's {anchorName ConfigIO}`bind` operator.",
+      "source_hash": 9940403346133564328,
+      "context_hash": 12388141917878432723,
+      "translation": "{anchorName ConfigIO}`result`가 수행하는 모든 {anchorName ConfigIO}`IO` 효과는 {anchorName ConfigIO}`next`가 호출되기 전에 발생해야 하며, 이는 {anchorName ConfigIO}`IO` 모나드의 {anchorName ConfigIO}`bind` 연산자에 의해 보장됩니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T14:59:39.889730Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "{anchorName ConfigIO}`ConfigIO` is not universe polymorphic because the underlying {anchorName ConfigIO}`IO` type is also not universe polymorphic.",
+      "source_hash": 11757908282137135342,
+      "context_hash": 11541519722869617252,
+      "translation": "{anchorName ConfigIO}`ConfigIO`는 유니버스 다형성이 아닌데, 이는 기저의 {anchorName ConfigIO}`IO` 타입 역시 유니버스 다형성이 아니기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:41.658791Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "Running a {anchorName ConfigIO}`ConfigIO` action involves transforming it into an {anchorName ConfigIO}`IO` action by providing it with a configuration:",
+      "source_hash": 8582449480047297319,
+      "context_hash": 12954688325985193546,
+      "translation": "{anchorName ConfigIO}`ConfigIO` 액션을 실행하는 것은 구성을 제공하여 이를 {anchorName ConfigIO}`IO` 액션으로 변환하는 과정을 포함합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:41.878511Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "This function is not really necessary, as a caller could simply provide the configuration directly.",
+      "source_hash": 10562565232307482115,
+      "context_hash": 14324008981090315645,
+      "translation": "이 함수는 호출자가 설정을 직접 제공하면 되므로 실제로는 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:42.836900Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "However, naming the operation can make it easier to see which parts of the code are intended to run in which monad.",
+      "source_hash": 10089162284476090706,
+      "context_hash": 10674531101192315465,
+      "translation": "그러나 연산에 이름을 붙이면 코드의 어느 부분이 어느 모나드에서 실행되도록 의도되었는지 파악하기가 더 쉬워질 수 있습니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T14:59:44.557298Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:0",
+      "source": "The next step is to define a means of accessing the current configuration as part of {anchorName ConfigIO}`ConfigIO`:",
+      "source_hash": 9893332511136473739,
+      "context_hash": 14829212698653956626,
+      "translation": "다음 단계는 {anchorName ConfigIO}`ConfigIO`의 일부로서 현재 설정에 접근하는 수단을 정의하는 것입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:45.890382Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:0",
+      "source": "This is just like {anchorName Reader (module := Examples.Monads.Class)}`read` from {ref \"custom-environments\"}[the evaluator example], except it uses {anchorName ConfigIO}`IO`'s {anchorName ConfigIO}`pure` to return its value rather than doing so directly.",
+      "source_hash": 14291781389606317978,
+      "context_hash": 5390837696860182777,
+      "translation": "이는 {ref \"custom-environments\"}[평가기 예제]에 나오는 {anchorName Reader (module := Examples.Monads.Class)}`read`와 마찬가지이지만, 값을 직접 반환하는 대신 {anchorName ConfigIO}`IO`의 {anchorName ConfigIO}`pure`를 사용해 반환한다는 점만 다릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:51.178680Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:0",
+      "source": "Because entering a directory modifies the current configuration for the scope of a recursive call, it will be necessary to have a way to override a configuration:",
+      "source_hash": 4515216713200590504,
+      "context_hash": 16077942626937016416,
+      "translation": "디렉터리에 진입하면 재귀 호출의 범위 동안 현재 구성이 변경되므로, 구성을 재정의할 방법이 필요합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:46.821780Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:14/seg:0",
+      "source": "Much of the code used in {lit}`doug` has no need for configurations, and {lit}`doug` calls ordinary Lean {anchorName ConfigIO}`IO` actions from the standard library that certainly don't need a {anchorName ConfigIO}`Config`.",
+      "source_hash": 8222443742644633928,
+      "context_hash": 11840387135537546717,
+      "translation": "{lit}`doug`에서 사용되는 코드 대부분은 설정이 필요하지 않으며, {lit}`doug`는 표준 라이브러리에 있는, {anchorName ConfigIO}`Config`가 전혀 필요하지 않은 평범한 Lean {anchorName ConfigIO}`IO` 액션들을 호출합니다.",
+      "glossary_snapshot": {
+        "Lean": "Lean"
+      },
+      "translated_at": "2026-08-18T14:59:48.955808Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:15/seg:0",
+      "source": "Ordinary {anchorName ConfigIO}`IO` actions can be run using {anchorName runIO}`runIO`, which ignores the configuration argument:",
+      "source_hash": 18175061642566381841,
+      "context_hash": 16328985520347312629,
+      "translation": "일반적인 {anchorName ConfigIO}`IO` 액션은 설정 인자를 무시하는 {anchorName runIO}`runIO`를 사용하여 실행할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:50.293801Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:16/seg:0",
+      "source": "With these components, {anchorName MedShowFileDir}`showFileName` and {anchorName MedShowFileDir}`showDirName` can be updated to take their configuration arguments implicitly through the {anchorName ConfigIO}`ConfigIO` monad.",
+      "source_hash": 17560652451822804002,
+      "context_hash": 17564002815943008227,
+      "translation": "이러한 구성 요소들을 사용하면, {anchorName MedShowFileDir}`showFileName`과 {anchorName MedShowFileDir}`showDirName`이 {anchorName ConfigIO}`ConfigIO` 모나드를 통해 암묵적으로 설정 인자를 받도록 갱신할 수 있습니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T14:59:51.481793Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:17/seg:0",
+      "source": "They use {ref \"nested-actions\"}[nested actions] to retrieve the configuration, and {anchorName runIO}`runIO` to actually execute the call to {anchorName MedShowFileDir}`IO.println`:",
+      "source_hash": 11229914322433846922,
+      "context_hash": 5801753135065007913,
+      "translation": "이 함수들은 설정을 가져오기 위해 {ref \"nested-actions\"}[중첩된 액션]을 사용하고, {anchorName MedShowFileDir}`IO.println` 호출을 실제로 실행하기 위해 {anchorName runIO}`runIO`를 사용합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:54.282100Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:18/seg:0",
+      "source": "In the new version of {anchorName MedDirTree}`dirTree`, the calls to {anchorName MedDirTree}`toEntry` and {anchorName MedDirTree}`readDir` are wrapped in {anchorName runIO}`runIO`.",
+      "source_hash": 6510366370199457796,
+      "context_hash": 8533614479766258900,
+      "translation": "새로운 버전의 {anchorName MedDirTree}`dirTree`에서는 {anchorName MedDirTree}`toEntry`와 {anchorName MedDirTree}`readDir` 호출이 {anchorName runIO}`runIO`로 감싸져 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:54.607722Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:19/seg:0",
+      "source": "Additionally, instead of building a new configuration and then requiring the programmer to keep track of which one to pass to recursive calls, it uses {anchorName MedDirTree}`locally` to naturally delimit the modified configuration to only a small region of the program, in which it is the _only_ valid configuration:",
+      "source_hash": 13816524198320516194,
+      "context_hash": 17180600405214232235,
+      "translation": "또한, 새로운 설정을 만든 다음 재귀 호출에 어떤 것을 전달할지 프로그래머가 계속 추적하도록 요구하는 대신, {anchorName MedDirTree}`locally`를 사용하여 수정된 설정을 프로그램의 작은 영역으로만 자연스럽게 한정합니다. 이 영역에서는 수정된 설정이 *유일한* 유효 설정입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:56.030527Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:20/seg:0",
+      "source": "The new version of {anchorName MedMain}`main` uses {anchorName ConfigIORun}`ConfigIO.run` to invoke {anchorName MedMain}`dirTree` with the initial configuration:",
+      "source_hash": 9033495058193594251,
+      "context_hash": 1462166300436309112,
+      "translation": "새 버전의 {anchorName MedMain}`main`은 {anchorName ConfigIORun}`ConfigIO.run`을 사용하여 초기 설정으로 {anchorName MedMain}`dirTree`를 호출합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:59:55.664266Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:21/seg:0",
+      "source": "This custom monad has a number of advantages over passing configurations manually:",
+      "source_hash": 1929482481592075147,
+      "context_hash": 9012335357588675346,
+      "translation": "이 커스텀 모나드는 설정을 수동으로 전달하는 것에 비해 여러 가지 장점이 있습니다:",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T14:59:58.668810Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:22/seg:0",
+      "source": "It is easier to ensure that configurations are passed down unchanged, except when changes are desired",
+      "source_hash": 3038712554904587056,
+      "context_hash": 1547712994920465053,
+      "translation": "변경이 필요한 경우를 제외하고는 설정이 변경되지 않은 채로 전달되도록 보장하는 것이 더 쉽습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:00.058345Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:23/seg:0",
+      "source": "The concern of passing the configuration onwards is more clearly separated from the concern of printing directory contents",
+      "source_hash": 543254388234360593,
+      "context_hash": 10097381847420974919,
+      "translation": "설정을 전달하는 관심사는 디렉터리 내용을 출력하는 관심사와 더 명확하게 분리됩니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:01.481305Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:24/seg:0",
+      "source": "As the program grows, there will be more and more intermediate layers that do nothing with configurations except propagate them, and these layers don't need to be rewritten as the configuration logic changes",
+      "source_hash": 10736309999677941340,
+      "context_hash": 2074761106758588653,
+      "translation": "프로그램이 커질수록 설정을 전달하는 것 외에는 아무 작업도 하지 않는 중간 계층이 점점 더 많아지는데, 이러한 계층은 설정 로직이 바뀌더라도 다시 작성할 필요가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:03.163881Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:25/seg:0",
+      "source": "However, there are also some clear downsides:",
+      "source_hash": 1956383861136498364,
+      "context_hash": 15382037739237263131,
+      "translation": "하지만 몇 가지 명백한 단점도 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:04.174015Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:26/seg:0",
+      "source": "As the program evolves and the monad requires more features, each of the basic operators such as {anchorName locally}`locally` and {anchorName currentConfig}`currentConfig` will need to be updated",
+      "source_hash": 18100626568563510948,
+      "context_hash": 9165447770093795986,
+      "translation": "프로그램이 발전하고 모나드에 더 많은 기능이 필요해짐에 따라, {anchorName locally}`locally`와 {anchorName currentConfig}`currentConfig`와 같은 각각의 기본 연산자를 업데이트해야 합니다",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:05.914422Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:27/seg:0",
+      "source": "Wrapping ordinary {anchorName ConfigIO}`IO` actions in {anchorName runIO}`runIO` is noisy and distracts from the flow of the program",
+      "source_hash": 9425666898722004883,
+      "context_hash": 9729113880580858123,
+      "translation": "일반적인 {anchorName ConfigIO}`IO` 액션을 {anchorName runIO}`runIO`로 감싸는 것은 번잡하며 프로그램의 흐름을 방해합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:07.342387Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:28/seg:0",
+      "source": "Writing monads instances by hand is repetitive, and the technique for adding a reader effect to another monad is a design pattern that requires documentation and communication overhead",
+      "source_hash": 17195518886788975411,
+      "context_hash": 8581143574961477329,
+      "translation": "모나드 인스턴스를 손으로 작성하는 것은 반복적인 작업이며, 다른 모나드에 리더 효과를 추가하는 기법은 문서화와 의사소통 오버헤드를 필요로 하는 디자인 패턴입니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:08.625325Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:29/seg:0",
+      "source": "Using a technique called _monad transformers_, all of these downsides can be addressed.",
+      "source_hash": 8916957013281241931,
+      "context_hash": 885712215459224029,
+      "translation": "*모나드 트랜스포머*라는 기법을 사용하면, 이러한 단점을 모두 해결할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:11.448663Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:30/seg:0",
+      "source": "A monad transformer takes a monad as an argument and returns a new monad.",
+      "source_hash": 3925528876480762589,
+      "context_hash": 1389079949345887724,
+      "translation": "모나드 트랜스포머는 모나드를 인자로 받아 새로운 모나드를 반환합니다.",
+      "glossary_snapshot": {
+        "monad transformer": "모나드 트랜스포머",
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:11.658092Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:31/seg:0",
+      "source": "Monad transformers consist of:",
+      "source_hash": 17515977698086971075,
+      "context_hash": 14865234782684784446,
+      "translation": "모나드 트랜스포머는 다음으로 구성됩니다:",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:12.765353Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:32/seg:0",
+      "source": "A definition of the transformer itself, which is typically a function from types to types",
+      "source_hash": 15386191797073457205,
+      "context_hash": 10442168430553544867,
+      "translation": "변환기 자체의 정의로, 일반적으로 타입에서 타입으로의 함수입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:14.404555Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:33/seg:0",
+      "source": "A {anchorName ConfigIO}`Monad` instance that assumes the inner type is already a monad",
+      "source_hash": 9459864537004425876,
+      "context_hash": 5238363771977446694,
+      "translation": "내부 타입이 이미 모나드라고 가정하는 {anchorName ConfigIO}`Monad` 인스턴스",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:15.403988Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:34/seg:0",
+      "source": "An operator to “lift” an action from the inner monad to the transformed monad, akin to {anchorName runIO}`runIO`",
+      "source_hash": 9137045653192195983,
+      "context_hash": 514426162994469432,
+      "translation": "{anchorName runIO}`runIO`와 유사하게, 내부 모나드의 액션을 변환된 모나드로 “끌어올리는(lift)” 연산자",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:16.880832Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Adding a Reader to Any Monad",
+      "source_hash": 10418980470464654878,
+      "context_hash": 13270136411108635480,
+      "translation": "모든 모나드에 Reader 추가하기",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:17.181434Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Adding a reader effect to {anchorName ConfigIO}`IO` was accomplished in {anchorName ConfigIO}`ConfigIO` by wrapping {anchorTerm ConfigIO}`IO α` in a function type.",
+      "source_hash": 13005700394368638934,
+      "context_hash": 8387425733749361906,
+      "translation": "{anchorName ConfigIO}`IO`에 리더 효과를 추가하는 작업은 {anchorTerm ConfigIO}`IO α`를 함수 타입으로 감싸는 방식으로 {anchorName ConfigIO}`ConfigIO`에서 수행되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:19.558360Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "The Lean standard library contains a function that can do this to _any_ polymorphic type, called {anchorName MyReaderT}`ReaderT`:",
+      "source_hash": 17577157698890831172,
+      "context_hash": 14879559243106179784,
+      "translation": "Lean 표준 라이브러리에는 이러한 작업을 *어떤* 다형 타입에도 수행할 수 있는 함수가 있으며, {anchorName MyReaderT}`ReaderT`라고 불립니다:",
+      "glossary_snapshot": {
+        "Lean": "Lean"
+      },
+      "translated_at": "2026-08-18T15:00:20.788055Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Its arguments are as follows:",
+      "source_hash": 4265911747855687659,
+      "context_hash": 2924762998970703403,
+      "translation": "그 인자는 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:20.724834Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "{anchorName MyReaderT}`ρ` is the environment that is accessible to the reader",
+      "source_hash": 8283875221501917585,
+      "context_hash": 13297852475324903014,
+      "translation": "{anchorName MyReaderT}`ρ`는 리더가 접근할 수 있는 환경입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:22.202766Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "{anchorName MyReaderT}`m` is the monad that is being transformed, such as {anchorName ConfigIO}`IO`",
+      "source_hash": 3032326439919951570,
+      "context_hash": 373744704004070025,
+      "translation": "{anchorName MyReaderT}`m`은 변환되는 대상이 되는 모나드로, {anchorName ConfigIO}`IO`와 같은 것입니다",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:23.951297Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "{anchorName MyReaderT}`α` is the type of values being returned by the monadic computation",
+      "source_hash": 13639688139422277783,
+      "context_hash": 10608523273822400351,
+      "translation": "{anchorName MyReaderT}`α`는 모나드 계산에 의해 반환되는 값의 타입입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:25.070195Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "Both {anchorName MyReaderT}`α` and {anchorName MyReaderT}`ρ` are in the same universe because the operator that retrieves the environment in the monad will have type {anchorTerm MyReaderTread}`m ρ`.",
+      "source_hash": 17517657743907915026,
+      "context_hash": 11783402312487700747,
+      "translation": "{anchorName MyReaderT}`α`와 {anchorName MyReaderT}`ρ`는 모두 같은 유니버스에 있는데, 이는 해당 모나드에서 환경을 가져오는 연산자가 {anchorTerm MyReaderTread}`m ρ` 타입을 가지기 때문입니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:25.297127Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "With {anchorName MyReaderT}`ReaderT`, {anchorName ConfigIO}`ConfigIO` becomes:",
+      "source_hash": 498323581161007171,
+      "context_hash": 2495581324164364839,
+      "translation": "{anchorName MyReaderT}`ReaderT`를 사용하면, {anchorName ConfigIO}`ConfigIO`는 다음과 같이 됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:26.475593Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "It is an {kw}`abbrev` because {anchorName ReaderTConfigIO}`ReaderT` has many useful features defined in the standard library that a non-reducible definition would hide.",
+      "source_hash": 10818892008099468537,
+      "context_hash": 15969185590921926948,
+      "translation": "이것이 {kw}`abbrev`인 이유는 {anchorName ReaderTConfigIO}`ReaderT`가 표준 라이브러리에 정의된 유용한 기능을 많이 가지고 있는데, 축약 불가능한(non-reducible) 정의는 이를 가려버리기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:29.170259Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:0",
+      "source": "Rather than taking responsibility for making these work directly for {anchorName ConfigIO}`ConfigIO`, it's easier to simply have {anchorName ReaderTConfigIO}`ConfigIO` behave identically to {anchorTerm ReaderTConfigIO}`ReaderT Config IO`.",
+      "source_hash": 11151506068328543853,
+      "context_hash": 12228198052235397462,
+      "translation": "이들이 {anchorName ConfigIO}`ConfigIO`에 대해 직접 작동하도록 만드는 책임을 지기보다는, {anchorName ReaderTConfigIO}`ConfigIO`가 {anchorTerm ReaderTConfigIO}`ReaderT Config IO`와 동일하게 동작하도록 하는 편이 더 쉽습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:29.599683Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:11/seg:0",
+      "source": "The manually-written {anchorName currentConfig}`currentConfig` obtained the environment out of the reader.",
+      "source_hash": 8173160341108176792,
+      "context_hash": 7744154830180146799,
+      "translation": "수동으로 작성된 {anchorName currentConfig}`currentConfig`는 리더에서 환경을 가져왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:29.586299Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:12/seg:0",
+      "source": "This effect can be defined in a generic form for all uses of {anchorName MyReaderTread}`ReaderT`, under the name {anchorName MonadReader}`read`:",
+      "source_hash": 8541540529645394143,
+      "context_hash": 14387921524663206558,
+      "translation": "이 효과는 {anchorName MonadReader}`read`라는 이름 아래, {anchorName MyReaderTread}`ReaderT`의 모든 사용에 대해 일반적인 형태로 정의할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:29.679572Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:0",
+      "source": "However, not every monad that provides a reader effect is built with {anchorName MyReaderT}`ReaderT`.",
+      "source_hash": 5201013710048321335,
+      "context_hash": 15251594212572550089,
+      "translation": "하지만 리더 효과를 제공하는 모든 모나드가 {anchorName MyReaderT}`ReaderT`로 만들어지는 것은 아닙니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:29.442581Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:14/seg:0",
+      "source": "The type class {anchorName MonadReader}`MonadReader` allows any monad to provide a {anchorName MonadReader}`read` operator:",
+      "source_hash": 8994546365334722586,
+      "context_hash": 17905865652575601546,
+      "translation": "타입 클래스 {anchorName MonadReader}`MonadReader`는 모든 모나드가 {anchorName MonadReader}`read` 연산자를 제공할 수 있도록 합니다:",
+      "glossary_snapshot": {
+        "type class": "타입 클래스",
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:31.698740Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:0",
+      "source": "The type {anchorName MonadReader}`ρ` is an output parameter because any given monad typically only provides a single type of environment through a reader, so automatically selecting it when the monad is known makes programs more convenient to write.",
+      "source_hash": 4596412207485275580,
+      "context_hash": 1962264441007104163,
+      "translation": "타입 {anchorName MonadReader}`ρ`는 출력 매개변수인데, 이는 주어진 모나드가 일반적으로 리더를 통해 단 하나의 환경 타입만을 제공하기 때문이며, 따라서 모나드가 알려졌을 때 이를 자동으로 선택하도록 하면 프로그램을 작성하기가 더 편리해집니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:34.568865Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:16/seg:0",
+      "source": "The {anchorName ConfigIO}`Monad` instance for {anchorName MyReaderT}`ReaderT` is essentially the same as the {anchorName ConfigIO}`Monad` instance for {anchorName ConfigIO}`ConfigIO`, except {anchorName ConfigIO}`IO` has been replaced by some arbitrary monad argument {anchorName MonadMyReaderT}`m`:",
+      "source_hash": 9510864253006932099,
+      "context_hash": 2493000930978541895,
+      "translation": "{anchorName MyReaderT}`ReaderT`에 대한 {anchorName ConfigIO}`Monad` 인스턴스는 본질적으로 {anchorName ConfigIO}`ConfigIO`에 대한 {anchorName ConfigIO}`Monad` 인스턴스와 동일하지만, {anchorName ConfigIO}`IO`가 임의의 모나드 인자 {anchorName MonadMyReaderT}`m`으로 대체되었다는 점만 다릅니다:",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:33.446920Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:0",
+      "source": "The next step is to eliminate uses of {anchorName runIO}`runIO`.",
+      "source_hash": 4790426579621936556,
+      "context_hash": 4053646732127117654,
+      "translation": "다음 단계는 {anchorName runIO}`runIO`의 사용을 제거하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:33.230025Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:18/seg:0",
+      "source": "When Lean encounters a mismatch in monad types, it automatically attempts to use a type class called {anchorName MyMonadLift}`MonadLift` to transform the actual monad into the expected monad.",
+      "source_hash": 13116034849567719739,
+      "context_hash": 15626024027835899988,
+      "translation": "Lean은 모나드 타입이 일치하지 않는 경우를 만나면, 실제 모나드를 예상되는 모나드로 변환하기 위해 {anchorName MyMonadLift}`MonadLift`라는 타입 클래스를 자동으로 사용하려 시도합니다.",
+      "glossary_snapshot": {
+        "Lean": "Lean",
+        "type class": "타입 클래스",
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:34.189121Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:19/seg:0",
+      "source": "This process is similar to the use of coercions.",
+      "source_hash": 11344449737026696590,
+      "context_hash": 16820405602931299876,
+      "translation": "이 과정은 강제 변환의 사용과 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:33.676872Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:20/seg:0",
+      "source": "{anchorName MyMonadLift}`MonadLift` is defined as follows:",
+      "source_hash": 16409907097505233553,
+      "context_hash": 6163368659159020251,
+      "translation": "{anchorName MyMonadLift}`MonadLift`는 다음과 같이 정의됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:33.517082Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:21/seg:0",
+      "source": "The method {anchorName MyMonadLift}`monadLift` translates from the monad {anchorName MyMonadLift}`m` to the monad {anchorName MyMonadLift}`n`.",
+      "source_hash": 10148302071674863437,
+      "context_hash": 3396326059176390115,
+      "translation": "{anchorName MyMonadLift}`monadLift` 메서드는 모나드 {anchorName MyMonadLift}`m`에서 모나드 {anchorName MyMonadLift}`n`으로 변환합니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T14:56:44.736469Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:22/seg:0",
+      "source": "The process is called “lifting” because it takes an action in the embedded monad and makes it into an action in the surrounding monad.",
+      "source_hash": 9496506255023430744,
+      "context_hash": 5574145452058939670,
+      "translation": "이 과정을 “들어올리기(lifting)”라고 부르는 이유는 내장된 모나드의 액션을 받아 이를 감싸는 모나드의 액션으로 만들기 때문입니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:34.494669Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:23/seg:0",
+      "source": "In this case, it will be used to “lift” from {anchorName ConfigIO}`IO` to {anchorTerm ReaderTConfigIO}`ReaderT Config IO`, though the instance works for _any_ inner monad {anchorName MonadLiftReaderT}`m`:",
+      "source_hash": 13640178489981798177,
+      "context_hash": 5671573589973248754,
+      "translation": "이 경우, {anchorName ConfigIO}`IO`에서 {anchorTerm ReaderTConfigIO}`ReaderT Config IO`로 “끌어올리는(lift)” 데 사용될 것입니다만, 이 인스턴스는 *어떤* 내부 모나드 {anchorName MonadLiftReaderT}`m`에 대해서도 동작합니다:",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:36.479979Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:24/seg:0",
+      "source": "The implementation of {anchorName MonadLiftReaderT}`monadLift` is very similar to that of {anchorName runIO}`runIO`.",
+      "source_hash": 6474682066109206193,
+      "context_hash": 5339784286453070165,
+      "translation": "{anchorName MonadLiftReaderT}`monadLift`의 구현은 {anchorName runIO}`runIO`의 구현과 매우 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:37.653573Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:25/seg:0",
+      "source": "Indeed, it is enough to define {anchorName showFileAndDir}`showFileName` and {anchorName showFileAndDir}`showDirName` without using {anchorName runIO}`runIO`:",
+      "source_hash": 16051860254804679080,
+      "context_hash": 1888248800743565294,
+      "translation": "실제로 {anchorName runIO}`runIO`를 사용하지 않고 {anchorName showFileAndDir}`showFileName`과 {anchorName showFileAndDir}`showDirName`을 정의하는 것으로 충분합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:37.931722Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:26/seg:0",
+      "source": "One final operation from the original {anchorName ConfigIO}`ConfigIO` remains to be translated to a use of {anchorName MyReaderT}`ReaderT`: {anchorName locally}`locally`.",
+      "source_hash": 5610918529290267664,
+      "context_hash": 6203123626654359897,
+      "translation": "원래의 {anchorName ConfigIO}`ConfigIO`에서 {anchorName MyReaderT}`ReaderT`의 사용으로 번역해야 할 마지막 연산이 하나 남아 있는데, 바로 {anchorName locally}`locally`입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:38.182812Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:27/seg:0",
+      "source": "The definition can be translated directly to {anchorName MyReaderT}`ReaderT`, but the Lean standard library provides a more general version.",
+      "source_hash": 5159635499534722325,
+      "context_hash": 9563392594579394917,
+      "translation": "이 정의는 {anchorName MyReaderT}`ReaderT`로 직접 번역될 수 있지만, Lean 표준 라이브러리는 더 일반화된 버전을 제공합니다.",
+      "glossary_snapshot": {
+        "Lean": "Lean"
+      },
+      "translated_at": "2026-08-18T15:00:38.839535Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:28/seg:0",
+      "source": "The standard version is called {anchorName MyMonadWithReader}`withReader`, and it is part of a type class called {anchorName MyMonadWithReader}`MonadWithReader`:",
+      "source_hash": 11005132936011667403,
+      "context_hash": 18441175390353429963,
+      "translation": "표준 버전은 {anchorName MyMonadWithReader}`withReader`라고 불리며, {anchorName MyMonadWithReader}`MonadWithReader`라는 타입 클래스의 일부입니다:",
+      "glossary_snapshot": {
+        "type class": "타입 클래스"
+      },
+      "translated_at": "2026-08-18T15:00:39.856172Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:29/seg:0",
+      "source": "Just as in {anchorName MonadReader}`MonadReader`, the environment {anchorName MyMonadWithReader}`ρ` is an {anchorName MyMonadWithReader}`outParam`.",
+      "source_hash": 16802002725150714206,
+      "context_hash": 11073580811100867239,
+      "translation": "{anchorName MonadReader}`MonadReader`에서와 마찬가지로, 환경 {anchorName MyMonadWithReader}`ρ`는 {anchorName MyMonadWithReader}`outParam`입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:39.355355Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:30/seg:0",
+      "source": "The {anchorName exportWithReader}`withReader` operation is exported, so that it doesn't need to be written with the type class name before it:",
+      "source_hash": 8385200722339793253,
+      "context_hash": 9689648462686022477,
+      "translation": "{anchorName exportWithReader}`withReader` 연산은 익스포트되어 있어서, 그 앞에 타입 클래스 이름을 붙여 쓰지 않아도 됩니다:",
+      "glossary_snapshot": {
+        "type class": "타입 클래스"
+      },
+      "translated_at": "2026-08-18T15:00:39.332927Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:31/seg:0",
+      "source": "The instance for {anchorName ReaderTWithReader}`ReaderT` is essentially the same as the definition of {anchorName locally}`locally`:",
+      "source_hash": 12611556076898530865,
+      "context_hash": 5335080363972434467,
+      "translation": "{anchorName ReaderTWithReader}`ReaderT`에 대한 인스턴스는 {anchorName locally}`locally`의 정의와 본질적으로 동일합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:40.699858Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:32/seg:0",
+      "source": "With these definitions in place, the new version of {anchorName readerTDirTree}`dirTree` can be written:",
+      "source_hash": 1670265497015599478,
+      "context_hash": 8383100245323468010,
+      "translation": "이러한 정의를 갖추면 {anchorName readerTDirTree}`dirTree`의 새 버전을 다음과 같이 작성할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:42.200527Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:33/seg:0",
+      "source": "Aside from replacing {anchorName locally}`locally` with {anchorName readerTDirTree}`withReader`, it is the same as before.",
+      "source_hash": 1602928828219764285,
+      "context_hash": 6678606626767731162,
+      "translation": "{anchorName locally}`locally`를 {anchorName readerTDirTree}`withReader`로 바꾼 것을 제외하면 이전과 동일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:44.065582Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:34/seg:0",
+      "source": "Replacing the custom {anchorName ConfigIO}`ConfigIO` type with {anchorName MonadMyReaderT}`ReaderT` did not save a large number of lines of code in this section.",
+      "source_hash": 11212735238694810051,
+      "context_hash": 16543366186102664480,
+      "translation": "사용자 정의 {anchorName ConfigIO}`ConfigIO` 타입을 {anchorName MonadMyReaderT}`ReaderT`로 대체해도 이 절에서는 코드 줄 수를 크게 줄이지 못했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:43.044597Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:35/seg:0",
+      "source": "However, rewriting the code using components from the standard library does have long-term benefits.",
+      "source_hash": 13752714417423698462,
+      "context_hash": 5164567356265056286,
+      "translation": "하지만 표준 라이브러리의 구성 요소를 사용해 코드를 다시 작성하면 장기적인 이점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:43.517396Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:36/seg:0",
+      "source": "First, readers who know about {anchorName MyReaderT}`ReaderT` don't need to take time to understand the {anchorName ConfigIO}`Monad` instance for {anchorName ConfigIO}`ConfigIO`, working backwards to the meaning of monad itself.",
+      "source_hash": 6619723295044694160,
+      "context_hash": 4102314175111393035,
+      "translation": "먼저, {anchorName MyReaderT}`ReaderT`에 대해 아는 독자는 {anchorName ConfigIO}`ConfigIO`에 대한 {anchorName ConfigIO}`Monad` 인스턴스를 이해하기 위해 모나드 자체의 의미로 거슬러 올라가는 시간을 들일 필요가 없습니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:46.787691Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:37/seg:0",
+      "source": "Instead, they can be confident in their initial understanding.",
+      "source_hash": 4390206078788245773,
+      "context_hash": 6185048790657945129,
+      "translation": "대신, 자신의 초기 이해를 확신할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:43.356077Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:38/seg:0",
+      "source": "Next, adding further effects to the monad (such as a state effect to count the files in each directory and display a count at the end) requires far fewer changes to the code, because the monad transformers and {anchorName MonadLiftReaderT}`MonadLift` instances provided in the library work well together.",
+      "source_hash": 15562657702950035895,
+      "context_hash": 15360185598324995658,
+      "translation": "다음으로, 모나드에 추가 효과(예를 들어 각 디렉터리의 파일 수를 세어 마지막에 그 개수를 출력하는 상태 효과)를 더하는 작업은 코드 변경을 훨씬 적게 요구하는데, 이는 라이브러리에서 제공하는 모나드 트랜스포머와 {anchorName MonadLiftReaderT}`MonadLift` 인스턴스들이 서로 잘 어우러져 작동하기 때문입니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:45.151617Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:39/seg:0",
+      "source": "Finally, using a set of type classes included in the standard library, polymorphic code can be written in such a way that it can work with a variety of monads without having to care about details like the order in which the monad transformers were applied.",
+      "source_hash": 2779431161356808133,
+      "context_hash": 4266282406989515838,
+      "translation": "마지막으로, 표준 라이브러리에 포함된 타입 클래스 집합을 사용하면, 모나드 트랜스포머가 적용된 순서와 같은 세부 사항을 신경 쓸 필요 없이 다양한 모나드와 함께 작동할 수 있도록 다형적 코드를 작성할 수 있습니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:45.124174Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:40/seg:0",
+      "source": "Just as some functions work in any monad, others can work in any monad that provides a certain type of state, or a certain type of exceptions, without having to specifically describe the _way_ in which a particular concrete monad provides the state or exceptions.",
+      "source_hash": 4426179257181229760,
+      "context_hash": 4041690011235184203,
+      "translation": "일부 함수가 어떤 모나드에서든 작동하는 것과 마찬가지로, 다른 함수들은 특정 구체적인 모나드가 상태나 예외를 제공하는 *방식*을 구체적으로 설명하지 않고도, 특정 종류의 상태나 특정 종류의 예외를 제공하는 어떤 모나드에서든 작동할 수 있습니다.",
+      "glossary_snapshot": {
+        "monad": "모나드"
+      },
+      "translated_at": "2026-08-18T15:00:51.466753Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Exercises",
+      "source_hash": 9369920611288401768,
+      "context_hash": 2660040715441508829,
+      "translation": "연습문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:47.074874Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Controlling the Display of Dotfiles",
+      "source_hash": 13356489132191105629,
+      "context_hash": 5804933627989589247,
+      "translation": "도트파일 표시 제어하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:47.312857Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Files whose names begin with a dot character ({lit}`'.'`) typically represent files that should usually be hidden, such as source-control metadata and configuration files.",
+      "source_hash": 16663887102706383399,
+      "context_hash": 13727643298499238190,
+      "translation": "이름이 점 문자({lit}`'.'`)로 시작하는 파일은 일반적으로 소스 제어 메타데이터나 설정 파일처럼 보통 숨겨져야 하는 파일을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:47.906608Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Modify {lit}`doug` with an option to show or hide filenames that begin with a dot.",
+      "source_hash": 13636435292013541910,
+      "context_hash": 14845286402444999584,
+      "translation": "점(.)으로 시작하는 파일 이름을 표시하거나 숨기는 옵션을 추가하여 {lit}`doug`를 수정하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:48.529644Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "This option should be controlled with a {lit}`-a` command-line option.",
+      "source_hash": 8883941327187613229,
+      "context_hash": 3399340295006751875,
+      "translation": "이 옵션은 {lit}`-a` 명령줄 옵션으로 제어되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T15:00:49.394236Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Starting Directory as Argument",
+      "source_hash": 3732453053438492176,
+      "context_hash": 3804540122715292155,
+      "translation": "시작 디렉터리를 인자로 전달하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:51:30.184725Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Modify {lit}`doug` so that it takes a starting directory as an additional command-line argument.",
+      "source_hash": 12957913570940695274,
+      "context_hash": 10351587650375756130,
+      "translation": "{lit}`doug`를 수정하여 시작 디렉터리를 추가 명령줄 인자로 받도록 하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-18T14:39:16.254036Z",
+      "issues": []
+    }
+  ]
+}
