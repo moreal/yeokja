@@ -222,22 +222,49 @@ fn rst_anonymous_references(text: &str) -> usize {
     count
 }
 
-/// Simple URL extraction — finds http:// and https:// URLs
+/// Extract HTTP(S) URLs without absorbing markup closers or Korean suffixes.
+///
+/// In `[label](https://example.com)에서`, whitespace tokenization alone reads
+/// `)에서` as part of the URL. Parentheses that occur inside a URL are balanced,
+/// while the unmatched `)` that closes the Markdown/Verso link ends it.
 fn extract_urls(text: &str) -> Vec<String> {
     let mut urls = Vec::new();
-    for word in text.split_whitespace() {
-        // Find the start of a URL within the token (handles cases like "[text](https://...")
-        let start = if let Some(pos) = word.find("https://").or_else(|| word.find("http://")) {
-            pos
-        } else {
-            continue;
+    let mut search_from = 0;
+    while search_from < text.len() {
+        let tail = &text[search_from..];
+        let https = tail.find("https://");
+        let http = tail.find("http://");
+        let Some(relative_start) = https.into_iter().chain(http).min() else {
+            break;
         };
-        let candidate = &word[start..];
-        // Trim trailing punctuation and closing brackets
-        let url = candidate.trim_end_matches(['.', ',', ';', ')', '>']);
+        let start = search_from + relative_start;
+        let candidate = &text[start..];
+        let mut depth = 0usize;
+        let mut end = candidate.len();
+        for (offset, ch) in candidate.char_indices() {
+            match ch {
+                c if c.is_whitespace() => {
+                    end = offset;
+                    break;
+                }
+                '<' | '>' | '"' => {
+                    end = offset;
+                    break;
+                }
+                '(' => depth += 1,
+                ')' if depth == 0 => {
+                    end = offset;
+                    break;
+                }
+                ')' => depth -= 1,
+                _ => {}
+            }
+        }
+        let url = candidate[..end].trim_end_matches(['.', ',', ';']);
         if !url.is_empty() {
             urls.push(url.to_string());
         }
+        search_from = start + end.max("http://".len());
     }
     urls
 }
@@ -266,6 +293,24 @@ mod tests {
         );
         let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
         assert!(result.passed);
+    }
+
+    #[tokio::test]
+    async fn markdown_link_can_take_a_korean_particle() {
+        let ctx = make_context(
+            "See [Lean FRO](https://lean-fro.org).",
+            "[Lean FRO](https://lean-fro.org)에서 확인하십시오.",
+        );
+        let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[test]
+    fn a_balanced_parenthesis_can_belong_to_the_url() {
+        assert_eq!(
+            extract_urls("[article](https://example.com/wiki/Foo_(bar))에서"),
+            vec!["https://example.com/wiki/Foo_(bar)"]
+        );
     }
 
     #[tokio::test]
