@@ -415,7 +415,7 @@ async fn start_translation(
             return Err(internal_error(e.to_string()));
         }
     };
-    let eval_provider = if options.auto_evaluate {
+    let eval_provider = if options.auto_evaluate && options.style_evaluate {
         match create_evaluator_provider(&state.config.provider) {
             Ok(p) => p,
             Err(e) => {

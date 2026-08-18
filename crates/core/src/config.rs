@@ -192,10 +192,15 @@ pub struct EvaluationConfig {
     pub max_retries: u32,
     #[serde(default = "default_auto_evaluate")]
     pub auto_evaluate: bool,
+    /// Run the optional LLM-as-judge style evaluator in addition to the
+    /// always-local glossary, link, format, and sentence-ending checks.
+    #[serde(default = "default_style_evaluate")]
+    pub style_evaluate: bool,
 }
 
 fn default_max_retries() -> u32 { 3 }
 fn default_auto_evaluate() -> bool { true }
+fn default_style_evaluate() -> bool { true }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TranslationConfig {
@@ -338,6 +343,7 @@ port = 8080
 [evaluation]
 max_retries = 5
 auto_evaluate = false
+style_evaluate = false
 
 [translation]
 concurrency = 12
@@ -354,7 +360,10 @@ concurrency = 12
         );
         assert_eq!(config.provider.provider_type, "anthropic");
         assert_eq!(config.server.unwrap().port, 8080);
-        assert_eq!(config.evaluation.unwrap().max_retries, 5);
+        let evaluation = config.evaluation.unwrap();
+        assert_eq!(evaluation.max_retries, 5);
+        assert!(!evaluation.auto_evaluate);
+        assert!(!evaluation.style_evaluate);
     }
 
     #[test]

@@ -13,7 +13,7 @@ pub async fn run(path: &str, progress: Option<ProgressSender>) -> Result<Transla
 
     let options = TranslateOptions::from_config(&ctx.config);
     let provider = create_provider(&ctx.config.provider)?;
-    let eval_provider = if options.auto_evaluate {
+    let eval_provider = if options.auto_evaluate && options.style_evaluate {
         create_evaluator_provider(&ctx.config.provider)?
     } else {
         None

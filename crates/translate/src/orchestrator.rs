@@ -126,6 +126,9 @@ fn next_block_id() -> u64 {
 #[derive(Debug, Clone)]
 pub struct TranslateOptions {
     pub auto_evaluate: bool,
+    /// Whether automatic evaluation also calls the optional LLM style judge.
+    /// Mechanical evaluators still run when this is false.
+    pub style_evaluate: bool,
     pub max_retries: u32,
     /// Maximum concurrent block translation requests across all files.
     pub concurrency: usize,
@@ -136,6 +139,7 @@ impl TranslateOptions {
         let evaluation = config.evaluation.as_ref();
         Self {
             auto_evaluate: evaluation.map(|e| e.auto_evaluate).unwrap_or(true),
+            style_evaluate: evaluation.map(|e| e.style_evaluate).unwrap_or(true),
             max_retries: evaluation.map(|e| e.max_retries).unwrap_or(3),
             concurrency: config
                 .translation
@@ -1290,6 +1294,7 @@ model = "test"
             parser_factory: Arc::new(|_, _| Box::new(OneBlockParser)),
             options: TranslateOptions {
                 auto_evaluate: false,
+                style_evaluate: false,
                 max_retries: 0,
                 concurrency: 2,
             },
