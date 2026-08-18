@@ -385,6 +385,96 @@ fn verso_structure(text: &str) -> Vec<String> {
     tokens
 }
 
+#[derive(Debug)]
+struct VersoCodeToken {
+    range: std::ops::Range<usize>,
+    header: String,
+    payload: String,
+    raw: String,
+}
+
+/// Restore non-breaking spaces in opaque Verso role payloads.
+///
+/// Models commonly turn an invisible U+00A0 into U+0020 or the literal text
+/// `\u{a0}`. The payload is code, not prose. When a translated role has the
+/// same header and otherwise-identical payload, put back the exact source token
+/// before format evaluation and persistence. Tokens are matched as a multiset
+/// so natural sentence reordering remains allowed.
+pub(crate) fn restore_verso_code_whitespace(source: &str, translation: &str) -> String {
+    let source_tokens = verso_code_tokens(source);
+    let translation_tokens = verso_code_tokens(translation);
+    let mut used = vec![false; translation_tokens.len()];
+    let mut replacements = Vec::new();
+
+    for source_token in source_tokens
+        .iter()
+        .filter(|token| token.payload.contains('\u{a0}'))
+    {
+        let normalized_source = normalize_verso_code_whitespace(&source_token.payload);
+        let Some((index, translated_token)) = translation_tokens
+            .iter()
+            .enumerate()
+            .find(|(index, token)| {
+                !used[*index]
+                    && token.header == source_token.header
+                    && normalize_verso_code_whitespace(&token.payload) == normalized_source
+            })
+        else {
+            continue;
+        };
+        used[index] = true;
+        replacements.push((translated_token.range.clone(), source_token.raw.clone()));
+    }
+
+    let mut restored = translation.to_string();
+    replacements.sort_by_key(|(range, _)| std::cmp::Reverse(range.start));
+    for (range, source_token) in replacements {
+        restored.replace_range(range, &source_token);
+    }
+    restored
+}
+
+fn normalize_verso_code_whitespace(payload: &str) -> String {
+    payload.replace("\\u{a0}", " ").replace('\u{a0}', " ")
+}
+
+fn verso_code_tokens(text: &str) -> Vec<VersoCodeToken> {
+    let mut tokens = Vec::new();
+    let mut at = 0;
+    while at < text.len() {
+        if text[at..].starts_with('{') {
+            let name_start = at + 1;
+            let starts_as_role = text[name_start..]
+                .chars()
+                .next()
+                .is_some_and(|ch| ch.is_ascii_alphabetic());
+            if starts_as_role
+                && let Some(close_offset) = text[name_start..].find('}')
+            {
+                let header_end = name_start + close_offset + 1;
+                if text[header_end..].starts_with('`') {
+                    let payload_start = header_end + 1;
+                    if let Some(close) = text[payload_start..].find('`') {
+                        let payload_end = payload_start + close;
+                        let end = payload_end + 1;
+                        tokens.push(VersoCodeToken {
+                            range: at..end,
+                            header: text[at..header_end].to_string(),
+                            payload: text[payload_start..payload_end].to_string(),
+                            raw: text[at..end].to_string(),
+                        });
+                        at = end;
+                        continue;
+                    }
+                }
+            }
+        }
+        let ch = text[at..].chars().next().unwrap();
+        at += ch.len_utf8();
+    }
+    tokens
+}
+
 /// Every AsciiDoc curved-quote pair `text` opens but cannot close.
 ///
 /// `"`term`"` is constrained like the rest, so a Korean particle against its
@@ -1112,5 +1202,29 @@ mod tests {
         );
         let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
         assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[test]
+    fn verso_code_nonbreaking_spaces_are_restored_before_evaluation() {
+        let nbsp = '\u{a0}';
+        let source = format!(
+            "Use {{lit}}`{nbsp}... ` after {{kw}}`in` and {{lit}}`{nbsp}= `."
+        );
+        let translation = "{kw}`in` 뒤에 {lit}`\\u{a0}... `와 {lit}` = `을 사용합니다.";
+        let restored = restore_verso_code_whitespace(&source, translation);
+        assert_eq!(
+            restored,
+            format!("{{kw}}`in` 뒤에 {{lit}}`{nbsp}... `와 {{lit}}`{nbsp}= `을 사용합니다.")
+        );
+    }
+
+    #[test]
+    fn verso_code_repair_does_not_hide_a_changed_payload() {
+        let source = "Use {lit}`\u{a0}...`.";
+        let translation = "{lit}`other`를 사용합니다.";
+        assert_eq!(
+            restore_verso_code_whitespace(source, translation),
+            translation
+        );
     }
 }

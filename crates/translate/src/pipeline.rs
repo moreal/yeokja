@@ -93,6 +93,11 @@ pub async fn translate_with_evaluation_observed(
                 .find(|(i, _)| *i == idx)
                 .map(|(_, s)| s.as_str())
                 .unwrap_or("");
+            let translation = if markup == Markup::Verso {
+                crate::evaluator_format::restore_verso_code_whitespace(source, translation)
+            } else {
+                translation.clone()
+            };
 
             let eval_ctx = EvaluationContext {
                 source: source.to_string(),
@@ -128,7 +133,7 @@ pub async fn translate_with_evaluation_observed(
             results.insert(
                 idx,
                 PipelineResult {
-                    translation: translation.clone(),
+                    translation,
                     evaluation: Some(combined_result),
                     attempts,
                 },
