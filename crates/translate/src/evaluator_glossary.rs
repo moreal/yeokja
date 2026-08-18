@@ -12,7 +12,12 @@ impl TranslationEvaluator for GlossaryEvaluator {
     ) -> Result<EvaluationResult, EvaluationError> {
         let mut issues = Vec::new();
 
-        let matching_terms = find_terms_in_text(&context.glossary, &context.source);
+        let source = if context.markup == Markup::Verso {
+            without_verso_role_headers(&context.source)
+        } else {
+            context.source.clone()
+        };
+        let matching_terms = find_terms_in_text(&context.glossary, &source);
 
         // The source is read without regard to case, so the translation is too.
         // Demanding the glossary's spelling starts a retry that cannot converge:
@@ -49,6 +54,37 @@ impl TranslationEvaluator for GlossaryEvaluator {
     fn name(&self) -> &'static str {
         "Glossary"
     }
+}
+
+/// Remove opaque `{role arguments}` headers while leaving visible labels and
+/// surrounding prose available to glossary matching. Backticked role payloads
+/// are already masked by `find_terms_in_text` itself.
+fn without_verso_role_headers(text: &str) -> String {
+    let mut output = String::with_capacity(text.len());
+    let mut copied_through = 0;
+    let mut at = 0;
+    while at < text.len() {
+        if text[at..].starts_with('{') {
+            let name_start = at + 1;
+            let starts_as_role = text[name_start..]
+                .chars()
+                .next()
+                .is_some_and(|ch| ch.is_ascii_alphabetic());
+            if starts_as_role
+                && let Some(close_offset) = text[name_start..].find('}')
+            {
+                let end = name_start + close_offset + 1;
+                output.push_str(&text[copied_through..at]);
+                copied_through = end;
+                at = end;
+                continue;
+            }
+        }
+        let ch = text[at..].chars().next().unwrap();
+        at += ch.len_utf8();
+    }
+    output.push_str(&text[copied_through..]);
+    output
 }
 
 #[cfg(test)]
@@ -120,5 +156,31 @@ mod tests {
         );
         let result = GlossaryEvaluator.evaluate(&ctx).await.unwrap();
         assert!(result.passed);
+    }
+
+    #[tokio::test]
+    async fn verso_role_names_and_code_payloads_are_not_prose_terms() {
+        let mut ctx = make_context(
+            "Use {tactic}`simp` and {anchorName Monad}`Monad`.",
+            "{tactic}`simp`와 {anchorName Monad}`Monad`를 사용합니다.",
+            vec![("tactic", "택틱"), ("monad", "모나드")],
+        );
+        ctx.markup = Markup::Verso;
+        let result = GlossaryEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn verso_still_checks_the_same_term_in_visible_prose() {
+        let mut ctx = make_context(
+            "This monad uses {anchorName Monad}`Monad`.",
+            "이 모나드는 {anchorName Monad}`Monad`를 사용합니다.",
+            vec![("monad", "모나드")],
+        );
+        ctx.markup = Markup::Verso;
+        assert!(GlossaryEvaluator.evaluate(&ctx).await.unwrap().passed);
+
+        ctx.translation = "이 추상화는 {anchorName Monad}`Monad`를 사용합니다.".to_string();
+        assert!(!GlossaryEvaluator.evaluate(&ctx).await.unwrap().passed);
     }
 }
