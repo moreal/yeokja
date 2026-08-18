@@ -154,6 +154,11 @@ fn run_step(
                 .arg("apply")
                 .arg(&patch_path)
                 .current_dir(tmp)
+                // A project commonly lives inside this repository. Without a
+                // ceiling, `git apply` discovers the outer `.git`, treats
+                // `tmp` as a worktree subdirectory, and silently reports a
+                // path-prefixed patch as "Skipped" with exit status 0.
+                .env("GIT_CEILING_DIRECTORIES", tmp.parent().unwrap_or(tmp))
                 .output()
                 .map_err(io_err(&patch_path))?;
             if !output.status.success() {
@@ -414,6 +419,33 @@ file = "patches/fix.patch"
         assert_eq!(read(&tree.join("book.adoc")), "line one\nline two\n");
         assert!(!tree.join("book.adoc").is_symlink());
         assert_eq!(read(&root.join("upstream/book.adoc")), "line one\n");
+    }
+
+    #[test]
+    fn patch_is_not_silently_skipped_inside_an_outer_git_worktree() {
+        let dir = tempfile::Builder::new()
+            .prefix("assemble-nested-")
+            .tempdir_in(env!("CARGO_MANIFEST_DIR"))
+            .unwrap();
+        let root = dir.path();
+        write(&root.join("upstream/book.txt"), "before\n");
+        write(
+            &root.join("patches/fix.patch"),
+            "--- a/book.txt\n+++ b/book.txt\n@@ -1 +1 @@\n-before\n+after\n",
+        );
+        let config = project(
+            r#"
+[derive]
+base = "upstream"
+
+[[derive.step]]
+kind = "patch"
+file = "patches/fix.patch"
+"#,
+        );
+
+        assemble(root, &config).unwrap();
+        assert_eq!(read(&root.join("build/tree/book.txt")), "after\n");
     }
 
     #[test]
