@@ -16,12 +16,24 @@ impl TranslationEvaluator for FormatEvaluator {
         // rewritten (see below). Counting characters would read that fix as two
         // markers the source never had and reject it.
         //
-        // For the same reason `*` is one count rather than bold and italic
-        // separately: `**bold**` and `*bold*` differ only in whether the pair
-        // can close against a word, and a translation may have to switch.
-        for (mark, name) in [('`', "Inline code markers (`)"), ('*', "Emphasis markers (*)")] {
-            let in_source = mark_runs(&context.source, mark);
-            let in_translation = mark_runs(&context.translation, mark);
+        // Markdown and Verso use both `_text_` and `*text*` for emphasis. `_`
+        // cannot close before a Korean particle, so the prompt deliberately
+        // asks the translator to switch that pair to `*`. Count the two spellings
+        // together for those markups; treating the instructed rewrite as a lost
+        // marker makes every retry repeat an impossible demand.
+        let checks = [
+            (
+                "Inline code markers (`)",
+                mark_runs(&context.source, '`'),
+                mark_runs(&context.translation, '`'),
+            ),
+            (
+                "Emphasis marker runs",
+                emphasis_runs(&context.source, context.markup),
+                emphasis_runs(&context.translation, context.markup),
+            ),
+        ];
+        for (name, in_source, in_translation) in checks {
             if in_source != in_translation {
                 issues.push(EvaluationIssue {
                     severity: IssueSeverity::Error,
@@ -49,8 +61,19 @@ impl TranslationEvaluator for FormatEvaluator {
             if !source.unclosable.is_empty() {
                 continue;
             }
-            let in_source = source.formed;
-            let in_translation = pair_up(&chars(&context.translation), mark).formed;
+            let (in_source, in_translation) = if mark == '_'
+                && matches!(context.markup, Markup::Markdown | Markup::Verso)
+            {
+                (
+                    markdown_emphasis_pairs(&context.source),
+                    markdown_emphasis_pairs(&context.translation),
+                )
+            } else {
+                (
+                    source.formed,
+                    pair_up(&chars(&context.translation), mark).formed,
+                )
+            };
             if in_source != in_translation {
                 issues.push(EvaluationIssue {
                     severity: IssueSeverity::Error,
@@ -221,6 +244,24 @@ fn mark_runs(text: &str, mark: char) -> usize {
         }
     }
     runs
+}
+
+/// Emphasis marker runs whose spelling may change without changing meaning.
+fn emphasis_runs(text: &str, markup: Markup) -> usize {
+    let stars = mark_runs(text, '*');
+    if matches!(markup, Markup::Markdown | Markup::Verso) {
+        stars + mark_runs(text, '_')
+    } else {
+        stars
+    }
+}
+
+/// Emphasis pairs that actually form under Markdown/Verso flanking rules.
+///
+/// `_` needs the constrained pairing simulation, while `*` is allowed directly
+/// before a Korean word character and each two marker runs form one pair.
+fn markdown_emphasis_pairs(text: &str) -> usize {
+    pair_up(&chars(text), '_').formed + mark_runs(text, '*') / 2
 }
 
 /// What a mark does across a stretch of text: how many pairs it actually forms,
@@ -723,6 +764,28 @@ mod tests {
         let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
         assert!(!result.passed);
         assert!(result.issues.iter().any(|i| i.message.contains("*italic*")));
+    }
+
+    #[tokio::test]
+    async fn markdown_allows_underscore_emphasis_to_become_stars_before_a_particle() {
+        let ctx = context_in(
+            Markup::Markdown,
+            "The _arity_ is the argument count.",
+            "인자 개수는 *arity*입니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn verso_allows_underscore_emphasis_to_become_stars_before_a_particle() {
+        let ctx = context_in(
+            Markup::Verso,
+            "It serves as _data_ for the lookup.",
+            "조회에 사용할 *데이터*로서 역할을 합니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
     }
 
     #[test]
