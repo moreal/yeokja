@@ -186,7 +186,9 @@ async fn update_segment(
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
         let parser = yeokja_parsers::select_parser(source_path, &state.config);
-        let doc = parser.parse(&source_text);
+        let doc = parser
+            .parse_checked(&source_text)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
         let empty_state = StateFile::new(0);
         let result = reconcile(&doc, &empty_state);
         let mut sf = StateFile::new(yeokja_core::hash::content_hash(&source_text));
@@ -211,7 +213,9 @@ async fn update_segment(
             // Refresh the output file so manual edits show up immediately.
             let parser = yeokja_parsers::select_parser(source_path, &state.config);
             if let Ok(source_text) = std::fs::read_to_string(source_path) {
-                let doc = parser.parse(&source_text);
+                let doc = parser
+                    .parse_checked(&source_text)
+                    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
                 let mut translations = yeokja_core::parser::TranslationMap::new();
                 for seg in &state_file.segments {
                     if let Some(t) = &seg.translation {

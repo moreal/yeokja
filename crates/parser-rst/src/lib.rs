@@ -365,7 +365,7 @@ fn is_field_marker(trimmed: &str) -> bool {
 }
 
 /// `.. name:: arguments` → the directive's name.
-fn parse_directive<'a>(trimmed: &'a str) -> Option<&'a str> {
+fn parse_directive(trimmed: &str) -> Option<&str> {
     let rest = trimmed.strip_prefix("..")?.strip_prefix(char::is_whitespace)?;
     let end = rest.find("::")?;
     let name = &rest[..end];

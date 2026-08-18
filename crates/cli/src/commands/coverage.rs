@@ -28,7 +28,10 @@ pub fn run(path: &str, min_lines: usize) -> Result<()> {
         let source = std::fs::read_to_string(file_path)?;
         // Selection rules are a deliberate choice, not a gap, so they are not
         // applied here — this measures the parse alone.
-        let result = coverage(&parser.parse(&source));
+        let document = parser
+            .parse_checked(&source)
+            .map_err(|error| anyhow::anyhow!("{}: {error}", file_path.display()))?;
+        let result = coverage(&document);
 
         word_lines += result.word_lines;
         offered_lines += result.offered_lines;

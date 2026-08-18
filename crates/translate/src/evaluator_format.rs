@@ -108,6 +108,29 @@ impl TranslationEvaluator for FormatEvaluator {
             }
         }
 
+        // Verso roles carry semantic identifiers in their headers, and code
+        // roles use their payload to locate checked examples. They can remain
+        // superficially balanced after a translator changes or drops those
+        // values, so compare the structural tokens themselves rather than only
+        // counting braces and backticks. Visible `[labels]` remain free to be
+        // translated; only their bracketed shape is recorded.
+        if context.markup == Markup::Verso {
+            let source = verso_structure(&context.source);
+            let translation = verso_structure(&context.translation);
+            if source != translation {
+                issues.push(EvaluationIssue {
+                    severity: IssueSeverity::Error,
+                    kind: IssueKind::FormatLost,
+                    message: format!(
+                        "Verso role structure changed: preserve every `{{role arguments}}` \
+                         header and every backticked code/math payload exactly. Visible \
+                         text inside `[labels]` may be translated. Source tokens: {source:?}; \
+                         translation tokens: {translation:?}"
+                    ),
+                });
+            }
+        }
+
         // A constrained pair has to close next to a non-word character, and
         // Korean writes its particles straight onto the word before them.
         let unclosable = unclosable_pairs(&context.translation, context.markup);
@@ -257,12 +280,68 @@ fn chars(text: &str) -> Vec<char> {
 fn constrained_marks(markup: Markup) -> &'static [(char, &'static str)] {
     match markup {
         Markup::Asciidoc => &[('`', "``code``"), ('*', "**bold**"), ('_', "__italic__")],
-        Markup::Markdown => &[('_', "*italic*")],
+        Markup::Markdown | Markup::Verso => &[('_', "*italic*")],
         // reStructuredText pairs are checked by `rst_broken_pairs`: every one
         // of its marker forms is constrained, so the doubled-form advice these
         // entries carry would be wrong there.
         Markup::Rst => &[],
     }
+}
+
+/// Sorted structural tokens from Verso inline roles and math.
+///
+/// Sorting deliberately permits a natural sentence reordering. The tokens are
+/// still a multiset, so dropping either of two identical references is caught.
+fn verso_structure(text: &str) -> Vec<String> {
+    let mut tokens = Vec::new();
+    let mut at = 0;
+    while at < text.len() {
+        if text[at..].starts_with("$$`") || text[at..].starts_with("$`") {
+            let prefix_len = if text[at..].starts_with("$$`") { 3 } else { 2 };
+            let payload_start = at + prefix_len;
+            if let Some(close) = text[payload_start..].find('`') {
+                let end = payload_start + close + 1;
+                tokens.push(format!("math:{}", &text[at..end]));
+                at = end;
+                continue;
+            }
+        }
+
+        if text[at..].starts_with('{') {
+            let name_start = at + 1;
+            let starts_as_role = text[name_start..]
+                .chars()
+                .next()
+                .is_some_and(|c| c.is_ascii_alphabetic());
+            if starts_as_role
+                && let Some(close_offset) = text[name_start..].find('}')
+            {
+                let header_end = name_start + close_offset + 1;
+                let header = &text[at..header_end];
+                if text[header_end..].starts_with('`') {
+                    let payload_start = header_end + 1;
+                    if let Some(close) = text[payload_start..].find('`') {
+                        let end = payload_start + close + 1;
+                        tokens.push(format!("role-code:{header}{}", &text[header_end..end]));
+                        at = end;
+                        continue;
+                    }
+                }
+                if text[header_end..].starts_with('[') {
+                    tokens.push(format!("role-label:{header}"));
+                } else {
+                    tokens.push(format!("role:{header}"));
+                }
+                at = header_end;
+                continue;
+            }
+        }
+
+        let ch = text[at..].chars().next().unwrap();
+        at += ch.len_utf8();
+    }
+    tokens.sort();
+    tokens
 }
 
 /// Every AsciiDoc curved-quote pair `text` opens but cannot close.
@@ -430,7 +509,7 @@ fn rst_broken_pairs(text: &str) -> Vec<String> {
                     let blocked = i > 0 && is_word(chars[i - 1]);
                     if !blocked {
                         open = Some((i, len));
-                    } else if chars[i + len..].iter().any(|c| *c == mark) {
+                    } else if chars[i + len..].contains(&mark) {
                         // A word glued to the front (`실행**될 수 있는**`)
                         // keeps the pair from opening — but only call it a
                         // pair when a partner run exists; `2*3` is arithmetic.
@@ -926,5 +1005,49 @@ mod tests {
         assert_eq!(mark_runs("the \"`term`\" here", '`'), 0);
         assert_eq!(mark_runs("the `code` here", '`'), 2);
         assert_eq!(mark_runs("\"`quoted`\" and `code`", '`'), 2);
+    }
+
+    #[tokio::test]
+    async fn verso_allows_visible_labels_to_be_translated() {
+        let ctx = context_in(
+            Markup::Verso,
+            "See {ref \"getting-started\"}[the previous chapter].",
+            "{ref \"getting-started\"}[이전 장]을 참고하십시오.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn verso_rejects_changed_role_headers_and_code_payloads() {
+        for translation in [
+            "{anchorName wrong}`List.map`을 사용합니다.",
+            "{anchorName map}`List.filter`를 사용합니다.",
+            "`List.map`을 사용합니다.",
+        ] {
+            let ctx = context_in(
+                Markup::Verso,
+                "Use {anchorName map}`List.map`.",
+                translation,
+            );
+            let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+            assert!(!result.passed, "{translation:?} should fail");
+            assert!(
+                result.issues.iter().any(|issue| issue.message.contains("Verso role")),
+                "{:?}",
+                result.issues
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn verso_allows_roles_to_move_with_the_translated_sentence() {
+        let ctx = context_in(
+            Markup::Verso,
+            "{lit}`lake` invokes {lit}`lean`.",
+            "{lit}`lean`은 {lit}`lake`가 호출합니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
     }
 }

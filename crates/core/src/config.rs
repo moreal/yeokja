@@ -156,6 +156,10 @@ pub struct SourceConfig {
     pub path: String,
     pub pattern: String,
     pub parser: String,
+    /// Parser-owned generated syntax data. Required by parsers such as Verso
+    /// whose authoritative grammar runs in an external toolchain.
+    #[serde(default)]
+    pub parser_manifest: Option<String>,
     pub output: String,
 }
 
@@ -320,6 +324,7 @@ glossary = "glossary.toml"
 path = "book/"
 pattern = "**/*.md"
 parser = "markdown"
+parser_manifest = "syntax.json"
 output = "{dir}/{stem}.ko{ext}"
 
 [provider]
@@ -343,6 +348,10 @@ concurrency = 12
         assert_eq!(config.project.target_lang, "ko");
         assert_eq!(config.sources.len(), 1);
         assert_eq!(config.sources[0].parser, "markdown");
+        assert_eq!(
+            config.sources[0].parser_manifest.as_deref(),
+            Some("syntax.json")
+        );
         assert_eq!(config.provider.provider_type, "anthropic");
         assert_eq!(config.server.unwrap().port, 8080);
         assert_eq!(config.evaluation.unwrap().max_retries, 5);

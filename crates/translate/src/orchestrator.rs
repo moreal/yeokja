@@ -164,6 +164,8 @@ pub enum OrchestratorError {
     Glob(String),
     #[error("State error: {0}")]
     State(#[from] yeokja_core::state::StateError),
+    #[error("Failed to parse {path}: {message}")]
+    Parse { path: PathBuf, message: String },
     #[error("Task join error: {0}")]
     Join(#[from] tokio::task::JoinError),
 }
@@ -286,10 +288,10 @@ pub fn match_orphans(
     files: &[PathBuf],
     config: &ProjectConfig,
     parser_factory: &ParserFactory,
-) -> Vec<OrphanReport> {
+) -> Result<Vec<OrphanReport>, OrchestratorError> {
     let orphans = yeokja_core::orphans::find_orphan_states(config);
     if orphans.is_empty() {
-        return Vec::new();
+        return Ok(Vec::new());
     }
 
     // Only files with no state of their own can be a rename destination.
@@ -320,15 +322,24 @@ pub fn match_orphans(
                 best = Some((idx, 1.0));
                 break;
             }
-            let hashes = segment_hashes.get_or_insert_with(|| {
+            let hashes = if let Some(hashes) = &segment_hashes {
+                hashes
+            } else {
                 let parser = parser_factory(file, config);
-                let mut doc = parser.parse(&source);
+                let mut doc = parser.parse_checked(&source).map_err(|error| {
+                    OrchestratorError::Parse {
+                        path: (*file).clone(),
+                        message: error.to_string(),
+                    }
+                })?;
                 apply_table_rules(&mut doc, &config.tables, file);
-                doc.translatable_segments()
+                let hashes = doc
+                    .translatable_segments()
                     .iter()
                     .map(|s| s.source_hash)
-                    .collect()
-            });
+                    .collect();
+                segment_hashes.insert(hashes)
+            };
             if hashes.is_empty() {
                 continue;
             }
@@ -353,14 +364,14 @@ pub fn match_orphans(
         }
     }
 
-    orphans
+    Ok(orphans
         .into_iter()
         .enumerate()
         .map(|(idx, orphan)| OrphanReport {
             renamed_to: renamed_to.get(&idx).cloned(),
             orphan,
         })
-        .collect()
+        .collect())
 }
 
 /// Move each matched orphan's state to its rename destination, so the
@@ -371,9 +382,9 @@ pub fn adopt_renamed_states(
     files: &[PathBuf],
     config: &ProjectConfig,
     parser_factory: &ParserFactory,
-) -> Vec<(PathBuf, PathBuf)> {
+) -> Result<Vec<(PathBuf, PathBuf)>, OrchestratorError> {
     let mut moves = Vec::new();
-    for report in match_orphans(files, config, parser_factory) {
+    for report in match_orphans(files, config, parser_factory)? {
         let Some(new_source) = report.renamed_to else {
             continue;
         };
@@ -402,7 +413,7 @@ pub fn adopt_renamed_states(
             }
         }
     }
-    moves
+    Ok(moves)
 }
 
 /// Parse a file and reconcile it against its saved state.
@@ -418,7 +429,12 @@ pub fn scan_file(
         path: file_path.to_path_buf(),
         source: e,
     })?;
-    let mut doc = parser.parse(&source);
+    let mut doc = parser
+        .parse_checked(&source)
+        .map_err(|error| OrchestratorError::Parse {
+            path: file_path.to_path_buf(),
+            message: error.to_string(),
+        })?;
     apply_table_rules(&mut doc, &config.tables, file_path);
     let doc = doc;
     let state_path = StateFile::state_file_path(file_path, config.state_dir());
@@ -544,7 +560,7 @@ impl Orchestrator {
 
         // A renamed source whose translations exist under the old name would
         // otherwise be retranslated from zero.
-        let adopted = adopt_renamed_states(&files, &self.config, &self.parser_factory);
+        let adopted = adopt_renamed_states(&files, &self.config, &self.parser_factory)?;
         if !adopted.is_empty() {
             tracing::info!(count = adopted.len(), "Adopted orphaned state across renames");
         }
@@ -674,7 +690,12 @@ impl FileTranslator {
             path: file_path.to_path_buf(),
             source: e,
         })?;
-        let mut doc = parser.parse(&source);
+        let mut doc = parser
+            .parse_checked(&source)
+            .map_err(|error| OrchestratorError::Parse {
+                path: file_path.to_path_buf(),
+                message: error.to_string(),
+            })?;
         let excluded = apply_table_rules(&mut doc, &self.config.tables, file_path);
         if excluded > 0 {
             tracing::debug!(file = %file_path.display(), excluded, "Table rules excluded cells");
@@ -1397,11 +1418,11 @@ model = "test"
         let factory: ParserFactory = Arc::new(|_, _| Box::new(LineParser));
 
         let files = vec![dir.path().join("new.md")];
-        let reports = match_orphans(&files, &config, &factory);
+        let reports = match_orphans(&files, &config, &factory).unwrap();
         assert_eq!(reports.len(), 1);
         assert_eq!(reports[0].renamed_to.as_deref(), Some(files[0].as_path()));
 
-        let moves = adopt_renamed_states(&files, &config, &factory);
+        let moves = adopt_renamed_states(&files, &config, &factory).unwrap();
         assert_eq!(moves.len(), 1);
         assert!(dir.path().join("new.md.yeokja.json").exists());
         assert!(!dir.path().join("old.md.yeokja.json").exists());

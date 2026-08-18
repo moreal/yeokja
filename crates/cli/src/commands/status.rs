@@ -56,7 +56,8 @@ pub fn run(path: &str, check: bool) -> Result<()> {
 
     // Orphans are project-wide (they have no source to fall under `path`),
     // so they are reported regardless of the filter.
-    let orphans = yeokja_translate::orchestrator::match_orphans(&files, &ctx.config, &parser_factory);
+    let orphans =
+        yeokja_translate::orchestrator::match_orphans(&files, &ctx.config, &parser_factory)?;
     if !orphans.is_empty() {
         println!("Orphaned state:   {}", orphans.len());
         for report in &orphans {

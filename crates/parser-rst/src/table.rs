@@ -72,7 +72,7 @@ pub fn parse(text: &str) -> Option<Table> {
 
 /// The line without the table's indent; `None` when the line is not indented
 /// that far (a ragged table is not laid out).
-fn strip_indent<'a>(line: &'a str, indent: usize) -> Option<&'a str> {
+fn strip_indent(line: &str, indent: usize) -> Option<&str> {
     if line.len() < indent || !line[..indent].chars().all(|c| c == ' ') {
         return None;
     }
@@ -97,7 +97,7 @@ fn byte_at_col(line: &str, col: usize) -> Option<usize> {
 }
 
 /// The text covering display columns `from..to` (`None` for to-the-end).
-fn col_slice<'a>(line: &'a str, from: usize, to: Option<usize>) -> Option<&'a str> {
+fn col_slice(line: &str, from: usize, to: Option<usize>) -> Option<&str> {
     let a = byte_at_col(line, from)?;
     let b = match to {
         Some(to) => byte_at_col(line, to)?,
@@ -202,7 +202,7 @@ fn parse_grid(lines: &[&str], indent: usize) -> Option<Table> {
         } else if line.starts_with('|') {
             for &b in &boundaries {
                 let at = byte_at_col(line, b)?;
-                if line[at..].chars().next() != Some('|') {
+                if !line[at..].starts_with('|') {
                     return None;
                 }
             }

@@ -1,13 +1,14 @@
 # Yeokja (역자)
 
-LLM을 활용한 구조화된 문서 번역 도구. Markdown, Asciidoc 문서를 문장 단위로 파싱하여 증분 번역합니다.
+LLM을 활용한 구조화된 문서 번역 도구. Markdown, AsciiDoc, reStructuredText,
+Verso 문서를 문장 단위로 파싱하여 증분 번역합니다.
 
 ## 주요 기능
 
 - **증분 번역** — 변경된 문장만 재번역. 해시 기반 변경 감지로 불필요한 API 호출 방지
 - **용어집 관리** — 일관된 용어 사용 보장. 용어 변경 시 관련 문장 자동 감지
 - **자동 품질 평가** — 용어 준수, 링크 보존, 서식 유지를 자동 검증하고 실패 시 재번역
-- **다중 포맷** — Markdown, Asciidoc 지원. 플러그인 구조로 확장 가능
+- **다중 포맷** — Markdown, AsciiDoc, reStructuredText, Lean `#doc`/Verso 지원
 - **다중 LLM** — OpenAI, Anthropic Claude, Google Gemini, TranslateGemma 지원
 - **CLI + TUI + Web** — 일괄 실행, 실시간 진행 뷰, 웹 기반 편집
 
@@ -233,6 +234,9 @@ crates/
 ├── parser-utils/      # 공용 문장 분리
 ├── parser-markdown/   # Markdown 파서 (pulldown-cmark)
 ├── parser-asciidoc/   # Asciidoc 파서 (라인 기반 span 방식)
+├── parser-rst/        # reStructuredText 파서 (라인/표 지오메트리)
+├── parser-verso/      # 공식 Verso AST manifest를 검증·소비하는 파서
+├── parsers/           # 파서 레지스트리
 ├── translate/         # LLM 연동, 평가, 파이프라인
 ├── cli/               # CLI + TUI
 └── server/            # REST API (axum)

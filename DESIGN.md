@@ -2,7 +2,9 @@
 
 ## Overview
 
-Yeokja는 구조화된 문서(Markdown, Asciidoc)를 문장 단위로 파싱하여 LLM 기반으로 번역하는 도구입니다. 증분 번역, 용어집 관리, 자동 품질 평가를 지원합니다.
+Yeokja는 구조화된 문서(Markdown, AsciiDoc, reStructuredText, Verso)를 문장
+단위로 파싱하여 LLM 기반으로 번역하는 도구입니다. 증분 번역, 용어집 관리,
+자동 품질 평가를 지원합니다.
 
 ## Crate 구조
 
@@ -13,6 +15,8 @@ yeokja/
 │   ├── parser-utils/      # yeokja-parser-utils
 │   ├── parser-markdown/   # yeokja-parser-markdown
 │   ├── parser-asciidoc/   # yeokja-parser-asciidoc
+│   ├── parser-rst/        # yeokja-parser-rst
+│   ├── parser-verso/      # yeokja-parser-verso
 │   ├── parsers/           # yeokja-parsers (파서 레지스트리)
 │   ├── translate/         # yeokja-translate
 │   ├── cli/               # yeokja-cli
@@ -25,6 +29,8 @@ yeokja/
 ```
 core ← parser-utils ← parser-markdown ← parsers
                      ← parser-asciidoc ← parsers
+                     ← parser-rst ← parsers
+                     ← parser-verso ← parsers
      ← translate
      ← server (+ parsers, translate)
      ← cli (+ parsers, translate, server)
@@ -81,6 +87,20 @@ core ← parser-utils ← parser-markdown ← parsers
   테이블 전체를 표시 폭 기준으로 다시 그립니다(열 폭 재계산, 원본 폭으로 줄바꿈,
   심플 테이블 마지막 열은 무한 열이라 경계 불확장). docutils가 정렬을 표시 폭으로
   세는 것을 실측으로 확인했습니다. 셀 병합 등 못 그리는 표는 통째로 verbatim 폴백
+
+**yeokja-parser-verso** — 공식 Verso concrete parser의 AST를 소비하는 manifest 기반 파서.
+- 프로젝트가 고정한 정확한 Verso revision에서 `Verso.Parser.document`를 실행해 `#doc`
+  본문 전체를 `Lean.Doc.Syntax` AST로 파싱합니다. Rust에 Verso 문법을 복제하지 않습니다
+- extractor는 `Verso.Doc.Concrete`만 로드합니다. 역할·지시문을 포함한 concrete syntax는
+  모두 파싱하되, 사용자 expander를 실행하는 elaboration은 번역 범위 산출에 필요하지 않아
+  의도적으로 신뢰 경계 밖에 둡니다
+- AST의 `SourceInfo`에서 제목·문단·목록·정의 목록·인용문·각주·표 셀의 byte range를
+  manifest로 내보내고, 코드·metadata·명령은 range 밖에 보존합니다
+- Rust parser는 schema/generator, Verso revision, 원문 hash, UTF-8 경계와 range 순서를
+  모두 검증합니다. manifest가 누락되거나 오래되면 Markdown 등으로 fallback하지 않고
+  CLI와 서버에 오류를 전달합니다
+- FP in Lean 원고 70개 전체를 공식 manifest로 파싱하고 빈 번역을 splice해 원문과 byte
+  단위로 같은지 검사합니다. FormatEvaluator는 역할·수식 payload 보존도 별도로 검사합니다
 
 **yeokja-parsers** — 파서 레지스트리.
 - `select_parser()`: 소스 설정의 `parser` 필드 또는 확장자로 파서 선택
@@ -203,7 +223,8 @@ TranslateGemma는 별도 형식: `<<<source>>>en<<<target>>>ko<<<text>>>...`
 
 `yeokja.toml`로 프로젝트 설정을 관리합니다:
 - `[project]`: 소스/타겟 언어, 용어집 경로, 상태 파일 디렉터리(`state_dir`)
-- `[[sources]]`: 번역 대상 파일 패턴, 파서 종류, 출력 경로 템플릿
+- `[[sources]]`: 번역 대상 파일 패턴, 파서 종류, 출력 경로 템플릿. Verso 소스는 공식
+  extractor가 만든 `parser_manifest`도 지정
 - `[provider]`: LLM 프로바이더 종류, 모델, API 키 환경변수
 - `[evaluation]`: 자동 평가 활성화, 최대 재시도 횟수
 - `[server]`: 서버 포트
@@ -248,4 +269,6 @@ upstream 리네임으로 고아가 된 상태는 `yeokja translate`가 전체 �
 | 상태 저장 | JSON (파일 기반) |
 | Markdown 파싱 | pulldown-cmark |
 | Asciidoc 파싱 | 자체 라인 기반 span 파서 |
+| reStructuredText 파싱 | 자체 라인/표 지오메트리 파서 |
+| Verso 파싱 | 공식 `Verso.Parser.document` AST + 검증된 source-range manifest |
 | 해시 | xxHash64 |

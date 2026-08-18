@@ -20,7 +20,7 @@ pub fn run(delete: bool) -> Result<()> {
     files.sort();
     files.dedup();
 
-    let reports = match_orphans(&files, &ctx.config, &parser_factory);
+    let reports = match_orphans(&files, &ctx.config, &parser_factory)?;
     if reports.is_empty() {
         println!("No orphaned state files.");
         return Ok(());

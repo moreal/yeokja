@@ -21,20 +21,36 @@ pub fn select_parser(file_path: &Path, config: &ProjectConfig) -> Box<dyn Docume
             .map(|p| p.matches_path(rel))
             .unwrap_or(false);
         if pattern_matches {
-            return parser_by_name(&source.parser);
+            return parser_by_name(
+                &source.parser,
+                file_path,
+                source.parser_manifest.as_deref(),
+            );
         }
     }
     match file_path.extension().and_then(|e| e.to_str()) {
         Some("adoc" | "asciidoc" | "asc") => Box::new(yeokja_parser_asciidoc::AsciidocParser),
         Some("rst" | "rest") => Box::new(yeokja_parser_rst::RstParser),
+        // A Lean manual must never be interpreted as Markdown just because its
+        // source rule is missing. With no manifest this parser reports a hard,
+        // actionable error from `parse_checked`.
+        Some("lean") => Box::new(yeokja_parser_verso::VersoParser::new(file_path, "")),
         _ => Box::new(yeokja_parser_markdown::MarkdownParser),
     }
 }
 
-fn parser_by_name(name: &str) -> Box<dyn DocumentParser> {
+fn parser_by_name(
+    name: &str,
+    file_path: &Path,
+    parser_manifest: Option<&str>,
+) -> Box<dyn DocumentParser> {
     match name {
         "asciidoc" => Box::new(yeokja_parser_asciidoc::AsciidocParser),
         "rst" => Box::new(yeokja_parser_rst::RstParser),
+        "verso" => Box::new(yeokja_parser_verso::VersoParser::new(
+            file_path,
+            parser_manifest.unwrap_or_default(),
+        )),
         _ => Box::new(yeokja_parser_markdown::MarkdownParser),
     }
 }
@@ -113,6 +129,31 @@ model = "gpt-4o"
     }
 
     #[test]
+    fn source_config_selects_verso_for_lean_files() {
+        let config = ProjectConfig::from_toml(
+            r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[[sources]]
+path = "book"
+pattern = "**/*.lean"
+parser = "verso"
+output = "ko/{path}"
+
+[provider]
+type = "openai_compatible"
+model = "gpt-4o"
+"#,
+        )
+        .unwrap();
+
+        let parser = select_parser(Path::new("book/Chapter.lean"), &config);
+        assert_eq!(parser.markup(), yeokja_core::parser::Markup::Verso);
+    }
+
+    #[test]
     fn extension_fallback_selects_asciidoc() {
         let config = config_with_source("book/", "markdown");
         let parser = select_parser(Path::new("docs/guide.adoc"), &config);
@@ -126,5 +167,19 @@ model = "gpt-4o"
         let parser = select_parser(Path::new("docs/guide.md"), &config);
         let doc = parser.parse("# Title");
         assert_eq!(doc.sections[0].blocks[0].heading_level, Some(1));
+    }
+
+    #[test]
+    fn lean_extension_never_falls_back_to_markdown() {
+        let config = config_with_source("book/", "markdown");
+        let parser = select_parser(Path::new("docs/Chapter.lean"), &config);
+        assert_eq!(parser.markup(), yeokja_core::parser::Markup::Verso);
+        assert!(
+            parser
+                .parse_checked("#doc (Manual) \"Title\" =>")
+                .unwrap_err()
+                .to_string()
+                .contains("official Verso span manifest")
+        );
     }
 }

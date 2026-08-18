@@ -26,7 +26,9 @@ pub fn run(path: &str) -> Result<()> {
         let parser = parser_factory(file_path, &ctx.config);
         let source = std::fs::read_to_string(file_path)?;
         // Report the document as the translator will see it, rules included.
-        let mut doc = parser.parse(&source);
+        let mut doc = parser
+            .parse_checked(&source)
+            .map_err(|error| anyhow::anyhow!("{}: {error}", file_path.display()))?;
         apply_table_rules(&mut doc, &ctx.config.tables, file_path);
         let doc = doc;
         let applicable = rules_for(&ctx.config.tables, file_path);

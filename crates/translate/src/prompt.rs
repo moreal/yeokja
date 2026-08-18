@@ -106,6 +106,13 @@ fn closing_rule(markup: yeokja_core::parser::Markup) -> &'static str {
              escape also applies before an opening marker glued to the end of a word: \
              실행\\ **될** rather than 실행**될**.\n"
         }
+        Markup::Verso => {
+            "Preserve every Verso role header (`{role arguments}`) exactly. Translate visible \
+             prose in `[labels]`, but keep code or math between backticks after a role or \
+             `$`/`$$` verbatim. Verso emphasis follows Markdown: when a Korean suffix follows \
+             an _italicised_ term, use * instead so the pair still closes: _arity_ → \
+             *arity*는.\n"
+        }
     }
 }
 
@@ -236,6 +243,12 @@ mod tests {
         assert!(rst.contains("``heap``\\ 에"));
         assert!(rst.contains("**bold**\\ 를"));
         assert!(!rst.contains("**bold**를"));
+
+        req.markup = Markup::Verso;
+        let verso = build_prompt(&req);
+        assert!(verso.contains("{role arguments}"));
+        assert!(verso.contains("[labels]"));
+        assert!(verso.contains("*arity*는"));
     }
 
     #[test]
