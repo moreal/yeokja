@@ -69,8 +69,8 @@ cargo build --manifest-path ../../Cargo.toml
 
 대량 번역 중에는 glossary·링크·Verso 역할·문장 종결 같은 결정적 검사를 매번 실행하고,
 재번역을 유발하지 않는 LLM 문체 평가는 비용과 시간을 이중으로 쓰지 않도록 끕니다.
-완료 후 `../../target/debug/yeokja evaluate upstream/book`으로 별도 문체 검토 보고서를
-생성할 수 있습니다.
+완료 후 `../../target/debug/yeokja evaluate upstream/book --mechanical-only`로 결정적
+검사만 전체 재실행하거나, 옵션을 빼고 별도 LLM 문체 검토 보고서를 생성할 수 있습니다.
 
 번역문을 수정할 때는 `ko/`가 아니라 `state/`의 `translation` 필드를 수정합니다.
 `ko/`와 `build/tree/`는 다음 실행에서 다시 만들어지는 파생 산출물입니다.

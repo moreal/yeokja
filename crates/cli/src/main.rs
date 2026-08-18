@@ -60,6 +60,9 @@ enum Commands {
     Evaluate {
         /// Path to evaluate
         path: String,
+        /// Run deterministic evaluators without the optional LLM style judge
+        #[arg(long)]
+        mechanical_only: bool,
     },
     /// Assemble the buildable tree from base, overlays, and steps
     Assemble,
@@ -150,8 +153,11 @@ async fn main() -> anyhow::Result<()> {
                 commands::glossary::remove(&term)?;
             }
         },
-        Commands::Evaluate { path } => {
-            commands::evaluate::run(&path).await?;
+        Commands::Evaluate {
+            path,
+            mechanical_only,
+        } => {
+            commands::evaluate::run(&path, mechanical_only).await?;
         }
         Commands::Assemble => {
             commands::assemble::run()?;

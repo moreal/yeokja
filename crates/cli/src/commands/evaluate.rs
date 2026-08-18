@@ -6,11 +6,15 @@ use yeokja_translate::evaluator::{EvaluationContext, IssueSeverity};
 use yeokja_translate::factory::create_evaluator_provider;
 use yeokja_translate::orchestrator::{collect_files, scan_file, standard_evaluators};
 
-pub async fn run(path: &str) -> Result<()> {
+pub async fn run(path: &str, mechanical_only: bool) -> Result<()> {
     let ctx = ProjectContext::load()?;
     let parser_factory = super::parser_factory();
 
-    let eval_provider = create_evaluator_provider(&ctx.config.provider)?;
+    let eval_provider = if mechanical_only {
+        None
+    } else {
+        create_evaluator_provider(&ctx.config.provider)?
+    };
     let files = collect_files(Path::new(path), &ctx.config)?;
 
     let evaluators = standard_evaluators(eval_provider, &ctx.config.project.target_lang);
