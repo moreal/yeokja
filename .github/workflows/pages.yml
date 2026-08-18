@@ -61,6 +61,28 @@ jobs:
       - name: Install the PyPy docs Sphinx toolchain
         run: pip install 'sphinx<2' 'docutils==0.11' 'sphinx-issues==1.2.0' 'sphinx_rtd_theme<1' py sphinx-affiliates
 
+      # FP in Lean은 빌드 중 Python 출력을 책에 포함하므로 upstream CI와 같은
+      # 버전을 사용합니다. 앞서 설치한 Sphinx 실행 파일은 PyPy 2.7 shebang을
+      # 유지하므로 이후 Python 기본값을 바꿔도 PyPy 문서 빌드에는 영향이 없습니다.
+      - name: Install Python for FP in Lean
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10.4'
+
+      # upstream fp-lean CI와 같은 방식으로 elan을 설치합니다. book과 examples는
+      # 서로 다른 lean-toolchain을 가지며, 첫 lean 호출이 각각을 설치합니다.
+      - name: Install elan for FP in Lean
+        run: |
+          curl -O --location https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh
+          chmod u+x elan-init.sh
+          ./elan-init.sh -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Install FP in Lean toolchains
+        run: |
+          (cd projects/fp-lean/upstream/examples && lean --version)
+          (cd projects/fp-lean/upstream/book && lean --version)
+
       # 상태 파일이 있는 문서만 재구성·검사합니다. 상태가 없는 문서는 영어
       # 원문 그대로 트리에 남는 것이 의도된 동작이고(부분 번역 프로젝트),
       # 상태 파일 단위로 돌기 때문에 CI가 provider를 부를 일도 없습니다.
@@ -91,6 +113,7 @@ jobs:
           cp -r projects/thebeambook/dist/site _site/theBeamBook
           cp -r projects/pypy/dist/site _site/pypy
           cp -r projects/pypy/dist/rpython-site _site/rpython
+          cp -r projects/fp-lean/dist/site _site/fp-lean
           cat > _site/index.html <<'HTML'
           <!doctype html>
           <html lang="ko">
@@ -106,6 +129,8 @@ jobs:
               — 원문 <a href="https://github.com/pypy/pypy">pypy/pypy</a> (MIT)</li>
             <li><a href="rpython/">RPython 문서 한국어판</a>
               — 원문 <a href="https://github.com/pypy/pypy">pypy/pypy</a>의 rpython/doc (MIT)</li>
+            <li><a href="fp-lean/">Functional Programming in Lean 한국어판</a>
+              — 원문 <a href="https://lean-lang.org/functional_programming_in_lean/">Functional Programming in Lean</a> (CC BY 4.0)</li>
           </ul>
           </body>
           </html>
