@@ -10,7 +10,7 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use yeokja_core::model::*;
 use yeokja_core::parser::{DocumentParseError, DocumentParser, Markup, TranslationMap};
-use yeokja_parser_utils::{make_segments, normalize_inline_text, splice_reconstruct};
+use yeokja_parser_utils::{apply_splices, collect_splices, make_segments, normalize_inline_text};
 
 const MANIFEST_SCHEMA: u32 = 1;
 const OFFICIAL_GENERATOR: &str = "Verso.Parser.document";
@@ -210,16 +210,22 @@ impl DocumentParser for VersoParser {
     }
 
     fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String {
-        let mut reconstructed = splice_reconstruct(document, translations);
+        let mut splices = collect_splices(document, translations);
+        splices.extend(heading_file_splices(
+            document,
+            translations,
+            &self.source_path,
+        ));
+        let mut reconstructed = apply_splices(&document.source, splices);
         if document_title_is_translated(document, translations) {
-            ensure_document_tag(&mut reconstructed, &self.source_path);
+            ensure_document_metadata(&mut reconstructed, &self.source_path);
             replace_disabled_part_tags(&mut reconstructed, &self.source_path);
         }
         reconstructed
     }
 }
 
-fn document_title_is_translated(document: &Document, translations: &TranslationMap) -> bool {
+fn document_title(document: &Document) -> Option<&Block> {
     document
         .sections
         .iter()
@@ -232,22 +238,117 @@ fn document_title_is_translated(document: &Document, translations: &TranslationM
                 .map(|span| span.start)
                 .unwrap_or(usize::MAX)
         })
-        .is_some_and(|block| {
-            block
-                .segments
-                .iter()
-                .any(|segment| translations.contains_key(&segment.id))
-        })
 }
 
-/// Give translated `#doc` parts a stable ASCII tag when upstream did not.
+fn document_title_is_translated(document: &Document, translations: &TranslationMap) -> bool {
+    document_title(document).is_some_and(|block| block_is_translated(block, translations))
+}
+
+fn block_is_translated(block: &Block, translations: &TranslationMap) -> bool {
+    block
+        .segments
+        .iter()
+        .any(|segment| translations.contains_key(&segment.id))
+}
+
+fn heading_file_splices(
+    document: &Document,
+    translations: &TranslationMap,
+    source_path: &Path,
+) -> Vec<(std::ops::Range<usize>, String)> {
+    let document_title_span = document_title(document).and_then(|block| block.span.as_ref());
+    let mut splices = Vec::new();
+
+    for block in document
+        .sections
+        .iter()
+        .flat_map(|section| &section.blocks)
+        .filter(|block| block.block_type == BlockType::Heading)
+    {
+        let Some(span) = block.span.as_ref() else {
+            continue;
+        };
+        if !block_is_translated(block, translations) {
+            continue;
+        }
+
+        let file = if document_title_span == Some(span) {
+            source_file_slug(source_path)
+        } else {
+            english_heading_slug(&block.raw_content)
+        };
+        let Some(file) = file else {
+            continue;
+        };
+        if let Some(splice) = heading_file_splice(&document.source, span.end, &file) {
+            splices.push(splice);
+        }
+    }
+    splices
+}
+
+fn heading_file_splice(
+    source: &str,
+    heading_end: usize,
+    file: &str,
+) -> Option<(std::ops::Range<usize>, String)> {
+    let line_end = heading_end + source[heading_end..].find('\n')?;
+    let body_start = line_end + 1;
+    let first_content = source[body_start..]
+        .find(|ch: char| !ch.is_whitespace())
+        .map(|offset| body_start + offset)
+        .unwrap_or(source.len());
+
+    if source[first_content..].starts_with("%%%") {
+        let metadata_body = first_content + 3;
+        let close = metadata_body + source[metadata_body..].find("\n%%%")?;
+        if metadata_has_field(&source[metadata_body..close], "file") {
+            None
+        } else {
+            Some((close..close, format!("\nfile := \"{file}\"")))
+        }
+    } else {
+        Some((
+            body_start..body_start,
+            format!("%%%\nfile := \"{file}\"\n%%%\n"),
+        ))
+    }
+}
+
+fn english_heading_slug(raw: &str) -> Option<String> {
+    let mut slug = String::new();
+    let mut in_role_header = false;
+
+    for ch in raw.chars() {
+        match ch {
+            '{' => in_role_header = true,
+            '}' if in_role_header => in_role_header = false,
+            _ if in_role_header => {}
+            '`' | '*' | '_' => {}
+            _ if ch.is_ascii_alphanumeric() => slug.push(ch.to_ascii_lowercase()),
+            _ => push_slug_separator(&mut slug),
+        }
+    }
+
+    while slug.ends_with('-') {
+        slug.pop();
+    }
+    (!slug.is_empty()).then_some(slug)
+}
+
+/// Give translated `#doc` parts stable ASCII metadata when upstream did not.
 ///
 /// Verso auto-tags mangle every non-ASCII character to `___`, so unrelated
 /// Korean titles of the same length collide when independently elaborated
 /// parts are assembled. Explicit upstream tags remain authoritative. For the
 /// few documents without one, a source-path hash is stable across translations
 /// and unique within a project.
-fn ensure_document_tag(reconstructed: &mut String, source_path: &Path) {
+///
+/// Multi-page output separately derives directory names from translated
+/// titles. Preserve readable, stable English URLs by deriving `file` from the
+/// source file's English identifier. Explicit upstream file names likewise
+/// remain authoritative.
+fn ensure_document_metadata(reconstructed: &mut String, source_path: &Path) {
     let Some(doc_start) = reconstructed.find("#doc ") else {
         return;
     };
@@ -263,6 +364,7 @@ fn ensure_document_tag(reconstructed: &mut String, source_path: &Path) {
         "yeokja-doc-{:016x}",
         fnv1a64(&source_path.to_string_lossy())
     );
+    let file = source_file_slug(source_path);
 
     if reconstructed[first_content..].starts_with("%%%") {
         let metadata_body = first_content + 3;
@@ -270,12 +372,76 @@ fn ensure_document_tag(reconstructed: &mut String, source_path: &Path) {
             return;
         };
         let close = metadata_body + relative_close;
-        if reconstructed[metadata_body..close].contains("tag :=") {
+        let metadata = &reconstructed[metadata_body..close];
+        let mut additions = Vec::new();
+        if !metadata_has_field(metadata, "tag") {
+            additions.push(format!("tag := \"{tag}\""));
+        }
+        if let Some(file) = file
+            && !metadata_has_field(metadata, "file")
+        {
+            additions.push(format!("file := \"{file}\""));
+        }
+        if additions.is_empty() {
             return;
         }
-        reconstructed.insert_str(close, &format!("\ntag := \"{tag}\""));
+        reconstructed.insert_str(close, &format!("\n{}", additions.join("\n")));
     } else {
-        reconstructed.insert_str(body_start, &format!("%%%\ntag := \"{tag}\"\n%%%\n"));
+        let mut metadata = vec![format!("tag := \"{tag}\"")];
+        if let Some(file) = file {
+            metadata.push(format!("file := \"{file}\""));
+        }
+        reconstructed.insert_str(body_start, &format!("%%%\n{}\n%%%\n", metadata.join("\n")));
+    }
+}
+
+fn metadata_has_field(metadata: &str, field: &str) -> bool {
+    metadata.lines().any(|line| {
+        line.trim_start()
+            .strip_prefix(field)
+            .is_some_and(|rest| rest.trim_start().starts_with(":="))
+    })
+}
+
+/// Convert an English Lean module filename to a stable lowercase URL component.
+///
+/// A boundary is inserted at ordinary camel-case transitions and before the
+/// final capital of an acronym (`FPLean` becomes `fp-lean`, `ReaderIO` becomes
+/// `reader-io`). Non-ASCII and punctuation runs become one dash.
+fn source_file_slug(source_path: &Path) -> Option<String> {
+    let stem = source_path.file_stem()?.to_str()?;
+    let chars: Vec<_> = stem.chars().collect();
+    let mut slug = String::new();
+
+    for (index, &ch) in chars.iter().enumerate() {
+        if !ch.is_ascii_alphanumeric() {
+            push_slug_separator(&mut slug);
+            continue;
+        }
+
+        if ch.is_ascii_uppercase() && !slug.is_empty() {
+            let previous = index.checked_sub(1).and_then(|i| chars.get(i)).copied();
+            let next = chars.get(index + 1).copied();
+            let starts_word = previous
+                .is_some_and(|c| c.is_ascii_lowercase() || c.is_ascii_digit())
+                || previous.is_some_and(|c| c.is_ascii_uppercase())
+                    && next.is_some_and(|c| c.is_ascii_lowercase());
+            if starts_word {
+                push_slug_separator(&mut slug);
+            }
+        }
+        slug.push(ch.to_ascii_lowercase());
+    }
+
+    while slug.ends_with('-') {
+        slug.pop();
+    }
+    (!slug.is_empty()).then_some(slug)
+}
+
+fn push_slug_separator(slug: &mut String) {
+    if !slug.is_empty() && !slug.ends_with('-') {
+        slug.push('-');
     }
 }
 
@@ -493,6 +659,7 @@ mod tests {
         let output = parser.reconstruct(&document, &translations);
         assert!(output.contains("#doc (Manual) \"제목\" =>"));
         assert!(output.contains("tag := \"yeokja-doc-"));
+        assert!(output.contains("file := \"chapter\""));
         assert!(output.contains("본문입니다."));
         assert!(output.contains("# Section"));
     }
@@ -517,7 +684,11 @@ mod tests {
             &TranslationMap::from([(title_id, "제목".to_string())]),
         );
 
-        assert!(output.contains("authors := [\"Author\"]\ntag := \"yeokja-doc-"));
+        assert!(output.contains("authors := [\"Author\"]"));
+        assert!(output.contains("tag := \"yeokja-doc-"));
+        assert!(output.contains("file := \"chapter\""));
+        assert_eq!(output.matches("tag :=").count(), 1);
+        assert_eq!(output.matches("file :=").count(), 1);
         assert_eq!(output.matches("%%%").count(), 2);
     }
 
@@ -544,6 +715,64 @@ mod tests {
         assert!(output.contains("tag := \"upstream-tag\""));
         assert!(!output.contains("yeokja-doc-"));
         assert_eq!(output.matches("tag :=").count(), 1);
+        assert!(output.contains("file := \"chapter\""));
+    }
+
+    #[test]
+    fn an_explicit_document_file_remains_authoritative() {
+        let source = "#doc (Manual) \"Title\" =>\n%%%\nfile := \"upstream-file\"\n%%%\n\nBody.\n";
+        let title = source.find("Title").unwrap();
+        let body = source.find("Body.").unwrap();
+        let fixture = Fixture::new(
+            source,
+            &[
+                ("heading", title, title + 5, Some(1)),
+                ("paragraph", body, body + 5, None),
+            ],
+        );
+        let parser = fixture.parser();
+        let document = parser.parse_checked(&fixture.source).unwrap();
+        let title_id = document.translatable_segments()[0].id.clone();
+        let output = parser.reconstruct(
+            &document,
+            &TranslationMap::from([(title_id, "제목".to_string())]),
+        );
+
+        assert!(output.contains("file := \"upstream-file\""));
+        assert_eq!(output.matches("file :=").count(), 1);
+        assert!(output.contains("tag := \"yeokja-doc-"));
+    }
+
+    #[test]
+    fn source_module_names_become_readable_english_slugs() {
+        assert_eq!(
+            source_file_slug(Path::new("book/FPLean/GettingToKnow.lean")).as_deref(),
+            Some("getting-to-know")
+        );
+        assert_eq!(
+            source_file_slug(Path::new("book/FPLean/DatatypesPatterns.lean")).as_deref(),
+            Some("datatypes-patterns")
+        );
+        assert_eq!(
+            source_file_slug(Path::new("book/FPLean/ReaderIO.lean")).as_deref(),
+            Some("reader-io")
+        );
+        assert_eq!(
+            source_file_slug(Path::new("book/FPLean.lean")).as_deref(),
+            Some("fp-lean")
+        );
+    }
+
+    #[test]
+    fn original_heading_text_becomes_a_readable_english_slug() {
+        assert_eq!(
+            english_heading_slug("One API, Many Applications").as_deref(),
+            Some("one-api-many-applications")
+        );
+        assert_eq!(
+            english_heading_slug("Checking for {lit}`none`: Don't Repeat Yourself").as_deref(),
+            Some("checking-for-none-don-t-repeat-yourself")
+        );
     }
 
     #[test]
@@ -571,6 +800,8 @@ mod tests {
 
         assert!(!output.contains("tag := none"));
         assert_eq!(output.matches("tag := \"yeokja-part-").count(), 2);
+        assert!(output.contains("file := \"one\""));
+        assert!(output.contains("file := \"two\""));
         assert!(output.contains("-0\""));
         assert!(output.contains("-1\""));
     }

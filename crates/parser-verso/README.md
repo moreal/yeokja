@@ -58,6 +58,15 @@ tag를 쓰도록 지정한 절의 `tag := none`도 소스 경로와 순번 기�
 Verso의 slug 변환은 한글 글자마다 같은 `___`를 사용하므로, 이 보완이 없으면 길이가
 같은 서로 다른 한국어 제목이 최종 manual 조립 단계에서 충돌할 수 있습니다.
 
+다중 페이지 HTML의 디렉터리명은 tag와 별개입니다. upstream이 `file` metadata를
+명시하지 않은 번역된 `#doc`에는 영어 Lean 소스 파일명을 lowercase kebab-case로
+바꾼 `file`을 추가합니다. 예를 들어 `GettingToKnow.lean`과
+`DatatypesPatterns.lean`은 `/getting-to-know/datatypes-patterns/`가 됩니다. 따라서
+표시 제목은 한국어로 번역해도 URL은 읽을 수 있는 안정적인 영어 경로를 유지합니다.
+다중 페이지 분할 경계가 될 수 있는 일반 heading에는 공식 AST가 제공한 원문 heading
+span에서 영어 단어 slug를 만들어 같은 metadata를 추가합니다. upstream의 명시적
+`file` 값은 tag와 마찬가지로 그대로 보존합니다.
+
 ## AST 투영 규칙
 
 | 공식 AST | Yeokja block | 처리 |
