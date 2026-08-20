@@ -2,7 +2,19 @@
 #
 # 번역은 CI에서 일어나지 않습니다: 커밋된 state/에서 출력을 재구성만 하고
 # (완역 상태라 provider 호출이 0회), `status --check`가 미번역 세그먼트를
-# 발견하면 영어 문장이 섞인 판을 조용히 배포하는 대신 실패합니다.
+# 발견하면 영어 문장이 섞인 판을 조용히 배포하는 대신 실패합니다. 이 재구성은
+# 그래도 build html 전에 필요합니다: 재구성 결과인 ko/는 gitignore되어 있고,
+# assemble은 ko/가 없으면 에러 없이 "빈 오버레이"로 취급해 영어 원본만 있는
+# 사이트를 조용히 만들어 버리기 때문입니다.
+#
+# 프로젝트마다 필요한 툴체인이 달라서(PyPy는 Python 2.7+Sphinx, theBeamBook은
+# Ruby+Asciidoctor, FP in Lean은 elan+Lean) 프로젝트별로 잡을 나눠 병렬로
+# 돌리고, 각 잡은 자기 프로젝트에 필요한 툴체인만 설치합니다. pypy-eu-reports는
+# state/가 통째로 gitignore(라이선스 미확정, README 참조)라 커밋된 상태가 없고
+# [build.html] 타깃도 없어 CI에서 할 일이 없으므로 matrix에서 뺍니다.
+#
+# 새 배포 프로젝트를 추가하면 아래 rebuild 잡의 matrix.include와 stage 잡의
+# 스테이징 스텝에 각각 항목을 추가해야 합니다.
 name: Deploy Pages
 
 on:
@@ -20,19 +32,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-cli:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: true
-
-      # contributors 표가 git 히스토리 전체를 요구합니다. actions/checkout이
-      # 서브모듈을 얕게 받았을 때만 --unshallow가 의미가 있고, 아니면 no-op.
-      # theBeamBook만 풉니다 — pypy 히스토리는 크고 여기서는 필요 없습니다.
-      - name: Unshallow theBeamBook for the contributors table
-        run: git -C projects/thebeambook/upstream fetch --unshallow || true
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -40,31 +44,80 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
 
-      - name: Install Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
-
-      - name: Install the Asciidoctor toolchain
-        run: gem install asciidoctor asciidoctor-diagram rouge
-
       - name: Build yeokja
         run: cargo build --release -p yeokja-cli
+
+      - name: Upload yeokja binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: yeokja-cli
+          path: target/release/yeokja
+          retention-days: 1
+
+  rebuild:
+    needs: build-cli
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: pypy
+            toolchain: python2
+          - project: thebeambook
+            toolchain: ruby
+            unshallow: true
+          - project: fp-lean
+            toolchain: lean
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 이 잡이 다루는 프로젝트의 submodule만 받습니다 — 다른 두 프로젝트의
+      # upstream(수백 MB)까지 받을 이유가 없습니다.
+      - name: Fetch this project's submodule
+        run: git submodule update --init --depth 1 projects/${{ matrix.project }}/upstream
+
+      # contributors 표가 git 히스토리 전체를 요구합니다. actions/checkout이
+      # submodule을 얕게 받았을 때만 --unshallow가 의미가 있고, 아니면 no-op.
+      - name: Unshallow this project's submodule for the contributors table
+        if: matrix.unshallow
+        run: git -C projects/${{ matrix.project }}/upstream fetch --unshallow || true
+
+      - name: Download yeokja binary
+        uses: actions/download-artifact@v4
+        with:
+          name: yeokja-cli
+          path: target/release
+
+      - name: Make yeokja executable
+        run: chmod +x target/release/yeokja
 
       # PyPy 문서의 conf.py는 py2 문법인 pypy.config를 임포트하므로 공식
       # 환경(.readthedocs.yaml)과 같은 Python 2.7이 필요합니다.
       - name: Install Python 2.7 for the PyPy docs
+        if: matrix.toolchain == 'python2'
         uses: actions/setup-python@v5
         with:
           python-version: 'pypy2.7'
 
       - name: Install the PyPy docs Sphinx toolchain
+        if: matrix.toolchain == 'python2'
         run: pip install 'sphinx<2' 'docutils==0.11' 'sphinx-issues==1.2.0' 'sphinx_rtd_theme<1' py sphinx-affiliates
 
+      - name: Install Ruby
+        if: matrix.toolchain == 'ruby'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Install the Asciidoctor toolchain
+        if: matrix.toolchain == 'ruby'
+        run: gem install asciidoctor asciidoctor-diagram rouge
+
       # FP in Lean은 빌드 중 Python 출력을 책에 포함하므로 upstream CI와 같은
-      # 버전을 사용합니다. 앞서 설치한 Sphinx 실행 파일은 PyPy 2.7 shebang을
-      # 유지하므로 이후 Python 기본값을 바꿔도 PyPy 문서 빌드에는 영향이 없습니다.
+      # 버전을 사용합니다.
       - name: Install Python for FP in Lean
+        if: matrix.toolchain == 'lean'
         uses: actions/setup-python@v5
         with:
           python-version: '3.10.4'
@@ -72,6 +125,7 @@ jobs:
       # upstream fp-lean CI와 같은 방식으로 elan을 설치합니다. book과 examples는
       # 서로 다른 lean-toolchain을 가지며, 첫 lean 호출이 각각을 설치합니다.
       - name: Install elan for FP in Lean
+        if: matrix.toolchain == 'lean'
         run: |
           curl -O --location https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh
           chmod u+x elan-init.sh
@@ -79,45 +133,52 @@ jobs:
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
       - name: Install FP in Lean toolchains
+        if: matrix.toolchain == 'lean'
         run: |
           (cd projects/fp-lean/upstream/examples && lean --version)
           (cd projects/fp-lean/upstream/book && lean --version)
 
-      # 상태 파일이 있는 문서만 재구성·검사합니다. 상태가 없는 문서는 영어
-      # 원문 그대로 트리에 남는 것이 의도된 동작이고(부분 번역 프로젝트),
-      # 상태 파일 단위로 돌기 때문에 CI가 provider를 부를 일도 없습니다.
       - name: Rebuild translated sources from committed state
         run: |
-          for project in projects/*/; do
-            (
-              cd "$project"
-              for s in $(find state -name '*.yeokja.json'); do
-                src="${s#state/}"; src="${src%.yeokja.json}"
-                ../../target/release/yeokja translate "$src"
-                ../../target/release/yeokja status --check "$src"
-              done
-            )
+          cd projects/${{ matrix.project }}
+          for s in $(find state -name '*.yeokja.json'); do
+            src="${s#state/}"; src="${src%.yeokja.json}"
+            ../../target/release/yeokja translate "$src"
+            ../../target/release/yeokja status --check "$src"
           done
 
-      # Pages에 실릴 프로젝트는 [build.html] 타깃으로 HTML을 dist/site에
-      # 내놓습니다. 소스 수집 절차만 담은 recipe-only 프로젝트는 건너뜁니다.
-      - name: Build every deployable project's HTML
+      - name: Build HTML
         run: |
-          for project in projects/*/; do
-            if ! grep -q '^\[build\.html\]' "$project/yeokja.toml"; then
-              echo "Skipping $project (no [build.html] target)"
-              continue
-            fi
-            (cd "$project" && ../../target/release/yeokja build html)
-          done
+          cd projects/${{ matrix.project }}
+          ../../target/release/yeokja build html
+
+      - name: Upload built site
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.project }}
+          path: projects/${{ matrix.project }}/dist
+          retention-days: 1
+
+  stage:
+    needs: rebuild
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download built sites
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: artifacts
 
       - name: Stage the Pages tree
         run: |
           mkdir -p _site
-          cp -r projects/thebeambook/dist/site _site/theBeamBook
-          cp -r projects/pypy/dist/site _site/pypy
-          cp -r projects/pypy/dist/rpython-site _site/rpython
-          cp -r projects/fp-lean/dist/site _site/fp-lean
+          cp -r artifacts/dist-thebeambook/site _site/theBeamBook
+          cp -r artifacts/dist-pypy/site _site/pypy
+          cp -r artifacts/dist-pypy/rpython-site _site/rpython
+          cp -r artifacts/dist-fp-lean/site _site/fp-lean
           cp site/index.html site/favicon.svg _site/
 
       - name: Configure Pages
@@ -131,7 +192,7 @@ jobs:
           path: _site
 
   deploy:
-    needs: build
+    needs: stage
     runs-on: ubuntu-latest
     environment:
       name: github-pages
