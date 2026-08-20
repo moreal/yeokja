@@ -22,9 +22,22 @@ pub fn split_sentences(text: &str) -> Vec<String> {
         current.push(chars[i]);
 
         if matches!(chars[i], '.' | '!' | '?') {
-            // Check if this is an abbreviation
+            // Check if this is an abbreviation. A bare suffix check (`ends_with`)
+            // also matches ordinary words that happen to end the same way as a
+            // short abbreviation ("interest." ~ "st.", "programs." ~ "ms."), so
+            // the character right before the match must not continue a word.
             let current_lower = current.to_lowercase();
-            let is_abbreviation = abbreviations.iter().any(|abbr| current_lower.ends_with(abbr));
+            let is_abbreviation = abbreviations.iter().any(|abbr| {
+                let Some(prefix_len) = current_lower.len().checked_sub(abbr.len()) else {
+                    return false;
+                };
+                current_lower.is_char_boundary(prefix_len)
+                    && &current_lower[prefix_len..] == *abbr
+                    && current_lower[..prefix_len]
+                        .chars()
+                        .next_back()
+                        .is_none_or(|c| !c.is_alphanumeric())
+            });
 
             // A dot inside a URL token (e.g. "https://example.com/v1.Get") is
             // not a sentence boundary. Only applies when the token continues
@@ -79,6 +92,24 @@ fn token_is_url(chars: &[char], end: usize) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn short_abbreviation_needs_a_word_boundary() {
+        // "st." (Street) and "ms." (Ms./manuscript) are real abbreviations, but a
+        // bare suffix check also matched ordinary words ending the same way.
+        assert_eq!(
+            split_sentences("It was of interest. Type classes are extensible."),
+            vec!["It was of interest.", "Type classes are extensible."]
+        );
+        assert_eq!(
+            split_sentences("These are programs. Types classify them."),
+            vec!["These are programs.", "Types classify them."]
+        );
+        assert_eq!(
+            split_sentences("Visit St. Louis. It is a city."),
+            vec!["Visit St. Louis.", "It is a city."]
+        );
+    }
 
     #[test]
     fn dot_inside_token_is_not_a_boundary() {

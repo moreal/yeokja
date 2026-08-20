@@ -116,26 +116,24 @@ private def BlockContext.kind (ctx : BlockContext) : String :=
   else if ctx.inQuote then "block_quote"
   else "paragraph"
 
+/-- Verso's `linebreak` node is a mid-paragraph source line wrap, not a sentence
+boundary (it renders as plain whitespace, not `<br>`); splitting spans on it
+used to sever sentences that upstream wrapped across two lines. It is still
+excluded from the span's own start/stop: a trailing linebreak (e.g. the line
+that ends a table cell right before the next row's `*`) is source structure,
+not translatable content, and letting it into the span ate the newline the
+structure depends on when the translation was spliced back in. -/
 private def inlineSpans (source : String) (base : Nat) (container : Syntax)
     (kind : String) (level : Option Nat := none) : Array ExportSpan := Id.run do
-  let mut spans := #[]
-  let mut group : Array Syntax := #[]
-  let flush : Array Syntax → Array ExportSpan → Array ExportSpan := fun group spans =>
-    if group.isEmpty || !group.any (carriesProse source) then spans
-    else
-      match group[0]!.getRange?, group.back!.getRange? with
-      | some first, some last =>
-          let raw := first.start.extract source last.stop
-          if raw.trimAscii.startsWith "_Copyright " && raw.trimAscii.endsWith "_" then spans
-          else spans.push {start := base + first.start.byteIdx, stop := base + last.stop.byteIdx, kind, level}
-      | _, _ => spans
-  for inline in topInlines container do
-    if inline.getKind == ``Lean.Doc.Syntax.linebreak then
-      spans := flush group spans
-      group := #[]
-    else
-      group := group.push inline
-  return flush group spans
+  let content := (topInlines container).filter (·.getKind != ``Lean.Doc.Syntax.linebreak)
+  if content.isEmpty || !content.any (carriesProse source) then #[]
+  else
+    match content[0]!.getRange?, content.back!.getRange? with
+    | some first, some last =>
+        let raw := first.start.extract source last.stop
+        if raw.trimAscii.startsWith "_Copyright " && raw.trimAscii.endsWith "_" then #[]
+        else #[{start := base + first.start.byteIdx, stop := base + last.stop.byteIdx, kind, level}]
+    | _, _ => #[]
 
 private def headingLevel (source : String) (stx : Syntax) : Option Nat := do
   let range ← stx.getRange?
