@@ -34,8 +34,9 @@ impl TranslationEvaluator for EndingEvaluator {
                     kind: IssueKind::StyleIssue,
                     message: format!(
                         "Sentence endings leave the document's register: {}. This document \
-                         is uniformly 합쇼체 — end declaratives in ~합니다/~입니다 and \
-                         imperatives in ~하십시오, not ~다/~이다 or ~요/~세요.",
+                         is uniformly 합쇼체 — end declaratives in ~합니다/~입니다, \
+                         imperatives in ~하십시오, and proposals in ~ㅂ시다/~읍시다; \
+                         do not use plain ~다/~이다 or polite ~요/~세요.",
                         offending.join(", "),
                     ),
                 });
@@ -62,8 +63,8 @@ impl TranslationEvaluator for EndingEvaluator {
 ///
 /// A sentence ends where a period follows Hangul, so numbers, URLs, and code
 /// never enter the judgment. The trailing syllable run decides the register:
-/// ~니다 is 합쇼체; any other ~다 is the plain register; the two-syllable ~요
-/// forms are the polite register. A bare final 요 is left alone — 필요 and
+/// ~니다 and the proposal endings ~ㅂ시다/~읍시다 are 합쇼체; any other ~다
+/// is the plain register; the two-syllable ~요 forms are the polite register. A bare final 요 is left alone — 필요 and
 /// 중요 end nouns, not sentences — and so are noun endings generally, since a
 /// fragment rendered as a noun phrase is a translator's legitimate choice.
 fn off_register_endings(text: &str) -> Vec<String> {
@@ -83,15 +84,35 @@ fn off_register_endings(text: &str) -> Vec<String> {
         if tail.is_empty() || !piece.ends_with(&tail) {
             continue;
         }
-        let off = (tail.ends_with('다') && !tail.ends_with("니다"))
+        let off = (tail.ends_with('다') && !is_hapsyoche_da_ending(&tail))
             || POLITE.iter().any(|p| tail.ends_with(p));
         if off {
-            let shown: String = tail.chars().rev().take(6).collect::<Vec<_>>()
-                .into_iter().rev().collect();
+            let shown: String = tail
+                .chars()
+                .rev()
+                .take(6)
+                .collect::<Vec<_>>()
+                .into_iter()
+                .rev()
+                .collect();
             found.push(format!("…{shown}."));
         }
     }
     found
+}
+
+fn is_hapsyoche_da_ending(tail: &str) -> bool {
+    if tail.ends_with("니다") || tail.ends_with("읍시다") {
+        return true;
+    }
+    let Some(stem) = tail.strip_suffix("시다") else {
+        return false;
+    };
+    // In forms such as 합시다, 봅시다, 둡시다, the syllable before 시다 has
+    // jongseong ㅂ (index 17 in the Unicode Hangul composition formula).
+    stem.chars()
+        .next_back()
+        .is_some_and(|ch| ('가'..='힣').contains(&ch) && (ch as u32 - 0xAC00) % 28 == 17)
 }
 
 #[cfg(test)]
@@ -117,6 +138,21 @@ mod tests {
             "스케줄러는 보장을 담당합니다.",
         );
         assert!(EndingEvaluator.evaluate(&ctx).await.unwrap().passed);
+    }
+
+    #[tokio::test]
+    async fn formal_proposals_pass() {
+        for translation in [
+            "이제 $G$를 유한군이라고 합시다.",
+            "다음 예를 살펴봅시다.",
+            "두 집합을 잡읍시다.",
+        ] {
+            let ctx = context("Let us continue.", translation);
+            assert!(
+                EndingEvaluator.evaluate(&ctx).await.unwrap().passed,
+                "{translation:?} should pass"
+            );
+        }
     }
 
     /// The audit's most common find: a block translated whole in the plain
@@ -159,11 +195,11 @@ mod tests {
     #[test]
     fn nouns_numbers_and_code_are_not_sentences() {
         for text in [
-            "이 작업에는 재컴파일이 필요.",   // bare 요 ends a noun
+            "이 작업에는 재컴파일이 필요.", // bare 요 ends a noun
             "버전은 3.14입니다.",
             "https://doc.pypy.org 를 보십시오.",
             "명령형은 ~하십시오.",
-            "프로세스 생성 방법.",             // noun phrase rendering
+            "프로세스 생성 방법.", // noun phrase rendering
         ] {
             assert!(
                 off_register_endings(text).is_empty(),

@@ -102,14 +102,12 @@ impl BuildSection {
                     available(targets)
                 )),
             },
-            (BuildSection::Named(targets), Some(name)) => {
-                targets.get(name).ok_or_else(|| {
-                    format!(
-                        "no build target named {name} (available: {})",
-                        available(targets)
-                    )
-                })
-            }
+            (BuildSection::Named(targets), Some(name)) => targets.get(name).ok_or_else(|| {
+                format!(
+                    "no build target named {name} (available: {})",
+                    available(targets)
+                )
+            }),
         }
     }
 }
@@ -198,9 +196,15 @@ pub struct EvaluationConfig {
     pub style_evaluate: bool,
 }
 
-fn default_max_retries() -> u32 { 3 }
-fn default_auto_evaluate() -> bool { true }
-fn default_style_evaluate() -> bool { true }
+fn default_max_retries() -> u32 {
+    3
+}
+fn default_auto_evaluate() -> bool {
+    true
+}
+fn default_style_evaluate() -> bool {
+    true
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TranslationConfig {
@@ -209,9 +213,19 @@ pub struct TranslationConfig {
     /// this caps concurrent provider requests rather than CPU use.
     #[serde(default = "default_concurrency")]
     pub concurrency: usize,
+    /// Maximum number of pending segments from adjacent blocks to send in one
+    /// provider request. Evaluation still runs per segment. A value of one
+    /// preserves the original block-at-a-time behavior.
+    #[serde(default = "default_batch_segments")]
+    pub batch_segments: usize,
 }
 
-pub fn default_concurrency() -> usize { 4 }
+pub fn default_concurrency() -> usize {
+    4
+}
+pub fn default_batch_segments() -> usize {
+    1
+}
 
 /// A rule selecting which columns of which tables are translated.
 ///
@@ -425,7 +439,9 @@ outputs = ["site"]
         assert_eq!(derive.overlay.len(), 2);
         assert!(derive.overlay[0].require_base);
         assert!(!derive.overlay[1].require_base);
-        assert!(matches!(&derive.step[0], DeriveStep::Patch { file } if file == "patches/fix.patch"));
+        assert!(
+            matches!(&derive.step[0], DeriveStep::Patch { file } if file == "patches/fix.patch")
+        );
         assert!(matches!(&derive.step[1], DeriveStep::Generate { .. }));
         let build = config.build.unwrap();
         let target = build.select(None).unwrap();
@@ -459,7 +475,12 @@ outputs = ["book.pdf"]
         assert_eq!(build.select(Some("pdf")).unwrap().outputs, vec!["book.pdf"]);
         // Several targets: the caller must name one, and a wrong name lists them.
         assert!(build.select(None).unwrap_err().contains("html, pdf"));
-        assert!(build.select(Some("epub")).unwrap_err().contains("html, pdf"));
+        assert!(
+            build
+                .select(Some("epub"))
+                .unwrap_err()
+                .contains("html, pdf")
+        );
     }
 
     #[test]
@@ -533,9 +554,26 @@ model = "claude-sonnet-5"
 [translation]
 "#;
         let config = ProjectConfig::from_toml(toml).unwrap();
-        assert_eq!(
-            config.translation.unwrap().concurrency,
-            default_concurrency()
-        );
+        let translation = config.translation.unwrap();
+        assert_eq!(translation.concurrency, default_concurrency());
+        assert_eq!(translation.batch_segments, default_batch_segments());
+    }
+
+    #[test]
+    fn translation_section_reads_batch_segments() {
+        let toml = r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[provider]
+type = "anthropic"
+model = "claude-sonnet-5"
+
+[translation]
+batch_segments = 12
+"#;
+        let config = ProjectConfig::from_toml(toml).unwrap();
+        assert_eq!(config.translation.unwrap().batch_segments, 12);
     }
 }

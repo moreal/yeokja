@@ -21,28 +21,33 @@ impl TranslationEvaluator for FormatEvaluator {
         // asks the translator to switch that pair to `*`. Count the two spellings
         // together for those markups; treating the instructed rewrite as a lost
         // marker makes every retry repeat an impossible demand.
-        let checks = [
-            (
-                "Inline code markers (`)",
-                mark_runs(&context.source, '`'),
-                mark_runs(&context.translation, '`'),
-            ),
-            (
-                "Emphasis marker runs",
-                emphasis_runs(&context.source, context.markup),
-                emphasis_runs(&context.translation, context.markup),
-            ),
-        ];
-        for (name, in_source, in_translation) in checks {
-            if in_source != in_translation {
-                issues.push(EvaluationIssue {
-                    severity: IssueSeverity::Error,
-                    kind: IssueKind::FormatLost,
-                    message: format!(
-                        "{name} count mismatch: source has {in_source}, \
-                         translation has {in_translation}"
-                    ),
-                });
+        // Backticks and asterisks are ordinary punctuation in LaTeX (not
+        // Markdown-style inline markup), so applying these checks there rejects
+        // valid TeX quotations such as ``term'' and mathematical `*` tokens.
+        if context.markup != Markup::Latex {
+            let checks = [
+                (
+                    "Inline code markers (`)",
+                    mark_runs(&context.source, '`'),
+                    mark_runs(&context.translation, '`'),
+                ),
+                (
+                    "Emphasis marker runs",
+                    emphasis_runs(&context.source, context.markup),
+                    emphasis_runs(&context.translation, context.markup),
+                ),
+            ];
+            for (name, in_source, in_translation) in checks {
+                if in_source != in_translation {
+                    issues.push(EvaluationIssue {
+                        severity: IssueSeverity::Error,
+                        kind: IssueKind::FormatLost,
+                        message: format!(
+                            "{name} count mismatch: source has {in_source}, \
+                             translation has {in_translation}"
+                        ),
+                    });
+                }
             }
         }
 
@@ -61,19 +66,18 @@ impl TranslationEvaluator for FormatEvaluator {
             if !source.unclosable.is_empty() {
                 continue;
             }
-            let (in_source, in_translation) = if mark == '_'
-                && matches!(context.markup, Markup::Markdown | Markup::Verso)
-            {
-                (
-                    markdown_emphasis_pairs(&context.source),
-                    markdown_emphasis_pairs(&context.translation),
-                )
-            } else {
-                (
-                    source.formed,
-                    pair_up(&chars(&context.translation), mark).formed,
-                )
-            };
+            let (in_source, in_translation) =
+                if mark == '_' && matches!(context.markup, Markup::Markdown | Markup::Verso) {
+                    (
+                        markdown_emphasis_pairs(&context.source),
+                        markdown_emphasis_pairs(&context.translation),
+                    )
+                } else {
+                    (
+                        source.formed,
+                        pair_up(&chars(&context.translation), mark).formed,
+                    )
+                };
             if in_source != in_translation {
                 issues.push(EvaluationIssue {
                     severity: IssueSeverity::Error,
@@ -149,6 +153,30 @@ impl TranslationEvaluator for FormatEvaluator {
                          header and every backticked code/math payload exactly. Visible \
                          text inside `[labels]` may be translated. Source tokens: {source:?}; \
                          translation tokens: {translation:?}"
+                    ),
+                });
+            }
+        }
+
+        if context.markup == Markup::Latex {
+            let mut source = latex_structure(&context.source);
+            let mut translation = latex_structure(&context.translation);
+            // Korean grammar routinely moves a displayed term or reference to
+            // another part of the sentence. The safety property is that every
+            // structural token survives byte-for-byte, including duplicates;
+            // their prose-level order is not itself LaTeX syntax.
+            source.sort_unstable();
+            translation.sort_unstable();
+            if !is_multiset_subset(&source, &translation) {
+                issues.push(EvaluationIssue {
+                    severity: IssueSeverity::Error,
+                    kind: IssueKind::FormatLost,
+                    message: format!(
+                        "LaTeX structure changed: preserve every source command, brace, bracket, \
+                         comment placeholder, and mathematical expression (natural sentence \
+                         reordering, translated prose inside \\text{{...}}, and moved terminal \
+                         punctuation are allowed). Source tokens: \
+                         {source:?}; translation tokens: {translation:?}"
                     ),
                 });
             }
@@ -325,8 +353,260 @@ fn constrained_marks(markup: Markup) -> &'static [(char, &'static str)] {
         // reStructuredText pairs are checked by `rst_broken_pairs`: every one
         // of its marker forms is constrained, so the doubled-form advice these
         // entries carry would be wrong there.
-        Markup::Rst => &[],
+        Markup::Rst | Markup::Latex => &[],
     }
+}
+
+/// LaTeX syntax whose spelling is independent of the visible prose around it.
+///
+/// The evaluator compares the resulting tokens as a multiset: Korean sentence
+/// order may move complete commands and math spans, while changing or dropping
+/// even one token (including one of two duplicates) is still rejected.
+fn latex_structure(text: &str) -> Vec<String> {
+    let masked = mask_latex_visible_text_arguments(text);
+    let text = masked.as_str();
+    let mut tokens = Vec::new();
+    let bytes = text.as_bytes();
+    let mut at = 0usize;
+    while at < bytes.len() {
+        if text[at..].starts_with('⟦')
+            && let Some(close) = text[at..].find('⟧')
+        {
+            let end = at + close + '⟧'.len_utf8();
+            tokens.push(format!("comment:{}", &text[at..end]));
+            at = end;
+            continue;
+        }
+
+        if bytes[at] == b'$' && !is_escaped(bytes, at) {
+            let delimiter = if bytes.get(at + 1) == Some(&b'$') {
+                "$$"
+            } else {
+                "$"
+            };
+            let start = at;
+            at += delimiter.len();
+            while at < bytes.len() {
+                if text[at..].starts_with(delimiter) && !is_escaped(bytes, at) {
+                    at += delimiter.len();
+                    break;
+                }
+                at += text[at..].chars().next().map_or(1, char::len_utf8);
+            }
+            tokens.push(format!("math:{}", normalize_math_token(&text[start..at])));
+            continue;
+        }
+
+        if text[at..].starts_with("\\(") || text[at..].starts_with("\\[") {
+            let (close, width) = if text[at..].starts_with("\\(") {
+                ("\\)", 2)
+            } else {
+                ("\\]", 2)
+            };
+            let start = at;
+            at += width;
+            if let Some(offset) = text[at..].find(close) {
+                at += offset + close.len();
+            } else {
+                at = text.len();
+            }
+            tokens.push(format!("math:{}", normalize_math_token(&text[start..at])));
+            continue;
+        }
+
+        if bytes[at] == b'\\' {
+            let start = at;
+            at += 1;
+            if at < bytes.len() && (bytes[at].is_ascii_alphabetic() || bytes[at] == b'@') {
+                while at < bytes.len() && (bytes[at].is_ascii_alphabetic() || bytes[at] == b'@') {
+                    at += 1;
+                }
+            } else if at < bytes.len() {
+                at += text[at..].chars().next().map_or(1, char::len_utf8);
+            }
+            let command = &text[start + 1..at];
+            // A backslash followed by a space is a typographic interword-space
+            // hint (most often after i.e.), not semantic document structure.
+            // Korean normally drops it with the preceding Latin abbreviation.
+            if command.chars().all(char::is_whitespace) {
+                continue;
+            }
+            // TeX accent commands and dotless i/j spell visible Latin text.
+            // Transliteration into Hangul legitimately removes both the accent
+            // command and its local braces.
+            if matches!(command, "i" | "j") {
+                continue;
+            }
+            if latex_accent_command(command) {
+                if let Some(end) = latex_argument_end(text, at, b'{', b'}') {
+                    at = end;
+                } else if at < bytes.len() {
+                    if bytes[at] == b'\\' {
+                        at += 1;
+                        while at < bytes.len()
+                            && (bytes[at].is_ascii_alphabetic() || bytes[at] == b'@')
+                        {
+                            at += 1;
+                        }
+                    } else {
+                        at += text[at..].chars().next().map_or(1, char::len_utf8);
+                    }
+                }
+                continue;
+            }
+            tokens.push(format!("command:{}", &text[start..at]));
+            if latex_opaque_argument_command(command) {
+                while let Some(end) = latex_argument_end(text, at, b'[', b']') {
+                    tokens.push(format!("opaque:{}", &text[at..end]));
+                    at = end;
+                }
+                if let Some(end) = latex_argument_end(text, at, b'{', b'}') {
+                    tokens.push(format!("opaque:{}", &text[at..end]));
+                    at = end;
+                }
+            } else if command == "href"
+                && let Some(end) = latex_argument_end(text, at, b'{', b'}')
+            {
+                // The destination is semantic; the following visible label is prose.
+                tokens.push(format!("opaque:{}", &text[at..end]));
+                at = end;
+            }
+            continue;
+        }
+
+        let ch = text[at..].chars().next().unwrap();
+        if matches!(ch, '{' | '}' | '[' | ']' | '&' | '#' | '~') {
+            tokens.push(format!("syntax:{ch}"));
+        }
+        at += ch.len_utf8();
+    }
+    tokens
+}
+
+fn mask_latex_visible_text_arguments(text: &str) -> String {
+    let bytes = text.as_bytes();
+    let mut output = String::with_capacity(text.len());
+    let mut at = 0usize;
+    while at < bytes.len() {
+        if text[at..].starts_with("\\text") {
+            let command_end = at + "\\text".len();
+            let mut open = command_end;
+            while bytes.get(open).is_some_and(u8::is_ascii_whitespace) {
+                open += 1;
+            }
+            if bytes.get(open) == Some(&b'{')
+                && let Some(end) = latex_argument_end(text, command_end, b'{', b'}')
+            {
+                output.push_str(&text[at..=open]);
+                output.push_str("VISIBLE_PROSE");
+                output.push('}');
+                at = end;
+                continue;
+            }
+        }
+        let ch = text[at..].chars().next().unwrap();
+        output.push(ch);
+        at += ch.len_utf8();
+    }
+    output
+}
+
+fn normalize_math_token(token: &str) -> String {
+    let (open, close) = if token.starts_with("$$") && token.ends_with("$$") {
+        ("$$", "$$")
+    } else if token.starts_with('$') && token.ends_with('$') {
+        ("$", "$")
+    } else if token.starts_with("\\(") && token.ends_with("\\)") {
+        ("\\(", "\\)")
+    } else if token.starts_with("\\[") && token.ends_with("\\]") {
+        ("\\[", "\\]")
+    } else {
+        return token.to_string();
+    };
+    let inner = token[open.len()..token.len() - close.len()].trim_end();
+    let inner = inner
+        .strip_suffix(['.', ',', ';', ':', '?', '!'])
+        .unwrap_or(inner)
+        .trim_end();
+    format!("{open}{inner}{close}")
+}
+
+fn latex_accent_command(command: &str) -> bool {
+    matches!(
+        command,
+        "\"" | "'" | "^" | "~" | "=" | "b" | "c" | "d" | "H" | "k" | "r" | "t" | "u" | "v"
+    )
+}
+
+fn is_multiset_subset(required: &[String], available: &[String]) -> bool {
+    let mut counts = std::collections::HashMap::<&str, usize>::new();
+    for token in available {
+        *counts.entry(token).or_default() += 1;
+    }
+    required.iter().all(|token| {
+        let Some(count) = counts.get_mut(token.as_str()) else {
+            return false;
+        };
+        if *count == 0 {
+            return false;
+        }
+        *count -= 1;
+        true
+    })
+}
+
+fn is_escaped(bytes: &[u8], at: usize) -> bool {
+    let mut slashes = 0usize;
+    let mut cursor = at;
+    while cursor > 0 && bytes[cursor - 1] == b'\\' {
+        slashes += 1;
+        cursor -= 1;
+    }
+    slashes % 2 == 1
+}
+
+fn latex_opaque_argument_command(command: &str) -> bool {
+    matches!(
+        command,
+        "Cref"
+            | "cref"
+            | "cite"
+            | "citeauthor"
+            | "citep"
+            | "citet"
+            | "eqref"
+            | "include"
+            | "includegraphics"
+            | "input"
+            | "label"
+            | "pageref"
+            | "ref"
+            | "url"
+    )
+}
+
+fn latex_argument_end(text: &str, mut at: usize, open: u8, close: u8) -> Option<usize> {
+    let bytes = text.as_bytes();
+    while bytes.get(at).is_some_and(u8::is_ascii_whitespace) {
+        at += 1;
+    }
+    if bytes.get(at) != Some(&open) {
+        return None;
+    }
+    let mut depth = 0usize;
+    let mut cursor = at;
+    while cursor < bytes.len() {
+        if bytes[cursor] == open && !is_escaped(bytes, cursor) {
+            depth += 1;
+        } else if bytes[cursor] == close && !is_escaped(bytes, cursor) {
+            depth -= 1;
+            if depth == 0 {
+                return Some(cursor + 1);
+            }
+        }
+        cursor += 1;
+    }
+    None
 }
 
 /// Sorted structural tokens from Verso inline roles and math.
@@ -354,9 +634,7 @@ fn verso_structure(text: &str) -> Vec<String> {
                 .chars()
                 .next()
                 .is_some_and(|c| c.is_ascii_alphabetic());
-            if starts_as_role
-                && let Some(close_offset) = text[name_start..].find('}')
-            {
+            if starts_as_role && let Some(close_offset) = text[name_start..].find('}') {
                 let header_end = name_start + close_offset + 1;
                 let header = &text[at..header_end];
                 if text[header_end..].starts_with('`') {
@@ -411,14 +689,15 @@ pub(crate) fn restore_verso_code_whitespace(source: &str, translation: &str) -> 
         .filter(|token| token.payload.contains('\u{a0}'))
     {
         let normalized_source = normalize_verso_code_whitespace(&source_token.payload);
-        let Some((index, translated_token)) = translation_tokens
-            .iter()
-            .enumerate()
-            .find(|(index, token)| {
-                !used[*index]
-                    && token.header == source_token.header
-                    && normalize_verso_code_whitespace(&token.payload) == normalized_source
-            })
+        let Some((index, translated_token)) =
+            translation_tokens
+                .iter()
+                .enumerate()
+                .find(|(index, token)| {
+                    !used[*index]
+                        && token.header == source_token.header
+                        && normalize_verso_code_whitespace(&token.payload) == normalized_source
+                })
         else {
             continue;
         };
@@ -448,9 +727,7 @@ fn verso_code_tokens(text: &str) -> Vec<VersoCodeToken> {
                 .chars()
                 .next()
                 .is_some_and(|ch| ch.is_ascii_alphabetic());
-            if starts_as_role
-                && let Some(close_offset) = text[name_start..].find('}')
-            {
+            if starts_as_role && let Some(close_offset) = text[name_start..].find('}') {
                 let header_end = name_start + close_offset + 1;
                 if text[header_end..].starts_with('`') {
                     let payload_start = header_end + 1;
@@ -707,7 +984,9 @@ fn line_start_construct(text: &str) -> Option<&'static str> {
     let spaced = rest.starts_with([' ', '\t']);
     match first {
         // `.Title` names the block below it; `...` is an ellipsis.
-        '.' if !rest.is_empty() && !rest.starts_with(['.', ' ', '\t']) => Some("a block title (`.`)"),
+        '.' if !rest.is_empty() && !rest.starts_with(['.', ' ', '\t']) => {
+            Some("a block title (`.`)")
+        }
         '*' | '-' | '+' if spaced => Some("a list item"),
         '=' if spaced => Some("a section title (`=`)"),
         '#' if spaced => Some("a heading (`#`)"),
@@ -797,10 +1076,19 @@ mod tests {
 
     #[test]
     fn constructs_are_recognised_at_line_start() {
-        assert_eq!(line_start_construct("= Title"), Some("a section title (`=`)"));
+        assert_eq!(
+            line_start_construct("= Title"),
+            Some("a section title (`=`)")
+        );
         assert_eq!(line_start_construct("* item"), Some("a list item"));
-        assert_eq!(line_start_construct("[source,erlang]"), Some("an attribute line (`[...]`)"));
-        assert_eq!(line_start_construct(":toc: left"), Some("an attribute entry (`:name:`)"));
+        assert_eq!(
+            line_start_construct("[source,erlang]"),
+            Some("an attribute line (`[...]`)")
+        );
+        assert_eq!(
+            line_start_construct(":toc: left"),
+            Some("an attribute entry (`:name:`)")
+        );
         assert_eq!(line_start_construct("// note"), Some("a comment (`//`)"));
         assert_eq!(line_start_construct("보통 문장입니다."), None);
         assert_eq!(line_start_construct("3.14 입니다."), None);
@@ -926,8 +1214,16 @@ mod tests {
     /// not. Calling both broken would have switched the check off for the pair.
     #[test]
     fn a_closer_is_sought_past_the_one_that_cannot_close() {
-        assert!(unclosable_pairs("The allocator _temp_alloc_ is used.", Markup::Asciidoc).is_empty());
-        assert!(!unclosable_pairs("할당자 _temp_alloc_은 임시 할당에 씁니다.", Markup::Asciidoc).is_empty());
+        assert!(
+            unclosable_pairs("The allocator _temp_alloc_ is used.", Markup::Asciidoc).is_empty()
+        );
+        assert!(
+            !unclosable_pairs(
+                "할당자 _temp_alloc_은 임시 할당에 씁니다.",
+                Markup::Asciidoc
+            )
+            .is_empty()
+        );
     }
 
     /// Asciidoctor blocks a closing mark on a quote as well as on a letter.
@@ -975,7 +1271,10 @@ mod tests {
         let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
         assert!(!result.passed);
         assert!(
-            result.issues.iter().any(|i| i.message.contains("do not line up")),
+            result
+                .issues
+                .iter()
+                .any(|i| i.message.contains("do not line up")),
             "{:?}",
             result.issues
         );
@@ -995,7 +1294,10 @@ mod tests {
         let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
         assert!(!result.passed);
         assert!(
-            result.issues.iter().any(|i| i.message.contains("do not line up")),
+            result
+                .issues
+                .iter()
+                .any(|i| i.message.contains("do not line up")),
             "{:?}",
             result.issues
         );
@@ -1034,7 +1336,10 @@ mod tests {
         let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
         assert!(!result.passed);
         assert!(
-            result.issues.iter().any(|i| i.message.contains("curved-quote")),
+            result
+                .issues
+                .iter()
+                .any(|i| i.message.contains("curved-quote")),
             "{:?}",
             result.issues
         );
@@ -1072,7 +1377,10 @@ mod tests {
         let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
         assert!(!result.passed);
         assert!(
-            result.issues.iter().any(|i| i.message.contains("backslash-escaped")),
+            result
+                .issues
+                .iter()
+                .any(|i| i.message.contains("backslash-escaped")),
             "{:?}",
             result.issues
         );
@@ -1186,7 +1494,10 @@ mod tests {
             let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
             assert!(!result.passed, "{translation:?} should fail");
             assert!(
-                result.issues.iter().any(|issue| issue.message.contains("Verso role")),
+                result
+                    .issues
+                    .iter()
+                    .any(|issue| issue.message.contains("Verso role")),
                 "{:?}",
                 result.issues
             );
@@ -1207,9 +1518,7 @@ mod tests {
     #[test]
     fn verso_code_nonbreaking_spaces_are_restored_before_evaluation() {
         let nbsp = '\u{a0}';
-        let source = format!(
-            "Use {{lit}}`{nbsp}... ` after {{kw}}`in` and {{lit}}`{nbsp}= `."
-        );
+        let source = format!("Use {{lit}}`{nbsp}... ` after {{kw}}`in` and {{lit}}`{nbsp}= `.");
         let translation = "{kw}`in` 뒤에 {lit}`\\u{a0}... `와 {lit}` = `을 사용합니다.";
         let restored = restore_verso_code_whitespace(&source, translation);
         assert_eq!(
@@ -1226,5 +1535,110 @@ mod tests {
             restore_verso_code_whitespace(source, translation),
             translation
         );
+    }
+
+    #[tokio::test]
+    async fn latex_preserves_commands_math_references_and_comment_placeholders() {
+        let ctx = context_in(
+            Markup::Latex,
+            "See \\Cref{thm:main}: a \\emph{group} $G$ works. ⟦YKTEXC0⟧",
+            "\\Cref{thm:main}을 보십시오. \\emph{군} $G$는 작동합니다. ⟦YKTEXC0⟧",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn latex_rejects_changed_math_and_reference_targets() {
+        for translation in [
+            "\\Cref{thm:other}에 따르면 $G$가 작동합니다.",
+            "\\Cref{thm:main}에 따르면 $H$가 작동합니다.",
+        ] {
+            let ctx = context_in(
+                Markup::Latex,
+                "By \\Cref{thm:main}, $G$ works.",
+                translation,
+            );
+            let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+            assert!(!result.passed, "{translation:?} should fail");
+        }
+    }
+
+    #[tokio::test]
+    async fn latex_allows_complete_tokens_to_move_with_korean_word_order() {
+        let ctx = context_in(
+            Markup::Latex,
+            r"For $x \in X$, see \Cref{thm:main} and use \emph{compactness}.",
+            r"\emph{콤팩트성}을 사용하고 \Cref{thm:main}을 보십시오. 단, $x \in X$입니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn latex_rejects_a_dropped_duplicate_token() {
+        let ctx = context_in(Markup::Latex, "$G$ acts on $G$.", "$G$가 작용합니다.");
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed);
+    }
+
+    #[tokio::test]
+    async fn latex_allows_additional_valid_math_notation() {
+        let ctx = context_in(
+            Markup::Latex,
+            "The characteristic is zero and its submodules stabilize.",
+            "표수는 $0$이고 $M$의 부분가군은 안정화됩니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn latex_ignores_a_dropped_interword_spacing_hint() {
+        let ctx = context_in(
+            Markup::Latex,
+            r"The value is fixed, i.e.\ it cannot move.",
+            "그 값은 고정되어 있습니다. 즉, 움직일 수 없습니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn latex_allows_visible_prose_inside_math_to_be_translated() {
+        let ctx = context_in(
+            Markup::Latex,
+            r"The value is $\sup\{x \mid x \text{ compact}\}$.",
+            r"그 값은 $\sup\{x \mid x \text{ 콤팩트}\}$입니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn latex_allows_terminal_punctuation_to_move_out_of_math() {
+        let ctx = context_in(
+            Markup::Latex,
+            r"Show that \[ T^\dagger = p(T). \]",
+            r"다음을 보이십시오. \[ T^\dagger = p(T) \]",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn latex_allows_tex_accents_to_be_transliterated() {
+        for source in [r#"G\"{o}del"#, r"\v{C}ech", r"\^{e}tre"] {
+            let ctx = context_in(Markup::Latex, source, "한글 음역");
+            let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+            assert!(result.passed, "{source:?}: {:?}", result.issues);
+        }
+    }
+
+    #[tokio::test]
+    async fn latex_does_not_treat_tex_quotes_as_inline_code() {
+        let ctx = context_in(Markup::Latex, "A ``group''.", "어떤 ‘군’입니다.");
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
     }
 }

@@ -1,0 +1,156 @@
+[project]
+source_lang = "en"
+target_lang = "ko"
+glossary = "glossary.toml"
+state_dir = "state"
+
+# 책의 최상위 진입점과 각 장 원고만 번역합니다. preamble/macros/Qcircuit은
+# 실행 코드이므로 번역 대상에서 빼고, 아래 패치에서 독자에게 보이는 고정 문구만
+# 한국어로 바꿉니다.
+[[sources]]
+path = "upstream"
+pattern = "Napkin.tex"
+parser = "latex"
+output = "ko/{path}"
+
+[[sources]]
+path = "upstream/tex/H113"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/H113/{path}"
+
+[[sources]]
+path = "upstream/tex/alg-NT"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/alg-NT/{path}"
+
+[[sources]]
+path = "upstream/tex/alg-geom"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/alg-geom/{path}"
+
+[[sources]]
+path = "upstream/tex/backmatter"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/backmatter/{path}"
+
+[[sources]]
+path = "upstream/tex/calculus"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/calculus/{path}"
+
+[[sources]]
+path = "upstream/tex/cats"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/cats/{path}"
+
+[[sources]]
+path = "upstream/tex/complex-ana"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/complex-ana/{path}"
+
+[[sources]]
+path = "upstream/tex/diffgeo"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/diffgeo/{path}"
+
+[[sources]]
+path = "upstream/tex/frontmatter"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/frontmatter/{path}"
+
+[[sources]]
+path = "upstream/tex/homology"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/homology/{path}"
+
+[[sources]]
+path = "upstream/tex/linalg"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/linalg/{path}"
+
+[[sources]]
+path = "upstream/tex/measure"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/measure/{path}"
+
+[[sources]]
+path = "upstream/tex/quantum"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/quantum/{path}"
+
+[[sources]]
+path = "upstream/tex/rep-theory"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/rep-theory/{path}"
+
+[[sources]]
+path = "upstream/tex/riemann-surface"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/riemann-surface/{path}"
+
+[[sources]]
+path = "upstream/tex/set-theory"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/set-theory/{path}"
+
+[[sources]]
+path = "upstream/tex/topology"
+pattern = "*.tex"
+parser = "latex"
+output = "ko/tex/topology/{path}"
+
+[derive]
+base = "upstream"
+
+[[derive.overlay]]
+path = "ko"
+require_base = true
+
+# 한국어 폰트와 LuaLaTeX가 포함된 재현 가능한 Nix 빌드 정의입니다.
+[[derive.overlay]]
+path = "assets"
+
+[[derive.step]]
+kind = "patch"
+file = "patches/korean-localization.patch"
+
+[build.pdf]
+command = '''
+set -e
+napkin_build_dir=$(mktemp -d)
+trap 'rm -rf "$napkin_build_dir"' EXIT
+cp -RL . "$napkin_build_dir/src"
+result=$(nix build "path:$napkin_build_dir/src" --no-link --print-out-paths)
+cp "$result/Napkin.pdf" Napkin-ko.pdf
+'''
+outputs = ["Napkin-ko.pdf"]
+dist = "output/pdf"
+
+[provider]
+type = "claude_code"
+model = "claude-sonnet-5"
+
+[evaluation]
+auto_evaluate = true
+style_evaluate = false
+max_retries = 3
+
+[translation]
+concurrency = 12
+batch_segments = 24

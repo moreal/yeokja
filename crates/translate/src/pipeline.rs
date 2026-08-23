@@ -81,10 +81,23 @@ pub async fn translate_with_evaluation_observed(
         let response = provider.translate(current_request.clone()).await?;
         on_event(PipelineEvent::Translated { attempt: attempts });
 
-        // Evaluate each translated segment
-        let mut all_passed = true;
+        // Evaluate each translated segment. Passed segments leave the retry
+        // set immediately: retranslating an entire multi-block batch because
+        // one item lost a brace is slower and can regress translations that
+        // were already correct.
+        let mut retry_segments = Vec::new();
         let mut feedback_parts: Vec<String> = Vec::new();
         let mut attempt_issues: Vec<String> = Vec::new();
+
+        for (idx, source) in &current_request.segments {
+            if !response.translations.contains_key(idx) {
+                retry_segments.push((*idx, source.clone()));
+                let message =
+                    format!("Missing translation for [{idx}]; include it in the response.");
+                feedback_parts.push(message.clone());
+                attempt_issues.push(message);
+            }
+        }
 
         for (&idx, translation) in &response.translations {
             let source = current_request
@@ -112,13 +125,14 @@ pub async fn translate_with_evaluation_observed(
                 passed: true,
                 issues: Vec::new(),
             };
+            let mut triggers_retry = false;
 
             for evaluator in evaluators {
                 if let Ok(result) = evaluator.evaluate(&eval_ctx).await {
                     if !result.passed && evaluator.triggers_retranslation() {
-                        all_passed = false;
+                        triggers_retry = true;
                         for issue in &result.issues {
-                            feedback_parts.push(issue.message.clone());
+                            feedback_parts.push(format!("[{idx}] {}", issue.message));
                         }
                     }
                     combined_result.issues.extend(result.issues);
@@ -138,7 +152,19 @@ pub async fn translate_with_evaluation_observed(
                     attempts,
                 },
             );
+            if triggers_retry
+                && let Some((_, source)) = current_request
+                    .segments
+                    .iter()
+                    .find(|(request_idx, _)| *request_idx == idx)
+            {
+                retry_segments.push((idx, source.clone()));
+            }
         }
+
+        retry_segments.sort_by_key(|(idx, _)| *idx);
+        retry_segments.dedup_by_key(|(idx, _)| *idx);
+        let all_passed = retry_segments.is_empty();
 
         on_event(PipelineEvent::Evaluated {
             attempt: attempts,
@@ -155,6 +181,7 @@ pub async fn translate_with_evaluation_observed(
 
         // Retry with feedback
         tracing::info!(attempt = attempts, "Retrying translation with feedback");
+        current_request.segments = retry_segments;
         current_request.feedback = Some(feedback_parts.join("\n"));
     }
 
@@ -170,13 +197,19 @@ mod tests {
 
     struct MockProvider {
         responses: std::sync::Mutex<Vec<HashMap<usize, String>>>,
+        requests: std::sync::Mutex<Vec<Vec<usize>>>,
     }
 
     impl MockProvider {
         fn new(responses: Vec<HashMap<usize, String>>) -> Self {
             Self {
                 responses: std::sync::Mutex::new(responses),
+                requests: std::sync::Mutex::new(Vec::new()),
             }
+        }
+
+        fn requests(&self) -> Vec<Vec<usize>> {
+            self.requests.lock().unwrap().clone()
         }
     }
 
@@ -184,8 +217,12 @@ mod tests {
     impl TranslationProvider for MockProvider {
         async fn translate(
             &self,
-            _request: TranslateRequest,
+            request: TranslateRequest,
         ) -> Result<TranslateResponse, TranslateError> {
+            self.requests
+                .lock()
+                .unwrap()
+                .push(request.segments.iter().map(|(idx, _)| *idx).collect());
             let mut responses = self.responses.lock().unwrap();
             let translations = if responses.is_empty() {
                 HashMap::new()
@@ -216,6 +253,38 @@ mod tests {
 
     struct FailOnceEvaluator {
         call_count: std::sync::Mutex<u32>,
+    }
+
+    struct RejectBad;
+
+    #[async_trait]
+    impl TranslationEvaluator for RejectBad {
+        async fn evaluate(
+            &self,
+            context: &EvaluationContext,
+        ) -> Result<EvaluationResult, EvaluationError> {
+            let passed = context.translation != "bad";
+            Ok(EvaluationResult {
+                passed,
+                issues: if passed {
+                    Vec::new()
+                } else {
+                    vec![EvaluationIssue {
+                        severity: IssueSeverity::Error,
+                        kind: IssueKind::FormatLost,
+                        message: "bad translation".to_string(),
+                    }]
+                },
+            })
+        }
+
+        fn triggers_retranslation(&self) -> bool {
+            true
+        }
+
+        fn name(&self) -> &'static str {
+            "RejectBad"
+        }
     }
 
     impl FailOnceEvaluator {
@@ -282,6 +351,51 @@ mod tests {
 
         assert_eq!(results[&1].translation, "안녕하세요.");
         assert_eq!(results[&1].attempts, 1);
+    }
+
+    #[tokio::test]
+    async fn retry_contains_only_failed_and_missing_segments() {
+        let provider = MockProvider::new(vec![
+            [(1, "통과합니다.".to_string()), (2, "bad".to_string())].into(),
+            [
+                (2, "고쳤습니다.".to_string()),
+                (3, "추가했습니다.".to_string()),
+            ]
+            .into(),
+        ]);
+        let evaluators: Vec<&dyn TranslationEvaluator> = vec![&RejectBad];
+        let request = TranslateRequest {
+            segments: vec![
+                (1, "First.".to_string()),
+                (2, "Second.".to_string()),
+                (3, "Third.".to_string()),
+            ],
+            block_context: "First. Second. Third.".to_string(),
+            glossary: HashMap::new(),
+            source_lang: "en".to_string(),
+            target_lang: "ko".to_string(),
+            markup: Markup::Markdown,
+            feedback: None,
+            prompt_template: None,
+        };
+
+        let result = translate_with_evaluation(
+            &provider,
+            &evaluators,
+            request,
+            &HashMap::new(),
+            "en",
+            "ko",
+            Markup::Markdown,
+            3,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(provider.requests(), [vec![1, 2, 3], vec![2, 3]]);
+        assert_eq!(result[&1].translation, "통과합니다.");
+        assert_eq!(result[&2].translation, "고쳤습니다.");
+        assert_eq!(result[&3].translation, "추가했습니다.");
     }
 
     #[tokio::test]

@@ -41,7 +41,9 @@ pub fn build_prompt(request: &TranslateRequest) -> String {
         request.source_lang, request.target_lang
     ));
     prompt.push_str("Respond with each numbered translation in the same [N] format.\n");
-    prompt.push_str("Preserve all markup exactly: links, URLs, bold/italic markers, and inline code.\n");
+    prompt.push_str(
+        "Preserve all markup exactly: links, URLs, bold/italic markers, and inline code.\n",
+    );
     prompt.push_str(closing_rule(request.markup));
 
     // Korean drifts between registers unless the register is named: the same
@@ -50,8 +52,9 @@ pub fn build_prompt(request: &TranslateRequest) -> String {
     if request.target_lang.starts_with("ko") {
         prompt.push_str(
             "Write formal written Korean (합쇼체) throughout: declarative sentences end in \
-             ~합니다/~입니다, imperatives in ~하십시오. Never end a sentence in the plain \
-             ~다/~이다 register or the polite ~요 register.\n",
+             ~합니다/~입니다, imperatives in ~하십시오, and \"let us\" proposals may end in \
+             ~ㅂ시다/~읍시다. Never end a sentence in the plain ~다/~이다 register or the \
+             polite ~요 register.\n",
         );
     }
 
@@ -61,10 +64,15 @@ pub fn build_prompt(request: &TranslateRequest) -> String {
     }
 
     if let Some(feedback) = &request.feedback {
-        prompt.push_str(&format!("\nPrevious translation had these issues, please fix them:\n{feedback}\n"));
+        prompt.push_str(&format!(
+            "\nPrevious translation had these issues, please fix them:\n{feedback}\n"
+        ));
     }
 
-    prompt.push_str(&format!("\nContext (full paragraph):\n{}\n", request.block_context));
+    prompt.push_str(&format!(
+        "\nContext (full paragraph):\n{}\n",
+        request.block_context
+    ));
 
     prompt.push_str("\nSentences to translate:\n");
     prompt.push_str(&segments_section);
@@ -106,6 +114,17 @@ fn closing_rule(markup: yeokja_core::parser::Markup) -> &'static str {
              escape also applies before an opening marker glued to the end of a word: \
              실행\\ **될** rather than 실행**될**.\n"
         }
+        Markup::Latex => {
+            "Preserve every LaTeX command, environment, brace, comment placeholder such as \
+             ⟦YKTEXC0⟧, and math span exactly. Translate only the visible prose, including \
+             prose inside formatting commands such as \\emph{...}; never translate command \
+             names, labels, or citation keys. Preserve mathematical notation between $...$, \
+             \\(...\\), and \\[...\\], but translate natural-language prose inside \
+             \\text{...}; sentence-final punctuation may move outside the math delimiter. \
+             Complete commands and mathematical expressions may move only as Korean word order \
+             requires; do not split, duplicate, or omit them. Korean particles may follow a \
+             closing brace directly.\n"
+        }
         Markup::Verso => {
             "Preserve every Verso role header (`{role arguments}`) exactly. Translate visible \
              prose in `[labels]`, but keep code or math between backticks after a role or \
@@ -127,15 +146,16 @@ pub fn parse_response(response: &str) -> Result<HashMap<usize, String>, String> 
         }
 
         if let Some(rest) = line.strip_prefix('[')
-            && let Some(bracket_end) = rest.find(']') {
-                let idx_str = &rest[..bracket_end];
-                if let Ok(idx) = idx_str.parse::<usize>() {
-                    let translation = rest[bracket_end + 1..].trim().to_string();
-                    if !translation.is_empty() {
-                        translations.insert(idx, translation);
-                    }
+            && let Some(bracket_end) = rest.find(']')
+        {
+            let idx_str = &rest[..bracket_end];
+            if let Ok(idx) = idx_str.parse::<usize>() {
+                let translation = rest[bracket_end + 1..].trim().to_string();
+                if !translation.is_empty() {
+                    translations.insert(idx, translation);
                 }
             }
+        }
     }
 
     if translations.is_empty() {
@@ -189,7 +209,8 @@ mod tests {
                 (1, "The repository stores all history.".to_string()),
                 (2, "Each commit represents a snapshot.".to_string()),
             ],
-            block_context: "The repository stores all history. Each commit represents a snapshot.".to_string(),
+            block_context: "The repository stores all history. Each commit represents a snapshot."
+                .to_string(),
             glossary,
             source_lang: "en".to_string(),
             target_lang: "ko".to_string(),
@@ -254,9 +275,8 @@ mod tests {
     #[test]
     fn build_prompt_uses_custom_template() {
         let mut req = make_request();
-        req.prompt_template = Some(
-            "{source_lang}->{target_lang}\nTERMS:\n{glossary}\nTEXT:\n{segments}".to_string(),
-        );
+        req.prompt_template =
+            Some("{source_lang}->{target_lang}\nTERMS:\n{glossary}\nTEXT:\n{segments}".to_string());
         let prompt = build_prompt(&req);
         assert!(prompt.starts_with("en->ko\n"));
         assert!(prompt.contains("TERMS:\n- repository → 저장소"));

@@ -18,6 +18,9 @@ pub enum Markup {
     Markdown,
     Asciidoc,
     Rst,
+    /// LaTeX document syntax. Natural-language spans can contain inline math
+    /// and formatting commands, which must survive translation verbatim.
+    Latex,
     /// Verso manual syntax embedded in a Lean `#doc` command.
     Verso,
 }

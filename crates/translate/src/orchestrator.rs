@@ -7,10 +7,10 @@
 //! TUI, server API) can render it however they like.
 
 use crate::evaluator::TranslationEvaluator;
+use crate::evaluator_ending::EndingEvaluator;
 use crate::evaluator_format::FormatEvaluator;
 use crate::evaluator_glossary::GlossaryEvaluator;
 use crate::evaluator_link::LinkEvaluator;
-use crate::evaluator_ending::EndingEvaluator;
 use crate::evaluator_style::StyleEvaluator;
 use crate::pipeline::translate_with_evaluation_observed;
 use crate::provider::{LlmProvider, TranslateRequest, TranslationProvider};
@@ -18,14 +18,14 @@ use chrono::Utc;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use tokio::sync::{mpsc, Mutex, Semaphore};
+use tokio::sync::{Mutex, Semaphore, mpsc};
 use yeokja_core::config::ProjectConfig;
 use yeokja_core::glossary::Glossary;
 use yeokja_core::hash::content_hash;
 use yeokja_core::model::Document;
-use yeokja_core::select::apply_table_rules;
 use yeokja_core::parser::{DocumentParser, Markup, TranslationMap};
-use yeokja_core::reconcile::{reconcile_with_status, ReconciledSegment};
+use yeokja_core::reconcile::{ReconciledSegment, reconcile_with_status};
+use yeokja_core::select::apply_table_rules;
 use yeokja_core::state::{SegmentState, StateFile};
 
 /// Maps a file to the parser that should handle it.
@@ -48,10 +48,16 @@ fn preview(text: &str) -> String {
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ProgressEvent {
     /// Emitted once before any work starts, carrying run-wide constants.
-    RunStarted { concurrency: usize },
+    RunStarted {
+        concurrency: usize,
+    },
     /// Emitted once at start: every file with its pending-segment count.
-    FilesDiscovered { files: Vec<(PathBuf, usize)> },
-    FileStarted { file: PathBuf },
+    FilesDiscovered {
+        files: Vec<(PathBuf, usize)>,
+    },
+    FileStarted {
+        file: PathBuf,
+    },
     /// A block task was spawned and is waiting for a concurrency permit.
     BlockQueued {
         id: u64,
@@ -66,9 +72,15 @@ pub enum ProgressEvent {
         source: String,
     },
     /// A translation request was sent to the provider.
-    BlockAttempt { id: u64, attempt: u32 },
+    BlockAttempt {
+        id: u64,
+        attempt: u32,
+    },
     /// The provider answered; evaluators are about to run.
-    BlockTranslating { id: u64, attempt: u32 },
+    BlockTranslating {
+        id: u64,
+        attempt: u32,
+    },
     /// Evaluators finished. `passed == false` means a retry follows unless
     /// `max_retries` is exhausted.
     BlockEvaluated {
@@ -90,11 +102,18 @@ pub enum ProgressEvent {
         file: PathBuf,
         error: String,
     },
-    FileCompleted { file: PathBuf },
-    FileFailed { file: PathBuf, error: String },
+    FileCompleted {
+        file: PathBuf,
+    },
+    FileFailed {
+        file: PathBuf,
+        error: String,
+    },
     /// The run was cancelled; already-translated blocks are kept.
     Cancelled,
-    Finished { errors: usize },
+    Finished {
+        errors: usize,
+    },
 }
 
 /// Cooperative cancellation for a translation run. Cancelling stops further
@@ -203,7 +222,8 @@ pub fn collect_files(
     } else if path.is_dir() {
         let filter = normalize(path);
         let mut push_matches = |pattern: &str| -> Result<(), OrchestratorError> {
-            let entries = glob::glob(pattern).map_err(|e| OrchestratorError::Glob(e.to_string()))?;
+            let entries =
+                glob::glob(pattern).map_err(|e| OrchestratorError::Glob(e.to_string()))?;
             for entry in entries {
                 let entry = entry.map_err(|e| OrchestratorError::Glob(e.to_string()))?;
                 if normalize(&entry).starts_with(filter) {
@@ -217,11 +237,7 @@ pub fn collect_files(
             push_matches(&format!("{}/**/*.md", path.display()))?;
         } else {
             for source in &config.sources {
-                let pattern = format!(
-                    "{}/{}",
-                    source.path.trim_end_matches('/'),
-                    source.pattern
-                );
+                let pattern = format!("{}/{}", source.path.trim_end_matches('/'), source.pattern);
                 push_matches(&pattern)?;
             }
         }
@@ -330,12 +346,13 @@ pub fn match_orphans(
                 hashes
             } else {
                 let parser = parser_factory(file, config);
-                let mut doc = parser.parse_checked(&source).map_err(|error| {
-                    OrchestratorError::Parse {
-                        path: (*file).clone(),
-                        message: error.to_string(),
-                    }
-                })?;
+                let mut doc =
+                    parser
+                        .parse_checked(&source)
+                        .map_err(|error| OrchestratorError::Parse {
+                            path: (*file).clone(),
+                            message: error.to_string(),
+                        })?;
                 apply_table_rules(&mut doc, &config.tables, file);
                 let hashes = doc
                     .translatable_segments()
@@ -355,9 +372,7 @@ pub fn match_orphans(
                 .collect::<HashSet<u64>>()
                 .len();
             let overlap = matched as f64 / hashes.len() as f64;
-            if overlap >= RENAME_OVERLAP_THRESHOLD
-                && best.is_none_or(|(_, prev)| overlap > prev)
-            {
+            if overlap >= RENAME_OVERLAP_THRESHOLD && best.is_none_or(|(_, prev)| overlap > prev) {
                 best = Some((idx, overlap));
             }
         }
@@ -464,7 +479,10 @@ pub fn standard_evaluators(
         Box::new(EndingEvaluator),
     ];
     if let Some(provider) = style_provider {
-        evaluators.push(Box::new(StyleEvaluator::new(provider, target_lang.to_string())));
+        evaluators.push(Box::new(StyleEvaluator::new(
+            provider,
+            target_lang.to_string(),
+        )));
     }
     evaluators
 }
@@ -542,6 +560,50 @@ fn group_by_block(
     groups
 }
 
+/// Merge adjacent block requests without losing their per-segment identity.
+///
+/// Starting a CLI-backed provider once per short LaTeX list item costs much
+/// more than translating it. The joined context keeps block boundaries visible
+/// while the numbered segments and evaluators remain exactly as granular as
+/// before. Very large blocks stay alone and the byte cap prevents an otherwise
+/// harmless run of tiny segments from producing an unwieldy prompt.
+fn batch_block_groups(
+    groups: Vec<(String, Vec<(usize, SegmentState)>)>,
+    segment_limit: usize,
+) -> Vec<(String, Vec<(usize, SegmentState)>)> {
+    const CONTEXT_LIMIT: usize = 16 * 1024;
+    let segment_limit = segment_limit.max(1);
+    if segment_limit == 1 {
+        return groups;
+    }
+
+    let mut batched = Vec::new();
+    let mut context = String::new();
+    let mut segments = Vec::new();
+
+    for (next_context, mut next_segments) in groups {
+        let separator = if context.is_empty() { 0 } else { 7 }; // "\n\n---\n\n"
+        let exceeds_segments =
+            !segments.is_empty() && segments.len() + next_segments.len() > segment_limit;
+        let exceeds_context =
+            !segments.is_empty() && context.len() + separator + next_context.len() > CONTEXT_LIMIT;
+        if exceeds_segments || exceeds_context {
+            batched.push((std::mem::take(&mut context), std::mem::take(&mut segments)));
+        }
+
+        if !context.is_empty() {
+            context.push_str("\n\n---\n\n");
+        }
+        context.push_str(&next_context);
+        segments.append(&mut next_segments);
+    }
+
+    if !segments.is_empty() {
+        batched.push((context, segments));
+    }
+    batched
+}
+
 pub struct Orchestrator {
     pub config: Arc<ProjectConfig>,
     pub glossary: Arc<Glossary>,
@@ -566,7 +628,10 @@ impl Orchestrator {
         // otherwise be retranslated from zero.
         let adopted = adopt_renamed_states(&files, &self.config, &self.parser_factory)?;
         if !adopted.is_empty() {
-            tracing::info!(count = adopted.len(), "Adopted orphaned state across renames");
+            tracing::info!(
+                count = adopted.len(),
+                "Adopted orphaned state across renames"
+            );
         }
 
         // Pre-scan for pending counts so front-ends can show totals up front.
@@ -606,9 +671,7 @@ impl Orchestrator {
             let semaphore = semaphore.clone();
             let progress = progress.clone();
             handles.push(tokio::spawn(async move {
-                let result = this
-                    .translate_file(&file_path, &semaphore, &progress)
-                    .await;
+                let result = this.translate_file(&file_path, &semaphore, &progress).await;
                 (file_path, result)
             }));
         }
@@ -714,7 +777,14 @@ impl FileTranslator {
         };
 
         let reconciled = reconcile_with_status(&doc, &existing, &self.glossary);
-        let block_groups = group_by_block(&doc, &reconciled);
+        let block_groups = batch_block_groups(
+            group_by_block(&doc, &reconciled),
+            self.config
+                .translation
+                .as_ref()
+                .map(|translation| translation.batch_segments)
+                .unwrap_or_else(yeokja_core::config::default_batch_segments),
+        );
 
         let output_path = resolve_output_path(file_path, &self.config);
         if block_groups.is_empty() {
@@ -767,9 +837,7 @@ impl FileTranslator {
             let mut translated_count = 0usize;
             while let Some((block_id, updates)) = rx.recv().await {
                 let mut segs = writer_segments_for_task.lock().await;
-                let current = updates
-                    .first()
-                    .map(|u| u.translation.clone());
+                let current = updates.first().map(|u| u.translation.clone());
                 for update in &updates {
                     let seg = &mut segs[update.index];
                     seg.translation = Some(update.translation.clone());
@@ -909,10 +977,8 @@ impl FileTranslator {
         };
 
         let translations: Vec<(usize, String, Vec<String>)> = if self.options.auto_evaluate {
-            let evaluators = standard_evaluators(
-                self.eval_provider.clone(),
-                &self.config.project.target_lang,
-            );
+            let evaluators =
+                standard_evaluators(self.eval_provider.clone(), &self.config.project.target_lang);
             let evaluator_refs: Vec<&dyn TranslationEvaluator> =
                 evaluators.iter().map(|e| e.as_ref()).collect();
 
@@ -1107,6 +1173,60 @@ model = "test"
         assert_eq!(groups.len(), 1);
         assert_eq!(groups[0].0, "translate me");
         assert_eq!(groups[0].1[0].0, 0, "index must address `reconciled`");
+    }
+
+    #[test]
+    fn adjacent_block_groups_are_batched_without_losing_indices() {
+        let doc = Document {
+            sections: vec![Section {
+                blocks: (0..5)
+                    .map(|index| Block {
+                        block_type: BlockType::Paragraph,
+                        segments: vec![Segment {
+                            id: SegmentId::new(0, index, 0),
+                            source: format!("Sentence {index}."),
+                            source_hash: index as u64,
+                            block_type: BlockType::Paragraph,
+                        }],
+                        raw_content: format!("Context {index}."),
+                        heading_level: None,
+                        span: None,
+                        role: BlockRole::None,
+                        translatable: true,
+                    })
+                    .collect(),
+            }],
+            source: String::new(),
+        };
+        let glossary = Glossary::from_toml("").unwrap();
+        let reconciled = reconcile_with_status(&doc, &StateFile::new(0), &glossary);
+        let groups = batch_block_groups(group_by_block(&doc, &reconciled), 2);
+        assert_eq!(groups.len(), 3);
+        assert_eq!(
+            groups[0]
+                .1
+                .iter()
+                .map(|(index, _)| *index)
+                .collect::<Vec<_>>(),
+            [0, 1]
+        );
+        assert_eq!(
+            groups[1]
+                .1
+                .iter()
+                .map(|(index, _)| *index)
+                .collect::<Vec<_>>(),
+            [2, 3]
+        );
+        assert_eq!(
+            groups[2]
+                .1
+                .iter()
+                .map(|(index, _)| *index)
+                .collect::<Vec<_>>(),
+            [4]
+        );
+        assert!(groups[0].0.contains("Context 0.\n\n---\n\nContext 1."));
     }
 
     #[test]
@@ -1331,7 +1451,11 @@ model = "test"
 
         let outcome = orchestrator.translate_path(dir.path(), None).await.unwrap();
         assert_eq!(outcome.segments_translated, 0);
-        assert_eq!(calls.load(Ordering::SeqCst), 1, "no retranslation after rename");
+        assert_eq!(
+            calls.load(Ordering::SeqCst),
+            1,
+            "no retranslation after rename"
+        );
         assert!(dir.path().join("ch2.md.yeokja.json").exists());
         assert!(!dir.path().join("ch1.md.yeokja.json").exists());
         assert_eq!(
@@ -1398,9 +1522,7 @@ model = "test"
                 issues: Vec::new(),
             });
         }
-        state
-            .save(&dir.path().join("old.md.yeokja.json"))
-            .unwrap();
+        state.save(&dir.path().join("old.md.yeokja.json")).unwrap();
 
         let config = test_config(&format!(
             r#"

@@ -21,16 +21,13 @@ pub fn select_parser(file_path: &Path, config: &ProjectConfig) -> Box<dyn Docume
             .map(|p| p.matches_path(rel))
             .unwrap_or(false);
         if pattern_matches {
-            return parser_by_name(
-                &source.parser,
-                file_path,
-                source.parser_manifest.as_deref(),
-            );
+            return parser_by_name(&source.parser, file_path, source.parser_manifest.as_deref());
         }
     }
     match file_path.extension().and_then(|e| e.to_str()) {
         Some("adoc" | "asciidoc" | "asc") => Box::new(yeokja_parser_asciidoc::AsciidocParser),
         Some("rst" | "rest") => Box::new(yeokja_parser_rst::RstParser),
+        Some("tex" | "latex") => Box::new(yeokja_parser_latex::LatexParser),
         // A Lean manual must never be interpreted as Markdown just because its
         // source rule is missing. With no manifest this parser reports a hard,
         // actionable error from `parse_checked`.
@@ -47,6 +44,7 @@ fn parser_by_name(
     match name {
         "asciidoc" => Box::new(yeokja_parser_asciidoc::AsciidocParser),
         "rst" => Box::new(yeokja_parser_rst::RstParser),
+        "latex" | "tex" => Box::new(yeokja_parser_latex::LatexParser),
         "verso" => Box::new(yeokja_parser_verso::VersoParser::new(
             file_path,
             parser_manifest.unwrap_or_default(),
@@ -167,6 +165,13 @@ model = "gpt-4o"
         let parser = select_parser(Path::new("docs/guide.md"), &config);
         let doc = parser.parse("# Title");
         assert_eq!(doc.sections[0].blocks[0].heading_level, Some(1));
+    }
+
+    #[test]
+    fn extension_fallback_selects_latex() {
+        let config = config_with_source("book/", "markdown");
+        let parser = select_parser(Path::new("docs/chapter.tex"), &config);
+        assert_eq!(parser.markup(), yeokja_core::parser::Markup::Latex);
     }
 
     #[test]

@@ -18,10 +18,7 @@ impl TranslationEvaluator for LinkEvaluator {
                 issues.push(EvaluationIssue {
                     severity: IssueSeverity::Error,
                     kind: IssueKind::LinkBroken,
-                    message: format!(
-                        "URL '{}' from source is missing in translation",
-                        url
-                    ),
+                    message: format!("URL '{}' from source is missing in translation", url),
                 });
             }
         }
@@ -131,9 +128,7 @@ fn rst_named_references(text: &str) -> Vec<NamedReference> {
                 i = content_start;
                 continue;
             };
-            if run == 1
-                && chars.get(close + 1) == Some(&'_')
-                && chars.get(close + 2) != Some(&'_')
+            if run == 1 && chars.get(close + 1) == Some(&'_') && chars.get(close + 2) != Some(&'_')
             {
                 let content: String = chars[content_start..close].iter().collect();
                 if !content.contains('<') {
@@ -247,7 +242,7 @@ fn extract_urls(text: &str) -> Vec<String> {
                     end = offset;
                     break;
                 }
-                '<' | '>' | '"' => {
+                '<' | '>' | '"' | '}' | ']' => {
                     end = offset;
                     break;
                 }
@@ -313,6 +308,14 @@ mod tests {
         );
     }
 
+    #[test]
+    fn latex_command_closer_is_not_part_of_the_url() {
+        assert_eq!(
+            extract_urls("See \\url{https://example.com/path} for details."),
+            vec!["https://example.com/path"]
+        );
+    }
+
     #[tokio::test]
     async fn fails_when_url_missing() {
         let ctx = make_context(
@@ -360,7 +363,9 @@ mod tests {
         let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
         assert!(!result.passed);
         assert!(
-            result.issues[0].message.contains("Development bug/feature tracker"),
+            result.issues[0]
+                .message
+                .contains("Development bug/feature tracker"),
             "{}",
             result.issues[0].message
         );
@@ -447,8 +452,14 @@ mod tests {
     #[test]
     fn anonymous_references_are_counted_precisely() {
         assert_eq!(rst_anonymous_references("see `the docs`__ and here__"), 2);
-        assert_eq!(rst_anonymous_references("calls ``cont.__init__()`` twice"), 0);
-        assert_eq!(rst_anonymous_references("a named `ref`_ is not anonymous"), 0);
+        assert_eq!(
+            rst_anonymous_references("calls ``cont.__init__()`` twice"),
+            0
+        );
+        assert_eq!(
+            rst_anonymous_references("a named `ref`_ is not anonymous"),
+            0
+        );
         assert_eq!(rst_anonymous_references("`여기`__\\ 에서"), 1);
     }
 }
