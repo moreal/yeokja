@@ -9,11 +9,12 @@
 #
 # 프로젝트마다 필요한 툴체인이 달라서(PyPy는 Python 2.7+Sphinx, theBeamBook은
 # Ruby+Asciidoctor, FP in Lean은 elan+Lean, Napkin은 Nix+LaTeXML) 프로젝트별로 잡을 나눠 병렬로
-# 돌리고, 각 잡은 자기 프로젝트에 필요한 툴체인만 설치합니다. pypy-eu-reports는
+# 돌리고, Napkin의 HTML·EPUB·PDF도 각각 별도 잡에서 병렬로 빌드합니다. 각 잡은 자기
+# 프로젝트와 타깃에 필요한 툴체인만 설치합니다. pypy-eu-reports는
 # state/가 통째로 gitignore(라이선스 미확정, README 참조)라 커밋된 상태가 없고
 # [build.html] 타깃도 없어 CI에서 할 일이 없으므로 matrix에서 뺍니다.
 #
-# 새 HTML 배포 프로젝트를 추가하면 아래 rebuild 잡의 matrix.include와 stage 잡의
+# 새 배포 프로젝트나 타깃을 추가하면 아래 rebuild 잡의 matrix.include와 stage 잡의
 # 스테이징 스텝에 각각 항목을 추가해야 합니다.
 name: Deploy Pages
 
@@ -62,14 +63,36 @@ jobs:
       matrix:
         include:
           - project: pypy
+            target: html
             toolchain: python2
+            artifact: dist-pypy
+            artifact_path: projects/pypy/dist
           - project: thebeambook
+            target: html
             toolchain: ruby
             unshallow: true
+            artifact: dist-thebeambook
+            artifact_path: projects/thebeambook/dist
           - project: fp-lean
+            target: html
             toolchain: lean
+            artifact: dist-fp-lean
+            artifact_path: projects/fp-lean/dist
           - project: napkin
+            target: html
             toolchain: nix
+            artifact: dist-napkin-html
+            artifact_path: projects/napkin/dist
+          - project: napkin
+            target: epub
+            toolchain: nix
+            artifact: dist-napkin-epub
+            artifact_path: projects/napkin/output/epub
+          - project: napkin
+            target: pdf
+            toolchain: nix
+            artifact: dist-napkin-pdf
+            artifact_path: projects/napkin/output/pdf
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -116,7 +139,7 @@ jobs:
         if: matrix.toolchain == 'ruby'
         run: gem install asciidoctor asciidoctor-diagram rouge
 
-      - name: Install Nix for the Napkin HTML build
+      - name: Install Nix for the Napkin build
         if: matrix.toolchain == 'nix'
         uses: cachix/install-nix-action@v31
 
@@ -167,16 +190,16 @@ jobs:
             ../../target/release/yeokja status --check "$src"
           done
 
-      - name: Build HTML
+      - name: Build ${{ matrix.target }}
         run: |
           cd projects/${{ matrix.project }}
-          ../../target/release/yeokja build html
+          ../../target/release/yeokja build ${{ matrix.target }}
 
-      - name: Upload built site
+      - name: Upload build output
         uses: actions/upload-artifact@v4
         with:
-          name: dist-${{ matrix.project }}
-          path: projects/${{ matrix.project }}/dist
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact_path }}
           retention-days: 1
 
   stage:
@@ -199,7 +222,9 @@ jobs:
           cp -r artifacts/dist-pypy/site _site/pypy
           cp -r artifacts/dist-pypy/rpython-site _site/rpython
           cp -r artifacts/dist-fp-lean/site _site/fp-lean
-          cp -r artifacts/dist-napkin/site _site/napkin
+          cp -r artifacts/dist-napkin-html/site _site/napkin
+          cp artifacts/dist-napkin-pdf/Napkin-ko.pdf _site/napkin/
+          cp artifacts/dist-napkin-epub/Napkin-ko.epub _site/napkin/
           cp site/index.html site/favicon.svg _site/
 
       - name: Configure Pages

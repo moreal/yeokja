@@ -26,6 +26,7 @@ cargo build --manifest-path ../../Cargo.toml
 ../../target/debug/yeokja status .
 ../../target/debug/yeokja coverage .
 ../../target/debug/yeokja translate .
+../../target/debug/yeokja build html
 ../../target/debug/yeokja build pdf
 ../../target/debug/yeokja build epub
 ```
@@ -36,6 +37,9 @@ EPUB 3 전자책은 `output/epub/Napkin-ko.epub`에 생성되며,
 [GitHub Pages에서 EPUB 내려받기](https://moreal.github.io/yeokja/napkin/Napkin-ko.epub)도
 가능합니다. EPUB 빌드는 수식을 MathML로 변환하고 `epubcheck` 검증까지 마친 뒤
 산출물을 복사합니다.
+
+Pages CI에서는 HTML, PDF, EPUB 타깃을 서로 독립된 잡으로 병렬 빌드한 뒤 하나의
+배포 디렉터리로 합칩니다.
 
 번역문을 수정할 때는 `ko/`가 아니라 `state/`의 `translation` 필드를 고칩니다.
 `ko/`와 `build/tree/`는 다음 실행에서 다시 만들어지는 파생 산출물입니다.
