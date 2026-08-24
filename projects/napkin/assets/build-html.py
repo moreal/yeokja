@@ -267,16 +267,38 @@ def add_site_chrome(site: Path) -> None:
 <a class="napkin-skip" href="#napkin-main">본문으로 건너뛰기</a>
 <header class="napkin-sitebar">
   <div class="napkin-sitebar-inner">
-    <a class="napkin-brand" href="index.html">무한히 큰 냅킨</a>
-    <nav aria-label="책 링크">
-      <a href="index.html">목차</a>
-      <a href="Napkin-ko.pdf" download>PDF 다운로드</a>
-      <a href="Napkin-ko.epub" download>EPUB 다운로드</a>
+    <div class="napkin-sitebar-leading">
+      <button class="napkin-menu-button" type="button" aria-controls="napkin-toc" aria-expanded="false" data-napkin-menu-toggle>
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+        <span>목차</span>
+      </button>
+      <a class="napkin-brand" href="index.html">
+        <span class="napkin-brand-title">무한히 큰 냅킨</span>
+        <span class="napkin-brand-edition">한국어판</span>
+      </a>
+    </div>
+    <nav class="napkin-site-actions" aria-label="책 자료">
+      <a href="Napkin-ko.pdf" download aria-label="PDF 다운로드"><span>PDF</span><span class="napkin-download-label"> 다운로드</span></a>
+      <a href="Napkin-ko.epub" download aria-label="EPUB 다운로드"><span>EPUB</span><span class="napkin-download-label"> 다운로드</span></a>
     </nav>
   </div>
 </header>
+<div class="napkin-menu-backdrop" data-napkin-menu-backdrop hidden aria-hidden="true"></div>
+""".strip()
+    toc_header = """
+<div class="napkin-toc-header">
+  <span class="napkin-toc-heading">목차</span>
+  <button class="napkin-menu-close" type="button" aria-label="목차 닫기" data-napkin-menu-close>
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path d="m6 6 12 12M18 6 6 18"></path>
+    </svg>
+  </button>
+</div>
 """.strip()
     mathjax = """
+<script>document.documentElement.classList.add("napkin-has-js");</script>
 <script>
   window.MathJax = {
     svg: {fontCache: "global"},
@@ -284,6 +306,7 @@ def add_site_chrome(site: Path) -> None:
   };
 </script>
 <script defer src="mathjax/mml-svg.js"></script>
+<script defer src="napkin.js"></script>
 """.strip()
 
     for html_path in site.rglob("*.html"):
@@ -291,7 +314,16 @@ def add_site_chrome(site: Path) -> None:
         html = re.sub(r'(<html\b[^>]*?)\s+lang="[^"]*"', r"\1", html, count=1)
         html = html.replace("<html", '<html lang="ko"', 1)
         html = html.replace("</head>", f"{mathjax}\n</head>", 1)
-        html = html.replace("<body>", f"<body>\n{banner}", 1)
+        body_class = ' class="napkin-index"' if html_path.name == "index.html" else ""
+        html = html.replace("<body>", f"<body{body_class}>\n{banner}", 1)
+        html, toc_count = re.subn(
+            r'<nav class="ltx_page_navbar">',
+            f'<nav id="napkin-toc" class="ltx_page_navbar" aria-label="책 목차" tabindex="-1">\n{toc_header}',
+            html,
+            count=1,
+        )
+        if toc_count != 1:
+            raise RuntimeError(f"LaTeXML navigation missing in {html_path}")
         content = '<div class="ltx_page_content">'
         content_start = html.find(content)
         if content_start == -1:
@@ -388,6 +420,7 @@ def main() -> None:
         for directory in [site / "mathjax", *(site / "mathjax").rglob("*")]:
             if directory.is_dir():
                 directory.chmod(directory.stat().st_mode | 0o200)
+        shutil.copy2(work / "napkin.js", site / "napkin.js")
         (site / ".nojekyll").touch()
         add_site_chrome(site)
 
