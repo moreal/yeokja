@@ -57,9 +57,11 @@
               mathjax
               notoSansCjk
               notoSerifCjk
+              pandoc
               perlPackages.LaTeXML
               python3
               tex
+              epubcheck
             ];
             FONTCONFIG_FILE = pkgs.makeFontsConf {
               fontDirectories = [notoSansCjk notoSerifCjk];

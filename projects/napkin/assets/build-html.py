@@ -21,9 +21,6 @@ ASY_DEFINITIONS = re.compile(
 TIKZ_BLOCK = re.compile(
     r"(?ms)\\begin\{tikzpicture\}(.*?)\\end\{tikzpicture\}"
 )
-MATH_SPAN = re.compile(
-    r'(?s)(<span\b[^>]*\bclass="[^"]*\bltx_Math\b[^"]*"[^>]*>)(.*?)(</span>)'
-)
 
 
 def render_asymptote(task: tuple[Path, Path, Path, str]) -> None:
@@ -184,6 +181,7 @@ def replace_latex_diagrams(root: Path) -> int:
             return f"\\includegraphics{{media/html-diagram/{stem}.svg}}"
 
         text = TIKZ_BLOCK.sub(replace_tikz, text)
+
         search_from = 0
         replacements: list[tuple[int, int, str]] = []
         while True:
@@ -273,6 +271,7 @@ def add_site_chrome(site: Path) -> None:
     <nav aria-label="책 링크">
       <a href="index.html">목차</a>
       <a href="Napkin-ko.pdf" download>PDF 다운로드</a>
+      <a href="Napkin-ko.epub" download>EPUB 다운로드</a>
     </nav>
   </div>
 </header>
@@ -284,7 +283,7 @@ def add_site_chrome(site: Path) -> None:
     options: {enableMenu: true}
   };
 </script>
-<script defer src="mathjax/tex-svg.js"></script>
+<script defer src="mathjax/mml-svg.js"></script>
 """.strip()
 
     for html_path in site.rglob("*.html"):
@@ -292,14 +291,6 @@ def add_site_chrome(site: Path) -> None:
         html = re.sub(r'(<html\b[^>]*?)\s+lang="[^"]*"', r"\1", html, count=1)
         html = html.replace("<html", '<html lang="ko"', 1)
         html = html.replace("</head>", f"{mathjax}\n</head>", 1)
-        html = MATH_SPAN.sub(
-            lambda match: match.group(1)
-            + r"\("
-            + match.group(2)
-            + r"\)"
-            + match.group(3),
-            html,
-        )
         html = html.replace("<body>", f"<body>\n{banner}", 1)
         content = '<div class="ltx_page_content">'
         content_start = html.find(content)
@@ -351,8 +342,7 @@ def main() -> None:
             f"--log={log}",
             "--timeout=2400",
             "--noparse",
-            "--mathtex",
-            "--nopresentationmathml",
+            "--presentationmathml",
             "--split",
             "--splitat=chapter",
             "--splitnaming=label",
@@ -392,6 +382,12 @@ def main() -> None:
             site / "mathjax",
             ignore=shutil.ignore_patterns("es5"),
         )
+        # Nix store directories are read-only. copytree preserves those modes,
+        # which would make the disposable build tree impossible to remove on
+        # the next yeokja build even though its parent belongs to the user.
+        for directory in [site / "mathjax", *(site / "mathjax").rglob("*")]:
+            if directory.is_dir():
+                directory.chmod(directory.stat().st_mode | 0o200)
         (site / ".nojekyll").touch()
         add_site_chrome(site)
 

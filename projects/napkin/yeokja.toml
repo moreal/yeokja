@@ -149,9 +149,29 @@ dist = "output/pdf"
 [build.html]
 command = '''
 set -e
-nix develop "path:$YEOKJA_ROOT/assets" -c python3 build-html.py
+nix develop "path:$YEOKJA_ROOT/assets" -c sh -c '
+  set -e
+  python3 build-html.py
+  python3 build-epub.py --site site --output site/Napkin-ko.epub
+  epubcheck site/Napkin-ko.epub
+'
 '''
 outputs = ["site"]
+
+# HTML과 같은 장별 LaTeXML 결과를 EPUB 3으로 패키징합니다. LaTeXML의
+# Presentation MathML을 보존하고 epubcheck가 배포 전에 규격 준수 여부를 검사합니다.
+[build.epub]
+command = '''
+set -e
+nix develop "path:$YEOKJA_ROOT/assets" -c sh -c '
+  set -e
+  python3 build-html.py
+  python3 build-epub.py --site site --output Napkin-ko.epub
+  epubcheck Napkin-ko.epub
+'
+'''
+outputs = ["Napkin-ko.epub"]
+dist = "output/epub"
 
 [provider]
 type = "claude_code"

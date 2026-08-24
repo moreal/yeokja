@@ -14,6 +14,7 @@ assets/         한국어 폰트가 포함된 Nix 빌드 정의
 patches/        한국어 조판·고정 UI 문구·저작자 표시 패치
 build/tree/     원문과 번역을 겹친 일회용 빌드 트리
 output/pdf/     완성된 PDF
+output/epub/    완성된 EPUB 3 전자책
 ```
 
 ## 사용법
@@ -26,10 +27,15 @@ cargo build --manifest-path ../../Cargo.toml
 ../../target/debug/yeokja coverage .
 ../../target/debug/yeokja translate .
 ../../target/debug/yeokja build pdf
+../../target/debug/yeokja build epub
 ```
 
 완성된 한국어판은 `output/pdf/Napkin-ko.pdf`에 생성됩니다.
 [GitHub Pages에서 PDF 내려받기](https://moreal.github.io/yeokja/napkin/Napkin-ko.pdf)
+EPUB 3 전자책은 `output/epub/Napkin-ko.epub`에 생성되며,
+[GitHub Pages에서 EPUB 내려받기](https://moreal.github.io/yeokja/napkin/Napkin-ko.epub)도
+가능합니다. EPUB 빌드는 수식을 MathML로 변환하고 `epubcheck` 검증까지 마친 뒤
+산출물을 복사합니다.
 
 번역문을 수정할 때는 `ko/`가 아니라 `state/`의 `translation` 필드를 고칩니다.
 `ko/`와 `build/tree/`는 다음 실행에서 다시 만들어지는 파생 산출물입니다.
