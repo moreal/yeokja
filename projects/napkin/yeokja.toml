@@ -142,6 +142,17 @@ cp "$result/Napkin.pdf" Napkin-ko.pdf
 outputs = ["Napkin-ko.pdf"]
 dist = "output/pdf"
 
+# LaTeXML은 책 전체를 한 번에 해석해 장 사이의 참조를 보존한 뒤 chapter
+# 단위로 HTML을 나눕니다. 직접 해석하지 못하는 Asymptote, Qcircuit, 일부
+# TikZ 그림은 먼저 SVG로 렌더링하고, 수식은 함께 배포하는 MathJax가 표시합니다.
+# 툴체인은 PDF 빌드와 같은 Nix flake에 고정합니다.
+[build.html]
+command = '''
+set -e
+nix develop "path:$YEOKJA_ROOT/assets" -c python3 build-html.py
+'''
+outputs = ["site"]
+
 [provider]
 type = "claude_code"
 model = "claude-sonnet-5"

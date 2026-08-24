@@ -8,14 +8,13 @@
 # 사이트를 조용히 만들어 버리기 때문입니다.
 #
 # 프로젝트마다 필요한 툴체인이 달라서(PyPy는 Python 2.7+Sphinx, theBeamBook은
-# Ruby+Asciidoctor, FP in Lean은 elan+Lean) 프로젝트별로 잡을 나눠 병렬로
+# Ruby+Asciidoctor, FP in Lean은 elan+Lean, Napkin은 Nix+LaTeXML) 프로젝트별로 잡을 나눠 병렬로
 # 돌리고, 각 잡은 자기 프로젝트에 필요한 툴체인만 설치합니다. pypy-eu-reports는
 # state/가 통째로 gitignore(라이선스 미확정, README 참조)라 커밋된 상태가 없고
 # [build.html] 타깃도 없어 CI에서 할 일이 없으므로 matrix에서 뺍니다.
 #
 # 새 HTML 배포 프로젝트를 추가하면 아래 rebuild 잡의 matrix.include와 stage 잡의
-# 스테이징 스텝에 각각 항목을 추가해야 합니다. Napkin은 커밋된 PDF 하나만
-# 배포하므로 rebuild matrix에는 넣지 않고 stage 잡에서 바로 복사합니다.
+# 스테이징 스텝에 각각 항목을 추가해야 합니다.
 name: Deploy Pages
 
 on:
@@ -69,6 +68,8 @@ jobs:
             unshallow: true
           - project: fp-lean
             toolchain: lean
+          - project: napkin
+            toolchain: nix
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -114,6 +115,10 @@ jobs:
       - name: Install the Asciidoctor toolchain
         if: matrix.toolchain == 'ruby'
         run: gem install asciidoctor asciidoctor-diagram rouge
+
+      - name: Install Nix for the Napkin HTML build
+        if: matrix.toolchain == 'nix'
+        uses: cachix/install-nix-action@v31
 
       # Sphinx의 graphviz 확장과 asciidoctor-diagram 둘 다 다이어그램을
       # 렌더링하려면 dot 바이너리가 있어야 합니다. 없으면 빌드가 실패하는 대신
@@ -189,12 +194,12 @@ jobs:
 
       - name: Stage the Pages tree
         run: |
-          mkdir -p _site/napkin
+          mkdir -p _site
           cp -r artifacts/dist-thebeambook/site _site/theBeamBook
           cp -r artifacts/dist-pypy/site _site/pypy
           cp -r artifacts/dist-pypy/rpython-site _site/rpython
           cp -r artifacts/dist-fp-lean/site _site/fp-lean
-          cp projects/napkin/output/pdf/Napkin-ko.pdf _site/napkin/Napkin-ko.pdf
+          cp -r artifacts/dist-napkin/site _site/napkin
           cp site/index.html site/favicon.svg _site/
 
       - name: Configure Pages

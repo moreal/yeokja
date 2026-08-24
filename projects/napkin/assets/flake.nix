@@ -11,7 +11,11 @@
     flake-utils,
   }:
     with flake-utils.lib;
-      eachDefaultSystem (
+      eachSystem [
+        "aarch64-darwin"
+        "aarch64-linux"
+        "x86_64-linux"
+      ] (
         system: let
           pkgs = import nixpkgs {inherit system;};
           notoSansCjk = pkgs.noto-fonts-cjk-sans.override {static = true;};
@@ -43,6 +47,26 @@
             installPhase = ''
               mkdir -p $out
               cp Napkin.pdf $out/
+            '';
+          };
+          devShell = pkgs.mkShell {
+            packages = with pkgs; [
+              asymptote
+              biber
+              ghostscript
+              mathjax
+              notoSansCjk
+              notoSerifCjk
+              perlPackages.LaTeXML
+              python3
+              tex
+            ];
+            FONTCONFIG_FILE = pkgs.makeFontsConf {
+              fontDirectories = [notoSansCjk notoSerifCjk];
+            };
+            shellHook = ''
+              export OSFONTDIR="${notoSansCjk}/share/fonts//:${notoSerifCjk}/share/fonts//"
+              export NAPKIN_MATHJAX_DIR="${pkgs.mathjax}/lib/node_modules/mathjax"
             '';
           };
         }
