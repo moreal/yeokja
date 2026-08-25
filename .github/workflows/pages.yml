@@ -78,6 +78,11 @@ jobs:
             toolchain: lean
             artifact: dist-fp-lean
             artifact_path: projects/fp-lean/dist
+          - project: tpil
+            target: html
+            toolchain: lean
+            artifact: dist-tpil
+            artifact_path: projects/tpil/dist
           - project: napkin
             target: html
             toolchain: nix
@@ -158,16 +163,16 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y graphviz fonts-noto-cjk
 
       # FP in Lean은 빌드 중 Python 출력을 책에 포함하므로 upstream CI와 같은
-      # 버전을 사용합니다.
-      - name: Install Python for FP in Lean
+      # 버전을 사용합니다. 같은 Lean 잡인 TPiL에도 일관된 Python을 제공합니다.
+      - name: Install Python for the Lean books
         if: matrix.toolchain == 'lean'
         uses: actions/setup-python@v5
         with:
           python-version: '3.10.4'
 
-      # upstream fp-lean CI와 같은 방식으로 elan을 설치합니다. book과 examples는
+      # upstream Lean 책 CI와 같은 방식으로 elan을 설치합니다. book과 examples는
       # 서로 다른 lean-toolchain을 가지며, 첫 lean 호출이 각각을 설치합니다.
-      - name: Install elan for FP in Lean
+      - name: Install elan for the Lean books
         if: matrix.toolchain == 'lean'
         run: |
           curl -O --location https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh
@@ -175,11 +180,11 @@ jobs:
           ./elan-init.sh -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Install FP in Lean toolchains
+      - name: Install the Lean book toolchains
         if: matrix.toolchain == 'lean'
         run: |
-          (cd projects/fp-lean/upstream/examples && lean --version)
-          (cd projects/fp-lean/upstream/book && lean --version)
+          (cd projects/${{ matrix.project }}/upstream/examples && lean --version)
+          (cd projects/${{ matrix.project }}/upstream/book && lean --version)
 
       - name: Rebuild translated sources from committed state
         run: |
@@ -222,6 +227,7 @@ jobs:
           cp -r artifacts/dist-pypy/site _site/pypy
           cp -r artifacts/dist-pypy/rpython-site _site/rpython
           cp -r artifacts/dist-fp-lean/site _site/fp-lean
+          cp -r artifacts/dist-tpil/site _site/tpil
           cp -r artifacts/dist-napkin-html/site _site/napkin
           cp artifacts/dist-napkin-pdf/Napkin-ko.pdf _site/napkin/
           cp artifacts/dist-napkin-epub/Napkin-ko.epub _site/napkin/

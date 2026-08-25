@@ -1,0 +1,71 @@
+[project]
+source_lang = "en"
+target_lang = "ko"
+glossary = "glossary.toml"
+state_dir = "state"
+
+[[sources]]
+path = "upstream/book"
+pattern = "TPiL.lean"
+parser = "verso"
+parser_manifest = "verso-spans.json"
+output = "ko/book/{path}"
+
+[[sources]]
+path = "upstream/book/TPiL"
+pattern = "*.lean"
+parser = "verso"
+parser_manifest = "verso-spans.json"
+output = "ko/book/TPiL/{path}"
+
+[derive]
+base = "upstream"
+
+[[derive.overlay]]
+path = "ko"
+require_base = true
+
+[[derive.step]]
+kind = "generate"
+command = '''
+set -e
+for file in book/.verso/*.json; do
+  if [ -L "$file" ]; then
+    cp -L "$file" "$file.yeokja-copy"
+    mv "$file.yeokja-copy" "$file"
+  fi
+done
+'''
+
+[[derive.step]]
+kind = "patch"
+file = "patches/attribution.patch"
+
+# Verso의 기술 용어 역할은 표시 문구를 기본 참조 키로 사용합니다. 표시 문구를
+# 한국어로 옮겨도 영문 정의와 참조가 이어지도록 원문의 키를 명시합니다.
+[[derive.step]]
+kind = "patch"
+file = "patches/verso-term-keys.patch"
+
+[build.html]
+command = '''
+set -e
+cd book
+lake exe tpil
+cd ..
+mv book/_out/html-multi site
+cp LICENSE site/LICENSE
+'''
+outputs = ["site"]
+
+[provider]
+type = "claude_code"
+model = "claude-sonnet-5"
+
+[evaluation]
+auto_evaluate = true
+style_evaluate = false
+max_retries = 3
+
+[translation]
+concurrency = 8
