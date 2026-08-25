@@ -28,6 +28,12 @@ def render_asymptote(task: tuple[Path, Path, Path, str]) -> None:
     source_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     source_path.write_text(source, encoding="utf-8")
+
+    # Asymptote keeps its TeX pipe in fixed texput.* files next to the output.
+    # Give every parallel render a private directory so those files cannot race.
+    render_dir = root / ".html-asy/render" / output_path.stem
+    render_dir.mkdir(parents=True, exist_ok=True)
+    render_output = render_dir / output_path.name
     subprocess.run(
         [
             "asy",
@@ -38,12 +44,13 @@ def render_asymptote(task: tuple[Path, Path, Path, str]) -> None:
             "latex",
             "-o",
             # Asymptote appends the selected format extension itself.
-            str(output_path.with_suffix("").relative_to(root)),
+            str(render_output.with_suffix("").relative_to(root)),
             str(source_path.relative_to(root)),
         ],
         cwd=root,
         check=True,
     )
+    render_output.replace(output_path)
 
 
 def replace_asymptote(root: Path) -> int:

@@ -1,0 +1,73 @@
+[project]
+source_lang = "en"
+target_lang = "ko"
+glossary = "glossary.toml"
+state_dir = "state"
+
+# Mathematics in Lean의 교재 산문은 Lean 파일의 `/- TEXT:` 블록 안에
+# reStructuredText로 들어 있습니다. mil 파서는 그 범위만 번역하고 Lean 코드와
+# 예제·해답 전환 지시문은 바이트 단위로 보존합니다.
+[[sources]]
+path = "upstream/MIL"
+pattern = "C*/S*.lean"
+parser = "mil"
+output = "ko/MIL/{path}"
+
+# 각 장의 짧은 제목/목차 파일은 일반 reStructuredText입니다.
+[[sources]]
+path = "upstream/MIL"
+pattern = "C*/*.rst"
+parser = "rst"
+output = "ko/MIL/{path}"
+
+[derive]
+base = "upstream"
+
+[[derive.overlay]]
+path = "ko"
+require_base = true
+
+# 한국어판 제목, 저작자 표시, 라이선스와 변경 고지를 생성되는 책에 넣습니다.
+[[derive.step]]
+kind = "patch"
+file = "patches/attribution.patch"
+
+# upstream의 공식 생성기가 번역된 TEXT 블록으로 Sphinx 입력과 실습 저장소를
+# 다시 만듭니다. 번역 대상 밖의 Lean 코드는 그대로 유지됩니다.
+[[derive.step]]
+kind = "generate"
+command = '''
+set -e
+# 조립 트리의 스크립트가 upstream을 가리키는 심링크인 채로 실행되면 Python이
+# 실제 경로를 따라가 source/를 읽기 전용 submodule 쪽에 생성합니다. 스크립트만
+# 먼저 실파일로 만들어 모든 생성물이 일회용 조립 트리 안에 머물게 합니다.
+for file in scripts/*.py; do
+  if [ -L "$file" ]; then
+    cp -L "$file" "$file.yeokja-copy"
+    mv "$file.yeokja-copy" "$file"
+  fi
+done
+python3 scripts/mkall.py
+'''
+
+[build.html]
+command = '''
+set -e
+sphinx-build -M html source build -W --keep-going
+mv build/html site
+cp LICENSE site/LICENSE
+'''
+outputs = ["site"]
+
+[provider]
+type = "claude_code"
+model = "claude-sonnet-5"
+
+[evaluation]
+auto_evaluate = true
+style_evaluate = false
+max_retries = 3
+
+[translation]
+concurrency = 8
+batch_segments = 12

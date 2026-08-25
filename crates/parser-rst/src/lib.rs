@@ -24,6 +24,63 @@ use yeokja_parser_utils::{
 
 pub struct RstParser;
 
+/// Parser for the Mathematics in Lean source format.
+///
+/// The book keeps reStructuredText prose inside `/- TEXT:` blocks in Lean
+/// files. The surrounding Lean program, exercise directives, and quoted code
+/// must remain byte-for-byte intact. We therefore mask everything outside
+/// those blocks with spaces (while retaining byte offsets and newlines), let
+/// the regular RST parser discover the prose spans, and finally reconstruct
+/// against the original Lean source.
+pub struct MilParser;
+
+const MIL_TEXT_START: &str = "/- TEXT:";
+const MIL_TEXT_ENDS: [&str; 5] = [
+    "TEXT. -/",
+    "EXAMPLES: -/",
+    "SOLUTIONS: -/",
+    "BOTH: -/",
+    "OMIT: -/",
+];
+
+fn mask_mil_source(source: &str) -> Result<String, String> {
+    let mut masked = vec![b' '; source.len()];
+    for (index, byte) in source.as_bytes().iter().enumerate() {
+        if matches!(byte, b'\n' | b'\r') {
+            masked[index] = *byte;
+        }
+    }
+
+    let mut in_text = false;
+    let mut saw_text = false;
+    let mut offset = 0usize;
+    for line in source.split_inclusive('\n') {
+        let content = line.trim_end_matches(['\r', '\n']);
+        let trimmed = content.trim();
+        if !in_text && trimmed.starts_with(MIL_TEXT_START) {
+            in_text = true;
+            saw_text = true;
+        } else if in_text && MIL_TEXT_ENDS.iter().any(|end| trimmed.starts_with(end)) {
+            in_text = false;
+        } else if in_text {
+            masked[offset..offset + line.len()].copy_from_slice(line.as_bytes());
+        }
+        offset += line.len();
+    }
+
+    if in_text {
+        return Err("unterminated `/- TEXT:` block in Mathematics in Lean source".to_string());
+    }
+    if !saw_text {
+        return Err("no `/- TEXT:` blocks found in Mathematics in Lean source".to_string());
+    }
+
+    // Bytes copied from the source remain valid UTF-8 and every masked byte is
+    // ASCII. Non-ASCII bytes outside text blocks became one space per byte,
+    // deliberately preserving all offsets used by the span parser.
+    String::from_utf8(masked).map_err(|error| error.to_string())
+}
+
 /// Directives whose body is data, not prose: code, markup passed through raw,
 /// document structure, or references resolved elsewhere. Everything not listed
 /// keeps its body in the document's language — admonitions, `function::` and
@@ -718,6 +775,33 @@ impl DocumentParser for RstParser {
     }
 }
 
+impl DocumentParser for MilParser {
+    fn parse(&self, source: &str) -> Document {
+        self.parse_checked(source).unwrap_or_else(|_| Document {
+            sections: Vec::new(),
+            source: source.to_string(),
+        })
+    }
+
+    fn parse_checked(
+        &self,
+        source: &str,
+    ) -> Result<Document, yeokja_core::parser::DocumentParseError> {
+        let masked = mask_mil_source(source).map_err(yeokja_core::parser::DocumentParseError)?;
+        let mut document = RstParser.parse(&masked);
+        document.source = source.to_string();
+        Ok(document)
+    }
+
+    fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String {
+        RstParser.reconstruct(document, translations)
+    }
+
+    fn markup(&self) -> Markup {
+        Markup::Rst
+    }
+}
+
 /// The last line of the indented block starting under line `at`: lines more
 /// indented than `threshold` belong to it, and blank lines do not end it —
 /// only a dedent does.
@@ -856,6 +940,53 @@ mod tests {
             }
         }
         parser.reconstruct(&doc, &translations)
+    }
+
+    #[test]
+    fn mil_parser_translates_only_text_blocks() {
+        let source = "import MIL.Common\n/- TEXT:\nGetting Started\n===============\n\nRead this.\nTEXT. -/\nexample (alpha : Type) : alpha = alpha := rfl\n";
+        let document = MilParser.parse_checked(source).unwrap();
+        let segments = document.translatable_segments();
+        assert_eq!(
+            segments
+                .iter()
+                .map(|segment| segment.source.as_str())
+                .collect::<Vec<_>>(),
+            vec!["Getting Started", "Read this."]
+        );
+        assert!(
+            !segments
+                .iter()
+                .any(|segment| segment.source.contains("example"))
+        );
+    }
+
+    #[test]
+    fn mil_parser_reconstruction_preserves_lean_and_unicode_bytes() {
+        let source = "import MIL.Common\n/- TEXT:\nGetting Started\n===============\n\nRead this.\nBOTH: -/\nexample (alpha : Type) (x : alpha) : x = x := by rfl -- alpha α\n";
+        let document = MilParser.parse_checked(source).unwrap();
+        let mut translations = TranslationMap::new();
+        for segment in document.translatable_segments() {
+            let translated = match segment.source.as_str() {
+                "Getting Started" => "시작하기",
+                "Read this." => "이 글을 읽으세요.",
+                other => panic!("unexpected segment: {other}"),
+            };
+            translations.insert(segment.id.clone(), translated.to_string());
+        }
+        let output = MilParser.reconstruct(&document, &translations);
+        assert_eq!(
+            output,
+            "import MIL.Common\n/- TEXT:\n시작하기\n========\n\n이 글을 읽으세요.\nBOTH: -/\nexample (alpha : Type) (x : alpha) : x = x := by rfl -- alpha α\n"
+        );
+    }
+
+    #[test]
+    fn mil_parser_requires_closed_text_blocks() {
+        let error = MilParser
+            .parse_checked("/- TEXT:\nNever closed.\n")
+            .unwrap_err();
+        assert!(error.to_string().contains("unterminated"));
     }
 
     #[test]

@@ -44,6 +44,7 @@ fn parser_by_name(
     match name {
         "asciidoc" => Box::new(yeokja_parser_asciidoc::AsciidocParser),
         "rst" => Box::new(yeokja_parser_rst::RstParser),
+        "mil" | "mathematics_in_lean" => Box::new(yeokja_parser_rst::MilParser),
         "latex" | "tex" => Box::new(yeokja_parser_latex::LatexParser),
         "verso" => Box::new(yeokja_parser_verso::VersoParser::new(
             file_path,
@@ -149,6 +150,38 @@ model = "gpt-4o"
 
         let parser = select_parser(Path::new("book/Chapter.lean"), &config);
         assert_eq!(parser.markup(), yeokja_core::parser::Markup::Verso);
+    }
+
+    #[test]
+    fn source_config_selects_mil_parser_for_lean_files() {
+        let config = ProjectConfig::from_toml(
+            r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[[sources]]
+path = "MIL"
+pattern = "**/*.lean"
+parser = "mil"
+output = "ko/{path}"
+
+[provider]
+type = "openai_compatible"
+model = "gpt-4o"
+"#,
+        )
+        .unwrap();
+
+        let parser = select_parser(Path::new("MIL/C01/S01.lean"), &config);
+        assert_eq!(parser.markup(), yeokja_core::parser::Markup::Rst);
+        assert_eq!(
+            parser
+                .parse("/- TEXT:\nHello.\nTEXT. -/")
+                .translatable_segments()[0]
+                .source,
+            "Hello."
+        );
     }
 
     #[test]

@@ -8,7 +8,8 @@
 # 사이트를 조용히 만들어 버리기 때문입니다.
 #
 # 프로젝트마다 필요한 툴체인이 달라서(PyPy는 Python 2.7+Sphinx, theBeamBook은
-# Ruby+Asciidoctor, FP in Lean은 elan+Lean, Napkin은 Nix+LaTeXML) 프로젝트별로 잡을 나눠 병렬로
+# Ruby+Asciidoctor, Lean 서적은 elan 또는 Python+Sphinx, Napkin은 Nix+LaTeXML)
+# 프로젝트별로 잡을 나눠 병렬로
 # 돌리고, Napkin의 HTML·EPUB·PDF도 각각 별도 잡에서 병렬로 빌드합니다. 각 잡은 자기
 # 프로젝트와 타깃에 필요한 툴체인만 설치합니다. pypy-eu-reports는
 # state/가 통째로 gitignore(라이선스 미확정, README 참조)라 커밋된 상태가 없고
@@ -83,6 +84,11 @@ jobs:
             toolchain: lean
             artifact: dist-tpil
             artifact_path: projects/tpil/dist
+          - project: mil
+            target: html
+            toolchain: python3
+            artifact: dist-mil
+            artifact_path: projects/mil/dist
           - project: napkin
             target: html
             toolchain: nix
@@ -133,6 +139,16 @@ jobs:
       - name: Install the PyPy docs Sphinx toolchain
         if: matrix.toolchain == 'python2'
         run: pip install 'sphinx<2' 'docutils==0.11' 'sphinx-issues==1.2.0' 'sphinx_rtd_theme<1' py sphinx-affiliates
+
+      - name: Install Python for Mathematics in Lean
+        if: matrix.toolchain == 'python3'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install the Mathematics in Lean Sphinx toolchain
+        if: matrix.toolchain == 'python3'
+        run: pip install -r projects/${{ matrix.project }}/upstream/scripts/requirements.txt
 
       - name: Install Ruby
         if: matrix.toolchain == 'ruby'
@@ -228,6 +244,7 @@ jobs:
           cp -r artifacts/dist-pypy/rpython-site _site/rpython
           cp -r artifacts/dist-fp-lean/site _site/fp-lean
           cp -r artifacts/dist-tpil/site _site/tpil
+          cp -r artifacts/dist-mil/site _site/mil
           cp -r artifacts/dist-napkin-html/site _site/napkin
           cp artifacts/dist-napkin-pdf/Napkin-ko.pdf _site/napkin/
           cp artifacts/dist-napkin-epub/Napkin-ko.epub _site/napkin/
