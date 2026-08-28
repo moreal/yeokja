@@ -1,0 +1,1414 @@
+{
+  "version": 1,
+  "source_hash": 159519956706411578,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Specialize functions with guards",
+      "source_hash": 13580515974967216071,
+      "context_hash": 5664304435715748606,
+      "translation": "가드를 사용한 함수 특수화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565566Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Rejection Notice",
+      "source_hash": 13288005455860318677,
+      "context_hash": 14879555322899476928,
+      "translation": "거부 통지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565570Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP was rejected by its author since the design didn't show any significant speedup, but also because of the lack of time to implement the most advanced and complex optimizations.",
+      "source_hash": 5058923221175980107,
+      "context_hash": 5118290104669931454,
+      "translation": "이 PEP는 설계가 유의미한 속도 향상을 보여 주지 못했으며, 가장 진보되고 복잡한 최적화를 구현할 시간이 부족했기 때문에 작성자에 의해 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565570Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 5226011131534313114,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565571Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Add functions to the Python C API to specialize pure Python functions: add specialized codes with guards.",
+      "source_hash": 8396757426792800933,
+      "context_hash": 146647864534328483,
+      "translation": "순수 Python 함수를 특수화하도록 Python C API에 함수를 추가합니다. 가드가 적용된 특수화 코드를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565571Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "It allows to implement static optimizers respecting the Python semantics.",
+      "source_hash": 605138332129995971,
+      "context_hash": 9170184838928119140,
+      "translation": "이를 통해 Python 의미론을 준수하는 정적 최적화기를 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565571Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 12317411015522704770,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565571Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Python semantics",
+      "source_hash": 3364984146730652915,
+      "context_hash": 6448085817524067215,
+      "translation": "Python 의미론",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565572Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Python is hard to optimize because almost everything is mutable: builtin functions, function code, global variables, local variables, ... can be modified at runtime.",
+      "source_hash": 15817727537846134721,
+      "context_hash": 4900258855998870341,
+      "translation": "거의 모든 것이 변경 가능하기 때문에 Python은 최적화하기 어렵습니다. 내장 함수, 함수 코드, 전역 변수, 지역 변수 등을 실행 중에 수정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565572Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "Implement optimizations respecting the Python semantics requires to detect when \"something changes\", we will call these checks \"guards\".",
+      "source_hash": 17589674361450648493,
+      "context_hash": 16632283951899980512,
+      "translation": "Python 의미론을 준수하는 최적화를 구현하려면 “무언가 변경되는” 시점을 감지해야 하며, 이러한 검사를 “가드”라고 부릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565572Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "This PEP proposes to add a public API to the Python C API to add specialized codes with guards to a function.",
+      "source_hash": 1333481903933332508,
+      "context_hash": 13843493742702187241,
+      "translation": "이 PEP는 함수에 가드가 적용된 특수화 코드를 추가할 수 있도록 Python C API에 공개 API를 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565572Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "When the function is called, a specialized code is used if nothing changed, otherwise use the original bytecode.",
+      "source_hash": 9818420870882715108,
+      "context_hash": 15583751530987155271,
+      "translation": "함수를 호출할 때 변경된 사항이 없으면 특수화 코드를 사용하고, 그렇지 않으면 원래 바이트코드를 사용합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:05:54.565573Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Even if guards help to respect most parts of the Python semantics, it's hard to optimize Python without making subtle changes on the exact behaviour.",
+      "source_hash": 11414432998900259981,
+      "context_hash": 3658616808131110419,
+      "translation": "가드는 Python 의미론의 대부분을 준수하는 데 도움이 되지만, 정확한 동작에 미묘한 변경을 가하지 않고 Python을 최적화하기는 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565574Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "CPython has a long history and many applications rely on implementation details.",
+      "source_hash": 11280925152203055375,
+      "context_hash": 6177404189746018642,
+      "translation": "CPython은 오랜 역사를 지니고 있으며 많은 애플리케이션이 구현 세부 사항에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565575Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:2",
+      "source": "A compromise must be found between \"everything is mutable\" and performance.",
+      "source_hash": 9758052843774942799,
+      "context_hash": 6249929602874881884,
+      "translation": "“모든 것이 변경 가능함”과 성능 사이에서 절충점을 찾아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565575Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "Writing an optimizer is out of the scope of this PEP.",
+      "source_hash": 10341510419548055454,
+      "context_hash": 11050117621994774045,
+      "translation": "최적화기를 작성하는 것은 이 PEP의 범위에 속하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565575Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Why not a JIT compiler?",
+      "source_hash": 7749691589878670113,
+      "context_hash": 16499483157589593586,
+      "translation": "JIT 컴파일러는 왜 사용하지 않습니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565575Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "There are multiple JIT compilers for Python actively developed:",
+      "source_hash": 5921961366150542848,
+      "context_hash": 8253449510144825466,
+      "translation": "Python용 JIT 컴파일러는 여러 개가 활발히 개발되고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565576Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "`PyPy <http://pypy.org/>`_",
+      "source_hash": 194608084183056488,
+      "context_hash": 12246775380303074341,
+      "translation": "`PyPy <http://pypy.org/>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565576Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "`Pyston <https://github.com/dropbox/pyston>`_",
+      "source_hash": 15032186628709768393,
+      "context_hash": 5095529444873418840,
+      "translation": "`Pyston <https://github.com/dropbox/pyston>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565576Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "`Numba <http://numba.pydata.org/>`_",
+      "source_hash": 12098995446996453963,
+      "context_hash": 5507642595170857386,
+      "translation": "`Numba <http://numba.pydata.org/>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565577Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "`Pyjion <https://github.com/microsoft/pyjion>`_",
+      "source_hash": 13207053861990915023,
+      "context_hash": 14087479130826251637,
+      "translation": "`Pyjion <https://github.com/microsoft/pyjion>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565577Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "Numba is specific to numerical computation.",
+      "source_hash": 16687267417643071785,
+      "context_hash": 10854113830460504201,
+      "translation": "Numba는 수치 계산에 특화되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565577Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:1",
+      "source": "Pyston and Pyjion are still young.",
+      "source_hash": 17896848728349725519,
+      "context_hash": 12449676745137509896,
+      "translation": "Pyston과 Pyjion은 아직 초기 단계입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565578Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:2",
+      "source": "PyPy is the most complete Python interpreter, it is generally faster than CPython in micro- and many macro-benchmarks and has a very good compatibility with CPython (it respects the Python semantics).",
+      "source_hash": 18133919071758250939,
+      "context_hash": 10771499763135472693,
+      "translation": "PyPy는 가장 완성도가 높은 Python 인터프리터이며, 일반적으로 마이크로 벤치마크와 여러 매크로 벤치마크에서 CPython보다 빠르고 CPython과의 호환성도 매우 뛰어납니다(Python 의미론을 준수합니다).",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:05:54.565578Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:3",
+      "source": "There are still issues with Python JIT compilers which avoid them to be widely used instead of CPython.",
+      "source_hash": 756962658770155647,
+      "context_hash": 13365028596912759301,
+      "translation": "Python JIT 컴파일러에는 여전히 CPython 대신 널리 사용되지 못하게 하는 문제가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565578Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "Many popular libraries like numpy, PyGTK, PyQt, PySide and wxPython are implemented in C or C++ and use the Python C API.",
+      "source_hash": 776474397181335158,
+      "context_hash": 17145032850551697413,
+      "translation": "numpy, PyGTK, PyQt, PySide, wxPython과 같은 많은 인기 라이브러리는 C 또는 C++로 구현되며 Python C API를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565579Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:1",
+      "source": "To have a small memory footprint and better performances, Python JIT compilers do not use reference counting to use a faster garbage collector, do not use C structures of CPython objects and manage memory allocations differently.",
+      "source_hash": 2841095890591472837,
+      "context_hash": 155766148546499560,
+      "translation": "메모리 사용량을 줄이고 성능을 향상하기 위해 Python JIT 컴파일러는 더 빠른 가비지 수집기를 사용하려고 참조 카운팅을 사용하지 않으며, CPython 객체의 C 구조체를 사용하지 않고 메모리 할당을 다르게 관리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565579Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:2",
+      "source": "PyPy has a ``cpyext`` module which emulates the Python C API but it has worse performances than CPython and does not support the full Python C API.",
+      "source_hash": 6667888069371390775,
+      "context_hash": 10815152154548875386,
+      "translation": "PyPy에는 Python C API를 에뮬레이트하는 ``cpyext`` 모듈이 있지만 CPython보다 성능이 떨어지며 Python C API 전체를 지원하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565579Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "New features are first developed in CPython.",
+      "source_hash": 10988528374842482955,
+      "context_hash": 6253614798007519120,
+      "translation": "새로운 기능은 CPython에서 먼저 개발됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565579Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:1",
+      "source": "In January 2016, the latest CPython stable version is 3.5, whereas PyPy only supports Python 2.7 and 3.2, and Pyston only supports Python 2.7.",
+      "source_hash": 11540213258799747714,
+      "context_hash": 12181150069769717954,
+      "translation": "2016년 1월 기준으로 최신 CPython 안정 버전은 3.5인 반면, PyPy는 Python 2.7과 3.2만 지원하고 Pyston은 Python 2.7만 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:54.565580Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "Even if PyPy has a very good compatibility with Python, some modules are still not compatible with PyPy: see `PyPy Compatibility Wiki <https://bitbucket.org/pypy/compatibility/wiki/Home>`_.",
+      "source_hash": 13386287358837202636,
+      "context_hash": 2419821607946189487,
+      "translation": "PyPy가 Python과 매우 높은 호환성을 갖추고 있더라도 일부 모듈은 여전히 PyPy와 호환되지 않습니다. `PyPy Compatibility Wiki <https://bitbucket.org/pypy/compatibility/wiki/Home>`_\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441111Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:1",
+      "source": "The incomplete support of the Python C API is part of this problem.",
+      "source_hash": 6132077907917774875,
+      "context_hash": 10556491628815716900,
+      "translation": "Python C API에 대한 지원이 불완전한 것이 이 문제의 일부입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441114Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:2",
+      "source": "There are also subtle differences between PyPy and CPython like reference counting: object destructors are always called in PyPy, but can be called \"later\" than in CPython.",
+      "source_hash": 13280488556483462734,
+      "context_hash": 13812482225395267841,
+      "translation": "참조 카운팅과 같이 PyPy와 CPython 사이에는 미묘한 차이도 있습니다. 객체 소멸자는 PyPy에서 항상 호출되지만 CPython에서보다 \"나중에\" 호출될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441114Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:3",
+      "source": "Using context managers helps to control when resources are released.",
+      "source_hash": 12283930176121888538,
+      "context_hash": 4047269204558232031,
+      "translation": "컨텍스트 관리자를 사용하면 리소스가 해제되는 시점을 제어하는 데 도움이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441114Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "Even if PyPy is much faster than CPython in a wide range of benchmarks, some users still report worse performances than CPython on some specific use cases or unstable performances.",
+      "source_hash": 1120669374690534568,
+      "context_hash": 3890982656638940446,
+      "translation": "PyPy가 광범위한 벤치마크에서 CPython보다 훨씬 빠르더라도 일부 사용자는 특정 사용 사례에서 CPython보다 성능이 나쁘거나 성능이 불안정하다고 여전히 보고합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441114Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "When Python is used as a scripting program for programs running less than 1 minute, JIT compilers can be slower because their startup time is higher and the JIT compiler takes time to optimize the code.",
+      "source_hash": 15592317253960182256,
+      "context_hash": 2965171978899263862,
+      "translation": "Python을 1분 미만으로 실행되는 프로그램의 스크립팅 언어로 사용할 때 JIT 컴파일러는 시작 시간이 더 길고 코드를 최적화하는 데 시간이 걸리므로 더 느릴 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441115Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:1",
+      "source": "For example, most Mercurial commands take a few seconds.",
+      "source_hash": 3811829130673441632,
+      "context_hash": 9073645186285545055,
+      "translation": "예를 들어 대부분의 Mercurial 명령은 몇 초가 걸립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441115Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "Numba now supports ahead of time compilation, but it requires decorator to specify arguments types and it only supports numerical types.",
+      "source_hash": 14339376860790958695,
+      "context_hash": 7924223034152140007,
+      "translation": "Numba는 이제 사전 컴파일을 지원하지만 인자 타입을 지정하려면 데코레이터가 필요하며 수치 타입만 지원합니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T19:05:58.441115Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "CPython 3.5 has almost no optimization: the peephole optimizer only implements basic optimizations.",
+      "source_hash": 6240315397763485627,
+      "context_hash": 11676217027800903435,
+      "translation": "CPython 3.5에는 최적화가 거의 없습니다. 피프홀 최적화 프로그램은 기본적인 최적화만 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441116Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:1",
+      "source": "A static compiler is a compromise between CPython 3.5 and PyPy.",
+      "source_hash": 9494519927233226177,
+      "context_hash": 8772624200470303411,
+      "translation": "정적 컴파일러는 CPython 3.5와 PyPy 사이의 절충안입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441116Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "There was also the Unladen Swallow project, but it was abandoned in 2011.",
+      "source_hash": 8622231690409427722,
+      "context_hash": 1418162761553410918,
+      "translation": "Unladen Swallow 프로젝트도 있었지만 2011년에 중단되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441116Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Examples",
+      "source_hash": 2926230321239078022,
+      "context_hash": 5845886412080466548,
+      "translation": "예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441116Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Following examples are not written to show powerful optimizations promising important speedup, but to be short and easy to understand, just to explain the principle.",
+      "source_hash": 6251921245219819646,
+      "context_hash": 753003251531191327,
+      "translation": "다음 예제는 상당한 속도 향상을 약속하는 강력한 최적화를 보여 주기 위한 것이 아니라, 원리를 설명하기 위해 짧고 이해하기 쉽게 작성되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441117Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Hypothetical myoptimizer module",
+      "source_hash": 13387877804737043730,
+      "context_hash": 14129586593771499564,
+      "translation": "가상의 myoptimizer 모듈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441117Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Examples in this PEP uses a hypothetical ``myoptimizer`` module which provides the following functions and types:",
+      "source_hash": 17034998707926163725,
+      "context_hash": 8149038241274357140,
+      "translation": "이 PEP의 예제에서는 다음 함수와 타입을 제공하는 가상의 ``myoptimizer`` 모듈을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441117Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "``specialize(func, code, guards)``: add the specialized code ``code`` with guards ``guards`` to the function ``func``",
+      "source_hash": 8518976330269227921,
+      "context_hash": 8147717990045356330,
+      "translation": "``specialize(func, code, guards)``: 특수화된 코드 ``code``\\ 와 가드 ``guards``\\ 를 함수 ``func``\\ 에 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441117Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "``get_specialized(func)``: get the list of specialized codes as a list of ``(code, guards)`` tuples where ``code`` is a callable or code object and ``guards`` is a list of a guards",
+      "source_hash": 5917239762862731362,
+      "context_hash": 8113000574619072432,
+      "translation": "``get_specialized(func)``: 특수화된 코드의 목록을 반환합니다. 이 목록은 ``code``\\ 가 호출 가능 객체 또는 코드 객체이고 ``guards``\\ 가 가드 목록인 ``(code, guards)`` 튜플의 리스트입니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:05:58.441118Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "``GuardBuiltins(name)``: guard watching for ``builtins.__dict__[name]`` and ``globals()[name]``.",
+      "source_hash": 10919144501705327586,
+      "context_hash": 1574809314091227629,
+      "translation": "``GuardBuiltins(name)``: ``builtins.__dict__[name]``\\ 와 ``globals()[name]``\\ 을 감시하는 가드입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441118Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "The guard fails if ``builtins.__dict__[name]`` is replaced, or if ``globals()[name]`` is set.",
+      "source_hash": 7257800652304036277,
+      "context_hash": 3391781308370524112,
+      "translation": "``builtins.__dict__[name]``\\ 이 대체되거나 ``globals()[name]``\\ 이 설정되면 가드가 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441118Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Using bytecode",
+      "source_hash": 10053388973989768349,
+      "context_hash": 1903174339151004275,
+      "translation": "바이트코드 사용",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:05:58.441119Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Add specialized bytecode where the call to the pure builtin function ``chr(65)`` is replaced with its result ``\"A\"``",
+      "source_hash": 2548860438976827092,
+      "context_hash": 11708476656796608319,
+      "translation": "순수 내장 함수 ``chr(65)`` 호출을 그 결과인 ``\"A\"``\\ 로 대체하는 특수화된 바이트코드를 추가합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:05:58.441119Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "Example showing the behaviour of the guard",
+      "source_hash": 9241509716325150849,
+      "context_hash": 5308034313133154284,
+      "translation": "가드의 동작을 보여 주는 예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441119Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "Output",
+      "source_hash": 18158795255602651411,
+      "context_hash": 1142404165626347966,
+      "translation": "출력",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441120Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "The first call uses the specialized bytecode which returns the string ``\"A\"``.",
+      "source_hash": 488000856470106223,
+      "context_hash": 5907815615619066282,
+      "translation": "첫 번째 호출은 문자열 ``\"A\"``\\ 를 반환하는 특수화된 바이트코드를 사용합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:05:58.441120Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:1",
+      "source": "The second call removes the specialized code because the builtin ``chr()`` function was replaced, and executes the original bytecode calling ``chr(65)``.",
+      "source_hash": 3004341642213948375,
+      "context_hash": 14252584713720183782,
+      "translation": "두 번째 호출은 내장 ``chr()`` 함수가 대체되었기 때문에 특수화된 코드를 제거하고 ``chr(65)``\\ 를 호출하는 원래 바이트코드를 실행합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:05:58.441120Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:0",
+      "source": "On a microbenchmark, calling the specialized bytecode takes 88 ns, whereas the original function takes 145 ns (+57 ns): 1.6 times as fast.",
+      "source_hash": 4655112258419739059,
+      "context_hash": 5894568993394568544,
+      "translation": "마이크로벤치마크에서 특수화된 바이트코드를 호출하는 데는 88ns가 걸리는 반면 원래 함수에는 145ns(+57ns)가 걸립니다. 즉, 1.6배 빠릅니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:05:58.441121Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Using builtin function",
+      "source_hash": 7258110281556752537,
+      "context_hash": 18328396457382681100,
+      "translation": "내장 함수 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441121Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Add the C builtin ``chr()`` function as the specialized code instead of a bytecode calling ``chr(obj)``",
+      "source_hash": 6455775132929625630,
+      "context_hash": 17784608873378947214,
+      "translation": "``chr(obj)``\\ 를 호출하는 바이트코드 대신 C 내장 함수 ``chr()``\\ 를 특수화된 코드로 추가합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:05:58.441121Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "Example showing the behaviour of the guard",
+      "source_hash": 9241509716325150849,
+      "context_hash": 18330971673147434712,
+      "translation": "가드의 동작을 보여 주는 예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441122Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "Output",
+      "source_hash": 18158795255602651411,
+      "context_hash": 4555455928636141694,
+      "translation": "출력",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441122Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "The first call calls the C builtin ``chr()`` function (without creating a Python frame).",
+      "source_hash": 2729376570273956584,
+      "context_hash": 8512078565440884497,
+      "translation": "첫 번째 호출은 C 내장 함수 ``chr()``\\ 를 호출합니다(Python 프레임을 생성하지 않음).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:58.441122Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:1",
+      "source": "The second call removes the specialized code because the builtin ``chr()`` function was replaced, and executes the original bytecode.",
+      "source_hash": 1254192872289299782,
+      "context_hash": 2808466559956673964,
+      "translation": "두 번째 호출은 내장 ``chr()`` 함수가 대체되었기 때문에 특수화된 코드를 제거하고 원래 바이트코드를 실행합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:05:58.441122Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:0",
+      "source": "On a microbenchmark, calling the C builtin takes 95 ns, whereas the original bytecode takes 155 ns (+60 ns): 1.6 times as fast.",
+      "source_hash": 14331231657557807387,
+      "context_hash": 14511469057154825970,
+      "translation": "마이크로벤치마크에서 C 내장 함수를 호출하는 데 95ns가 걸리는 반면, 원래 바이트코드는 155ns가 걸립니다(+60ns): 1.6배 빠릅니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:05:53.687221Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:1",
+      "source": "Calling directly ``chr(65)`` takes 76 ns.",
+      "source_hash": 8267498884346710135,
+      "context_hash": 8168689335971070720,
+      "translation": "``chr(65)``\\ 를 직접 호출하면 76ns가 걸립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687228Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Choose the specialized code",
+      "source_hash": 13312605581844793651,
+      "context_hash": 3314116429167494633,
+      "translation": "특수화된 코드를 선택하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687229Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Pseudo-code to choose the specialized code to call a pure Python function",
+      "source_hash": 1745234141972534725,
+      "context_hash": 11270278071687548716,
+      "translation": "순수 Python 함수를 호출할 특수화된 코드를 선택하는 의사 코드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687229Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Changes",
+      "source_hash": 16338901047571710273,
+      "context_hash": 6450652205590007245,
+      "translation": "변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687229Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "Changes to the Python C API:",
+      "source_hash": 8686755385418366452,
+      "context_hash": 8999039779451677094,
+      "translation": "Python C API 변경 사항:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687230Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "Add a ``PyFuncGuardObject`` object and a ``PyFuncGuard_Type`` type",
+      "source_hash": 3332732724416862415,
+      "context_hash": 4503498863812744663,
+      "translation": "``PyFuncGuardObject``\\ 객체와 ``PyFuncGuard_Type``\\ 타입을 추가하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687230Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "Add a ``PySpecializedCode`` structure",
+      "source_hash": 10303608844203886907,
+      "context_hash": 6470874955434813826,
+      "translation": "``PySpecializedCode``\\ 구조체를 추가하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687230Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "Add the following fields to the ``PyFunctionObject`` structure",
+      "source_hash": 79363760089313646,
+      "context_hash": 44730686388169525,
+      "translation": "``PyFunctionObject``\\ 구조체에 다음 필드를 추가하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687231Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "Add function methods:",
+      "source_hash": 11955882900711948902,
+      "context_hash": 10315516283211783091,
+      "translation": "함수 메서드를 추가하십시오:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687231Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "``PyFunction_Specialize()``",
+      "source_hash": 13339271159661257765,
+      "context_hash": 12064775656604810808,
+      "translation": "``PyFunction_Specialize()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687231Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:0",
+      "source": "``PyFunction_GetSpecializedCodes()``",
+      "source_hash": 17975829241805319241,
+      "context_hash": 2356518522098914820,
+      "translation": "``PyFunction_GetSpecializedCodes()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687232Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:9/seg:0",
+      "source": "``PyFunction_GetSpecializedCode()``",
+      "source_hash": 14385361840137796750,
+      "context_hash": 16320658838495447767,
+      "translation": "``PyFunction_GetSpecializedCode()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687232Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:10/seg:0",
+      "source": "``PyFunction_RemoveSpecialized()``",
+      "source_hash": 15914369672956899172,
+      "context_hash": 8098758613394610297,
+      "translation": "``PyFunction_RemoveSpecialized()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687232Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:11/seg:0",
+      "source": "``PyFunction_RemoveAllSpecialized()``",
+      "source_hash": 7172800156326329404,
+      "context_hash": 4384671843198586689,
+      "translation": "``PyFunction_RemoveAllSpecialized()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687232Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:12/seg:0",
+      "source": "None of these function and types are exposed at the Python level.",
+      "source_hash": 16734783443236232087,
+      "context_hash": 7880838691524409894,
+      "translation": "이 함수와 타입은 Python 수준에 노출되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687233Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:13/seg:0",
+      "source": "All these additions are explicitly excluded of the stable ABI.",
+      "source_hash": 3769565421342060692,
+      "context_hash": 11652318511900556808,
+      "translation": "이러한 모든 추가 사항은 안정 ABI에서 명시적으로 제외됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687233Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:14/seg:0",
+      "source": "When a function code is replaced (``func.__code__ = new_code``), all specialized codes and guards are removed.",
+      "source_hash": 3628609247754275780,
+      "context_hash": 5318851949186762572,
+      "translation": "함수 코드를 교체하면(``func.__code__ = new_code``), 모든 특수화된 코드와 가드가 제거됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687233Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Function guard",
+      "source_hash": 18006942615272461211,
+      "context_hash": 1806169342142257314,
+      "translation": "함수 가드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687233Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "Add a function guard object",
+      "source_hash": 18424999338442681630,
+      "context_hash": 9042585986254202801,
+      "translation": "함수 가드 객체를 추가하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687234Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "The ``init()`` function initializes a guard:",
+      "source_hash": 10999069510203133506,
+      "context_hash": 4236114606885788332,
+      "translation": "``init()``\\ 함수는 가드를 초기화합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687234Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "Return ``0`` on success",
+      "source_hash": 11985858379592780744,
+      "context_hash": 7787974048294291655,
+      "translation": "성공하면 ``0``\\ 을 반환합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687234Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "Return ``1`` if the guard will always fail: ``PyFunction_Specialize()`` must ignore the specialized code",
+      "source_hash": 4717853481545615636,
+      "context_hash": 11556000074565244207,
+      "translation": "가드가 항상 실패하는 경우 ``1``\\ 을 반환합니다: ``PyFunction_Specialize()``\\ 는 특수화된 코드를 무시해야 합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687235Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:0",
+      "source": "Raise an exception and return ``-1`` on error",
+      "source_hash": 6134471159415188859,
+      "context_hash": 1344731964681686355,
+      "translation": "오류가 발생하면 예외를 발생시키고 ``-1``\\ 을 반환합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687235Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:7/seg:0",
+      "source": "The ``check()`` function checks a guard:",
+      "source_hash": 13613559945707999267,
+      "context_hash": 13332561264569511919,
+      "translation": "``check()``\\ 함수는 가드를 검사합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687235Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:8/seg:0",
+      "source": "Return ``0`` on success",
+      "source_hash": 11985858379592780744,
+      "context_hash": 10914595653785232215,
+      "translation": "성공하면 ``0``\\ 을 반환합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687235Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:9/seg:0",
+      "source": "Return ``1`` if the guard failed temporarily",
+      "source_hash": 14369966735715440417,
+      "context_hash": 5024379129922475148,
+      "translation": "가드가 일시적으로 실패한 경우 ``1``\\ 을 반환합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687236Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:10/seg:0",
+      "source": "Return ``2`` if the guard will always fail: the specialized code must be removed",
+      "source_hash": 17783413057499273759,
+      "context_hash": 2215653776254913341,
+      "translation": "가드가 항상 실패하는 경우 ``2``\\ 를 반환합니다: 특수화된 코드를 제거해야 합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687236Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:11/seg:0",
+      "source": "Raise an exception and return ``-1`` on error",
+      "source_hash": 6134471159415188859,
+      "context_hash": 4945297827738076282,
+      "translation": "오류가 발생하면 예외를 발생시키고 ``-1``\\ 을 반환합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687236Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:12/seg:0",
+      "source": "*stack* is an array of arguments: indexed arguments followed by (*key*, *value*) pairs of keyword arguments. *na* is the number of indexed arguments. *nk* is the number of keyword arguments: the number of (*key*, *value*) pairs. ``stack`` contains ``na + nk * 2`` objects.",
+      "source_hash": 11275632450683364212,
+      "context_hash": 5562570066772845259,
+      "translation": "*stack*\\ 은 인자의 배열입니다. 인덱스가 지정된 인자 뒤에 키워드 인자의 (*key*, *value*) 쌍이 옵니다. *na*\\ 는 인덱스가 지정된 인자의 개수입니다. *nk*\\ 는 키워드 인자의 개수, 즉 (*key*, *value*) 쌍의 개수입니다. ``stack``\\ 에는 ``na + nk * 2``\\ 개의 객체가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687236Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Specialized code",
+      "source_hash": 13770536372995374831,
+      "context_hash": 8978368584025206730,
+      "translation": "특수화된 코드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687237Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "Add a specialized code structure",
+      "source_hash": 7159213919667478961,
+      "context_hash": 11395735375715538401,
+      "translation": "특수화된 코드 구조체를 추가하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:53.687237Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Function methods",
+      "source_hash": 2910551642034553465,
+      "context_hash": 4045518942178134241,
+      "translation": "함수 메서드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451726Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "PyFunction_Specialize",
+      "source_hash": 3446878103550898828,
+      "context_hash": 18340832444304765946,
+      "translation": "PyFunction_Specialize",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451729Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "Add a function method to specialize the function, add a specialized code with guards",
+      "source_hash": 2039609041495965971,
+      "context_hash": 2132840586330992695,
+      "translation": "함수를 전문화하고, 가드가 있는 전문화된 코드를 추가하는 함수 메서드를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451729Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "If *code* is a Python function, the code object of the *code* function is used as the specialized code.",
+      "source_hash": 9544776083728216168,
+      "context_hash": 10077428155785106066,
+      "translation": "*code*\\ 가 Python 함수인 경우, *code* 함수의 코드 객체를 전문화된 코드로 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451730Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:1",
+      "source": "The specialized Python function must have the same parameter defaults, the same keyword parameter defaults, and must not have specialized code.",
+      "source_hash": 13792633527794137686,
+      "context_hash": 6221841128983584399,
+      "translation": "전문화된 Python 함수는 동일한 매개변수 기본값과 동일한 키워드 매개변수 기본값을 가져야 하며, 전문화된 코드를 가져서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451730Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:0",
+      "source": "If *code* is a Python function or a code object, a new code object is created and the code name and first line number of the code object of *func* are copied.",
+      "source_hash": 15643477688298699989,
+      "context_hash": 1647524055923050769,
+      "translation": "*code*\\ 가 Python 함수 또는 코드 객체인 경우, 새 코드 객체를 만들고 *func*\\ 의 코드 객체에서 코드 이름과 첫 번째 줄 번호를 복사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451730Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:1",
+      "source": "The specialized code must have the same cell variables and the same free variables.",
+      "source_hash": 7529808755386013955,
+      "context_hash": 7565881732888170175,
+      "translation": "전문화된 코드는 동일한 셀 변수와 동일한 자유 변수를 가져야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451730Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:0",
+      "source": "Result:",
+      "source_hash": 3570879099788233846,
+      "context_hash": 12693553307275143174,
+      "translation": "결과:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451731Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:0",
+      "source": "Return ``0`` on success",
+      "source_hash": 11985858379592780744,
+      "context_hash": 12326828260218906021,
+      "translation": "성공하면 ``0``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451731Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:8/seg:0",
+      "source": "Return ``1`` if the specialization has been ignored",
+      "source_hash": 10526617605974273560,
+      "context_hash": 11556000074565244207,
+      "translation": "전문화가 무시된 경우 ``1``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451731Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:9/seg:0",
+      "source": "Raise an exception and return ``-1`` on error",
+      "source_hash": 6134471159415188859,
+      "context_hash": 4239044831545846534,
+      "translation": "오류가 발생하면 예외를 발생시키고 ``-1``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451731Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:10/seg:0",
+      "source": "PyFunction_GetSpecializedCodes",
+      "source_hash": 7131823542468750070,
+      "context_hash": 6494017593359450195,
+      "translation": "PyFunction_GetSpecializedCodes",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451731Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:11/seg:0",
+      "source": "Add a function method to get the list of specialized codes",
+      "source_hash": 4912764307238012380,
+      "context_hash": 12046897861296333714,
+      "translation": "전문화된 코드 목록을 가져오는 함수 메서드를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451732Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:13/seg:0",
+      "source": "Return a list of (*code*, *guards*) tuples where *code* is a callable or code object and *guards* is a list of ``PyFuncGuard`` objects.",
+      "source_hash": 17373392437348132968,
+      "context_hash": 6639127852199423945,
+      "translation": "*code*\\ 가 호출 가능 객체 또는 코드 객체이고 *guards*\\ 가 ``PyFuncGuard`` 객체의 목록인 (*code*, *guards*) 튜플의 목록을 반환합니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:06:11.451732Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:13/seg:1",
+      "source": "Raise an exception and return ``NULL`` on error.",
+      "source_hash": 3678262920578050495,
+      "context_hash": 12145197224539197066,
+      "translation": "오류가 발생하면 예외를 발생시키고 ``NULL``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451733Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:14/seg:0",
+      "source": "PyFunction_GetSpecializedCode",
+      "source_hash": 4058510848518701293,
+      "context_hash": 7597299417762465492,
+      "translation": "PyFunction_GetSpecializedCode",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451733Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:15/seg:0",
+      "source": "Add a function method checking guards to choose a specialized code",
+      "source_hash": 9163062018363732760,
+      "context_hash": 18279658932357939130,
+      "translation": "가드를 검사하여 전문화된 코드를 선택하는 함수 메서드를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451733Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:17/seg:0",
+      "source": "See ``check()`` function of guards for *stack*, *na* and *nk* arguments.",
+      "source_hash": 391873877506423906,
+      "context_hash": 11980635054094452329,
+      "translation": "*stack*, *na* 및 *nk* 인자에 대해서는 가드의 ``check()`` 함수를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451733Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:17/seg:1",
+      "source": "Return a callable or a code object on success.",
+      "source_hash": 674474812081894627,
+      "context_hash": 7729951144975360405,
+      "translation": "성공하면 호출 가능 객체 또는 코드 객체를 반환합니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:06:11.451734Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:17/seg:2",
+      "source": "Raise an exception and return ``NULL`` on error.",
+      "source_hash": 3678262920578050495,
+      "context_hash": 1352014209100289805,
+      "translation": "오류가 발생하면 예외를 발생시키고 ``NULL``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451734Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:18/seg:0",
+      "source": "PyFunction_RemoveSpecialized",
+      "source_hash": 16127002240589269038,
+      "context_hash": 4200153414728222153,
+      "translation": "PyFunction_RemoveSpecialized",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451734Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:19/seg:0",
+      "source": "Add a function method to remove a specialized code with its guards by its index",
+      "source_hash": 13447462077877276819,
+      "context_hash": 1478127371250490345,
+      "translation": "인덱스로 해당 가드와 함께 전문화된 코드를 제거하는 함수 메서드를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451735Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:21/seg:0",
+      "source": "Return ``0`` on success or if the index does not exist.",
+      "source_hash": 10877360826509998266,
+      "context_hash": 18033156726884711763,
+      "translation": "성공하거나 인덱스가 존재하지 않으면 ``0``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451735Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:21/seg:1",
+      "source": "Raise an exception and return ``-1`` on error.",
+      "source_hash": 14074200187075960997,
+      "context_hash": 8770612774688938194,
+      "translation": "오류가 발생하면 예외를 발생시키고 ``-1``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451735Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:22/seg:0",
+      "source": "PyFunction_RemoveAllSpecialized",
+      "source_hash": 4447078890485361106,
+      "context_hash": 2108041307653975263,
+      "translation": "PyFunction_RemoveAllSpecialized",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451735Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:23/seg:0",
+      "source": "Add a function method to remove all specialized codes and guards of a function",
+      "source_hash": 15774088268090470462,
+      "context_hash": 12646088097049615145,
+      "translation": "함수의 모든 전문화된 코드와 가드를 제거하는 함수 메서드를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451735Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:25/seg:0",
+      "source": "Return ``0`` on success.",
+      "source_hash": 7765919015648396208,
+      "context_hash": 12826820083268363900,
+      "translation": "성공하면 ``0``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451736Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:25/seg:1",
+      "source": "Raise an exception and return ``-1`` if *func* is not a function.",
+      "source_hash": 11612431604889368343,
+      "context_hash": 5084794732074805580,
+      "translation": "*func*\\ 가 함수가 아니면 예외를 발생시키고 ``-1``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451736Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Benchmark",
+      "source_hash": 10378892356231695205,
+      "context_hash": 8248555161666012879,
+      "translation": "벤치마크",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451736Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Microbenchmark on ``python3.6 -m timeit -s 'def f(): pass' 'f()'`` (best of 3 runs):",
+      "source_hash": 7635220167363873637,
+      "context_hash": 5893301959001527591,
+      "translation": "``python3.6 -m timeit -s 'def f(): pass' 'f()'``\\ 에서의 마이크로벤치마크(3회 실행 중 최상의 결과):",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451736Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "Original Python: 79 ns",
+      "source_hash": 6329099095546378481,
+      "context_hash": 6652155760147885100,
+      "translation": "원본 Python: 79 ns",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451737Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "Patched Python: 79 ns",
+      "source_hash": 7034284103878027466,
+      "context_hash": 1122296367003341129,
+      "translation": "패치된 Python: 79 ns",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:06:11.451737Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "According to this microbenchmark, the changes has no overhead on calling a Python function without specialization.",
+      "source_hash": 14690217371490772635,
+      "context_hash": 13862389918316828087,
+      "translation": "이 마이크로벤치마크에 따르면, 특수화하지 않고 Python 함수를 호출하는 데 변경 사항으로 인한 오버헤드가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:39.223154Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 12583521294512092312,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:39.223157Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "The `issue #26098: PEP 510: Specialize functions with guards <http://bugs.python.org/issue26098>`_ contains a patch which implements this PEP.",
+      "source_hash": 11360120708278452315,
+      "context_hash": 5510331763996975457,
+      "translation": "`issue #26098: PEP 510: Specialize functions with guards <http://bugs.python.org/issue26098>`_\\ 에는 이 PEP를 구현하는 패치가 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:39.223158Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Other implementations of Python",
+      "source_hash": 12986416595717537707,
+      "context_hash": 1633038938035703247,
+      "translation": "Python의 다른 구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:39.223158Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "This PEP only contains changes to the Python C API, the Python API is unchanged.",
+      "source_hash": 5681437402633295574,
+      "context_hash": 3607833641675454075,
+      "translation": "이 PEP에는 Python C API에 대한 변경 사항만 포함되어 있으며, Python API는 변경되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:39.223159Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "Other implementations of Python are free to not implement new additions, or implement added functions as no-op:",
+      "source_hash": 915422898457982796,
+      "context_hash": 16352269625787923354,
+      "translation": "Python의 다른 구현은 새로운 추가 사항을 구현하지 않거나, 추가된 함수를 no-op으로 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:39.223159Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "``PyFunction_Specialize()``: always return ``1`` (the specialization has been ignored)",
+      "source_hash": 10970272656400021761,
+      "context_hash": 6112698988330960489,
+      "translation": "``PyFunction_Specialize()``: 항상 ``1``\\ 을 반환합니다(특수화는 무시됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:39.223159Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "``PyFunction_GetSpecializedCodes()``: always return an empty list",
+      "source_hash": 13865869314108984775,
+      "context_hash": 17067443319051935318,
+      "translation": "``PyFunction_GetSpecializedCodes()``: 항상 빈 리스트를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:39.223160Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:0",
+      "source": "``PyFunction_GetSpecializedCode()``: return the function code object, as the existing ``PyFunction_GET_CODE()`` macro",
+      "source_hash": 12900109637616620078,
+      "context_hash": 13650990993149451792,
+      "translation": "``PyFunction_GetSpecializedCode()``: 기존 ``PyFunction_GET_CODE()`` 매크로와 마찬가지로 함수 코드 객체를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:39.223160Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Discussion",
+      "source_hash": 14315283418082301837,
+      "context_hash": 15921471599751498335,
+      "translation": "논의",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:39.223160Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Thread on the python-ideas mailing list: `RFC: PEP: Specialized functions with guards <https://mail.python.org/pipermail/python-ideas/2016-January/037703.html>`_.",
+      "source_hash": 6869165453299529843,
+      "context_hash": 15507386620327263766,
+      "translation": "python-ideas 메일링 리스트의 스레드: `RFC: PEP: Specialized functions with guards <https://mail.python.org/pipermail/python-ideas/2016-January/037703.html>`_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:39.223161Z",
+      "issues": []
+    }
+  ]
+}

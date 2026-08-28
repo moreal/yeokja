@@ -1,0 +1,460 @@
+{
+  "version": 1,
+  "source_hash": 13880905020489163435,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Change Windows console encoding to UTF-8",
+      "source_hash": 4087362081665942438,
+      "context_hash": 16530898886277989957,
+      "translation": "Windows 콘솔 인코딩을 UTF-8로 변경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.926998Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 10354571486584322311,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927002Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Historically, Python uses the ANSI APIs for interacting with the Windows operating system, often via C Runtime functions.",
+      "source_hash": 2561462291171949559,
+      "context_hash": 4046431990509793263,
+      "translation": "역사적으로 Python은 Windows 운영 체제와 상호작용하기 위해 흔히 C 런타임 함수를 통해 ANSI API를 사용해 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927002Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "However, these have been long discouraged in favor of the UTF-16 APIs.",
+      "source_hash": 13637676122697755543,
+      "context_hash": 7795751228485665034,
+      "translation": "하지만 이러한 방식은 UTF-16 API를 사용하는 편이 권장되면서 오랫동안 지양되어 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927003Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "Within the operating system, all text is represented as UTF-16, and the ANSI APIs perform encoding and decoding using the active code page.",
+      "source_hash": 4785674537152910254,
+      "context_hash": 16131131497178207035,
+      "translation": "운영 체제 내부에서 모든 텍스트는 UTF-16으로 표현되며, ANSI API는 활성 코드 페이지를 사용해 인코딩과 디코딩을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927003Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "This PEP proposes changing the default standard stream implementation on Windows to use the Unicode APIs.",
+      "source_hash": 11404138244809702075,
+      "context_hash": 16209044630089499543,
+      "translation": "이 PEP는 Windows에서 기본 표준 스트림 구현을 Unicode API를 사용하도록 변경할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927003Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "This will allow users to print and input the full range of Unicode characters at the default Windows console.",
+      "source_hash": 8484844767651294040,
+      "context_hash": 10456766875965745491,
+      "translation": "이를 통해 사용자는 기본 Windows 콘솔에서 전체 범위의 Unicode 문자를 출력하고 입력할 수 있게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927004Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:2",
+      "source": "This also requires a subtle change to how the tokenizer parses text from readline hooks.",
+      "source_hash": 15276521621764469391,
+      "context_hash": 566169975521909760,
+      "translation": "이는 또한 토크나이저가 readline 훅에서 텍스트를 파싱하는 방식에 미묘한 변경을 요구합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927004Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Specific Changes",
+      "source_hash": 15489914679541926166,
+      "context_hash": 10163846497299323502,
+      "translation": "구체적인 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927004Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Add _io.WindowsConsoleIO",
+      "source_hash": 14128738422277505089,
+      "context_hash": 156860542738905050,
+      "translation": "_io.WindowsConsoleIO 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927005Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Currently an instance of ``_io.FileIO`` is used to wrap the file descriptors representing standard input, output and error.",
+      "source_hash": 16438320203989440626,
+      "context_hash": 6856950522505108045,
+      "translation": "현재는 표준 입력, 출력, 오류를 나타내는 파일 디스크립터를 감싸기 위해 ``_io.FileIO``\\ 의 인스턴스가 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927005Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "We add a new class (implemented in C) ``_io.WindowsConsoleIO`` that acts as a raw IO object using the Windows console functions, specifically, ``ReadConsoleW`` and ``WriteConsoleW``.",
+      "source_hash": 17794829660282891956,
+      "context_hash": 5270875790419525434,
+      "translation": "저희는 Windows 콘솔 함수, 구체적으로는 ``ReadConsoleW``\\ 와 ``WriteConsoleW``\\ 를 사용하여 원시 IO 객체 역할을 하는 (C로 구현된) 새 클래스 ``_io.WindowsConsoleIO``\\ 를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927005Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "This class will be used when the legacy-mode flag is not in effect, when opening a standard stream by file descriptor and the stream is a console buffer rather than a redirected file.",
+      "source_hash": 8056446369147053137,
+      "context_hash": 2454827927991140195,
+      "translation": "이 클래스는 레거시 모드 플래그가 적용되지 않은 상태에서, 파일 디스크립터로 표준 스트림을 열 때 해당 스트림이 리디렉션된 파일이 아니라 콘솔 버퍼인 경우에 사용됩니다.",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T17:33:13.927006Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "Otherwise, ``_io.FileIO`` will be used as it is today.",
+      "source_hash": 12590870775793413648,
+      "context_hash": 6803866317055989274,
+      "translation": "그렇지 않으면 오늘날과 마찬가지로 ``_io.FileIO``\\ 가 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927007Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "This is a raw (bytes) IO class that requires text to be passed encoded with utf-8, which will be decoded to utf-16-le and passed to the Windows APIs.",
+      "source_hash": 15687042018278844364,
+      "context_hash": 12154160127182687035,
+      "translation": "이는 utf-8로 인코딩되어 전달된 텍스트를 요구하는 원시(바이트) IO 클래스이며, 해당 텍스트는 utf-16-le로 디코딩되어 Windows API에 전달됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927007Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "Similarly, bytes read from the class will be provided by the operating system as utf-16-le and converted into utf-8 when returned to Python.",
+      "source_hash": 16199708926551940707,
+      "context_hash": 239861768692864505,
+      "translation": "마찬가지로, 이 클래스로부터 읽어들인 바이트는 운영 체제에 의해 utf-16-le로 제공되며 Python에 반환될 때 utf-8로 변환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.927007Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "The use of an ASCII compatible encoding is required to maintain compatibility with code that bypasses the ``TextIOWrapper`` and directly writes ASCII bytes to the standard streams (for example, `Twisted's process_stdinreader.py`_).",
+      "source_hash": 12864201285025797749,
+      "context_hash": 4166803728926934968,
+      "translation": "``TextIOWrapper``\\ 를 우회하여 표준 스트림에 ASCII 바이트를 직접 쓰는 코드(예를 들어, `Twisted's process_stdinreader.py`_)와의 호환성을 유지하려면 ASCII 호환 인코딩을 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883540Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:1",
+      "source": "Code that assumes a particular encoding for the standard streams other than ASCII will likely break.",
+      "source_hash": 1836579473484204573,
+      "context_hash": 18317882685824446085,
+      "translation": "ASCII 외의 특정 인코딩을 표준 스트림에 대해 가정하는 코드는 깨질 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883543Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Add _PyOS_WindowsConsoleReadline",
+      "source_hash": 694724468092720110,
+      "context_hash": 9564670260401699522,
+      "translation": "_PyOS_WindowsConsoleReadline 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883543Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "To allow Unicode entry at the interactive prompt, a new readline hook is required.",
+      "source_hash": 6429227809849561443,
+      "context_hash": 15074839181079407846,
+      "translation": "대화형 프롬프트에서 유니코드 입력을 허용하려면 새로운 readline 훅이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883544Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "The existing ``PyOS_StdioReadline`` function will delegate to the new ``_PyOS_WindowsConsoleReadline`` function when reading from a file descriptor that is a console buffer and the legacy-mode flag is not in effect (the logic should be identical to above).",
+      "source_hash": 8805809766772671105,
+      "context_hash": 2424941159408583721,
+      "translation": "기존 ``PyOS_StdioReadline`` 함수는 콘솔 버퍼인 파일 디스크립터로부터 읽어들이고 레거시 모드 플래그가 활성화되어 있지 않을 때 새로운 ``_PyOS_WindowsConsoleReadline`` 함수에 위임합니다(로직은 위와 동일해야 합니다).",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T17:26:21.883544Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Since the readline interface is required to return an 8-bit encoded string with no embedded nulls, the ``_PyOS_WindowsConsoleReadline`` function transcodes from utf-16-le as read from the operating system into utf-8.",
+      "source_hash": 12449591130416866959,
+      "context_hash": 7143522531749355049,
+      "translation": "readline 인터페이스는 널 문자가 포함되지 않은 8비트 인코딩 문자열을 반환해야 하므로, ``_PyOS_WindowsConsoleReadline`` 함수는 운영체제에서 읽어들인 utf-16-le을 utf-8로 변환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883545Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "The function ``PyRun_InteractiveOneObject`` which currently obtains the encoding from ``sys.stdin`` will select utf-8 unless the legacy-mode flag is in effect.",
+      "source_hash": 13055573196812450888,
+      "context_hash": 11274398304469008527,
+      "translation": "현재 ``sys.stdin``\\ 에서 인코딩을 얻는 ``PyRun_InteractiveOneObject`` 함수는 레거시 모드 플래그가 활성화되어 있지 않는 한 utf-8을 선택합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883546Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "This may require readline hooks to change their encodings to utf-8, or to require legacy-mode for correct behaviour.",
+      "source_hash": 742601528430880705,
+      "context_hash": 12075673191306904328,
+      "translation": "이는 readline 훅이 인코딩을 utf-8로 변경하도록 요구하거나, 올바른 동작을 위해 레거시 모드를 요구할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883546Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Add legacy mode",
+      "source_hash": 1710665886097672997,
+      "context_hash": 4664356940690498767,
+      "translation": "레거시 모드 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883546Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Launching Python with the environment variable ``PYTHONLEGACYWINDOWSSTDIO`` set will enable the legacy-mode flag, which completely restores the previous behaviour.",
+      "source_hash": 1928273380342095116,
+      "context_hash": 14096819175898147750,
+      "translation": "환경 변수 ``PYTHONLEGACYWINDOWSSTDIO``\\ 를 설정한 채로 Python을 실행하면 레거시 모드 플래그가 활성화되며, 이는 이전 동작을 완전히 복원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883546Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Alternative Approaches",
+      "source_hash": 13872290572285027528,
+      "context_hash": 8179008543586665956,
+      "translation": "대안적 접근법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883547Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The `win_unicode_console package`_ is a pure-Python alternative to changing the default behaviour of the console.",
+      "source_hash": 3728973968478122308,
+      "context_hash": 10132407313212817915,
+      "translation": "`win_unicode_console package`_\\ 는 콘솔의 기본 동작을 변경하는 순수 Python 대안입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883547Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "It implements essentially the same modifications as described here using pure Python code.",
+      "source_hash": 8804305681018850615,
+      "context_hash": 1487914633936210589,
+      "translation": "이는 순수 Python 코드를 사용하여 본질적으로 여기서 설명한 것과 동일한 수정 사항을 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883547Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Code that may break",
+      "source_hash": 7760653213251875211,
+      "context_hash": 7815077853713140107,
+      "translation": "깨질 수 있는 코드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883547Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The following code patterns may break or see different behaviour as a result of this change.",
+      "source_hash": 6435269528482877781,
+      "context_hash": 7042709212028241005,
+      "translation": "다음 코드 패턴들은 이 변경의 결과로 깨지거나 다른 동작을 보일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883548Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "All of these code samples require explicitly choosing to use a raw file object in place of a more convenient wrapper that would prevent any visible change.",
+      "source_hash": 18028666198657037964,
+      "context_hash": 3029799885033267838,
+      "translation": "이 코드 예제들은 모두 눈에 띄는 변화를 방지해줄 더 편리한 래퍼 대신 raw 파일 객체를 사용하도록 명시적으로 선택해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:21.883548Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Assuming stdin/stdout encoding",
+      "source_hash": 12880440685783918695,
+      "context_hash": 7871937876530601366,
+      "translation": "표준 입출력 인코딩 가정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:38.618505Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Code that assumes that the encoding required by ``sys.stdin.buffer`` or ``sys.stdout.buffer`` is ``'mbcs'`` or a more specific encoding may currently be working by chance, but could encounter issues under this change.",
+      "source_hash": 15478952324264488780,
+      "context_hash": 4917386255659137957,
+      "translation": "``sys.stdin.buffer``\\ 나 ``sys.stdout.buffer``\\ 에 필요한 인코딩이 ``'mbcs'``\\ 이거나 더 구체적인 인코딩이라고 가정하는 코드는 현재 우연히 동작하고 있을 수 있지만, 이 변경으로 인해 문제가 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:38.618511Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "For example",
+      "source_hash": 9117899214634101441,
+      "context_hash": 9760476324341699669,
+      "translation": "예를 들어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:38.618513Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "To correct this code, the encoding specified on the ``TextIOWrapper`` should be used, either implicitly or explicitly",
+      "source_hash": 17256539663475427101,
+      "context_hash": 633008635248992198,
+      "translation": "이 코드를 수정하려면 암시적으로든 명시적으로든 ``TextIOWrapper``\\ 에 지정된 인코딩을 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:38.618514Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Incorrectly using the raw object",
+      "source_hash": 14081479365370877946,
+      "context_hash": 7119320266493126059,
+      "translation": "raw 객체를 잘못 사용하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:38.618514Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Code that uses the raw IO object and does not correctly handle partial reads and writes may be affected.",
+      "source_hash": 12339543211651687784,
+      "context_hash": 2312197214806685373,
+      "translation": "raw IO 객체를 사용하면서 부분 읽기와 쓰기를 올바르게 처리하지 않는 코드는 영향을 받을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:38.618515Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "This is particularly important for reads, where the number of characters read will never exceed one-fourth of the number of bytes allowed, as there is no feasible way to prevent input from encoding as much longer utf-8 strings",
+      "source_hash": 1787890161112462811,
+      "context_hash": 14664041148840328222,
+      "translation": "이는 읽기에서 특히 중요한데, 입력이 훨씬 더 긴 UTF-8 문자열로 인코딩되는 것을 막을 실질적인 방법이 없기 때문에 읽히는 문자 수는 허용된 바이트 수의 4분의 1을 결코 초과하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:38.618516Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "To correct this code, the buffered reader/writer should be used, or the caller should continue reading until its buffer is full",
+      "source_hash": 339841128070151762,
+      "context_hash": 13173665589712168373,
+      "translation": "이 코드를 수정하려면 버퍼링된 리더/라이터를 사용하거나, 호출자가 버퍼가 가득 찰 때까지 계속 읽어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:38.618517Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Using the raw object with small buffers",
+      "source_hash": 3461481864733099109,
+      "context_hash": 7553780776733463141,
+      "translation": "작은 버퍼로 raw 객체 사용하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:38.618518Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Code that uses the raw IO object and attempts to read less than four characters will now receive an error.",
+      "source_hash": 1881747042481914432,
+      "context_hash": 7645675449815043294,
+      "translation": "raw IO 객체를 사용하여 4개 미만의 문자를 읽으려는 코드는 이제 오류를 받게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:38.618519Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "Because it's possible that any single character may require up to four bytes when represented in utf-8, requests must fail",
+      "source_hash": 364022737048240765,
+      "context_hash": 2141047188716665109,
+      "translation": "UTF-8로 표현될 때 단일 문자 하나가 최대 4바이트를 필요로 할 수 있기 때문에, 요청은 실패해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:38.618519Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "The only workaround is to pass a larger buffer",
+      "source_hash": 15198688342204238066,
+      "context_hash": 2957709252119545457,
+      "translation": "유일한 해결 방법은 더 큰 버퍼를 전달하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:38.618520Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "(The extra ``>>>`` is due to the newline remaining in the input buffer and is expected in this situation.)",
+      "source_hash": 57685346149240481,
+      "context_hash": 16469272058368343007,
+      "translation": "(추가된 ``>>>``\\ 는 입력 버퍼에 남아 있는 줄바꿈 문자 때문이며, 이 상황에서는 예상된 동작입니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:38.618521Z",
+      "issues": []
+    }
+  ]
+}

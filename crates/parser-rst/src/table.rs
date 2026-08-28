@@ -428,12 +428,36 @@ pub fn render(table: &Table, texts: &[Vec<Option<String>>]) -> String {
                 .enumerate()
                 .map(|(c, cell)| match &row_texts[c] {
                     Some(text) if *text != cell.text => {
+                        let text = text.replace('\n', " ");
+                        let is_line_block = cell.fragments.len() > 1
+                            && cell
+                                .fragments
+                                .iter()
+                                .filter(|fragment| !fragment.is_empty())
+                                .all(|fragment| fragment.starts_with("| "));
+                        if is_line_block {
+                            // The leading ``|`` on every source fragment is
+                            // RST line-block structure, not prose. A
+                            // translation commonly retains the markers but
+                            // moves them as the sentence is reordered. Strip
+                            // those copies, wrap the prose, then restore one
+                            // marker at the start of every rendered line.
+                            let prose = text
+                                .split_whitespace()
+                                .filter(|word| *word != "|")
+                                .collect::<Vec<_>>()
+                                .join(" ");
+                            return wrap(&prose, table.col_widths[c].saturating_sub(2).max(1))
+                                .into_iter()
+                                .map(|fragment| format!("| {fragment}"))
+                                .collect();
+                        }
                         // A simple table reads a non-blank first column as a
                         // new row, so the first cell must hold one line.
                         if table.kind == Kind::Simple && c == 0 {
-                            vec![text.replace('\n', " ")]
+                            vec![text]
                         } else {
-                            wrap(&text.replace('\n', " "), table.col_widths[c])
+                            wrap(&text, table.col_widths[c])
                         }
                     }
                     _ => cell.fragments.clone(),

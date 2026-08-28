@@ -1,0 +1,111 @@
+[project]
+source_lang = "en"
+target_lang = "ko"
+glossary = "glossary.toml"
+state_dir = "state"
+
+# PEP 20의 text 코드 블록은 실행 코드가 아니라 독자가 읽는 19개 경구입니다.
+[[sources]]
+path = "upstream/peps"
+pattern = "pep-0020.rst"
+parser = "pep_text_block"
+output = "ko/peps/{path}"
+
+# 철회된 PEP 9는 독자에게 보이는 평문 템플릿 전체를 하나의 RST 리터럴 블록에
+# 넣은 예외입니다. 바깥 `::`만 파싱 그림자에서 걷어내 산문을 번역합니다.
+[[sources]]
+path = "upstream/peps"
+pattern = "pep-0009.rst"
+parser = "pep_plaintext"
+output = "ko/peps/{path}"
+
+# PEP 본문은 Internet Message Format 메타데이터로 시작합니다. pep 파서는
+# 기계 판독 필드를 보존하고 Title 값과 첫 빈 줄 뒤의 RST 본문만 번역합니다.
+# Copyright/License 절은 법적 문구가 바뀌지 않도록 원문 그대로 둡니다.
+[[sources]]
+path = "upstream/peps"
+pattern = "pep-*.rst"
+exclude = [
+  "pep-0003.rst",
+  "pep-0005.rst",
+  "pep-0042.rst",
+  "pep-0100.rst",
+  "pep-0200.rst",
+  "pep-0202.rst",
+  "pep-0206.rst",
+  "pep-0210.rst",
+  "pep-0211.rst",
+  "pep-0213.rst",
+  "pep-0214.rst",
+  "pep-0216.rst",
+  "pep-0217.rst",
+  "pep-0219.rst",
+  "pep-0220.rst",
+  "pep-0225.rst",
+  "pep-0226.rst",
+  "pep-0227.rst",
+  "pep-0230.rst",
+  "pep-0233.rst",
+  "pep-0235.rst",
+  "pep-0339.rst",
+  "pep-0350.rst",
+  "pep-0401.rst",
+  "pep-0600.rst",
+  "pep-0720.rst",
+  "pep-0772.rst",
+  "pep-3106.rst",
+]
+parser = "pep"
+output = "ko/peps/{path}"
+
+# 특정 PEP에 딸린 부록은 부모 PEP의 라이선스를 따릅니다. 템플릿과 PEP
+# 저장소 자체의 운영 문서는 번역 대상에 포함하지 않습니다.
+[[sources]]
+path = "upstream/peps"
+pattern = "pep-*/appendix-*.rst"
+parser = "rst"
+output = "ko/peps/{path}"
+
+[derive]
+base = "upstream"
+
+[[derive.overlay]]
+path = "ko"
+require_base = true
+
+[[derive.overlay]]
+path = "overrides"
+
+# 각 PEP의 원문 Copyright 절을 다시 감사하고, 허가를 확인하지 못한 PEP는
+# 원문을 복제하지 않는 안내 페이지로 치환합니다. 허용된 번역에는 라이선스
+# 종류, 공식 원문, 수정자와 수정일(OPUBL-1.0)을 표시합니다.
+[[derive.step]]
+kind = "generate"
+command = '''
+python3 "$YEOKJA_ROOT/scripts/licenses.py" prepare .
+'''
+
+[build.html]
+command = '''
+set -e
+python3 -m sphinx --builder dirhtml --jobs auto --fail-on-warning --keep-going peps build
+mv build site
+cp license-manifest.json site/license-manifest.json
+'''
+outputs = ["site"]
+
+[provider]
+type = "pi"
+model = "gpt-5.6-sol"
+# PiProvider는 이 필드를 pi의 --provider 값으로 사용합니다.
+base_url = "openai-codex"
+
+[evaluation]
+auto_evaluate = true
+style_evaluate = false
+# 기계 검증에 실패한 세그먼트는 검증 피드백과 함께 다시 번역합니다.
+max_retries = 3
+
+[translation]
+concurrency = 18
+batch_segments = 32

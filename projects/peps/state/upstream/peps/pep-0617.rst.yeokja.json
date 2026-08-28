@@ -1,0 +1,2232 @@
+{
+  "version": 1,
+  "source_hash": 2694037603997144493,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "New PEG parser for CPython",
+      "source_hash": 3416733126285827503,
+      "context_hash": 1550075017305294471,
+      "translation": "CPython용 새로운 PEG 파서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653474Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Overview",
+      "source_hash": 11777448466030057203,
+      "context_hash": 11330878024118603182,
+      "translation": "개요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653477Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes replacing the current LL(1)-based parser of CPython with a new PEG-based parser.",
+      "source_hash": 4271973215504153719,
+      "context_hash": 7560861333959431992,
+      "translation": "이 PEP는 CPython의 현재 LL(1) 기반 파서를 새로운 PEG 기반 파서로 교체할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653477Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This new parser would allow the elimination of multiple \"hacks\" that exist in the current grammar to circumvent the LL(1)-limitation.",
+      "source_hash": 12306414983656054247,
+      "context_hash": 647542245800723902,
+      "translation": "이 새로운 파서를 사용하면 LL(1) 제한을 우회하기 위해 현재 문법에 존재하는 여러 \"hack\"을 제거할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653477Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "It would substantially reduce the maintenance costs in some areas related to the compiling pipeline such as the grammar, the parser and the AST generation.",
+      "source_hash": 9993342304469783400,
+      "context_hash": 17362360152694704801,
+      "translation": "또한 문법, 파서 및 AST 생성과 같은 컴파일 파이프라인 관련 일부 영역의 유지 관리 비용을 크게 줄일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653477Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:3",
+      "source": "The new PEG parser will also lift the LL(1) restriction on the current Python grammar.",
+      "source_hash": 17499744545137167651,
+      "context_hash": 1393650770842500376,
+      "translation": "새로운 PEG 파서는 현재 Python 문법에 대한 LL(1) 제한도 해제합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653478Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Background on LL(1) parsers",
+      "source_hash": 8721093079821365027,
+      "context_hash": 4129895377719832561,
+      "translation": "LL(1) 파서의 배경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653478Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The current Python grammar is an LL(1)-based grammar.",
+      "source_hash": 15917354573142032072,
+      "context_hash": 11972522999543526350,
+      "translation": "현재 Python 문법은 LL(1) 기반 문법입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653478Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "A grammar can be said to be LL(1) if it can be parsed by an LL(1) parser, which in turn is defined as a top-down parser that parses the input from left to right, performing leftmost derivation of the sentence, with just one token of lookahead.",
+      "source_hash": 9607915699536545975,
+      "context_hash": 2261075848114184420,
+      "translation": "문법은 LL(1) 파서로 구문 분석할 수 있다면 LL(1)이라고 할 수 있으며, LL(1) 파서는 입력을 왼쪽에서 오른쪽으로 구문 분석하고, 단 하나의 선행 토큰만 사용하여 문장의 가장 왼쪽 유도를 수행하는 하향식 파서로 정의됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653478Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "The traditional approach to constructing or generating an LL(1) parser is to produce a *parse table* which encodes the possible transitions between all possible states of the parser.",
+      "source_hash": 10756128479135333675,
+      "context_hash": 17009347173057555603,
+      "translation": "LL(1) 파서를 구성하거나 생성하는 전통적인 방법은 파서의 가능한 모든 상태 사이의 가능한 전이를 인코딩하는 *parse table*\\ 을 생성하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653479Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:3",
+      "source": "These tables are normally constructed from the *first sets* and the *follow sets* of the grammar:",
+      "source_hash": 13881482760651441866,
+      "context_hash": 13649598915333512659,
+      "translation": "이러한 테이블은 일반적으로 문법의 *first sets*\\ 와 *follow sets*\\ 로부터 구성됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653479Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Given a rule, the *first set* is the collection of all terminals that can occur first in a full derivation of that rule.",
+      "source_hash": 13046350278428596057,
+      "context_hash": 15412587723316855823,
+      "translation": "규칙이 주어졌을 때, *first set*\\ 은 해당 규칙을 완전히 유도할 때 처음에 나타날 수 있는 모든 단말 기호의 모음입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653479Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "Intuitively, this helps the parser decide among the alternatives in a rule.",
+      "source_hash": 11749564293166678515,
+      "context_hash": 15684360606113780193,
+      "translation": "직관적으로 이는 파서가 규칙의 여러 대안 중에서 결정하는 데 도움을 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653479Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "For instance, given the rule",
+      "source_hash": 10134961399650698873,
+      "context_hash": 15731878576446733717,
+      "translation": "예를 들어 다음 규칙이 주어졌다고 합시다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653480Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "if only ``A`` can start with the terminal *a* and only ``B`` can start with the terminal *b* and the parser sees the token *b* when parsing this rule, it knows that it needs to follow the non-terminal ``B``.",
+      "source_hash": 12070934513629103725,
+      "context_hash": 1041962227895359208,
+      "translation": "``A``\\ 만 단말 기호 *a*\\ 로 시작할 수 있고 ``B``\\ 만 단말 기호 *b*\\ 로 시작할 수 있는데, 이 규칙을 구문 분석할 때 파서가 토큰 *b*\\ 를 본다면, 따라야 할 비단말 기호가 ``B``\\ 임을 알 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653480Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "An extension to this simple idea is needed when a rule may expand to the empty string.",
+      "source_hash": 1932480095570135926,
+      "context_hash": 7653533105243846688,
+      "translation": "규칙이 빈 문자열로 확장될 수 있는 경우에는 이 단순한 개념을 확장해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653480Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "Given a rule, the *follow set* is the collection of terminals that can appear immediately to the right of that rule in a partial derivation.",
+      "source_hash": 1484687774799150583,
+      "context_hash": 18426488364134202359,
+      "translation": "규칙이 주어졌을 때, *follow set*\\ 은 부분 유도에서 해당 규칙의 바로 오른쪽에 나타날 수 있는 단말 기호의 모음입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653481Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:2",
+      "source": "Intuitively, this solves the problem of the empty alternative.",
+      "source_hash": 16261167080912282460,
+      "context_hash": 12836083815262358595,
+      "translation": "직관적으로 이는 빈 대안의 문제를 해결합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653481Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:3",
+      "source": "For instance, given this rule",
+      "source_hash": 15379399047502013631,
+      "context_hash": 1750772220384374462,
+      "translation": "예를 들어 다음 규칙이 주어졌다고 합시다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653481Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "if the parser has the token *b* and the non-terminal ``A`` can only start with the token *a*, then the parser can tell that this is an invalid program.",
+      "source_hash": 14063134384783321857,
+      "context_hash": 7341703818743558128,
+      "translation": "파서가 토큰 *b*\\ 를 가지고 있고 비단말 기호 ``A``\\ 가 토큰 *a*\\ 로만 시작할 수 있다면, 파서는 이것이 유효하지 않은 프로그램임을 알 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653481Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:1",
+      "source": "But if ``A`` could expand to the empty string (called an ε-production), then the parser would recognise a valid empty ``A``, since the next token *b* is in the *follow set*  of ``A``.",
+      "source_hash": 13128637688069463999,
+      "context_hash": 2191241205812241350,
+      "translation": "그러나 ``A``\\ 가 빈 문자열로 확장될 수 있다면(이를 ε-생성이라고 합니다), 다음 토큰 *b*\\ 가 ``A``\\ 의 *follow set*\\ 에 있으므로 파서는 유효한 빈 ``A``\\ 를 인식합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653482Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "The current Python grammar does not contain ε-productions, so the *follow sets* are not needed when creating the parse tables.",
+      "source_hash": 5739347154559611335,
+      "context_hash": 1617589144345299176,
+      "translation": "현재 Python 문법에는 ε-생성이 포함되어 있지 않으므로, 파싱 테이블을 생성할 때 *follow sets*\\ 는 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653482Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:1",
+      "source": "Currently, in CPython, a parser generator program reads the grammar and produces a parsing table representing a set of deterministic finite automata (DFA) that can be included in a C program, the parser.",
+      "source_hash": 5150161334502779026,
+      "context_hash": 5637740267051460567,
+      "translation": "현재 CPython에서는 파서 제너레이터 프로그램이 문법을 읽고, C 프로그램인 파서에 포함할 수 있는 결정적 유한 오토마타(DFA) 집합을 나타내는 구문 분석 테이블을 생성합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:49:36.426834Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:2",
+      "source": "The parser is a pushdown automaton that uses this data to produce a Concrete Syntax Tree (CST) sometimes known directly as a \"parse tree\".",
+      "source_hash": 10459247877294589533,
+      "context_hash": 3890771824541863582,
+      "translation": "파서는 이 데이터를 사용하여 구체 구문 트리(Concrete Syntax Tree, CST)를 생성하는 푸시다운 오토마톤이며, 이를 때로 직접 \"parse tree\"라고도 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653483Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:3",
+      "source": "In this process, the *first sets* are used indirectly when generating the DFAs.",
+      "source_hash": 7926202751293895126,
+      "context_hash": 7306725231808132765,
+      "translation": "이 과정에서 DFA를 생성할 때 *first sets*\\ 가 간접적으로 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653483Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "LL(1) parsers and grammars are usually efficient and simple to implement and generate.",
+      "source_hash": 3680251172539675335,
+      "context_hash": 231157303517001423,
+      "translation": "LL(1) 파서와 문법은 일반적으로 효율적이며 구현하고 생성하기도 쉽습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653484Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:1",
+      "source": "However, it is not possible, under the LL(1) restriction, to express certain common constructs in a way natural to the language designer and the reader.",
+      "source_hash": 11382305233285327337,
+      "context_hash": 11961568731375098893,
+      "translation": "그러나 LL(1) 제한하에서는 언어 설계자와 독자에게 자연스러운 방식으로 특정 일반적인 구문을 표현할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653484Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:2",
+      "source": "This includes some in the Python language.",
+      "source_hash": 15416083411383632499,
+      "context_hash": 13224992056903988607,
+      "translation": "여기에는 Python 언어의 일부 구문도 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653484Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "As LL(1) parsers can only look one token ahead to distinguish possibilities, some rules in the grammar may be ambiguous.",
+      "source_hash": 17627919280688225736,
+      "context_hash": 15373550874727885150,
+      "translation": "LL(1) 파서는 가능성을 구별하기 위해 한 토큰 앞만 살펴볼 수 있으므로, 문법의 일부 규칙은 모호할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653485Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:1",
+      "source": "For instance the rule",
+      "source_hash": 4599840600955012994,
+      "context_hash": 11540854832595749986,
+      "translation": "예를 들어 다음 규칙이 주어졌다고 합시다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:23.653485Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:0",
+      "source": "is ambiguous if the *first sets* of both ``A`` and ``B`` have some elements in common.",
+      "source_hash": 760391163406932119,
+      "context_hash": 17925245324470280266,
+      "translation": "``A``\\ 와 ``B``\\ 의 *첫 번째 집합* 모두에 일부 공통 원소가 있으면 모호합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981172Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:1",
+      "source": "When the parser sees a token in the input program that both *A* and *B* can start with, it is impossible for it to deduce which option to expand, as no further token of the program can be examined to disambiguate.",
+      "source_hash": 12941748255982133221,
+      "context_hash": 15394094902221212472,
+      "translation": "파서가 입력 프로그램에서 *A*\\ 와 *B* 모두로 시작할 수 있는 토큰을 발견하면, 프로그램의 더 이상 어떤 토큰도 검사하여 구분할 수 없으므로 어느 선택지를 확장해야 하는지 추론할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981177Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:2",
+      "source": "The rule may be transformed to equivalent LL(1) rules, but then it may be harder for a human reader to grasp its meaning.",
+      "source_hash": 10537892663634851833,
+      "context_hash": 14424701818030611152,
+      "translation": "이 규칙은 동등한 LL(1) 규칙으로 변환할 수 있지만, 그러면 사람이 그 의미를 파악하기 더 어려워질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981178Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:3",
+      "source": "Examples later in this document show that the current LL(1)-based grammar suffers a lot from this scenario.",
+      "source_hash": 14598560830140316250,
+      "context_hash": 4117176061833547185,
+      "translation": "이 문서의 뒷부분에 나오는 예제는 현재의 LL(1) 기반 문법이 이 상황을 크게 겪는다는 것을 보여 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981178Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:0",
+      "source": "Another broad class of rules precluded by LL(1) is left-recursive rules.",
+      "source_hash": 8334684716469952405,
+      "context_hash": 14366670285129282570,
+      "translation": "LL(1)에서 배제되는 또 다른 광범위한 규칙 부류는 왼쪽 재귀 규칙입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981179Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:1",
+      "source": "A rule is left-recursive if it can derive to a sentential form with itself as the leftmost symbol.",
+      "source_hash": 7859506700589702903,
+      "context_hash": 12148939173754492863,
+      "translation": "규칙이 자신을 가장 왼쪽 기호로 갖는 문장형으로 유도될 수 있으면 해당 규칙은 왼쪽 재귀입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981179Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:2",
+      "source": "For instance this rule",
+      "source_hash": 17574584534274521214,
+      "context_hash": 1979112720754159411,
+      "translation": "예를 들어 다음 규칙은",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981180Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:15/seg:0",
+      "source": "is left-recursive because the rule can be expanded to an expression that starts with itself.",
+      "source_hash": 6197659113323675079,
+      "context_hash": 6946701363889811082,
+      "translation": "이 규칙으로부터 자기 자신으로 시작하는 표현식으로 확장할 수 있으므로 왼쪽 재귀입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981180Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:15/seg:1",
+      "source": "As will be described later, left-recursion is the natural way to express certain desired language properties directly in the grammar.",
+      "source_hash": 15906668712981995878,
+      "context_hash": 3669476416250322978,
+      "translation": "뒤에서 설명하겠지만, 왼쪽 재귀는 원하는 특정 언어 속성을 문법에서 직접 표현하는 자연스러운 방법입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981181Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Background on PEG parsers",
+      "source_hash": 16814585683166678557,
+      "context_hash": 11127926654390176868,
+      "translation": "PEG 파서의 배경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981181Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "A PEG (Parsing Expression Grammar) grammar differs from a context-free grammar (like the current one) in the fact that the way it is written more closely reflects how the parser will operate when parsing it.",
+      "source_hash": 2980991408979973088,
+      "context_hash": 755538871753215662,
+      "translation": "PEG(Parsing Expression Grammar) 문법은 문맥 자유 문법(현재 문법과 같은 문법)과 달리, 작성 방식이 파서가 이를 파싱할 때 작동하는 방식을 더 밀접하게 반영합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981182Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "The fundamental technical difference is that the choice operator is ordered.",
+      "source_hash": 4162577942842820937,
+      "context_hash": 4049075989694582308,
+      "translation": "근본적인 기술적 차이는 선택 연산자가 순서가 있다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981182Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "This means that when writing",
+      "source_hash": 6115072997807257619,
+      "context_hash": 1936426439947057640,
+      "translation": "즉, 다음과 같이 작성할 때",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981182Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "a context-free-grammar parser (like an LL(1) parser) will generate constructions that given an input string will *deduce* which alternative (``A``, ``B`` or ``C``) must be expanded, while a PEG parser will check if the first alternative succeeds and only if it fails, will it continue with the second or the third one in the order in which they are written.",
+      "source_hash": 14421733037345014836,
+      "context_hash": 15847318829970900037,
+      "translation": "문맥 자유 문법 파서(LL(1) 파서와 같은 파서)는 입력 문자열이 주어지면 어떤 대안(``A``, ``B`` 또는 ``C``)을 확장해야 하는지 *추론*\\ 하는 구문을 생성하는 반면, PEG 파서는 첫 번째 대안이 성공하는지 확인하고, 실패한 경우에만 작성된 순서에 따라 두 번째 대안 또는 세 번째 대안으로 계속 진행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981183Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "This makes the choice operator not commutative.",
+      "source_hash": 9408209484766607345,
+      "context_hash": 649578254402807358,
+      "translation": "따라서 선택 연산자는 교환법칙을 따르지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981183Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "Unlike LL(1) parsers, PEG-based parsers cannot be ambiguous: if a string parses, it has exactly one valid parse tree.",
+      "source_hash": 8566513154996517715,
+      "context_hash": 1609613382876029531,
+      "translation": "LL(1) 파서와 달리 PEG 기반 파서는 모호할 수 없습니다. 문자열이 파싱되면 유효한 파싱 트리가 정확히 하나만 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981184Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:1",
+      "source": "This means that a PEG-based parser cannot suffer from the ambiguity problems described in the previous section.",
+      "source_hash": 16479967710672189275,
+      "context_hash": 15618873554159982231,
+      "translation": "이는 PEG 기반 파서가 이전 절에서 설명한 모호성 문제를 겪을 수 없다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981184Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "PEG parsers are usually constructed as a recursive descent parser in which every rule in the grammar corresponds to a function in the program implementing the parser and the parsing expression (the \"expansion\" or \"definition\" of the rule) represents the \"code\" in said function.",
+      "source_hash": 5110750545345947075,
+      "context_hash": 6982022102108182309,
+      "translation": "PEG 파서는 일반적으로 재귀 하강 파서로 구성되며, 여기서는 문법의 각 규칙이 파서를 구현하는 프로그램의 함수에 대응하고, 파싱 표현식(해당 규칙의 \"확장\" 또는 \"정의\")이 해당 함수의 \"코드\"를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981185Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "Each parsing function conceptually takes an input string as its argument, and yields one of the following results:",
+      "source_hash": 4182567324049314091,
+      "context_hash": 2101244972723313922,
+      "translation": "각 파싱 함수는 개념적으로 입력 문자열을 인자로 받아 다음 결과 중 하나를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981185Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "A \"success\" result.",
+      "source_hash": 12608571068585028105,
+      "context_hash": 646560201971644417,
+      "translation": "\"성공\" 결과입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981185Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:1",
+      "source": "This result indicates that the expression can be parsed by that rule and the function may optionally move forward or consume one or more characters of the input string supplied to it.",
+      "source_hash": 2349157410550053269,
+      "context_hash": 17019510403562838667,
+      "translation": "이 결과는 해당 규칙으로 표현식을 파싱할 수 있으며, 함수가 선택적으로 앞으로 진행하여 제공된 입력 문자열의 문자를 하나 이상 소비할 수 있음을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981185Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "A \"failure\" result, in which case no input is consumed.",
+      "source_hash": 13178655946942213507,
+      "context_hash": 15182444570104989945,
+      "translation": "\"실패\" 결과이며, 이 경우 입력은 소비되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981185Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "Notice that \"failure\" results do not imply that the program is incorrect or a parsing failure because as the choice operator is ordered, a \"failure\" result merely indicates \"try the following option\".",
+      "source_hash": 17243257265254909983,
+      "context_hash": 16339937070769801931,
+      "translation": "선택 연산자에 순서가 있으므로 \"실패\" 결과는 단순히 \"다음 선택지를 시도하십시오\"를 나타낼 뿐, 프로그램이 잘못되었거나 파싱에 실패했음을 의미하지 않는다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981186Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:1",
+      "source": "A direct implementation of a PEG parser as a recursive descent parser will present exponential time performance in the worst case as compared with LL(1) parsers, because PEG parsers have infinite lookahead (this means that they can consider an arbitrary number of tokens before deciding for a rule).",
+      "source_hash": 7299976213091180674,
+      "context_hash": 9925342118109330254,
+      "translation": "PEG 파서는 무한한 선행 탐색을 수행하기 때문에(즉, 규칙을 결정하기 전에 임의의 수의 토큰을 고려할 수 있기 때문에), PEG 파서를 재귀 하강 파서로 직접 구현하면 최악의 경우 LL(1) 파서와 비교하여 지수 시간 성능을 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981186Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:2",
+      "source": "Usually, PEG parsers avoid this exponential time complexity with a technique called \"packrat parsing\" [1]_ which not only loads the entire program in memory before parsing it but also allows the parser to backtrack arbitrarily.",
+      "source_hash": 13807115582894454361,
+      "context_hash": 12567062011342762749,
+      "translation": "일반적으로 PEG 파서는 \"팩랫 파싱\"이라고 하는 기법 [1]_ 을 사용하여 이러한 지수 시간 복잡도를 피합니다. 이 기법은 파싱하기 전에 전체 프로그램을 메모리에 로드할 뿐만 아니라 파서가 임의로 역추적할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981187Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:3",
+      "source": "This is made efficient by memoizing the rules already matched for each position.",
+      "source_hash": 2826069140097713246,
+      "context_hash": 15395613376641471227,
+      "translation": "이는 각 위치에서 이미 일치한 규칙을 메모이제이션하여 효율적으로 수행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981187Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:4",
+      "source": "The cost of the memoization cache is that the parser will naturally use more memory than a simple LL(1) parser, which normally are table-based.",
+      "source_hash": 16087147606130535885,
+      "context_hash": 5669782844444540071,
+      "translation": "메모이제이션 캐시의 비용은 일반적인 단순 LL(1) 파서가 테이블 기반인 것과 달리, 파서가 자연스럽게 더 많은 메모리를 사용한다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981187Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:5",
+      "source": "We will explain later in this document why we consider this cost acceptable.",
+      "source_hash": 15734837107224589531,
+      "context_hash": 9133764404747641936,
+      "translation": "이 문서의 뒷부분에서 이 비용을 수용할 수 있다고 판단하는 이유를 설명하겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981187Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 13073669201036946053,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981188Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "In this section, we describe a list of problems that are present in the current parser machinery in CPython that motivates the need for a new parser.",
+      "source_hash": 3677360536853625635,
+      "context_hash": 1074980507408479935,
+      "translation": "이 절에서는 새로운 파서의 필요성을 뒷받침하는, 현재 CPython의 파서 체계에 존재하는 여러 문제를 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981188Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Some rules are not actually LL(1)",
+      "source_hash": 14248347747009092748,
+      "context_hash": 932727067214604084,
+      "translation": "일부 규칙은 실제로 LL(1)이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:18.981188Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Although the Python grammar is technically an LL(1) grammar (because it is parsed by an LL(1) parser) several rules are not LL(1) and several workarounds are implemented in the grammar and in other parts of CPython to deal with this.",
+      "source_hash": 9376484106598506070,
+      "context_hash": 14166288279657502703,
+      "translation": "Python 문법은 기술적으로 LL(1) 문법이지만(LL(1) 파서로 구문 분석되기 때문입니다), 여러 규칙이 LL(1)이 아니며 이를 처리하기 위한 여러 우회책이 문법과 CPython의 다른 부분에 구현되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.266995Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "For example, consider the rule for assignment expressions",
+      "source_hash": 7689346923919670469,
+      "context_hash": 8013920007218488999,
+      "translation": "예를 들어, 대입 표현식에 대한 규칙을 살펴보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267001Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "This simple rule is not compatible with the Python grammar as *NAME* is among the elements of the *first set* of the rule *test*.",
+      "source_hash": 14874812760166398707,
+      "context_hash": 13025685903965957599,
+      "translation": "이 단순한 규칙은 *NAME*\\ 이 *test* 규칙의 *FIRST 집합*\\ 에 속하는 요소이므로 Python 문법과 호환되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267001Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "To work around this limitation the actual rule that appears in the current grammar is",
+      "source_hash": 10196512572070848936,
+      "context_hash": 3488371866390385602,
+      "translation": "이 제한을 우회하기 위해 현재 문법에 나타나는 실제 규칙은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267001Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "Which is a much broader rule than the previous one allowing constructs like ``[x for x in y] := [1,2,3]``.",
+      "source_hash": 11762177298838334316,
+      "context_hash": 4484756313235952517,
+      "translation": "이는 이전 규칙보다 훨씬 더 포괄적인 규칙이므로 ``[x for x in y] := [1,2,3]``\\ 와 같은 구문을 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267002Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:1",
+      "source": "The way the rule is limited to its desired form is by disallowing these unwanted constructions when transforming the parse tree to the abstract syntax tree.",
+      "source_hash": 16217200931543017291,
+      "context_hash": 1339856612688929202,
+      "translation": "이 규칙을 원하는 형태로 제한하는 방법은 파스 트리를 추상 구문 트리로 변환할 때 이러한 원치 않는 구문을 허용하지 않는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267002Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:2",
+      "source": "This is not only inelegant but a considerable maintenance burden as it forces the AST creation routines and the compiler into a situation in which they need to know how to separate valid programs from invalid programs, which should be a responsibility solely of the parser.",
+      "source_hash": 5341756768144902938,
+      "context_hash": 11440819968378311620,
+      "translation": "이는 우아하지 않을 뿐만 아니라 상당한 유지 관리 부담이기도 합니다. AST 생성 루틴과 컴파일러가 유효한 프로그램과 유효하지 않은 프로그램을 구분하는 방법을 알아야 하는 상황에 놓이게 하기 때문이며, 이는 오로지 파서가 담당해야 할 책임입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267002Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:3",
+      "source": "This also leads to the actual grammar file not reflecting correctly what the *actual* grammar is (that is, the collection of all valid Python programs).",
+      "source_hash": 7655193469637297009,
+      "context_hash": 3166750182783824252,
+      "translation": "이로 인해 실제 문법 파일이 *실제* 문법, 즉 유효한 모든 Python 프로그램의 집합을 올바르게 반영하지 못하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267003Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "Similar workarounds appear in multiple other rules of the current grammar.",
+      "source_hash": 2006284132294394201,
+      "context_hash": 10191666807774293903,
+      "translation": "현재 문법의 여러 다른 규칙에서도 이와 유사한 우회책이 나타납니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267003Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:1",
+      "source": "Sometimes this problem is unsolvable.",
+      "source_hash": 13084089895263891101,
+      "context_hash": 556403323154278334,
+      "translation": "때로는 이 문제를 해결할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267004Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:2",
+      "source": "For instance, `bpo-12782: Multiple context expressions do not support parentheses for continuation across lines <https://github.com/python/cpython/issues/56991>`_ shows how making an LL(1) rule that supports writing",
+      "source_hash": 18437289333572018790,
+      "context_hash": 5517371344489436507,
+      "translation": "예를 들어, `bpo-12782: Multiple context expressions do not support parentheses for continuation across lines <https://github.com/python/cpython/issues/56991>`_\\ 은 다음과 같은 작성을 지원하는 LL(1) 규칙을 만드는 방법을 보여 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267004Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "is not possible since the first sets of the grammar items that can appear as context managers include the open parenthesis, making the rule ambiguous.",
+      "source_hash": 7051031403236645066,
+      "context_hash": 9140052479925344474,
+      "translation": "컨텍스트 관리자로 나타날 수 있는 문법 항목의 FIRST 집합에 여는 괄호가 포함되므로, 이 규칙은 모호해지기 때문에 작성할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267004Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:1",
+      "source": "This rule is not only consistent with other parts of the language (like the rule for multiple imports), but is also very useful to auto-formatting tools, as parenthesized groups are normally used to group elements to be formatted together (in the same way the tools operate on the contents of lists, sets...).",
+      "source_hash": 10804393112185133551,
+      "context_hash": 18040906387694683528,
+      "translation": "이 규칙은 언어의 다른 부분(예를 들어 여러 import에 대한 규칙)과 일관될 뿐만 아니라 자동 서식 지정 도구에도 매우 유용합니다. 괄호로 묶인 그룹은 일반적으로 함께 서식을 지정할 요소를 그룹화하는 데 사용되기 때문입니다(이러한 도구가 리스트, 집합 등의 내용에 대해 작동하는 방식과 같습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267005Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Complicated AST parsing",
+      "source_hash": 3512298010237486529,
+      "context_hash": 15677514352824807878,
+      "translation": "복잡한 AST 파싱",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267005Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Another problem of the current parser is that there is a huge coupling between the AST generation routines and the particular shape of the produced parse trees.",
+      "source_hash": 1408719615446730173,
+      "context_hash": 5089159894270404109,
+      "translation": "현재 파서의 또 다른 문제는 AST 생성 루틴과 생성된 파스 트리의 특정 형태 사이에 매우 강한 결합이 있다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267005Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "This makes the code for generating the AST especially complicated as many actions and choices are implicit.",
+      "source_hash": 1077085417303841407,
+      "context_hash": 15102376832911765659,
+      "translation": "이로 인해 많은 동작과 선택이 암묵적으로 이루어지므로 AST를 생성하는 코드가 특히 복잡해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267006Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:2",
+      "source": "For instance, the AST generation code knows what alternatives of a certain rule are produced based on the number of child nodes present in a given parse node.",
+      "source_hash": 17022973578106201662,
+      "context_hash": 6613834793361521462,
+      "translation": "예를 들어 AST 생성 코드는 특정 규칙의 어떤 대안이 생성되는지를 주어진 파스 노드에 존재하는 자식 노드 수를 바탕으로 파악합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267006Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:3",
+      "source": "This makes the code difficult to follow as this property is not directly related to the grammar file and is influenced by implementation details.",
+      "source_hash": 9400659996519440229,
+      "context_hash": 1243319443780373598,
+      "translation": "이 속성이 문법 파일과 직접 관련되어 있지 않고 구현 세부 사항의 영향을 받으므로 코드를 이해하기가 어려워집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267007Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:4",
+      "source": "As a result of this, a considerable amount of the AST generation code needs to deal with inspecting and reasoning about the particular shape of the parse trees that it receives.",
+      "source_hash": 1265046017449203078,
+      "context_hash": 11110185792722913456,
+      "translation": "그 결과 AST 생성 코드의 상당 부분이 전달받은 파스 트리의 특정 형태를 검사하고 이에 대해 추론해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267007Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Lack of left recursion",
+      "source_hash": 17634759751871006401,
+      "context_hash": 9800785605704115264,
+      "translation": "좌재귀의 부재",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267007Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "As described previously, a limitation of LL(1) grammars is that they cannot allow left-recursion.",
+      "source_hash": 1393579910103251391,
+      "context_hash": 10203178966179768074,
+      "translation": "앞서 설명했듯이 LL(1) 문법의 한계는 좌재귀를 허용할 수 없다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267007Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "This makes writing some rules very unnatural and far from how programmers normally think about the program.",
+      "source_hash": 2025801308953443688,
+      "context_hash": 11805494072255148621,
+      "translation": "이로 인해 일부 규칙을 작성하는 방식이 매우 부자연스럽고 프로그래머가 일반적으로 프로그램을 사고하는 방식과도 동떨어지게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267008Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:2",
+      "source": "For instance this construct (a simpler variation of several rules present in the current grammar)",
+      "source_hash": 11063413174591095728,
+      "context_hash": 17327522695518109900,
+      "translation": "예를 들어 현재 문법에 존재하는 여러 규칙을 단순화한 변형인 다음 구문은",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267008Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "cannot be parsed by an LL(1) parser.",
+      "source_hash": 14554617120845458018,
+      "context_hash": 4888927386396589841,
+      "translation": "LL(1) 파서로 구문 분석할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267008Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "The traditional remedy is to rewrite the grammar to circumvent the problem",
+      "source_hash": 4043913073607935242,
+      "context_hash": 17341101173074031788,
+      "translation": "전통적인 해결책은 이 문제를 우회하도록 문법을 다시 작성하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267009Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "The problem that appears with this form is that the parse tree is forced to have a very unnatural shape.",
+      "source_hash": 10366059729192625766,
+      "context_hash": 5562898081565759819,
+      "translation": "이 형태에서 발생하는 문제는 파스 트리가 매우 부자연스러운 형태를 갖도록 강제된다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267009Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:1",
+      "source": "This is because with this rule, for the input program ``a + b + c`` the parse tree will be flattened (``['a', '+', 'b', '+', 'c']``) and must be post-processed to construct a left-recursive parse tree (``[['a', '+', 'b'], '+', 'c']``).",
+      "source_hash": 16685009927387689878,
+      "context_hash": 7394614285370203051,
+      "translation": "이 규칙을 사용하면 입력 프로그램 ``a + b + c``\\ 에 대해 파스 트리가 평탄화된 형태(``['a', '+', 'b', '+', 'c']``)가 되며, 좌재귀 파스 트리(``[['a', '+', 'b'], '+', 'c']``)를 구성하려면 후처리해야 하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267010Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:2",
+      "source": "Being forced to write the second rule not only leads to the parse tree not correctly reflecting the desired associativity, but also imposes further pressure on later compilation stages to detect and post-process these cases.",
+      "source_hash": 15537924180243952847,
+      "context_hash": 18002233350227156993,
+      "translation": "두 번째 규칙을 작성하도록 강제하면 파스 트리가 원하는 결합 방향을 올바르게 반영하지 못할 뿐만 아니라, 이후 컴파일 단계에서 이러한 경우를 감지하고 후처리해야 한다는 부담도 가중됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267010Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Intermediate parse tree",
+      "source_hash": 6754148558391038898,
+      "context_hash": 48915975896641183,
+      "translation": "중간 파스 트리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:26.267010Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The last problem present in the current parser is the intermediate creation of a parse tree or Concrete Syntax Tree that is later transformed to an Abstract Syntax Tree.",
+      "source_hash": 9613047563305842984,
+      "context_hash": 6315362952121032580,
+      "translation": "현재 파서에 존재하는 마지막 문제는 나중에 추상 구문 트리로 변환되는 구문 분석 트리 또는 구체 구문 트리를 중간 단계에서 생성한다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320457Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "Although the construction of a CST is very common in parser and compiler pipelines, in CPython this intermediate CST is not used by anything else (it is only indirectly exposed by the *parser* module and a surprisingly small part of the code in the CST production is reused in the module).",
+      "source_hash": 3255464575995643747,
+      "context_hash": 7647693317254931183,
+      "translation": "CST의 구성은 파서 및 컴파일러 파이프라인에서 매우 일반적이지만, CPython에서는 이 중간 CST를 다른 어떤 것도 사용하지 않습니다(*parser* 모듈을 통해 간접적으로만 노출되며 CST 생성 코드 중 놀라울 정도로 적은 부분만 해당 모듈에서 재사용됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320463Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "Which is worse: the whole tree is kept in memory, keeping many branches that consist of chains of nodes with a single child.",
+      "source_hash": 441361044752502461,
+      "context_hash": 14530168882445447866,
+      "translation": "더 나쁜 점은 전체 트리가 메모리에 유지되며, 단일 자식을 가진 노드의 연쇄로 구성된 많은 가지도 함께 유지된다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320464Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:3",
+      "source": "This has been shown to consume a considerable amount of memory (for instance in `bpo-26415: Excessive peak memory consumption by the Python parser <https://github.com/python/cpython/issues/70603>`_).",
+      "source_hash": 2411437297413909551,
+      "context_hash": 12598040043674158038,
+      "translation": "이로 인해 상당한 양의 메모리가 소비되는 것으로 나타났습니다(예를 들어 `bpo-26415: Excessive peak memory consumption by the Python parser <https://github.com/python/cpython/issues/70603>`_).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320465Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Having to produce an intermediate result between the grammar and the AST is not only undesirable but also makes the AST generation step much more complicated, raising considerably the maintenance burden.",
+      "source_hash": 1660370696634317163,
+      "context_hash": 1704268935749844890,
+      "translation": "문법과 AST 사이에 중간 결과를 생성해야 하는 것은 바람직하지 않을 뿐만 아니라 AST 생성 단계를 훨씬 더 복잡하게 만들어 유지 관리 부담을 크게 증가시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320465Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "The new proposed PEG parser",
+      "source_hash": 14667981005491717589,
+      "context_hash": 10612887240843504461,
+      "translation": "새롭게 제안된 PEG 파서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320466Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "The new proposed PEG parser contains the following pieces:",
+      "source_hash": 15664898481073140232,
+      "context_hash": 4254357134841475199,
+      "translation": "새롭게 제안된 PEG 파서는 다음 구성 요소를 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320466Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "A parser generator that can read a grammar file and produce a PEG parser written in Python or C that can parse said grammar.",
+      "source_hash": 16133125996525482874,
+      "context_hash": 11328443730057947312,
+      "translation": "문법 파일을 읽고 해당 문법을 구문 분석할 수 있는 Python 또는 C로 작성된 PEG 파서를 생성하는 파서 제너레이터입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:49:36.426838Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "A PEG meta-grammar that automatically generates a Python parser that is used for the parser generator itself (this means that there are no manually-written parsers).",
+      "source_hash": 5617638707948534197,
+      "context_hash": 1018642960052858779,
+      "translation": "파서 제너레이터 자체에 사용되는 Python 파서를 자동으로 생성하는 PEG 메타 문법입니다(즉, 수작업으로 작성된 파서가 없습니다).",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:49:36.426839Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "A generated parser (using the parser generator) that can directly produce C and Python AST objects.",
+      "source_hash": 11064534404498714640,
+      "context_hash": 4332050734610900544,
+      "translation": "C 및 Python AST 객체를 직접 생성할 수 있도록 생성된 파서(파서 제너레이터를 사용함)입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:49:36.426839Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Left recursion",
+      "source_hash": 13438710526806727051,
+      "context_hash": 9655754659087100153,
+      "translation": "좌재귀",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320474Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "PEG parsers normally do not support left recursion but we have implemented a technique similar to the one described in Medeiros et al. [2]_ but using the memoization cache instead of static variables.",
+      "source_hash": 18295608965873249948,
+      "context_hash": 11055537086576105724,
+      "translation": "PEG 파서는 일반적으로 좌재귀를 지원하지 않지만, 정적 변수 대신 메모이제이션 캐시를 사용하는 Medeiros et al. [2]_\\ 에서 설명한 기법과 유사한 기법을 구현했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320474Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "This approach is closer to the one described in Warth et al. [3]_.",
+      "source_hash": 3323057329533665203,
+      "context_hash": 5632573418811113045,
+      "translation": "이 접근 방식은 Warth et al. [3]_\\ 에서 설명한 방식에 더 가깝습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320475Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "This allows us to write not only simple left-recursive rules but also more complicated rules that involve indirect left-recursion like",
+      "source_hash": 7322517050718652551,
+      "context_hash": 6813628265703011171,
+      "translation": "이를 통해 단순한 좌재귀 규칙뿐만 아니라 다음과 같이 간접 좌재귀를 포함하는 더 복잡한 규칙도 작성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320475Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "and \"hidden left-recursion\" like",
+      "source_hash": 9032545667187233907,
+      "context_hash": 14320962525768147851,
+      "translation": "또한 다음과 같은 “숨은 좌재귀”도 작성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320475Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Syntax",
+      "source_hash": 15264683888421833618,
+      "context_hash": 14528327753580760377,
+      "translation": "구문",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320475Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "The grammar consists of a sequence of rules of the form",
+      "source_hash": 11351201532840795770,
+      "context_hash": 5971559762309507786,
+      "translation": "문법은 다음 형식의 규칙 시퀀스로 구성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320476Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "Optionally, a type can be included right after the rule name, which specifies the return type of the C or Python function corresponding to the rule",
+      "source_hash": 16182579716526399432,
+      "context_hash": 1620350224477696788,
+      "translation": "선택적으로 규칙 이름 바로 뒤에 타입을 포함할 수 있으며, 이는 해당 규칙에 대응하는 C 또는 Python 함수의 반환 타입을 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320476Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "If the return type is omitted, then a ``void *`` is returned in C and an ``Any`` in Python.",
+      "source_hash": 2590843841843322270,
+      "context_hash": 11754143371329369088,
+      "translation": "반환 타입을 생략하면 C에서는 ``void *``\\ 가 반환되고 Python에서는 ``Any``\\ 가 반환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320477Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "Grammar Expressions",
+      "source_hash": 7816018514605923934,
+      "context_hash": 54588715460796904,
+      "translation": "문법 표현식",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320477Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "``# comment``",
+      "source_hash": 11116947690464031334,
+      "context_hash": 14892820204083836790,
+      "translation": "``# comment``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320477Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:0",
+      "source": "Python-style comments.",
+      "source_hash": 11944720870899118918,
+      "context_hash": 15397126894240136028,
+      "translation": "Python 스타일 주석입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320478Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:9/seg:0",
+      "source": "``e1 e2``",
+      "source_hash": 3952502825936543885,
+      "context_hash": 10311790065584823864,
+      "translation": "``e1 e2``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320478Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:10/seg:0",
+      "source": "Match e1, then match e2.",
+      "source_hash": 17064224778801369098,
+      "context_hash": 15708402098577650902,
+      "translation": "e1과 일치시킨 다음 e2와 일치시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320479Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:12/seg:0",
+      "source": "``e1 | e2``",
+      "source_hash": 6405446858648905126,
+      "context_hash": 17973054954697708012,
+      "translation": "``e1 | e2``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320479Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:13/seg:0",
+      "source": "Match e1 or e2.",
+      "source_hash": 15112461493269636076,
+      "context_hash": 8255395083486592126,
+      "translation": "e1 또는 e2와 일치시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320479Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:14/seg:0",
+      "source": "The first alternative can also appear on the line after the rule name for formatting purposes.",
+      "source_hash": 10431224969044747062,
+      "context_hash": 2468349017624056093,
+      "translation": "서식 지정을 위해 첫 번째 대안은 규칙 이름 다음 줄에 나타낼 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320480Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:14/seg:1",
+      "source": "In that case, a \\| must be used before the first alternative, like so:",
+      "source_hash": 11222149770812755900,
+      "context_hash": 4579179138804443587,
+      "translation": "이 경우에는 첫 번째 대안 앞에 다음과 같이 \\|를 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320480Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:16/seg:0",
+      "source": "``( e )``",
+      "source_hash": 12464867873133033042,
+      "context_hash": 13480096393763749944,
+      "translation": "``( e )``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320481Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:17/seg:0",
+      "source": "Match e.",
+      "source_hash": 4723863934418946268,
+      "context_hash": 5459833512871425564,
+      "translation": "e와 일치시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320481Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:19/seg:0",
+      "source": "A slightly more complex and useful example includes using the grouping operator together with the repeat operators:",
+      "source_hash": 7544762262713154811,
+      "context_hash": 5141118300335099582,
+      "translation": "조금 더 복잡하고 유용한 예로 그룹화 연산자를 반복 연산자와 함께 사용하는 경우가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320481Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:21/seg:0",
+      "source": "``[ e ] or e?``",
+      "source_hash": 16770265155524838502,
+      "context_hash": 9277986023895174902,
+      "translation": "``[ e ] or e?``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:22.320482Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:22/seg:0",
+      "source": "Optionally match e.",
+      "source_hash": 14676986965621522782,
+      "context_hash": 889408356209047684,
+      "translation": "e를 선택적으로 일치시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110546Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:24/seg:0",
+      "source": "A more useful example includes defining that a trailing comma is optional:",
+      "source_hash": 9605992115215478042,
+      "context_hash": 14349118547796386918,
+      "translation": "더 유용한 예에는 후행 쉼표가 선택 사항임을 정의하는 내용이 포함됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110549Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:26/seg:0",
+      "source": "``e*``",
+      "source_hash": 10900908227022399970,
+      "context_hash": 1143010978161657098,
+      "translation": "``e*``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110550Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:27/seg:0",
+      "source": "Match zero or more occurrences of e.",
+      "source_hash": 8425369146105709544,
+      "context_hash": 15343235600534089651,
+      "translation": "e가 0회 이상 나타나는 것과 일치시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110550Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:29/seg:0",
+      "source": "``e+``",
+      "source_hash": 717964767102267323,
+      "context_hash": 7459274072267501940,
+      "translation": "``e+``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110551Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:30/seg:0",
+      "source": "Match one or more occurrences of e.",
+      "source_hash": 5841559246084695725,
+      "context_hash": 12419992495607270952,
+      "translation": "e가 1회 이상 나타나는 것과 일치시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110551Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:32/seg:0",
+      "source": "``s.e+``",
+      "source_hash": 9622923991766157046,
+      "context_hash": 12560951572187028214,
+      "translation": "``s.e+``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110551Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:33/seg:0",
+      "source": "Match one or more occurrences of e, separated by s.",
+      "source_hash": 181056153183935937,
+      "context_hash": 5724647874647040406,
+      "translation": "s로 구분된 e가 1회 이상 나타나는 것과 일치시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110551Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:33/seg:1",
+      "source": "The generated parse tree does not include the separator.",
+      "source_hash": 14755325479416986143,
+      "context_hash": 1944714874547185182,
+      "translation": "생성된 구문 트리에는 구분 기호가 포함되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110552Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:33/seg:2",
+      "source": "This is otherwise identical to ``(e (s e)*)``.",
+      "source_hash": 12624916984003818484,
+      "context_hash": 2665349093823401727,
+      "translation": "그 외에는 ``(e (s e)*)``\\ 와 동일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110552Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:35/seg:0",
+      "source": "``&e``",
+      "source_hash": 7496451057332968370,
+      "context_hash": 538143633573254172,
+      "translation": "``&e``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110552Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:36/seg:0",
+      "source": "Succeed if e can be parsed, without consuming any input.",
+      "source_hash": 4415348585311841629,
+      "context_hash": 7114256440395098085,
+      "translation": "입력을 소비하지 않고 e를 구문 분석할 수 있으면 성공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110553Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:37/seg:0",
+      "source": "``!e``",
+      "source_hash": 4078209065933844166,
+      "context_hash": 15255989393071419873,
+      "translation": "``!e``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110553Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:38/seg:0",
+      "source": "Fail if e can be parsed, without consuming any input.",
+      "source_hash": 17936001803546395287,
+      "context_hash": 1202423133583868132,
+      "translation": "입력을 소비하지 않고 e를 구문 분석할 수 있으면 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110553Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:39/seg:0",
+      "source": "An example taken from the proposed Python grammar specifies that a primary consists of an atom, which is not followed by a ``.`` or a ``(`` or a ``[``:",
+      "source_hash": 7840289499647282021,
+      "context_hash": 16511635001937083583,
+      "translation": "제안된 Python 문법에서 가져온 예는 기본식이 ``.`` 또는 ``(`` 또는 ``[``\\ 가 뒤따르지 않는 원자로 구성된다고 지정합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110553Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:41/seg:0",
+      "source": "``~``",
+      "source_hash": 3254831880060518201,
+      "context_hash": 1280318524882403482,
+      "translation": "``~``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110553Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:42/seg:0",
+      "source": "Commit to the current alternative, even if it fails to parse.",
+      "source_hash": 15254986160972500000,
+      "context_hash": 17732433320453215934,
+      "translation": "구문 분석에 실패하더라도 현재 대안을 확정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110554Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:44/seg:0",
+      "source": "In this example, if a left parenthesis is parsed, then the other alternative won’t be considered, even if some_rule or ‘)’ fail to be parsed.",
+      "source_hash": 10370632406639989584,
+      "context_hash": 15407305011299694876,
+      "translation": "이 예에서는 왼쪽 괄호가 구문 분석되면 some_rule 또는 ‘)’를 구문 분석하는 데 실패하더라도 다른 대안은 고려되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110554Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:45/seg:0",
+      "source": "Variables in the Grammar",
+      "source_hash": 9823721511751903448,
+      "context_hash": 6018710485283179523,
+      "translation": "문법의 변수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110554Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:46/seg:0",
+      "source": "A subexpression can be named by preceding it with an identifier and an ``=`` sign.",
+      "source_hash": 1948592183413332407,
+      "context_hash": 6748890956301776304,
+      "translation": "식별자와 ``=``\\ 기호를 앞에 붙여 하위 표현식에 이름을 지정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110555Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:46/seg:1",
+      "source": "The name can then be used in the action (see below), like this",
+      "source_hash": 6466003154995068619,
+      "context_hash": 15460492058809642796,
+      "translation": "그러면 다음과 같이 해당 이름을 동작에서 사용할 수 있습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110555Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Grammar actions",
+      "source_hash": 4293712263995899018,
+      "context_hash": 11836440473969562412,
+      "translation": "문법 동작",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110555Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "To avoid the intermediate steps that obscure the relationship between the grammar and the AST generation the proposed PEG parser allows directly generating AST nodes for a rule via grammar actions.",
+      "source_hash": 14480369277259371223,
+      "context_hash": 1447316997905632568,
+      "translation": "문법과 AST 생성 간의 관계를 가리는 중간 단계를 피하기 위해, 제안된 PEG 파서는 문법 동작을 통해 규칙에 대한 AST 노드를 직접 생성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110555Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "Grammar actions are language-specific expressions that are evaluated when a grammar rule is successfully parsed.",
+      "source_hash": 14156959877918536707,
+      "context_hash": 5368866403555993154,
+      "translation": "문법 동작은 문법 규칙이 성공적으로 구문 분석될 때 평가되는 언어별 표현식입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110556Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:2",
+      "source": "These expressions can be written in Python or C depending on the desired output of the parser generator.",
+      "source_hash": 14409746029049402275,
+      "context_hash": 14189149015393075602,
+      "translation": "이러한 표현식은 파서 제너레이터의 원하는 출력에 따라 Python 또는 C로 작성할 수 있습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:49:36.426840Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:3",
+      "source": "This means that if one would want to generate a parser in Python and another in C, two grammar files should be written, each one with a different set of actions, keeping everything else apart from said actions identical in both files.",
+      "source_hash": 9780556581100964805,
+      "context_hash": 6187389910030382719,
+      "translation": "즉, Python으로 파서를 생성하고 또 다른 파서를 C로 생성하려면 두 개의 문법 파일을 작성해야 하며, 각 파일은 서로 다른 동작 집합을 사용하고 해당 동작을 제외한 나머지는 두 파일에서 모두 동일하게 유지해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110557Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:4",
+      "source": "As an example of a grammar with Python actions, the piece of the parser generator that parses grammar files is bootstrapped from a meta-grammar file with Python actions that generate the grammar tree as a result of the parsing.",
+      "source_hash": 5336243331446075616,
+      "context_hash": 6026188017304258137,
+      "translation": "Python 액션을 사용하는 문법의 예로, 문법 파일을 구문 분석하는 파서 제너레이터의 일부는 구문 분석 결과로 문법 트리를 생성하는 Python 액션이 포함된 메타 문법 파일에서 부트스트랩됩니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:49:36.426843Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "In the specific case of the new proposed PEG grammar for Python, having actions allows directly describing how the AST is composed in the grammar itself, making it more clear and maintainable.",
+      "source_hash": 16542854031877582868,
+      "context_hash": 11327728107425596816,
+      "translation": "새롭게 제안된 Python용 PEG 문법의 경우, 동작을 사용하면 AST가 문법 자체에서 어떻게 구성되는지 직접 설명할 수 있으므로 더 명확하고 유지 관리하기 쉬워집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110558Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:1",
+      "source": "This AST generation process is supported by the use of some helper functions that factor out common AST object manipulations and some other required operations that are not directly related to the grammar.",
+      "source_hash": 8714401821175058863,
+      "context_hash": 15001413563517238061,
+      "translation": "이 AST 생성 과정은 공통 AST 객체 조작과 문법과 직접 관련되지 않은 기타 필수 작업을 분리하는 일부 도우미 함수의 사용으로 지원됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110558Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "To indicate these actions each alternative can be followed by the action code inside curly-braces, which specifies the return value of the alternative",
+      "source_hash": 14589163019317961747,
+      "context_hash": 10962698850876363446,
+      "translation": "이러한 동작을 나타내기 위해 각 대안 뒤에 중괄호 안의 동작 코드를 배치할 수 있으며, 이 코드가 대안의 반환값을 지정합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110559Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "If the action is omitted and C code is being generated, then there are two different possibilities:",
+      "source_hash": 4530024434700385445,
+      "context_hash": 4279522151879207405,
+      "translation": "동작이 생략되고 C 코드가 생성되는 경우에는 두 가지 가능성이 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110559Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:0",
+      "source": "If there’s a single name in the alternative, this gets returned.",
+      "source_hash": 8556367084958193101,
+      "context_hash": 3149184536747286222,
+      "translation": "대안에 이름이 하나만 있으면 해당 이름이 반환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:32.110560Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:7/seg:0",
+      "source": "If not, a dummy name object gets returned (this case should be avoided).",
+      "source_hash": 406294295602139709,
+      "context_hash": 3623959862473648024,
+      "translation": "그렇지 않으면 더미 이름 객체가 반환됩니다(이 경우는 피해야 합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294867Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:8/seg:0",
+      "source": "If the action is omitted and Python code is being generated, then a list with all the parsed expressions gets returned (this is meant for debugging).",
+      "source_hash": 2585582254812549867,
+      "context_hash": 687711414870033776,
+      "translation": "동작이 생략되고 Python 코드가 생성되는 경우에는 파싱된 모든 표현식이 포함된 리스트가 반환됩니다(이는 디버깅을 위한 것입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294872Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:9/seg:0",
+      "source": "The full meta-grammar for the grammars supported by the PEG generator is:",
+      "source_hash": 10977970854344476767,
+      "context_hash": 1067458017221037894,
+      "translation": "PEG 제너레이터가 지원하는 문법을 위한 전체 메타 문법은 다음과 같습니다:",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:32:35.294872Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:11/seg:0",
+      "source": "As an illustrative example this simple grammar file allows directly generating a full parser that can parse simple arithmetic expressions and that returns a valid C-based Python AST:",
+      "source_hash": 1908035885121428254,
+      "context_hash": 1899155290657340124,
+      "translation": "예시로, 이 간단한 문법 파일을 사용하면 간단한 산술 표현식을 파싱하고 유효한 C 기반 Python AST를 반환하는 전체 파서를 직접 생성할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294875Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:13/seg:0",
+      "source": "Here ``EXTRA`` is a macro that expands to ``start_lineno, start_col_offset, end_lineno, end_col_offset, p->arena``, those being variables automatically injected by the parser; ``p`` points to an object that holds on to all state for the parser.",
+      "source_hash": 6831581322348986677,
+      "context_hash": 4895067476106730173,
+      "translation": "여기서 ``EXTRA``\\ 는 ``start_lineno, start_col_offset, end_lineno, end_col_offset, p->arena``\\ 로 확장되는 매크로이며, 이 변수들은 파서가 자동으로 주입합니다. ``p``\\ 는 파서의 모든 상태를 보유하는 객체를 가리킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294876Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:14/seg:0",
+      "source": "A similar grammar written to target Python AST objects:",
+      "source_hash": 13587987999581879187,
+      "context_hash": 8066049886657606625,
+      "translation": "Python AST 객체를 대상으로 작성한 유사한 문법은 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294876Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Migration plan",
+      "source_hash": 11351822540245185654,
+      "context_hash": 6926514962895593565,
+      "translation": "마이그레이션 계획",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294876Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "This section describes the migration plan when porting to the new PEG-based parser if this PEP is accepted.",
+      "source_hash": 17861368649024883499,
+      "context_hash": 18116074352180132976,
+      "translation": "이 절에서는 이 PEP가 수락되는 경우 새로운 PEG 기반 파서로 포팅할 때의 마이그레이션 계획을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294877Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "The migration will be executed in a series of steps that allow initially to fallback to the previous parser if needed:",
+      "source_hash": 9323907467286627375,
+      "context_hash": 209322096064792136,
+      "translation": "마이그레이션은 필요한 경우 처음에는 이전 파서로 폴백할 수 있도록 일련의 단계로 실행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294878Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "Starting with Python 3.9 alpha 6, include the new PEG-based parser machinery in CPython with a command-line flag and environment variable that allows switching between the new and the old parsers together with explicit APIs that allow invoking the new and the old parsers independently.",
+      "source_hash": 5212987292179303265,
+      "context_hash": 1518322904961944466,
+      "translation": "Python 3.9 alpha 6부터 새 파서와 이전 파서 사이를 전환할 수 있는 명령줄 플래그 및 환경 변수와, 새 파서와 이전 파서를 독립적으로 호출할 수 있는 명시적 API를 함께 사용하여 새로운 PEG 기반 파서 기능을 CPython에 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294878Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:1",
+      "source": "At this step, all Python APIs like ``ast.parse`` and ``compile`` will use the parser set by the flags or the environment variable and the default parser will be the new PEG-based parser.",
+      "source_hash": 15319454072163976211,
+      "context_hash": 9367481787326019593,
+      "translation": "이 단계에서 ``ast.parse``\\ 와 ``compile``\\ 같은 모든 Python API는 플래그 또는 환경 변수가 지정한 파서를 사용하며, 기본 파서는 새로운 PEG 기반 파서가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294878Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "Between Python 3.9 and Python 3.10, the old parser and related code (like the \"parser\" module) will be kept until a new Python release happens (Python 3.10).",
+      "source_hash": 11144190435169593908,
+      "context_hash": 2091441038812367027,
+      "translation": "Python 3.9와 Python 3.10 사이에는 새로운 Python 릴리스(Python 3.10)가 나올 때까지 이전 파서와 관련 코드(예: \"parser\" 모듈)를 유지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294878Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:1",
+      "source": "In the meanwhile and until the old parser is removed, **no new Python Grammar addition will be added that requires the PEG parser**.",
+      "source_hash": 9904386461105779801,
+      "context_hash": 11428888874740983062,
+      "translation": "그동안 그리고 이전 파서가 제거될 때까지는 **PEG 파서를 필요로 하는 새로운 Python Grammar 추가 사항을 추가하지 않습니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294879Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:2",
+      "source": "This means that the grammar will be kept LL(1) until the old parser is removed.",
+      "source_hash": 12423505301815321755,
+      "context_hash": 8146581226612930613,
+      "translation": "이는 이전 파서가 제거될 때까지 문법이 LL(1)로 유지된다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294879Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:0",
+      "source": "In Python 3.10, remove the old parser, the command-line flag, the environment variable and the \"parser\" module and related code.",
+      "source_hash": 8807554204954096453,
+      "context_hash": 3303182792446901878,
+      "translation": "Python 3.10에서는 이전 파서, 명령줄 플래그, 환경 변수, \"parser\" 모듈 및 관련 코드를 제거합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294880Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Performance and validation",
+      "source_hash": 7747478273411842326,
+      "context_hash": 8714711775181667802,
+      "translation": "성능 및 검증",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294880Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "We have done extensive timing and validation of the new parser, and this gives us confidence that the new parser is of high enough quality to replace the current parser.",
+      "source_hash": 16790169497233649243,
+      "context_hash": 9448386796384820640,
+      "translation": "새로운 파서에 대해 광범위한 시간 측정과 검증을 수행했으며, 이를 통해 새로운 파서의 품질이 현재 파서를 대체하기에 충분히 높다는 확신을 얻었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294880Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Validation",
+      "source_hash": 1269279639035949735,
+      "context_hash": 3116663018349879970,
+      "translation": "검증",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294881Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "To start with validation, we regularly compile the entire Python 3.8 stdlib and compare every aspect of the resulting AST with that produced by the standard compiler. (In the process we found a few bugs in the standard parser's treatment of line and column numbers, which we have all fixed upstream via a series of issues and PRs.)",
+      "source_hash": 4836000187986985717,
+      "context_hash": 17686637629148512678,
+      "translation": "검증을 시작하기 위해 Python 3.8 표준 라이브러리 전체를 정기적으로 컴파일하고, 그 결과로 생성된 AST의 모든 측면을 표준 컴파일러가 생성한 AST와 비교합니다. (이 과정에서 표준 파서가 행 번호와 열 번호를 처리하는 데 몇 가지 버그가 있음을 발견했으며, 일련의 이슈와 PR을 통해 이를 모두 업스트림에서 수정했습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294881Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "We have also occasionally compiled a much larger codebase (the approx. 3800 most popular packages on PyPI) and this has helped us find a (very) few additional bugs in the new parser.",
+      "source_hash": 7759772921961337502,
+      "context_hash": 13934413724120958579,
+      "translation": "또한 때때로 훨씬 더 큰 코드베이스(PyPI에서 가장 인기 있는 약 3,800개의 패키지)를 컴파일했으며, 이를 통해 새로운 파서에서 발생하는 (아주) 소수의 추가 버그를 발견할 수 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294882Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "(One area we have not explored extensively is rejection of all wrong programs.",
+      "source_hash": 17965437688848187872,
+      "context_hash": 685026608933563918,
+      "translation": "(아직 광범위하게 살펴보지 않은 영역 중 하나는 잘못된 프로그램을 모두 거부하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294882Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:1",
+      "source": "We have unit tests that check for a certain number of explicit rejections, but more work could be done, e.g. by using a fuzzer that inserts random subtle bugs into existing code.",
+      "source_hash": 7491766734053808567,
+      "context_hash": 1988012399767340854,
+      "translation": "명시적인 거부를 일정 횟수만큼 확인하는 단위 테스트가 있지만, 예를 들어 기존 코드에 무작위로 미묘한 버그를 삽입하는 퍼저를 사용하는 등 더 많은 작업을 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294882Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:2",
+      "source": "We're open to help in this area.)",
+      "source_hash": 7243774768855672471,
+      "context_hash": 3944176969496945953,
+      "translation": "이 영역에 대한 도움을 환영합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294883Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Performance",
+      "source_hash": 1168761202931664327,
+      "context_hash": 17863045830050539253,
+      "translation": "성능",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294883Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "We have tuned the performance of the new parser to come within 10% of the current parser both in speed and memory consumption.",
+      "source_hash": 13320523687252487937,
+      "context_hash": 941267656126954178,
+      "translation": "새로운 파서의 성능을 조정하여 속도와 메모리 사용량 모두에서 현재 파서의 10% 이내에 들어오도록 했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294883Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "While the PEG/packrat parsing algorithm inherently consumes more memory than the current LL(1) parser, we have an advantage because we don't construct an intermediate CST.",
+      "source_hash": 5776792657266979422,
+      "context_hash": 2295821772980158849,
+      "translation": "PEG/packrat 파싱 알고리즘은 본질적으로 현재의 LL(1) 파서보다 더 많은 메모리를 사용하지만, 중간 CST를 생성하지 않는다는 장점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294884Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "Below are some benchmarks.",
+      "source_hash": 2377319915323845122,
+      "context_hash": 4789177767408108727,
+      "translation": "아래에 몇 가지 벤치마크가 나와 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294884Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:1",
+      "source": "These are focused on compiling source code to bytecode, because this is the most realistic situation.",
+      "source_hash": 6677082820353593239,
+      "context_hash": 17282664479360485385,
+      "translation": "이는 가장 현실적인 상황인 소스 코드를 바이트코드로 컴파일하는 작업에 초점을 맞춥니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:32:35.294884Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:2",
+      "source": "Returning an AST to Python code is not as representative, because the process to convert the *internal* AST (only accessible to C code) to an *external* AST (an instance of ``ast.AST``) takes more time than the parser itself.",
+      "source_hash": 7663641179364705719,
+      "context_hash": 2557194445370240555,
+      "translation": "AST를 Python 코드로 반환하는 것은 대표성이 떨어집니다. *내부* AST(C 코드에서만 액세스할 수 있음)를 *외부* AST(``ast.AST``\\ 의 인스턴스)로 변환하는 과정이 파서 자체보다 더 많은 시간이 걸리기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294885Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "All measurements reported here are done on a recent MacBook Pro, taking the median of three runs.",
+      "source_hash": 14411344838026953450,
+      "context_hash": 9168654627086619261,
+      "translation": "여기 보고된 모든 측정은 최신 MacBook Pro에서 세 번 실행한 결과의 중앙값을 취해 수행했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294885Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:1",
+      "source": "No particular care was taken to stop other applications running on the same machine.",
+      "source_hash": 10009912342341320727,
+      "context_hash": 12018850267584210465,
+      "translation": "동일한 컴퓨터에서 실행 중인 다른 애플리케이션을 중지하는 데 특별히 주의를 기울이지는 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294885Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:4/seg:0",
+      "source": "The first timings are for our canonical test file, which has 100,000 lines endlessly repeating the following three lines:",
+      "source_hash": 4034565886302089511,
+      "context_hash": 18276379133847919075,
+      "translation": "첫 번째 시간 측정은 다음 세 줄을 끝없이 반복하는 100,000행의 표준 테스트 파일을 대상으로 합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:35.294886Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:6/seg:0",
+      "source": "Just parsing and throwing away the internal AST takes 1.16 seconds with a max RSS of 681 MiB.",
+      "source_hash": 14846638468109030332,
+      "context_hash": 701584338324761234,
+      "translation": "내부 AST만 구문 분석한 후 버리는 데 1.16초가 소요되며, 최대 RSS는 681 MiB입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881434Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:7/seg:0",
+      "source": "Parsing and converting to ``ast.AST`` takes 6.34 seconds, max RSS 1029 MiB.",
+      "source_hash": 6413906176004416036,
+      "context_hash": 1533545770166589006,
+      "translation": "구문 분석하여 ``ast.AST``\\ 로 변환하는 데 6.34초가 소요되며, 최대 RSS는 1029 MiB입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881437Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:8/seg:0",
+      "source": "Parsing and compiling to bytecode takes 1.28 seconds, max RSS 681 MiB.",
+      "source_hash": 12908300407110184522,
+      "context_hash": 12388187045194564855,
+      "translation": "구문 분석하여 바이트코드로 컴파일하는 데 1.28초가 소요되며, 최대 RSS는 681 MiB입니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:16:08.881438Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:9/seg:0",
+      "source": "With the current parser, parsing and compiling takes 1.44 seconds, max RSS 836 MiB.",
+      "source_hash": 13845406079956281389,
+      "context_hash": 8191100693156990408,
+      "translation": "현재 파서를 사용하면 구문 분석하고 컴파일하는 데 1.44초가 소요되며, 최대 RSS는 836 MiB입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881439Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:10/seg:0",
+      "source": "For this particular test file, the new parser is faster and uses less memory than the current parser (compare the last two bullets).",
+      "source_hash": 10394120167345542959,
+      "context_hash": 5886978798516986758,
+      "translation": "이 특정 테스트 파일에서는 새 파서가 현재 파서보다 빠르고 메모리도 적게 사용합니다(마지막 두 항목을 비교하십시오).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881439Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:11/seg:0",
+      "source": "We also did timings with a more realistic payload, the entire Python 3.8 stdlib.",
+      "source_hash": 3957065663394027026,
+      "context_hash": 725280491747241381,
+      "translation": "또한 더 현실적인 입력 데이터인 Python 3.8 표준 라이브러리 전체를 대상으로 시간도 측정했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881439Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:11/seg:1",
+      "source": "This payload consists of 1,641 files, 749,570 lines, 27,622,497 bytes. (Though 11 files can't be compiled by any Python 3 parser due to encoding issues, sometimes intentional.)",
+      "source_hash": 746636675417814405,
+      "context_hash": 18380823462889718969,
+      "translation": "이 입력 데이터는 1,641개 파일, 749,570개 행, 27,622,497바이트로 구성됩니다. (다만 11개 파일은 인코딩 문제로 인해 어떤 Python 3 파서로도 컴파일할 수 없으며, 때로는 이러한 문제가 의도된 것입니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881440Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:12/seg:0",
+      "source": "Compiling and throwing away the internal AST took 2.141 seconds.",
+      "source_hash": 8000023197101668429,
+      "context_hash": 7879947436684910715,
+      "translation": "내부 AST를 컴파일한 후 버리는 데 2.141초가 소요되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881440Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:12/seg:1",
+      "source": "That's 350,040 lines/sec, or 12,899,367 bytes/sec.",
+      "source_hash": 18283155483015833415,
+      "context_hash": 8841088845969717,
+      "translation": "이는 초당 350,040행 또는 초당 12,899,367바이트에 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881440Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:12/seg:2",
+      "source": "The max RSS was 74 MiB (the largest file in the stdlib is much smaller than our canonical test file).",
+      "source_hash": 14944451897192756928,
+      "context_hash": 17492378232434363448,
+      "translation": "최대 RSS는 74 MiB였습니다(표준 라이브러리에서 가장 큰 파일도 표준 테스트 파일보다 훨씬 작습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881441Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:13/seg:0",
+      "source": "Compiling to bytecode took 3.290 seconds.",
+      "source_hash": 245943300226068643,
+      "context_hash": 16774335759976584061,
+      "translation": "바이트코드로 컴파일하는 데 3.290초가 소요되었습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:16:08.881441Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:13/seg:1",
+      "source": "That's 227,861 lines/sec, or 8,396,942 bytes/sec.",
+      "source_hash": 12157915543926147313,
+      "context_hash": 5647717495109029152,
+      "translation": "이는 초당 227,861행 또는 초당 8,396,942바이트에 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881442Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:13/seg:2",
+      "source": "Max RSS 77 MiB.",
+      "source_hash": 8530491268665718527,
+      "context_hash": 15870180864614681231,
+      "translation": "최대 RSS는 77 MiB였습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881442Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:14/seg:0",
+      "source": "Compiling to bytecode using the current parser took 3.367 seconds.",
+      "source_hash": 7822065326446953817,
+      "context_hash": 17810977117703215460,
+      "translation": "현재 파서를 사용하여 바이트코드로 컴파일하는 데 3.367초가 소요되었습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:16:08.881442Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:14/seg:1",
+      "source": "That's 222,620 lines/sec, or 8,203,780 bytes/sec.",
+      "source_hash": 7795906021712558925,
+      "context_hash": 15468805810392746474,
+      "translation": "이는 초당 222,620행 또는 초당 8,203,780바이트에 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881443Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:14/seg:2",
+      "source": "Max RSS 70 MiB.",
+      "source_hash": 11549804948276640036,
+      "context_hash": 12888729039051487814,
+      "translation": "최대 RSS는 70 MiB였습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881443Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:15/seg:0",
+      "source": "Comparing the last two bullets we find that the new parser is slightly faster but uses slightly (about 10%) more memory.",
+      "source_hash": 4415527638425968260,
+      "context_hash": 3878850916805246827,
+      "translation": "마지막 두 항목을 비교해 보면 새 파서가 약간 더 빠르지만 메모리는 약간(약 10%) 더 많이 사용한다는 것을 알 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881444Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:15/seg:1",
+      "source": "We believe this is acceptable. (Also, there are probably some more tweaks we can make to reduce memory usage.)",
+      "source_hash": 7737662442226697531,
+      "context_hash": 13344667814083999194,
+      "translation": "이는 허용할 수 있다고 생각합니다. (또한 메모리 사용량을 줄이기 위해 추가로 몇 가지 조정을 할 수 있을 것입니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881444Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Rejected Alternatives",
+      "source_hash": 4665383330312454579,
+      "context_hash": 7604168196813621220,
+      "translation": "거부된 대안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881444Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "We did not seriously consider alternative ways to implement the new parser, but here's a brief discussion of LALR(1).",
+      "source_hash": 14134438808340962177,
+      "context_hash": 18413897575290953385,
+      "translation": "새 파서를 구현하는 다른 방법들은 진지하게 고려하지 않았지만, 여기서는 LALR(1)에 대해 간략히 논의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881444Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "Thirty years ago the first author decided to go his own way with Python's parser rather than using LALR(1), which was the industry standard at the time (e.g. Bison and Yacc).",
+      "source_hash": 15912201432738490806,
+      "context_hash": 5562592050779116753,
+      "translation": "30년 전 첫 번째 저자는 당시 업계 표준이었던 LALR(1)(예: Bison 및 Yacc)을 사용하는 대신 Python 파서에서 자신만의 방식을 택하기로 결정했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881444Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:1",
+      "source": "The reasons were primarily emotional (gut feelings, intuition), based on past experience using Yacc in other projects, where grammar development took more effort than anticipated (in part due to shift-reduce conflicts).",
+      "source_hash": 13988356556855135570,
+      "context_hash": 11314337728586288349,
+      "translation": "그 이유는 주로 감정적인 것(직감과 직관)이었으며, 다른 프로젝트에서 Yacc를 사용했던 과거 경험에 기반한 것이었습니다. 당시 문법 개발에 예상보다 더 많은 노력이 들었고, 그중 일부는 시프트-리듀스 충돌 때문이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881445Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:2",
+      "source": "A specific criticism of Bison and Yacc that still holds is that their meta-grammar (the notation used to feed the grammar into the parser generator) does not support EBNF conveniences like ``[optional_clause]`` or ``(repeated_clause)*``.",
+      "source_hash": 5781433749209281444,
+      "context_hash": 8335479474332902554,
+      "translation": "여전히 유효한 Bison 및 Yacc에 대한 구체적인 비판은, 이들의 메타 문법(문법을 파서 제너레이터에 입력하는 데 사용되는 표기법)이 ``[optional_clause]`` 또는 ``(repeated_clause)*``\\ 와 같은 EBNF 편의 기능을 지원하지 않는다는 점입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:49:36.426845Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:3",
+      "source": "Using a custom parser generator, a syntax tree matching the structure of the grammar could be generated automatically, and with EBNF that tree could match the \"human-friendly\" structure of the grammar.",
+      "source_hash": 13806376366085560492,
+      "context_hash": 18077073295239009764,
+      "translation": "사용자 지정 파서 제너레이터를 사용하면 문법의 구조와 일치하는 구문 트리를 자동으로 생성할 수 있으며, EBNF를 사용하면 해당 트리가 문법의 \"사람에게 친화적인\" 구조와 일치할 수 있습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:49:36.426846Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "Other variants of LR were not considered, nor was LL (e.g. ANTLR).",
+      "source_hash": 6504072513787500732,
+      "context_hash": 11709339789613420536,
+      "translation": "LR의 다른 변형도 고려하지 않았으며, LL도 고려하지 않았습니다(예: ANTLR).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881447Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:1",
+      "source": "PEG was selected because it was easy to understand given a basic understanding of recursive-descent parsing.",
+      "source_hash": 15676320857051332894,
+      "context_hash": 2782488200564095589,
+      "translation": "PEG는 재귀 하강 구문 분석을 기본적으로 이해하고 있다면 쉽게 이해할 수 있기 때문에 선택되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881447Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 14227980810950827938,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881447Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Ford, Bryan",
+      "source_hash": 3892609022985882058,
+      "context_hash": 7367899610328985349,
+      "translation": "Ford, Bryan",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881447Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "https://pdos.csail.mit.edu/~baford/packrat/thesis/",
+      "source_hash": 8927223935720970991,
+      "context_hash": 13374620281402467963,
+      "translation": "https://pdos.csail.mit.edu/~baford/packrat/thesis/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881448Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "Medeiros et al.",
+      "source_hash": 16592639747064369756,
+      "context_hash": 4776599084693918142,
+      "translation": "Medeiros 외",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881448Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "https://arxiv.org/pdf/1207.0443.pdf",
+      "source_hash": 4833314782330520204,
+      "context_hash": 14635108097679723385,
+      "translation": "https://arxiv.org/pdf/1207.0443.pdf",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881448Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "Warth et al.",
+      "source_hash": 10334258825427358949,
+      "context_hash": 4556850987553026328,
+      "translation": "Warth 외",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:08.881448Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:0",
+      "source": "https://web.cs.ucla.edu/~todd/research/pepm08.pdf",
+      "source_hash": 5159960017528479766,
+      "context_hash": 4969209606915909812,
+      "translation": "https://web.cs.ucla.edu/~todd/research/pepm08.pdf",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:23:56.515638Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:0",
+      "source": "[4] Guido's series on PEG parsing \\   https://medium.com/@gvanrossum_83706/peg-parsing-series-de5d41b2ed60",
+      "source_hash": 12064907082009244186,
+      "context_hash": 8245279841728228765,
+      "translation": "[4] PEG 파싱에 관한 Guido의 연재 \\   https://medium.com/@gvanrossum_83706/peg-parsing-series-de5d41b2ed60",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:23:56.515641Z",
+      "issues": []
+    }
+  ]
+}

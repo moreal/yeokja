@@ -77,8 +77,6 @@ impl LlmProvider for PiProvider {
             cmd.arg("--system-prompt").arg(system_prompt);
         }
 
-        cmd.arg("-");
-
         let mut child = cmd.spawn().map_err(|e| {
             TranslateError::Api {
                 status: 0,

@@ -1,0 +1,2136 @@
+{
+  "version": 1,
+  "source_hash": 9160351568366024265,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "PYC Repository Directories",
+      "source_hash": 6782467653534643346,
+      "context_hash": 16530898886277989957,
+      "translation": "PYC 저장소 디렉터리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581669Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 11192296797909851467,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581673Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP describes an extension to Python's import mechanism which improves sharing of Python source code files among multiple installed different versions of the Python interpreter.",
+      "source_hash": 4935390631167040433,
+      "context_hash": 13347903341578216211,
+      "translation": "이 PEP는 설치된 여러 서로 다른 버전의 Python 인터프리터 간 Python 소스 코드 파일의 공유를 개선하는 Python의 임포트 메커니즘 확장을 설명합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:33:32.581673Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "It does this by allowing more than one byte compilation file (.pyc files) to be co-located with the Python source file (.py file).",
+      "source_hash": 11420295964180032511,
+      "context_hash": 9273279719604544750,
+      "translation": "이는 둘 이상의 바이트 컴파일 파일(.pyc 파일)을 Python 소스 파일(.py 파일)과 같은 위치에 둘 수 있도록 함으로써 구현됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581674Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "The extension described here can also be used to support different Python compilation caches, such as JIT output that may be produced by an Unladen Swallow (:pep:`3146`) enabled C Python.",
+      "source_hash": 989025524633381505,
+      "context_hash": 12590851379860626124,
+      "translation": "여기서 설명하는 확장은 Unladen Swallow (:pep:`3146`)가 활성화된 C Python에서 생성될 수 있는 JIT 출력과 같은, 서로 다른 Python 컴파일 캐시를 지원하는 데에도 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581675Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Background",
+      "source_hash": 14089390735911585672,
+      "context_hash": 16331353853170823154,
+      "translation": "배경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581675Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "CPython compiles its source code into \"byte code\", and for performance reasons, it caches this byte code on the file system whenever the source file has changes.",
+      "source_hash": 239183036950207693,
+      "context_hash": 7831564151712468946,
+      "translation": "CPython은 소스 코드를 \"바이트코드\"로 컴파일하며, 성능상의 이유로 소스 파일이 변경될 때마다 이 바이트코드를 파일 시스템에 캐시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581675Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "This makes loading of Python modules much faster because the compilation phase can be bypassed.",
+      "source_hash": 12458355610699685718,
+      "context_hash": 134795161073956951,
+      "translation": "이렇게 하면 컴파일 단계를 건너뛸 수 있으므로 Python 모듈을 훨씬 빠르게 로드할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581675Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "When your source file is ``foo.py``, CPython caches the byte code in a ``foo.pyc`` file right next to the source.",
+      "source_hash": 8751761971424713419,
+      "context_hash": 3032702313641433126,
+      "translation": "소스 파일이 ``foo.py``\\ 인 경우 CPython은 소스 파일 바로 옆의 ``foo.pyc`` 파일에 바이트코드를 캐시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581676Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Byte code files contain two 32-bit big-endian numbers followed by the marshaled [2]_ code object.",
+      "source_hash": 17220051716857799446,
+      "context_hash": 3843233181787943680,
+      "translation": "바이트코드 파일에는 32비트 빅 엔디언 숫자 두 개가 들어 있으며, 그 뒤에 마셜링된 [2]_ 코드 객체가 이어집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581676Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "The 32-bit numbers represent a magic number and a timestamp.",
+      "source_hash": 15520209508429110392,
+      "context_hash": 15951864879371878993,
+      "translation": "32비트 숫자는 매직 넘버와 타임스탬프를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581676Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "The magic number changes whenever Python changes the byte code format, e.g. by adding new byte codes to its virtual machine.",
+      "source_hash": 8672618139375869254,
+      "context_hash": 7182356214704215227,
+      "translation": "Python이 바이트코드 형식을 변경할 때마다, 예를 들어 가상 머신에 새로운 바이트코드를 추가할 때마다 매직 넘버가 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581676Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:3",
+      "source": "This ensures that pyc files built for previous versions of the VM won't cause problems.",
+      "source_hash": 5621910782608367031,
+      "context_hash": 846377574243474356,
+      "translation": "이를 통해 이전 버전의 VM용으로 빌드된 pyc 파일이 문제를 일으키지 않도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581677Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:4",
+      "source": "The timestamp is used to make sure that the pyc file match the py file that was used to create it.",
+      "source_hash": 5995445926795873489,
+      "context_hash": 14226189301059009754,
+      "translation": "타임스탬프는 pyc 파일이 해당 파일을 생성하는 데 사용된 py 파일과 일치하는지 확인하는 데 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581677Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:5",
+      "source": "When either the magic number or timestamp do not match, the py file is recompiled and a new pyc file is written.",
+      "source_hash": 2911320446265602111,
+      "context_hash": 794094697366397869,
+      "translation": "매직 넘버 또는 타임스탬프 중 하나라도 일치하지 않으면 py 파일을 다시 컴파일하고 새 pyc 파일을 기록합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581677Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "In practice, it is well known that pyc files are not compatible across Python major releases.",
+      "source_hash": 14973773883335395758,
+      "context_hash": 3046688290050431223,
+      "translation": "실제로 pyc 파일이 Python 메이저 릴리스 간에 호환되지 않는다는 것은 잘 알려져 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581677Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "A reading of import.c [3]_ in the Python source code proves that within recent memory, every new CPython major release has bumped the pyc magic number.",
+      "source_hash": 18132493969906980131,
+      "context_hash": 9405796452242372316,
+      "translation": "Python 소스 코드에서 import.c [3]_\\ 을 읽어 보면, 최근까지 새 CPython 메이저 릴리스가 나올 때마다 pyc 매직 넘버가 변경되었다는 사실을 알 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581678Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 10262470613218159142,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581678Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Linux distributions such as Ubuntu [4]_ and Debian [5]_ provide more than one Python version at the same time to their users.",
+      "source_hash": 3992269460595758725,
+      "context_hash": 255870701022337946,
+      "translation": "Ubuntu [4]_\\ 와 Debian [5]_\\ 같은 Linux 배포판은 사용자에게 동시에 둘 이상의 Python 버전을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581678Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "For example, Ubuntu 9.10 Karmic Koala users can install Python 2.5, 2.6, and 3.1, with Python 2.6 being the default.",
+      "source_hash": 2968022135790236471,
+      "context_hash": 2106178626218505917,
+      "translation": "예를 들어 Ubuntu 9.10 Karmic Koala 사용자는 Python 2.5, 2.6, 3.1을 설치할 수 있으며, 기본값은 Python 2.6입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581678Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "This causes a conflict for third party Python source files installed by the system, because you cannot compile a single Python source file for more than one Python version at a time.",
+      "source_hash": 12802629872146080565,
+      "context_hash": 7295837163357795766,
+      "translation": "이는 시스템에 설치된 서드파티 Python 소스 파일에 충돌을 일으킵니다. 한 번에 둘 이상의 Python 버전용으로 단일 Python 소스 파일을 컴파일할 수 없기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581679Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "When Python finds a ``pyc`` file with a non-matching magic number, it falls back to the slower process of recompiling the source.",
+      "source_hash": 14843751369124478222,
+      "context_hash": 12613818747714294600,
+      "translation": "Python이 매칭되지 않는 매직 넘버를 가진 ``pyc`` 파일을 찾으면, 소스를 다시 컴파일하는 더 느린 과정으로 돌아갑니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581679Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "Thus if your system installed a ``/usr/share/python/foo.py``, two different versions of Python would fight over the ``pyc`` file and rewrite it each time the source is compiled.  (The standard library is unaffected by this, since multiple versions of the stdlib *are* installed on such distributions..)",
+      "source_hash": 14006465682207555582,
+      "context_hash": 7877671846889636691,
+      "translation": "따라서 시스템에 ``/usr/share/python/foo.py``\\ 가 설치되어 있다면, 서로 다른 두 Python 버전이 ``pyc`` 파일을 두고 경쟁하며 소스가 컴파일될 때마다 해당 파일을 다시 씁니다. (이러한 배포판에서는 여러 버전의 표준 라이브러리가 *실제로* 설치되므로 표준 라이브러리에는 이 문제가 영향을 미치지 않습니다.)",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:33:32.581679Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Furthermore, in order to ease the burden on operating system packagers for these distributions, the distribution packages do not contain Python version numbers [6]_; they are shared across all Python versions installed on the system.",
+      "source_hash": 180358319574041579,
+      "context_hash": 6279023126350010617,
+      "translation": "또한 이러한 배포판의 운영 체제 패키저가 부담을 덜 수 있도록 배포 패키지에는 Python 버전 번호 [6]_\\ 가 포함되지 않으며, 시스템에 설치된 모든 Python 버전에서 공유됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581680Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "Putting Python version numbers in the packages would be a maintenance nightmare, since all the packages",
+      "source_hash": 12510214738232560685,
+      "context_hash": 10266291533722717474,
+      "translation": "패키지에 Python 버전 번호를 넣으면 유지 관리가 악몽이 됩니다. 모든 패키지는",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581680Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "*and their dependencies* - would have to be updated every time a new",
+      "source_hash": 2809471412721596297,
+      "context_hash": 3236041756180215332,
+      "translation": "*그리고 그 종속성* - 새로운",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581681Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "Python release was added or removed from the distribution.",
+      "source_hash": 6376439453080814779,
+      "context_hash": 5679188162692315937,
+      "translation": "Python 릴리스가 배포판에 추가되거나 제거될 때마다 업데이트되어야 하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581681Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "Because of the sheer number of packages available, this amount of work is infeasible.",
+      "source_hash": 6531934581516267656,
+      "context_hash": 249204978010398170,
+      "translation": "제공되는 패키지의 수가 워낙 많으므로 이러한 작업량은 감당할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581681Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "(:pep:`384` has been proposed to address binary compatibility issues of third party extension modules across different versions of Python.)",
+      "source_hash": 8280415590304168648,
+      "context_hash": 15086064730299864457,
+      "translation": "(:pep:`384`)는 서로 다른 Python 버전 간 서드파티 확장 모듈의 바이너리 호환성 문제를 해결하기 위해 제안되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:32.581681Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "Because these distributions cannot share pyc files, elaborate mechanisms have been developed to put the resulting pyc files in non-shared locations while the source code is still shared.",
+      "source_hash": 2757175275998966383,
+      "context_hash": 12146637132540331489,
+      "translation": "이러한 배포판은 pyc 파일을 공유할 수 없으므로, 소스 코드는 여전히 공유하면서 결과로 생성된 pyc 파일을 공유되지 않는 위치에 배치하기 위한 정교한 메커니즘이 개발되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056911Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:1",
+      "source": "Examples include the symlink-based Debian regimes python-support [8]_ and python-central [9]_.",
+      "source_hash": 13918319743958270492,
+      "context_hash": 12985344698725465232,
+      "translation": "예로는 심볼릭 링크 기반의 Debian 방식인 python-support [8]_ 및 python-central [9]_\\ 이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056915Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:2",
+      "source": "These approaches make for much more complicated, fragile, inscrutable, and fragmented policies for delivering Python applications to a wide range of users.",
+      "source_hash": 15497922006775772030,
+      "context_hash": 13860609923855185557,
+      "translation": "이러한 접근 방식은 매우 다양한 사용자에게 Python 애플리케이션을 제공하기 위한 정책을 훨씬 더 복잡하고, 취약하며, 이해하기 어렵고, 파편화된 것으로 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056915Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:3",
+      "source": "Arguably more users get Python from their operating system vendor than from upstream tarballs.",
+      "source_hash": 6070831549312914286,
+      "context_hash": 6685662898802325862,
+      "translation": "상류 tarball보다 운영 체제 공급업체를 통해 Python을 얻는 사용자가 더 많다고 볼 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056915Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:4",
+      "source": "Thus, solving this pyc sharing problem for CPython is a high priority for such vendors.",
+      "source_hash": 6318649706793576267,
+      "context_hash": 11456700645453463226,
+      "translation": "따라서 이러한 공급업체에게 CPython의 pyc 공유 문제를 해결하는 일은 매우 높은 우선순위를 가집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056916Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "This PEP proposes a solution to this problem.",
+      "source_hash": 2261248276369392500,
+      "context_hash": 13405164695880563278,
+      "translation": "이 PEP는 이 문제에 대한 해결책을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056916Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Proposal",
+      "source_hash": 17139217736364358932,
+      "context_hash": 1847957268233284911,
+      "translation": "제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056917Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Python's import machinery is extended to write and search for byte code cache files in a single directory inside every Python package directory.",
+      "source_hash": 16157127908942703394,
+      "context_hash": 6228457683456263864,
+      "translation": "Python의 임포트 메커니즘이 확장되어 모든 Python 패키지 디렉터리 내부의 단일 디렉터리에 바이트코드 캐시 파일을 작성하고 검색합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056917Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "This directory will be called ``__pycache__``.",
+      "source_hash": 15573805025580064024,
+      "context_hash": 15404345882145392077,
+      "translation": "이 디렉터리를 ``__pycache__``\\ 라고 부릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056917Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Further, pyc file names will contain a magic string (called a \"tag\") that differentiates the Python version they were compiled for.",
+      "source_hash": 15884402654240185183,
+      "context_hash": 5919703735643850925,
+      "translation": "또한 pyc 파일 이름에는 해당 파일이 컴파일된 Python 버전을 구분하는 매직 문자열(“태그”라고 함)이 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056918Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "This allows multiple byte compiled cache files to co-exist for a single Python source file.",
+      "source_hash": 12404093928308651347,
+      "context_hash": 8128387618574129691,
+      "translation": "이를 통해 하나의 Python 소스 파일에 대해 여러 바이트코드 컴파일 캐시 파일이 공존할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056918Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "The magic tag is implementation defined, but should contain the implementation name and a version number shorthand, e.g. ``cpython-32``.",
+      "source_hash": 2538781674902842663,
+      "context_hash": 7826193806429018638,
+      "translation": "매직 태그는 구현에 따라 정의되지만, 구현 이름과 버전 번호의 약칭을 포함해야 합니다. 예를 들면 ``cpython-32``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056918Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "It must be unique among all versions of Python, and whenever the magic number is bumped, a new magic tag must be defined.",
+      "source_hash": 3996426493012721574,
+      "context_hash": 6564311007563228971,
+      "translation": "이 태그는 모든 Python 버전 사이에서 고유해야 하며, 매직 번호가 변경될 때마다 새 매직 태그를 정의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056919Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:2",
+      "source": "An example ``pyc`` file for Python 3.2 is thus ``foo.cpython-32.pyc``.",
+      "source_hash": 2882159256546495589,
+      "context_hash": 10478828160920025311,
+      "translation": "따라서 Python 3.2의 ``pyc`` 파일 예시는 ``foo.cpython-32.pyc``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056919Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "The magic tag is available in the ``imp`` module via the ``get_tag()`` function.",
+      "source_hash": 5979476568675830231,
+      "context_hash": 307974503000544682,
+      "translation": "매직 태그는 ``imp`` 모듈의 ``get_tag()`` 함수를 통해 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056919Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:1",
+      "source": "This is parallel to the ``imp.get_magic()`` function.",
+      "source_hash": 12701038161715322291,
+      "context_hash": 2638915625966016,
+      "translation": "이는 ``imp.get_magic()`` 함수와 대응합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056919Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "This scheme has the added benefit of reducing the clutter in a Python package directory.",
+      "source_hash": 5740673130738555472,
+      "context_hash": 9880522517574709480,
+      "translation": "이 방식은 Python 패키지 디렉터리의 불필요한 파일을 줄이는 추가적인 이점도 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056920Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "When a Python source file is imported for the first time, a ``__pycache__`` directory will be created in the package directory, if one does not already exist.",
+      "source_hash": 17247284729515877156,
+      "context_hash": 15693153362199677558,
+      "translation": "Python 소스 파일을 처음 임포트할 때 패키지 디렉터리에 ``__pycache__`` 디렉터리가 아직 없으면 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056920Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:1",
+      "source": "The pyc file for the imported source will be written to the ``__pycache__`` directory, using the magic-tag formatted name.",
+      "source_hash": 15483090442210522618,
+      "context_hash": 6008897042763186030,
+      "translation": "임포트된 소스의 pyc 파일은 매직 태그 형식의 이름을 사용하여 ``__pycache__`` 디렉터리에 기록됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056920Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:2",
+      "source": "If either the creation of the ``__pycache__`` directory or the pyc file inside that fails, the import will still succeed, just as it does in a pre-:pep:`3147` world.",
+      "source_hash": 3215373934525015029,
+      "context_hash": 6273752546246298222,
+      "translation": "``__pycache__`` 디렉터리 생성이나 그 안의 pyc 파일 생성 중 어느 하나라도 실패하더라도, 임포트는 pre-:pep:`3147` 환경에서와 마찬가지로 계속 성공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056920Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "If the py source file is missing, the pyc file inside ``__pycache__`` will be ignored.",
+      "source_hash": 16848213863199937365,
+      "context_hash": 14914289910476235411,
+      "translation": "py 소스 파일이 없으면 ``__pycache__`` 내부의 pyc 파일은 무시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056920Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:1",
+      "source": "This eliminates the problem of accidental stale pyc file imports.",
+      "source_hash": 3901422523665900551,
+      "context_hash": 5224981121421776442,
+      "translation": "이를 통해 실수로 오래된 pyc 파일을 임포트하는 문제가 제거됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056921Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "For backward compatibility, Python will still support pyc-only distributions, however it will only do so when the pyc file lives in the directory where the py file *would* have been, i.e. not in the ``__pycache__`` directory.  pyc file outside of ``__pycache__`` will only be imported if the py source file is missing.",
+      "source_hash": 10955584092854429367,
+      "context_hash": 3520353491855998493,
+      "translation": "하위 호환성을 위해 Python은 pyc 전용 배포본도 계속 지원하지만, pyc 파일이 py 파일이 *있었을* 디렉터리, 즉 ``__pycache__`` 디렉터리가 아닌 곳에 있을 때만 그렇게 합니다. ``__pycache__``\\ 외부의 pyc 파일은 py 소스 파일이 없는 경우에만 임포트됩니다.",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T20:03:06.783070Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "Tools such as ``py_compile`` [15]_ and ``compileall`` [16]_ will be extended to create :pep:`3147` formatted layouts automatically, but will have an option to create pyc-only distribution layouts.",
+      "source_hash": 15814933319766509318,
+      "context_hash": 6288421878875658649,
+      "translation": "``py_compile`` [15]_ 및 ``compileall`` [16]_\\ 과 같은 도구는 :pep:`3147` 형식의 레이아웃을 자동으로 생성하도록 확장되지만, pyc 전용 배포 레이아웃을 생성하는 옵션도 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056922Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Examples",
+      "source_hash": 2926230321239078022,
+      "context_hash": 4184702711815083644,
+      "translation": "예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056923Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "What would this look like in practice?",
+      "source_hash": 11656646536319064411,
+      "context_hash": 16284192406226847328,
+      "translation": "실제로는 어떤 모습일까요?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056923Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Let's say we have a Python package named ``alpha`` which contains a sub-package name ``beta``.",
+      "source_hash": 10910449698836853071,
+      "context_hash": 8618313308616432804,
+      "translation": "``alpha``\\ 라는 이름의 Python 패키지가 있고, 그 안에 ``beta``\\ 라는 이름의 서브패키지가 있다고 가정하겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056923Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "The source directory layout before byte compilation might look like this",
+      "source_hash": 4712581043405854398,
+      "context_hash": 8796227963240296337,
+      "translation": "바이트코드 컴파일 전의 소스 디렉터리 레이아웃은 다음과 같은 모습일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056924Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "After byte compiling this package with Python 3.2, you would see the following layout",
+      "source_hash": 9525468147550448326,
+      "context_hash": 14600090899891681320,
+      "translation": "이 패키지를 Python 3.2로 바이트코드 컴파일한 후에는 다음과 같은 레이아웃을 볼 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056924Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "*Note: listing order may differ depending on the platform.*",
+      "source_hash": 10743144709212807622,
+      "context_hash": 14509374639371097390,
+      "translation": "*참고: 목록 순서는 플랫폼에 따라 다를 수 있습니다.*",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056924Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "Let's say that two new versions of Python are installed, one is Python 3.3 and another is Unladen Swallow.",
+      "source_hash": 9861402067179450556,
+      "context_hash": 13578223471606474159,
+      "translation": "Python의 새 버전 두 개가 설치되었으며, 하나는 Python 3.3이고 다른 하나는 Unladen Swallow라고 가정하겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056925Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:1",
+      "source": "After byte compilation, the file system would look like this",
+      "source_hash": 8519024015859030057,
+      "context_hash": 12739812138727119811,
+      "translation": "바이트코드 컴파일 후 파일 시스템은 다음과 같은 모습이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:30.056925Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "As you can see, as long as the Python version identifier string is unique, any number of pyc files can co-exist.",
+      "source_hash": 13576512083100021766,
+      "context_hash": 9634365413046135589,
+      "translation": "보시는 것처럼 Python 버전 식별자 문자열이 고유한 한, 임의의 개수의 pyc 파일이 공존할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266567Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:1",
+      "source": "These identifier strings are described in more detail below.",
+      "source_hash": 11474808520049236332,
+      "context_hash": 2093374761506198435,
+      "translation": "이러한 식별자 문자열은 아래에서 더 자세히 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266571Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "A nice property of this layout is that the ``__pycache__`` directories can generally be ignored, such that a normal directory listing would show something like this",
+      "source_hash": 3588325636799094951,
+      "context_hash": 13673726288888476537,
+      "translation": "이 레이아웃의 장점은 ``__pycache__`` 디렉터리는 일반적으로 무시할 수 있으므로, 일반적인 디렉터리 목록에 다음과 비슷한 내용이 표시된다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266572Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "This is much less cluttered than even today's Python.",
+      "source_hash": 16565519413677473409,
+      "context_hash": 14926670531704054577,
+      "translation": "이는 오늘날의 Python보다도 훨씬 덜 복잡합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266572Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Python behavior",
+      "source_hash": 5426936828413940503,
+      "context_hash": 8770349024826752953,
+      "translation": "Python 동작",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266573Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "When Python searches for a module to import (say ``foo``), it may find one of several situations.",
+      "source_hash": 5468144999554272130,
+      "context_hash": 7973376200110166816,
+      "translation": "Python이 가져올 모듈(가령 ``foo``)을 검색할 때 여러 상황 중 하나에 해당할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266573Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "As per current Python rules, the term \"matching pyc\" means that the magic number matches the current interpreter's magic number, and the source file's timestamp matches the timestamp in the ``pyc`` file exactly.",
+      "source_hash": 9035722095279119959,
+      "context_hash": 9548162774995125834,
+      "translation": "현재 Python 규칙에 따르면 “일치하는 pyc”라는 용어는 매직 넘버가 현재 인터프리터의 매직 넘버와 일치하고, 소스 파일의 타임스탬프가 ``pyc`` 파일의 타임스탬프와 정확히 일치한다는 뜻입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:33:36.266574Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Case 0: The steady state",
+      "source_hash": 7038860041529245687,
+      "context_hash": 6398608769070764933,
+      "translation": "사례 0: 정상 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266575Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "When Python is asked to import module ``foo``, it searches for a ``foo.py`` file (or ``foo`` package, but that's not important for this discussion) along its ``sys.path``.",
+      "source_hash": 16159326907732180163,
+      "context_hash": 16405511116401124622,
+      "translation": "Python이 모듈 ``foo``\\ 를 가져오도록 요청받으면 ``foo.py`` 파일(또는 ``foo`` 패키지이지만, 이 논의에서는 중요하지 않습니다)을 해당 ``sys.path``\\ 를 따라 검색합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266576Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "If found, Python looks to see if there is a matching ``__pycache__/foo.<magic>.pyc`` file, and if so, that ``pyc`` file is loaded.",
+      "source_hash": 13140327349416169451,
+      "context_hash": 13100682108719536544,
+      "translation": "파일을 찾으면 Python은 일치하는 ``__pycache__/foo.<magic>.pyc`` 파일이 있는지 확인하고, 있다면 해당 ``pyc`` 파일을 로드합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266576Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Case 1: The first import",
+      "source_hash": 508762943954813889,
+      "context_hash": 4284650556723971684,
+      "translation": "사례 1: 첫 번째 임포트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266576Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "When Python locates the ``foo.py``, if the ``__pycache__/foo.<magic>.pyc`` file is missing, Python will create it, also creating the ``__pycache__`` directory if necessary.",
+      "source_hash": 1089769083379890167,
+      "context_hash": 13516681927544280613,
+      "translation": "Python이 ``foo.py``\\ 를 찾았을 때 ``__pycache__/foo.<magic>.pyc`` 파일이 없으면 Python은 이를 생성하며, 필요한 경우 ``__pycache__`` 디렉터리도 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266577Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "Python will parse and byte compile the ``foo.py`` file and save the byte code in ``__pycache__/foo.<magic>.pyc``.",
+      "source_hash": 6677665726784035930,
+      "context_hash": 10886290799365679555,
+      "translation": "Python은 ``foo.py`` 파일을 구문 분석하고 바이트코드로 컴파일한 뒤, 그 바이트코드를 ``__pycache__/foo.<magic>.pyc``\\ 에 저장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266577Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Case 2: The second import",
+      "source_hash": 14739020354266441160,
+      "context_hash": 17075736091395013605,
+      "translation": "사례 2: 두 번째 임포트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266578Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "When Python is asked to import module ``foo`` a second time (in a different process of course), it will again search for the ``foo.py`` file along its ``sys.path``.",
+      "source_hash": 12586882003546507456,
+      "context_hash": 7328640616601475409,
+      "translation": "Python이 모듈 ``foo``\\ 를 두 번째로(물론 다른 프로세스에서) 가져오도록 요청받으면, 다시 ``sys.path``\\ 를 따라 ``foo.py`` 파일을 검색합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266578Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "When Python locates the ``foo.py`` file, it looks for a matching ``__pycache__/foo.<magic>.pyc`` and finding this, it reads the byte code and continues as usual.",
+      "source_hash": 4439019125053726596,
+      "context_hash": 6110547174778421961,
+      "translation": "Python이 ``foo.py`` 파일을 찾으면 일치하는 ``__pycache__/foo.<magic>.pyc``\\ 를 검색하고, 이를 찾으면 바이트코드를 읽어 평소처럼 계속 진행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266578Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Case 3: __pycache__/foo.<magic>.pyc with no source",
+      "source_hash": 696634052342686885,
+      "context_hash": 5055628837013319156,
+      "translation": "사례 3: 소스가 없는 __pycache__/foo.<magic>.pyc",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266578Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "It's possible that the ``foo.py`` file somehow got removed, while leaving the cached pyc file still on the file system.",
+      "source_hash": 15195853973006805826,
+      "context_hash": 736754867805621616,
+      "translation": "``foo.py`` 파일이 어떤 이유로 제거되었지만 캐시된 pyc 파일은 파일 시스템에 여전히 남아 있을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266579Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "If the ``__pycache__/foo.<magic>.pyc`` file exists, but the ``foo.py`` file used to create it does not, Python will raise an ``ImportError`` when asked to import foo.",
+      "source_hash": 4810514134894602664,
+      "context_hash": 410701408542412767,
+      "translation": "``__pycache__/foo.<magic>.pyc`` 파일은 존재하지만 이를 생성하는 데 사용된 ``foo.py`` 파일이 존재하지 않으면, Python은 foo를 가져오도록 요청받을 때 ``ImportError``\\ 를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266579Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "In other words, Python will not import a pyc file from the cache directory unless the source file exists.",
+      "source_hash": 6829728280882917379,
+      "context_hash": 8561259870816894765,
+      "translation": "다시 말해, 소스 파일이 존재하지 않는 한 Python은 캐시 디렉터리에서 pyc 파일을 가져오지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266579Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Case 4: legacy pyc files and source-less imports",
+      "source_hash": 6146849896041089143,
+      "context_hash": 12640827601320721354,
+      "translation": "사례 4: 레거시 pyc 파일과 소스가 없는 임포트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266580Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "Python will ignore all legacy pyc files when a source file exists next to it.",
+      "source_hash": 17863084638179940092,
+      "context_hash": 2881613374160637921,
+      "translation": "소스 파일이 옆에 존재하면 Python은 모든 레거시 pyc 파일을 무시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266580Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "In other words, if a ``foo.pyc`` file exists next to the ``foo.py`` file, the pyc file will be ignored in all cases",
+      "source_hash": 7028418058552457868,
+      "context_hash": 13780861284332233018,
+      "translation": "다시 말해, ``foo.py`` 파일 옆에 ``foo.pyc`` 파일이 존재하면 모든 경우에 pyc 파일이 무시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266580Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "In order to continue to support source-less distributions though, if the source file is missing, Python will import a lone pyc file if it lives where the source file would have been.",
+      "source_hash": 6238693539833288550,
+      "context_hash": 2631358300927382299,
+      "translation": "다만 소스가 없는 배포를 계속 지원하기 위해, 소스 파일이 없으면 Python은 소스 파일이 있었을 위치에 단독 pyc 파일이 있는 경우 이를 가져옵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266581Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Case 5: read-only file systems",
+      "source_hash": 1895351952984869880,
+      "context_hash": 3009845471568651422,
+      "translation": "사례 5: 읽기 전용 파일 시스템",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266581Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "When the source lives on a read-only file system, or the ``__pycache__`` directory or pyc file cannot otherwise be written, all the same rules apply.",
+      "source_hash": 1581882228247315636,
+      "context_hash": 11631279349481441765,
+      "translation": "소스가 읽기 전용 파일 시스템에 있거나 ``__pycache__`` 디렉터리 또는 pyc 파일을 다른 이유로 쓸 수 없는 경우에도 모든 동일한 규칙이 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266582Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "This is also the case when ``__pycache__`` happens to be written with permissions which do not allow for writing containing pyc files.",
+      "source_hash": 1267944940933511475,
+      "context_hash": 6710300732607200142,
+      "translation": "``__pycache__``\\ 가 내부의 pyc 파일을 쓸 수 없는 권한으로 작성된 경우에도 마찬가지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266582Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Flow chart",
+      "source_hash": 17123247606868228117,
+      "context_hash": 13316804535105869393,
+      "translation": "흐름도",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266582Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "Here is a flow chart describing how modules are loaded:",
+      "source_hash": 12387516155873874849,
+      "context_hash": 4621859953170768638,
+      "translation": "다음은 모듈이 로드되는 방식을 설명하는 흐름도입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266582Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Alternative Python implementations",
+      "source_hash": 3155304086143736766,
+      "context_hash": 1200887175513601008,
+      "translation": "대체 Python 구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266583Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Alternative Python implementations such as Jython [11]_, IronPython [12]_, PyPy [13]_, Pynie [14]_, and Unladen Swallow can also use the ``__pycache__`` directory to store whatever compilation artifacts make sense for their platforms.",
+      "source_hash": 3417160970654850354,
+      "context_hash": 2603439789392283177,
+      "translation": "Jython [11]_, IronPython [12]_, PyPy [13]_, Pynie [14]_, Unladen Swallow와 같은 대체 Python 구현도 ``__pycache__`` 디렉터리를 사용하여 해당 플랫폼에 적합한 컴파일 산출물을 저장할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266583Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "For example, Jython could store the class file for the module in ``__pycache__/foo.jython-32.class``.",
+      "source_hash": 4355989284749734776,
+      "context_hash": 7042220373817218412,
+      "translation": "예를 들어 Jython은 모듈의 클래스 파일을 ``__pycache__/foo.jython-32.class``\\ 에 저장할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:36.266583Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Implementation strategy",
+      "source_hash": 17630905824663846259,
+      "context_hash": 3416354633840272531,
+      "translation": "구현 전략",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244416Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "This feature is targeted for Python 3.2, solving the problem for those and all future versions.",
+      "source_hash": 1724724655398384774,
+      "context_hash": 11886994084328722429,
+      "translation": "이 기능은 Python 3.2를 대상으로 하며, 해당 버전과 이후의 모든 버전에서 이 문제를 해결합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244419Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "It may be back-ported to Python 2.7.",
+      "source_hash": 15237299049819583042,
+      "context_hash": 884180881782822964,
+      "translation": "Python 2.7로 백포트될 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244420Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:2",
+      "source": "Vendors are free to backport the changes to earlier distributions as they see fit.",
+      "source_hash": 6244025599311986503,
+      "context_hash": 14217595897303985964,
+      "translation": "공급업체는 적절하다고 판단하는 대로 변경 사항을 이전 배포판으로 자유롭게 백포트할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244420Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:3",
+      "source": "For backports of this feature to Python 2, when the ``-U`` flag is used, a file such as ``foo.cpython-27u.pyc`` can be written.",
+      "source_hash": 4946122844733664676,
+      "context_hash": 8232951684171812360,
+      "translation": "이 기능을 Python 2로 백포트하는 경우, ``-U`` 플래그를 사용하면 ``foo.cpython-27u.pyc``\\ 와 같은 파일을 기록할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244420Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Effects on existing code",
+      "source_hash": 2204649592818596314,
+      "context_hash": 9455957302018638944,
+      "translation": "기존 코드에 미치는 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244421Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "Adoption of this PEP will affect existing code and idioms, both inside Python and outside.",
+      "source_hash": 758428397107802248,
+      "context_hash": 3673276548936400012,
+      "translation": "이 PEP를 채택하면 Python 내부와 외부 모두에서 기존 코드와 관용적 사용 방식에 영향을 미칩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244421Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "This section enumerates some of these effects.",
+      "source_hash": 5708532062341989597,
+      "context_hash": 4088482640787780661,
+      "translation": "이 절에서는 이러한 영향 중 일부를 열거합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244421Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Detecting PEP 3147 availability",
+      "source_hash": 4020530066214252947,
+      "context_hash": 3202241243983038307,
+      "translation": "PEP 3147 지원 여부 감지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244421Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "The easiest way to detect whether your version of Python provides PEP 3147 functionality is to do the following check",
+      "source_hash": 10386675142267179060,
+      "context_hash": 4872597765059216994,
+      "translation": "사용 중인 Python 버전이 PEP 3147 기능을 제공하는지 감지하는 가장 쉬운 방법은 다음 검사를 수행하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244421Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "__file__",
+      "source_hash": 2807775383027622382,
+      "context_hash": 4535180239947612043,
+      "translation": "__file__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244422Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "In Python 3, when you import a module, its ``__file__`` attribute points to its source ``py`` file (in Python 2, it points to the ``pyc`` file).",
+      "source_hash": 6428144680129157919,
+      "context_hash": 7259842523327686376,
+      "translation": "Python 3에서는 모듈을 가져올 때 해당 모듈의 ``__file__`` 속성이 소스 ``py`` 파일을 가리킵니다(Python 2에서는 ``pyc`` 파일을 가리킵니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244422Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:1",
+      "source": "A package's ``__file__`` points to the ``py`` file for its ``__init__.py``.",
+      "source_hash": 11040333704851499733,
+      "context_hash": 2332170567495493406,
+      "translation": "패키지의 ``__file__``\\ 은 해당 패키지의 ``__init__.py``\\ 에 대한 ``py`` 파일을 가리킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244422Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:2",
+      "source": "E.g.",
+      "source_hash": 7410681984054565405,
+      "context_hash": 10923842791911978978,
+      "translation": "예를 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244423Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "Nothing in this PEP would change the semantics of ``__file__``.",
+      "source_hash": 1142362791353116850,
+      "context_hash": 5212616633353093114,
+      "translation": "이 PEP의 어떤 내용도 ``__file__``\\ 의 의미를 변경하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244423Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "This PEP proposes the addition of an ``__cached__`` attribute to modules, which will always point to the actual ``pyc`` file that was read or written.",
+      "source_hash": 4568724912562656639,
+      "context_hash": 954442347951609441,
+      "translation": "이 PEP는 모듈에 ``__cached__`` 속성을 추가할 것을 제안하며, 이 속성은 항상 읽거나 기록한 실제 ``pyc`` 파일을 가리킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244423Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:1",
+      "source": "When the environment variable ``$PYTHONDONTWRITEBYTECODE`` is set, or the ``-B`` option is given, or if the source lives on a read-only filesystem, then the ``__cached__`` attribute will point to the location that the ``pyc`` file *would* have been written to if it didn't exist.",
+      "source_hash": 11138247193951922884,
+      "context_hash": 15187916445935224400,
+      "translation": "환경 변수 ``$PYTHONDONTWRITEBYTECODE``\\ 가 설정되었거나, ``-B`` 옵션이 지정되었거나, 소스가 읽기 전용 파일 시스템에 있다면 ``__cached__`` 속성은 ``pyc`` 파일이 존재하지 않았을 경우 *작성되었을* 위치를 가리킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:03:06.783083Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:2",
+      "source": "This location of course includes the ``__pycache__`` subdirectory in its path.",
+      "source_hash": 4340373565621811120,
+      "context_hash": 152121667262684679,
+      "translation": "물론 이 위치의 경로에는 ``__pycache__`` 하위 디렉터리가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244423Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "For alternative Python implementations which do not support ``pyc`` files, the ``__cached__`` attribute may point to whatever information makes sense.",
+      "source_hash": 3623604677906864795,
+      "context_hash": 15855641425229200939,
+      "translation": "``pyc`` 파일을 지원하지 않는 대체 Python 구현에서는 ``__cached__`` 속성이 의미가 있는 임의의 정보를 가리킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244424Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:1",
+      "source": "E.g. on Jython, this might be the ``.class`` file for the module: ``__pycache__/foo.jython-32.class``.",
+      "source_hash": 10701708668546080338,
+      "context_hash": 17957762683443778876,
+      "translation": "예를 들어 Jython에서는 모듈의 ``.class`` 파일인 ``__pycache__/foo.jython-32.class``\\ 일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244424Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:2",
+      "source": "Some implementations may use multiple compiled files to create the module, in which case ``__cached__`` may be a tuple.",
+      "source_hash": 17003772034956489200,
+      "context_hash": 1325161553399538349,
+      "translation": "일부 구현은 모듈을 생성하는 데 여러 컴파일 파일을 사용할 수 있으며, 이 경우 ``__cached__``\\ 는 튜플일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244424Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:3",
+      "source": "The exact contents of ``__cached__`` are Python implementation specific.",
+      "source_hash": 12831084041930658416,
+      "context_hash": 15185610813012435143,
+      "translation": "``__cached__``\\ 의 정확한 내용은 Python 구현별로 다릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244424Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:0",
+      "source": "It is recommended that when nothing sensible can be calculated, implementations should set the ``__cached__`` attribute to ``None``.",
+      "source_hash": 11465005530747088218,
+      "context_hash": 10893559416452018300,
+      "translation": "합리적인 값을 계산할 수 없는 경우 구현에서는 ``__cached__``\\ 를 ``None``\\ 으로 설정하는 것이 좋습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244425Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "py_compile and compileall",
+      "source_hash": 17410900634006647501,
+      "context_hash": 7342647795691800441,
+      "translation": "py_compile 및 compileall",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244425Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "Python comes with two modules, ``py_compile`` [15]_ and ``compileall`` [16]_ which support compiling Python modules external to the built-in import machinery.  ``py_compile`` in particular has intimate knowledge of byte compilation, so these will be updated to understand the new layout.",
+      "source_hash": 17750992103740227105,
+      "context_hash": 895215068215097235,
+      "translation": "Python에는 내장 import 메커니즘과 별도로 Python 모듈을 컴파일할 수 있도록 지원하는 두 모듈, ``py_compile`` [15]_\\ 와 ``compileall`` [16]_\\ 이 포함되어 있습니다. 특히 ``py_compile``\\ 은 바이트코드 컴파일을 잘 알고 있으므로, 이 모듈들은 새 레이아웃을 이해하도록 업데이트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244425Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "The ``-b`` flag is added to ``compileall`` for writing legacy ``.pyc`` byte-compiled file path names.",
+      "source_hash": 6749757513252680640,
+      "context_hash": 4499608197678418935,
+      "translation": "기존 ``.pyc`` 바이트코드 컴파일 파일 경로명을 기록할 수 있도록 ``compileall``\\ 에 ``-b`` 플래그가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244425Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "bdist_wininst and the Windows installer",
+      "source_hash": 13710030184633694005,
+      "context_hash": 14477353556057026000,
+      "translation": "bdist_wininst 및 Windows 설치 프로그램",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244425Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "These tools also compile modules explicitly on installation.",
+      "source_hash": 13511490500609976648,
+      "context_hash": 1469164009953289443,
+      "translation": "이러한 도구도 설치 시 모듈을 명시적으로 컴파일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244426Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:1",
+      "source": "If they do not use ``py_compile`` and ``compileall``, then they would also have to be modified to understand the new layout.",
+      "source_hash": 4670718558773375517,
+      "context_hash": 2955484099169799843,
+      "translation": "이 도구들이 ``py_compile``\\ 과 ``compileall``\\ 을 사용하지 않는다면, 새 레이아웃을 이해하도록 수정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244426Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "File extension checks",
+      "source_hash": 14085486778377707104,
+      "context_hash": 8304118154307146959,
+      "translation": "파일 확장자 검사",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244426Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "There exists some code which checks for files ending in ``.pyc`` and simply chops off the last character to find the matching ``.py`` file.",
+      "source_hash": 4964551451369859436,
+      "context_hash": 4869500514129481245,
+      "translation": "``.pyc``\\ 로 끝나는 파일을 검사한 다음 마지막 문자를 단순히 잘라 내 대응하는 ``.py`` 파일을 찾는 코드가 일부 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244426Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:1",
+      "source": "This code will obviously fail once this PEP is implemented.",
+      "source_hash": 6999739230726185049,
+      "context_hash": 1050845815667117473,
+      "translation": "이 PEP가 구현되면 이 코드는 명백히 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:41.244427Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "To support this use case, we'll add two new methods to the ``imp`` package [17]_:",
+      "source_hash": 16848254543801524756,
+      "context_hash": 3055967520302801987,
+      "translation": "이 사용 사례를 지원하기 위해 ``imp`` 패키지에 두 개의 새 메서드를 추가합니다 [17]_:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337261Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "``imp.cache_from_source(py_path)`` -> ``pyc_path``",
+      "source_hash": 3954977566681876926,
+      "context_hash": 5278729308573698035,
+      "translation": "``imp.cache_from_source(py_path)`` -> ``pyc_path``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337267Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:4/seg:0",
+      "source": "``imp.source_from_cache(pyc_path)`` -> ``py_path``",
+      "source_hash": 1489127954798278951,
+      "context_hash": 15625595092250320051,
+      "translation": "``imp.source_from_cache(pyc_path)`` -> ``py_path``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337267Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:0",
+      "source": "Alternative implementations are free to override these functions to return reasonable values based on their own support for this PEP.",
+      "source_hash": 10773856281963357646,
+      "context_hash": 13066989510649556445,
+      "translation": "대체 구현은 이 PEP에 대한 자체 지원을 바탕으로 합리적인 값을 반환하도록 이러한 함수를 자유롭게 재정의할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337268Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:1",
+      "source": "These methods are allowed to return ``None`` when the implementation (or :pep:`302` loader in effect) for whatever reason cannot calculate the appropriate file name.",
+      "source_hash": 3160594137754846134,
+      "context_hash": 7696856428873274869,
+      "translation": "구현 또는 적용 중인 :pep:`302` 로더가 어떤 이유로든 적절한 파일 이름을 계산할 수 없는 경우 이러한 메서드는 ``None``\\ 을 반환할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337268Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:2",
+      "source": "They should not raise exceptions.",
+      "source_hash": 16164681204158552895,
+      "context_hash": 10785738428765078069,
+      "translation": "예외를 발생시켜서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337269Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Backports",
+      "source_hash": 2539662525191140931,
+      "context_hash": 3509757989239355115,
+      "translation": "백포트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337270Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "For versions of Python earlier than 3.2 (and possibly 2.7), it is possible to backport this PEP.",
+      "source_hash": 11788127054982928634,
+      "context_hash": 1823936624084818361,
+      "translation": "3.2 이전 버전의 Python(그리고 2.7도 가능)에서는 이 PEP를 백포트할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337270Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:1",
+      "source": "However, in Python 3.2 (and possibly 2.7), this behavior will be turned on by default, and in fact, it will replace the old behavior.",
+      "source_hash": 799470585541893163,
+      "context_hash": 11078709404335502146,
+      "translation": "그러나 Python 3.2(그리고 2.7도 가능)에서는 이 동작이 기본적으로 활성화되며, 실제로 이전 동작을 대체합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337270Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:2",
+      "source": "Backports will need to support the old layout by default.",
+      "source_hash": 7694039454719366667,
+      "context_hash": 1472711677247067536,
+      "translation": "백포트는 기본적으로 이전 레이아웃을 지원해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337271Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:3",
+      "source": "We suggest supporting :pep:`3147` through the use of an environment variable called ``$PYTHONENABLECACHEDIR`` or the command line switch ``-Xenablecachedir`` to enable the feature.",
+      "source_hash": 8313273767862462326,
+      "context_hash": 15508475093900352094,
+      "translation": "기능을 활성화하려면 ``$PYTHONENABLECACHEDIR``\\ 라는 환경 변수 또는 ``-Xenablecachedir``\\ 라는 명령줄 스위치를 사용하여 :pep:`3147`\\ 을 지원할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337272Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "Makefiles and other dependency tools",
+      "source_hash": 6331955180895019941,
+      "context_hash": 8379623653377000946,
+      "translation": "Makefile 및 기타 종속성 도구",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337272Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "Makefiles and other tools which calculate dependencies on ``.pyc`` files (e.g. to byte-compile the source if the ``.pyc`` is missing) will have to be updated to check the new paths.",
+      "source_hash": 5028276057133459212,
+      "context_hash": 14366711050209168337,
+      "translation": "``.pyc`` 파일에 대한 종속성을 계산하는 Makefile 및 기타 도구(예를 들어 ``.pyc``\\ 가 없을 때 소스를 바이트코드로 컴파일하는 도구)는 새 경로를 확인하도록 업데이트해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337272Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "Alternatives",
+      "source_hash": 6705694286064414587,
+      "context_hash": 8095567325797209556,
+      "translation": "대안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337273Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "This section describes some alternative approaches or details that were considered and rejected during the PEP's development.",
+      "source_hash": 14115596106182539940,
+      "context_hash": 17088220061315126212,
+      "translation": "이 절에서는 PEP를 개발하는 동안 고려되었으나 거부된 몇 가지 대안적 접근 방식이나 세부 사항을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337273Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Hexadecimal magic tags",
+      "source_hash": 6691715430337691980,
+      "context_hash": 5558574628271239291,
+      "translation": "16진수 매직 태그",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337273Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "pyc files inside of the ``__pycache__`` directories contain a magic tag in their file names.",
+      "source_hash": 18395081874260743762,
+      "context_hash": 4317625917623036604,
+      "translation": "``__pycache__`` 디렉터리 내부의 pyc 파일에는 파일 이름에 매직 태그가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337274Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:1",
+      "source": "These are mnemonic tags for the actual magic numbers used by the importer.",
+      "source_hash": 8109555604165026055,
+      "context_hash": 11286593815799082591,
+      "translation": "이는 임포터가 사용하는 실제 매직 번호를 기억하기 쉽게 나타낸 태그입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337274Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:2",
+      "source": "We could have used the hexadecimal representation [10]_ of the binary magic number as a unique identifier.",
+      "source_hash": 18042752742350006059,
+      "context_hash": 16114491692747474466,
+      "translation": "이진 매직 번호의 16진수 표현 [10]_\\ 을 고유 식별자로 사용할 수도 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337274Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:3",
+      "source": "For example, in Python 3.2",
+      "source_hash": 6729806162324256243,
+      "context_hash": 2937092090799190433,
+      "translation": "예를 들어 Python 3.2에서는",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337274Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:3/seg:0",
+      "source": "This isn't particularly human friendly though, thus the magic tag proposed in this PEP.",
+      "source_hash": 1506741206201351798,
+      "context_hash": 5577346251220653782,
+      "translation": "하지만 이는 사람이 사용하기에 그다지 친숙하지 않으므로, 이 PEP에서는 매직 태그를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337275Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:0/seg:0",
+      "source": "PEP 304",
+      "source_hash": 824024733754300904,
+      "context_hash": 10127348975127871284,
+      "translation": "PEP 304",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337275Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:0",
+      "source": "There is some overlap between the goals of this PEP and :pep:`304`, which has been withdrawn.",
+      "source_hash": 399530572643216939,
+      "context_hash": 12809937606555151895,
+      "translation": "이 PEP의 목표와 철회된 :pep:`304`\\ 의 목표 사이에는 어느 정도 겹치는 부분이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337275Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:1",
+      "source": "However :pep:`304` would allow a user to create a shadow file system hierarchy in which to store ``pyc`` files.",
+      "source_hash": 5872038498603624984,
+      "context_hash": 8304584249078529273,
+      "translation": "그러나 :pep:`304`\\ 에서는 사용자가 ``pyc`` 파일을 저장할 섀도 파일 시스템 계층 구조를 만들 수 있도록 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337276Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:2",
+      "source": "This concept of a shadow hierarchy for ``pyc`` files could be used to satisfy the aims of this PEP.",
+      "source_hash": 3729872130768183454,
+      "context_hash": 4690860992857668110,
+      "translation": "``pyc`` 파일을 위한 섀도 계층 구조라는 이 개념을 이 PEP의 목적을 달성하는 데 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337276Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:3",
+      "source": "Although the :pep:`304` does not indicate why it was withdrawn, shadow directories have a number of problems.",
+      "source_hash": 10403753623010073209,
+      "context_hash": 3446534912295891981,
+      "translation": "철회된 이유를 :pep:`304`\\ 가 명시하지는 않지만, 섀도 디렉터리에는 여러 문제가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:03:06.783083Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:4",
+      "source": "The location of the shadow ``pyc`` files would not be easily discovered and would depend on the proper and consistent use of the ``$PYTHONBYTECODE`` environment variable both by the system and by end users.",
+      "source_hash": 10487380402245921007,
+      "context_hash": 5509909097308860356,
+      "translation": "섀도 ``pyc`` 파일의 위치를 쉽게 찾을 수 없으며, 시스템과 최종 사용자 모두가 ``$PYTHONBYTECODE`` 환경 변수를 올바르고 일관되게 사용해야 한다는 점에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337277Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:5",
+      "source": "There are also global implications, meaning that while the system might want to shadow ``pyc`` files, users might not want to, but the PEP defines only an all-or-nothing approach.",
+      "source_hash": 8686585547117833226,
+      "context_hash": 6534032870369188328,
+      "translation": "또한 전역적인 영향도 있습니다. 즉, 시스템은 ``pyc`` 파일을 섀도 처리하려 할 수 있지만 사용자는 원하지 않을 수 있는데, 이 PEP는 전부 아니면 전무한 접근 방식만 정의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337277Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:0",
+      "source": "As an example of the problem, a common (though fragile) Python idiom for locating data files is to do something like this",
+      "source_hash": 9479850423322223050,
+      "context_hash": 9808258130681453463,
+      "translation": "이 문제의 예로, 데이터 파일의 위치를 찾는 일반적인(하지만 취약한) Python 관용구는 다음과 같은 작업을 수행하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337277Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:4/seg:0",
+      "source": "This would be problematic since ``foo.bar.__file__`` will give the location of the ``pyc`` file in the shadow directory, and it may not be possible to find the ``my.dat`` file relative to the source directory from there.",
+      "source_hash": 1573458457419694410,
+      "context_hash": 8888656785236639070,
+      "translation": "이는 문제가 될 수 있습니다. ``foo.bar.__file__``\\ 는 섀도 디렉터리에 있는 ``pyc`` 파일의 위치를 제공하며, 그 위치에서 소스 디렉터리를 기준으로 ``my.dat`` 파일을 찾는 것이 불가능할 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337278Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:0/seg:0",
+      "source": "Fat byte compilation files",
+      "source_hash": 14081138600906264794,
+      "context_hash": 8257731649842857875,
+      "translation": "팻 바이트 컴파일 파일",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:34.337279Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:0",
+      "source": "An earlier version of this PEP described \"fat\" Python byte code files.",
+      "source_hash": 14569513897644267060,
+      "context_hash": 5647534112573413996,
+      "translation": "이 PEP의 이전 버전에서는 “팻” Python 바이트코드 파일을 설명했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929657Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:1",
+      "source": "These files would contain the equivalent of multiple ``pyc`` files in a single ``pyf`` file, with a lookup table keyed off the appropriate magic number.",
+      "source_hash": 4254765101363629247,
+      "context_hash": 940058281650761031,
+      "translation": "이러한 파일은 하나의 ``pyf`` 파일 안에 여러 ``pyc`` 파일에 해당하는 내용을 포함하고, 적절한 매직 넘버를 키로 사용하는 조회 테이블을 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929662Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:2",
+      "source": "This was an extensible file format so that the first 5 parallel Python implementations could be supported fairly efficiently, but with extension lookup tables available to scale ``pyf`` byte code objects as large as necessary.",
+      "source_hash": 5116313456225195410,
+      "context_hash": 3637475226840111982,
+      "translation": "이는 처음 5개의 병렬 Python 구현을 상당히 효율적으로 지원할 수 있는 확장 가능한 파일 형식이었으며, 필요한 만큼 ``pyf`` 바이트코드 객체를 확장할 수 있도록 확장용 조회 테이블도 제공했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929662Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:2/seg:0",
+      "source": "The fat byte compilation files were fairly complex, and inherently introduced difficult race conditions, so the current simplification of using directories was suggested.",
+      "source_hash": 5659518484749106677,
+      "context_hash": 9000631401422799146,
+      "translation": "팻 바이트 컴파일 파일은 상당히 복잡했고 본질적으로 해결하기 어려운 경쟁 조건을 도입했으므로, 현재처럼 디렉터리를 사용하는 단순화 방안이 제안되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929662Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:2/seg:1",
+      "source": "The same problem applies to using zip files as the fat pyc file format.",
+      "source_hash": 7436243831597369709,
+      "context_hash": 7441224950745767919,
+      "translation": "zip 파일을 팻 pyc 파일 형식으로 사용하는 경우에도 동일한 문제가 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929663Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:0/seg:0",
+      "source": "Multiple file extensions",
+      "source_hash": 15752039451772911758,
+      "context_hash": 8718520811402699865,
+      "translation": "여러 파일 확장자",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929663Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:1/seg:0",
+      "source": "The PEP author also considered an approach where multiple thin byte compiled files lived in the same place, but used different file extensions to designate the Python version.",
+      "source_hash": 2875817106243447038,
+      "context_hash": 12740902909707853101,
+      "translation": "PEP 작성자는 여러 개의 얇은 바이트 컴파일 파일을 같은 위치에 두되, Python 버전을 나타내기 위해 서로 다른 파일 확장자를 사용하는 방식도 고려했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929663Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:1/seg:1",
+      "source": "E.g. foo.pyc25, foo.pyc26, foo.pyc31 etc.  This was rejected because of the clutter involved in writing so many different files.",
+      "source_hash": 17748969422126955834,
+      "context_hash": 1882233077240578181,
+      "translation": "예를 들어 foo.pyc25, foo.pyc26, foo.pyc31 등입니다. 이렇게 서로 다른 파일을 너무 많이 작성해야 하는 번거로움 때문에 이 방식은 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929664Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:1/seg:2",
+      "source": "The multiple extension approach makes it more difficult (and an ongoing task) to update any tools that are dependent on the file extension.",
+      "source_hash": 16245457575366991527,
+      "context_hash": 1120441246865668286,
+      "translation": "여러 확장자 방식에서는 파일 확장자에 의존하는 도구를 업데이트하기가 더 어려워지며, 이는 계속 진행해야 하는 작업이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929664Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:0/seg:0",
+      "source": ".pyc",
+      "source_hash": 9094002215800229555,
+      "context_hash": 12225451933031360832,
+      "translation": ".pyc",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929665Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:0",
+      "source": "A proposal was floated to call the ``__pycache__`` directory ``.pyc`` or some other dot-file name.",
+      "source_hash": 17026352457158028042,
+      "context_hash": 15934284190832814179,
+      "translation": "``__pycache__`` 디렉터리를 ``.pyc`` 또는 다른 점 파일 이름으로 부르자는 제안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929665Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:1",
+      "source": "This would have the effect on \\*nix systems of hiding the directory.",
+      "source_hash": 12557801545951761839,
+      "context_hash": 7635311613777826681,
+      "translation": "이렇게 하면 \\*nix 시스템에서 디렉터리가 숨겨집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929665Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:2",
+      "source": "There are many reasons why this was rejected by the BDFL [20]_ including the fact that dot-files are only special on some platforms, and we actually do *not* want to hide these completely from users.",
+      "source_hash": 3515296833913222718,
+      "context_hash": 1925323379618393591,
+      "translation": "BDFL [20]_\\ 를 비롯하여 이 제안이 거부된 이유는 많습니다. 점 파일은 일부 플랫폼에서만 특별하게 취급되며, 실제로는 이러한 파일을 사용자에게서 완전히 숨기고 싶지 *않습니다*.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929666Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:0/seg:0",
+      "source": "Reference implementation",
+      "source_hash": 3855301145730187591,
+      "context_hash": 7765727784067634120,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T19:33:33.929666Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:0",
+      "source": "Work on this code is tracked in a Bazaar branch on Launchpad [22]_ until it's ready for merge into Python 3.2.",
+      "source_hash": 1914072043893096499,
+      "context_hash": 6869139719675200068,
+      "translation": "이 코드에 대한 작업은 Python 3.2에 병합할 준비가 될 때까지 Launchpad의 Bazaar 브랜치에서 추적됩니다 [22]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929667Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:1",
+      "source": "The work-in-progress diff can also be viewed [23]_ and is updated automatically as new changes are uploaded.",
+      "source_hash": 506647674553796670,
+      "context_hash": 14256101864199961939,
+      "translation": "진행 중인 diff도 [23]_\\ 에서 볼 수 있으며, 새로운 변경 사항이 업로드되면 자동으로 업데이트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929667Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:2/seg:0",
+      "source": "A Rietveld code review issue [24]_ has been opened as of 2010-04-01 (no, this is not an April Fools joke :).",
+      "source_hash": 7225345591650841771,
+      "context_hash": 14448313962455278306,
+      "translation": "2010-04-01 기준으로 Rietveld 코드 검토 이슈 [24]_\\ 가 열렸습니다(아니요, 만우절 농담이 아닙니다 :).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929668Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 11964843285293847135,
+      "translation": "참고 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929668Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:0",
+      "source": "The marshal module:",
+      "source_hash": 16635498279435397407,
+      "context_hash": 11885985513198390062,
+      "translation": "marshal 모듈:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929668Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:2/seg:0",
+      "source": "https://docs.python.org/3.1/library/marshal.html",
+      "source_hash": 6471786085347683215,
+      "context_hash": 1007164718727696666,
+      "translation": "https://docs.python.org/3.1/library/marshal.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929669Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:3/seg:0",
+      "source": "import.c:",
+      "source_hash": 13246004550889424326,
+      "context_hash": 8416042720829490503,
+      "translation": "import.c:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929669Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:4/seg:0",
+      "source": "https://github.com/python/cpython/blob/v3.2a1/Python/import.c",
+      "source_hash": 5510093070489043074,
+      "context_hash": 8774502918449191498,
+      "translation": "https://github.com/python/cpython/blob/v3.2a1/Python/import.c",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929669Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:5/seg:0",
+      "source": "Ubuntu: https://www.ubuntu.com",
+      "source_hash": 11365188660915196786,
+      "context_hash": 15338891984986276316,
+      "translation": "Ubuntu: https://www.ubuntu.com",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929670Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:6/seg:0",
+      "source": "Debian: https://www.debian.org",
+      "source_hash": 16117426981275746902,
+      "context_hash": 12996082023694971750,
+      "translation": "Debian: https://www.debian.org",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929670Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:7/seg:0",
+      "source": "Debian Python Policy:",
+      "source_hash": 8426221055205686194,
+      "context_hash": 8364809564135072054,
+      "translation": "Debian Python 정책:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929670Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:8/seg:0",
+      "source": "https://www.debian.org/doc/packaging-manuals/python-policy/",
+      "source_hash": 11263646939598172814,
+      "context_hash": 4981415751919512909,
+      "translation": "https://www.debian.org/doc/packaging-manuals/python-policy/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929670Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:9/seg:0",
+      "source": "python-support:",
+      "source_hash": 6210112628887642889,
+      "context_hash": 11626406902736592218,
+      "translation": "python-support:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929671Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:10/seg:0",
+      "source": "https://web.archive.org/web/20100110123824/http://wiki.debian.org/DebianPythonFAQ#Whatispython-support.3F",
+      "source_hash": 9857220313877931447,
+      "context_hash": 7166547536929502930,
+      "translation": "https://web.archive.org/web/20100110123824/http://wiki.debian.org/DebianPythonFAQ#Whatispython-support.3F",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929671Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:11/seg:0",
+      "source": "python-central:",
+      "source_hash": 12629006289782293520,
+      "context_hash": 13647001253629083577,
+      "translation": "python-central:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929671Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:12/seg:0",
+      "source": "https://web.archive.org/web/20100110123824/http://wiki.debian.org/DebianPythonFAQ#Whatispython-central.3F",
+      "source_hash": 5995155430268282904,
+      "context_hash": 12909903319339766989,
+      "translation": "https://web.archive.org/web/20100110123824/http://wiki.debian.org/DebianPythonFAQ#Whatispython-central.3F",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929672Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:13/seg:0",
+      "source": "binascii.hexlify():",
+      "source_hash": 7175032268485893582,
+      "context_hash": 7639415753373377397,
+      "translation": "binascii.hexlify():",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929672Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:14/seg:0",
+      "source": "https://docs.python.org/3.1/library/binascii.html#binascii.hexlify",
+      "source_hash": 6654949323807691825,
+      "context_hash": 4475000897117325054,
+      "translation": "https://docs.python.org/3.1/library/binascii.html#binascii.hexlify",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:33.929672Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:15/seg:0",
+      "source": "Jython: http://www.jython.org/",
+      "source_hash": 7363116770217100483,
+      "context_hash": 15367647410203758872,
+      "translation": "Jython: http://www.jython.org/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300962Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:16/seg:0",
+      "source": "IronPython: http://ironpython.net/",
+      "source_hash": 14009814677658398057,
+      "context_hash": 1697219462758218874,
+      "translation": "IronPython: http://ironpython.net/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300966Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:17/seg:0",
+      "source": "PyPy: https://web.archive.org/web/20100310130136/http://codespeak.net/pypy/dist/pypy/doc/",
+      "source_hash": 9435097927471271127,
+      "context_hash": 15245613656138134025,
+      "translation": "PyPy: https://web.archive.org/web/20100310130136/http://codespeak.net/pypy/dist/pypy/doc/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300966Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:18/seg:0",
+      "source": "Pynie: https://code.google.com/archive/p/pynie/",
+      "source_hash": 9138953236704434386,
+      "context_hash": 7379411603976049139,
+      "translation": "Pynie: https://code.google.com/archive/p/pynie/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300966Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:19/seg:0",
+      "source": "py_compile: https://docs.python.org/3.1/library/py_compile.html",
+      "source_hash": 8217077572049689961,
+      "context_hash": 16710064836902791073,
+      "translation": "py_compile: https://docs.python.org/3.1/library/py_compile.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300967Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:20/seg:0",
+      "source": "compileall: https://docs.python.org/3.1/library/compileall.html",
+      "source_hash": 2227744780208872420,
+      "context_hash": 5845411217938069347,
+      "translation": "compileall: https://docs.python.org/3.1/library/compileall.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300967Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:21/seg:0",
+      "source": "imp: https://docs.python.org/3.1/library/imp.html",
+      "source_hash": 11062354388414281546,
+      "context_hash": 12190671152685158374,
+      "translation": "imp: https://docs.python.org/3.1/library/imp.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300967Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:22/seg:0",
+      "source": "https://www.mail-archive.com/python-dev@python.org/msg45203.html",
+      "source_hash": 13848268626778529123,
+      "context_hash": 9332026019792629362,
+      "translation": "https://www.mail-archive.com/python-dev@python.org/msg45203.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300968Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:23/seg:0",
+      "source": "[21] importlib: https://docs.python.org/3.1/library/importlib.html",
+      "source_hash": 2535655220396015442,
+      "context_hash": 1701536706757597502,
+      "translation": "[21] importlib: https://docs.python.org/3.1/library/importlib.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300968Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:24/seg:0",
+      "source": "https://code.launchpad.net/~barry/python/pep3147",
+      "source_hash": 3130509969536563308,
+      "context_hash": 11513311424682884079,
+      "translation": "https://code.launchpad.net/~barry/python/pep3147",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300968Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:25/seg:0",
+      "source": "https://code.launchpad.net/~barry/python/pep3147/+merge/22648",
+      "source_hash": 3329225084001988460,
+      "context_hash": 9768150171897185465,
+      "translation": "https://code.launchpad.net/~barry/python/pep3147/+merge/22648",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300968Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:26/seg:0",
+      "source": "http://codereview.appspot.com/842043/show",
+      "source_hash": 13323370048768726626,
+      "context_hash": 8346420135479951312,
+      "translation": "http://codereview.appspot.com/842043/show",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300969Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:0/seg:0",
+      "source": "ACKNOWLEDGMENTS",
+      "source_hash": 8297882763579730466,
+      "context_hash": 1313943338974566202,
+      "translation": "감사의 말",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300969Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:1/seg:0",
+      "source": "Barry Warsaw's original idea was for fat Python byte code files.",
+      "source_hash": 4329247075334359302,
+      "context_hash": 15806641844909823515,
+      "translation": "Barry Warsaw의 원래 아이디어는 용량이 큰 Python 바이트코드 파일을 만드는 것이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300969Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:1/seg:1",
+      "source": "Martin von Loewis reviewed an early draft of the PEP and suggested the simplification to store traditional ``pyc`` and ``pyo`` files in a directory.",
+      "source_hash": 16392471932238101177,
+      "context_hash": 6615975914123335377,
+      "translation": "Martin von Loewis는 PEP의 초기 초안을 검토하고 기존의 ``pyc`` 및 ``pyo`` 파일을 디렉터리에 저장하도록 단순화할 것을 제안했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300970Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:1/seg:2",
+      "source": "Many other people reviewed early versions of this PEP and provided useful feedback including but not limited to:",
+      "source_hash": 6825047589628295193,
+      "context_hash": 16871817543272393074,
+      "translation": "그 밖에도 많은 사람이 이 PEP의 초기 버전을 검토하고 유용한 피드백을 제공했으며, 다음 사람들을 비롯하되 이에 국한되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300970Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:2/seg:0",
+      "source": "David Malcolm",
+      "source_hash": 8198634590956824182,
+      "context_hash": 9671215918335129642,
+      "translation": "David Malcolm",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300970Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:3/seg:0",
+      "source": "Josselin Mouette",
+      "source_hash": 12319175698147956098,
+      "context_hash": 425834417700829046,
+      "translation": "Josselin Mouette",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300970Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:4/seg:0",
+      "source": "Matthias Klose",
+      "source_hash": 9667418162459629237,
+      "context_hash": 4898645034463100278,
+      "translation": "Matthias Klose",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300971Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:5/seg:0",
+      "source": "Michael Hudson",
+      "source_hash": 17425052596172317471,
+      "context_hash": 3822353255128460478,
+      "translation": "Michael Hudson",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300971Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:6/seg:0",
+      "source": "Michael Vogt",
+      "source_hash": 2863807654884618214,
+      "context_hash": 10946543723398321582,
+      "translation": "Michael Vogt",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300971Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:7/seg:0",
+      "source": "Piotr Ożarowski",
+      "source_hash": 13559990921618958929,
+      "context_hash": 4613613490558213909,
+      "translation": "Piotr Ożarowski",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300972Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:8/seg:0",
+      "source": "Scott Kitterman",
+      "source_hash": 5589122648108332940,
+      "context_hash": 14736001824684029265,
+      "translation": "Scott Kitterman",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300972Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:9/seg:0",
+      "source": "Toshio Kuratomi",
+      "source_hash": 17625694513085294283,
+      "context_hash": 11110388172358367447,
+      "translation": "Toshio Kuratomi",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:43.300972Z",
+      "issues": []
+    }
+  ]
+}

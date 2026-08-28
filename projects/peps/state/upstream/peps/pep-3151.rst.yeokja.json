@@ -1,0 +1,2754 @@
+{
+  "version": 1,
+  "source_hash": 15286232916294625715,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Reworking the OS and IO exception hierarchy",
+      "source_hash": 18014823478318064018,
+      "context_hash": 16530898886277989957,
+      "translation": "운영 체제 및 IO 예외 계층 재작업",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581795Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 4055748640018986768,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581798Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "The standard exception hierarchy is an important part of the Python language.",
+      "source_hash": 10493391267323522461,
+      "context_hash": 17735518894028140355,
+      "translation": "표준 예외 계층은 Python 언어의 중요한 부분입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581798Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "It has two defining qualities: it is both generic and selective.",
+      "source_hash": 16665994220900178965,
+      "context_hash": 6982333494299476487,
+      "translation": "여기에는 두 가지 핵심 특성이 있습니다. 일반적이면서도 선택적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581798Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "Generic in that the same exception type can be raised",
+      "source_hash": 5040191163546534899,
+      "context_hash": 11977098604955047021,
+      "translation": "동일한 예외 유형이 발생할 수 있고",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581798Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "and handled - regardless of the context (for example, whether you are",
+      "source_hash": 193138176440611140,
+      "context_hash": 16855122599911143237,
+      "translation": "상황과 관계없이 처리될 수 있다는 점에서 일반적입니다(예를 들어,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581799Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "trying to add something to an integer, to call a string method, or to write an object on a socket, a TypeError will be raised for bad argument types).",
+      "source_hash": 7474443253267524862,
+      "context_hash": 4754659869773483534,
+      "translation": "정수에 무언가를 더하려 하거나, 문자열 메서드를 호출하려 하거나, 소켓에 객체를 쓰려 할 때 잘못된 인자 유형이면 TypeError가 발생합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581799Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:1",
+      "source": "Selective in that it allows the user to easily handle (silence, examine, process, store or encapsulate...) specific kinds of error conditions while letting other errors bubble up to higher calling contexts.",
+      "source_hash": 12015538277052550477,
+      "context_hash": 10869573008436166031,
+      "translation": "다른 오류는 더 높은 호출 컨텍스트로 전파되도록 두면서도 특정 종류의 오류 조건을 사용자가 쉽게 처리(무시, 검사, 처리, 저장 또는 캡슐화 등)할 수 있게 한다는 점에서 선택적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581799Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:2",
+      "source": "For example, you can choose to catch ZeroDivisionErrors without affecting the default handling of other ArithmeticErrors (such as OverflowErrors).",
+      "source_hash": 902174223295632095,
+      "context_hash": 3153607349050687504,
+      "translation": "예를 들어, 다른 ArithmeticError(예: OverflowError)의 기본 처리를 변경하지 않고 ZeroDivisionError를 포착하도록 선택할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581800Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:0",
+      "source": "This PEP proposes changes to a part of the exception hierarchy in order to better embody the qualities mentioned above: the errors related to operating system calls (OSError, IOError, mmap.error, select.error, and all their subclasses).",
+      "source_hash": 7015716551429729034,
+      "context_hash": 14699021334234995260,
+      "translation": "이 PEP는 위에서 언급한 특성을 더 잘 구현하기 위해 예외 계층의 일부를 변경할 것을 제안합니다. 대상은 운영 체제 호출과 관련된 오류(OSError, IOError, mmap.error, select.error 및 이들의 모든 서브클래스)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581800Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 3435715789114565243,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581800Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Confusing set of OS-related exceptions",
+      "source_hash": 11992968785587943104,
+      "context_hash": 11682288346336909756,
+      "translation": "혼란스러운 운영 체제 관련 예외 집합",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581800Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "OS-related (or system call-related) exceptions are currently a diversity of classes, arranged in the following sub-hierarchies",
+      "source_hash": 4168848440606140950,
+      "context_hash": 12721979931244762497,
+      "translation": "운영 체제 관련(또는 시스템 호출 관련) 예외는 현재 다양한 클래스의 집합이며, 다음 하위 계층으로 구성되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581801Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "While some of these distinctions can be explained by implementation considerations, they are often not very logical at a higher level.",
+      "source_hash": 5218974206737205745,
+      "context_hash": 8349175142149963244,
+      "translation": "이러한 구분 중 일부는 구현상의 고려 사항으로 설명할 수 있지만, 더 높은 수준에서는 대개 그다지 논리적이지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581801Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "The line separating OSError and IOError, for example, is often blurry.",
+      "source_hash": 2981689845507821012,
+      "context_hash": 10123893461880409992,
+      "translation": "예를 들어 OSError와 IOError를 구분하는 경계는 종종 모호합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581801Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:2",
+      "source": "Consider the following",
+      "source_hash": 6233749436296940853,
+      "context_hash": 6938732571798512052,
+      "translation": "다음을 살펴보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581801Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "The same error condition (a non-existing file) gets cast as two different exceptions depending on which library function was called.",
+      "source_hash": 15009482341152395096,
+      "context_hash": 1017906493281655942,
+      "translation": "동일한 오류 조건(존재하지 않는 파일)이 어떤 라이브러리 함수를 호출했는지에 따라 서로 다른 두 가지 예외로 변환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581802Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "The reason for this is that the ``os`` module exclusively raises OSError (or its subclass WindowsError) while the ``io`` module mostly raises IOError.",
+      "source_hash": 12541472966392365162,
+      "context_hash": 9563984164706507577,
+      "translation": "그 이유는 ``os`` 모듈은 OSError(또는 그 서브클래스인 WindowsError)만 발생시키는 반면, ``io`` 모듈은 대부분 IOError를 발생시키기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581802Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:2",
+      "source": "However, the user is interested in the nature of the error, not in which part of the interpreter it comes from (since the latter is obvious from reading the traceback message or application source code).",
+      "source_hash": 4494830341230293974,
+      "context_hash": 14204070956754096573,
+      "translation": "그러나 사용자가 관심을 가지는 것은 오류의 출처가 인터프리터의 어느 부분인지가 아니라 오류의 본질입니다(전자는 트레이스백 메시지나 애플리케이션 소스 코드를 읽으면 분명하기 때문입니다).",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:01:50.581802Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "In fact, it is hard to think of any situation where OSError should be caught but not IOError, or the reverse.",
+      "source_hash": 9392541222336824627,
+      "context_hash": 17258476137835752674,
+      "translation": "사실 OSError는 포착해야 하지만 IOError는 포착하지 않아야 하는 상황이나 그 반대의 상황은 생각하기 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581803Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "A further proof of the ambiguity of this segmentation is that the standard library itself sometimes has problems deciding.",
+      "source_hash": 3712756409574744306,
+      "context_hash": 2163035544112948476,
+      "translation": "이러한 구분의 모호성을 보여 주는 또 다른 증거는 표준 라이브러리 자체도 때때로 판단에 어려움을 겪는다는 점입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:01:50.581803Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:1",
+      "source": "For example, in the ``select`` module, similar failures will raise ``select.error``, ``OSError`` or ``IOError`` depending on whether you are using select(), a poll object, a kqueue object, or an epoll object.",
+      "source_hash": 12806525542228228168,
+      "context_hash": 13306229093482457343,
+      "translation": "예를 들어, ``select`` 모듈에서는 select(), poll 객체, kqueue 객체 또는 epoll 객체 중 무엇을 사용하는지에 따라 유사한 실패가 ``select.error``, ``OSError`` 또는 ``IOError``\\ 를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581804Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:2",
+      "source": "This makes user code uselessly complicated since it has to be prepared to catch various exception types, depending on which exact implementation of a single primitive it chooses to use at runtime.",
+      "source_hash": 4598099070088125265,
+      "context_hash": 6750696977892681610,
+      "translation": "이 때문에 사용자가 런타임에 하나의 기본 기능에서 어떤 정확한 구현을 선택해 사용할지에 따라 다양한 예외 유형을 포착할 준비를 해야 하므로 사용자 코드가 불필요하게 복잡해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581804Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "As for WindowsError, it seems to be a pointless distinction.",
+      "source_hash": 260361210112472139,
+      "context_hash": 13287959063980741391,
+      "translation": "WindowsError의 경우에는 무의미한 구분인 것으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581804Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:1",
+      "source": "First, it only exists on Windows systems, which requires tedious compatibility code in cross-platform applications (such code can be found in ``Lib/shutil.py``).",
+      "source_hash": 15924191512295423381,
+      "context_hash": 11076214861595891500,
+      "translation": "첫째, Windows 시스템에만 존재하므로 크로스 플랫폼 애플리케이션에 번거로운 호환성 코드가 필요합니다(이러한 코드는 ``Lib/shutil.py``\\ 에서 찾을 수 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581805Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:2",
+      "source": "Second, it inherits from OSError and is raised for similar errors as OSError is raised for on other systems.",
+      "source_hash": 16568806049190473163,
+      "context_hash": 2561764554146105691,
+      "translation": "둘째, OSError를 상속하며 다른 시스템에서 OSError가 발생하는 것과 유사한 오류에 대해 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581805Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:3",
+      "source": "Third, the user wanting access to low-level exception specifics has to examine the ``errno`` or ``winerror`` attribute anyway.",
+      "source_hash": 17102982397309419740,
+      "context_hash": 14648816304846297803,
+      "translation": "셋째, 저수준 예외의 세부 정보에 접근하려는 사용자는 어차피 ``errno`` 또는 ``winerror`` 속성을 검사해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581805Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "`Appendix B <PEP 3151 Appendix B_>`_ surveys the use of the various exception types across the interpreter and the standard library.",
+      "source_hash": 5124486210827363608,
+      "context_hash": 9415382122292239465,
+      "translation": "`Appendix B <PEP 3151 Appendix B_>`_\\ 에서는 인터프리터와 표준 라이브러리 전반에서 다양한 예외 유형이 사용되는 방식을 조사합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:01:50.581805Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Lack of fine-grained exceptions",
+      "source_hash": 4463319687566213073,
+      "context_hash": 1285405796771195587,
+      "translation": "세분화된 예외의 부족",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581806Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "The current variety of OS-related exceptions doesn't allow the user to filter easily for the desired kinds of failures.",
+      "source_hash": 13918975443332089312,
+      "context_hash": 8593406463869550925,
+      "translation": "현재의 다양한 운영 체제 관련 예외로는 사용자가 원하는 종류의 실패를 쉽게 필터링할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581806Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "As an example, consider the task of deleting a file if it exists.",
+      "source_hash": 2908214260763607937,
+      "context_hash": 11182831616283936686,
+      "translation": "예를 들어, 파일이 존재할 경우 해당 파일을 삭제하는 작업을 생각해 보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581806Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "The Look Before You Leap (LBYL) idiom suffers from an obvious race condition",
+      "source_hash": 4002869083460906509,
+      "context_hash": 13362480624373657824,
+      "translation": "LBYL(Look Before You Leap) 관용구에는 명백한 경쟁 조건이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.581807Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "If a file named as ``filename`` is created by another thread or process between the calls to ``os.path.exists`` and ``os.remove``, it won't be deleted.",
+      "source_hash": 3650151043432004972,
+      "context_hash": 892063438274221326,
+      "translation": "``os.path.exists``\\ 호출과 ``os.remove``\\ 호출 사이에 다른 스레드나 프로세스가 ``filename``\\ 이라는 이름의 파일을 만들면, 해당 파일은 삭제되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135217Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "This can produce bugs in the application, or even security issues.",
+      "source_hash": 11227391369431322595,
+      "context_hash": 13346503053136659447,
+      "translation": "이로 인해 애플리케이션에 버그가 발생하거나 심지어 보안 문제가 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135223Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "Therefore, the solution is to try to remove the file, and ignore the error if the file doesn't exist (an idiom known as Easier to Ask Forgiveness than to get Permission, or EAFP).",
+      "source_hash": 15710465018896841747,
+      "context_hash": 9192066198957475473,
+      "translation": "따라서 해결책은 파일 삭제를 시도하고, 파일이 존재하지 않는 경우에는 오류를 무시하는 것입니다(이는 “허가를 요청하기보다 용서를 구하는 것이 더 쉽다”라는 관용구, 즉 EAFP로 알려져 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135223Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:1",
+      "source": "Careful code will read like the following (which works under both POSIX and Windows systems)",
+      "source_hash": 18151577512123008775,
+      "context_hash": 15259073906960428935,
+      "translation": "신중한 코드는 다음과 같이 작성됩니다(POSIX 및 Windows 시스템에서 모두 작동합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135224Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "or even",
+      "source_hash": 17811029957338889000,
+      "context_hash": 16015040049803303169,
+      "translation": "또는 다음과 같이 작성할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135224Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "This is a lot more to type, and also forces the user to remember the various cryptic mnemonics from the ``errno`` module.",
+      "source_hash": 4587145377767348202,
+      "context_hash": 11461879517968785528,
+      "translation": "이렇게 작성하려면 입력해야 할 내용이 훨씬 많고, 사용자가 ``errno``\\ 모듈의 여러 난해한 니모닉을 기억해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135225Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:1",
+      "source": "It imposes an additional cognitive burden and gets tiresome rather quickly.",
+      "source_hash": 4687121287885648419,
+      "context_hash": 14923718270865249234,
+      "translation": "이는 추가적인 인지 부담을 주며, 매우 빠르게 번거로워집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135225Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:2",
+      "source": "Consequently, many programmers will instead write the following code, which silences exceptions too broadly",
+      "source_hash": 16690301690376291808,
+      "context_hash": 18345597255099280414,
+      "translation": "따라서 많은 프로그래머는 대신 다음과 같은 코드를 작성하며, 이 코드는 예외를 지나치게 광범위하게 무시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135225Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "``os.remove`` can raise an OSError not only when the file doesn't exist, but in other possible situations (for example, the filename points to a directory, or the current process doesn't have permission to remove the file), which all indicate bugs in the application logic and therefore shouldn't be silenced.",
+      "source_hash": 998085423384116922,
+      "context_hash": 14256426934960609988,
+      "translation": "``os.remove``\\ 는 파일이 존재하지 않을 때뿐만 아니라 다른 상황에서도 OSError를 발생시킬 수 있습니다(예를 들어 파일 이름이 디렉터리를 가리키거나 현재 프로세스에 파일을 삭제할 권한이 없는 경우). 이러한 상황은 모두 애플리케이션 로직의 버그를 나타내므로 무시해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135225Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:1",
+      "source": "What the programmer would like to write instead is something such as",
+      "source_hash": 17437020418988245717,
+      "context_hash": 2734587617934841281,
+      "translation": "프로그래머가 대신 작성하고 싶은 코드는 다음과 같은 형태입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135226Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Compatibility strategy",
+      "source_hash": 8065189968253455463,
+      "context_hash": 16784376645409830478,
+      "translation": "호환성 전략",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135226Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Reworking the exception hierarchy will obviously change the exact semantics of at least some existing code.",
+      "source_hash": 17266010244503226291,
+      "context_hash": 11925619527470949238,
+      "translation": "예외 계층 구조를 재구성하면 기존 코드 중 적어도 일부의 정확한 의미가 분명히 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135226Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "While it is not possible to improve on the current situation without changing exact semantics, it is possible to define a narrower type of compatibility, which we will call *useful compatibility*.",
+      "source_hash": 84115030633231156,
+      "context_hash": 3392432774953552191,
+      "translation": "정확한 의미를 변경하지 않고 현재 상황을 개선할 수는 없지만, 더 좁은 의미의 호환성을 정의할 수 있으며 이를 *유용한 호환성*\\ 이라고 부르겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135227Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "For this we first must explain what we will call *careful* and *careless* exception handling.  *Careless* (or \"naïve\") code is defined as code which blindly catches any of ``OSError``, ``IOError``, ``socket.error``, ``mmap.error``, ``WindowsError``, ``select.error`` without checking the ``errno`` attribute.",
+      "source_hash": 10232631949748764532,
+      "context_hash": 10701956480857988445,
+      "translation": "이를 위해 먼저 *신중한* 예외 처리와 *부주의한* 예외 처리라고 부를 것을 설명해야 합니다. *부주의한*\\ (또는 “순진한”) 코드는 ``errno``\\ 속성을 확인하지 않고 ``OSError``, ``IOError``, ``socket.error``, ``mmap.error``, ``WindowsError``, ``select.error``\\ 중 어느 것이든 무조건 포착하는 코드로 정의됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135227Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "This is because such exception types are much too broad to signify anything.",
+      "source_hash": 22060194611002537,
+      "context_hash": 712862376765960000,
+      "translation": "이는 이러한 예외 유형이 어떤 의미를 나타내기에는 지나치게 포괄적이기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135227Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:2",
+      "source": "Any of them can be raised for error conditions as diverse as: a bad file descriptor (which will usually indicate a programming error), an unconnected socket (ditto), a socket timeout, a file type mismatch, an invalid argument, a transmission failure, insufficient permissions, a non-existent directory, a full filesystem, etc.",
+      "source_hash": 5790489023690427635,
+      "context_hash": 16239190814315080388,
+      "translation": "이들 예외는 잘못된 파일 디스크립터(대개 프로그래밍 오류를 나타냅니다), 연결되지 않은 소켓(마찬가지입니다), 소켓 시간 초과, 파일 유형 불일치, 잘못된 인자, 전송 실패, 권한 부족, 존재하지 않는 디렉터리, 파일 시스템 가득 참 등 매우 다양한 오류 조건에서 발생할 수 있습니다.",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T19:01:58.135227Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "(moreover, the use of certain of these exceptions is irregular; `Appendix B <PEP 3151 Appendix B_>`_ exposes the case of the `select`_ module, which raises different exceptions depending on the implementation)",
+      "source_hash": 2979357508822725944,
+      "context_hash": 8397292733018661604,
+      "translation": "(또한 이러한 예외 중 일부의 사용은 일관되지 않습니다. `Appendix B <PEP 3151 Appendix B_>`_\\ 는 구현에 따라 서로 다른 예외를 발생시키는 `select`_ 모듈의 사례를 보여 줍니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135229Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "*Careful* code is defined as code which, when catching any of the above exceptions, examines the ``errno`` attribute to determine the actual error condition and takes action depending on it.",
+      "source_hash": 17038108932991601434,
+      "context_hash": 6043582535540651026,
+      "translation": "*신중한* 코드는 위 예외 중 하나를 포착할 때 ``errno``\\ 속성을 검사하여 실제 오류 조건을 확인하고, 그에 따라 조치를 취하는 코드로 정의됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135229Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "Then we can define *useful compatibility* as follows:",
+      "source_hash": 11737829474489619120,
+      "context_hash": 14000415004977169590,
+      "translation": "그러면 다음과 같이 *유용한 호환성*\\ 을 정의할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135229Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "useful compatibility doesn't make exception catching any narrower, but it can be broader for *careless* exception-catching code.",
+      "source_hash": 7839905739111136415,
+      "context_hash": 14837672589157144079,
+      "translation": "유용한 호환성은 예외 포착을 더 좁게 만들지는 않지만, *부주의한* 예외 포착 코드에 대해서는 더 넓게 적용될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135230Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:1",
+      "source": "Given the following kind of snippet, all exceptions caught before this PEP will also be caught after this PEP, but the reverse may be false (because the coalescing of ``OSError``, ``IOError`` and others means the ``except`` clause throws a slightly broader net)",
+      "source_hash": 341900332622651549,
+      "context_hash": 11352613506791671657,
+      "translation": "다음과 같은 종류의 코드 조각이 주어졌을 때, 이 PEP 이전에 포착되던 모든 예외는 이 PEP 이후에도 포착되지만, 그 역은 성립하지 않을 수 있습니다(``OSError``, ``IOError``\\ 및 기타 예외를 통합하면 ``except``\\ 절이 약간 더 넓은 범위를 포착하기 때문입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135230Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "useful compatibility doesn't alter the behaviour of *careful* exception-catching code.",
+      "source_hash": 3459592953889621469,
+      "context_hash": 18148531472007114691,
+      "translation": "유용한 호환성은 *신중한* 예외 포착 코드의 동작을 변경하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135230Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:1",
+      "source": "Given the following kind of snippet, the same errors should be silenced or re-raised, regardless of whether this PEP has been implemented or not",
+      "source_hash": 17627902904067662257,
+      "context_hash": 951939402856988629,
+      "translation": "다음과 같은 종류의 코드 조각이 주어졌을 때, 이 PEP가 구현되었는지 여부와 관계없이 동일한 오류가 무시되거나 다시 발생해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135231Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "The rationale for this compromise is that careless code can't really be helped, but at least code which \"works\" won't suddenly raise errors and crash.",
+      "source_hash": 1543086838344009782,
+      "context_hash": 8513219153030885642,
+      "translation": "이러한 절충의 근거는 부주의한 코드는 사실상 도와줄 수 없지만, 적어도 “작동하는” 코드는 갑자기 오류를 발생시키고 충돌하지 않도록 하기 위해서입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135231Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:1",
+      "source": "This is important since such code is likely to be present in scripts used as cron tasks or automated system administration programs.",
+      "source_hash": 12373129695320336431,
+      "context_hash": 17535972758560263274,
+      "translation": "이러한 코드는 cron 작업이나 자동화된 시스템 관리 프로그램에 사용되는 스크립트에 포함되어 있을 가능성이 높으므로 이는 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135231Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "Careful code, on the other hand, should not be penalized.",
+      "source_hash": 6557189023190232165,
+      "context_hash": 13236502205915309793,
+      "translation": "반면 신중한 코드에는 불이익을 주어서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135232Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:1",
+      "source": "Actually, one purpose of this PEP is to ease writing careful code.",
+      "source_hash": 2611578926174738945,
+      "context_hash": 10008733936685646788,
+      "translation": "실제로 이 PEP의 목적 중 하나는 신중한 코드 작성을 더 쉽게 하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135232Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Step 1: coalesce exception types",
+      "source_hash": 8878740991684381350,
+      "context_hash": 6396480368163858272,
+      "translation": "1단계: 예외 유형 통합",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135232Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The first step of the resolution is to coalesce existing exception types.",
+      "source_hash": 2755432643098631075,
+      "context_hash": 16640820406066384664,
+      "translation": "해결 과정의 첫 단계는 기존 예외 유형을 통합하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135233Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "The following changes are proposed:",
+      "source_hash": 1248338887398043890,
+      "context_hash": 9390001571698116170,
+      "translation": "다음과 같은 변경을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.135233Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "alias both socket.error and select.error to OSError",
+      "source_hash": 14517937496074969148,
+      "context_hash": 5508733273859256311,
+      "translation": "socket.error와 select.error를 모두 OSError의 별칭으로 지정합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:02:57.066276Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "alias mmap.error to OSError",
+      "source_hash": 4974313711498283490,
+      "context_hash": 9677853777686829540,
+      "translation": "mmap.error를 OSError의 별칭으로 지정합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:02:57.066279Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "alias both WindowsError and VMSError to OSError",
+      "source_hash": 6035201565567815936,
+      "context_hash": 17824613652299990383,
+      "translation": "WindowsError와 VMSError를 모두 OSError의 별칭으로 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376975Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "alias IOError to OSError",
+      "source_hash": 2841801008956151815,
+      "context_hash": 10834752226876067067,
+      "translation": "IOError를 OSError의 별칭으로 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376978Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "coalesce EnvironmentError into OSError",
+      "source_hash": 18211617978190038400,
+      "context_hash": 11708322416994209245,
+      "translation": "EnvironmentError를 OSError로 통합합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376978Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "Each of these changes doesn't preserve exact compatibility, but it does preserve *useful compatibility* (see \"compatibility\" section above).",
+      "source_hash": 10425551550412099727,
+      "context_hash": 5709600959499065474,
+      "translation": "이러한 변경 사항은 정확한 호환성을 보존하지는 않지만, *유용한 호환성*\\ 은 보존합니다(\"compatibility\" 섹션 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376978Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "Each of these changes can be accepted or refused individually, but of course it is considered that the greatest impact can be achieved if this first step is accepted in full.",
+      "source_hash": 13688215210871627828,
+      "context_hash": 13693052860823611939,
+      "translation": "이러한 변경 사항은 각각 개별적으로 수용하거나 거부할 수 있지만, 물론 이 첫 단계가 전체적으로 수용될 때 가장 큰 영향을 달성할 수 있다고 여겨집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376979Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:1",
+      "source": "In this case, the IO exception sub-hierarchy would become",
+      "source_hash": 9897259216065524780,
+      "context_hash": 11895677442939743220,
+      "translation": "이 경우 IO 예외 하위 계층은 다음과 같이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376979Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Justification",
+      "source_hash": 6670031307650305887,
+      "context_hash": 10330159333522860621,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376979Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Not only does this first step present the user a simpler landscape as explained in the rationale_ section, but it also allows for a better and more complete resolution of `Step 2`_ (see Prerequisite_).",
+      "source_hash": 1106822917049822647,
+      "context_hash": 16085189180193783909,
+      "translation": "rationale_ 섹션에서 설명한 것처럼 이 첫 단계는 사용자에게 더 단순한 구조를 제시할 뿐만 아니라, `Step 2`_\\ 에 대한 더 우수하고 완전한 해결도 가능하게 합니다(Prerequisite_\\ 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376980Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "The rationale for keeping ``OSError`` as the official name for generic OS-related exceptions is that it, precisely, is more generic than ``IOError``. ``EnvironmentError`` is more tedious to type and also much lesser-known.",
+      "source_hash": 5056923545315735572,
+      "context_hash": 6539818135543503156,
+      "translation": "일반적인 OS 관련 예외의 공식 이름으로 ``OSError``\\ 를 유지하는 근거는 정확히 말해 이것이 ``IOError``\\ 보다 더 일반적이기 때문입니다. ``EnvironmentError``\\ 는 입력하기가 더 번거롭고 훨씬 덜 알려져 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376980Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "The survey in `Appendix B <PEP 3151 Appendix B_>`_ shows that IOError is the dominant error today in the standard library.",
+      "source_hash": 7443393586584453225,
+      "context_hash": 13625330782129539546,
+      "translation": "`Appendix B <PEP 3151 Appendix B_>`_\\ 의 설문 조사에 따르면 오늘날 표준 라이브러리에서 IOError가 지배적인 오류입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:02:01.376980Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "As for third-party Python code, Google Code Search shows IOError being ten times more popular than EnvironmentError in user code, and three times more popular than OSError [3]_.",
+      "source_hash": 7068540557163634854,
+      "context_hash": 7065450447574427607,
+      "translation": "서드파티 Python 코드의 경우, Google Code Search에 따르면 사용자 코드에서 IOError는 EnvironmentError보다 열 배 더 많이 사용되며, OSError보다도 세 배 더 많이 사용됩니다 [3]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376981Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:2",
+      "source": "However, with no intention to deprecate IOError in the middle term, the lesser popularity of OSError is not a problem.",
+      "source_hash": 17769824960988558812,
+      "context_hash": 7576754374386341680,
+      "translation": "그러나 중기적으로 IOError를 사용 중단할 의도는 없으므로 OSError의 낮은 사용 빈도는 문제가 되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376981Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Exception attributes",
+      "source_hash": 11705366839984238748,
+      "context_hash": 9087582667161274330,
+      "translation": "예외 속성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376981Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Since WindowsError is coalesced into OSError, the latter gains a ``winerror`` attribute under Windows.",
+      "source_hash": 12004506138038345299,
+      "context_hash": 640153766317802011,
+      "translation": "WindowsError가 OSError로 통합되므로, 후자는 Windows에서 ``winerror``\\ 속성을 얻습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376981Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "It is set to None under situations where it is not meaningful, as is already the case with the ``errno``, ``filename`` and ``strerror`` attributes (for example when OSError is raised directly by Python code).",
+      "source_hash": 15099751595274824144,
+      "context_hash": 3728605440862802655,
+      "translation": "``errno``, ``filename`` 및 ``strerror`` 속성의 경우와 마찬가지로 의미가 없는 상황에서는 None으로 설정됩니다(예를 들어 Python 코드가 OSError를 직접 발생시키는 경우).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376982Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Deprecation of names",
+      "source_hash": 13057174897436888241,
+      "context_hash": 15100951875265086172,
+      "translation": "이름의 사용 중단",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376982Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "The following paragraphs outline a possible deprecation strategy for old exception names.",
+      "source_hash": 11742690107923334398,
+      "context_hash": 2874929577192224527,
+      "translation": "다음 문단에서는 이전 예외 이름에 대한 가능한 사용 중단 전략의 개요를 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376982Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "However, it has been decided to keep them as aliases for the time being.",
+      "source_hash": 15201299573919165344,
+      "context_hash": 13135654230559475478,
+      "translation": "그러나 당분간은 이 이름들을 별칭으로 유지하기로 결정되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376982Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "This decision could be revised in time for Python 4.0.",
+      "source_hash": 9537365501267670135,
+      "context_hash": 11379169628899326398,
+      "translation": "이 결정은 Python 4.0에 맞춰 재검토될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376983Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "built-in exceptions",
+      "source_hash": 6618256879608375905,
+      "context_hash": 14377910401125634041,
+      "translation": "내장 예외",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376983Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "Deprecating the old built-in exceptions cannot be done in a straightforward fashion by intercepting all lookups in the builtins namespace, since these are performance-critical.",
+      "source_hash": 6930760146487487840,
+      "context_hash": 18318648611962551782,
+      "translation": "이전 내장 예외의 사용 중단은 builtins 네임스페이스의 모든 조회를 가로채는 간단한 방식으로 수행할 수 없습니다. 이러한 조회는 성능상 매우 중요하기 때문입니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:02:01.376983Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:1",
+      "source": "We also cannot work at the object level, since the deprecated names will be aliased to non-deprecated objects.",
+      "source_hash": 9232528372696606295,
+      "context_hash": 13664209628347409543,
+      "translation": "또한 객체 수준에서 처리할 수도 없습니다. 사용 중단될 이름이 사용 중단되지 않는 객체의 별칭이 될 것이기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376984Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "A solution is to recognize these names at compilation time, and then emit a separate ``LOAD_OLD_GLOBAL`` opcode instead of the regular ``LOAD_GLOBAL``.",
+      "source_hash": 12051181186316330839,
+      "context_hash": 13964153804548060572,
+      "translation": "한 가지 해결책은 컴파일 시점에 이러한 이름을 인식한 다음, 일반적인 ``LOAD_GLOBAL`` 대신 별도의 ``LOAD_OLD_GLOBAL`` 연산 코드를 내보내는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376984Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:1",
+      "source": "This specialized opcode will handle the output of a DeprecationWarning (or PendingDeprecationWarning, depending on the policy decided upon) when the name doesn't exist in the globals namespace, but only in the builtins one.",
+      "source_hash": 8597826494986723854,
+      "context_hash": 13931848903893795294,
+      "translation": "이 특수 연산 코드는 이름이 globals 네임스페이스에는 없고 builtins 네임스페이스에만 있을 때 DeprecationWarning(또는 결정된 정책에 따라 PendingDeprecationWarning)을 출력합니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:02:01.376984Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:2",
+      "source": "This will be enough to avoid false positives (for example if someone defines their own ``OSError`` in a module), and false negatives will be rare (for example when someone accesses ``OSError`` through the ``builtins`` module rather than directly).",
+      "source_hash": 3432426523652604292,
+      "context_hash": 11411042981057201285,
+      "translation": "이렇게 하면 잘못된 양성(예를 들어 누군가 모듈에서 자체 ``OSError``\\ 를 정의하는 경우)을 방지할 수 있으며, 잘못된 음성은 드물 것입니다(예를 들어 누군가 ``builtins`` 모듈을 통해 직접 접근하지 않고 ``OSError``\\ 에 접근하는 경우).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376984Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "module-level exceptions",
+      "source_hash": 7623697164620274622,
+      "context_hash": 2275149126029537571,
+      "translation": "모듈 수준 예외",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376985Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "The above approach cannot be used easily, since it would require special-casing some modules when compiling code objects.",
+      "source_hash": 323917801033989495,
+      "context_hash": 8594422427113998464,
+      "translation": "위의 접근 방식은 코드 객체를 컴파일할 때 일부 모듈을 특별히 처리해야 하므로 쉽게 사용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376985Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:1",
+      "source": "However, these names are by construction much less visible (they don't appear in the builtins namespace), and lesser-known too, so we might decide to let them live in their own namespaces.",
+      "source_hash": 7834835775332257971,
+      "context_hash": 1102618651653783244,
+      "translation": "그러나 이러한 이름은 본질적으로 노출 빈도가 훨씬 낮고(builtins 네임스페이스에 나타나지 않음), 잘 알려지지도 않았으므로 자체 네임스페이스에 존재하도록 둘 수도 있습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:02:01.376985Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Step 2: define additional subclasses",
+      "source_hash": 2360885856700697697,
+      "context_hash": 12712458631326677658,
+      "translation": "2단계: 추가 서브클래스 정의",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376986Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The second step of the resolution is to extend the hierarchy by defining subclasses which will be raised, rather than their parent, for specific errno values.",
+      "source_hash": 9615200386293807617,
+      "context_hash": 18174053235977521337,
+      "translation": "해결의 두 번째 단계는 특정 errno 값에 대해 부모 클래스가 아니라 해당 서브클래스가 발생하도록 서브클래스를 정의하여 계층을 확장하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376986Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "Which errno values is subject to discussion, but a survey of existing exception matching practices (see `Appendix A <PEP 3151 Appendix A_>`_) helps us propose a reasonable subset of all values.",
+      "source_hash": 8568769661389836153,
+      "context_hash": 10394275572042158317,
+      "translation": "어떤 errno 값을 사용할지는 논의의 대상이지만, 기존 예외 매칭 관행을 조사하면(`Appendix A <PEP 3151 Appendix A_>`_ 참조) 모든 값 중 합리적인 부분 집합을 제안하는 데 도움이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:01.376986Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "Trying to map all errno mnemonics, indeed, seems foolish, pointless, and would pollute the root namespace.",
+      "source_hash": 8637886236078376078,
+      "context_hash": 8547815451927051378,
+      "translation": "실제로 모든 errno 니모닉을 매핑하려는 시도는 어리석고 무의미해 보이며 루트 네임스페이스를 오염시킬 것입니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:02:01.376986Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Furthermore, in a couple of cases, different errno values could raise the same exception subclass.",
+      "source_hash": 5416201795930598672,
+      "context_hash": 14973336521512945011,
+      "translation": "또한 몇 가지 경우에는 서로 다른 errno 값이 동일한 예외 서브클래스를 발생시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384446Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:1",
+      "source": "For example, EAGAIN, EALREADY, EWOULDBLOCK and EINPROGRESS are all used to signal that an operation on a non-blocking socket would block (and therefore needs trying again later).",
+      "source_hash": 14879874082726621312,
+      "context_hash": 2747960849885602686,
+      "translation": "예를 들어 EAGAIN, EALREADY, EWOULDBLOCK 및 EINPROGRESS는 모두 비차단 소켓에 대한 작업이 블로킹될 것임을 알리는 데 사용됩니다(따라서 나중에 다시 시도해야 합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384450Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:2",
+      "source": "They could therefore all raise an identical subclass and let the user examine the ``errno`` attribute if (s)he so desires (see below \"exception attributes\").",
+      "source_hash": 4185234083224249266,
+      "context_hash": 1245571422912568945,
+      "translation": "따라서 이들은 모두 동일한 서브클래스를 발생시키고, 사용자가 원한다면 ``errno``\\ 특성을 확인하도록 할 수 있습니다(아래의 \"예외 특성\" 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384451Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Prerequisite",
+      "source_hash": 14402812970595557961,
+      "context_hash": 7190979378608409248,
+      "translation": "선행 조건",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384451Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "`Step 1`_ is a loose prerequisite for this.",
+      "source_hash": 3390712021089687382,
+      "context_hash": 7238149699032904851,
+      "translation": "`Step 1`_\\ 은 이에 대한 느슨한 선행 조건입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384452Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "Prerequisite, because some errnos can currently be attached to different exception classes: for example, ENOENT can be attached to both OSError and IOError, depending on the context.",
+      "source_hash": 18137785808229965255,
+      "context_hash": 246653705670723465,
+      "translation": "선행 조건인 이유는 현재 일부 errno를 서로 다른 예외 클래스에 연결할 수 있기 때문입니다. 예를 들어 ENOENT는 컨텍스트에 따라 OSError와 IOError 모두에 연결될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384452Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "If we don't want to break *useful compatibility*, we can't make an ``except OSError`` (or IOError) fail to match an exception where it would succeed today.",
+      "source_hash": 18411964763679390412,
+      "context_hash": 10418114969725633165,
+      "translation": "*유용한 호환성*\\ 을 깨고 싶지 않다면, 현재는 일치하는 예외가 ``except OSError``\\ (또는 IOError)와 일치하지 않도록 만들 수는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384452Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "Loose, because we could decide for a partial resolution of step 2 if existing exception classes are not coalesced: for example, ENOENT could raise a hypothetical FileNotFoundError where an IOError was previously raised, but continue to raise OSError otherwise.",
+      "source_hash": 5176463572112908639,
+      "context_hash": 16942913376587462668,
+      "translation": "기존 예외 클래스가 통합되지 않는다면 2단계를 부분적으로 해결하기로 결정할 수 있으므로 느슨합니다. 예를 들어 ENOENT가 이전에는 IOError가 발생했던 경우에 가상의 FileNotFoundError를 발생시키되, 그 밖의 경우에는 계속 OSError를 발생시키도록 할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384453Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "The dependency on step 1 could be totally removed if the new subclasses used multiple inheritance to match with all of the existing superclasses (or, at least, OSError and IOError, which are arguable the most prevalent ones).",
+      "source_hash": 9884713237814235979,
+      "context_hash": 17700057213380723405,
+      "translation": "새 서브클래스가 기존의 모든 슈퍼클래스(또는 적어도 가장 널리 사용된다고 할 수 있는 OSError와 IOError)와 일치하도록 다중 상속을 사용한다면 1단계에 대한 의존성을 완전히 제거할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384453Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:1",
+      "source": "It would, however, make the hierarchy more complicated and therefore harder to grasp for the user.",
+      "source_hash": 7791586040743490313,
+      "context_hash": 9132691220558663648,
+      "translation": "그러나 그렇게 하면 계층 구조가 더 복잡해져 사용자가 이해하기 어려워집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384454Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "New exception classes",
+      "source_hash": 1201242805167737909,
+      "context_hash": 8559984620651272782,
+      "translation": "새 예외 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384454Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "The following tentative list of subclasses, along with a description and the list of errnos mapped to them, is submitted to discussion:",
+      "source_hash": 16315902338406192698,
+      "context_hash": 8258520798899823751,
+      "translation": "다음의 잠정적인 서브클래스 목록을 설명 및 각 서브클래스에 매핑된 errno 목록과 함께 논의를 위해 제출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384454Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "``FileExistsError``: trying to create a file or directory which already exists (EEXIST)",
+      "source_hash": 11257235048537188971,
+      "context_hash": 14706892752956665743,
+      "translation": "``FileExistsError``: 이미 존재하는 파일 또는 디렉터리를 만들려고 할 때(EEXIST)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384455Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "``FileNotFoundError``: for all circumstances where a file and directory is requested but doesn't exist (ENOENT)",
+      "source_hash": 13511619850512433045,
+      "context_hash": 15958707703717386137,
+      "translation": "``FileNotFoundError``: 파일 또는 디렉터리를 요청했지만 존재하지 않는 모든 경우(ENOENT)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384455Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "``IsADirectoryError``: file-level operation (open(), os.remove()...) requested on a directory (EISDIR)",
+      "source_hash": 13575470836529591121,
+      "context_hash": 2815142892285801023,
+      "translation": "``IsADirectoryError``: 디렉터리에 대해 파일 수준 작업(open(), os.remove()...)이 요청된 경우(EISDIR)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384456Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "``NotADirectoryError``: directory-level operation requested on something else (ENOTDIR)",
+      "source_hash": 9397397234094643109,
+      "context_hash": 10763449162563365495,
+      "translation": "``NotADirectoryError``: 다른 대상에 대해 디렉터리 수준 작업이 요청된 경우(ENOTDIR)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384456Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:0",
+      "source": "``PermissionError``: trying to run an operation without the adequate access rights - for example filesystem permissions (EACCES, EPERM)",
+      "source_hash": 7400714794030726969,
+      "context_hash": 9476424664273969322,
+      "translation": "``PermissionError``: 적절한 접근 권한 없이 작업을 실행하려고 할 때(예: 파일 시스템 권한)(EACCES, EPERM)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384456Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:7/seg:0",
+      "source": "``BlockingIOError``: an operation would block on an object (e.g. socket) set for non-blocking operation (EAGAIN, EALREADY, EWOULDBLOCK, EINPROGRESS); this is the existing ``io.BlockingIOError`` with an extended role",
+      "source_hash": 1500440117705665057,
+      "context_hash": 2878213085341148908,
+      "translation": "``BlockingIOError``: 비차단 작업을 수행하도록 설정된 객체(예: 소켓)에서 작업이 블로킹될 경우(EAGAIN, EALREADY, EWOULDBLOCK, EINPROGRESS); 이는 역할이 확장된 기존 ``io.BlockingIOError``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384456Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:8/seg:0",
+      "source": "``BrokenPipeError``: trying to write on a pipe while the other end has been closed, or trying to write on a socket which has been shutdown for writing (EPIPE, ESHUTDOWN)",
+      "source_hash": 5471489722490130463,
+      "context_hash": 206480697267994083,
+      "translation": "``BrokenPipeError``: 반대쪽 끝이 닫힌 동안 파이프에 쓰려고 하거나, 쓰기가 종료된 소켓에 쓰려고 할 때(EPIPE, ESHUTDOWN)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384457Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:9/seg:0",
+      "source": "``InterruptedError``: a system call was interrupted by an incoming signal (EINTR)",
+      "source_hash": 1857425594389280781,
+      "context_hash": 12817646475121088851,
+      "translation": "``InterruptedError``: 시스템 호출이 수신 신호에 의해 중단된 경우(EINTR)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384457Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:10/seg:0",
+      "source": "``ConnectionAbortedError``: connection attempt aborted by peer (ECONNABORTED)",
+      "source_hash": 11519867972340656499,
+      "context_hash": 10570716416749915605,
+      "translation": "``ConnectionAbortedError``: 피어에 의해 연결 시도가 중단된 경우(ECONNABORTED)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384457Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:11/seg:0",
+      "source": "``ConnectionRefusedError``: connection reset by peer (ECONNREFUSED)",
+      "source_hash": 23217242051903482,
+      "context_hash": 15875416863794929526,
+      "translation": "``ConnectionRefusedError``: 피어에 의해 연결이 재설정된 경우(ECONNREFUSED)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384458Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:12/seg:0",
+      "source": "``ConnectionResetError``: connection reset by peer (ECONNRESET)",
+      "source_hash": 2424275975201918575,
+      "context_hash": 8250159766910984036,
+      "translation": "``ConnectionResetError``: 피어에 의해 연결이 재설정된 경우(ECONNRESET)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384458Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:13/seg:0",
+      "source": "``TimeoutError``: connection timed out (ETIMEDOUT); this can be re-cast as a generic timeout exception, replacing ``socket.timeout`` and also useful for other types of timeout (for example in Lock.acquire())",
+      "source_hash": 2008387667867684791,
+      "context_hash": 15992130144034023881,
+      "translation": "``TimeoutError``: 연결 시간이 초과된 경우(ETIMEDOUT); 이는 일반적인 시간 초과 예외로 다시 정의하여 ``socket.timeout``\\ 을 대체할 수 있으며, 다른 유형의 시간 초과(예: Lock.acquire())에도 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384458Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:14/seg:0",
+      "source": "``ChildProcessError``: operation on a child process failed (ECHILD); this is raised mainly by the wait() family of functions.",
+      "source_hash": 6810964409102317227,
+      "context_hash": 3429310370523075153,
+      "translation": "``ChildProcessError``: 자식 프로세스에 대한 작업이 실패한 경우(ECHILD); 이는 주로 wait() 계열 함수에서 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384459Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:15/seg:0",
+      "source": "``ProcessLookupError``: the given process (as identified by, e.g., its process id) doesn't exist (ESRCH).",
+      "source_hash": 13723366591965270602,
+      "context_hash": 12391285350965842318,
+      "translation": "``ProcessLookupError``: 지정된 프로세스(예: 프로세스 ID로 식별되는 프로세스)가 존재하지 않는 경우(ESRCH)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384459Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:16/seg:0",
+      "source": "In addition, the following exception class is proposed for inclusion:",
+      "source_hash": 10402700183824182763,
+      "context_hash": 16319719750129319818,
+      "translation": "또한 다음 예외 클래스를 포함할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384459Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:17/seg:0",
+      "source": "``ConnectionError``: a base class for ``ConnectionAbortedError``, ``ConnectionRefusedError`` and ``ConnectionResetError``",
+      "source_hash": 13281952462369500299,
+      "context_hash": 7359136822803928194,
+      "translation": "``ConnectionError``: ``ConnectionAbortedError``, ``ConnectionRefusedError`` 및 ``ConnectionResetError``\\ 의 베이스 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384459Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:18/seg:0",
+      "source": "The following drawing tries to sum up the proposed additions, along with the corresponding errno values (where applicable).",
+      "source_hash": 2165379460525709956,
+      "context_hash": 16011970923287690212,
+      "translation": "다음 그림은 제안된 추가 사항을 해당 errno 값(해당하는 경우)과 함께 요약하려고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384460Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:18/seg:1",
+      "source": "The root of the sub-hierarchy (OSError, assuming `Step 1`_ is accepted in full) is not shown",
+      "source_hash": 17009254387207486184,
+      "context_hash": 2558635519641982668,
+      "translation": "하위 계층 구조의 루트(OSError, `Step 1`_ 이 완전히 수락된다고 가정)는 표시하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384460Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Naming",
+      "source_hash": 2665270351651321507,
+      "context_hash": 18068518356383665798,
+      "translation": "이름 지정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:18.384460Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "Various naming controversies can arise.",
+      "source_hash": 10334637978562990227,
+      "context_hash": 7006002839651031916,
+      "translation": "다양한 명명 논란이 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864682Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "One of them is whether all exception class names should end in \"``Error``\".",
+      "source_hash": 1355209641651838673,
+      "context_hash": 6247438118421528753,
+      "translation": "그중 하나는 모든 예외 클래스 이름이 \"``Error``\"\\ 로 끝나야 하는지에 관한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864685Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:2",
+      "source": "In favour is consistency with the rest of the exception hierarchy, against is concision (especially with long names such as ``ConnectionAbortedError``).",
+      "source_hash": 10162061017300455809,
+      "context_hash": 10087921816128986742,
+      "translation": "찬성하는 쪽의 근거는 나머지 예외 계층과의 일관성이고, 반대하는 쪽의 근거는 간결성입니다(특히 ``ConnectionAbortedError``\\ 와 같이 이름이 긴 경우에 그렇습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864685Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Exception attributes",
+      "source_hash": 11705366839984238748,
+      "context_hash": 2534273547288849852,
+      "translation": "예외 속성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864686Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "In order to preserve *useful compatibility*, these subclasses should still set adequate values for the various exception attributes defined on the superclass (for example ``errno``, ``filename``, and optionally ``winerror``).",
+      "source_hash": 2718675714201170133,
+      "context_hash": 7219138184081681297,
+      "translation": "*유용한 하위 호환성*\\ 을\\ 보존하려면 이러한 서브클래스는 슈퍼클래스에 정의된 다양한 예외 속성에 대해 여전히 적절한 값을 설정해야 합니다(예를 들어 ``errno``, ``filename``, 선택적으로 ``winerror``).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864686Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 17897691198104517297,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864687Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Since it is proposed that the subclasses are raised based purely on the value of ``errno``, little or no changes should be required in extension modules (either standard or third-party).",
+      "source_hash": 2227873544124999606,
+      "context_hash": 8116076987191129317,
+      "translation": "서브클래스를 순전히 ``errno``\\ 의 값에 기반하여 발생시키도록 제안되었으므로, 확장 모듈(표준 또는 서드 파티)에는 변경이 거의 또는 전혀 필요하지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864687Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "The first possibility is to adapt the ``PyErr_SetFromErrno()`` family of functions (``PyErr_SetFromWindowsErr()`` under Windows) to raise the appropriate OSError subclass.",
+      "source_hash": 11138800080876767849,
+      "context_hash": 6911187401495708034,
+      "translation": "첫 번째 가능성은 ``PyErr_SetFromErrno()``\\ 계열의 함수(Windows에서는 ``PyErr_SetFromWindowsErr()``\\ )를 조정하여 적절한 OSError 서브클래스를 발생시키도록 하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864687Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:1",
+      "source": "This wouldn't cover, however, Python code raising OSError directly, using the following idiom (seen in ``Lib/tempfile.py``)",
+      "source_hash": 8641868179469505831,
+      "context_hash": 9689556460160166326,
+      "translation": "그러나 이렇게 하면 다음 관용구를 사용하여 OSError를 직접 발생시키는 Python 코드는 처리하지 못합니다(``Lib/tempfile.py``\\ 에서 볼 수 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864688Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "A second possibility, suggested by Marc-Andre Lemburg, is to adapt ``OSError.__new__`` to instantiate the appropriate subclass.",
+      "source_hash": 5334537373142135494,
+      "context_hash": 11053535027696496364,
+      "translation": "두 번째 가능성은 Marc-Andre Lemburg가 제안한 것으로, ``OSError.__new__``\\ 를 조정하여 적절한 서브클래스를 인스턴스화하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864688Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:1",
+      "source": "This has the benefit of also covering Python code such as the above.",
+      "source_hash": 4715480837059643246,
+      "context_hash": 15857518002910876926,
+      "translation": "이는 위와 같은 Python 코드도 처리할 수 있다는 이점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864688Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Possible objections",
+      "source_hash": 16030138522703111732,
+      "context_hash": 17143942238137477309,
+      "translation": "가능한 반론",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864688Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Namespace pollution",
+      "source_hash": 8181065146411477488,
+      "context_hash": 9916300943648615040,
+      "translation": "네임스페이스 오염",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:02:09.864689Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "Making the exception hierarchy finer-grained makes the root (or builtins) namespace larger.",
+      "source_hash": 12504055962741664604,
+      "context_hash": 15592263248254989281,
+      "translation": "예외 계층을 더 세분화하면 루트(또는 builtins) 네임스페이스가 더 커집니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:02:09.864690Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "This is to be moderated, however, as:",
+      "source_hash": 2281046791861904440,
+      "context_hash": 141249284136405147,
+      "translation": "그러나 다음과 같은 이유로 이는 완화됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864690Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "only a handful of additional classes are proposed;",
+      "source_hash": 16761005392099306719,
+      "context_hash": 14299043278747018271,
+      "translation": "제안된 추가 클래스가 극소수이기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864691Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "while standard exception types live in the root namespace, they are visually distinguished by the fact that they use the CamelCase convention, while almost all other builtins use lowercase naming (except True, False, None, Ellipsis and NotImplemented)",
+      "source_hash": 9017760310187820497,
+      "context_hash": 10651908135829054568,
+      "translation": "표준 예외 타입은 루트 네임스페이스에 존재하지만, CamelCase 규칙을 사용한다는 점에서 시각적으로 구별되며, 거의 모든 다른 내장 객체는 소문자 명명 방식을 사용합니다(True, False, None, Ellipsis 및 NotImplemented는 제외).",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:02:09.864691Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:0",
+      "source": "An alternative would be to provide a separate module containing the finer-grained exceptions, but that would defeat the purpose of encouraging careful code over careless code, since the user would first have to import the new module instead of using names already accessible.",
+      "source_hash": 16817610004786890576,
+      "context_hash": 1549878377283630398,
+      "translation": "다른 방법으로는 더 세분화된 예외를 포함하는 별도 모듈을 제공할 수 있지만, 그렇게 하면 부주의한 코드보다 신중한 코드를 장려하려는 목적에 어긋납니다. 사용자가 이미 접근할 수 있는 이름을 사용하는 대신 먼저 새 모듈을 가져와야 하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864692Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Earlier discussion",
+      "source_hash": 97049835692466268,
+      "context_hash": 6940494149927641531,
+      "translation": "이전 논의",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864692Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "While this is the first time such as formal proposal is made, the idea has received informal support in the past [1]_; both the introduction of finer-grained exception classes and the coalescing of OSError and IOError.",
+      "source_hash": 3144344463289658815,
+      "context_hash": 7994703113697445503,
+      "translation": "이와 같은 공식적인 제안이 이루어지는 것은 이번이 처음이지만, 이 아이디어는 과거에 비공식적인 지지를 받아 왔습니다 [1]_; 더 세분화된 예외 클래스의 도입과 OSError 및 IOError의 통합 모두에 대한 지지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864693Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "The removal of WindowsError alone has been discussed and rejected as part of :pep:`another PEP <348#removing-windowserror>`, but there seemed to be a consensus that the distinction with OSError wasn't meaningful.",
+      "source_hash": 3697284120391781650,
+      "context_hash": 3056084103260459961,
+      "translation": "WindowsError의 제거만으로도 :pep:`another PEP <348#removing-windowserror>`\\ 의 일부로 논의되었으며 거부되었지만, OSError와의 구분이 의미 있지 않다는 데에는 합의가 있었던 것으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864693Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:1",
+      "source": "This supports at least its aliasing with OSError.",
+      "source_hash": 3944898451749989301,
+      "context_hash": 10888370571075182576,
+      "translation": "이는 적어도 OSError의 별칭으로 만드는 것을 뒷받침합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864693Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 5758325336793216470,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864693Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "The reference implementation has been integrated into Python 3.3.",
+      "source_hash": 11277324537875241609,
+      "context_hash": 17760849410817836187,
+      "translation": "참조 구현이 Python 3.3에 통합되었습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T19:02:09.864694Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "It was formerly developed in http://hg.python.org/features/pep-3151/ in branch ``pep-3151``, and also tracked on the bug tracker at http://bugs.python.org/issue12555.",
+      "source_hash": 11723938654371083818,
+      "context_hash": 10980146466679524595,
+      "translation": "이전에는 http://hg.python.org/features/pep-3151/ 의 ``pep-3151`` 브랜치에서 개발되었으며, http://bugs.python.org/issue12555 의 버그 추적기에서도 추적되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:09:43.759135Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:2",
+      "source": "It has been successfully tested on a variety of systems: Linux, Windows, OpenIndiana and FreeBSD buildbots.",
+      "source_hash": 12816916850934422438,
+      "context_hash": 769420390998507873,
+      "translation": "Linux, Windows, OpenIndiana 및 FreeBSD 빌드봇을 비롯한 다양한 시스템에서 성공적으로 테스트되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864695Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "One source of trouble has been with the respective constructors of ``OSError`` and ``WindowsError``, which were incompatible.",
+      "source_hash": 9403197333327580354,
+      "context_hash": 469783205467735436,
+      "translation": "문제의 한 원인은 서로 호환되지 않았던 ``OSError``\\ 와 ``WindowsError``\\ 의 각 생성자였습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864696Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:1",
+      "source": "The way it is solved is by keeping the ``OSError`` signature and adding a fourth optional argument to allow passing the Windows error code (which is different from the POSIX errno).",
+      "source_hash": 8546192534166622252,
+      "context_hash": 15040638969779842791,
+      "translation": "해결 방법은 ``OSError``\\ 의 시그니처를 유지하고, POSIX errno와는 다른 Windows 오류 코드를 전달할 수 있도록 네 번째 선택적 인자를 추가하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864696Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:2",
+      "source": "The fourth argument is stored as ``winerror`` and its POSIX translation as ``errno``.",
+      "source_hash": 998032826099970217,
+      "context_hash": 11296301793222307769,
+      "translation": "네 번째 인자는 ``winerror``\\ 로 저장되고, 그 POSIX 변환값은 ``errno``\\ 로 저장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864696Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:3",
+      "source": "The ``PyErr_SetFromWindowsErr*`` functions have been adapted to use the right constructor call.",
+      "source_hash": 16942782567554023406,
+      "context_hash": 8609631278335647643,
+      "translation": "``PyErr_SetFromWindowsErr*``\\ 함수는 올바른 생성자 호출을 사용하도록 조정되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864697Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "A slight complication is when the ``PyErr_SetExcFromWindowsErr*`` functions are called with ``OSError`` rather than ``WindowsError``: the ``errno`` attribute of the exception object would store the Windows error code (such as 109 for ERROR_BROKEN_PIPE) rather than its POSIX translation (such as 32 for EPIPE), which it does now.",
+      "source_hash": 10717465729284108365,
+      "context_hash": 7870213008662048633,
+      "translation": "``PyErr_SetExcFromWindowsErr*``\\ 함수가 ``WindowsError``\\ 대신 ``OSError``\\ 와 함께 호출되는 경우 약간 복잡해집니다. 예외 객체의 ``errno``\\ 속성이 현재처럼 POSIX 변환값(예: EPIPE의 경우 32)을 저장하는 대신 Windows 오류 코드(예: ERROR_BROKEN_PIPE의 경우 109)를 저장하게 되기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864697Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:1",
+      "source": "For non-socket error codes, this only occurs in the private ``_multiprocessing`` module for which there is no compatibility concern.",
+      "source_hash": 5548538953912365321,
+      "context_hash": 11790135174663003991,
+      "translation": "소켓이 아닌 오류 코드의 경우 이는 비공개 ``_multiprocessing``\\ 모듈에서만 발생하며, 이 모듈에는 호환성 문제가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:02:09.864697Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "For socket errors, the \"POSIX errno\" as reflected by the ``errno`` module is numerically equal to the `Windows Socket error code <http://msdn.microsoft.com/en-us/library/ms740668%28v=vs.85%29.aspx>`_ returned by the ``WSAGetLastError`` system call",
+      "source_hash": 10467200984318410881,
+      "context_hash": 17376077846644478429,
+      "translation": "소켓 오류의 경우, ``errno`` 모듈에 반영된 \"POSIX errno\"는 ``WSAGetLastError`` 시스템 호출이 반환하는 `Windows Socket error code <http://msdn.microsoft.com/en-us/library/ms740668%28v=vs.85%29.aspx>`_\\ 와 수치적으로 동일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064854Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Possible alternative",
+      "source_hash": 5724287440792531376,
+      "context_hash": 4886545748785450939,
+      "translation": "가능한 대안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064858Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Pattern matching",
+      "source_hash": 11139304399109681274,
+      "context_hash": 4952582627675057391,
+      "translation": "패턴 매칭",
+      "glossary_snapshot": {
+        "pattern matching": "패턴 매칭"
+      },
+      "translated_at": "2026-08-28T19:01:58.064858Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "Another possibility would be to introduce an advanced pattern matching syntax when catching exceptions.",
+      "source_hash": 835151867075682538,
+      "context_hash": 12634632154263074452,
+      "translation": "또 다른 가능성은 예외를 포착할 때 고급 패턴 매칭 구문을 도입하는 것입니다.",
+      "glossary_snapshot": {
+        "pattern matching": "패턴 매칭"
+      },
+      "translated_at": "2026-08-28T19:01:58.064859Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:1",
+      "source": "For example",
+      "source_hash": 9117899214634101441,
+      "context_hash": 5938989681340757053,
+      "translation": "예를 들어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064860Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "Several problems with this proposal:",
+      "source_hash": 16277521660969292674,
+      "context_hash": 5981941117569089022,
+      "translation": "이 제안에는 몇 가지 문제가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064860Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:4/seg:0",
+      "source": "it introduces new syntax, which is perceived by the author to be a heavier change compared to reworking the exception hierarchy",
+      "source_hash": 930078943167049006,
+      "context_hash": 1921518130932779051,
+      "translation": "새로운 구문을 도입하므로, 저자가 보기에 예외 계층 구조를 재구성하는 것보다 더 큰 변경으로 인식됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064860Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:0",
+      "source": "it doesn't decrease typing effort significantly",
+      "source_hash": 3806026842408527448,
+      "context_hash": 1813979694962283416,
+      "translation": "입력해야 하는 수고를 크게 줄이지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064861Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:0",
+      "source": "it doesn't relieve the programmer from the burden of having to remember errno mnemonics",
+      "source_hash": 9572293255489288999,
+      "context_hash": 11035864899232946055,
+      "translation": "프로그래머가 errno 니모닉을 기억해야 하는 부담을 덜어 주지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064861Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Exceptions ignored by this PEP",
+      "source_hash": 5712027133495661913,
+      "context_hash": 9025478313778758851,
+      "translation": "이 PEP에서 무시하는 예외",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064861Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "This PEP ignores ``EOFError``, which signals a truncated input stream in various protocol and file format implementations (for example ``GzipFile``). ``EOFError`` is not OS- or IO-related, it is a logical error raised at a higher level.",
+      "source_hash": 3028034335696252723,
+      "context_hash": 3657476900251269394,
+      "translation": "이 PEP에서는 다양한 프로토콜 및 파일 형식 구현에서 잘린 입력 스트림을 나타내는 ``EOFError``\\ 를 무시합니다(예를 들어 ``GzipFile``). ``EOFError``\\ 는 OS 또는 IO와 관련된 오류가 아니라 더 높은 수준에서 발생하는 논리적 오류입니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:01:58.064862Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:0",
+      "source": "This PEP also ignores ``SSLError``, which is raised by the ``ssl`` module in order to propagate errors signalled by the ``OpenSSL`` library.",
+      "source_hash": 541549191774424752,
+      "context_hash": 14460206425749876679,
+      "translation": "이 PEP에서는 ``ssl`` 모듈이 ``OpenSSL`` 라이브러리에서 신호한 오류를 전달하기 위해 발생시키는 ``SSLError``\\ 도 무시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064862Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:1",
+      "source": "Ideally, ``SSLError`` would benefit from a similar but separate treatment since it defines its own constants for error types (``ssl.SSL_ERROR_WANT_READ``, etc.).",
+      "source_hash": 2444623004941400231,
+      "context_hash": 5335365639323900235,
+      "translation": "이상적으로는 ``SSLError``\\ 가 오류 유형에 대한 자체 상수(``ssl.SSL_ERROR_WANT_READ``, 등)를 정의하므로 유사하지만 별도의 처리를 통해 이점을 얻을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064863Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:2",
+      "source": "In Python 3.2, ``SSLError`` is already replaced with ``socket.timeout`` when it signals a socket timeout (see `issue 10272 <http://bugs.python.org/issue10272>`_).",
+      "source_hash": 113099939482550874,
+      "context_hash": 3798590006651497120,
+      "translation": "Python 3.2에서는 소켓 타임아웃을 나타낼 때 ``SSLError``\\ 가 이미 ``socket.timeout``\\ 으로 대체됩니다(`issue 10272 <http://bugs.python.org/issue10272>`_ 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064863Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:0",
+      "source": "Endly, the fate of ``socket.gaierror`` and ``socket.herror`` is not settled.",
+      "source_hash": 11888064133709991333,
+      "context_hash": 3259011866738258412,
+      "translation": "마지막으로 ``socket.gaierror``\\ 와 ``socket.herror``\\ 의 향방은 아직 정해지지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064863Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:1",
+      "source": "While they would deserve less cryptic names, this can be handled separately from the exception hierarchy reorganization effort.",
+      "source_hash": 17821602353216506216,
+      "context_hash": 170512204903472208,
+      "translation": "이 예외들은 덜 난해한 이름을 사용할 만하지만, 이는 예외 계층 구조 재구성 작업과 별도로 처리할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064863Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "Appendix A: Survey of common errnos",
+      "source_hash": 6531969735685387456,
+      "context_hash": 11246039094560799702,
+      "translation": "부록 A: 일반적인 errno 조사",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064863Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "This is a quick inventory of the various errno mnemonics checked for in the standard library and its tests, as part of ``except`` clauses.",
+      "source_hash": 5496890984831233302,
+      "context_hash": 231634090641560411,
+      "translation": "이는 표준 라이브러리와 그 테스트에서 ``except`` 절의 일부로 확인하는 다양한 errno 니모닉을 간단히 정리한 것입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:01:58.064864Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "Common errnos with OSError",
+      "source_hash": 17358456876569078733,
+      "context_hash": 12076680389553215428,
+      "translation": "OSError에서 사용되는 일반적인 errno",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064864Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "``EBADF``: bad file descriptor (usually means the file descriptor was closed)",
+      "source_hash": 6401060085498569153,
+      "context_hash": 3812458889587244203,
+      "translation": "``EBADF``: 잘못된 파일 디스크립터(일반적으로 파일 디스크립터가 닫혔음을 의미합니다)",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T19:01:58.064865Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:0",
+      "source": "``EEXIST``: file or directory exists",
+      "source_hash": 13937239307307990041,
+      "context_hash": 8339396171264264140,
+      "translation": "``EEXIST``: 파일 또는 디렉터리가 이미 존재합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064865Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:0",
+      "source": "``EINTR``: interrupted function call",
+      "source_hash": 5901119640263821158,
+      "context_hash": 16822524762804766711,
+      "translation": "``EINTR``: 함수 호출이 중단되었습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064866Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:0",
+      "source": "``EISDIR``: is a directory",
+      "source_hash": 5923924998603403962,
+      "context_hash": 8627984015097042519,
+      "translation": "``EISDIR``: 디렉터리입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064866Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:5/seg:0",
+      "source": "``ENOTDIR``: not a directory",
+      "source_hash": 13862672070759307114,
+      "context_hash": 3097531837332738171,
+      "translation": "``ENOTDIR``: 디렉터리가 아닙니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064866Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:6/seg:0",
+      "source": "``ENOENT``: no such file or directory",
+      "source_hash": 12821887960497661875,
+      "context_hash": 13203662245505470755,
+      "translation": "``ENOENT``: 해당 파일 또는 디렉터리가 없습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064866Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:7/seg:0",
+      "source": "``EOPNOTSUPP``: operation not supported on socket (possible confusion with the existing io.UnsupportedOperation)",
+      "source_hash": 12833009388726810206,
+      "context_hash": 6670408941306681992,
+      "translation": "``EOPNOTSUPP``: 소켓에서 작업을 지원하지 않습니다(기존 io.UnsupportedOperation과 혼동할 가능성이 있습니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064866Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:8/seg:0",
+      "source": "``EPERM``: operation not permitted (when using e.g. os.setuid())",
+      "source_hash": 587539028210698455,
+      "context_hash": 16405615163491764388,
+      "translation": "``EPERM``: 작업이 허용되지 않습니다(예: os.setuid() 사용 시)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064867Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Common errnos with IOError",
+      "source_hash": 8074562395454244449,
+      "context_hash": 1063548358350352859,
+      "translation": "IOError에서 사용되는 일반적인 errno",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064867Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "``EACCES``: permission denied (for filesystem operations)",
+      "source_hash": 8998590760522504314,
+      "context_hash": 5681505720362015162,
+      "translation": "``EACCES``: 권한이 거부되었습니다(파일 시스템 작업의 경우)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064867Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:2/seg:0",
+      "source": "``EBADF``: bad file descriptor (with select.epoll); read operation on a write-only GzipFile, or vice-versa",
+      "source_hash": 8530092760705741137,
+      "context_hash": 6758939678907037458,
+      "translation": "``EBADF``: 잘못된 파일 디스크립터(select.epoll 사용 시); 쓰기 전용 GzipFile에서 읽기 작업을 수행하거나 그 반대의 경우입니다",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T19:01:58.064867Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:3/seg:0",
+      "source": "``EBUSY``: device or resource busy",
+      "source_hash": 2370776151692591292,
+      "context_hash": 1466713328287303007,
+      "translation": "``EBUSY``: 장치 또는 리소스가 사용 중입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064868Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:4/seg:0",
+      "source": "``EISDIR``: is a directory (when trying to open())",
+      "source_hash": 3636491638178632125,
+      "context_hash": 11241259545174194310,
+      "translation": "``EISDIR``: 디렉터리입니다(open()을 호출하려는 경우)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.064868Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:5/seg:0",
+      "source": "``ENODEV``: no such device",
+      "source_hash": 1294146403746790421,
+      "context_hash": 3830262191677294583,
+      "translation": "``ENODEV``: 해당 장치가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298941Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:6/seg:0",
+      "source": "``ENOENT``: no such file or directory (when trying to open())",
+      "source_hash": 5368380744363067240,
+      "context_hash": 7101082996796025287,
+      "translation": "``ENOENT``: 해당 파일 또는 디렉터리가 없습니다(open()을 시도할 때).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298947Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:7/seg:0",
+      "source": "``ETIMEDOUT``: connection timed out",
+      "source_hash": 17078383554934175901,
+      "context_hash": 6143615042572117836,
+      "translation": "``ETIMEDOUT``: 연결 시간이 초과되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298947Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:0/seg:0",
+      "source": "Common errnos with socket.error",
+      "source_hash": 12773784470572342233,
+      "context_hash": 1650941019266051454,
+      "translation": "socket.error와 관련된 일반적인 errno",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298948Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:0",
+      "source": "All these errors may also be associated with a plain IOError, for example when calling read() on a socket's file descriptor.",
+      "source_hash": 4326425826040438047,
+      "context_hash": 1189646610526767053,
+      "translation": "이러한 모든 오류는 일반 IOError와도 관련될 수 있습니다. 예를 들어 소켓의 파일 디스크립터에서 read()를 호출할 때 그렇습니다.",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T19:01:58.298949Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:0",
+      "source": "``EAGAIN``: resource temporarily unavailable (during a non-blocking socket call except connect())",
+      "source_hash": 38493161029373658,
+      "context_hash": 12469285415907019401,
+      "translation": "``EAGAIN``: 리소스를 일시적으로 사용할 수 없습니다(connect()를 제외한 비차단 소켓 호출 중).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298951Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:3/seg:0",
+      "source": "``EALREADY``: connection already in progress (during a non-blocking connect())",
+      "source_hash": 15342601427322311493,
+      "context_hash": 15593861833289253516,
+      "translation": "``EALREADY``: 연결이 이미 진행 중입니다(비차단 connect() 중).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298952Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:4/seg:0",
+      "source": "``EINPROGRESS``: operation in progress (during a non-blocking connect())",
+      "source_hash": 9046482250052432743,
+      "context_hash": 437513428610720764,
+      "translation": "``EINPROGRESS``: 작업이 진행 중입니다(비차단 connect() 중).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298952Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:5/seg:0",
+      "source": "``EINTR``: interrupted function call",
+      "source_hash": 5901119640263821158,
+      "context_hash": 14326658985429098395,
+      "translation": "``EINTR``: 함수 호출이 중단되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298953Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:6/seg:0",
+      "source": "``EISCONN``: the socket is connected",
+      "source_hash": 7271775793049293227,
+      "context_hash": 4229287432997739046,
+      "translation": "``EISCONN``: 소켓이 연결되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298953Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:7/seg:0",
+      "source": "``ECONNABORTED``: connection aborted by peer (during an accept() call)",
+      "source_hash": 13013494504414027663,
+      "context_hash": 8006218166823544019,
+      "translation": "``ECONNABORTED``: 피어가 연결을 중단했습니다(accept() 호출 중).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298953Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:8/seg:0",
+      "source": "``ECONNREFUSED``: connection refused by peer",
+      "source_hash": 6666393684380446122,
+      "context_hash": 5951996496865053267,
+      "translation": "``ECONNREFUSED``: 피어가 연결을 거부했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298953Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:9/seg:0",
+      "source": "``ECONNRESET``: connection reset by peer",
+      "source_hash": 4064161336723927318,
+      "context_hash": 16323587576409642019,
+      "translation": "``ECONNRESET``: 피어가 연결을 재설정했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298953Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:10/seg:0",
+      "source": "``ENOTCONN``: socket not connected",
+      "source_hash": 10794448779582898276,
+      "context_hash": 1034381135823225666,
+      "translation": "``ENOTCONN``: 소켓이 연결되지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298954Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:11/seg:0",
+      "source": "``ESHUTDOWN``: cannot send after transport endpoint shutdown",
+      "source_hash": 17815280990140693798,
+      "context_hash": 1668816997300053189,
+      "translation": "``ESHUTDOWN``: 전송 엔드포인트가 종료된 후에는 전송할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298954Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:12/seg:0",
+      "source": "``EWOULDBLOCK``: same reasons as ``EAGAIN``",
+      "source_hash": 9455805523414897078,
+      "context_hash": 12565568724052750314,
+      "translation": "``EWOULDBLOCK``: ``EAGAIN``\\ 과 동일한 이유입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298954Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:0/seg:0",
+      "source": "Common errnos with select.error",
+      "source_hash": 3364697603396772178,
+      "context_hash": 12758140875978443644,
+      "translation": "select.error와 관련된 일반적인 errno",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298954Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:0",
+      "source": "``EINTR``: interrupted function call",
+      "source_hash": 5901119640263821158,
+      "context_hash": 1721970473079776061,
+      "translation": "``EINTR``: 함수 호출이 중단되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298955Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:0/seg:0",
+      "source": "Appendix B: Survey of raised OS and IO errors",
+      "source_hash": 14964088816805058567,
+      "context_hash": 12834484024833768557,
+      "translation": "부록 B: 발생한 OS 및 IO 오류 조사",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298955Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:0/seg:0",
+      "source": "About VMSError",
+      "source_hash": 10756843886458616816,
+      "context_hash": 10759574031692233714,
+      "translation": "VMSError 정보",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298955Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:0",
+      "source": "VMSError is completely unused by the interpreter core and the standard library.",
+      "source_hash": 6025349223877043489,
+      "context_hash": 11339045227870600524,
+      "translation": "VMSError는 인터프리터 코어와 표준 라이브러리에서 완전히 사용되지 않습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:01:58.298956Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:1",
+      "source": "It was added as part of the OpenVMS patches submitted in 2002 by Jean-François Piéronne [4]_; the motivation for including VMSError was that it could be raised by third-party packages.",
+      "source_hash": 10049362902084871544,
+      "context_hash": 1811239537367401698,
+      "translation": "이는 Jean-François Piéronne이 2002년에 제출한 OpenVMS 패치의 일부로 추가되었습니다 [4]_; VMSError를 포함한 동기는 서드파티 패키지에서 이를 발생시킬 수 있도록 하기 위한 것이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298957Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:0/seg:0",
+      "source": "Interpreter core",
+      "source_hash": 1246710406226007223,
+      "context_hash": 10220804526802699924,
+      "translation": "인터프리터 코어",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:01:58.298957Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:0",
+      "source": "Handling of PYTHONSTARTUP raises IOError (but the error gets discarded)",
+      "source_hash": 1437794959522244581,
+      "context_hash": 1909966900941796462,
+      "translation": "PYTHONSTARTUP 처리는 IOError를 발생시키지만 오류는 버려집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298958Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:3/seg:0",
+      "source": "``PyObject_Print()`` raises IOError when ferror() signals an error on the ``FILE *`` parameter (which, in the source tree, is always either stdout or stderr).",
+      "source_hash": 17850945119229188162,
+      "context_hash": 3295065506005230343,
+      "translation": "``PyObject_Print()``\\ 는 ferror()가 ``FILE *`` 매개변수에서 오류를 알릴 때 IOError를 발생시킵니다(소스 트리에서는 이 매개변수가 항상 stdout 또는 stderr 중 하나입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298959Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:4/seg:0",
+      "source": "Unicode encoding and decoding using the ``mbcs`` encoding can raise WindowsError for some error conditions.",
+      "source_hash": 6710193576754127827,
+      "context_hash": 14751984723279502466,
+      "translation": "``mbcs`` 인코딩을 사용한 유니코드 인코딩 및 디코딩은 일부 오류 조건에서 WindowsError를 발생시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298959Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:0/seg:0",
+      "source": "Standard library",
+      "source_hash": 14146526859986544187,
+      "context_hash": 956138258154360271,
+      "translation": "표준 라이브러리",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:01:58.298959Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:0",
+      "source": "bz2",
+      "source_hash": 16736406703487652890,
+      "context_hash": 97379845115825321,
+      "translation": "bz2",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298960Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:2/seg:0",
+      "source": "Raises IOError throughout (OSError is unused)",
+      "source_hash": 4733687650315945554,
+      "context_hash": 9515151587838566870,
+      "translation": "전체적으로 IOError를 발생시킵니다(OSError는 사용되지 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298960Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:4/seg:0",
+      "source": "curses",
+      "source_hash": 8938848093547462918,
+      "context_hash": 164681652534845130,
+      "translation": "curses",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298960Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:5/seg:0",
+      "source": "Not examined.",
+      "source_hash": 16314234498507484212,
+      "context_hash": 6446588157985109227,
+      "translation": "검토하지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298961Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:6/seg:0",
+      "source": "dbm.gnu, dbm.ndbm",
+      "source_hash": 13575552343219963041,
+      "context_hash": 11235844662554750790,
+      "translation": "dbm.gnu, dbm.ndbm",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:58.298961Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:7/seg:0",
+      "source": "_dbm.error and _gdbm.error inherit from IOError",
+      "source_hash": 9283501426381805006,
+      "context_hash": 12189136850302024675,
+      "translation": "_dbm.error와 _gdbm.error는 IOError를 상속합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045732Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:9/seg:0",
+      "source": "fcntl",
+      "source_hash": 18244030585331441062,
+      "context_hash": 3760251045873858392,
+      "translation": "fcntl",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045736Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:10/seg:0",
+      "source": "Raises IOError throughout (OSError is unused).",
+      "source_hash": 17612846339316626320,
+      "context_hash": 2682281545324209247,
+      "translation": "전반적으로 IOError를 발생시킵니다(OSError는 사용되지 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045736Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:11/seg:0",
+      "source": "imp module",
+      "source_hash": 1717693891769656936,
+      "context_hash": 7651682840536404115,
+      "translation": "imp 모듈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045736Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:12/seg:0",
+      "source": "Raises IOError for bad file descriptors",
+      "source_hash": 11695899619771080181,
+      "context_hash": 16743468062212928951,
+      "translation": "잘못된 파일 디스크립터에 대해 IOError를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045737Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:14/seg:0",
+      "source": "io module",
+      "source_hash": 5981720749606684683,
+      "context_hash": 811514149041923018,
+      "translation": "io 모듈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045737Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:15/seg:0",
+      "source": "Raises IOError when trying to open a directory under Unix",
+      "source_hash": 13227523371323058786,
+      "context_hash": 16934106418600225915,
+      "translation": "Unix에서 디렉터리를 열려고 할 때 IOError를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045737Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:17/seg:0",
+      "source": "Raises IOError or io.UnsupportedOperation (which inherits from the former) for unsupported operations",
+      "source_hash": 7652171270127101663,
+      "context_hash": 17156306075644698568,
+      "translation": "지원되지 않는 작업에 대해 IOError 또는 io.UnsupportedOperation(앞의 예외를 상속함)을 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045738Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:19/seg:0",
+      "source": "Raises either IOError or TypeError when the inferior I/O layer misbehaves (i.e. violates the API it is expected to implement).",
+      "source_hash": 5757017349876133026,
+      "context_hash": 8286930302381315958,
+      "translation": "하위 I/O 계층이 올바르게 동작하지 않을 때(즉, 구현해야 하는 API를 위반할 때) IOError 또는 TypeError 중 하나를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045738Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:20/seg:0",
+      "source": "Raises IOError when the underlying OS resource becomes invalid",
+      "source_hash": 17723543314195413900,
+      "context_hash": 5021404582099510581,
+      "translation": "하위 OS 리소스가 유효하지 않게 되면 IOError를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045739Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:22/seg:0",
+      "source": "...or for implementation-specific optimizations",
+      "source_hash": 11580793448366826410,
+      "context_hash": 3718143330327759420,
+      "translation": "...또는 구현별 최적화를 위해 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045739Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:24/seg:0",
+      "source": "Raises BlockingIOError (inheriting from IOError) when a call on a non-blocking object would block.",
+      "source_hash": 14053578411453036301,
+      "context_hash": 11927802402131961088,
+      "translation": "비블로킹 객체에 대한 호출이 블로킹될 때 BlockingIOError(IOError를 상속함)를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045739Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:25/seg:0",
+      "source": "mmap",
+      "source_hash": 6890836157205903026,
+      "context_hash": 9769514440008052705,
+      "translation": "mmap",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045740Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:26/seg:0",
+      "source": "Under Unix, raises its own ``mmap.error`` (inheriting from EnvironmentError) throughout",
+      "source_hash": 1298059069110458956,
+      "context_hash": 2404056900448325736,
+      "translation": "Unix에서는 전반적으로 자체 ``mmap.error``\\ (EnvironmentError를 상속함)를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045740Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:28/seg:0",
+      "source": "Under Windows, however, it mostly raises WindowsError (the source code also shows a few occurrences of ``mmap.error``)",
+      "source_hash": 11136894123549883971,
+      "context_hash": 11280252406861286857,
+      "translation": "그러나 Windows에서는 대부분 WindowsError를 발생시키며(소스 코드에는 ``mmap.error``\\ 가 몇 차례 나타나기도 합니다) 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045741Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:30/seg:0",
+      "source": "multiprocessing",
+      "source_hash": 2153367878537598864,
+      "context_hash": 8949571802897719319,
+      "translation": "multiprocessing",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045741Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:31/seg:0",
+      "source": "Not examined.",
+      "source_hash": 16314234498507484212,
+      "context_hash": 17783877746221507558,
+      "translation": "조사하지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045741Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:32/seg:0",
+      "source": "os / posix",
+      "source_hash": 5203006133778358634,
+      "context_hash": 12557730929905735429,
+      "translation": "os / posix",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045741Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:33/seg:0",
+      "source": "The ``os`` (or ``posix``) module raises OSError throughout, except under Windows where WindowsError can be raised instead.",
+      "source_hash": 11892155740991951900,
+      "context_hash": 11833154033025704037,
+      "translation": "``os``\\ (또는 ``posix``) 모듈은 전반적으로 OSError를 발생시키지만, Windows에서는 대신 WindowsError가 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045742Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:34/seg:0",
+      "source": "ossaudiodev",
+      "source_hash": 14292421984141883861,
+      "context_hash": 7692920165650652753,
+      "translation": "ossaudiodev",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045742Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:35/seg:0",
+      "source": "Raises IOError throughout (OSError is unused)",
+      "source_hash": 4733687650315945554,
+      "context_hash": 231174039993505742,
+      "translation": "전반적으로 IOError를 발생시킵니다(OSError는 사용되지 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045743Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:37/seg:0",
+      "source": "readline",
+      "source_hash": 14947155710505702881,
+      "context_hash": 9872993322240153519,
+      "translation": "readline",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045743Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:38/seg:0",
+      "source": "Raises IOError in various file-handling functions",
+      "source_hash": 6752882282048867177,
+      "context_hash": 11884611314665233198,
+      "translation": "다양한 파일 처리 함수에서 IOError를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045743Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:40/seg:0",
+      "source": "select",
+      "source_hash": 8659844501252626126,
+      "context_hash": 4299542609507872495,
+      "translation": "select",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045743Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:41/seg:0",
+      "source": "select() and poll objects raise ``select.error``, which doesn't inherit from anything (but poll.modify() raises IOError);",
+      "source_hash": 17775516023433556548,
+      "context_hash": 4727081369188234977,
+      "translation": "select()와 poll 객체는 어떤 것도 상속하지 않는 ``select.error``\\ 를 발생시키지만(poll.modify()는 IOError를 발생시킵니다);",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045744Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:42/seg:0",
+      "source": "epoll objects raise IOError;",
+      "source_hash": 475046081109182766,
+      "context_hash": 14028011481436778754,
+      "translation": "epoll 객체는 IOError를 발생시킵니다;",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045744Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:43/seg:0",
+      "source": "kqueue objects raise both OSError and IOError.",
+      "source_hash": 6587325702858674740,
+      "context_hash": 11949782542078574528,
+      "translation": "kqueue 객체는 OSError와 IOError를 모두 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045744Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:44/seg:0",
+      "source": "As a side-note, not deriving from ``EnvironmentError`` means ``select.error`` does not get the useful ``errno`` attribute.",
+      "source_hash": 10213467806442593286,
+      "context_hash": 5865452873391592078,
+      "translation": "참고로 ``EnvironmentError``\\ 를 상속하지 않으므로 ``select.error``\\ 에는 유용한 ``errno`` 특성이 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045744Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:44/seg:1",
+      "source": "User code must check ``args[0]`` instead",
+      "source_hash": 8425912088410634088,
+      "context_hash": 5065722947180147923,
+      "translation": "사용자 코드는 대신 ``args[0]``\\ 을 확인해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045745Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:46/seg:0",
+      "source": "signal",
+      "source_hash": 10650259291360888447,
+      "context_hash": 13070631957330295160,
+      "translation": "signal",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045745Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:47/seg:0",
+      "source": "``signal.ItimerError`` inherits from IOError.",
+      "source_hash": 11236624345102311836,
+      "context_hash": 15858624251083244672,
+      "translation": "``signal.ItimerError``\\ 는 IOError를 상속합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045746Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:48/seg:0",
+      "source": "socket",
+      "source_hash": 10991425273196493354,
+      "context_hash": 6690005614263918050,
+      "translation": "socket",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:48.045746Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:49/seg:0",
+      "source": "``socket.error`` inherits from IOError.",
+      "source_hash": 9958410565595638778,
+      "context_hash": 8876811422907748558,
+      "translation": "``socket.error``\\ 는 IOError를 상속합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029436Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:50/seg:0",
+      "source": "sys",
+      "source_hash": 6004299687510104055,
+      "context_hash": 9079569660669867175,
+      "translation": "sys",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029441Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:51/seg:0",
+      "source": "``sys.getwindowsversion()`` raises WindowsError with a bogus error number if the ``GetVersionEx()`` call fails.",
+      "source_hash": 10811090320689041305,
+      "context_hash": 7200377189000635836,
+      "translation": "``sys.getwindowsversion()``\\ 은 ``GetVersionEx()`` 호출이 실패하면 잘못된 오류 번호와 함께 WindowsError를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029442Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:52/seg:0",
+      "source": "time",
+      "source_hash": 6654316283193002875,
+      "context_hash": 1708965878704155432,
+      "translation": "time",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029442Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:53/seg:0",
+      "source": "Raises IOError for internal errors in time.time() and time.sleep().",
+      "source_hash": 2511756092597648060,
+      "context_hash": 2383151649252309179,
+      "translation": "time.time() 및 time.sleep()의 내부 오류에 대해 IOError를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029443Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:54/seg:0",
+      "source": "zipimport",
+      "source_hash": 18437709340890922953,
+      "context_hash": 2350990859509052148,
+      "translation": "zipimport",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029443Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:55/seg:0",
+      "source": "zipimporter.get_data() can raise IOError.",
+      "source_hash": 13370786907007863175,
+      "context_hash": 12715429986877719506,
+      "translation": "zipimporter.get_data()는 IOError를 발생시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029444Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:0/seg:0",
+      "source": "Acknowledgments",
+      "source_hash": 10274568925451722959,
+      "context_hash": 70890411352039959,
+      "translation": "감사의 말",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029444Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:1/seg:0",
+      "source": "Significant input has been received from Alyssa Coghlan.",
+      "source_hash": 2537372605535309015,
+      "context_hash": 572340145511686456,
+      "translation": "Alyssa Coghlan으로부터 상당한 입력을 받았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029444Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 16207709827581258902,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029445Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:1/seg:0",
+      "source": "\"IO module precisions and exception hierarchy\":",
+      "source_hash": 9148632622701042771,
+      "context_hash": 12168343237435941852,
+      "translation": "\"IO 모듈의 정밀도와 예외 계층 구조\":",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029445Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:2/seg:0",
+      "source": "https://mail.python.org/pipermail/python-dev/2009-September/092130.html",
+      "source_hash": 3241165209012122692,
+      "context_hash": 3786205233811735379,
+      "translation": "https://mail.python.org/pipermail/python-dev/2009-September/092130.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029445Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:3/seg:0",
+      "source": "Google Code Search of ``IOError`` in Python code: `around 40000 results",
+      "source_hash": 11883102901503580854,
+      "context_hash": 10480874089344524638,
+      "translation": "Python 코드에서 ``IOError``\\ 를 Google Code Search로 검색한 결과: `약 40000개의 결과",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029446Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:4/seg:0",
+      "source": "<http://www.google.com/codesearch?q=lang%3Apython%20IOError>`_; ``OSError``: `around 15200 results <http://www.google.com/codesearch?q=lang%3Apython%20OSError>`_; ``EnvironmentError``: `around 3000 results <http://www.google.com/codesearch?q=lang%3Apython%20EnvironmentError>`_",
+      "source_hash": 5397565233243526088,
+      "context_hash": 16285212197662821945,
+      "translation": "<http://www.google.com/codesearch?q=lang%3Apython%20IOError>`_; ``OSError``: `약 15200개의 결과 <http://www.google.com/codesearch?q=lang%3Apython%20OSError>`_; ``EnvironmentError``: `약 3000개의 결과 <http://www.google.com/codesearch?q=lang%3Apython%20EnvironmentError>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029447Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:5/seg:0",
+      "source": "http://bugs.python.org/issue614055",
+      "source_hash": 10285998202772553837,
+      "context_hash": 16064152911822544554,
+      "translation": "http://bugs.python.org/issue614055",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:23.029447Z",
+      "issues": []
+    }
+  ]
+}

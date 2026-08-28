@@ -1,0 +1,4166 @@
+{
+  "version": 1,
+  "source_hash": 5104929579269713626,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Immortal Objects, Using a Fixed Refcount",
+      "source_hash": 875167509903213557,
+      "context_hash": 8157121822796364127,
+      "translation": "불멸 객체, 고정 참조 횟수 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242087Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "PEP Acceptance Conditions",
+      "source_hash": 4668375514056375555,
+      "context_hash": 825455771980083975,
+      "translation": "PEP 승인 조건",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242090Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "The PEP was accepted with conditions:",
+      "source_hash": 10627215644993444489,
+      "context_hash": 1096155123986673638,
+      "translation": "다음 조건을 달아 PEP가 승인되었습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242091Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "the primary proposal in `Solutions for Accidental De-Immortalization`_ (reset the immortal refcount in ``tp_dealloc()``) was applied",
+      "source_hash": 6009401628768473585,
+      "context_hash": 12217250534997134187,
+      "translation": "`Solutions for Accidental De-Immortalization`_\\ 에 제시된 주요 제안(``tp_dealloc()``\\ 에서 불멸 참조 횟수를 재설정)이 적용되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242091Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "types without this were not immortalized (in CPython's code)",
+      "source_hash": 8159644680905682219,
+      "context_hash": 1309196669934000293,
+      "translation": "이를 적용하지 않은 형식은 CPython 코드에서 불멸화하지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242091Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:0",
+      "source": "the PEP was updated with final benchmark results once the implementation is finalized (confirming the change is worthwhile)",
+      "source_hash": 8773954285523122390,
+      "context_hash": 11233133324398587892,
+      "translation": "구현이 완료된 후 최종 벤치마크 결과를 반영하여 PEP를 업데이트했습니다(해당 변경에 가치가 있음을 확인했습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242091Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 9889117731461995582,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242092Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Currently the CPython runtime maintains a `small amount of mutable state <Runtime Object State_>`_ in the allocated memory of each object.",
+      "source_hash": 8864878373727933830,
+      "context_hash": 16621687729475736575,
+      "translation": "현재 CPython 런타임은 각 객체의 할당된 메모리에 `small amount of mutable state <Runtime Object State_>`_\\ 를 유지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242092Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Because of this, otherwise immutable objects are actually mutable.",
+      "source_hash": 9468371089645231206,
+      "context_hash": 6259894508547822339,
+      "translation": "이 때문에 본래 불변이어야 하는 객체가 실제로는 변경 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242092Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "This can have a large negative impact on CPU and memory performance, especially for approaches to increasing Python's scalability.",
+      "source_hash": 10713755401260129510,
+      "context_hash": 3529573464271466153,
+      "translation": "이는 CPU 및 메모리 성능에 큰 부정적 영향을 줄 수 있으며, 특히 Python의 확장성을 높이는 접근 방식에서 그러합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242092Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "This proposal mandates that, internally, CPython will support marking an object as one for which that runtime state will no longer change.",
+      "source_hash": 15226643272698584656,
+      "context_hash": 16742515466435371398,
+      "translation": "이 제안은 CPython이 내부적으로 해당 런타임 상태가 더 이상 변경되지 않는 객체로 표시하는 기능을 지원하도록 규정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242093Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "Consequently, such an object's refcount will never reach 0, and thus the object will never be cleaned up (except when the runtime knows it's safe to do so, like during runtime finalization).",
+      "source_hash": 15681180992495203452,
+      "context_hash": 1665630349096254698,
+      "translation": "따라서 이러한 객체의 참조 횟수는 결코 0에 도달하지 않으며, 객체는 절대 정리되지 않습니다(런타임 종료 중처럼 런타임이 정리해도 안전하다고 판단하는 경우는 제외합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242093Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "We call these objects \"immortal\".  (Normally, only a relatively small number of internal objects will ever be immortal.) The fundamental improvement here is that now an object can be truly immutable.",
+      "source_hash": 6713546996564125202,
+      "context_hash": 7234157496614634333,
+      "translation": "이러한 객체를 \"불멸\"이라고 부릅니다. (일반적으로 내부 객체 중 비교적 적은 수만 불멸 객체가 됩니다.) 여기서 얻는 근본적인 개선점은 이제 객체가 진정으로 불변일 수 있다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242093Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Scope",
+      "source_hash": 18262138923952726113,
+      "context_hash": 11338066874801628512,
+      "translation": "범위",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242093Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Object immortality is meant to be an internal-only feature, so this proposal does not include any changes to public API or behavior (with one exception).",
+      "source_hash": 8325548479266902775,
+      "context_hash": 18289221573949267930,
+      "translation": "객체 불멸성은 내부 전용 기능을 위한 것이므로, 이 제안에는 공개 API나 동작의 변경이 포함되지 않습니다(한 가지 예외가 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242094Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "As usual, we may still add some private (yet publicly accessible) API to do things like immortalize an object or tell if one is immortal.",
+      "source_hash": 2508863914953869770,
+      "context_hash": 6881527476346695668,
+      "translation": "평소처럼 객체를 불멸화하거나 불멸 객체인지 확인하는 등의 작업을 수행할 수 있는 비공개(그러나 공개적으로 접근 가능한) API를 추가할 수는 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242094Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "Any effort to expose this feature to users would need to be proposed separately.",
+      "source_hash": 14804570395970201480,
+      "context_hash": 2132985952607717544,
+      "translation": "이 기능을 사용자에게 노출하려는 모든 시도는 별도로 제안해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242094Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "There is one exception to \"no change in behavior\": refcounting semantics for immortal objects will differ in some cases from user expectations.",
+      "source_hash": 5676648234458972469,
+      "context_hash": 13925455836864386991,
+      "translation": "\"동작 변경 없음\"에는 한 가지 예외가 있습니다. 불멸 객체의 참조 횟수 계산 의미가 일부 경우 사용자의 예상과 달라집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242094Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "This exception, and the solution, are discussed below.",
+      "source_hash": 13203734642643207233,
+      "context_hash": 1325412053432463986,
+      "translation": "이 예외와 해결책은 아래에서 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242095Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Most of this PEP focuses on an internal implementation that satisfies the above mandate.",
+      "source_hash": 872323504514356358,
+      "context_hash": 13706822350288343437,
+      "translation": "이 PEP의 대부분은 위의 규정을 충족하는 내부 구현에 초점을 맞춥니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242095Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "However, those implementation details are not meant to be strictly proscriptive.",
+      "source_hash": 11135270637771314878,
+      "context_hash": 13555891320723663541,
+      "translation": "그러나 이러한 구현 세부 사항은 엄격하게 규정하려는 것이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242096Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:2",
+      "source": "Instead, at the least they are included to help illustrate the technical considerations required by the mandate.",
+      "source_hash": 8303065643148721118,
+      "context_hash": 8295331548491754165,
+      "translation": "대신 최소한 해당 규정에 필요한 기술적 고려 사항을 설명하는 데 도움이 되도록 포함했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242096Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:3",
+      "source": "The actual implementation may deviate somewhat as long as it satisfies the constraints outlined below.",
+      "source_hash": 5109010811260105214,
+      "context_hash": 5128516184070628826,
+      "translation": "실제 구현은 아래에 제시된 제약 조건을 충족하는 한 어느 정도 달라질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242096Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:4",
+      "source": "Furthermore, the acceptability of any specific implementation detail described below does not depend on the status of this PEP, unless explicitly specified.",
+      "source_hash": 14016755446291919311,
+      "context_hash": 1310687452858360591,
+      "translation": "또한 아래에 설명된 특정 구현 세부 사항의 수용 가능성은 명시적으로 지정되지 않는 한 이 PEP의 상태에 좌우되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242096Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "For example, the particular details of:",
+      "source_hash": 9008457417239534756,
+      "context_hash": 459536186317391657,
+      "translation": "예를 들어 다음과 같은 세부 사항이 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242096Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "how to mark something as immortal",
+      "source_hash": 11368575154155839758,
+      "context_hash": 1761195165329044795,
+      "translation": "무언가를 불멸로 표시하는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242096Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "how to recognize something as immortal",
+      "source_hash": 18021740769567619757,
+      "context_hash": 2348648386483396995,
+      "translation": "무언가가 불멸인지 인식하는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242097Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "which subset of functionally immortal objects are marked as immortal",
+      "source_hash": 7928187516371810471,
+      "context_hash": 6186512560332517802,
+      "translation": "기능적으로 불멸인 객체 중 어떤 하위 집합을 불멸로 표시할지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242097Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "which memory-management activities are skipped or modified for immortal objects",
+      "source_hash": 5578077102992585880,
+      "context_hash": 4377455556419174803,
+      "translation": "불멸 객체에 대해 어떤 메모리 관리 활동을 건너뛰거나 수정할지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242097Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "are not only CPython-specific but are also private implementation details that are expected to change in subsequent versions.",
+      "source_hash": 11266517398482567007,
+      "context_hash": 14017406405078432910,
+      "translation": "이러한 사항은 CPython에만 국한되지 않을 뿐 아니라 이후 버전에서 변경될 것으로 예상되는 비공개 구현 세부 사항이기도 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242097Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Implementation Summary",
+      "source_hash": 15974067019878023740,
+      "context_hash": 5684987281614020143,
+      "translation": "구현 요약",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242097Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Here's a high-level look at the implementation:",
+      "source_hash": 18386833742467740341,
+      "context_hash": 9462532886953510444,
+      "translation": "다음은 구현을 개괄적으로 살펴본 내용입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:57.242098Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "If an object's refcount matches a very specific value (defined below) then that object is treated as immortal.",
+      "source_hash": 508532843197406522,
+      "context_hash": 3818143820520700324,
+      "translation": "객체의 참조 카운트가 매우 특정한 값(아래에 정의됨)과 일치하면 해당 객체는 불멸 객체로 취급합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831510Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "The CPython C-API and runtime will not modify the refcount (or other runtime state) of an immortal object.",
+      "source_hash": 13739971836740040566,
+      "context_hash": 271082098582547731,
+      "translation": "CPython C-API와 런타임은 불멸 객체의 참조 카운트(또는 기타 런타임 상태)를 수정하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831515Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "The runtime will now be explicitly responsible for deallocating all immortal objects during finalization, unless statically allocated. (See `Object Cleanup`_ below.)",
+      "source_hash": 10388183183049962486,
+      "context_hash": 3376647855228665860,
+      "translation": "정적으로 할당된 객체가 아닌 한, 이제 런타임이 종료 과정에서 모든 불멸 객체를 명시적으로 할당 해제할 책임을 집니다. (아래의 `Object Cleanup`_\\ 을 참조하십시오.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831515Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Aside from the change to refcounting semantics, there is one other possible negative impact to consider.",
+      "source_hash": 4499582624881007740,
+      "context_hash": 6487976097923666629,
+      "translation": "참조 카운트 의미 체계의 변경 외에도 고려해야 할 부정적인 영향이 한 가지 더 있을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831516Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "The threshold for an \"acceptable\" performance penalty for immortal objects is 2% (the consensus at the 2022 Language Summit).",
+      "source_hash": 14751026058193282539,
+      "context_hash": 13897489539408211913,
+      "translation": "불멸 객체에 대해 “허용 가능한” 성능 저하의 기준은 2%입니다(2022년 언어 정상 회의에서의 합의).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831517Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:2",
+      "source": "A naive implementation of the approach described below makes CPython roughly 4% slower.",
+      "source_hash": 6740641661069933730,
+      "context_hash": 16647544848407556437,
+      "translation": "아래에 설명된 접근 방식을 순진하게 구현하면 CPython이 대략 4% 느려집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831517Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:3",
+      "source": "However, the implementation is ~performance-neutral~ once known mitigations are applied.",
+      "source_hash": 6521909898820956691,
+      "context_hash": 7065582761056720537,
+      "translation": "그러나 알려진 완화책을 적용하면 구현은 ~성능 중립적~\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831518Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "TODO: Update the performance impact for the latest branch (both for GCC and for clang).",
+      "source_hash": 9182620846925855091,
+      "context_hash": 1930807124413613840,
+      "translation": "TODO: 최신 브랜치의 성능 영향을 업데이트하십시오(GCC와 clang 모두).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831518Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 7936275845534982908,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831519Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "As noted above, currently all objects are effectively mutable.",
+      "source_hash": 9692337570296143371,
+      "context_hash": 13523009825702133048,
+      "translation": "위에서 언급했듯이 현재 모든 객체는 사실상 변경 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831519Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "That includes \"immutable\" objects like ``str`` instances.",
+      "source_hash": 16630941680250987912,
+      "context_hash": 3808430281918402805,
+      "translation": "여기에는 ``str`` 인스턴스와 같은 “변경 불가능한” 객체도 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831519Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "This is because every object's refcount is frequently modified as the object is used during execution.",
+      "source_hash": 6334502027253312035,
+      "context_hash": 8022725188623668264,
+      "translation": "이는 실행 중 객체가 사용되는 동안 모든 객체의 참조 카운트가 빈번하게 수정되기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831520Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:3",
+      "source": "This is especially significant for a number of commonly used global (builtin) objects, e.g. ``None``.",
+      "source_hash": 748596422072892274,
+      "context_hash": 10269448187198267660,
+      "translation": "이는 ``None``\\ 과 같이 흔히 사용되는 여러 전역(내장) 객체에서 특히 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831520Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:4",
+      "source": "Such objects are used a lot, both in Python code and internally.",
+      "source_hash": 11144945163796060268,
+      "context_hash": 293525902847635240,
+      "translation": "이러한 객체는 Python 코드와 내부적으로 모두 매우 많이 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831520Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:5",
+      "source": "That adds up to a consistent high volume of refcount changes.",
+      "source_hash": 12487002720578567219,
+      "context_hash": 7962710109125936475,
+      "translation": "그 결과 참조 카운트 변경이 지속적으로 대량 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831521Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "The effective mutability of all Python objects has a concrete impact on parts of the Python community, e.g. projects that aim for scalability like Instagram or the effort to make the GIL per-interpreter.",
+      "source_hash": 759208100708294107,
+      "context_hash": 16614613312448027371,
+      "translation": "모든 Python 객체가 사실상 변경 가능하다는 점은 Instagram처럼 확장성을 목표로 하는 프로젝트나 GIL을 인터프리터별로 만들려는 노력 등 Python 커뮤니티의 일부에 구체적인 영향을 미칩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:13:58.831521Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "Below we describe several ways in which refcount modification has a real negative effect on such projects.",
+      "source_hash": 11571221367439092982,
+      "context_hash": 8790128970911902445,
+      "translation": "아래에서는 참조 카운트 수정이 이러한 프로젝트에 실제로 부정적인 영향을 미치는 몇 가지 방식을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831523Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:2",
+      "source": "None of that would happen for objects that are truly immutable.",
+      "source_hash": 11192725171782228247,
+      "context_hash": 11844853228752447825,
+      "translation": "진정으로 변경 불가능한 객체라면 이러한 일은 발생하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831524Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Reducing CPU Cache Invalidation",
+      "source_hash": 11347586180267530082,
+      "context_hash": 1159560018528714172,
+      "translation": "CPU 캐시 무효화 줄이기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831524Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Every modification of a refcount causes the corresponding CPU cache line to be invalidated.",
+      "source_hash": 14486205734354479097,
+      "context_hash": 5988020518554314957,
+      "translation": "참조 카운트를 수정할 때마다 해당 CPU 캐시 라인이 무효화됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831524Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "This has a number of effects.",
+      "source_hash": 7757890967928841796,
+      "context_hash": 13564889045726824063,
+      "translation": "여기에는 여러 영향이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831525Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "For one, the write must be propagated to other cache levels and to main memory.",
+      "source_hash": 17108859263482041859,
+      "context_hash": 10597494950941352733,
+      "translation": "우선 쓰기 작업을 다른 캐시 수준과 주 메모리로 전파해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831525Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "This has small effect on all Python programs.",
+      "source_hash": 15296507535987525579,
+      "context_hash": 3044312789828226094,
+      "translation": "이는 모든 Python 프로그램에 작은 영향을 미칩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831525Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:2",
+      "source": "Immortal objects would provide a slight relief in that regard.",
+      "source_hash": 5775354053818241705,
+      "context_hash": 2967451616237488599,
+      "translation": "불멸 객체는 이와 관련하여 약간의 부담을 덜어 줄 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831526Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "On top of that, multi-core applications pay a price.",
+      "source_hash": 2588066612207587440,
+      "context_hash": 5713807742599609218,
+      "translation": "또한 멀티코어 애플리케이션은 비용을 치러야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831526Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "If two threads (running simultaneously on distinct cores) are interacting with the same object (e.g. ``None``)  then they will end up invalidating each other's caches with each incref and decref.",
+      "source_hash": 11027599688909408785,
+      "context_hash": 11177381106247947936,
+      "translation": "서로 다른 코어에서 동시에 실행되는 두 스레드가 동일한 객체(예: ``None``)와 상호 작용하면, 각 incref와 decref가 발생할 때마다 서로의 캐시를 무효화하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831526Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:2",
+      "source": "This is true even for otherwise immutable objects like ``True``, ``0``, and ``str`` instances.",
+      "source_hash": 14978397130190780492,
+      "context_hash": 10185551656742717138,
+      "translation": "이는 ``True``, ``0``, ``str`` 인스턴스처럼 그 밖에는 변경 불가능한 객체에도 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831527Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:3",
+      "source": "CPython's GIL helps reduce this effect, since only one thread runs at a time, but it doesn't completely eliminate the penalty.",
+      "source_hash": 15205597787023540793,
+      "context_hash": 8125110262099638085,
+      "translation": "CPython의 GIL은 한 번에 하나의 스레드만 실행되므로 이러한 영향을 줄이는 데 도움이 되지만, 비용을 완전히 제거하지는 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831527Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Avoiding Data Races",
+      "source_hash": 6547226837770211303,
+      "context_hash": 14461167098251825948,
+      "translation": "데이터 경쟁 방지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831528Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Speaking of multi-core, we are considering making the GIL a per-interpreter lock, which would enable true multi-core parallelism.",
+      "source_hash": 4215784966781513275,
+      "context_hash": 2389520007935616975,
+      "translation": "멀티코어와 관련하여, 진정한 멀티코어 병렬 처리를 가능하게 하는 인터프리터별 잠금으로 GIL을 만들 것을 고려하고 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:13:58.831528Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "Among other things, the GIL currently protects against races between multiple concurrent threads that may incref or decref the same object.",
+      "source_hash": 4464344350607792078,
+      "context_hash": 10444820282058507188,
+      "translation": "무엇보다도 현재 GIL은 동일한 객체에 대해 incref 또는 decref를 수행할 수 있는 여러 동시 스레드 간의 경쟁 상태를 방지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831529Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:2",
+      "source": "Without a shared GIL, two running interpreters could not safely share any objects, even otherwise immutable ones like ``None``.",
+      "source_hash": 9254601613410936720,
+      "context_hash": 10881222147713672386,
+      "translation": "공유 GIL이 없다면 실행 중인 두 인터프리터는 ``None``\\ 처럼 그 밖에는 변경 불가능한 객체조차 안전하게 공유할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:58.831529Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "This means that, to have a per-interpreter GIL, each interpreter must have its own copy of *every* object.",
+      "source_hash": 17077738049071798,
+      "context_hash": 2924879102352295132,
+      "translation": "이는 인터프리터별 GIL을 사용하려면 각 인터프리터가 *모든* 객체의 자체 복사본을 가져야 한다는 의미입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:14:00.776799Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "That includes the singletons and static types.",
+      "source_hash": 7302737569894507722,
+      "context_hash": 4217800176232048848,
+      "translation": "여기에는 싱글턴과 정적 타입이 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776803Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:2",
+      "source": "We have a viable strategy for that but it will require a meaningful amount of extra effort and extra complexity.",
+      "source_hash": 1071322053263408340,
+      "context_hash": 2958064060703778929,
+      "translation": "이를 위한 실행 가능한 전략이 있지만, 상당한 추가 노력과 추가 복잡성이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776803Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "The alternative is to ensure that all shared objects are truly immutable.",
+      "source_hash": 5864695491965511980,
+      "context_hash": 14257538900718934716,
+      "translation": "대안은 모든 공유 객체가 실제로 변경 불가능하도록 보장하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776804Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "There would be no races because there would be no modification.",
+      "source_hash": 3661347091549131524,
+      "context_hash": 12662306699806649824,
+      "translation": "수정이 없으므로 경쟁 상태도 발생하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776804Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:2",
+      "source": "This is something that the immortality proposed here would enable for otherwise immutable objects.",
+      "source_hash": 16348790677037403399,
+      "context_hash": 11653296622629869784,
+      "translation": "여기서 제안하는 불멸성이 다른 경우에는 변경 불가능한 객체에 대해 가능하게 하는 것이 바로 이것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776804Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:3",
+      "source": "With immortal objects, support for a per-interpreter GIL becomes much simpler.",
+      "source_hash": 17388688413854732449,
+      "context_hash": 9087781618101793482,
+      "translation": "불멸 객체를 사용하면 인터프리터별 GIL 지원이 훨씬 간단해집니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:14:00.776804Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Avoiding Copy-on-Write",
+      "source_hash": 3009423537483063327,
+      "context_hash": 2455062342855525098,
+      "translation": "Copy-on-Write 회피",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776805Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "For some applications it makes sense to get the application into a desired initial state and then fork the process for each worker.",
+      "source_hash": 8601984604857400609,
+      "context_hash": 6723921618061692706,
+      "translation": "일부 애플리케이션에서는 애플리케이션을 원하는 초기 상태로 만든 다음 각 작업자를 위해 프로세스를 fork하는 것이 합리적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776806Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "This can result in a large performance improvement, especially memory usage.",
+      "source_hash": 17526896249257379374,
+      "context_hash": 13846494531446241623,
+      "translation": "이는 특히 메모리 사용량에서 상당한 성능 향상으로 이어질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776806Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "Several enterprise Python users (e.g. Instagram, YouTube) have taken advantage of this.",
+      "source_hash": 10127701801440417302,
+      "context_hash": 12743219358608548372,
+      "translation": "여러 엔터프라이즈 Python 사용자가(예: Instagram, YouTube) 이를 활용해 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776806Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:3",
+      "source": "However, the above refcount semantics drastically reduce the benefits and have led to some sub-optimal workarounds.",
+      "source_hash": 15620621434063487366,
+      "context_hash": 9973200996595685787,
+      "translation": "그러나 위의 참조 횟수 의미론은 이점을 크게 줄이며 일부 최적이 아닌 우회책을 초래했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776807Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Also note that \"fork\" isn't the only operating system mechanism that uses copy-on-write semantics.",
+      "source_hash": 4169150593004602642,
+      "context_hash": 6520951737037130964,
+      "translation": "또한 \"fork\"가 카피 온 라이트 의미 체계를 사용하는 유일한 운영 체제 메커니즘은 아니라는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:53:10.771087Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "Another example is ``mmap``.",
+      "source_hash": 6898095240948594901,
+      "context_hash": 7679176405112805048,
+      "translation": "또 다른 예로는 ``mmap``\\ 이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776808Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:2",
+      "source": "Any such utility will potentially benefit from fewer copy-on-writes when immortal objects are involved, when compared to using only \"mortal\" objects.",
+      "source_hash": 2526427172058800198,
+      "context_hash": 4935812604403404537,
+      "translation": "이러한 유틸리티는 \"불멸\" 객체만 사용하는 경우와 비교하여, 불멸 객체가 관련될 때 카피 온 라이트가 줄어드는 이점을 잠재적으로 얻을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776809Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 13721990958025542418,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776809Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "The proposed solution is obvious enough that both of this proposal's authors came to the same conclusion (and implementation, more or less) independently.",
+      "source_hash": 16968676669057491263,
+      "context_hash": 10736563133985549775,
+      "translation": "제안된 해결책은 매우 명확하여 이 제안의 두 저자가 모두 서로 독립적으로(대체로 동일한 구현과 함께) 같은 결론에 도달했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776809Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "The Pyston project `uses a similar approach <Pyston_>`_.",
+      "source_hash": 18076812683466244676,
+      "context_hash": 17024978432276322851,
+      "translation": "Pyston 프로젝트는 `유사한 접근 방식을 사용합니다 <Pyston_>`_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776809Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "Other designs were also considered.",
+      "source_hash": 4011704783717537706,
+      "context_hash": 12616005959568179938,
+      "translation": "다른 설계도 고려되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776810Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:3",
+      "source": "Several possibilities have also been discussed on python-dev in past years.",
+      "source_hash": 11027211509530930051,
+      "context_hash": 8892196276490894877,
+      "translation": "지난 몇 년 동안 python-dev에서 여러 가능성이 논의되기도 했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776810Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "Alternatives include:",
+      "source_hash": 6462434614806914377,
+      "context_hash": 9845227486698271252,
+      "translation": "대안은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776810Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "use a high bit to mark \"immortal\" but do not change ``Py_INCREF()``",
+      "source_hash": 14033462660254068016,
+      "context_hash": 2436867844404805730,
+      "translation": "높은 비트를 사용하여 \"불멸\"을 표시하지만 ``Py_INCREF()``\\ 는 변경하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776811Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "add an explicit flag to objects",
+      "source_hash": 18165481230197715466,
+      "context_hash": 7307237964302677104,
+      "translation": "객체에 명시적인 플래그를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776811Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "implement via the type (``tp_dealloc()`` is a no-op)",
+      "source_hash": 12242044174848288004,
+      "context_hash": 9511980774097607178,
+      "translation": "타입을 통해 구현합니다(``tp_dealloc()``\\ 은 아무 작업도 하지 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776811Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "track via the object's type object",
+      "source_hash": 1071205250646887405,
+      "context_hash": 16140449566514464474,
+      "translation": "객체의 타입 객체를 통해 추적합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776811Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "track with a separate table",
+      "source_hash": 17003715511767405964,
+      "context_hash": 817568052665453918,
+      "translation": "별도의 테이블로 추적합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776811Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:0",
+      "source": "Each of the above makes objects immortal, but none of them address the performance penalties from refcount modification described above.",
+      "source_hash": 6625284809541263951,
+      "context_hash": 14254048827923869833,
+      "translation": "위의 방법은 각각 객체를 불멸로 만들지만, 앞서 설명한 참조 횟수 수정으로 인한 성능 저하를 해결하는 방법은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776812Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:0",
+      "source": "In the case of per-interpreter GIL, the only realistic alternative is to move all global objects into ``PyInterpreterState`` and add one or more lookup functions to access them.",
+      "source_hash": 4135577659571088236,
+      "context_hash": 13780399473251176265,
+      "translation": "인터프리터별 GIL의 경우 유일하게 현실적인 대안은 모든 전역 객체를 ``PyInterpreterState``\\ 로 옮기고, 해당 객체에 액세스하기 위한 하나 이상의 조회 함수를 추가하는 것입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:14:00.776812Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:1",
+      "source": "Then we'd have to add some hacks to the C-API to preserve compatibility for the may objects exposed there.",
+      "source_hash": 16878673579241886143,
+      "context_hash": 18370112793242539417,
+      "translation": "그런 다음 거기에 노출된 많은 객체의 호환성을 유지하기 위해 C-API에 몇 가지 우회 코드를 추가해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776813Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:2",
+      "source": "The story is much, much simpler with immortal objects.",
+      "source_hash": 9182277950188530204,
+      "context_hash": 1353933722189175902,
+      "translation": "불멸 객체를 사용하면 상황이 훨씬, 훨씬 간단해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776813Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Impact",
+      "source_hash": 13241537819021598767,
+      "context_hash": 8161071212016718708,
+      "translation": "영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776813Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Benefits",
+      "source_hash": 14215724090463354963,
+      "context_hash": 13231022283428916376,
+      "translation": "이점",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:00.776814Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "Most notably, the cases described in the above examples stand to benefit greatly from immortal objects.",
+      "source_hash": 8340291241405721586,
+      "context_hash": 12797668034040062721,
+      "translation": "특히 위 예시에 설명된 경우는 불멸 객체를 통해 큰 혜택을 얻을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082652Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "Projects using pre-fork can drop their workarounds.",
+      "source_hash": 3527129534975761363,
+      "context_hash": 2004054133831090286,
+      "translation": "pre-fork를 사용하는 프로젝트는 자체 우회책을 제거할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082654Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:2",
+      "source": "For the per-interpreter GIL project, immortal objects greatly simplifies the solution for existing static types, as well as objects exposed by the public C-API.",
+      "source_hash": 11849513245781126446,
+      "context_hash": 5050364912638579669,
+      "translation": "인터프리터별 GIL 프로젝트에서는 불멸 객체가 기존 정적 타입과 공개 C-API가 노출하는 객체에 대한 해결책을 크게 단순화합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:14:06.082655Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "In general, a strong immutability guarantee for objects enables Python applications to scale better, particularly in `multi-process deployments <Facebook>`_.",
+      "source_hash": 16138337779642163303,
+      "context_hash": 5124569949076788064,
+      "translation": "일반적으로 객체에 강력한 불변성 보장을 제공하면 Python 애플리케이션의 확장성이 향상되며, 특히 `multi-process deployments <Facebook>`_\\ 에서 그렇습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082656Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "This is because they can then leverage multi-core parallelism without such a significant tradeoff in memory usage as they now have.",
+      "source_hash": 12035350553394371424,
+      "context_hash": 13537722478114830782,
+      "translation": "이는 애플리케이션이 현재 감수해야 하는 것만큼 큰 메모리 사용량 절충 없이 멀티코어 병렬 처리를 활용할 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082656Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:2",
+      "source": "The cases we just described, as well as those described above in `Motivation`_, reflect this improvement.",
+      "source_hash": 5039740018697038242,
+      "context_hash": 7011098072801538456,
+      "translation": "방금 설명한 경우와 위의 `Motivation`_\\ 에서 설명한 경우는 이러한 개선을 보여 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082656Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Performance",
+      "source_hash": 1168761202931664327,
+      "context_hash": 9562597032820612832,
+      "translation": "성능",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082657Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "A naive implementation shows `a 2% slowdown`_ (3% with MSVC).",
+      "source_hash": 8312864671237691017,
+      "context_hash": 17108460610491585137,
+      "translation": "순진한 구현에서는 `a 2% slowdown`_\\ 이 나타납니다(MSVC에서는 3%입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082657Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "We have demonstrated a return to ~performance-neutral~ with a handful of basic mitigations applied.",
+      "source_hash": 15709183939883849564,
+      "context_hash": 12893768171672760246,
+      "translation": "몇 가지 기본 완화책을 적용하면 ~performance-neutral~ 상태로 돌아갈 수 있음을 입증했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082657Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:2",
+      "source": "See the `mitigations`_ section below.",
+      "source_hash": 1830813391231978859,
+      "context_hash": 15745985241050417734,
+      "translation": "아래의 `mitigations`_ 섹션을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082658Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "On the positive side, immortal objects save a significant amount of memory when used `with a pre-fork model <Facebook>`_.",
+      "source_hash": 14564709635706527455,
+      "context_hash": 9432331654623606025,
+      "translation": "긍정적인 측면에서 불멸 객체는 `with a pre-fork model <Facebook>`_\\ 에서 사용할 때 상당한 메모리를 절약합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082658Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:1",
+      "source": "Also, immortal objects provide opportunities for specialization in the eval loop that would improve performance.",
+      "source_hash": 2266877986517261490,
+      "context_hash": 17509763703421516341,
+      "translation": "또한 불멸 객체는 평가 루프에서 성능을 향상할 수 있는 특수화 기회를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082658Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Backward Compatibility",
+      "source_hash": 3447041900669616890,
+      "context_hash": 14423858736348962055,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T18:14:06.082659Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "Ideally this internal-only feature would be completely compatible.",
+      "source_hash": 16805991074378141724,
+      "context_hash": 15665646125873105527,
+      "translation": "이상적으로는 이 내부 전용 기능이 완전히 호환되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082660Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "However, it does involve a change to refcount semantics in some cases.",
+      "source_hash": 8724580530604169490,
+      "context_hash": 14754625124155136425,
+      "translation": "그러나 일부 경우 참조 카운트 의미가 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082660Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:2",
+      "source": "Only immortal objects are affected, but this includes high-use objects like ``None``, ``True``, and ``False``.",
+      "source_hash": 8944292963083988514,
+      "context_hash": 10226879921331933972,
+      "translation": "영향을 받는 것은 불멸 객체뿐이지만, 여기에는 ``None``, ``True``, ``False``\\ 와 같이 사용 빈도가 높은 객체가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082660Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "Specifically, when an immortal object is involved:",
+      "source_hash": 3551964102612133135,
+      "context_hash": 16708076258990795453,
+      "translation": "구체적으로 불멸 객체가 관련된 경우에는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082661Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "code that inspects the refcount will see a really, really large value",
+      "source_hash": 5504017962081675965,
+      "context_hash": 543206749799129285,
+      "translation": "참조 카운트를 검사하는 코드는 매우, 매우 큰 값을 확인하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082661Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:0",
+      "source": "the new noop behavior may break code that:",
+      "source_hash": 17399615454157173154,
+      "context_hash": 5928707813709105345,
+      "translation": "새로운 noop 동작으로 인해 다음과 같은 코드가 중단될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082662Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:5/seg:0",
+      "source": "depends specifically on the refcount to always increment or decrement (or have a specific value from ``Py_SET_REFCNT()``)",
+      "source_hash": 6670832948253121530,
+      "context_hash": 15183014785029705330,
+      "translation": "참조 카운트가 항상 증가하거나 감소한다고 명시적으로 의존하는 코드(또는 ``Py_SET_REFCNT()``\\ 에서 특정 값을 갖는다고 의존하는 코드)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082662Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:6/seg:0",
+      "source": "relies on any specific refcount value, other than 0 or 1",
+      "source_hash": 14862372758068021589,
+      "context_hash": 15160631762023111871,
+      "translation": "0이나 1이 아닌 특정 참조 카운트 값에 의존하는 코드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082662Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:7/seg:0",
+      "source": "directly manipulates the refcount to store extra information there",
+      "source_hash": 18445540339389639242,
+      "context_hash": 15799614173779301415,
+      "translation": "추가 정보를 저장하기 위해 참조 카운트를 직접 조작하는 코드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082662Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:8/seg:0",
+      "source": "in 32-bit pre-3.12 `Stable ABI`_ extensions, objects may leak due to `Accidental Immortality`_",
+      "source_hash": 2005866192535798710,
+      "context_hash": 7310897997317072232,
+      "translation": "32비트 pre-3.12 `Stable ABI`_ 확장 기능에서는 `Accidental Immortality`_\\ 로 인해 객체가 누수될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082663Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:9/seg:0",
+      "source": "such extensions may crash due to `Accidental De-Immortalizing`_",
+      "source_hash": 15235927693576088119,
+      "context_hash": 2670985992330763325,
+      "translation": "이러한 확장 기능은 `Accidental De-Immortalizing`_\\ 으로 인해 충돌할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082663Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:10/seg:0",
+      "source": "Again, those changes in behavior only apply to immortal objects, not the vast majority of objects a user will use.",
+      "source_hash": 8935147978704354011,
+      "context_hash": 6536915098905855681,
+      "translation": "다시 말해 이러한 동작 변경은 불멸 객체에만 적용되며, 사용자가 사용할 객체의 대다수에는 적용되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082663Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:10/seg:1",
+      "source": "Furthermore, users cannot mark an object as immortal so no user-created objects will ever have that changed behavior.",
+      "source_hash": 12864105617786056991,
+      "context_hash": 921518841221561344,
+      "translation": "더구나 사용자는 객체를 불멸 객체로 표시할 수 없으므로, 사용자가 생성한 객체에는 이러한 변경된 동작이 절대 적용되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082663Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:10/seg:2",
+      "source": "Users that rely on any of the changing behavior for global (builtin) objects are already in trouble.",
+      "source_hash": 11721008695606883322,
+      "context_hash": 7573526543991131891,
+      "translation": "전역(내장) 객체에 대해 변경되는 동작에 의존하는 사용자는 이미 곤경에 처해 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082664Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:10/seg:3",
+      "source": "So the overall impact should be small.",
+      "source_hash": 2194813208305336315,
+      "context_hash": 13219786489854664074,
+      "translation": "따라서 전체적인 영향은 작을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082664Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:11/seg:0",
+      "source": "Also note that code which checks for refleaks should keep working fine, unless it checks for hard-coded small values relative to some immortal object.",
+      "source_hash": 6812423526977386755,
+      "context_hash": 11685950055451818940,
+      "translation": "또한 참조 누수를 검사하는 코드는 일부 불멸 객체를 기준으로 하드코딩된 작은 값을 검사하지 않는 한 계속 정상적으로 작동해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082664Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:11/seg:1",
+      "source": "The problems noticed by `Pyston`_ shouldn't apply here since we do not modify the refcount.",
+      "source_hash": 1652768528948503756,
+      "context_hash": 9426532429805950887,
+      "translation": "참조 카운트를 수정하지 않으므로 `Pyston`_\\ 에서 발견된 문제는 여기에는 적용되지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082664Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:12/seg:0",
+      "source": "See `Public Refcount Details`_ below for further discussion.",
+      "source_hash": 7171667645761529221,
+      "context_hash": 15677299126550052092,
+      "translation": "추가 논의는 아래의 `Public Refcount Details`_\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082665Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:13/seg:0",
+      "source": "Accidental Immortality",
+      "source_hash": 4866020332749043413,
+      "context_hash": 13801620884150774652,
+      "translation": "우발적 불멸화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:06.082665Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:14/seg:0",
+      "source": "Hypothetically, a non-immortal object could be incref'ed so much that it reaches the magic value needed to be considered immortal.",
+      "source_hash": 12411655984849318416,
+      "context_hash": 5073474178113577625,
+      "translation": "가정적으로, 불멸 객체가 아닌 객체에 incref가 너무 많이 수행되어 불멸 객체로 간주되는 데 필요한 마법 값에 도달할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286916Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:14/seg:1",
+      "source": "That means it would never be decref'ed all the way back to 0, so it would accidentally leak (never be cleaned up).",
+      "source_hash": 14606295820485313860,
+      "context_hash": 14168026211423231616,
+      "translation": "이는 해당 객체가 다시 0까지 decref되지 않으므로, 우발적으로 누수되어 정리되지 않는다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286921Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:15/seg:0",
+      "source": "With 64-bit refcounts, this accidental scenario is so unlikely that we need not worry.",
+      "source_hash": 893270338145386010,
+      "context_hash": 3209054519658865042,
+      "translation": "64비트 참조 횟수에서는 이러한 우발적 상황이 발생할 가능성이 매우 낮으므로 걱정할 필요가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286922Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:15/seg:1",
+      "source": "Even if done deliberately by using ``Py_INCREF()`` in a tight loop and each iteration only took 1 CPU cycle, it would take 2^60 cycles (if the immortal bit were 2^60).",
+      "source_hash": 1293441677057142371,
+      "context_hash": 967677221523198505,
+      "translation": "``Py_INCREF()``\\ 를 긴밀한 루프에서 사용하고 각 반복이 CPU 사이클 1개만 소요되도록 의도적으로 수행하더라도, 2^60 사이클이 필요합니다(불멸 비트가 2^60인 경우).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286922Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:15/seg:2",
+      "source": "At a fast 5 GHz that would still take nearly 250,000,000 seconds (over 2,500 days)!",
+      "source_hash": 7506519315737116830,
+      "context_hash": 1877666430054492377,
+      "translation": "빠른 5GHz에서도 이는 거의 250,000,000초(2,500일 초과)가 걸립니다!",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286923Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:16/seg:0",
+      "source": "Also note that it is doubly unlikely to be a problem because it wouldn't matter until the refcount would have gotten back to 0 and the object cleaned up.",
+      "source_hash": 1441201883786843011,
+      "context_hash": 10213041016427398957,
+      "translation": "또한 참조 횟수가 다시 0이 되어 객체가 정리될 때까지는 문제가 되지 않으므로, 문제가 될 가능성이 두 배로 낮다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286924Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:16/seg:1",
+      "source": "So any object that hit that magic \"immortal\" refcount value would have to be decref'ed that many times again before the change in behavior would be noticed.",
+      "source_hash": 11573006297898975095,
+      "context_hash": 734461603523014736,
+      "translation": "따라서 마법의 \"불멸\" 참조 횟수 값에 도달한 객체는 동작 변경이 감지되기 전에 그만큼 여러 번 다시 decref되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286924Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:17/seg:0",
+      "source": "Again, the only realistic way that the magic refcount would be reached (and then reversed) is if it were done deliberately.  (Of course, the same thing could be done efficiently using ``Py_SET_REFCNT()`` though that would be even less of an accident.)  At that point we don't consider it a concern of this proposal.",
+      "source_hash": 17958311493204490441,
+      "context_hash": 10664641947243421691,
+      "translation": "다시 말해, 마법의 참조 횟수에 도달한 다음 되돌리는 현실적인 유일한 방법은 이를 의도적으로 수행하는 것입니다. (물론 ``Py_SET_REFCNT()``\\ 를 사용하면 같은 작업을 효율적으로 수행할 수 있지만, 이는 우발적으로 발생할 가능성이 더욱 낮습니다.) 이 시점에서는 이를 이 제안의 우려 사항으로 간주하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286925Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:18/seg:0",
+      "source": "On builds with much smaller maximum refcounts, like 32-bit platforms, the consequences aren't so obvious.",
+      "source_hash": 17257010384320027020,
+      "context_hash": 4572794730519946536,
+      "translation": "32비트 플랫폼처럼 최대 참조 횟수가 훨씬 작은 빌드에서는 그 결과가 그리 명확하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286925Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:18/seg:1",
+      "source": "Let's say the magic refcount were 2^30.",
+      "source_hash": 6451148637052054489,
+      "context_hash": 14293484505121274924,
+      "translation": "마법의 참조 횟수가 2^30이라고 가정하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286926Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:18/seg:2",
+      "source": "Using the same specs as above, it would take roughly 4 seconds to accidentally immortalize an object.",
+      "source_hash": 14317306520616625649,
+      "context_hash": 18126949297731495414,
+      "translation": "위와 동일한 사양을 사용하면 객체를 우발적으로 불멸화하는 데 대략 4초가 걸립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286926Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:18/seg:3",
+      "source": "Under reasonable conditions, it is still highly unlikely that an object be accidentally immortalized.",
+      "source_hash": 17931330456214590774,
+      "context_hash": 14596912741607944369,
+      "translation": "합리적인 조건에서는 객체가 우발적으로 불멸화될 가능성이 여전히 매우 낮습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286927Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:18/seg:4",
+      "source": "It would have to meet these criteria:",
+      "source_hash": 4140144869811118101,
+      "context_hash": 11500741205466023652,
+      "translation": "다음 기준을 충족해야 합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286927Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:19/seg:0",
+      "source": "targeting a non-immortal object (so not one of the high-use builtins)",
+      "source_hash": 8364387490486442018,
+      "context_hash": 15961428569753035468,
+      "translation": "불멸 객체가 아닌 객체를 대상으로 할 것(따라서 사용 빈도가 높은 기본 제공 객체 중 하나가 아닐 것)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286928Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:20/seg:0",
+      "source": "the extension increfs without a corresponding decref (e.g. returns from a function or method)",
+      "source_hash": 8071113274511113291,
+      "context_hash": 12011415448955588251,
+      "translation": "확장 모듈이 이에 대응하는 decref 없이 incref할 것(예: 함수 또는 메서드에서 반환할 때)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286928Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:21/seg:0",
+      "source": "no other code decrefs the object in the meantime",
+      "source_hash": 3584286357724662913,
+      "context_hash": 8705463156568037490,
+      "translation": "그동안 다른 코드가 객체를 decref하지 않을 것",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286928Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:22/seg:0",
+      "source": "Even at a much less frequent rate it would not take long to reach accidental immortality (on 32-bit).",
+      "source_hash": 3641704780609444604,
+      "context_hash": 4704997007518229183,
+      "translation": "훨씬 낮은 빈도로 수행하더라도 32비트에서는 우발적 불멸성에 도달하는 데 오래 걸리지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286928Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:22/seg:1",
+      "source": "However, then it would have to run through the same number of (now noop-ing) decrefs before that one object would be effectively leaking.",
+      "source_hash": 10979283485280495260,
+      "context_hash": 10848957378907561358,
+      "translation": "그러나 그 경우 해당 객체 하나가 사실상 누수되기 전에 동일한 횟수의 (이제 아무 작업도 하지 않는) decref를 다시 수행해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286929Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:22/seg:2",
+      "source": "This is highly unlikely, especially because the calculations assume no decrefs.",
+      "source_hash": 14956920996798145852,
+      "context_hash": 9223196255510571315,
+      "translation": "특히 계산이 decref가 전혀 없다고 가정하므로, 이는 가능성이 매우 낮습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286929Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:23/seg:0",
+      "source": "Furthermore, this isn't all that different from how such 32-bit extensions can already incref an object past 2^31 and turn the refcount negative.",
+      "source_hash": 1018052889886632302,
+      "context_hash": 13219063762963150387,
+      "translation": "게다가 이는 이러한 32비트 확장 모듈이 이미 객체를 2^31 이상 incref하여 참조 횟수를 음수로 바꾸는 방식과 크게 다르지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286930Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:23/seg:1",
+      "source": "If that were an actual problem then we would have heard about it.",
+      "source_hash": 577970052350898673,
+      "context_hash": 16685586557331997196,
+      "translation": "그것이 실제 문제였다면 우리는 이미 그에 관한 이야기를 들었을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286930Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:24/seg:0",
+      "source": "Between all of the above cases, the proposal doesn't consider accidental immortality a problem.",
+      "source_hash": 345220964968423574,
+      "context_hash": 6157953238526737469,
+      "translation": "위의 모든 경우를 종합하면, 이 제안에서는 우발적 불멸성을 문제로 간주하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286930Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:25/seg:0",
+      "source": "Stable ABI",
+      "source_hash": 2017471955778429006,
+      "context_hash": 2149539588211947558,
+      "translation": "안정 ABI",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286931Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:26/seg:0",
+      "source": "The implementation approach described in this PEP is compatible with extensions compiled to the stable ABI (with the exception of `Accidental Immortality`_ and `Accidental De-Immortalizing`_).",
+      "source_hash": 1614682049361462419,
+      "context_hash": 6848725038388021484,
+      "translation": "이 PEP에서 설명하는 구현 방식은 안정 ABI용으로 컴파일된 확장 모듈과 호환됩니다(`Accidental Immortality`_ 및 `Accidental De-Immortalizing`_\\ 은 제외합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286931Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:26/seg:1",
+      "source": "Due to the nature of the stable ABI, unfortunately, such extensions use versions of ``Py_INCREF()``, etc. that directly modify the object's ``ob_refcnt`` field.",
+      "source_hash": 15642962672965457945,
+      "context_hash": 11919215811500502377,
+      "translation": "안정 ABI의 특성상 안타깝게도 이러한 확장 모듈은 객체의 ``ob_refcnt`` 필드를 직접 수정하는 ``Py_INCREF()``, 기타 버전들을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286931Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:26/seg:2",
+      "source": "This will invalidate all the performance benefits of immortal objects.",
+      "source_hash": 11848804829215614986,
+      "context_hash": 10968475032512588001,
+      "translation": "이로 인해 불멸 객체의 성능상 이점이 모두 무효화됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286932Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:27/seg:0",
+      "source": "However, we do ensure that immortal objects (mostly) stay immortal in that situation.",
+      "source_hash": 17488264937235504005,
+      "context_hash": 7173251082841688349,
+      "translation": "그러나 이러한 상황에서도 불멸 객체가 (대체로) 불멸 상태를 유지하도록 보장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286932Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:27/seg:1",
+      "source": "We set the initial refcount of immortal objects to a value for which we can identify the object as immortal and which continues to do so even if the refcount is modified by an extension. (For example, suppose we used one of the high refcount bits to indicate that an object was immortal.",
+      "source_hash": 8651906242356366403,
+      "context_hash": 7574910752324096146,
+      "translation": "불멸 객체의 초기 참조 횟수를 객체를 불멸 객체로 식별할 수 있고, 확장 모듈이 참조 횟수를 수정하더라도 계속 그렇게 식별할 수 있는 값으로 설정합니다. (예를 들어 높은 참조 횟수 비트 중 하나를 객체가 불멸임을 나타내는 데 사용한다고 가정하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286933Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:27/seg:2",
+      "source": "We would set the initial refcount to a higher value that still matches the bit, like halfway to the next bit.",
+      "source_hash": 5111536532788352798,
+      "context_hash": 10796438637072578232,
+      "translation": "다음 비트까지의 중간값처럼 해당 비트와 여전히 일치하는 더 높은 값으로 초기 참조 횟수를 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286933Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:27/seg:3",
+      "source": "See `_Py_IMMORTAL_REFCNT`_.) At worst, objects in that situation would feel the effects described in the `Motivation`_ section.",
+      "source_hash": 11913917161860035847,
+      "context_hash": 15416660346151322287,
+      "translation": "`_Py_IMMORTAL_REFCNT`_\\ 를 참조하십시오.) 최악의 경우에도 그러한 상황의 객체는 `Motivation`_ 섹션에서 설명한 영향을 받게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286933Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:27/seg:4",
+      "source": "Even then the overall impact is unlikely to be significant.",
+      "source_hash": 11060453665137024994,
+      "context_hash": 13204517209350161562,
+      "translation": "그렇더라도 전반적인 영향이 상당할 가능성은 낮습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286934Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:28/seg:0",
+      "source": "Accidental De-Immortalizing",
+      "source_hash": 13596756590847700796,
+      "context_hash": 6033232076493940919,
+      "translation": "우발적 불멸성 해제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:12.286934Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:29/seg:0",
+      "source": "32-bit builds of older stable ABI extensions can take `Accidental Immortality`_ to the next level.",
+      "source_hash": 7200737045433639465,
+      "context_hash": 10407103204702113005,
+      "translation": "32비트 빌드의 이전 안정 ABI 확장은 `Accidental Immortality`_\\ 를 한 단계 더 발전시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890452Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:30/seg:0",
+      "source": "Hypothetically, such an extension could incref an object to a value on the next highest bit above the magic refcount value.",
+      "source_hash": 4757866126346374750,
+      "context_hash": 9065008028344431127,
+      "translation": "가정적으로, 이러한 확장은 객체의 참조 횟수를 매직 참조 횟수 값보다 높은 다음 비트의 값까지 incref할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890456Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:30/seg:1",
+      "source": "For example, if the magic value were 2^30 and the initial immortal refcount were thus 2^30 + 2^29 then it would take 2^29 increfs by the extension to reach a value of 2^31, making the object non-immortal. (Of course, a refcount that high would probably already cause a crash, regardless of immortal objects.)",
+      "source_hash": 696774670233149032,
+      "context_hash": 8650756126217075792,
+      "translation": "예를 들어 매직 값이 2^30이고 초기 불멸 참조 횟수가 따라서 2^30 + 2^29라면, 확장이 2^29번 incref해야 2^31 값에 도달하여 객체가 불멸 상태가 아니게 됩니다. (물론 이렇게 높은 참조 횟수라면 불멸 객체와 관계없이 이미 충돌을 일으킬 가능성이 높습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890456Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:31/seg:0",
+      "source": "The more problematic case is where such a 32-bit stable ABI extension goes crazy decref'ing an already immortal object.",
+      "source_hash": 8137878342412348829,
+      "context_hash": 7564169747813056224,
+      "translation": "더 문제가 되는 경우는 이러한 32비트 안정 ABI 확장이 이미 불멸 상태인 객체를 미친 듯이 decref하는 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890456Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:31/seg:1",
+      "source": "Continuing with the above example, it would take 2^29 asymmetric decrefs to drop below the magic immortal refcount value.",
+      "source_hash": 16104168833921344090,
+      "context_hash": 1751109592415836801,
+      "translation": "위의 예를 계속 적용하면, 매직 불멸 참조 횟수 값 아래로 떨어뜨리려면 2^29번의 비대칭 decref가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890457Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:31/seg:2",
+      "source": "So an object like ``None`` could be made mortal and subject to decref.",
+      "source_hash": 903490185445225604,
+      "context_hash": 9063002469765678328,
+      "translation": "따라서 ``None``\\ 과 같은 객체가 유한 수명 상태가 되어 decref의 대상이 될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890457Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:31/seg:3",
+      "source": "That still wouldn't be a problem until somehow the decrefs continue on that object until it reaches 0.",
+      "source_hash": 18415151887018858947,
+      "context_hash": 12351404882468309172,
+      "translation": "그래도 어떻게든 해당 객체에 대한 decref가 0에 도달할 때까지 계속되지 않는 한 문제는 발생하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890457Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:31/seg:4",
+      "source": "For statically allocated immortal objects, like ``None``, the extension would crash the process if it tried to dealloc the object.",
+      "source_hash": 1489024622946584292,
+      "context_hash": 3480136164693107737,
+      "translation": "``None``\\ 과 같이 정적으로 할당된 불멸 객체의 경우, 확장이 객체를 dealloc하려고 시도하면 프로세스가 충돌합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890457Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:31/seg:5",
+      "source": "For any other immortal objects, the dealloc might be okay.",
+      "source_hash": 13048211745945187389,
+      "context_hash": 290239685380371518,
+      "translation": "그 밖의 불멸 객체에서는 dealloc이 정상적으로 수행될 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890458Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:31/seg:6",
+      "source": "However, there might be runtime code expecting the formerly-immortal object to be around forever.",
+      "source_hash": 1135677913931379295,
+      "context_hash": 2800771385921052206,
+      "translation": "그러나 이전에는 불멸 상태였던 객체가 영원히 존재할 것으로 예상하는 런타임 코드가 있을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890458Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:31/seg:7",
+      "source": "That code would probably crash.",
+      "source_hash": 258778853287295100,
+      "context_hash": 7624074890475447903,
+      "translation": "그러한 코드는 아마 충돌할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890458Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:32/seg:0",
+      "source": "Again, the likelihood of this happening is extremely small, even on 32-bit builds.",
+      "source_hash": 11175790159489900104,
+      "context_hash": 912375765836016871,
+      "translation": "다시 말해, 32비트 빌드에서도 이러한 일이 발생할 가능성은 극히 낮습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890459Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:32/seg:1",
+      "source": "It would require roughly a billion decrefs on that one object without a corresponding incref.",
+      "source_hash": 592971422317856655,
+      "context_hash": 15817742407306887604,
+      "translation": "해당 객체 하나에 대응하는 incref 없이 대략 10억 번의 decref가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890459Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:32/seg:2",
+      "source": "The most likely scenario is the following:",
+      "source_hash": 11687077803910988955,
+      "context_hash": 1729851053220986539,
+      "translation": "가장 가능성이 높은 시나리오는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890459Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:33/seg:0",
+      "source": "A \"new\" reference to ``None`` is returned by many functions and methods.",
+      "source_hash": 17978285969824388841,
+      "context_hash": 6845858310008843276,
+      "translation": "많은 함수와 메서드가 ``None``\\ 에 대한 \"새로운\" 참조를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890459Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:33/seg:1",
+      "source": "Unlike with non-immortal objects, the 3.12 runtime will basically never incref ``None`` before giving it to the extension.",
+      "source_hash": 2109633369389066850,
+      "context_hash": 2491476144815505350,
+      "translation": "3.12 런타임은 불멸 객체가 아닌 객체의 경우와 달리, ``None``\\ 을 확장에 전달하기 전에 기본적으로 절대 incref하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890460Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:33/seg:2",
+      "source": "However, the extension *will* decref it when done with it (unless it returns it).",
+      "source_hash": 8887536668142481574,
+      "context_hash": 11953798991647045,
+      "translation": "그러나 확장은 작업을 마치면(반환하는 경우를 제외하고) *반드시* decref합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890460Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:33/seg:3",
+      "source": "Each time that exchange happens with the one object, we get one step closer to a crash.",
+      "source_hash": 17901176446714881999,
+      "context_hash": 4573689033082572724,
+      "translation": "해당 객체 하나에 대해 이러한 교환이 발생할 때마다 충돌에 한 단계씩 가까워집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890460Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:34/seg:0",
+      "source": "How realistic is it that some form of that exchange (with a single object) will happen a billion times in the lifetime of a Python process on 32-bit?",
+      "source_hash": 5815097164476083941,
+      "context_hash": 4052117180703398926,
+      "translation": "32비트 환경에서 Python 프로세스의 수명 동안 이러한 교환이 어떤 형태로든(단일 객체에 대해) 10억 번 발생할 가능성이 얼마나 현실적입니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890461Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:34/seg:1",
+      "source": "If it is a problem, how could it be addressed?",
+      "source_hash": 11350928609098339061,
+      "context_hash": 13233932994433762469,
+      "translation": "이것이 문제라면 어떻게 해결할 수 있습니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890461Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:35/seg:0",
+      "source": "As to how realistic, the answer isn't clear currently.",
+      "source_hash": 7189883336185316350,
+      "context_hash": 10215604971720518037,
+      "translation": "얼마나 현실적인지에 대해서는 현재 답이 명확하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890461Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:35/seg:1",
+      "source": "However, the mitigation is simple enough that we can safely proceed under the assumption that it would not be a problem.",
+      "source_hash": 1342076174424024720,
+      "context_hash": 6928224283853594548,
+      "translation": "그러나 완화책은 충분히 간단하므로 문제가 되지 않을 것이라는 가정하에 안전하게 진행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890462Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:36/seg:0",
+      "source": "We look at possible solutions `later on <Solutions for Accidental De-Immortalization>`_.",
+      "source_hash": 18369560013636950943,
+      "context_hash": 14685543535024614842,
+      "translation": "가능한 해결책은 `나중에 <Solutions for Accidental De-Immortalization>`_\\ 살펴봅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890462Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Alternate Python Implementations",
+      "source_hash": 12049069417429751669,
+      "context_hash": 16924737081416877670,
+      "translation": "대체 Python 구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890462Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "This proposal is CPython-specific.",
+      "source_hash": 6001437818279693134,
+      "context_hash": 324573785534383064,
+      "translation": "이 제안은 CPython에만 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890463Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "However, it does relate to the behavior of the C-API, which may affect other Python implementations.",
+      "source_hash": 12867009625817551815,
+      "context_hash": 17630574663726771736,
+      "translation": "그러나 이 제안은 C-API의 동작과 관련이 있으며, 이는 다른 Python 구현에 영향을 줄 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890463Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:2",
+      "source": "Consequently, the effect of changed behavior described in `Backward Compatibility`_ above also applies here (e.g. if another implementation is tightly coupled to specific refcount values, other than 0, or on exactly how refcounts change, then they may impacted).",
+      "source_hash": 10062935519762721654,
+      "context_hash": 6303506688922176283,
+      "translation": "따라서 위의 `하위 호환성 <Backward Compatibility_>`_\\ 에 설명된 변경된 동작의 영향도 여기 적용됩니다(예를 들어 다른 구현이 0이 아닌 특정 참조 횟수 값이나 참조 횟수가 정확히 어떻게 변경되는지에 밀접하게 결합되어 있다면 영향을 받을 수 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890463Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 14443511473131946492,
+      "translation": "보안 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890464Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "This feature has no known impact on security.",
+      "source_hash": 2977042176822410505,
+      "context_hash": 7758193746055587529,
+      "translation": "이 기능이 보안에 미치는 영향은 알려진 바가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890464Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Maintainability",
+      "source_hash": 17115801893002859253,
+      "context_hash": 15021690219413927211,
+      "translation": "유지 관리성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:09.890464Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "This is not a complex feature so it should not cause much mental overhead for maintainers.",
+      "source_hash": 18136954556411027757,
+      "context_hash": 17949677460053068683,
+      "translation": "이는 복잡한 기능이 아니므로 유지보수 담당자에게 큰 정신적 부담을 주지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985893Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "The basic implementation doesn't touch much code so it should have much impact on maintainability.",
+      "source_hash": 15151589971547981809,
+      "context_hash": 16792063812974928042,
+      "translation": "기본 구현은 많은 코드를 건드리지 않으므로 유지보수성에 큰 영향을 미칠 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985897Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:2",
+      "source": "There may be some extra complexity due to performance penalty mitigation.",
+      "source_hash": 6283518445384713059,
+      "context_hash": 12217554920679543283,
+      "translation": "성능 저하를 완화하기 위해 약간의 복잡성이 추가될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985897Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:3",
+      "source": "However, that should be limited to where we immortalize all objects post-init and later explicitly deallocate them during runtime finalization.",
+      "source_hash": 5460028830718768652,
+      "context_hash": 16646793173727956294,
+      "translation": "그러나 이는 초기화 후 모든 객체를 불멸화하고 나중에 런타임 종료 과정에서 명시적으로 할당 해제하는 부분으로 제한되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985897Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:4",
+      "source": "The code for this should be relatively concentrated.",
+      "source_hash": 11869944387290157556,
+      "context_hash": 16351995324376110191,
+      "translation": "이를 위한 코드는 비교적 집중되어 있을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985898Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 17060000401371581710,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985898Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "The approach involves these fundamental changes:",
+      "source_hash": 168171554693110709,
+      "context_hash": 6146935758822220487,
+      "translation": "이 접근 방식에는 다음과 같은 근본적인 변경 사항이 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985898Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "add `_Py_IMMORTAL_REFCNT`_ (the magic value) to the internal C-API",
+      "source_hash": 17480499356089953551,
+      "context_hash": 14875994947003693715,
+      "translation": "내부 C-API에 `_Py_IMMORTAL_REFCNT`_ (매직 값)을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985898Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "update ``Py_INCREF()`` and ``Py_DECREF()`` to no-op for objects that match the magic refcount",
+      "source_hash": 8968954897808511329,
+      "context_hash": 15104170258841951202,
+      "translation": "매직 참조 횟수와 일치하는 객체에 대해 ``Py_INCREF()`` 및 ``Py_DECREF()``\\ 를 no-op이 되도록 업데이트합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985899Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:0",
+      "source": "do the same for any other API that modifies the refcount",
+      "source_hash": 15854593314129528040,
+      "context_hash": 17604108621532893833,
+      "translation": "참조 횟수를 수정하는 다른 모든 API에도 동일하게 적용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985899Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:0",
+      "source": "stop modifying ``PyGC_Head`` for immortal GC objects (\"containers\")",
+      "source_hash": 16343784745212505242,
+      "context_hash": 12362131173393574075,
+      "translation": "불멸 GC 객체(\"컨테이너\")에 대해서는 ``PyGC_Head``\\ 를 더 이상 수정하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985899Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:6/seg:0",
+      "source": "ensure that all immortal objects are cleaned up during runtime finalization",
+      "source_hash": 15506474275133135016,
+      "context_hash": 1633181415130546947,
+      "translation": "런타임 종료 과정에서 모든 불멸 객체가 정리되도록 보장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985899Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:7/seg:0",
+      "source": "Then setting any object's refcount to ``_Py_IMMORTAL_REFCNT`` makes it immortal.",
+      "source_hash": 8813793414743633556,
+      "context_hash": 2255848022311827276,
+      "translation": "그러면 어떤 객체의 참조 횟수든 ``_Py_IMMORTAL_REFCNT``\\ 로 설정하면 해당 객체가 불멸 객체가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985900Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:8/seg:0",
+      "source": "(There are other minor, internal changes which are not described here.)",
+      "source_hash": 5537639279005729374,
+      "context_hash": 17490435589294367667,
+      "translation": "(여기에서 설명하지 않은 기타 사소한 내부 변경 사항도 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985900Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:9/seg:0",
+      "source": "In the following sub-sections we dive into the most significant details.",
+      "source_hash": 14599430922988719054,
+      "context_hash": 12525803687773105394,
+      "translation": "다음 하위 절에서는 가장 중요한 세부 사항을 자세히 살펴봅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985900Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:9/seg:1",
+      "source": "First we will cover some conceptual topics, followed by more concrete aspects like specific affected APIs.",
+      "source_hash": 14426648672742348236,
+      "context_hash": 17205295033545112444,
+      "translation": "먼저 몇 가지 개념적 주제를 다룬 다음, 영향을 받는 특정 API와 같은 보다 구체적인 측면을 살펴봅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985900Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Public Refcount Details",
+      "source_hash": 17200495387433746604,
+      "context_hash": 8190204446472496346,
+      "translation": "공개 참조 횟수 세부 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985901Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "In `Backward Compatibility`_ we introduced possible ways that user code might be broken by the change in this proposal.",
+      "source_hash": 3326078139474201529,
+      "context_hash": 10142052459788120272,
+      "translation": "`Backward Compatibility`_ 에서는 이 제안의 변경으로 인해 사용자 코드가 손상될 수 있는 방법을 소개했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985901Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:1",
+      "source": "Any contributing misunderstanding by users is likely due in large part to the names of the refcount-related API and to how the documentation explains those API (and refcounting in general).",
+      "source_hash": 4953817979737093024,
+      "context_hash": 8086015481787777281,
+      "translation": "사용자가 겪는 오해의 원인은 상당 부분 참조 횟수 관련 API의 이름과 문서에서 해당 API(및 일반적인 참조 횟수 계산)를 설명하는 방식에 있을 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985901Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "Between the names and the docs, we can clearly see answers to the following questions:",
+      "source_hash": 9156434213066780608,
+      "context_hash": 12596146970385169636,
+      "translation": "이름과 문서를 함께 살펴보면 다음 질문에 대한 답을 명확히 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985901Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "what behavior do users expect?",
+      "source_hash": 4668632604307395133,
+      "context_hash": 13558308131078017803,
+      "translation": "사용자는 어떤 동작을 기대합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985901Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "what guarantees do we make?",
+      "source_hash": 5265679988522990769,
+      "context_hash": 16977316322952719988,
+      "translation": "우리는 어떤 보장을 제공합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985902Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "do we indicate how to interpret the refcount value they receive?",
+      "source_hash": 16480962124825630001,
+      "context_hash": 11038070408779543085,
+      "translation": "사용자가 받은 참조 횟수 값을 어떻게 해석해야 하는지 나타냅니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985902Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:0",
+      "source": "what are the use cases under which a user would set an object's refcount to a specific value?",
+      "source_hash": 8007199428862497075,
+      "context_hash": 16612018805679455439,
+      "translation": "사용자가 객체의 참조 횟수를 특정 값으로 설정하는 사용 사례는 무엇입니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985902Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:0",
+      "source": "are users setting the refcount of objects they did not create?",
+      "source_hash": 7487156363444063015,
+      "context_hash": 2594477227822680966,
+      "translation": "사용자가 자신이 생성하지 않은 객체의 참조 횟수를 설정합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985902Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:8/seg:0",
+      "source": "As part of this proposal, we must make sure that users can clearly understand on which parts of the refcount behavior they can rely and which are considered implementation details.",
+      "source_hash": 13416790858794370577,
+      "context_hash": 17494012904410123401,
+      "translation": "이 제안의 일부로서 사용자가 참조 횟수 동작의 어느 부분에 의존할 수 있고 어느 부분이 구현 세부 사항으로 간주되는지 명확히 이해할 수 있도록 해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985903Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:8/seg:1",
+      "source": "Specifically, they should use the existing public refcount-related API and the only refcount values with any meaning are 0 and 1.  (Some code relies on 1 as an indicator that the object can be safely modified.)  All other values are considered \"not 0 or 1\".",
+      "source_hash": 12232864640450508586,
+      "context_hash": 1508549013437963667,
+      "translation": "구체적으로 사용자는 기존의 공개 참조 횟수 관련 API를 사용해야 하며, 의미가 있는 참조 횟수 값은 0과 1뿐입니다. (일부 코드는 객체를 안전하게 수정할 수 있다는 표시로 1에 의존합니다.) 그 밖의 모든 값은 \"0 또는 1이 아님\"으로 간주됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985903Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:9/seg:0",
+      "source": "This information will be clarified in the `documentation <Documentation_>`_.",
+      "source_hash": 1190363420422473507,
+      "context_hash": 7618101881020406058,
+      "translation": "이 정보는 `documentation <Documentation_>`_ 에서 명확히 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985903Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:10/seg:0",
+      "source": "Arguably, the existing refcount-related API should be modified to reflect what we want users to expect.",
+      "source_hash": 3391002797131418944,
+      "context_hash": 6744976598562571026,
+      "translation": "사용자에게 기대하도록 하려는 내용을 반영하도록 기존의 참조 횟수 관련 API를 수정해야 한다고 주장할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985903Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:10/seg:1",
+      "source": "Something like the following:",
+      "source_hash": 16601285855752216706,
+      "context_hash": 15692821919380560563,
+      "translation": "다음과 같은 형태입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985904Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:11/seg:0",
+      "source": "``Py_INCREF()`` -> ``Py_ACQUIRE_REF()`` (or only support ``Py_NewRef()``)",
+      "source_hash": 1417827114719466135,
+      "context_hash": 15581414616873263853,
+      "translation": "``Py_INCREF()`` -> ``Py_ACQUIRE_REF()`` (또는 ``Py_NewRef()``\\ 만 지원)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985904Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:12/seg:0",
+      "source": "``Py_DECREF()`` -> ``Py_RELEASE_REF()``",
+      "source_hash": 8902496072126314203,
+      "context_hash": 11530347096130445386,
+      "translation": "``Py_DECREF()`` -> ``Py_RELEASE_REF()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:11.985904Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:13/seg:0",
+      "source": "``Py_REFCNT()`` -> ``Py_HAS_REFS()``",
+      "source_hash": 4982309294477259045,
+      "context_hash": 7067807147332566607,
+      "translation": "``Py_REFCNT()`` -> ``Py_HAS_REFS()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052857Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:14/seg:0",
+      "source": "``Py_SET_REFCNT()`` -> ``Py_RESET_REFS()`` and ``Py_SET_NO_REFS()``",
+      "source_hash": 14350475525692808781,
+      "context_hash": 3514800504488050327,
+      "translation": "``Py_SET_REFCNT()`` -> ``Py_RESET_REFS()`` 및 ``Py_SET_NO_REFS()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052860Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:15/seg:0",
+      "source": "However, such a change is not a part of this proposal.",
+      "source_hash": 11116523351834202317,
+      "context_hash": 16780613605165530073,
+      "translation": "그러나 이러한 변경은 이 제안의 일부가 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052860Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:15/seg:1",
+      "source": "It is included here to demonstrate the tighter focus for user expectations that would benefit this change.",
+      "source_hash": 10932018657755192649,
+      "context_hash": 3969439823669314454,
+      "translation": "이 변경으로부터 혜택을 받을 사용자 기대에 더욱 집중할 수 있음을 보여 주기 위해 여기에 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052860Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Constraints",
+      "source_hash": 11930884711566436492,
+      "context_hash": 3624624384142287853,
+      "translation": "제약 조건",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052861Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "ensure that otherwise immutable objects can be truly immutable",
+      "source_hash": 15552786954495959865,
+      "context_hash": 10829158634758715287,
+      "translation": "다른 면에서 불변인 객체가 진정으로 불변이 되도록 보장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052861Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "minimize performance penalty for normal Python use cases",
+      "source_hash": 14949339574755368106,
+      "context_hash": 14889915674402312346,
+      "translation": "일반적인 Python 사용 사례에서 성능 저하를 최소화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052861Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "be careful when immortalizing objects that we don't actually expect to persist until runtime finalization.",
+      "source_hash": 8149046412104302378,
+      "context_hash": 12828512126142081157,
+      "translation": "런타임 종료 시점까지 실제로 유지될 것으로 예상하지 않는 객체를 불멸화할 때 주의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052861Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "be careful when immortalizing objects that are not otherwise immutable",
+      "source_hash": 3136285328135589075,
+      "context_hash": 1164975423046009444,
+      "translation": "다른 면에서 불변이 아닌 객체를 불멸화할 때 주의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052861Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:0",
+      "source": "``__del__`` and weakrefs must continue working properly",
+      "source_hash": 17621387726980543026,
+      "context_hash": 11130819984726691481,
+      "translation": "``__del__`` 및 weakref가 계속 올바르게 작동해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052861Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:6/seg:0",
+      "source": "Regarding \"truly\" immutable objects, this PEP doesn't impact the effective immutability of any objects, other than the per-object runtime state (e.g. refcount).",
+      "source_hash": 4834609004095631081,
+      "context_hash": 2221032476746351605,
+      "translation": "“진정으로” 불변인 객체와 관련하여 이 PEP는 객체별 런타임 상태(예: 참조 횟수)를 제외한 어떠한 객체의 실질적인 불변성에도 영향을 미치지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052862Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:6/seg:1",
+      "source": "So whether or not some immortal object is truly (or even effectively) immutable can only be settled separately from this proposal.",
+      "source_hash": 97933209638581850,
+      "context_hash": 17821975234455882082,
+      "translation": "따라서 어떤 불멸 객체가 진정으로(또는 실질적으로라도) 불변인지 여부는 이 제안과 별도로 결정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052862Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:6/seg:2",
+      "source": "For example, str objects are generally considered immutable, but ``PyUnicodeObject`` holds some lazily cached data.",
+      "source_hash": 17084629278560073470,
+      "context_hash": 1406160149182730870,
+      "translation": "예를 들어 str 객체는 일반적으로 불변으로 간주되지만, ``PyUnicodeObject``\\ 는 일부 데이터를 지연하여 캐시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052863Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:6/seg:3",
+      "source": "This PEP has no influence on how that state affects str immutability.",
+      "source_hash": 9823309966280690074,
+      "context_hash": 18287911258245691291,
+      "translation": "이 PEP는 해당 상태가 str 불변성에 영향을 미치는 방식에 영향을 주지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052863Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Immortal Mutable Objects",
+      "source_hash": 16971296377140168722,
+      "context_hash": 6965767840664913278,
+      "translation": "불멸 가변 객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052863Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "Any object can be marked as immortal.",
+      "source_hash": 1349990095994429289,
+      "context_hash": 9370524406335741836,
+      "translation": "모든 객체를 불멸 객체로 표시할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052863Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:1",
+      "source": "We do not propose any restrictions or checks.",
+      "source_hash": 166811732394316084,
+      "context_hash": 6141967051227084303,
+      "translation": "어떠한 제한이나 검사도 제안하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052863Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:2",
+      "source": "However, in practice the value of making an object immortal relates to its mutability and depends on the likelihood it would be used for a sufficient portion of the application's lifetime.",
+      "source_hash": 12360385511960956380,
+      "context_hash": 5521597497597117865,
+      "translation": "그러나 실제로 객체를 불멸 객체로 만드는 것의 가치는 해당 객체의 가변성과 관련되며, 애플리케이션 수명의 충분한 기간 동안 사용될 가능성에 따라 달라집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052864Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:3",
+      "source": "Marking a mutable object as immortal can make sense in some situations.",
+      "source_hash": 1972236482477991025,
+      "context_hash": 6002566312869187097,
+      "translation": "일부 상황에서는 가변 객체를 불멸 객체로 표시하는 것이 타당할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052864Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:0",
+      "source": "Many of the use cases for immortal objects center on immutability, so that threads can safely and efficiently share such objects without locking.",
+      "source_hash": 5429477514802635772,
+      "context_hash": 7385692378427626454,
+      "translation": "불멸 객체의 많은 사용 사례는 불변성을 중심으로 하므로, 스레드가 잠금 없이 그러한 객체를 안전하고 효율적으로 공유할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052864Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:1",
+      "source": "For this reason a mutable object, like a dict or list, would never be shared (and thus no immortality).",
+      "source_hash": 9271700352968925491,
+      "context_hash": 6509093019198706699,
+      "translation": "이러한 이유로 딕셔너리나 리스트와 같은 가변 객체는 결코 공유되지 않습니다(따라서 불멸성도 없습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052864Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:2",
+      "source": "However, immortality may be appropriate if there is sufficient guarantee that the normally mutable object won't actually be modified.",
+      "source_hash": 17888557117381969668,
+      "context_hash": 1050316118481572318,
+      "translation": "그러나 일반적으로 가변인 객체가 실제로 수정되지 않을 것이라는 충분한 보장이 있다면 불멸성이 적절할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052865Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:0",
+      "source": "On the other hand, some mutable objects will never be shared between threads (at least not without a lock like the GIL).",
+      "source_hash": 7252344214847415712,
+      "context_hash": 18112542343679849371,
+      "translation": "반면 일부 가변 객체는 스레드 간에 결코 공유되지 않습니다(적어도 전역 인터프리터 잠금과 같은 잠금 없이는 공유되지 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052865Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:1",
+      "source": "In some cases it may be practical to make some of those immortal too.",
+      "source_hash": 5716627508502245771,
+      "context_hash": 973687298758394288,
+      "translation": "경우에 따라 그러한 객체 중 일부도 불멸 객체로 만드는 것이 실용적일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052865Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:2",
+      "source": "For example, ``sys.modules`` is a per-interpreter dict that we do not expect to ever get freed until the corresponding interpreter is finalized (assuming it isn't replaced).",
+      "source_hash": 12664654899647632390,
+      "context_hash": 4428553716593733396,
+      "translation": "예를 들어, ``sys.modules``\\ 는 해당 인터프리터가 종료될 때까지 해제되지 않을 것으로 예상하는 인터프리터별 딕셔너리입니다(대체되지 않는다고 가정할 경우).",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:14:25.052865Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:3",
+      "source": "By making it immortal, we would no longer incur the extra overhead during incref/decref.",
+      "source_hash": 9291669614116970606,
+      "context_hash": 5566381839374544555,
+      "translation": "이를 불멸 객체로 만들면 incref/decref 중에 발생하는 추가 오버헤드를 더 이상 부담하지 않게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052866Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:4/seg:0",
+      "source": "We explore this idea further in the `mitigations`_ section below.",
+      "source_hash": 16698096151231026449,
+      "context_hash": 7996756495797051854,
+      "translation": "아래의 `mitigations`_ 섹션에서 이 아이디어를 더 자세히 살펴봅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052866Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Implicitly Immortal Objects",
+      "source_hash": 14832758186616126723,
+      "context_hash": 14424098330641720738,
+      "translation": "암묵적으로 불멸인 객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052867Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "If an immortal object holds a reference to a normal (mortal) object then that held object is effectively immortal.",
+      "source_hash": 12552121378280724410,
+      "context_hash": 2357133406531710567,
+      "translation": "불멸 객체가 일반 객체(유한 수명 객체)에 대한 참조를 보유하면 해당 객체도 실질적으로 불멸입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052867Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:1",
+      "source": "This is because that object's refcount can never reach 0 until the immortal object releases it.",
+      "source_hash": 13873659574738356857,
+      "context_hash": 8870710836446820503,
+      "translation": "이는 불멸 객체가 해당 객체를 해제할 때까지 해당 객체의 참조 횟수가 0에 도달할 수 없기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052868Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "Examples:",
+      "source_hash": 5956079259256418663,
+      "context_hash": 13517213712609129241,
+      "translation": "예:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052868Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "containers like ``dict`` and ``list``",
+      "source_hash": 8831324680957536176,
+      "context_hash": 5546585897847663340,
+      "translation": "``dict`` 및 ``list``\\ 와 같은 컨테이너",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:25.052868Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:4/seg:0",
+      "source": "objects that hold references internally like ``PyTypeObject`` with its ``tp_subclasses`` and ``tp_weaklist``",
+      "source_hash": 15668891889525087171,
+      "context_hash": 18107903506359738775,
+      "translation": "``tp_subclasses``\\ 와 ``tp_weaklist``\\ 를 가진 ``PyTypeObject``\\ 와 같이 내부적으로 참조를 보유하는 객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995522Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:0",
+      "source": "an object's type (held in ``ob_type``)",
+      "source_hash": 1518881665592910102,
+      "context_hash": 17416522260500865774,
+      "translation": "객체의 타입 (``ob_type``\\ 에 보유됨)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995526Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:0",
+      "source": "Such held objects are thus implicitly immortal for as long as they are held.",
+      "source_hash": 10425237815619702183,
+      "context_hash": 7876084535294479553,
+      "translation": "따라서 이러한 보유된 객체는 보유되는 동안 암묵적으로 불멸 객체가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995526Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:1",
+      "source": "In practice, this should have no real consequences since it really isn't a change in behavior.",
+      "source_hash": 4055105228443166262,
+      "context_hash": 4209213864619012030,
+      "translation": "실제로 이는 동작의 변경이 아니므로 실질적인 결과를 초래하지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995526Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:2",
+      "source": "The only difference is that the immortal object (holding the reference) doesn't ever get cleaned up.",
+      "source_hash": 11771444721847531221,
+      "context_hash": 8125624022734915548,
+      "translation": "유일한 차이는 참조를 보유하는 불멸 객체가 정리되지 않는다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995526Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:7/seg:0",
+      "source": "We do not propose that such implicitly immortal objects be changed in any way.",
+      "source_hash": 2156178526019952069,
+      "context_hash": 4651352080960915975,
+      "translation": "이러한 암묵적으로 불멸인 객체를 어떤 방식으로든 변경하자는 제안은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995527Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:7/seg:1",
+      "source": "They should not be explicitly marked as immortal just because they are held by an immortal object.",
+      "source_hash": 10806593328329434773,
+      "context_hash": 765034265422111379,
+      "translation": "불멸 객체가 보유하고 있다는 이유만으로 해당 객체를 명시적으로 불멸 객체로 표시해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995527Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:7/seg:2",
+      "source": "That would provide no advantage over doing nothing.",
+      "source_hash": 4386403686550590545,
+      "context_hash": 15346397844287893359,
+      "translation": "그렇게 해도 아무것도 하지 않는 것보다 나을 점이 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995527Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Un-Immortalizing Objects",
+      "source_hash": 14839531999364743804,
+      "context_hash": 6930489485734930428,
+      "translation": "객체의 불멸성 해제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995528Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "This proposal does not include any mechanism for taking an immortal object and returning it to a \"normal\" condition.",
+      "source_hash": 11736508604748551015,
+      "context_hash": 8749008234916503392,
+      "translation": "이 제안에는 불멸 객체를 가져와 \"정상\" 상태로 되돌리는 메커니즘이 포함되어 있지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995528Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:1",
+      "source": "Currently there is no need for such an ability.",
+      "source_hash": 994918281641492241,
+      "context_hash": 14835204436054639811,
+      "translation": "현재로서는 그러한 기능이 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995529Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:0",
+      "source": "On top of that, the obvious approach is to simply set the refcount to a small value.",
+      "source_hash": 2145985849568844709,
+      "context_hash": 7488399539628518095,
+      "translation": "게다가 명백한 접근 방식은 참조 횟수를 단순히 작은 값으로 설정하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995529Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:1",
+      "source": "However, at that point there is no way in knowing which value would be safe.",
+      "source_hash": 1601085516316445056,
+      "context_hash": 17007991668905459218,
+      "translation": "그러나 그 시점에는 어떤 값이 안전할지 알 방법이 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995529Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:2",
+      "source": "Ideally we'd set it to the value that it would have been if it hadn't been made immortal.",
+      "source_hash": 6141548291857245633,
+      "context_hash": 13078404613432619599,
+      "translation": "이상적으로는 해당 객체가 불멸 객체로 만들어지지 않았더라면 가졌을 값으로 설정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995530Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:3",
+      "source": "However, that value will have long been lost.",
+      "source_hash": 18364489498789835210,
+      "context_hash": 3317853971525330364,
+      "translation": "그러나 그 값은 이미 오래전에 사라졌을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995530Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:4",
+      "source": "Hence the complexities involved make it less likely that an object could safely be un-immortalized, even if we had a good reason to do so.",
+      "source_hash": 17977823509032509081,
+      "context_hash": 15859501981599555652,
+      "translation": "따라서 관련된 복잡성 때문에, 그렇게 해야 할 타당한 이유가 있더라도 객체의 불멸성을 안전하게 해제할 가능성은 낮아집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995530Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "_Py_IMMORTAL_REFCNT",
+      "source_hash": 8727665093932829521,
+      "context_hash": 16947774746682421723,
+      "translation": "_Py_IMMORTAL_REFCNT",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995531Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "We will add two internal constants",
+      "source_hash": 12069071868656379308,
+      "context_hash": 11050564558381719095,
+      "translation": "내부 상수 두 개를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995531Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:0",
+      "source": "The actual top-most bit depends on existing uses for refcount bits, e.g. the sign bit or some GC uses.",
+      "source_hash": 2272444563685376026,
+      "context_hash": 14647914441652267544,
+      "translation": "실제 최상위 비트는 참조 횟수 비트의 기존 사용 방식, 예를 들어 부호 비트나 일부 GC 사용 방식에 따라 달라집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995531Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:1",
+      "source": "We will use the highest bit possible after consideration of existing uses.",
+      "source_hash": 14359117111355403478,
+      "context_hash": 10261099731700148847,
+      "translation": "기존 사용 방식을 검토한 후 가능한 가장 높은 비트를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995531Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:4/seg:0",
+      "source": "The refcount for immortal objects will be set to ``_Py_IMMORTAL_REFCNT`` (meaning the value will be halfway between ``_Py_IMMORTAL_BIT`` and the value at the next highest bit).",
+      "source_hash": 12194701865924336625,
+      "context_hash": 1694632942389478798,
+      "translation": "불멸 객체의 참조 횟수는 ``_Py_IMMORTAL_REFCNT``\\ 로 설정합니다 (즉, 값은 ``_Py_IMMORTAL_BIT``\\ 와 그보다 한 단계 높은 비트의 값 사이의 중간이 됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995532Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:4/seg:1",
+      "source": "However, to check if an object is immortal we will compare (bitwise-and) its refcount against just ``_Py_IMMORTAL_BIT``.",
+      "source_hash": 8185983601575437320,
+      "context_hash": 12141709142317628380,
+      "translation": "그러나 객체가 불멸인지 확인할 때는 해당 객체의 참조 횟수와 ``_Py_IMMORTAL_BIT``\\ 만 비트 AND 연산하여 비교합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995532Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:5/seg:0",
+      "source": "The difference means that an immortal object will still be considered immortal, even if somehow its refcount were modified (e.g. by an older stable ABI extension).",
+      "source_hash": 6215924638450579653,
+      "context_hash": 15562670037343791644,
+      "translation": "이 차이로 인해 어떤 방식으로든 참조 횟수가 수정되더라도(예: 이전 안정 ABI 확장에 의해) 불멸 객체는 계속 불멸 객체로 간주됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995533Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:6/seg:0",
+      "source": "Note that top two bits of the refcount are already reserved for other uses.",
+      "source_hash": 14030394199884375553,
+      "context_hash": 17522249500085587364,
+      "translation": "참조 횟수의 최상위 두 비트는 이미 다른 용도로 예약되어 있다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995533Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:6/seg:1",
+      "source": "That's why we are using the third top-most bit.",
+      "source_hash": 2826797192460337550,
+      "context_hash": 17472798039234397270,
+      "translation": "이것이 최상위에서 세 번째 비트를 사용하는 이유입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995533Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:7/seg:0",
+      "source": "The implementation is also open to using other values for the immortal bit, such as the sign bit or 2^31 (for saturated refcounts on 64-bit).",
+      "source_hash": 4095202057132140294,
+      "context_hash": 12934479561434176636,
+      "translation": "구현에서는 부호 비트나 2^31(64비트에서 포화된 참조 횟수에 사용)과 같이 불멸 비트에 다른 값을 사용하는 것도 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995534Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "Affected API",
+      "source_hash": 7309906079938641191,
+      "context_hash": 6163936796827719281,
+      "translation": "영향을 받는 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995534Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "API that will now ignore immortal objects:",
+      "source_hash": 16451119144476270088,
+      "context_hash": 10475527713798391368,
+      "translation": "이제 불멸 객체를 무시하는 API:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995534Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:0",
+      "source": "(public) ``Py_INCREF()``",
+      "source_hash": 13959704032051216167,
+      "context_hash": 11292512266649188944,
+      "translation": "(public) ``Py_INCREF()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995535Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:0",
+      "source": "(public) ``Py_DECREF()``",
+      "source_hash": 1465961318053803607,
+      "context_hash": 13965875626921892276,
+      "translation": "(public) ``Py_DECREF()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995535Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:0",
+      "source": "(public) ``Py_SET_REFCNT()``",
+      "source_hash": 13698155872894278225,
+      "context_hash": 10192807110480770412,
+      "translation": "(public) ``Py_SET_REFCNT()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995535Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:5/seg:0",
+      "source": "(private) ``_Py_NewReference()``",
+      "source_hash": 6520467352607748415,
+      "context_hash": 10302949580287113448,
+      "translation": "(private) ``_Py_NewReference()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:36.995536Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:6/seg:0",
+      "source": "API that exposes refcounts (unchanged but may now return large values):",
+      "source_hash": 7495467923155956301,
+      "context_hash": 8590775723149365624,
+      "translation": "참조 횟수를 노출하는 API(변경되지 않지만 이제 큰 값을 반환할 수 있음):",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427907Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:7/seg:0",
+      "source": "(public) ``Py_REFCNT()``",
+      "source_hash": 4250785101579608764,
+      "context_hash": 13418485762511257587,
+      "translation": "(공개) ``Py_REFCNT()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427912Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:8/seg:0",
+      "source": "(public) ``sys.getrefcount()``",
+      "source_hash": 11022219400370361660,
+      "context_hash": 16169104851554850510,
+      "translation": "(공개) ``sys.getrefcount()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427912Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:9/seg:0",
+      "source": "(Note that ``_Py_RefTotal``, and consequently ``sys.gettotalrefcount()``, will not be affected.)",
+      "source_hash": 3342728619182133380,
+      "context_hash": 12004620642452113898,
+      "translation": "(``_Py_RefTotal`` 및 그에 따른 ``sys.gettotalrefcount()``\\ 는 영향을 받지 않는다는 점에 유의하십시오.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427913Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:10/seg:0",
+      "source": "TODO: clarify the status of ``_Py_RefTotal``.",
+      "source_hash": 4216959701969513399,
+      "context_hash": 16877669671256025249,
+      "translation": "TODO: ``_Py_RefTotal``\\ 의 상태를 명확히 하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427913Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:11/seg:0",
+      "source": "Also, immortal objects will not participate in GC.",
+      "source_hash": 9725827660302837158,
+      "context_hash": 15579010616134595922,
+      "translation": "또한 불멸 객체는 GC에 참여하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427914Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Immortal Global Objects",
+      "source_hash": 10507021863486620285,
+      "context_hash": 187167216575374977,
+      "translation": "불멸 전역 객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427914Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "All runtime-global (builtin) objects will be made immortal.",
+      "source_hash": 12690406452659294335,
+      "context_hash": 10101336526673228723,
+      "translation": "런타임 전역(내장) 객체는 모두 불멸 객체로 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427914Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:1",
+      "source": "That includes the following:",
+      "source_hash": 5369124141943382356,
+      "context_hash": 2106688274492301911,
+      "translation": "여기에는 다음이 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427915Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:2/seg:0",
+      "source": "singletons (``None``, ``True``, ``False``, ``Ellipsis``, ``NotImplemented``)",
+      "source_hash": 817661492627104442,
+      "context_hash": 1512219922997292321,
+      "translation": "싱글턴(``None``, ``True``, ``False``, ``Ellipsis``, ``NotImplemented``)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427915Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:3/seg:0",
+      "source": "all static types (e.g. ``PyLong_Type``, ``PyExc_Exception``)",
+      "source_hash": 7309249115237221594,
+      "context_hash": 13782055853878598825,
+      "translation": "모든 정적 타입(예: ``PyLong_Type``, ``PyExc_Exception``)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427915Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:4/seg:0",
+      "source": "all static objects in ``_PyRuntimeState.global_objects`` (e.g. identifiers, small ints)",
+      "source_hash": 9361313668862934556,
+      "context_hash": 14201886753197518910,
+      "translation": "``_PyRuntimeState.global_objects``\\ 의 모든 정적 객체(예: 식별자, 작은 정수)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427916Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:5/seg:0",
+      "source": "The question of making the full objects actually immutable (e.g. for per-interpreter GIL) is not in the scope of this PEP.",
+      "source_hash": 11038125606860851248,
+      "context_hash": 16129279713682515129,
+      "translation": "완전한 객체를 실제로 불변으로 만들지 여부(예: 인터프리터별 GIL을 위해)는 이 PEP의 범위에 포함되지 않습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:14:54.427916Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:0/seg:0",
+      "source": "Object Cleanup",
+      "source_hash": 14464689339751666161,
+      "context_hash": 13249848298539538914,
+      "translation": "객체 정리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427918Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:0",
+      "source": "In order to clean up all immortal objects during runtime finalization, we must keep track of them.",
+      "source_hash": 4018519564335664799,
+      "context_hash": 1688357074332456241,
+      "translation": "런타임 종료 중 모든 불멸 객체를 정리하려면 해당 객체를 추적해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427918Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:0",
+      "source": "For GC objects (\"containers\") we'll leverage the GC's permanent generation by pushing all immortalized containers there.",
+      "source_hash": 5164980603616898000,
+      "context_hash": 2994290906630426864,
+      "translation": "GC 객체(\"컨테이너\")의 경우, 모든 불멸화된 컨테이너를 GC의 영구 세대로 이동하여 영구 세대를 활용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427918Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:1",
+      "source": "During runtime shutdown, the strategy will be to first let the runtime try to do its best effort of deallocating these instances normally.",
+      "source_hash": 8301140612555669489,
+      "context_hash": 14277450223641498504,
+      "translation": "런타임 종료 중에는 먼저 런타임이 이러한 인스턴스를 정상적으로 할당 해제하기 위해 최선을 다하도록 하는 전략을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427919Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:2",
+      "source": "Most of the module deallocation will now be handled by ``pylifecycle.c:finalize_modules()`` where we clean up the remaining modules as best as we can.",
+      "source_hash": 1179390841753400429,
+      "context_hash": 11715357700863506831,
+      "translation": "이제 대부분의 모듈 할당 해제는 ``pylifecycle.c:finalize_modules()``\\ 에서 처리되며, 여기서 남은 모듈을 가능한 한 최선을 다해 정리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427919Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:3",
+      "source": "It will change which modules are available during ``__del__``, but that's already explicitly undefined behavior in the docs.",
+      "source_hash": 2850304284079699270,
+      "context_hash": 15277679117386848746,
+      "translation": "이로 인해 ``__del__``\\ 중에 사용할 수 있는 모듈이 달라지지만, 이는 이미 문서에서 명시적으로 정의되지 않은 동작입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427920Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:4",
+      "source": "Optionally, we could do some topological ordering to guarantee that user modules will be deallocated first before the stdlib modules.",
+      "source_hash": 11314291397448748053,
+      "context_hash": 14347314912235964340,
+      "translation": "선택적으로 사용자 모듈이 표준 라이브러리 모듈보다 먼저 할당 해제되도록 보장하기 위해 위상 정렬을 수행할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427920Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:5",
+      "source": "Finally, anything left over (if any) can be found through the permanent generation GC list which we can clear after ``finalize_modules()`` is done.",
+      "source_hash": 8412504018779929694,
+      "context_hash": 4206555276934357888,
+      "translation": "마지막으로 남은 항목이 있다면 영구 세대 GC 목록을 통해 찾을 수 있으며, ``finalize_modules()``\\ 가 완료된 후 해당 목록을 지울 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427921Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:3/seg:0",
+      "source": "For non-container objects, the tracking approach will vary on a case-by-case basis.",
+      "source_hash": 16241839876122344754,
+      "context_hash": 9371884991726844418,
+      "translation": "컨테이너가 아닌 객체의 경우 추적 방식은 사례별로 달라집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427921Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:3/seg:1",
+      "source": "In nearly every case, each such object is directly accessible on the runtime state, e.g. in a ``_PyRuntimeState`` or ``PyInterpreterState`` field.",
+      "source_hash": 4014600898004324902,
+      "context_hash": 323046180735119039,
+      "translation": "거의 모든 경우 이러한 객체는 런타임 상태에서 직접 액세스할 수 있습니다. 예를 들어 ``_PyRuntimeState`` 또는 ``PyInterpreterState`` 필드에 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427921Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:3/seg:2",
+      "source": "We may need to add a tracking mechanism to the runtime state for a small number of objects.",
+      "source_hash": 17424080891691235858,
+      "context_hash": 10600634003583086397,
+      "translation": "소수의 객체에는 런타임 상태에 추적 메커니즘을 추가해야 할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427922Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:4/seg:0",
+      "source": "None of the cleanup will have a significant effect on performance.",
+      "source_hash": 3322756812783512986,
+      "context_hash": 14925004111606120938,
+      "translation": "이러한 정리 작업은 성능에 유의미한 영향을 미치지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427922Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:0/seg:0",
+      "source": "Performance Regression Mitigations",
+      "source_hash": 4689180607332462994,
+      "context_hash": 8569283698224873369,
+      "translation": "성능 회귀 완화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427922Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:0",
+      "source": "In the interest of clarity, here are some of the ways we are going to try to recover some of the `4% performance <Performance_>`_ we lose with the naive implementation of immortal objects.",
+      "source_hash": 7142676127607916731,
+      "context_hash": 2980596923235975087,
+      "translation": "명확히 하기 위해, 순진한 불멸 객체 구현으로 잃게 되는 `4% performance <Performance_>`_\\ 성능의 일부를 회복하기 위해 시도할 방법을 몇 가지 제시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427923Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:2/seg:0",
+      "source": "Note that none of this section is actually part of the proposal.",
+      "source_hash": 4514083330444037298,
+      "context_hash": 16274444775194684114,
+      "translation": "이 절의 내용은 실제로 제안의 일부가 아니라는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427923Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:3/seg:0",
+      "source": "at the end of runtime init, mark all objects as immortal",
+      "source_hash": 2137664985016561846,
+      "context_hash": 620315429731658979,
+      "translation": "런타임 초기화가 끝날 때 모든 객체를 불멸로 표시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427923Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:4/seg:0",
+      "source": "We can apply the concept from `Immortal Mutable Objects`_ in the pursuit of getting back some of that 4% performance we lose with the naive implementation of immortal objects.",
+      "source_hash": 554399311364823436,
+      "context_hash": 2624011227735783394,
+      "translation": "순진한 불멸 객체 구현으로 잃게 되는 4% 성능의 일부를 회복하기 위해 `Immortal Mutable Objects`_\\ 의 개념을 적용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427924Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:4/seg:1",
+      "source": "At the end of runtime init we can mark *all* objects as immortal and avoid the extra cost in incref/decref.",
+      "source_hash": 15664351729297835176,
+      "context_hash": 11882861929230163349,
+      "translation": "런타임 초기화가 끝날 때 *all*\\ 모든 객체를 불멸로 표시하여 incref/decref의 추가 비용을 피할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427924Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:4/seg:2",
+      "source": "We only need to worry about immutability with objects that we plan on sharing between threads without a GIL.",
+      "source_hash": 8753209164751993589,
+      "context_hash": 10216120614661036283,
+      "translation": "GIL 없이 스레드 간에 공유할 계획인 객체의 불변성만 고려하면 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:54.427924Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:5/seg:0",
+      "source": "drop unnecessary hard-coded refcount operations",
+      "source_hash": 1603363409769220034,
+      "context_hash": 7781849892752233171,
+      "translation": "불필요하게 하드코딩된 참조 카운트 연산 제거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.137993Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:6/seg:0",
+      "source": "Parts of the C-API interact specifically with objects that we know to be immortal, like ``Py_RETURN_NONE``.",
+      "source_hash": 9427064708178229815,
+      "context_hash": 5232777337700991225,
+      "translation": "C-API의 일부는 ``Py_RETURN_NONE``\\ 과 같이 불멸 객체임을 알고 있는 객체와 특별히 상호 작용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.137996Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:6/seg:1",
+      "source": "Such functions and macros can be updated to drop any refcount operations.",
+      "source_hash": 5513116945995213008,
+      "context_hash": 16001730500344220973,
+      "translation": "이러한 함수와 매크로는 모든 참조 카운트 연산을 제거하도록 업데이트할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.137997Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:7/seg:0",
+      "source": "specialize for immortal objects in the eval loop",
+      "source_hash": 16287010421050285071,
+      "context_hash": 14509160278201221085,
+      "translation": "평가 루프에서 불멸 객체에 특화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.137997Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:8/seg:0",
+      "source": "There are opportunities to optimize operations in the eval loop involving specific known immortal objects (e.g. ``None``).",
+      "source_hash": 11685594619495595441,
+      "context_hash": 17485618602626809624,
+      "translation": "``None``\\ 과 같은 특정 불멸 객체가 알려진 경우, 평가 루프에서 해당 객체와 관련된 연산을 최적화할 기회가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.137997Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:8/seg:1",
+      "source": "The general mechanism is described in :pep:`659`.",
+      "source_hash": 18427054545760414524,
+      "context_hash": 17017230825029903189,
+      "translation": "일반적인 메커니즘은 :pep:`659`\\ 에 설명되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.137998Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:8/seg:2",
+      "source": "Also see `Pyston`_.",
+      "source_hash": 3112339747145683798,
+      "context_hash": 11368210151895139951,
+      "translation": "`Pyston`_\\ 도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.137998Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:9/seg:0",
+      "source": "other possibilities",
+      "source_hash": 885396439752129980,
+      "context_hash": 9931140367939353186,
+      "translation": "기타 가능성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.137998Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:10/seg:0",
+      "source": "mark every interned string as immortal",
+      "source_hash": 8739094081689345933,
+      "context_hash": 14274480246449861970,
+      "translation": "모든 인터닝된 문자열을 불멸로 표시",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.137998Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:11/seg:0",
+      "source": "mark the \"interned\" dict as immortal if shared else share all interned strings",
+      "source_hash": 2010931941984636736,
+      "context_hash": 2689397647121137188,
+      "translation": "공유되는 경우 \"interned\" 딕셔너리를 불멸로 표시하고, 그렇지 않으면 인터닝된 모든 문자열을 공유하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:53:10.771092Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:12/seg:0",
+      "source": "(Larry,MAL) mark all constants unmarshalled for a module as immortal",
+      "source_hash": 2093537682447791773,
+      "context_hash": 10584313943772493256,
+      "translation": "(Larry,MAL) 모듈에 대해 역직렬화된 모든 상수를 불멸로 표시",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.137999Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:13/seg:0",
+      "source": "(Larry,MAL) allocate (immutable) immortal objects in their own memory page(s)",
+      "source_hash": 4331492607291284434,
+      "context_hash": 17626251353735730035,
+      "translation": "(Larry,MAL) (불변) 불멸 객체를 자체 메모리 페이지에 할당",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.137999Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:14/seg:0",
+      "source": "saturated refcounts using the 32 least-significant bits",
+      "source_hash": 18228673263838338723,
+      "context_hash": 644058310367241521,
+      "translation": "최하위 32비트를 사용한 포화 참조 카운트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:0/seg:0",
+      "source": "Solutions for Accidental De-Immortalization",
+      "source_hash": 14224868334425818147,
+      "context_hash": 13095762436039655914,
+      "translation": "우발적인 불멸성 해제에 대한 해결책",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:1/seg:0",
+      "source": "In the `Accidental De-Immortalizing`_ section we outlined a possible negative consequence of immortal objects.",
+      "source_hash": 54571935409092377,
+      "context_hash": 14031567761622583698,
+      "translation": "`Accidental De-Immortalizing`_ 섹션에서는 불멸 객체의 가능한 부정적 결과를 설명했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:1/seg:1",
+      "source": "Here we look at some of the options to deal with that.",
+      "source_hash": 1688606572288918220,
+      "context_hash": 7210717473114957704,
+      "translation": "여기에서는 이를 처리할 몇 가지 방안을 살펴봅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:2/seg:0",
+      "source": "Note that we enumerate solutions here to illustrate that satisfactory options are available, rather than to dictate how the problem will be solved.",
+      "source_hash": 5340919046361220574,
+      "context_hash": 13400826901044474913,
+      "translation": "문제의 해결 방법을 지시하기보다는 만족스러운 방안을 사용할 수 있음을 보여 주기 위해 여기에서 해결책을 열거한다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138001Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:3/seg:0",
+      "source": "Also note the following:",
+      "source_hash": 17729382234305228253,
+      "context_hash": 2683178107936508302,
+      "translation": "다음 사항에도 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138001Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:4/seg:0",
+      "source": "this only matters in the 32-bit stable-ABI case",
+      "source_hash": 16827447333446249357,
+      "context_hash": 14022224929281907686,
+      "translation": "이는 32비트 안정 ABI인 경우에만 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138001Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:5/seg:0",
+      "source": "it only affects immortal objects",
+      "source_hash": 9388998522745842151,
+      "context_hash": 16001362468798762921,
+      "translation": "이는 불멸 객체에만 영향을 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138001Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:6/seg:0",
+      "source": "there are no user-defined immortal objects, only built-in types",
+      "source_hash": 3706405069542143341,
+      "context_hash": 9773031940496776958,
+      "translation": "사용자 정의 불멸 객체는 없으며, 내장 타입만 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138002Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:7/seg:0",
+      "source": "most immortal objects will be statically allocated (and thus already must fail if ``tp_dealloc()`` is called)",
+      "source_hash": 13511900809357202437,
+      "context_hash": 9366410275293743425,
+      "translation": "대부분의 불멸 객체는 정적으로 할당되므로 (따라서 ``tp_dealloc()``\\ 이 호출되면 이미 실패해야 하므로)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138002Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:8/seg:0",
+      "source": "only a handful of immortal objects will be used often enough to possibly face this problem in practice (e.g. ``None``)",
+      "source_hash": 7211530314358168193,
+      "context_hash": 15932807587258819330,
+      "translation": "실제로 이 문제에 직면할 가능성이 있을 정도로 자주 사용되는 불멸 객체는 소수에 불과합니다(예: ``None``).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138003Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:9/seg:0",
+      "source": "the main problem to solve is crashes coming from ``tp_dealloc()``",
+      "source_hash": 10813497572841876290,
+      "context_hash": 4157355212207801265,
+      "translation": "해결해야 할 주요 문제는 ``tp_dealloc()``\\ 에서 발생하는 충돌입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138003Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:10/seg:0",
+      "source": "One fundamental observation for a solution is that we can reset an immortal object's refcount to ``_Py_IMMORTAL_REFCNT`` when some condition is met.",
+      "source_hash": 15179165622768006579,
+      "context_hash": 9202759435938411196,
+      "translation": "해결책을 위한 한 가지 근본적인 관찰은 어떤 조건이 충족되면 불멸 객체의 참조 카운트를 ``_Py_IMMORTAL_REFCNT``\\ 로 재설정할 수 있다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138003Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:11/seg:0",
+      "source": "With all that in mind, a simple, yet effective, solution would be to reset an immortal object's refcount in ``tp_dealloc()``. ``NoneType`` and ``bool`` already have a ``tp_dealloc()`` that calls ``Py_FatalError()`` if triggered.",
+      "source_hash": 14757504734016128831,
+      "context_hash": 6248870065027208544,
+      "translation": "이 모든 점을 고려할 때 간단하면서도 효과적인 해결책은 ``tp_dealloc()``\\ 에서 불멸 객체의 참조 카운트를 재설정하는 것입니다. ``NoneType``\\ 과 ``bool``\\ 에는 이미 트리거될 경우 ``Py_FatalError()``\\ 를 호출하는 ``tp_dealloc()``\\ 이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138003Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:11/seg:1",
+      "source": "The same goes for other types based on certain conditions, like ``PyUnicodeObject`` (depending on ``unicode_is_singleton()``), ``PyTupleObject``, and ``PyTypeObject``.",
+      "source_hash": 1147938606642817269,
+      "context_hash": 17676313374086416518,
+      "translation": "``PyUnicodeObject`` (``unicode_is_singleton()``\\ 에 따라), ``PyTupleObject``, ``PyTypeObject``\\ 와 같이 특정 조건에 따른 다른 타입도 마찬가지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138004Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:11/seg:2",
+      "source": "In fact, the same check is important for all statically declared object.",
+      "source_hash": 5202150803761486283,
+      "context_hash": 17487896023067770981,
+      "translation": "실제로 동일한 검사는 정적으로 선언된 모든 객체에 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138004Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:11/seg:3",
+      "source": "For those types, we would instead reset the refcount.",
+      "source_hash": 2408850025627051501,
+      "context_hash": 4969016643261353770,
+      "translation": "이러한 타입에서는 대신 참조 카운트를 재설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138004Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:11/seg:4",
+      "source": "For the remaining cases we would introduce the check.",
+      "source_hash": 1439883790225991634,
+      "context_hash": 7783231875677255602,
+      "translation": "나머지 경우에는 해당 검사를 도입합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138004Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:11/seg:5",
+      "source": "In all cases, the overhead of the check in ``tp_dealloc()`` should be too small to matter.",
+      "source_hash": 2265893409401533077,
+      "context_hash": 14471178669737410810,
+      "translation": "모든 경우에 ``tp_dealloc()``\\ 에서 검사를 수행하는 오버헤드는 무시해도 될 정도로 작아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138004Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:12/seg:0",
+      "source": "Other (less practical) solutions:",
+      "source_hash": 5672670715979918847,
+      "context_hash": 15396608373179427161,
+      "translation": "기타 (실용성이 낮은) 해결책:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:58.138005Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:13/seg:0",
+      "source": "periodically reset the refcount for immortal objects",
+      "source_hash": 6793082089195437321,
+      "context_hash": 5885586816415002726,
+      "translation": "불멸 객체의 참조 횟수를 주기적으로 재설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428375Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:14/seg:0",
+      "source": "only do that for high-use objects",
+      "source_hash": 17711739023376287844,
+      "context_hash": 11747419790845496935,
+      "translation": "사용 빈도가 높은 객체에 대해서만 그렇게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428377Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:15/seg:0",
+      "source": "only do it if a stable-ABI extension has been imported",
+      "source_hash": 6937406305665128654,
+      "context_hash": 6814631205178974761,
+      "translation": "안정 ABI 확장이 임포트된 경우에만 그렇게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428378Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:16/seg:0",
+      "source": "provide a runtime flag for disabling immortality",
+      "source_hash": 4102078106773741430,
+      "context_hash": 9231252735466344207,
+      "translation": "불멸성을 비활성화하는 런타임 플래그를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428378Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:17/seg:0",
+      "source": "(`The discussion thread <https://mail.python.org/archives/list/python-dev@python.org/message/OXAYWH47ZGLOWXTNKCIW4YE5PXGHNT4Y/>`__ has further detail.)",
+      "source_hash": 10670674395910209510,
+      "context_hash": 10196901999298545510,
+      "translation": "(`The discussion thread <https://mail.python.org/archives/list/python-dev@python.org/message/OXAYWH47ZGLOWXTNKCIW4YE5PXGHNT4Y/>`__\\ 에는 추가 세부 정보가 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428378Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:18/seg:0",
+      "source": "Regardless of the solution we end up with, we can do something else later if necessary.",
+      "source_hash": 5004369980637402740,
+      "context_hash": 1805825707732122421,
+      "translation": "최종적으로 어떤 해결책을 선택하든, 필요하다면 나중에 다른 작업을 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428378Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:19/seg:0",
+      "source": "TODO: Add a note indicating that the implemented solution does not affect the overall ~performance-neutral~ outcome.",
+      "source_hash": 14811583775217511261,
+      "context_hash": 15734121313107449791,
+      "translation": "TODO: 구현된 해결책이 전반적인 ~performance-neutral~ 결과에 영향을 주지 않는다는 내용의 주석을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428379Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:0/seg:0",
+      "source": "Documentation",
+      "source_hash": 10013224844392777931,
+      "context_hash": 11075346912953587839,
+      "translation": "문서화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428379Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:0",
+      "source": "The immortal objects behavior and API are internal, implementation details and will not be added to the documentation.",
+      "source_hash": 8590977389600974385,
+      "context_hash": 10277542170523324844,
+      "translation": "불멸 객체의 동작과 API는 내부적인 구현 세부 사항이므로 문서에 추가하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428380Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:2/seg:0",
+      "source": "However, we will update the documentation to make public guarantees about refcount behavior more clear.",
+      "source_hash": 5089579005866198464,
+      "context_hash": 4765009021868237144,
+      "translation": "그러나 참조 횟수 동작에 대한 공개 보장을 더 명확하게 설명하도록 문서를 업데이트합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428380Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:2/seg:1",
+      "source": "That includes, specifically:",
+      "source_hash": 13505794527010695633,
+      "context_hash": 2903893706156191429,
+      "translation": "구체적으로는 다음을 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428381Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:3/seg:0",
+      "source": "``Py_INCREF()`` - change \"Increment the reference count for object o.\" to \"Indicate taking a new reference to object o.\"",
+      "source_hash": 914102115575379866,
+      "context_hash": 11976557208042266148,
+      "translation": "``Py_INCREF()`` - \"객체 o의 참조 횟수를 증가시킵니다.\"를 \"객체 o에 대한 새 참조를 취했음을 나타냅니다.\"로 변경합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428381Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:4/seg:0",
+      "source": "``Py_DECREF()`` - change \"Decrement the reference count for object o.\" to \"Indicate no longer using a previously taken reference to object o.\"",
+      "source_hash": 14808065235835494853,
+      "context_hash": 12353667294550737960,
+      "translation": "``Py_DECREF()`` - \"객체 o의 참조 횟수를 감소시킵니다.\"를 \"이전에 취한 객체 o에 대한 참조를 더 이상 사용하지 않음을 나타냅니다.\"로 변경합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428381Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:5/seg:0",
+      "source": "similar for ``Py_XINCREF()``, ``Py_XDECREF()``, ``Py_NewRef()``, ``Py_XNewRef()``, ``Py_Clear()``",
+      "source_hash": 6021963384113495744,
+      "context_hash": 4884872262377750237,
+      "translation": "``Py_XINCREF()``, ``Py_XDECREF()``, ``Py_NewRef()``, ``Py_XNewRef()``, ``Py_Clear()``\\ 에도 유사하게 적용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428381Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:6/seg:0",
+      "source": "``Py_REFCNT()`` - add \"The refcounts 0 and 1 have specific meanings and all others only mean code somewhere is using the object, regardless of the value. 0 means the object is not used and will be cleaned up. 1 means code holds exactly a single reference.\"",
+      "source_hash": 5926582705182969641,
+      "context_hash": 12608914701671083067,
+      "translation": "``Py_REFCNT()`` - \"참조 횟수 0과 1에는 특정한 의미가 있으며, 나머지 값은 그 값에 관계없이 코드 어딘가에서 객체를 사용하고 있다는 의미일 뿐입니다. 0은 객체가 사용되지 않으며 정리된다는 의미입니다. 1은 코드가 정확히 하나의 참조를 보유한다는 의미입니다.\"를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428382Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:7/seg:0",
+      "source": "``Py_SET_REFCNT()`` - refer to ``Py_REFCNT()`` about how values over 1 may be substituted with some over value",
+      "source_hash": 9811089006046191759,
+      "context_hash": 8249383665380564606,
+      "translation": "``Py_SET_REFCNT()`` - 1보다 큰 값이 다른 더 큰 값으로 대체될 수 있다는 내용은 ``Py_REFCNT()``\\ 를 참조하도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428382Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:8/seg:0",
+      "source": "We *may* also add a note about immortal objects to the following, to help reduce any surprise users may have with the change:",
+      "source_hash": 9671421174010934242,
+      "context_hash": 10257461460783874358,
+      "translation": "변경으로 인해 사용자가 느낄 수 있는 놀라움을 줄이는 데 도움이 되도록, 다음 항목에 불멸 객체에 관한 메모를 추가할 *수도* 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:53:10.771093Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:9/seg:0",
+      "source": "``Py_SET_REFCNT()`` (a no-op for immortal objects)",
+      "source_hash": 4461394483982738782,
+      "context_hash": 5533011997507112853,
+      "translation": "``Py_SET_REFCNT()`` (불멸 객체에 대해서는 아무 작업도 하지 않습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428383Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:10/seg:0",
+      "source": "``Py_REFCNT()`` (value may be surprisingly large)",
+      "source_hash": 11951703285265985866,
+      "context_hash": 10684210618241192505,
+      "translation": "``Py_REFCNT()`` (값이 예상보다 훨씬 클 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428383Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:11/seg:0",
+      "source": "``sys.getrefcount()`` (value may be surprisingly large)",
+      "source_hash": 12578857383370557052,
+      "context_hash": 12153471991976956942,
+      "translation": "``sys.getrefcount()`` (값이 예상보다 훨씬 클 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428383Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:12/seg:0",
+      "source": "Other API that might benefit from such notes are currently undocumented.",
+      "source_hash": 8309083368184814142,
+      "context_hash": 13071906884052406870,
+      "translation": "이러한 주석의 혜택을 받을 수 있는 다른 API는 현재 문서화되어 있지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428384Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:12/seg:1",
+      "source": "We wouldn't add such a note anywhere else (including for ``Py_INCREF()`` and ``Py_DECREF()``) since the feature is otherwise transparent to users.",
+      "source_hash": 16783370305409314454,
+      "context_hash": 15415904270218463373,
+      "translation": "이 기능은 그 밖에는 사용자에게 투명하므로, ``Py_INCREF()`` 및 ``Py_DECREF()``\\ 를 포함하여 다른 곳에는 이러한 주석을 추가하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428384Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 8321307834342984700,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:15:01.428385Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:0",
+      "source": "The implementation is proposed on GitHub:",
+      "source_hash": 6959457135918889297,
+      "context_hash": 1180556805246917612,
+      "translation": "구현은 GitHub에서 제안되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428386Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:2/seg:0",
+      "source": "https://github.com/python/cpython/pull/19474",
+      "source_hash": 15522862856674101714,
+      "context_hash": 14048760297706071130,
+      "translation": "https://github.com/python/cpython/pull/19474",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428386Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:0/seg:0",
+      "source": "Open Issues",
+      "source_hash": 15188361361114285070,
+      "context_hash": 9042868913567767148,
+      "translation": "미해결 문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428386Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:0",
+      "source": "how realistic is the `Accidental De-Immortalizing`_ concern?",
+      "source_hash": 12170906023768289137,
+      "context_hash": 14135303582063827855,
+      "translation": "`Accidental De-Immortalizing`_ 우려는 얼마나 현실적입니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428386Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 13342389490071418673,
+      "translation": "참고 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428386Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:0/seg:0",
+      "source": "Prior Art",
+      "source_hash": 13769606215757599510,
+      "context_hash": 10438276661412906574,
+      "translation": "선행 사례",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428387Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:1/seg:0",
+      "source": "`Pyston`_",
+      "source_hash": 12275760068288144593,
+      "context_hash": 9681808499002666318,
+      "translation": "`Pyston`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428387Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:0/seg:0",
+      "source": "Discussions",
+      "source_hash": 10987630735954210954,
+      "context_hash": 10502554143740515310,
+      "translation": "논의",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428387Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:1/seg:0",
+      "source": "This was discussed in December 2021 on python-dev:",
+      "source_hash": 2961872900467872972,
+      "context_hash": 8876650642978676381,
+      "translation": "이 내용은 2021년 12월 python-dev에서 논의되었습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:01.428387Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:2/seg:0",
+      "source": "https://mail.python.org/archives/list/python-dev@python.org/thread/7O3FUA52QGTVDC6MDAV5WXKNFEDRK5D6/#TBTHSOI2XRWRO6WQOLUW3X7S5DUXFAOV",
+      "source_hash": 16858365456959364635,
+      "context_hash": 3247098896753917889,
+      "translation": "https://mail.python.org/archives/list/python-dev@python.org/thread/7O3FUA52QGTVDC6MDAV5WXKNFEDRK5D6/#TBTHSOI2XRWRO6WQOLUW3X7S5DUXFAOV",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623113Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:3/seg:0",
+      "source": "https://mail.python.org/archives/list/python-dev@python.org/thread/PNLBJBNIQDMG2YYGPBCTGOKOAVXRBJWY",
+      "source_hash": 12721021141051874260,
+      "context_hash": 13908568018027823533,
+      "translation": "https://mail.python.org/archives/list/python-dev@python.org/thread/PNLBJBNIQDMG2YYGPBCTGOKOAVXRBJWY",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623117Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:0/seg:0",
+      "source": "Runtime Object State",
+      "source_hash": 3880526460775197196,
+      "context_hash": 2858927086974520431,
+      "translation": "런타임 객체 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623117Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:1/seg:0",
+      "source": "Here is the internal state that the CPython runtime keeps for each Python object:",
+      "source_hash": 4523985339063792027,
+      "context_hash": 11790189080934368982,
+      "translation": "각 Python 객체에 대해 CPython 런타임이 유지하는 내부 상태는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623118Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:2/seg:0",
+      "source": "`PyObject.ob_refcnt`_: the object's `refcount <refcounting_>`_",
+      "source_hash": 10074514556672277863,
+      "context_hash": 801706193436500634,
+      "translation": "`PyObject.ob_refcnt`_: 객체의 `refcount <refcounting_>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623118Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:3/seg:0",
+      "source": "`_PyGC_Head <PyGC_Head>`_: (optional) the object's node in a list of `\"GC\" objects <refcounting_>`_",
+      "source_hash": 2860607282648388027,
+      "context_hash": 17428439643280750467,
+      "translation": "`_PyGC_Head <PyGC_Head>`_: (선택 사항) `\"GC\" 객체 <refcounting_>`_ 목록에서 객체의 노드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623118Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:4/seg:0",
+      "source": "`_PyObject_HEAD_EXTRA <PyObject_HEAD_EXTRA>`_: (optional) the object's node in the list of heap objects",
+      "source_hash": 7654018493190052901,
+      "context_hash": 6817616346094577934,
+      "translation": "`_PyObject_HEAD_EXTRA <PyObject_HEAD_EXTRA>`_: (선택 사항) 힙 객체 목록에서 객체의 노드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623118Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:5/seg:0",
+      "source": "``ob_refcnt`` is part of the memory allocated for every object.",
+      "source_hash": 4673353391103444753,
+      "context_hash": 6140631873417473524,
+      "translation": "``ob_refcnt``\\ 은 모든 객체에 할당되는 메모리의 일부입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623119Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:5/seg:1",
+      "source": "However, ``_PyObject_HEAD_EXTRA`` is allocated only if CPython was built with ``Py_TRACE_REFS`` defined.  ``PyGC_Head`` is allocated only if the object's type has ``Py_TPFLAGS_HAVE_GC`` set.",
+      "source_hash": 9760535295884152408,
+      "context_hash": 16792737722432298071,
+      "translation": "그러나 CPython이 ``Py_TRACE_REFS``\\ 가 정의된 상태로 빌드된 경우에만 ``_PyObject_HEAD_EXTRA``\\ 가 할당됩니다. 객체의 타입에 ``Py_TPFLAGS_HAVE_GC``\\ 가 설정된 경우에만 ``PyGC_Head``\\ 가 할당됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623119Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:5/seg:2",
+      "source": "Typically this is only container types (e.g. ``list``).",
+      "source_hash": 12664623339270542196,
+      "context_hash": 753696551112170717,
+      "translation": "일반적으로 이는 컨테이너 타입(예: ``list``)에만 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623119Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:5/seg:3",
+      "source": "Also note that ``PyObject.ob_refcnt`` and ``_PyObject_HEAD_EXTRA`` are part of ``PyObject_HEAD``.",
+      "source_hash": 2065156009838580910,
+      "context_hash": 3227455296696850817,
+      "translation": "또한 ``PyObject.ob_refcnt``\\ 와 ``_PyObject_HEAD_EXTRA``\\ 는 ``PyObject_HEAD``\\ 의 일부라는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623119Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:0/seg:0",
+      "source": "Reference Counting, with Cyclic Garbage Collection",
+      "source_hash": 2172064233689597488,
+      "context_hash": 1546339288888169463,
+      "translation": "순환 가비지 컬렉션을 사용하는 참조 카운팅",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623120Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:1/seg:0",
+      "source": "Garbage collection is a memory management feature of some programming languages.",
+      "source_hash": 6164428434486997616,
+      "context_hash": 9612783972989841015,
+      "translation": "가비지 컬렉션은 일부 프로그래밍 언어의 메모리 관리 기능입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623120Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:1/seg:1",
+      "source": "It means objects are cleaned up (e.g. memory freed) once they are no longer used.",
+      "source_hash": 16916987587799724588,
+      "context_hash": 9936603438123007597,
+      "translation": "이는 객체가 더 이상 사용되지 않으면 정리된다는 의미입니다(예: 메모리가 해제됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623120Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:2/seg:0",
+      "source": "Refcounting is one approach to garbage collection.",
+      "source_hash": 1383428732099319625,
+      "context_hash": 11370177346722252555,
+      "translation": "참조 카운팅은 가비지 컬렉션의 한 가지 접근 방식입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623120Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:2/seg:1",
+      "source": "The language runtime tracks how many references are held to an object.",
+      "source_hash": 18324070737122250181,
+      "context_hash": 9713031132485390848,
+      "translation": "언어 런타임은 객체에 유지되는 참조의 수를 추적합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623121Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:2/seg:2",
+      "source": "When code takes ownership of a reference to an object or releases it, the runtime is notified and it increments or decrements the refcount accordingly.",
+      "source_hash": 17606225132335622572,
+      "context_hash": 16854498277405806521,
+      "translation": "코드가 객체에 대한 참조의 소유권을 취하거나 이를 해제하면 런타임에 알림이 전달되고, 런타임은 그에 따라 참조 카운트를 증가시키거나 감소시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623121Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:2/seg:3",
+      "source": "When the refcount reaches 0, the runtime cleans up the object.",
+      "source_hash": 888580927677964868,
+      "context_hash": 5868043097191442728,
+      "translation": "참조 카운트가 0에 도달하면 런타임이 객체를 정리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623121Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:3/seg:0",
+      "source": "With CPython, code must explicitly take or release references using the C-API's ``Py_INCREF()`` and ``Py_DECREF()``.",
+      "source_hash": 6561326349835526409,
+      "context_hash": 9049289229708936268,
+      "translation": "CPython에서는 C-API의 ``Py_INCREF()``\\ 와 ``Py_DECREF()``\\ 를 사용하여 코드가 참조를 명시적으로 취하거나 해제해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623122Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:3/seg:1",
+      "source": "These macros happen to directly modify the object's refcount (unfortunately, since that causes ABI compatibility issues if we want to change our garbage collection scheme).",
+      "source_hash": 3280457285686844969,
+      "context_hash": 9241321308965890286,
+      "translation": "이러한 매크로는 객체의 참조 카운트를 직접 수정합니다(가비지 컬렉션 방식을 변경하려는 경우 ABI 호환성 문제가 발생하기 때문에 유감스러운 일입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623122Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:3/seg:2",
+      "source": "Also, when an object is cleaned up in CPython, it also releases any references (and resources) it owns (before it's memory is freed).",
+      "source_hash": 5186755528795777732,
+      "context_hash": 12695355529114653741,
+      "translation": "또한 CPython에서 객체가 정리될 때 객체는 자신이 소유한 모든 참조(및 리소스)도 해제합니다(메모리가 해제되기 전에).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623122Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:4/seg:0",
+      "source": "Sometimes objects may be involved in reference cycles, e.g. where object A holds a reference to object B and object B holds a reference to object A.",
+      "source_hash": 17814983180843867012,
+      "context_hash": 3709459802233401037,
+      "translation": "때때로 객체가 참조 순환에 관여할 수 있습니다. 예를 들어 객체 A가 객체 B에 대한 참조를 보유하고 객체 B가 객체 A에 대한 참조를 보유하는 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623122Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:4/seg:1",
+      "source": "Consequently, neither object would ever be cleaned up even if no other references were held (i.e. a memory leak).",
+      "source_hash": 16235174879483553587,
+      "context_hash": 16318608048941262762,
+      "translation": "결과적으로 다른 참조가 보유되지 않더라도 두 객체 모두 절대 정리되지 않습니다(즉, 메모리 누수가 발생합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623123Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:4/seg:2",
+      "source": "The most common objects involved in cycles are containers.",
+      "source_hash": 11398793552482921468,
+      "context_hash": 12507934705344131989,
+      "translation": "순환에 관여하는 가장 일반적인 객체는 컨테이너입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623123Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:5/seg:0",
+      "source": "CPython has dedicated machinery to deal with reference cycles, which we call the \"cyclic garbage collector\", or often just \"garbage collector\" or \"GC\".",
+      "source_hash": 10211105170620779334,
+      "context_hash": 5556536397186851180,
+      "translation": "CPython에는 참조 순환을 처리하기 위한 전용 메커니즘이 있으며, 이를 \"순환 가비지 컬렉터\" 또는 흔히 \"가비지 컬렉터\"나 \"GC\"라고 부릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623123Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:5/seg:1",
+      "source": "Don't let the name confuse you.",
+      "source_hash": 17095865018015508878,
+      "context_hash": 15355419742764157563,
+      "translation": "이름 때문에 혼동하지 마십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623124Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:5/seg:2",
+      "source": "It only deals with breaking reference cycles.",
+      "source_hash": 18032282163971135474,
+      "context_hash": 5111420954127831243,
+      "translation": "이는 참조 순환을 끊는 일만 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623124Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:6/seg:0",
+      "source": "See the docs for a more detailed explanation of refcounting and cyclic garbage collection:",
+      "source_hash": 12233635388777702409,
+      "context_hash": 5095033572080497767,
+      "translation": "참조 카운팅과 순환 가비지 컬렉션에 대한 더 자세한 설명은 다음 문서를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623125Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:7/seg:0",
+      "source": "https://docs.python.org/3.11/c-api/intro.html#reference-counts",
+      "source_hash": 10461012435774783278,
+      "context_hash": 3484979014772982919,
+      "translation": "https://docs.python.org/3.11/c-api/intro.html#reference-counts",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623125Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:8/seg:0",
+      "source": "https://docs.python.org/3.11/c-api/refcounting.html",
+      "source_hash": 9390779157919039876,
+      "context_hash": 6086600634596757631,
+      "translation": "https://docs.python.org/3.11/c-api/refcounting.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623125Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:9/seg:0",
+      "source": "https://docs.python.org/3.11/c-api/typeobj.html#c.PyObject.ob_refcnt",
+      "source_hash": 17656838205974010690,
+      "context_hash": 16356762760167293099,
+      "translation": "https://docs.python.org/3.11/c-api/typeobj.html#c.PyObject.ob_refcnt",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623125Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:10/seg:0",
+      "source": "https://docs.python.org/3.11/c-api/gcsupport.html",
+      "source_hash": 3698236316368125292,
+      "context_hash": 17025456076188643007,
+      "translation": "https://docs.python.org/3.11/c-api/gcsupport.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:57.623126Z",
+      "issues": []
+    }
+  ]
+}

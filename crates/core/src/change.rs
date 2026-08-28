@@ -26,6 +26,13 @@ pub fn compute_status(
         tracing::trace!(id = %segment.id, status = ?SegmentStatus::Pending, "Computed segment status");
         return SegmentStatus::Pending;
     }
+    // Evaluator failures are actionable state, not a completed translation.
+    // Keeping them pending lets a fast first pass fill the corpus once and a
+    // later quality pass retry only the segments that actually need work.
+    if !segment.issues.is_empty() {
+        tracing::trace!(id = %segment.id, status = ?SegmentStatus::Pending, issues = segment.issues.len(), "Computed segment status");
+        return SegmentStatus::Pending;
+    }
     if segment.source_hash != current_source_hash {
         tracing::trace!(id = %segment.id, status = ?SegmentStatus::Stale, "Computed segment status");
         return SegmentStatus::Stale;
@@ -83,6 +90,14 @@ mod tests {
     #[test]
     fn pending_when_no_translation() {
         let seg = make_segment_state(100, 200, false);
+        let status = compute_status(&seg, 100, 200, &Glossary::empty());
+        assert_eq!(status, SegmentStatus::Pending);
+    }
+
+    #[test]
+    fn pending_when_evaluation_issues_remain() {
+        let mut seg = make_segment_state(100, 200, true);
+        seg.issues.push("RST structure changed".to_string());
         let status = compute_status(&seg, 100, 200, &Glossary::empty());
         assert_eq!(status, SegmentStatus::Pending);
     }

@@ -18,7 +18,15 @@ pub fn select_parser(file_path: &Path, config: &ProjectConfig) -> Box<dyn Docume
             continue;
         };
         let pattern_matches = glob::Pattern::new(&source.pattern)
-            .map(|p| p.matches_path(rel))
+            .map(|pattern| {
+                pattern.matches_path_with(
+                    rel,
+                    glob::MatchOptions {
+                        require_literal_separator: true,
+                        ..glob::MatchOptions::new()
+                    },
+                )
+            })
             .unwrap_or(false);
         if pattern_matches {
             return parser_by_name(&source.parser, file_path, source.parser_manifest.as_deref());
@@ -44,6 +52,9 @@ fn parser_by_name(
     match name {
         "asciidoc" => Box::new(yeokja_parser_asciidoc::AsciidocParser),
         "rst" => Box::new(yeokja_parser_rst::RstParser),
+        "pep" => Box::new(yeokja_parser_rst::PepParser),
+        "pep_plaintext" => Box::new(yeokja_parser_rst::PepPlaintextParser),
+        "pep_text_block" => Box::new(yeokja_parser_rst::PepTextBlockParser),
         "mil" | "mathematics_in_lean" => Box::new(yeokja_parser_rst::MilParser),
         "latex" | "tex" => Box::new(yeokja_parser_latex::LatexParser),
         "verso" => Box::new(yeokja_parser_verso::VersoParser::new(
@@ -125,6 +136,38 @@ model = "gpt-4o"
         let parser = select_parser(Path::new("docs/notes.adoc"), &config);
         let doc = parser.parse("= Title");
         assert_eq!(doc.sections[0].blocks[0].heading_level, Some(1));
+    }
+
+    #[test]
+    fn a_single_star_does_not_match_across_directories() {
+        let config = ProjectConfig::from_toml(
+            r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[[sources]]
+path = "peps"
+pattern = "pep-*.rst"
+parser = "pep"
+output = "ko/{path}"
+
+[[sources]]
+path = "peps"
+pattern = "pep-*/appendix-*.rst"
+parser = "rst"
+output = "ko/{path}"
+
+[provider]
+type = "openai_compatible"
+model = "test"
+"#,
+        )
+        .unwrap();
+
+        let parser = select_parser(Path::new("peps/pep-0639/appendix-examples.rst"), &config);
+        let document = parser.parse("Appendix\n========\n\nBody.\n");
+        assert_eq!(document.translatable_segments()[0].source, "Appendix");
     }
 
     #[test]

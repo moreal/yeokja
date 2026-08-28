@@ -1,0 +1,2878 @@
+{
+  "version": 1,
+  "source_hash": 7353626770792271377,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "PySlot: Unified slot system for the C API",
+      "source_hash": 17942005961691741441,
+      "context_hash": 16530898886277989957,
+      "translation": "C API를 위한 통합 슬롯 시스템, PySlot",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048391Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 5411488676767965879,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048394Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Replace type and module slots with a new structure: a tagged anonymous union with flags.",
+      "source_hash": 13155276019544743034,
+      "context_hash": 4891280798529713103,
+      "translation": "타입 및 모듈 슬롯을 플래그가 포함된 태그 지정 익명 공용체라는 새로운 구조로 교체합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048395Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This improves type safety and allows adding new slots in a more forward-compatible way.",
+      "source_hash": 3992805061836757623,
+      "context_hash": 17214559988583534129,
+      "translation": "이를 통해 타입 안전성이 향상되고 새로운 슬롯을 더 나은 하위 호환성을 갖는 방식으로 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048395Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "API added in 3.15 (:external+py3.15:c:func:`PyModule_FromSlotsAndSpec` and the new :external+py3.15:ref:`extension export hook <extension-export-hook>`) will be changed to use the new slots.",
+      "source_hash": 13624697460630583655,
+      "context_hash": 16613923494154389040,
+      "translation": "3.15에서 추가된 API (:external+py3.15:c:func:`PyModule_FromSlotsAndSpec` 및 새로운 :external+py3.15:ref:`확장 내보내기 훅 <extension-export-hook>`)는 새 슬롯을 사용하도록 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048395Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "The existing slot structures and related API is soft-deprecated. (That is: they will continue to work without warnings, and it’ll be fully documented and supported, but we plan to not add any new features to it.)",
+      "source_hash": 13453132377704248905,
+      "context_hash": 18269281682938899590,
+      "translation": "기존 슬롯 구조와 관련 API는 소프트 폐기되었습니다. (즉, 경고 없이 계속 작동하고 완전히 문서화 및 지원되지만, 여기에 새로운 기능은 추가하지 않을 계획입니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048395Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Background",
+      "source_hash": 14089390735911585672,
+      "context_hash": 11881023213164718408,
+      "translation": "배경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048396Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The C API in Python 3.14 contains two extendable structs used to provide information when creating a new object: :c:type:`PyType_Spec` and :c:type:`PyModuleDef`.",
+      "source_hash": 2896472023738715031,
+      "context_hash": 16553952826081905495,
+      "translation": "Python 3.14의 C API에는 새 객체를 생성할 때 정보를 제공하는 데 사용되는 확장 가능한 구조체가 두 개 있습니다. 즉, :c:type:`PyType_Spec`\\ 및 :c:type:`PyModuleDef`\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048396Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Each has a family of C API functions that create a Python object from it. (Each family works as a single function, with optional arguments that got added over time.) These are:",
+      "source_hash": 4661807991638823111,
+      "context_hash": 15741797042658311449,
+      "translation": "각각에는 해당 구조체에서 Python 객체를 생성하는 C API 함수군이 있습니다. (각 함수군은 시간이 지나면서 추가된 선택적 인자를 받는 하나의 함수로 작동합니다.) 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048396Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "``PyType_From*`` functions, like :c:func:`PyType_FromMetaclass`, for ``PyType_Spec``;",
+      "source_hash": 12028815364316265201,
+      "context_hash": 15540093507080923884,
+      "translation": "``PyType_From*`` 함수(예: :c:func:`PyType_FromMetaclass`)는 ``PyType_Spec``\\ 에 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048396Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "``PyModule_FromDef*`` functions, like :c:func:`PyModule_FromDefAndSpec`, for ``PyModuleDef``.",
+      "source_hash": 12569412401694841498,
+      "context_hash": 10664512372057019667,
+      "translation": "``PyModule_FromDef*`` 함수(예: :c:func:`PyModule_FromDefAndSpec`)는 ``PyModuleDef``\\ 에 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048397Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "Separating \"input\" structures from runtime objects allows the internal structure of the object to stay opaque (in both the API and the ABI), allowing future CPython versions (or even alternative implementations) to change the details.",
+      "source_hash": 2693670388432733863,
+      "context_hash": 981071506150050192,
+      "translation": "“입력” 구조체를 런타임 객체와 분리하면 API와 ABI 모두에서 객체의 내부 구조를 불투명하게 유지할 수 있으므로, 향후 CPython 버전이나 대체 구현에서 세부 사항을 변경할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048397Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Both structures contain a *slots* field, essentially an array of `tagged unions <https://en.wikipedia.org/wiki/Tagged_union>`__ (``void`` pointers taged with an ``int`` ID).",
+      "source_hash": 4363596231462502144,
+      "context_hash": 8104784308787195303,
+      "translation": "두 구조체에는 본질적으로 `태그가 지정된 공용체 <https://en.wikipedia.org/wiki/Tagged_union>`__ 배열인 *slots* 필드가 포함되어 있습니다. (``int`` ID로 태그가 지정된 ``void`` 포인터입니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048397Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "This allows for future expansion.",
+      "source_hash": 3977758080718362694,
+      "context_hash": 9957176943847615941,
+      "translation": "이를 통해 향후 확장이 가능해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048398Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "In :pep:`793`, new module creation API was added.",
+      "source_hash": 10841543324939638655,
+      "context_hash": 16599987811750721730,
+      "translation": "새 모듈 생성 API가 :pep:`793`\\ 에서 추가되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:01:25.059070Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:1",
+      "source": "Instead of the ``PyModuleDef`` structure, it uses only an array of *slots*.",
+      "source_hash": 12597349329513478557,
+      "context_hash": 6519916657440245586,
+      "translation": "이 API는 ``PyModuleDef`` 구조체 대신 *slots* 배열만 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048399Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:2",
+      "source": "To replace the existing members of ``PyModuleDef``, it adds corresponding slot IDs -- for example, the module name is specified in a ``Py_mod_name`` slot, rather than in ``PyModuleDef.m_name``.",
+      "source_hash": 2980114873219983226,
+      "context_hash": 309284653648141375,
+      "translation": "기존 ``PyModuleDef`` 멤버를 대체하기 위해 이에 대응하는 슬롯 ID를 추가합니다. 예를 들어 모듈 이름은 ``PyModuleDef.m_name``\\ 이 아니라 ``Py_mod_name`` 슬롯에 지정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048399Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:3",
+      "source": "That PEP notes:",
+      "source_hash": 17498887301676337463,
+      "context_hash": 12547511624938858661,
+      "translation": "해당 PEP에서는 다음과 같이 언급합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048399Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "The PyModuleDef_Slot struct does have some downsides compared to fixed fields.",
+      "source_hash": 15551911973735635562,
+      "context_hash": 6007547558433289824,
+      "translation": "PyModuleDef_Slot 구조체에는 고정 필드와 비교할 때 몇 가지 단점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048399Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:1",
+      "source": "We believe these are fixable, but leave that out of scope of this PEP.",
+      "source_hash": 11733326198270110383,
+      "context_hash": 8527322946545872913,
+      "translation": "이러한 단점은 해결할 수 있다고 생각하지만, 이 PEP의 범위에서는 제외합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048400Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "This proposal addresses the downsides.",
+      "source_hash": 17771337267494084175,
+      "context_hash": 14959985864922937309,
+      "translation": "이 제안은 이러한 단점을 해결합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048400Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 17222111077427857960,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048400Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "The main shortcomings of the existing ``PyModuleDef_Slot`` and ``PyType_Slot`` are:",
+      "source_hash": 7454715805488720430,
+      "context_hash": 11230024756874416902,
+      "translation": "기존 ``PyModuleDef_Slot`` 및 ``PyType_Slot``\\ 의 주요 단점은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048400Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Type safety",
+      "source_hash": 17412122088284100514,
+      "context_hash": 1102958813870422236,
+      "translation": "타입 안전성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048400Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "``void *`` is used for data pointers, function pointers and small integers, requiring casting that works in practice on all relevant architectures, but is technically undefined or implementation-defined behaviour in C.",
+      "source_hash": 6690295729178964469,
+      "context_hash": 7849157658441989186,
+      "translation": "``void *``\\ 는 데이터 포인터, 함수 포인터 및 작은 정수에 사용되므로 모든 관련 아키텍처에서 실제로 작동하는 캐스팅이 필요하지만, C에서는 기술적으로 정의되지 않았거나 구현에 따라 정의된 동작입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048401Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "For example: :c:macro:`Py_tp_doc` marks a string; :c:macro:`Py_mod_gil` a small integer, and :c:macro:`Py_tp_repr` a function; all must be cast to ``void*``.",
+      "source_hash": 5478161066933114771,
+      "context_hash": 9438129045350791217,
+      "translation": "예를 들어 :c:macro:`Py_tp_doc`\\ 는 문자열을 나타내고, :c:macro:`Py_mod_gil`\\ 은 작은 정수를, :c:macro:`Py_tp_repr`\\ 은 함수를 나타내며, 모두 ``void*``\\ 로 캐스팅해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048401Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "Limited forward compatibility",
+      "source_hash": 15757053990848207508,
+      "context_hash": 16979738252065902180,
+      "translation": "제한적인 하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048401Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "If an extension provides a slot ID that's unknown to the current interpreter, type/module creation will fail.",
+      "source_hash": 11791898565223493560,
+      "context_hash": 4758928435295832360,
+      "translation": "확장에서 현재 인터프리터가 알 수 없는 슬롯 ID를 제공하면 타입 또는 모듈 생성에 실패합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:17:26.048402Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:1",
+      "source": "This makes it cumbersome to use \"optional\" features – ones that should only take effect if the interpreter supports them.",
+      "source_hash": 10306019823383736832,
+      "context_hash": 15109135026540551592,
+      "translation": "이로 인해 인터프리터가 지원하는 경우에만 적용되어야 하는 “선택적” 기능을 사용하기가 번거로워집니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:17:26.048403Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:2",
+      "source": "The recently added slots :c:macro:`Py_mod_gil` and :c:macro:`Py_mod_multiple_interpreters` are good examples.",
+      "source_hash": 14898413260003461506,
+      "context_hash": 1062693372678629833,
+      "translation": "최근 추가된 :c:macro:`Py_mod_gil`\\ 및 :c:macro:`Py_mod_multiple_interpreters`\\ 슬롯이 좋은 예입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:26.048403Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "One workaround is to check the Python version, and omit slots that predate the current interpreter.",
+      "source_hash": 6877461714631768130,
+      "context_hash": 13875304369042282664,
+      "translation": "한 가지 우회 방법은 Python 버전을 확인하고 현재 인터프리터보다 이전에 도입된 슬롯을 생략하는 것입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:17:37.568458Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:1",
+      "source": "This is cumbersome for users.",
+      "source_hash": 17281495601101897486,
+      "context_hash": 17276498539369191430,
+      "translation": "이는 사용자에게 번거롭습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568464Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:2",
+      "source": "It also constraints possible non-CPython implementations of the C API, preventing them from \"cherry-picking\" features introduced in newer CPython versions.",
+      "source_hash": 18277047589959373404,
+      "context_hash": 3842018660987687652,
+      "translation": "또한 C API의 가능한 비 CPython 구현을 제약하여, 최신 CPython 버전에 도입된 기능을 \"체리 피킹\"하지 못하게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568465Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Endorsements",
+      "source_hash": 1140560136017187590,
+      "context_hash": 13716777196365060236,
+      "translation": "지지 의견",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568465Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "This PEP is unusual in that it doesn't immediately help end users -- it needs to be in place well before it starts being helpful.",
+      "source_hash": 14364892570310604883,
+      "context_hash": 1526138196369229346,
+      "translation": "이 PEP는 최종 사용자에게 즉시 도움이 되지 않는다는 점에서 특이합니다. 도움이 되기 훨씬 전부터 마련되어 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568465Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "In the words of a Cython maintainer, `Da Woods <https://discuss.python.org/t/105552/2>`__:",
+      "source_hash": 4162884168094318860,
+      "context_hash": 13922836512296150029,
+      "translation": "Cython 유지 관리자의 말을 빌리면, `Da Woods <https://discuss.python.org/t/105552/2>`__:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568466Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "I suspect Cython wouldn’t immediately use it (at least for classes… obviously if it goes into PEP 793 then we would for that).",
+      "source_hash": 16884646628170132807,
+      "context_hash": 6315382876997519429,
+      "translation": "Cython이 이를 즉시 사용하지는 않을 것이라고 생각합니다(적어도 클래스에서는… 분명히 PEP 793에 들어간다면 이를 사용할 것입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568466Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "Just because it’s mostly targeted at future improvements rather than an immediate new feature.",
+      "source_hash": 2583070717754180236,
+      "context_hash": 15283932426193622139,
+      "translation": "이는 즉각적인 새 기능보다는 미래의 개선을 주된 대상으로 하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568467Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "It looks usable though.",
+      "source_hash": 6492840353285361582,
+      "context_hash": 11055765278079599145,
+      "translation": "그래도 사용할 수 있어 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568467Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Instead, support comes from core devs who'll need change the C API, and want do so in backwards-compatible ways:",
+      "source_hash": 4485018270454444057,
+      "context_hash": 7154066240886554869,
+      "translation": "대신 C API를 변경해야 하며 하위 호환 방식으로 변경하고자 하는 핵심 개발자들로부터 지원이 나옵니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568467Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "`Mark Shannon <https://discuss.python.org/t/105552/4>`__:",
+      "source_hash": 11403547901982624231,
+      "context_hash": 2727835887695086178,
+      "translation": "`Mark Shannon <https://discuss.python.org/t/105552/4>`__:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568468Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "This seems like a worthwhile improvement.",
+      "source_hash": 5985203252256490167,
+      "context_hash": 13944852405743949062,
+      "translation": "이는 가치 있는 개선으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568468Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:1",
+      "source": "Count me as a +1",
+      "source_hash": 10389493762588441164,
+      "context_hash": 14426708411271735672,
+      "translation": "저를 +1로 세어 주십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568468Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "`Victor Stinner <https://discuss.python.org/t/105552/19>`__:",
+      "source_hash": 9660283136621921012,
+      "context_hash": 11190495727097602426,
+      "translation": "`Victor Stinner <https://discuss.python.org/t/105552/19>`__:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568469Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "I changed my mind and I’m now a supporter of PEP 820 :) It took me a while but I now see the PEP 820 advantages: it enhances the backward compatibility and the stable ABI.",
+      "source_hash": 10991773023316192689,
+      "context_hash": 11301587651061346415,
+      "translation": "생각을 바꾸어 이제 PEP 820의 지지자가 되었습니다 :) 시간이 좀 걸렸지만 이제 PEP 820의 장점을 알겠습니다. 하위 호환성과 안정적인 ABI를 향상합니다.",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T19:17:37.568469Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Example",
+      "source_hash": 1513857641461741027,
+      "context_hash": 1893047940377282167,
+      "translation": "예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568470Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "This proposal adds API to create classes and modules from arrays of slots, which can be specified as C literals using macros, like this",
+      "source_hash": 6312212682950574423,
+      "context_hash": 16073085426942837249,
+      "translation": "이 제안은 슬롯 배열로부터 클래스와 모듈을 생성하는 API를 추가하며, 매크로를 사용하여 다음과 같이 C 리터럴로 지정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568470Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "The macros simplify hand-written literals.",
+      "source_hash": 7578633185340627488,
+      "context_hash": 13846259611706147756,
+      "translation": "매크로는 수작업으로 작성한 리터럴을 간소화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568471Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "For more complex use cases, like compatibility between several Python versions, or templated/auto-generated slot arrays, as well as for non-C users of the C API, the slot struct definitions can be written out.",
+      "source_hash": 9591833843518651039,
+      "context_hash": 15554145612984397703,
+      "translation": "여러 Python 버전 간의 호환성, 템플릿화되거나 자동 생성된 슬롯 배열과 같은 더 복잡한 사용 사례에서는 물론 C를 사용하지 않는 C API 사용자에게도 슬롯 구조체 정의를 직접 작성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568471Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:2",
+      "source": "For example, if the ``nb_matrix_multiply`` slot (:pep:`465`) was added in the near future (say, CPython 3.17) rather than in 3.5, users could add it with an \"``OPTIONAL``\" flag, making their class support the ``@`` operator only on CPython versions with that operator",
+      "source_hash": 1372159285633196829,
+      "context_hash": 2188959471194439319,
+      "translation": "예를 들어 ``nb_matrix_multiply`` 슬롯 (:pep:`465`)이 3.5가 아니라 가까운 미래(예를 들어 CPython 3.17)에 추가되었다면, 사용자는 이를 \"``OPTIONAL``\" 플래그와 함께 추가하여 해당 연산자를 지원하는 CPython 버전에서만 클래스가 ``@`` 연산자를 지원하도록 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568472Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 7591863293948937659,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568472Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Here we explain the design decisions in this proposal.",
+      "source_hash": 9347723633682930664,
+      "context_hash": 4389478684084056692,
+      "translation": "여기에서는 이 제안의 설계 결정을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568472Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "Some of the rationale is repeated from :pep:`793`, which replaced the :c:type:`PyModuleDef` struct with an array of slots.",
+      "source_hash": 15391717923599532454,
+      "context_hash": 11891073422841868283,
+      "translation": "근거의 일부는 :pep:`793`\\ 에서 반복되며, 이 PEP는 :c:type:`PyModuleDef` 구조체를 슬롯 배열로 대체했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568473Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Using slots",
+      "source_hash": 3412765273022989340,
+      "context_hash": 14925988092787905481,
+      "translation": "슬롯 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568473Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The main alternative to slots is using a versioned ``struct`` for input.",
+      "source_hash": 12638520262745590382,
+      "context_hash": 8189646712361266949,
+      "translation": "슬롯의 주요 대안은 입력에 버전이 지정된 ``struct``\\ 를 사용하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568473Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "There are two variants of such a design:",
+      "source_hash": 6473089317870926232,
+      "context_hash": 14919157625401737409,
+      "translation": "이러한 설계에는 두 가지 변형이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568473Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "A large struct with fields for all info.",
+      "source_hash": 14239026277280038752,
+      "context_hash": 13912773855641733908,
+      "translation": "모든 정보를 위한 필드를 포함하는 큰 구조체입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568474Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "As we can see with ``PyTypeObject``, most of such a struct tends to be NULLs in practice.",
+      "source_hash": 1474200039410339394,
+      "context_hash": 4203516602423840646,
+      "translation": "``PyTypeObject``\\ 에서 볼 수 있듯이 실제로 이러한 구조체의 대부분은 NULL인 경향이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568474Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:2",
+      "source": "As more fields become obsolete, either the wastage grows, or we introduce new struct layouts (while keeping compatibility with the old ones for a while).",
+      "source_hash": 8995972534803980339,
+      "context_hash": 6013599808386322451,
+      "translation": "더 많은 필드가 더 이상 사용되지 않게 되면 낭비가 늘어나거나, 새로운 구조체 레이아웃을 도입해야 합니다(한동안 기존 레이아웃과의 호환성을 유지하면서).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568475Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "A small struct with only the info necessary for initial creation, with other info added afterwards (with dedicated function calls, or Python-level ``setattr``).",
+      "source_hash": 11277082168088175270,
+      "context_hash": 13868427718301819207,
+      "translation": "초기 생성에 필요한 정보만 포함하는 작은 구조체이며, 나머지 정보는 이후에 추가합니다(전용 함수 호출이나 Python 수준의 ``setattr`` 호출을 사용합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568475Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "This design:",
+      "source_hash": 12626147308593022665,
+      "context_hash": 3951846556942986397,
+      "translation": "이 설계는 다음과 같은 문제를 일으킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568475Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "makes it cumbersome to add/obsolete/adjust the required info (for example, in :PEP:`697` I gave meaning to negative values of an existing field; adding a new field would be cleaner in similar situations);",
+      "source_hash": 5231960848988957905,
+      "context_hash": 2007774949129132626,
+      "translation": "필요한 정보를 추가하거나 폐기하거나 조정하기가 번거롭습니다(예를 들어 :PEP:`697`\\ 에서는 기존 필드의 음수 값에 의미를 부여했습니다. 비슷한 상황에서는 새 필드를 추가하는 편이 더 깔끔합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:37.568475Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "increases the number of API calls between an extension and the interpreter.",
+      "source_hash": 17896549563952635610,
+      "context_hash": 15575036233734942051,
+      "translation": "확장과 인터프리터 간 API 호출 수를 늘립니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:17:57.100614Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "We believe that “batch” API for type/module creation makes sense, even if it partially duplicates an API to modify “live” objects.",
+      "source_hash": 10094370282268176327,
+      "context_hash": 10526418819353268435,
+      "translation": "“배치” 타입/모듈 생성 API는 “실시간” 객체를 수정하는 API와 부분적으로 중복되더라도 타당하다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100619Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Using slots *only*",
+      "source_hash": 18429884988046890610,
+      "context_hash": 1097838944285662052,
+      "translation": "슬롯 *만* 사용하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100619Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The classes ``PyType_Spec`` and ``PyModuleDef`` have explicit fields in addition to a slots array.",
+      "source_hash": 9758571857902436098,
+      "context_hash": 6740789735311478083,
+      "translation": "클래스 ``PyType_Spec`` 및 ``PyModuleDef``\\ 은 슬롯 배열 외에도 명시적 필드를 갖습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100619Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "These include:",
+      "source_hash": 13378355645001281204,
+      "context_hash": 17055649670269210079,
+      "translation": "여기에는 다음이 포함됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100620Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Required information, such as the class name (``PyType_Spec.name``).",
+      "source_hash": 17617195581832385537,
+      "context_hash": 8005967847599341797,
+      "translation": "클래스 이름(``PyType_Spec.name``)과 같은 필수 정보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100620Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "This proposal adds a *slot* ID for the name, and makes it required.",
+      "source_hash": 13944790351031692423,
+      "context_hash": 16567125992078460526,
+      "translation": "이 제안은 이름에 대한 *슬롯* ID를 추가하고 이를 필수로 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100621Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "Non-pointers (``basicsize``, ``flags``).",
+      "source_hash": 10268709939689897251,
+      "context_hash": 5444816790782942957,
+      "translation": "포인터가 아닌 항목(``basicsize``, ``flags``)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100621Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "Originally, slots were intended to only contain *function pointers*; they now contain *data pointers* as well as integers or flags.",
+      "source_hash": 1512674604089332886,
+      "context_hash": 1471113712054623535,
+      "translation": "원래 슬롯은 *함수 포인터*\\ 만 포함하도록 설계되었지만, 이제는 *데이터 포인터*\\ 와 정수 또는 플래그도 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100621Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:2",
+      "source": "This proposal uses a union to handle types cleanly.",
+      "source_hash": 5741254400744532833,
+      "context_hash": 4352665661704526617,
+      "translation": "이 제안은 타입을 깔끔하게 처리하기 위해 유니온을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100621Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "Items added before the slots mechanism.",
+      "source_hash": 3768767801777978973,
+      "context_hash": 8336352387945646427,
+      "translation": "슬롯 메커니즘 이전에 추가된 항목입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100622Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:1",
+      "source": "The ``PyModuleDef.m_slots`` itself was repurposed from ``m_reload`` which was always NULL; the optional ``m_traverse`` or ``m_methods`` members predate it.",
+      "source_hash": 11948438034893273377,
+      "context_hash": 11439631291703635127,
+      "translation": "``PyModuleDef.m_slots``\\ 자체는 항상 NULL이었던 ``m_reload``\\ 에서 용도가 변경되었습니다. 선택적인 ``m_traverse`` 또는 ``m_methods`` 멤버는 그보다 앞서 존재했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100622Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "We can do without these fields, and have *only* an array of slots.",
+      "source_hash": 7396834761048329480,
+      "context_hash": 11122550495929940586,
+      "translation": "이러한 필드 없이 *오직* 슬롯 배열 하나만 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:01:25.059073Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:1",
+      "source": "A wrapper class around the array would complicate the design.",
+      "source_hash": 4385086111263970880,
+      "context_hash": 11304846482474925689,
+      "translation": "배열을 둘러싼 래퍼 클래스는 설계를 복잡하게 만들 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100623Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:2",
+      "source": "If fields in such a class ever become obsolete, they are hard to remove or repurpose.",
+      "source_hash": 11521727448859954497,
+      "context_hash": 18327450350737095890,
+      "translation": "이러한 클래스의 필드가 언젠가 더 이상 사용되지 않게 되면 제거하거나 용도를 변경하기 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100623Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Nested slot tables",
+      "source_hash": 13682651862811565301,
+      "context_hash": 754497214763554703,
+      "translation": "중첩된 슬롯 테이블",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100623Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "In this proposal, the array of slots can reference another array of slots, which is treated as if it was merged into its “parent”, recursively.",
+      "source_hash": 7772672511148941399,
+      "context_hash": 12946631137679357049,
+      "translation": "이 제안에서는 슬롯 배열이 다른 슬롯 배열을 참조할 수 있으며, 이 배열은 해당 “부모”에 재귀적으로 병합된 것처럼 처리됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100624Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "This complicates slot handling inside the interpreter, but allows:",
+      "source_hash": 3923940341653920684,
+      "context_hash": 9480517208708715123,
+      "translation": "이는 인터프리터 내부의 슬롯 처리를 복잡하게 만들지만, 다음을 가능하게 합니다:",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:17:57.100624Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "Mixing dynamically allocated (or stack-allocated) slots with ``static`` ones.",
+      "source_hash": 15450309173525845311,
+      "context_hash": 15857814878911147495,
+      "translation": "동적으로 할당된 (또는 스택에 할당된) 슬롯과 ``static``\\ 인 슬롯을 혼합할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100625Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "This solves the issue that lead to the ``PyType_From*`` family of functions expanding with values that typically can't  be ``static``.",
+      "source_hash": 5426688546610021267,
+      "context_hash": 8481631007615457809,
+      "translation": "이는 일반적으로 ``static``\\ 일 수 없는 값으로 확장되는 ``PyType_From*`` 함수군의 문제를 해결합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100625Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:2",
+      "source": "For example, the *module* argument to :c:func:`PyType_FromModuleAndSpec` should be a heap-allocated module object.",
+      "source_hash": 18426789038249273173,
+      "context_hash": 12017499747934404897,
+      "translation": "예를 들어, :c:func:`PyType_FromModuleAndSpec`\\ 의 *module* 인자는 힙에 할당된 모듈 객체여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100625Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "Sharing a subset of the slots to implement functionality common to several classes/modules.",
+      "source_hash": 4701775688020553696,
+      "context_hash": 14119522726594591653,
+      "translation": "여러 클래스/모듈에 공통되는 기능을 구현하도록 슬롯의 일부를 공유할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100625Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "Easily including some slots conditionally, e.g. based on the Python version.",
+      "source_hash": 2635978224887209785,
+      "context_hash": 1251735253910926403,
+      "translation": "예를 들어 Python 버전에 따라 일부 슬롯을 조건부로 쉽게 포함할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100626Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Nested “legacy” slot tables",
+      "source_hash": 17577979643893063773,
+      "context_hash": 1119134692884064507,
+      "translation": "중첩된 “레거시” 슬롯 테이블",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100626Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Similarly to nested arrays of ``PyType_Slot``, we also propose supporting arrays of “legacy” slots (``PyType_Slot`` and ``PyModuleDef_Slot``) in the “new” slots, and vice versa.",
+      "source_hash": 10393344018959743621,
+      "context_hash": 9903045046697869748,
+      "translation": "중첩된 ``PyType_Slot`` 배열과 마찬가지로, “새” 슬롯에서 “레거시” 슬롯(``PyType_Slot`` 및 ``PyModuleDef_Slot``) 배열을 지원하고 그 반대도 지원할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100626Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "This way, users can reuse code they already have written without rewriting/reformatting, and only use the “new” slots if they need any new features.",
+      "source_hash": 396334445527734973,
+      "context_hash": 13521105020557619306,
+      "translation": "이렇게 하면 사용자는 다시 작성하거나 서식을 다시 지정하지 않고 이미 작성한 코드를 재사용할 수 있으며, 새로운 기능이 필요한 경우에만 “새” 슬롯을 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100626Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Fixed-width integers",
+      "source_hash": 12145929509515887714,
+      "context_hash": 17738087716271044019,
+      "translation": "고정 폭 정수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100626Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "This proposal uses fixed-width integers for slot IDs (``uint16_t``) and flags (``uint64_t``).",
+      "source_hash": 1331979249061988381,
+      "context_hash": 13753946023267368231,
+      "translation": "이 제안은 슬롯 ID(``uint16_t``)와 플래그(``uint64_t``)에 고정 폭 정수를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100627Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "With the C ``int`` type, using more than 16 bits would not be portable, but it would silently work on common platforms.",
+      "source_hash": 7113466055065554964,
+      "context_hash": 11927466029018558569,
+      "translation": "C ``int`` 형식을 사용할 경우 16비트를 초과하여 사용하는 것은 이식 가능하지 않지만, 일반적인 플랫폼에서는 조용히 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100627Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:2",
+      "source": "Using ``int`` but avoiding values over ``UINT16_MAX`` wastes 16 bits on common platforms.",
+      "source_hash": 17134310821663479698,
+      "context_hash": 7188423590971307975,
+      "translation": "``int``\\ 를 사용하면서 ``UINT16_MAX``\\ 를 초과하는 값을 피하면 일반적인 플랫폼에서 16비트를 낭비합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100627Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Memory layout",
+      "source_hash": 1123149389784711341,
+      "context_hash": 14269894497743707150,
+      "translation": "메모리 레이아웃",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:57.100627Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "On common 64-bit platforms, we can keep the size of the new struct the same as the existing ``PyType_Slot`` and ``PyModuleDef_Slot``. (The existing structs waste 6 out of 16 bytes due to ``int`` portability and padding; this proposal puts some of those bits to use for new features.) On 32-bit platforms, this proposal calls for the same layout as on 64-bit, doubling the size compared to the existing structs (from 8 bytes to 16).",
+      "source_hash": 1827582694671006388,
+      "context_hash": 7988672920240394980,
+      "translation": "일반적인 64비트 플랫폼에서는 새 구조체의 크기를 기존 ``PyType_Slot``\\ 및 ``PyModuleDef_Slot``\\ 구조체와 동일하게 유지할 수 있습니다. (기존 구조체는 ``int``\\ 의 이식성과 패딩으로 인해 16바이트 중 6바이트를 낭비하지만, 이 제안에서는 해당 비트 중 일부를 새로운 기능에 사용합니다.) 32비트 플랫폼에서는 이 제안이 64비트 플랫폼과 동일한 레이아웃을 요구하므로, 기존 구조체에 비해 크기가 2배로 증가합니다(8바이트에서 16바이트로 증가합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086523Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "For “configuration” data that's usually ``static``, it should be OK.",
+      "source_hash": 1185247566523253364,
+      "context_hash": 14974726345792630263,
+      "translation": "일반적으로 ``static``\\ 인 “구성” 데이터라면 문제가 없을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086527Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "The proposal does not use bit-fields and enums, whose memory representation is compiler-dependent, causing issues when using the API from languages other than C.",
+      "source_hash": 1081783335592284142,
+      "context_hash": 3294702707452736829,
+      "translation": "이 제안에서는 비트 필드와 열거형을 사용하지 않습니다. 이러한 메모리 표현은 컴파일러에 따라 달라지므로 C 이외의 언어에서 API를 사용할 때 문제가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086527Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "The structure is laid out assuming that a type's alignment matches its size.",
+      "source_hash": 13117166318506690877,
+      "context_hash": 5676727016762885495,
+      "translation": "이 구조체는 타입의 정렬 요구 사항이 그 크기와 일치한다고 가정하여 배치됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086528Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Single ID space",
+      "source_hash": 3095216589527890596,
+      "context_hash": 11218250946297923199,
+      "translation": "단일 ID 공간",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086528Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "Currently, the numeric values of *module* and *type* slots overlap:",
+      "source_hash": 4676157049079424037,
+      "context_hash": 470577023496555988,
+      "translation": "현재 *module* 및 *type* 슬롯의 숫자 값은 서로 겹칩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086528Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "``Py_bf_getbuffer`` == ``Py_mod_create`` == 1",
+      "source_hash": 17998701345293667381,
+      "context_hash": 8967069804405597263,
+      "translation": "``Py_bf_getbuffer`` == ``Py_mod_create`` == 1",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086529Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "``Py_bf_releasebuffer`` == ``Py_mod_exec`` == 2",
+      "source_hash": 420389642757674490,
+      "context_hash": 1705321838479819511,
+      "translation": "``Py_bf_releasebuffer`` == ``Py_mod_exec`` == 2",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086529Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:0",
+      "source": "``Py_mp_ass_subscript`` == ``Py_mod_multiple_interpreters`` == 3",
+      "source_hash": 9852647956279874640,
+      "context_hash": 12022957120909308080,
+      "translation": "``Py_mp_ass_subscript`` == ``Py_mod_multiple_interpreters`` == 3",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086529Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:5/seg:0",
+      "source": "``Py_mp_length`` == ``Py_mod_gil`` == 4",
+      "source_hash": 17275061335461125952,
+      "context_hash": 3441138223641721276,
+      "translation": "``Py_mp_length`` == ``Py_mod_gil`` == 4",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086529Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:6/seg:0",
+      "source": "and similar for module slots added in CPython 3.15",
+      "source_hash": 4106562403486994544,
+      "context_hash": 7114750000301127804,
+      "translation": "그리고 CPython 3.15에서 추가된 모듈 슬롯도 이와 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086530Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:7/seg:0",
+      "source": "This proposal use a single sequence for both, so future slots avoid this overlap.",
+      "source_hash": 468725846944646116,
+      "context_hash": 942226813255363199,
+      "translation": "이 제안에서는 둘 모두에 하나의 시퀀스를 사용하므로, 향후 슬롯에서는 이러한 중복을 피할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086530Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:7/seg:1",
+      "source": "This is to:",
+      "source_hash": 3836383843931560802,
+      "context_hash": 12745098725842131793,
+      "translation": "이는 다음을 위한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086530Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:8/seg:0",
+      "source": "Avoid *accidentally* using type slots for modules, and vice versa",
+      "source_hash": 7276637729996111576,
+      "context_hash": 9385113164307916192,
+      "translation": "모듈에 타입 슬롯을, 반대로 타입에 모듈 슬롯을 *실수로* 사용하는 것을 방지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086530Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:9/seg:0",
+      "source": "Allow external libraries or checkers to determine a slot's meaning (and type) based on the ID.",
+      "source_hash": 5226067500169477498,
+      "context_hash": 2997251463880918896,
+      "translation": "외부 라이브러리 또는 검사기가 ID를 기반으로 슬롯의 의미(및 타입)를 확인할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086531Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:10/seg:0",
+      "source": "The 4 existing overlaps means we don't reach these goals right now, but we can gradually migrate to new numeric IDs in a way that's transparent to the user.",
+      "source_hash": 17446444368009405717,
+      "context_hash": 15075910674379047715,
+      "translation": "기존에 중복되는 항목이 4개 있으므로 지금 당장은 이러한 목표를 달성할 수 없지만, 사용자에게 투명한 방식으로 새로운 숫자 ID로 점진적으로 마이그레이션할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086531Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:11/seg:0",
+      "source": "The main disadvantage is that any internal lookup tables will be either bigger (if we use separate ones for types & modules, so they'll contain blanks), or harder to manage (if they're merged).",
+      "source_hash": 18004554447055171688,
+      "context_hash": 11378471249677802956,
+      "translation": "가장 큰 단점은 내부 조회 테이블이 더 커지거나(타입과 모듈에 별도의 테이블을 사용하여 빈 항목이 포함되는 경우), 관리하기 더 어려워진다는 것입니다(테이블을 병합하는 경우).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086531Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Deprecation warnings",
+      "source_hash": 1812798736849580694,
+      "context_hash": 13537953967255634926,
+      "translation": "사용 중단 경고",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086532Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Multiple slots are documented to not allow NULL values, but CPython allows NULL for backwards compatibility.",
+      "source_hash": 2741224910381264449,
+      "context_hash": 10228194356920694627,
+      "translation": "여러 슬롯은 NULL 값을 허용하지 않는다고 문서화되어 있지만, CPython은 하위 호환성을 위해 NULL을 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086532Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "Similarly, multiple slot IDs should not appear more than once in a single array, but CPython allows such duplicates.",
+      "source_hash": 9697861519924159840,
+      "context_hash": 16458900478037290209,
+      "translation": "마찬가지로 단일 배열에 여러 슬롯 ID가 두 번 이상 나타나서는 안 되지만, CPython은 이러한 중복을 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086532Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "This is a maintenance issue, as CPython should preserve its undocumented (and often untested) behaviour in these cases as the implementation is changed.",
+      "source_hash": 2797410477836162720,
+      "context_hash": 18359247411599222579,
+      "translation": "이는 유지 관리 문제입니다. 구현이 변경되더라도 CPython은 이러한 경우의 문서화되지 않았고(대개 테스트되지도 않은) 동작을 유지해야 하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086532Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "It also prevents API extensions.",
+      "source_hash": 7101708931996348597,
+      "context_hash": 6881243814413827517,
+      "translation": "또한 API 확장을 방해합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086533Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:1",
+      "source": "For example, instead of adding the :c:macro:`Py_TPFLAGS_DISALLOW_INSTANTIATION` flag in 3.10, we could have allowed settning the ``Py_tp_new`` slot to NULL for the same effect.",
+      "source_hash": 16885245997900776306,
+      "context_hash": 3197845664567054432,
+      "translation": "예를 들어 3.10에서 :c:macro:`Py_TPFLAGS_DISALLOW_INSTANTIATION` 플래그를 추가하는 대신, 동일한 효과를 위해 ``Py_tp_new``\\ 슬롯을 NULL로 설정하도록 허용할 수 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086533Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "To allow changing the edge case behaviour in the (far) future, and to allow freedom for possible alternative implementations of the C API, we'll start issuing runtime deprecation warnings in these cases.",
+      "source_hash": 16300069873943351689,
+      "context_hash": 8476519670499529111,
+      "translation": "먼 미래에 이러한 예외적인 경우의 동작을 변경할 수 있도록 하고 C API의 가능한 대체 구현에 자유를 부여하기 위해, 이러한 경우 런타임 사용 중단 경고를 발행하기 시작할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086534Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:1",
+      "source": "To avoid flooding users with warnings for things that are outside of their control, we'll only show deprecation warnings when the new API is used.",
+      "source_hash": 7970051261699789555,
+      "context_hash": 11274076606056781554,
+      "translation": "사용자가 제어할 수 없는 사항에 대한 경고로 사용자를 inundate하지 않도록, 새로운 API가 사용될 때만 사용 중단 경고를 표시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086534Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 17208828173061578431,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086534Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "A new ``PySlot`` structure will be defined as follows",
+      "source_hash": 14927315273865427825,
+      "context_hash": 9102390750683197098,
+      "translation": "다음과 같은 새로운 ``PySlot``\\ 구조체를 정의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086534Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "``sl_id``: A slot number, identifying what the slot does.",
+      "source_hash": 7014261470585985228,
+      "context_hash": 16651441431011281845,
+      "translation": "``sl_id``: 슬롯의 기능을 식별하는 슬롯 번호입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086535Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "``sl_flags``: Flags, defined below.",
+      "source_hash": 6564805756767150705,
+      "context_hash": 11279449368185615231,
+      "translation": "``sl_flags``: 아래에 정의된 플래그입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086535Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:0",
+      "source": "32 bits reserved for future extensions (expected to be enabled by future flags).",
+      "source_hash": 10310704673319828652,
+      "context_hash": 4125464493241039407,
+      "translation": "향후 확장을 위해 32비트를 예약합니다(향후 플래그를 통해 활성화될 것으로 예상됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086535Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:6/seg:0",
+      "source": "An union with the data, whose type depends on the slot.",
+      "source_hash": 12682390053579605595,
+      "context_hash": 10361312078832645681,
+      "translation": "타입이 슬롯에 따라 달라지는 데이터를 포함하는 union입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086535Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "New API",
+      "source_hash": 9626464690629045021,
+      "context_hash": 14753800191336202167,
+      "translation": "새로운 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:31.086535Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "The following function will be added.",
+      "source_hash": 6180148435873662194,
+      "context_hash": 15037050442750161190,
+      "translation": "다음 함수가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769684Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "It will create the corresponding Python type object from the given array of slots",
+      "source_hash": 9876209102985506926,
+      "context_hash": 18268752379062986339,
+      "translation": "주어진 슬롯 배열로 해당 Python 타입 객체를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769689Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "With this function, the ``Py_tp_token`` slot may not be set to ``Py_TP_USE_SPEC`` (i.e. ``NULL``).",
+      "source_hash": 10510016500844069802,
+      "context_hash": 6919780708945260805,
+      "translation": "이 함수를 사용하면 ``Py_tp_token`` 슬롯을 ``Py_TP_USE_SPEC``\\ (즉, ``NULL``)로 설정할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769689Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Changed API",
+      "source_hash": 15897947968251670622,
+      "context_hash": 8378665976131438558,
+      "translation": "변경된 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769690Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "The ``PyModule_FromSlotsAndSpec`` function (added in CPython 3.15 in :pep:`793`) will be *changed* to take the new slot structure",
+      "source_hash": 17874732160540170688,
+      "context_hash": 4580987473082695953,
+      "translation": "``PyModule_FromSlotsAndSpec`` 함수(:pep:`793`\\ 에 따라 CPython 3.15에 추가됨)는 새 슬롯 구조를 받도록 *변경될* 것입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:01:25.059086Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "The :external+py3.15:ref:`extension module export hook <extension-export-hook>` added in :pep:`793` (:samp:`PyModExport_{<name>}`) will be *changed* to return the new slot structure.",
+      "source_hash": 7584899232848451633,
+      "context_hash": 14035877240103690174,
+      "translation": "관련 :pep:`793`\\ 에서 추가된 :external+py3.15:ref:`확장 모듈 내보내기 훅 <extension-export-hook>` (:samp:`PyModExport_{<name>}`)은 새로운 슬롯 구조체를 반환하도록 *변경됩니다*.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:09:36.460157Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:1",
+      "source": "The :external+py3.15:c:macro:`PyMODEXPORT_FUNC` macro will be updated accordingly.",
+      "source_hash": 4898216171822257377,
+      "context_hash": 14402110552270007567,
+      "translation": "관련 :external+py3.15:c:macro:`PyMODEXPORT_FUNC` 매크로도 이에 맞게 업데이트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:09:36.460160Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "General slot semantics",
+      "source_hash": 2776797806540961913,
+      "context_hash": 13529737966110343415,
+      "translation": "일반적인 슬롯 의미론",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769694Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "When slots are passed to a function that applies them, the function will not modify the slot array, nor any data it points to (recursively).",
+      "source_hash": 766357806736612260,
+      "context_hash": 10706926540131665838,
+      "translation": "슬롯을 적용하는 함수에 슬롯이 전달되면, 해당 함수는 슬롯 배열이나 그것이 재귀적으로 가리키는 어떠한 데이터도 수정하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769694Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "After the function is done, the user is allowed to modify or deallocate the array, and any data it points to (recursively), unless it's explicitly marked as \"static\" (see ``PySlot_STATIC`` below).",
+      "source_hash": 2349293302199552151,
+      "context_hash": 5662770583016226040,
+      "translation": "함수가 완료된 후에는 명시적으로 “static”으로 표시된 경우(아래의 ``PySlot_STATIC`` 참조)를 제외하고, 사용자가 배열과 배열이 재귀적으로 가리키는 모든 데이터를 수정하거나 할당 해제할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769695Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:1",
+      "source": "This means the interpreter typically needs to make a copy of all data in the struct, including ``char *`` text.",
+      "source_hash": 16807231846430193454,
+      "context_hash": 260924692151319589,
+      "translation": "즉, 인터프리터는 일반적으로 ``char *`` 텍스트를 포함하여 구조체의 모든 데이터를 복사해야 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:17:41.769695Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Flags",
+      "source_hash": 14662362199530734789,
+      "context_hash": 17060716115732102750,
+      "translation": "플래그",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769697Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "``sl_flags`` may set the following bits.",
+      "source_hash": 9142326974567012265,
+      "context_hash": 10737997127133974104,
+      "translation": "``sl_flags``\\ 에는 다음 비트를 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769697Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "Unassigned bits must be set to zero.",
+      "source_hash": 15915678910098877684,
+      "context_hash": 8152746183292060184,
+      "translation": "할당되지 않은 비트는 0으로 설정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769697Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "``PySlot_OPTIONAL``: If the slot ID is unknown, the interpreter should ignore the slot entirely. (For example, if ``nb_matrix_multiply`` was being added to CPython now, your type could use this.)",
+      "source_hash": 13422033851230459285,
+      "context_hash": 10039862087490069016,
+      "translation": "``PySlot_OPTIONAL``: 슬롯 ID를 알 수 없는 경우 인터프리터는 해당 슬롯을 완전히 무시해야 합니다. (예를 들어, 지금 CPython에 ``nb_matrix_multiply``\\ 를 추가한다면 타입에서 이 플래그를 사용할 수 있습니다.)",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:17:41.769698Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "``PySlot_STATIC``: All data the slot points to is statically allocated and constant.",
+      "source_hash": 18281890515126559909,
+      "context_hash": 5433859433844896538,
+      "translation": "``PySlot_STATIC``: 슬롯이 가리키는 모든 데이터는 정적으로 할당되며 상수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769699Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:1",
+      "source": "Thus, the interpreter does not need to copy the information.",
+      "source_hash": 12607164506209234343,
+      "context_hash": 7587435228389321468,
+      "translation": "따라서 인터프리터는 해당 정보를 복사할 필요가 없습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:17:41.769699Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:2",
+      "source": "This flag is implied for function pointers.",
+      "source_hash": 1053748940396421313,
+      "context_hash": 13095248384153035882,
+      "translation": "함수 포인터에는 이 플래그가 암시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769699Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "The flag applies even to data the slot points to \"indirectly\", except for nested slots -- see :ref:`pep820-nested-tables` below -- which can have their own ``PySlot_STATIC`` flag.",
+      "source_hash": 9281061255144674104,
+      "context_hash": 1905707296676414869,
+      "translation": "이 플래그는 슬롯이 “간접적으로” 가리키는 데이터에도 적용되지만, 아래의 :ref:`중첩 슬롯 테이블 <pep820-nested-tables>`\\ 에 설명된 중첩 슬롯은 예외이며 자체 ``PySlot_STATIC`` 플래그를 가질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769700Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:1",
+      "source": "For example, if applied to a ``Py_tp_members`` slot that points to an *array* of ``PyMemberDef`` structures, then the entire array, as well as the ``name`` and ``doc`` strings in its elements, must be static and constant.",
+      "source_hash": 16482337907508864792,
+      "context_hash": 3701393931837324548,
+      "translation": "예를 들어 ``PyMemberDef`` 구조체의 *배열*\\ 을 가리키는 ``Py_tp_members`` 슬롯에 적용하는 경우, 전체 배열과 그 요소의 ``name`` 및 ``doc`` 문자열은 모두 정적이며 상수여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769700Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:0",
+      "source": "This flag will be required for slots that need static data (``Py_mod_methods``, ``Py_tp_methods``, ``Py_tp_members``, ``Py_tp_getset``).",
+      "source_hash": 5609129714489824361,
+      "context_hash": 7191291671740366803,
+      "translation": "정적 데이터가 필요한 슬롯(``Py_mod_methods``, ``Py_tp_methods``, ``Py_tp_members``, ``Py_tp_getset``)에는 이 플래그가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769701Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:6/seg:0",
+      "source": "``PySlot_INTPTR``: The data is stored in ``sl_ptr``, and must be cast to the appropriate type.",
+      "source_hash": 9480276193317465566,
+      "context_hash": 17327770423525663273,
+      "translation": "``PySlot_INTPTR``: 데이터는 ``sl_ptr``\\ 에 저장되며 적절한 타입으로 캐스팅해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769701Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:7/seg:0",
+      "source": "This flag simplifies porting from the existing ``PyType_Slot`` and ``PyModuleDef_Slot``, where all slots work this way.",
+      "source_hash": 9588425722075278755,
+      "context_hash": 7921351324856232172,
+      "translation": "이 플래그는 모든 슬롯이 이러한 방식으로 작동하는 기존 ``PyType_Slot`` 및 ``PyModuleDef_Slot``\\ 에서 포팅하는 작업을 간소화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769701Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Convenience macros",
+      "source_hash": 525379515742956851,
+      "context_hash": 5918747673420073698,
+      "translation": "편의 매크로",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769702Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "The following macros will be added to the API to simplify slot definition",
+      "source_hash": 5782853501851782318,
+      "context_hash": 14748245678475238014,
+      "translation": "슬롯 정의를 간소화하기 위해 다음 매크로가 API에 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769702Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:0",
+      "source": "We'll also add two more macros that avoid named initializers, for use in C++11-compatibile code.",
+      "source_hash": 704920814697294088,
+      "context_hash": 16320161641215341923,
+      "translation": "또한 명명된 초기화자를 사용하지 않는 매크로 두 개를 추가하여 C++11 호환 코드에서 사용할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769702Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:1",
+      "source": "Note that these cast the value to ``void*``, so they do not improve type safety over existing slots",
+      "source_hash": 14017772727093353627,
+      "context_hash": 4004279887854320591,
+      "translation": "이 매크로는 값을 ``void*``\\ 로 캐스팅하므로 기존 슬롯보다 타입 안전성을 향상시키지 않는다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769702Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Nested slot tables",
+      "source_hash": 13682651862811565301,
+      "context_hash": 14015628850088663016,
+      "translation": "중첩 슬롯 테이블",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769703Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "A new slot, ``Py_slot_subslots``, will be added to allow nesting slot tables.",
+      "source_hash": 11018392700484064019,
+      "context_hash": 15457690388818481095,
+      "translation": "슬롯 테이블의 중첩을 허용하기 위해 새 슬롯인 ``Py_slot_subslots``\\ 가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769703Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:1",
+      "source": "Its value (``sl_ptr``) should point to an array of ``PySlot`` structures, which will be treated as if they were part of the current slot array. ``sl_ptr`` can be ``NULL`` to indicate that there are no slots.",
+      "source_hash": 17288509393609466891,
+      "context_hash": 13106934639559785338,
+      "translation": "이 값(``sl_ptr``)은 ``PySlot`` 구조체 배열을 가리켜야 하며, 이 배열은 현재 슬롯 배열의 일부인 것처럼 처리됩니다. ``sl_ptr``\\ 은 ``NULL``\\ 로 설정하여 슬롯이 없음을 나타낼 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769703Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "Two more slots will allow similar nesting for existing slot structures:",
+      "source_hash": 3246737069916480169,
+      "context_hash": 5885901759920894695,
+      "translation": "기존 슬롯 구조체에도 유사한 중첩을 허용하는 슬롯 두 개가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769704Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "``Py_tp_slots`` for an array of ``PyType_Slot``",
+      "source_hash": 5743200496271034855,
+      "context_hash": 2720899030930814387,
+      "translation": "``Py_tp_slots``: ``PyType_Slot`` 배열용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:41.769704Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:4/seg:0",
+      "source": "``Py_mod_slots`` for an array of ``PyModuleDef_Slot``",
+      "source_hash": 10447111645554771732,
+      "context_hash": 15735316125464653438,
+      "translation": "``Py_mod_slots``\\ 는 ``PyModuleDef_Slot`` 배열을 위한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509308Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:0",
+      "source": "Each ``PyType_Slot`` in the array will be converted to ``(PySlot){.sl_id=slot, .sl_flags=PySlot_INTPTR, .sl_ptr=func}`` (with ``PySlot_STATIC`` to ``sl_flags`` added for slots that require it), and similar with ``PyModuleDef_Slot``.",
+      "source_hash": 6326639333630043929,
+      "context_hash": 16428901321170298968,
+      "translation": "배열의 각 ``PyType_Slot``\\ 은 ``(PySlot){.sl_id=slot, .sl_flags=PySlot_INTPTR, .sl_ptr=func}``\\ 로 변환되며, 필요한 슬롯에는 ``sl_flags``\\ 에 ``PySlot_STATIC``\\ 이 추가됩니다. ``PyModuleDef_Slot``\\ 도 마찬가지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509311Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:0",
+      "source": "In the initial implementation, nesting depth will be limited to 5 levels.",
+      "source_hash": 18185992826611456550,
+      "context_hash": 6906962546484630132,
+      "translation": "초기 구현에서는 중첩 깊이를 5단계로 제한합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509312Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:1",
+      "source": "This restriction may be lifted in the future.",
+      "source_hash": 17335249025696116191,
+      "context_hash": 11566401049688933861,
+      "translation": "이 제한은 향후 해제될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509312Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "New slot IDs",
+      "source_hash": 16513021985731508300,
+      "context_hash": 7587995876541227671,
+      "translation": "새로운 슬롯 ID",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509313Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "The following new slot IDs, usable for both type and module definitions, will be added:",
+      "source_hash": 12178166139127985614,
+      "context_hash": 4255437719668808728,
+      "translation": "타입 및 모듈 정의 모두에 사용할 수 있는 다음 새로운 슬롯 ID가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509313Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:0",
+      "source": "``Py_slot_end`` (defined as ``0``): Marks the end of a slots array.",
+      "source_hash": 4057462537213643260,
+      "context_hash": 8413361728376139842,
+      "translation": "``Py_slot_end``\\ (``0``\\ 으로 정의됨): 슬롯 배열의 끝을 표시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509313Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:0",
+      "source": "The ``PySlot_INTPTR`` and ``PySlot_STATIC`` flags are ignored.",
+      "source_hash": 6387426606517968201,
+      "context_hash": 14420067658509665339,
+      "translation": "``PySlot_INTPTR`` 및 ``PySlot_STATIC`` 플래그는 무시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509313Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:4/seg:0",
+      "source": "The ``PySlot_OPTIONAL`` flags is not allowed with ``Py_slot_end``.",
+      "source_hash": 15117618890811469023,
+      "context_hash": 7333072988508107777,
+      "translation": "``PySlot_OPTIONAL`` 플래그는 ``Py_slot_end``\\ 와 함께 사용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509314Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:5/seg:0",
+      "source": "``Py_slot_subslots``, ``Py_tp_slots``, ``Py_mod_slots``: see :ref:`pep820-nested-tables` above",
+      "source_hash": 18201753496059610991,
+      "context_hash": 6173018391071117657,
+      "translation": "``Py_slot_subslots``, ``Py_tp_slots``, ``Py_mod_slots``: 위의 :ref:`pep820-nested-tables` 항목을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509314Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:6/seg:0",
+      "source": "``Py_slot_invalid`` (defined as ``UINT16_MAX``, i.e. ``-1``): treated as an unknown slot ID.",
+      "source_hash": 16958396602003372779,
+      "context_hash": 4935911721204989516,
+      "translation": "``Py_slot_invalid``\\ (``UINT16_MAX``, 즉 ``-1``\\ 로 정의됨): 알 수 없는 슬롯 ID로 처리됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509314Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:7/seg:0",
+      "source": "The following new slot IDs will be added to cover existing members of ``PyModuleDef``:",
+      "source_hash": 16458105928607622059,
+      "context_hash": 11337812190820921424,
+      "translation": "``PyModuleDef``\\ 의 기존 멤버를 포괄하기 위해 다음 새로운 슬롯 ID가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509315Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:8/seg:0",
+      "source": "``Py_tp_name`` (mandatory for type creation)",
+      "source_hash": 2815438799733340720,
+      "context_hash": 259814795442549865,
+      "translation": "``Py_tp_name``\\ (타입 생성에 필수)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509315Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:9/seg:0",
+      "source": "``Py_tp_basicsize`` (of type ``Py_ssize_t``)",
+      "source_hash": 4967301126890542815,
+      "context_hash": 1072484066176871958,
+      "translation": "``Py_tp_basicsize``\\ (``Py_ssize_t`` 타입)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509315Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:10/seg:0",
+      "source": "``Py_tp_extra_basicsize`` (equivalent to setting ``PyType_Spec.basicsize`` to ``-extra_basicsize``)",
+      "source_hash": 7364418353037759822,
+      "context_hash": 550600752488281749,
+      "translation": "``Py_tp_extra_basicsize``\\ (``PyType_Spec.basicsize``\\ 를 ``-extra_basicsize``\\ 로 설정하는 것과 동일함)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509315Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:11/seg:0",
+      "source": "``Py_tp_itemsize``",
+      "source_hash": 5749338037006485427,
+      "context_hash": 14930796414490423976,
+      "translation": "``Py_tp_itemsize``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509315Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:12/seg:0",
+      "source": "``Py_tp_flags``",
+      "source_hash": 8733115819737966547,
+      "context_hash": 10876791427280154260,
+      "translation": "``Py_tp_flags``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509316Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:13/seg:0",
+      "source": "The following new slot IDs will be added to cover arguments of ``PyType_FromMetaclass``:",
+      "source_hash": 4452878923791829193,
+      "context_hash": 1449530021047085995,
+      "translation": "``PyType_FromMetaclass``\\ 의 인자를 포괄하기 위해 다음 새로운 슬롯 ID가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509316Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:14/seg:0",
+      "source": "``Py_tp_metaclass`` (used to set ``ob_type`` after metaclass calculation)",
+      "source_hash": 7672596578661043914,
+      "context_hash": 627249233627430274,
+      "translation": "``Py_tp_metaclass``\\ (메타클래스 계산 후 ``ob_type``\\ 을 설정하는 데 사용됨)",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:17:39.509316Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:15/seg:0",
+      "source": "``Py_tp_module``",
+      "source_hash": 10030357066230755345,
+      "context_hash": 17651068572810088106,
+      "translation": "``Py_tp_module``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509317Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:16/seg:0",
+      "source": "Note that ``Py_tp_base`` and ``Py_tp_bases`` already exist.",
+      "source_hash": 12619952507044499471,
+      "context_hash": 7895366469957988481,
+      "translation": "``Py_tp_base`` 및 ``Py_tp_bases``\\ 는 이미 존재한다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509317Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:16/seg:1",
+      "source": "The interpreter will treat them identically: either can specify a class object or a tuple of them. ``Py_tp_base`` will be soft-deprecated in favour of ``Py_tp_bases``.",
+      "source_hash": 2526299108477968885,
+      "context_hash": 6923891749890977569,
+      "translation": "인터프리터는 이들을 동일하게 처리합니다. 둘 중 어느 것이든 클래스 객체 또는 클래스 객체의 튜플을 지정할 수 있습니다. ``Py_tp_base``\\ 는 ``Py_tp_bases``\\ 를 대신하여 소프트 폐기됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:17:39.509317Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:16/seg:2",
+      "source": "Specifying both in a single definition will be deprecated (currently, ``Py_tp_bases`` overrides ``Py_tp_base``).",
+      "source_hash": 5093544540320240031,
+      "context_hash": 8534827995260445899,
+      "translation": "하나의 정의에서 둘 다 지정하는 것은 폐기될 예정입니다(현재는 ``Py_tp_bases``\\ 가 ``Py_tp_base``\\ 를 재정의합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509318Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:17/seg:0",
+      "source": "None of the new slots will be usable with ``PyType_GetSlot``. (This limitation may be lifted in the future, with C API WG approval.)",
+      "source_hash": 17517341340047222415,
+      "context_hash": 12800479854329044419,
+      "translation": "새로운 슬롯 중 어느 것도 ``PyType_GetSlot``\\ 과 함께 사용할 수 없습니다. (C API WG의 승인을 받으면 이 제한이 향후 해제될 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509318Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:18/seg:0",
+      "source": "Of the new slots, only ``Py_slot_end``, ``Py_slot_subslots``, ``Py_tp_slots``, ``Py_mod_slots`` will be allowed in ``PyType_Spec`` and/or ``PyModuleDef``.",
+      "source_hash": 3002888784574996819,
+      "context_hash": 6268415505409963682,
+      "translation": "새로운 슬롯 중 ``Py_slot_end``, ``Py_slot_subslots``, ``Py_tp_slots``, ``Py_mod_slots``\\ 만 ``PyType_Spec`` 및/또는 ``PyModuleDef``\\ 에서 허용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509318Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "Slot renumbering",
+      "source_hash": 11560049644952744022,
+      "context_hash": 6714298797033879192,
+      "translation": "슬롯 번호 변경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509319Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "New slots IDs will have unique numeric values (that is, ``Py_slot_*``, ``Py_tp_*`` and ``Py_mod_*`` won't share IDs).",
+      "source_hash": 6321185928112058035,
+      "context_hash": 5692631368427028706,
+      "translation": "새로운 슬롯 ID는 고유한 숫자 값을 갖습니다(즉, ``Py_slot_*``, ``Py_tp_*`` 및 ``Py_mod_*``\\ 는 ID를 공유하지 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509319Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:0",
+      "source": "Slots numbered 1 through 4 (``Py_bf_getbuffer``...\\ ``Py_mp_length`` and ``Py_mod_create``...\\ ``Py_mod_gil``) will be redefined as new (larger) numbers.",
+      "source_hash": 7368126290294011083,
+      "context_hash": 1338089135567580457,
+      "translation": "1부터 4까지 번호가 매겨진 슬롯(``Py_bf_getbuffer``...\\ ``Py_mp_length`` 및 ``Py_mod_create``...\\ ``Py_mod_gil``)은 새로운 더 큰 번호로 재정의됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509319Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:1",
+      "source": "The old numbers will remain as aliases, and will be used when compiling for Stable ABI versions below 3.15.",
+      "source_hash": 5502489671428217403,
+      "context_hash": 5545563470498020174,
+      "translation": "이전 번호는 별칭으로 남으며, 3.15 미만의 Stable ABI 버전용으로 컴파일할 때 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509319Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:0",
+      "source": "Slots for members of ``PyModuleDef``, which were added in :ref:`PEP 793 <pep793-api-summary>`, will be renumbered so that they have unique IDs:",
+      "source_hash": 3370370386531652979,
+      "context_hash": 8035141159590716296,
+      "translation": "``PyModuleDef``\\ 의 멤버를 위한 슬롯은 :ref:`PEP 793 <pep793-api-summary>`\\ 에서 추가되었으며, 고유한 ID를 갖도록 번호가 다시 매겨집니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:01:25.059096Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:4/seg:0",
+      "source": "``Py_mod_name``",
+      "source_hash": 4309755348561653843,
+      "context_hash": 14825719101947145892,
+      "translation": "``Py_mod_name``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509320Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:5/seg:0",
+      "source": "``Py_mod_doc``",
+      "source_hash": 1973050504750235144,
+      "context_hash": 13194816143233676250,
+      "translation": "``Py_mod_doc``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.509320Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:6/seg:0",
+      "source": "``Py_mod_state_size``",
+      "source_hash": 7287890974767811832,
+      "context_hash": 17100009997539230001,
+      "translation": "``Py_mod_state_size``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466799Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:7/seg:0",
+      "source": "``Py_mod_methods``",
+      "source_hash": 18191683523037459028,
+      "context_hash": 5096393762718637235,
+      "translation": "``Py_mod_methods``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466802Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:8/seg:0",
+      "source": "``Py_mod_state_traverse``",
+      "source_hash": 2372229842781799885,
+      "context_hash": 17994127485388298976,
+      "translation": "``Py_mod_state_traverse``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466803Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:9/seg:0",
+      "source": "``Py_mod_state_clear``",
+      "source_hash": 636919216183098851,
+      "context_hash": 7744004492911736162,
+      "translation": "``Py_mod_state_clear``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466803Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:10/seg:0",
+      "source": "``Py_mod_state_free``",
+      "source_hash": 783628608352500228,
+      "context_hash": 14736615733228578649,
+      "translation": "``Py_mod_state_free``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466803Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "Soft deprecation",
+      "source_hash": 5320626901063943748,
+      "context_hash": 17887182047724456125,
+      "translation": "소프트 폐기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466803Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "These existing functions will be :pep:`soft-deprecated <387#soft-deprecation>`:",
+      "source_hash": 8831079783781074303,
+      "context_hash": 3696167505127142605,
+      "translation": "다음 기존 함수들은 :pep:`soft-deprecated <387#soft-deprecation>`\\ 됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466804Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:0",
+      "source": "``PyType_FromSpec``",
+      "source_hash": 164714757793836151,
+      "context_hash": 6703450160611994957,
+      "translation": "``PyType_FromSpec``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466804Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:0",
+      "source": "``PyType_FromSpecWithBases``",
+      "source_hash": 6085577569826892090,
+      "context_hash": 3271016996185223504,
+      "translation": "``PyType_FromSpecWithBases``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466804Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:0",
+      "source": "``PyType_FromModuleAndSpec``",
+      "source_hash": 11683052194583234460,
+      "context_hash": 8788910082660349222,
+      "translation": "``PyType_FromModuleAndSpec``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466804Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:5/seg:0",
+      "source": "``PyType_FromMetaclass``",
+      "source_hash": 15942433416222278942,
+      "context_hash": 17270152628961006102,
+      "translation": "``PyType_FromMetaclass``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466805Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:6/seg:0",
+      "source": "``PyModule_FromDefAndSpec``",
+      "source_hash": 1982929745372522595,
+      "context_hash": 12938990463205363071,
+      "translation": "``PyModule_FromDefAndSpec``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466805Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:7/seg:0",
+      "source": "``PyModule_FromDefAndSpec2``",
+      "source_hash": 3345388821894508849,
+      "context_hash": 13681539640580971781,
+      "translation": "``PyModule_FromDefAndSpec2``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466805Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:8/seg:0",
+      "source": "``PyModule_ExecDef``",
+      "source_hash": 11618273305278441442,
+      "context_hash": 6258680274048768041,
+      "translation": "``PyModule_ExecDef``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466805Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:9/seg:0",
+      "source": "(As a reminder: soft-deprecated API is not scheduled for removal, does not raise warnings, and remains documented and tested.",
+      "source_hash": 10262429573050325325,
+      "context_hash": 6392126758064357781,
+      "translation": "(다시 말씀드리면, 소프트 폐기된 API는 제거될 예정이 아니며, 경고를 발생시키지 않고, 계속 문서화되고 테스트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466806Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:9/seg:1",
+      "source": "However, no new functionality will be added to it.)",
+      "source_hash": 14605227463573120598,
+      "context_hash": 11438394181360689283,
+      "translation": "그러나 여기에 새로운 기능은 추가되지 않습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466806Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:10/seg:0",
+      "source": "Arrays of ``PyType_Slot`` or ``PyModuleDef_Slot``, which are accepted by these functions, can contain any slots, including \"new\" ones defined in this PEP.",
+      "source_hash": 5418004263942884147,
+      "context_hash": 11081805205779565139,
+      "translation": "이러한 함수가 허용하는 ``PyType_Slot`` 또는 ``PyModuleDef_Slot`` 배열에는 이 PEP에서 정의된 \"새로운\" 슬롯을 비롯하여 모든 슬롯이 포함될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466807Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:10/seg:1",
+      "source": "This includes nested \"new-style\" slots (``Py_slot_subslots``).",
+      "source_hash": 17207344067536083309,
+      "context_hash": 2845284604928020114,
+      "translation": "여기에는 중첩된 \"새 스타일\" 슬롯(``Py_slot_subslots``)도 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466807Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Deprecation warnings",
+      "source_hash": 1812798736849580694,
+      "context_hash": 7644655015137233585,
+      "translation": "사용 중단 경고",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466807Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "Functions that take ``PySlot`` arrays (but not functions that take the older ``PyType_Slot`` or ``PyModuleDef_Slot`` arrays) will emit runtime deprecation warnings for the following cases, for slots where the case is currently disallowed in documentation but allowed by the runtime:",
+      "source_hash": 12732199138792495547,
+      "context_hash": 12819158093667500421,
+      "translation": "``PySlot`` 배열을 받는 함수는 (기존의 ``PyType_Slot`` 또는 ``PyModuleDef_Slot`` 배열을 받는 함수와 달리) 현재 문서에서는 허용되지 않지만 런타임에서는 허용되는 다음 경우에 해당하는 슬롯에 대해 런타임 사용 중단 경고를 발생시킵니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466807Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:2/seg:0",
+      "source": "setting a slot value to NULL:",
+      "source_hash": 10937350856575430203,
+      "context_hash": 6050918356271385533,
+      "translation": "슬롯 값을 NULL로 설정하는 경우:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466808Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:3/seg:0",
+      "source": "all type slots except ``Py_tp_doc``",
+      "source_hash": 15090981375078812206,
+      "context_hash": 997893217562281948,
+      "translation": "``Py_tp_doc``\\ 를 제외한 모든 타입 슬롯",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466808Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:4/seg:0",
+      "source": "``Py_mod_create``",
+      "source_hash": 13186156808554143974,
+      "context_hash": 10941366533304938461,
+      "translation": "``Py_mod_create``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466808Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:5/seg:0",
+      "source": "``Py_mod_exec``",
+      "source_hash": 2458031214155581575,
+      "context_hash": 642621658361259789,
+      "translation": "``Py_mod_exec``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466808Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:6/seg:0",
+      "source": "repeating a slot ID in a single slots array (including sub-slot arrays added in this PEP):",
+      "source_hash": 1534382391064893831,
+      "context_hash": 12618580386615005331,
+      "translation": "하나의 슬롯 배열에서 슬롯 ID를 반복하는 경우 (이 PEP에서 추가된 하위 슬롯 배열 포함):",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466809Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:7/seg:0",
+      "source": "all type slots, except slots where this is already a runtime error (``Py_tp_doc``, ``Py_tp_members``)",
+      "source_hash": 9810836129214299446,
+      "context_hash": 16381466317858302290,
+      "translation": "이미 런타임 오류인 경우(``Py_tp_doc``, ``Py_tp_members``)를 제외한 모든 타입 슬롯",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466809Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:8/seg:0",
+      "source": "``Py_mod_create``",
+      "source_hash": 13186156808554143974,
+      "context_hash": 11031715036628274327,
+      "translation": "``Py_mod_create``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466809Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:9/seg:0",
+      "source": "``Py_mod_abi``",
+      "source_hash": 14060956879385354201,
+      "context_hash": 4748773835362714664,
+      "translation": "``Py_mod_abi``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466809Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 2343022660415778604,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466810Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:0",
+      "source": "This PEP proposes to change API that was already released in alpha versions of Python 3.15.",
+      "source_hash": 9401346251750672214,
+      "context_hash": 7542277865447313512,
+      "translation": "이 PEP는 Python 3.15의 알파 버전에서 이미 릴리스된 API를 변경할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466810Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:1",
+      "source": "This will inconvenience early adopters of that API, but -- as long as the PEP is accepted and implemented before the first beta -- this change is within the letter and spirit of our backwards compatibility policy.",
+      "source_hash": 11630109387634120703,
+      "context_hash": 9388373799093434057,
+      "translation": "이 API의 초기 사용자는 불편을 겪겠지만, PEP가 첫 번째 베타 버전 이전에 승인되고 구현되는 한 이 변경은 하위 호환성 정책의 문언과 취지에 부합합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:36.466810Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:0",
+      "source": "Renumbering of slots is done in a backwards-compatible way.",
+      "source_hash": 1184733730671642414,
+      "context_hash": 14701390491544750657,
+      "translation": "슬롯의 번호 재지정은 하위 호환성을 유지하는 방식으로 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613120Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:1",
+      "source": "Old values continue to be accepted, and are used when compiling for earlier Stable ABI.",
+      "source_hash": 17711863387093963815,
+      "context_hash": 6864772785687032486,
+      "translation": "이전 값은 계속 허용되며, 더 이전 Stable ABI에 맞게 컴파일할 때 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613123Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:3/seg:0",
+      "source": "Some cases that are documented as illegal will begin emitting deprecation warnings (see :ref:`pep820-hard-deprecations`).",
+      "source_hash": 5523435055919835646,
+      "context_hash": 7043802533312496694,
+      "translation": "허용되지 않는 것으로 문서화된 일부 사례에서는 사용 중단 경고를 내기 시작합니다(자세한 내용은 :ref:`pep820-hard-deprecations`\\ 를 참조하십시오).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613124Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:4/seg:0",
+      "source": "Otherwise, this PEP only adds and soft-deprecates APIs, which is backwards compatible.",
+      "source_hash": 9996591091355348565,
+      "context_hash": 15197094491381736667,
+      "translation": "그 외에 이 PEP는 API를 추가하고 소프트 디프리케이트할 뿐이므로 하위 호환성을 유지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613124Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 12297954348293698249,
+      "translation": "보안 관련 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613124Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:0",
+      "source": "None known",
+      "source_hash": 13953642888906057750,
+      "context_hash": 4685212823500510940,
+      "translation": "알려진 사항 없음",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613125Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 7446384045624121992,
+      "translation": "이 내용을 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613125Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:1/seg:0",
+      "source": "Adjust the \"Extending and Embedding\" tutorial to use this.",
+      "source_hash": 11341835396891544389,
+      "context_hash": 7247663913973580407,
+      "translation": "이를 사용하도록 \"확장 및 임베딩\" 튜토리얼을 조정하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613125Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 17219063337824397081,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T19:17:39.613126Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:0",
+      "source": "After this PEP was accepted, the implementation was merged in `CPython issue 149044 <https://github.com/python/cpython/issues/149044>`__.",
+      "source_hash": 13871544521677279181,
+      "context_hash": 683053942396023572,
+      "translation": "이 PEP가 승인된 후 구현이 `CPython issue 149044 <https://github.com/python/cpython/issues/149044>`__\\ 에 병합되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613126Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 9427629113687134634,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613127Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:0",
+      "source": "See the :ref:`pep820-rationale` section for several alternative ideas.",
+      "source_hash": 157742174803982373,
+      "context_hash": 11186897211186944529,
+      "translation": "여러 대안 아이디어는 :ref:`pep820-rationale` 절을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613127Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:0/seg:0",
+      "source": "Third-party slot ID allocation",
+      "source_hash": 10411252021387619402,
+      "context_hash": 8616723900103059888,
+      "translation": "서드파티 슬롯 ID 할당",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613127Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:0",
+      "source": "It was suggested to allow third parties to reserve slot IDs for their own use.",
+      "source_hash": 210837739917875988,
+      "context_hash": 17399728398103314757,
+      "translation": "서드파티가 자체 용도로 슬롯 ID를 예약할 수 있도록 하자는 제안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613127Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:1",
+      "source": "This would be mainly useful for alternate implementations.",
+      "source_hash": 12087303167787980301,
+      "context_hash": 1709035939427361657,
+      "translation": "이는 주로 대체 구현에 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613128Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:2",
+      "source": "For example, something like GraalPy might want custom type slots (e.g. an \"inherits from this Java class\" slot).",
+      "source_hash": 2510914278928206653,
+      "context_hash": 12920807003226806747,
+      "translation": "예를 들어 GraalPy와 같은 구현에서는 사용자 지정 타입 슬롯(예: \"이 Java 클래스에서 상속\" 슬롯)이 필요할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613128Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:3",
+      "source": "Similarly, at one point PyPy had an extra ``tp_pypy_flags`` in their typeobject struct.",
+      "source_hash": 1497897604838042336,
+      "context_hash": 3226657153300013985,
+      "translation": "이와 유사하게 한때 PyPy의 typeobject 구조체에는 추가 ``tp_pypy_flags``\\ 가 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613128Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:2/seg:0",
+      "source": "This PEP does not specify a namespace mechanism.",
+      "source_hash": 7416303319445506987,
+      "context_hash": 11423153111966611555,
+      "translation": "이 PEP는 네임스페이스 메커니즘을 지정하지 않습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:17:39.613128Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:2/seg:1",
+      "source": "One can be added in the future.",
+      "source_hash": 1005485509845351327,
+      "context_hash": 141687144899613929,
+      "translation": "이는 향후 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613129Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:2/seg:2",
+      "source": "We're also free to reserve individual slot IDs for alternate implementations.",
+      "source_hash": 9737504083504342486,
+      "context_hash": 11439144670918640908,
+      "translation": "또한 대체 구현을 위해 개별 슬롯 ID를 예약할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613129Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:3/seg:0",
+      "source": "Note that slots are not a good way for *extension modules* to add extra data to types or modules, as there is no API to retrieve the slots used to create a specific object.",
+      "source_hash": 12728456402041829197,
+      "context_hash": 11191101066236187785,
+      "translation": "슬롯은 *extension modules*\\ 가 타입이나 모듈에 추가 데이터를 추가하는 데 적합한 방법이 아니라는 점에 유의하십시오. 특정 객체를 생성하는 데 사용된 슬롯을 조회할 API가 없기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613130Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:0/seg:0",
+      "source": "Avoiding anonymous unions",
+      "source_hash": 11577223025551602656,
+      "context_hash": 14444469840613545581,
+      "translation": "익명 유니온 방지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613130Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:1/seg:0",
+      "source": "This PEP proposes a struct with *anonymous unions*, which are not yet used in CPython's documented public API.",
+      "source_hash": 7270309425435659924,
+      "context_hash": 9249731772845649594,
+      "translation": "이 PEP는 *anonymous unions*\\ 를 포함하는 구조체를 제안하지만, 이는 아직 CPython의 문서화된 공개 API에서 사용되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613130Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:2/seg:0",
+      "source": "There is no known issue with adding these, but the following notes may be relevant:",
+      "source_hash": 17535307328365109642,
+      "context_hash": 13376753149696150085,
+      "translation": "이를 추가해도 알려진 문제는 없지만, 다음 사항이 관련될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613130Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:3/seg:0",
+      "source": "Anonymous unions are only supported in C since C11.",
+      "source_hash": 18080732657728607545,
+      "context_hash": 15388077916144593511,
+      "translation": "익명 유니온은 C11부터 C에서만 지원됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613131Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:3/seg:1",
+      "source": "But, CPython already requires the feature, and uses it for internal members of the ``PyObject`` struct.",
+      "source_hash": 7800108458211411320,
+      "context_hash": 2921217755413138620,
+      "translation": "그러나 CPython은 이미 이 기능을 요구하며, ``PyObject`` 구조체의 내부 멤버에 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613131Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:4/seg:0",
+      "source": "Until C++20, which adds C-style designated initializers, C++ initializers only allow setting the first member of a union.",
+      "source_hash": 14088484195153257560,
+      "context_hash": 152115032135577048,
+      "translation": "C 스타일 지정 초기화자를 추가하는 C++20 이전에는 C++ 초기화자가 유니온의 첫 번째 멤버만 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613131Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:4/seg:1",
+      "source": "However, this is an issue for *named* unions as well.",
+      "source_hash": 9523595999073129480,
+      "context_hash": 13680151972865864865,
+      "translation": "그러나 이는 *named* 유니온에서도 발생하는 문제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613131Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:4/seg:2",
+      "source": "Avoiding unions entirely would mean losing most of the type-safety improvements of this PEP.",
+      "source_hash": 2524880214088022880,
+      "context_hash": 14281598989676757954,
+      "translation": "유니온을 완전히 피하면 이 PEP의 타입 안전성 개선 사항 대부분을 잃게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613132Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:5/seg:0",
+      "source": "Note that the proposed flag ``PySlot_INTPTR``, and the workaround macros ``PySlot_PTR`` & ``PySlot_PTR_STATIC``, allow using this API in code that needs to be compatible with C++11 or has similar union-related limitations.",
+      "source_hash": 14497505670222797220,
+      "context_hash": 16715627611582745765,
+      "translation": "제안된 플래그 ``PySlot_INTPTR``\\ 와 해결 방법 매크로 ``PySlot_PTR`` 및 ``PySlot_PTR_STATIC``\\ 을 사용하면 C++11과 호환되어야 하거나 유니온과 관련된 유사한 제한이 있는 코드에서도 이 API를 사용할 수 있다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613132Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:6/seg:0",
+      "source": "C++ doesn't have anonymous *structs*.",
+      "source_hash": 15040573433632363889,
+      "context_hash": 14895520149108935118,
+      "translation": "C++에는 익명 *structs*\\ 가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613132Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:6/seg:1",
+      "source": "This might surprise C programmers for whom anonymous structs/unions are a single language feature.",
+      "source_hash": 1072385882939399004,
+      "context_hash": 16722408170222584532,
+      "translation": "익명 구조체/유니온을 하나의 언어 기능으로 인식하는 C 프로그래머에게는 이것이 놀라울 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:17:39.613132Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:7/seg:0",
+      "source": "Non-C/C++ language wrappers may need to give the union a name.",
+      "source_hash": 4979321757105445129,
+      "context_hash": 13795828008847073822,
+      "translation": "C/C++가 아닌 언어의 래퍼는 유니온에 이름을 지정해야 할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767040Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:7/seg:1",
+      "source": "This is fine. (Dear reader: if you need this, please open a CPython issue about exposing a preferred name in headers and documentation.)",
+      "source_hash": 12025911232155468509,
+      "context_hash": 1529039425463748488,
+      "translation": "괜찮습니다. (독자 여러분, 이것이 필요하다면 헤더와 문서에서 선호되는 이름을 노출하는 방법에 관한 CPython 이슈를 열어 주십시오.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767044Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:8/seg:0",
+      "source": "For a bigger picture: anonymous unions can be a helpful tool for implemeting tagged unions and for evolving public API in backwards-compatible ways.",
+      "source_hash": 3412676300220443213,
+      "context_hash": 6550674168550893113,
+      "translation": "더 큰 관점에서 보면, 익명 유니온은 태그 유니온을 구현하고 하위 호환 방식으로 공개 API를 발전시키는 데 유용한 도구가 될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767044Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:8/seg:1",
+      "source": "This PEP intentionally opens the door to using them more often.",
+      "source_hash": 17796421511506156002,
+      "context_hash": 358009402122408605,
+      "translation": "이 PEP는 익명 유니온을 더 자주 사용할 수 있는 길을 의도적으로 열어 둡니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767044Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:0/seg:0",
+      "source": "Fallback slots",
+      "source_hash": 3259130035301279184,
+      "context_hash": 17727110518478710411,
+      "translation": "폴백 슬롯",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767045Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:1/seg:0",
+      "source": "An earlier version of this PEP proposed a flag: ``PySlot_HAS_FALLBACK``:",
+      "source_hash": 7594622349843104957,
+      "context_hash": 8353173745902824428,
+      "translation": "이 PEP의 이전 버전에서는 다음 플래그를 제안했습니다: ``PySlot_HAS_FALLBACK``:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767045Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:2/seg:0",
+      "source": "If the flagged slot's ID is unknown, the interpreter will ignore the slot.",
+      "source_hash": 4779533543083556560,
+      "context_hash": 6892163917999888066,
+      "translation": "플래그가 지정된 슬롯의 ID를 알 수 없으면 인터프리터는 해당 슬롯을 무시합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:21:57.767045Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:2/seg:1",
+      "source": "If it's known, the interpreter should ignore subsequent slots up to (and including) the first one without HAS_FALLBACK.",
+      "source_hash": 15538992755454637628,
+      "context_hash": 11367008531776915423,
+      "translation": "ID를 알고 있다면 인터프리터는 HAS_FALLBACK이 없는 첫 번째 슬롯까지(그리고 그 슬롯을 포함하여) 뒤따르는 슬롯을 무시해야 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:21:57.767047Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:3/seg:0",
+      "source": "Effectively, consecutive slots with the HAS_FALLBACK flag, plus the first non-HAS_FALLBACK slot after them, form a \"block\" where the the interpreter will only consider the *first* slot in the block that it understands.",
+      "source_hash": 7903412209649125458,
+      "context_hash": 10979612013895331380,
+      "translation": "사실상 HAS_FALLBACK 플래그가 지정된 연속 슬롯들과 그 뒤의 첫 번째 non-HAS_FALLBACK 슬롯은 하나의 \"블록\"을 형성하며, 인터프리터는 해당 블록에서 자신이 이해하는 *첫 번째* 슬롯만 고려합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:21:57.767047Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:3/seg:1",
+      "source": "If the entire block is to be optional, it should end with a slot with the OPTIONAL flag.",
+      "source_hash": 4026209909115879733,
+      "context_hash": 2241634335386141016,
+      "translation": "블록 전체를 선택 사항으로 만들려면 OPTIONAL 플래그가 지정된 슬롯으로 끝나야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767048Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:4/seg:0",
+      "source": "This flag may be added later, in the Python version where it's needed. (For backwards compatibility, all slots flagged HAS_FALLBACK will also need the OPTIONAL flag).",
+      "source_hash": 10648339227481492734,
+      "context_hash": 7336596922806462219,
+      "translation": "이 플래그는 필요한 Python 버전에서 나중에 추가될 수 있습니다. (하위 호환성을 위해 HAS_FALLBACK이 지정된 모든 슬롯에는 OPTIONAL 플래그도 필요합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767049Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:0/seg:0",
+      "source": "Open Issues",
+      "source_hash": 15188361361114285070,
+      "context_hash": 17229144096032704274,
+      "translation": "미해결 문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767049Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:1/seg:0",
+      "source": "None yet.",
+      "source_hash": 7602520794979836626,
+      "context_hash": 13628939554569729570,
+      "translation": "아직 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767050Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:0/seg:0",
+      "source": "Acknowledgements",
+      "source_hash": 16326275492144793040,
+      "context_hash": 1690298854044636443,
+      "translation": "감사의 말",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767050Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:1/seg:0",
+      "source": "Thanks to Da Woods, Antoine Pitrou, Mark Shannon and Victor Stinner for substantial input on this iteration of the proposal.",
+      "source_hash": 11529688389927533450,
+      "context_hash": 7993533354536993813,
+      "translation": "이번 제안 개정에 상당한 의견을 보내 주신 Da Woods, Antoine Pitrou, Mark Shannon 및 Victor Stinner께 감사드립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767050Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:0/seg:0",
+      "source": "Change History",
+      "source_hash": 7493511711571116789,
+      "context_hash": 17953003799949088508,
+      "translation": "변경 이력",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767051Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:1/seg:0",
+      "source": "17-Jun-2026",
+      "source_hash": 16002569091559699661,
+      "context_hash": 12112758748279112483,
+      "translation": "2026년 6월 17일",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767052Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:2/seg:0",
+      "source": "Require explicit ``PySlot_STATIC`` flag for slots that need static data.",
+      "source_hash": 12176541477029703199,
+      "context_hash": 7271196553658594884,
+      "translation": "정적 데이터가 필요한 슬롯에는 명시적인 ``PySlot_STATIC`` 플래그를 요구합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767052Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:3/seg:0",
+      "source": "PEP marked final.",
+      "source_hash": 15430076671648073834,
+      "context_hash": 15905394546830679339,
+      "translation": "PEP가 최종본으로 표시되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767055Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:4/seg:0",
+      "source": "24-Apr-2026",
+      "source_hash": 9832151917027638127,
+      "context_hash": 2072789334553639955,
+      "translation": "2026년 4월 24일",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767055Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:5/seg:0",
+      "source": "Limit deprecation for NULL and repeated slots to the new API.",
+      "source_hash": 13382608888026497093,
+      "context_hash": 9373624273498341278,
+      "translation": "NULL 및 반복 슬롯에 대한 사용 중단을 새 API로 제한합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767055Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:6/seg:0",
+      "source": "PEP is accepted",
+      "source_hash": 6767272746819695894,
+      "context_hash": 11557539915629489702,
+      "translation": "PEP가 승인되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767055Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:7/seg:0",
+      "source": "`12-Mar-2026 <https://discuss.python.org/t/105552/12>`__",
+      "source_hash": 4176242056435415661,
+      "context_hash": 12011072782022310188,
+      "translation": "`2026년 3월 12일 <https://discuss.python.org/t/105552/12>`__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767056Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:8/seg:0",
+      "source": "Remove unnecessary flag ``PySlot_HAS_FALLBACK``",
+      "source_hash": 16717164401100893522,
+      "context_hash": 17376902425234530773,
+      "translation": "불필요한 ``PySlot_HAS_FALLBACK`` 플래그를 제거합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767056Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:9/seg:0",
+      "source": "`28-Jan-2026 <https://discuss.python.org/t/105552/6>`__",
+      "source_hash": 2107000144867708177,
+      "context_hash": 16010800127678738207,
+      "translation": "`2026년 1월 28일 <https://discuss.python.org/t/105552/6>`__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767057Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:10/seg:0",
+      "source": "Be clearer that the PEP 793 API added in 3.15 alpha (``PyModExport``, ``PyModule_FromSlotsAndSpec``) will be changed to return the new slots.",
+      "source_hash": 7455399880201604654,
+      "context_hash": 14140456186215551244,
+      "translation": "3.15 알파 버전에 추가된 PEP 793 API(``PyModExport``, ``PyModule_FromSlotsAndSpec``)가 새 슬롯을 반환하도록 변경된다는 점을 더 명확히 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767057Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:11/seg:0",
+      "source": "Deprecation of things that were documented to not work, but worked in practice:",
+      "source_hash": 7296096415186801313,
+      "context_hash": 780259134336333520,
+      "translation": "작동하지 않는 것으로 문서화되었지만 실제로는 작동했던 항목의 사용 중단:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767057Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:12/seg:0",
+      "source": "setting a slot value to NULL (except if the slot explicitly allows this)",
+      "source_hash": 16206478946411598460,
+      "context_hash": 18443463293787476653,
+      "translation": "슬롯 값을 NULL로 설정합니다(슬롯에서 이를 명시적으로 허용하는 경우는 제외합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767057Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:13/seg:0",
+      "source": "repeating a slot ID in a definition (except )",
+      "source_hash": 12352480581243887362,
+      "context_hash": 1198081223356940910,
+      "translation": "정의에서 슬롯 ID를 반복합니다(제외 )",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767058Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:14/seg:0",
+      "source": "Add \"third-party slot ID allocation\" and \"avoiding anonymous unions\" to Rejected Ideas.",
+      "source_hash": 8008872580291759813,
+      "context_hash": 4587606140452245763,
+      "translation": "\"타사 슬롯 ID 할당\"과 \"익명 유니온 피하기\"를 거부된 아이디어에 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767058Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:15/seg:0",
+      "source": "`06-Jan-2025 <https://discuss.python.org/t/105552>`__",
+      "source_hash": 18364866512587208849,
+      "context_hash": 256122218440957729,
+      "translation": "`2025년 1월 6일 <https://discuss.python.org/t/105552>`__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767058Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:16/seg:0",
+      "source": "Initial PEP",
+      "source_hash": 14967910353291343199,
+      "context_hash": 10873594591780386599,
+      "translation": "최초 PEP",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:57.767059Z",
+      "issues": []
+    }
+  ]
+}

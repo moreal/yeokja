@@ -24,6 +24,26 @@ use yeokja_parser_utils::{
 
 pub struct RstParser;
 
+/// Parser for Python Enhancement Proposals.
+///
+/// A PEP starts with an RFC 2822 metadata preamble.  Most of its values are
+/// machine-readable enums, identifiers, dates, URLs, and author names, so the
+/// generic RST parser must not offer the preamble as prose.  Only the value of
+/// ``Title:`` is reader-facing natural language; the body after the first blank
+/// line is ordinary reStructuredText.
+pub struct PepParser;
+
+/// Parser for the withdrawn plaintext template in PEP 9.  Its entire body is
+/// deliberately wrapped in one RST literal block, although the contents are
+/// prose.  Removing only that outer marker in the parse shadow exposes the
+/// prose while reconstruction still targets the untouched original source.
+pub struct PepPlaintextParser;
+
+/// PEP variant that treats explicitly selected ``code-block:: text`` bodies
+/// as reader-facing prose.  Used narrowly for PEP 20, whose Zen aphorisms are
+/// marked as a text code block for layout rather than because they are code.
+pub struct PepTextBlockParser;
+
 /// Parser for the Mathematics in Lean source format.
 ///
 /// The book keeps reStructuredText prose inside `/- TEXT:` blocks in Lean
@@ -42,6 +62,128 @@ const MIL_TEXT_ENDS: [&str; 5] = [
     "BOTH: -/",
     "OMIT: -/",
 ];
+
+fn mask_pep_source(source: &str) -> Result<String, String> {
+    let mut masked = vec![b' '; source.len()];
+    for (index, byte) in source.as_bytes().iter().enumerate() {
+        if matches!(byte, b'\n' | b'\r') {
+            masked[index] = *byte;
+        }
+    }
+
+    let mut offset = 0usize;
+    let mut saw_pep = false;
+    let mut saw_title = false;
+    let mut body_start = None;
+    for line in source.split_inclusive('\n') {
+        let content = line.trim_end_matches(['\r', '\n']);
+        if content.is_empty() {
+            body_start = Some(offset + line.len());
+            break;
+        }
+        if offset == 0 {
+            saw_pep = content.starts_with("PEP:");
+        }
+        if let Some(value) = content.strip_prefix("Title:") {
+            let leading = value.len() - value.trim_start().len();
+            let start = offset + "Title:".len() + leading;
+            masked[start..offset + content.len()]
+                .copy_from_slice(&source.as_bytes()[start..offset + content.len()]);
+            saw_title = true;
+        }
+        offset += line.len();
+    }
+
+    if !saw_pep {
+        return Err("PEP source must begin with an RFC 2822 `PEP:` header".to_string());
+    }
+    if !saw_title {
+        return Err("PEP source has no `Title:` header".to_string());
+    }
+    let body_start = body_start.ok_or_else(|| {
+        "PEP metadata preamble is not terminated by a blank line".to_string()
+    })?;
+    // License notices are legal terms rather than translation prose.  Keep the
+    // final Copyright/License section (and anything following it) byte-for-byte
+    // so an exact grant or restriction can never be altered by the model.
+    let mut license_start = None;
+    let mut offset = 0usize;
+    let mut lines = source.split_inclusive('\n').peekable();
+    while let Some(line) = lines.next() {
+        let content = line.trim_end_matches(['\r', '\n']);
+        let heading = content.trim().to_ascii_lowercase();
+        let is_license_heading = matches!(
+            heading.as_str(),
+            "copyright"
+                | "copyright and license"
+                | "copyright/license"
+                | "copyright and/or license"
+                | "license"
+        );
+        if is_license_heading
+            && let Some(next) = lines.peek()
+        {
+            let adornment = next.trim();
+            if let Some(marker) = adornment.chars().next() {
+                if adornment.len() >= 3
+                    && marker.is_ascii_punctuation()
+                    && adornment.chars().all(|character| character == marker)
+                {
+                    license_start = Some(offset);
+                }
+            }
+        }
+        offset += line.len();
+    }
+    let translatable_end = license_start.unwrap_or(source.len());
+    if translatable_end > body_start {
+        masked[body_start..translatable_end]
+            .copy_from_slice(&source.as_bytes()[body_start..translatable_end]);
+    }
+
+    String::from_utf8(masked).map_err(|error| error.to_string())
+}
+
+fn split_zen_aphorisms(document: &mut Document) {
+    for section in &mut document.sections {
+        let mut blocks = Vec::new();
+        for block in section.blocks.drain(..) {
+            if !block.raw_content.contains("Beautiful is better than ugly.") {
+                blocks.push(block);
+                continue;
+            }
+            let span_start = block.span.as_ref().map(|span| span.start).unwrap_or(0);
+            let mut offset = 0usize;
+            for line in block.raw_content.split_inclusive('\n') {
+                let content = line.trim_end_matches(['\r', '\n']);
+                let prose = content.trim();
+                if !prose.is_empty() {
+                    let leading = content.find(prose).unwrap();
+                    let start = span_start + offset + leading;
+                    let end = start + prose.len();
+                    blocks.push(Block {
+                        block_type: BlockType::Paragraph,
+                        segments: make_segments(prose, BlockType::Paragraph, 0, 0),
+                        raw_content: prose.to_string(),
+                        heading_level: None,
+                        span: Some(start..end),
+                        role: BlockRole::None,
+                        translatable: true,
+                    });
+                }
+                offset += line.len();
+            }
+        }
+        section.blocks = blocks;
+    }
+    for (section_index, section) in document.sections.iter_mut().enumerate() {
+        for (block_index, block) in section.blocks.iter_mut().enumerate() {
+            for (segment_index, segment) in block.segments.iter_mut().enumerate() {
+                segment.id = SegmentId::new(section_index, block_index, segment_index);
+            }
+        }
+    }
+}
 
 fn mask_mil_source(source: &str) -> Result<String, String> {
     let mut masked = vec![b' '; source.len()];
@@ -768,10 +910,7 @@ impl DocumentParser for RstParser {
     }
 
     fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String {
-        let mut splices = collect_splices(document, translations);
-        splices.extend(adornment_edits(document, translations));
-        splices.extend(table_edits(document, translations));
-        apply_splices(&document.source, splices)
+        reconstruct_rst(document, translations)
     }
 }
 
@@ -800,6 +939,585 @@ impl DocumentParser for MilParser {
     fn markup(&self) -> Markup {
         Markup::Rst
     }
+}
+
+impl DocumentParser for PepParser {
+    fn parse(&self, source: &str) -> Document {
+        self.parse_checked(source).unwrap_or_else(|_| Document {
+            sections: Vec::new(),
+            source: source.to_string(),
+        })
+    }
+
+    fn parse_checked(
+        &self,
+        source: &str,
+    ) -> Result<Document, yeokja_core::parser::DocumentParseError> {
+        let masked = mask_pep_source(source).map_err(yeokja_core::parser::DocumentParseError)?;
+        let mut document = RstParser.parse(&masked);
+        document.source = source.to_string();
+        Ok(document)
+    }
+
+    fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String {
+        reconstruct_rst(document, translations)
+    }
+
+    fn markup(&self) -> Markup {
+        Markup::Rst
+    }
+}
+
+impl DocumentParser for PepPlaintextParser {
+    fn parse(&self, source: &str) -> Document {
+        self.parse_checked(source).unwrap_or_else(|_| Document {
+            sections: Vec::new(),
+            source: source.to_string(),
+        })
+    }
+
+    fn parse_checked(
+        &self,
+        source: &str,
+    ) -> Result<Document, yeokja_core::parser::DocumentParseError> {
+        let mut masked = mask_pep_source(source).map_err(yeokja_core::parser::DocumentParseError)?;
+        let marker = masked.find("\n::\n").ok_or_else(|| {
+            yeokja_core::parser::DocumentParseError(
+                "plaintext PEP has no outer `::` literal marker".to_string(),
+            )
+        })?;
+        masked.replace_range(marker + 1..marker + 3, "  ");
+        let mut document = RstParser.parse(&masked);
+        document.source = source.to_string();
+        Ok(document)
+    }
+
+    fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String {
+        reconstruct_rst(document, translations)
+    }
+
+    fn markup(&self) -> Markup {
+        Markup::Rst
+    }
+}
+
+impl DocumentParser for PepTextBlockParser {
+    fn parse(&self, source: &str) -> Document {
+        self.parse_checked(source).unwrap_or_else(|_| Document {
+            sections: Vec::new(),
+            source: source.to_string(),
+        })
+    }
+
+    fn parse_checked(
+        &self,
+        source: &str,
+    ) -> Result<Document, yeokja_core::parser::DocumentParseError> {
+        let mut masked = mask_pep_source(source).map_err(yeokja_core::parser::DocumentParseError)?;
+        let mut offset = 0usize;
+        let mut found = false;
+        for line in masked.clone().split_inclusive('\n') {
+            let content = line.trim_end_matches(['\r', '\n']);
+            if content.trim() == ".. code-block:: text" {
+                masked.replace_range(offset..offset + content.len(), &" ".repeat(content.len()));
+                found = true;
+            }
+            offset += line.len();
+        }
+        if !found {
+            return Err(yeokja_core::parser::DocumentParseError(
+                "selected PEP has no `code-block:: text` prose block".to_string(),
+            ));
+        }
+        let mut document = RstParser.parse(&masked);
+        split_zen_aphorisms(&mut document);
+        document.source = source.to_string();
+        Ok(document)
+    }
+
+    fn reconstruct(&self, document: &Document, translations: &TranslationMap) -> String {
+        reconstruct_rst(document, translations)
+    }
+
+    fn markup(&self) -> Markup {
+        Markup::Rst
+    }
+}
+
+/// Reconstruct RST while retaining the implicit target names of translated
+/// section titles that are referenced elsewhere in the document. In RST,
+/// `` `Future Directions`_ `` resolves to the heading text itself; translating
+/// only the heading silently changes that target to its Korean spelling.
+fn reconstruct_rst(document: &Document, translations: &TranslationMap) -> String {
+    // Zero-width insertions must sort before the title replacement at the same
+    // byte position, or `apply_splices` will correctly discard them as overlap.
+    let mut splices = embedded_link_target_edits(document, translations);
+    let (heading_edits, heading_aliases) = heading_anchor_edits(document, translations);
+    splices.extend(heading_edits);
+    // Anonymous hyperlink targets (``__ URL``) are RST structure, even though
+    // the legacy segmentation represents consecutive target lines as a prose
+    // block. Never splice their normalized segment text back into the source:
+    // doing so joins adjacent targets and changes their count. Filtering only
+    // at reconstruction keeps existing segment IDs and translation state
+    // stable while preserving the original target lines byte-for-byte.
+    let mut prose_translations = translations.clone();
+    rewrite_heading_references(&mut prose_translations, &heading_aliases);
+    for block in document.sections.iter().flat_map(|section| &section.blocks) {
+        if let Some(edit) = indented_alpha_enumeration_edit(block, &prose_translations) {
+            for segment in &block.segments {
+                prose_translations.remove(&segment.id);
+            }
+            splices.push(edit);
+            continue;
+        }
+        if block
+            .raw_content
+            .lines()
+            .all(|line| matches!(line.trim(), "__") || line.trim().starts_with("__ "))
+        {
+            for segment in &block.segments {
+                prose_translations.remove(&segment.id);
+            }
+        }
+    }
+    splices.extend(collect_splices(document, &prose_translations));
+    splices.extend(adornment_edits(document, translations));
+    splices.extend(table_edits(document, translations));
+    let mut output = apply_splices(&document.source, splices);
+    rewrite_heading_references_in_text(&mut output, &heading_aliases);
+    repair_korean_reference_boundaries(&output)
+}
+
+/// Keep an RST reference recognizable when a Korean particle follows it.
+///
+/// The per-segment format repair deliberately avoids guessing when an embedded
+/// link starts in one parser segment and closes in another. Once the complete
+/// document has been reconstructed, however, the closing backtick and its
+/// reference suffix are unambiguous. A backslash-escaped space is invisible in
+/// rendered output and gives docutils the boundary it requires.
+fn repair_korean_reference_boundaries(text: &str) -> String {
+    let chars: Vec<char> = text.chars().collect();
+    let mut insertions = std::collections::BTreeSet::new();
+
+    for at in 0..chars.len() {
+        let suffix_end = if chars[at] == '`' && chars.get(at + 1) == Some(&'_') {
+            if chars.get(at + 2) == Some(&'_') {
+                at + 3
+            } else {
+                at + 2
+            }
+        } else if chars[at] == ']' && chars.get(at + 1) == Some(&'_') {
+            at + 2
+        } else {
+            continue;
+        };
+        if chars.get(suffix_end).is_some_and(|ch| ('\u{ac00}'..='\u{d7a3}').contains(ch)) {
+            insertions.insert(suffix_end);
+        }
+    }
+
+    if insertions.is_empty() {
+        return text.to_string();
+    }
+    let mut repaired = String::with_capacity(text.len() + insertions.len() * 2);
+    for boundary in 0..=chars.len() {
+        if insertions.contains(&boundary) {
+            repaired.push_str("\\ ");
+        }
+        if let Some(ch) = chars.get(boundary) {
+            repaired.push(*ch);
+        }
+    }
+    repaired
+}
+
+fn indented_alpha_enumeration_edit(
+    block: &Block,
+    translations: &TranslationMap,
+) -> Option<(Range<usize>, String)> {
+    if !block
+        .segments
+        .iter()
+        .any(|segment| translations.contains_key(&segment.id))
+    {
+        return None;
+    }
+    let span = block.span.clone()?;
+    let mut lines = block.raw_content.lines();
+    let first = lines.next()?.trim_start();
+    if alpha_enumerator(first).is_none() {
+        return None;
+    }
+
+    let continuations: Vec<(String, String)> = lines
+        .filter_map(|line| {
+            let trimmed = line.trim_start();
+            let marker = alpha_enumerator(trimmed)?;
+            let indent = &line[..line.len() - trimmed.len()];
+            Some((format!(" {marker}"), format!("\n{indent}{marker}")))
+        })
+        .collect();
+    if continuations.is_empty() {
+        return None;
+    }
+
+    let mut rebuilt = join_segments_with_translations(&block.segments, translations);
+    for (needle, replacement) in continuations {
+        rebuilt = rebuilt.replacen(&needle, &replacement, 1);
+    }
+    Some((span, rebuilt))
+}
+
+fn alpha_enumerator(text: &str) -> Option<&str> {
+    let bytes = text.as_bytes();
+    if bytes.len() >= 3
+        && bytes[0].is_ascii_alphabetic()
+        && bytes[1] == b'.'
+        && bytes[2].is_ascii_whitespace()
+    {
+        Some(&text[..3])
+    } else {
+        None
+    }
+}
+
+/// An embedded RST link also defines a reusable target named by its visible
+/// label. If that label is translated, an earlier `` `label`_ `` reference
+/// breaks even though the URL itself survives. Preserve an explicit original
+/// label-to-URL target near the start of the document.
+fn embedded_link_target_edits(
+    document: &Document,
+    translations: &TranslationMap,
+) -> Vec<(Range<usize>, String)> {
+    let mut targets: Vec<(String, String)> = Vec::new();
+    for (label, target, link_start) in embedded_links(&document.source) {
+        let link_is_translated = document
+            .sections
+            .iter()
+            .flat_map(|section| &section.blocks)
+            .any(|block| {
+                block.span.as_ref().is_some_and(|span| span.contains(&link_start))
+                    && block
+                        .segments
+                        .iter()
+                        .any(|segment| translations.contains_key(&segment.id))
+            });
+        if !link_is_translated {
+            continue;
+        }
+        let quoted_reference = format!("`{label}`_");
+        if !document.source.contains(&quoted_reference) {
+            continue;
+        }
+        let plain_target = format!(".. _{label}:");
+        let quoted_target = format!(".. _`{label}`:");
+        if document
+            .source
+            .lines()
+            .any(|line| matches!(line.trim(), existing if existing == plain_target || existing.starts_with(&quoted_target)))
+            || targets.iter().any(|(existing, _)| existing == &label)
+        {
+            continue;
+        }
+        targets.push((label, target));
+    }
+    if targets.is_empty() {
+        return Vec::new();
+    }
+
+    let insertion = if document.source.starts_with("PEP:") {
+        document
+            .source
+            .find("\n\n")
+            .map(|start| start + 2)
+            .unwrap_or(0)
+    } else {
+        0
+    };
+    let directives = targets
+        .into_iter()
+        .map(|(label, target)| format!(".. _`{label}`: {target}\n"))
+        .collect::<String>()
+        + "\n";
+    vec![(insertion..insertion, directives)]
+}
+
+fn embedded_links(source: &str) -> Vec<(String, String, usize)> {
+    let mut links = Vec::new();
+    let mut offset = 0usize;
+    while let Some(open) = source[offset..].find('`') {
+        let content_start = offset + open + 1;
+        let Some(close) = source[content_start..].find('`') else { break };
+        let content_end = content_start + close;
+        let content = &source[content_start..content_end];
+        if source[content_end + 1..].starts_with('_')
+            && let Some(target_start) = content.rfind(" <")
+            && let Some(target) = content[target_start + 2..].strip_suffix('>')
+        {
+            let label = content[..target_start]
+                .split_whitespace()
+                .collect::<Vec<_>>()
+                .join(" ");
+            if !label.is_empty() && !label.contains('`') && !target.ends_with('_') {
+                links.push((label, target.to_string(), offset + open));
+            }
+        }
+        offset = content_end + 1;
+    }
+    links
+}
+
+fn heading_anchor_edits(
+    document: &Document,
+    translations: &TranslationMap,
+) -> (Vec<(Range<usize>, String)>, Vec<(String, String)>) {
+    let mut edits = Vec::new();
+    let mut aliases = Vec::new();
+    let namespace = document_target_namespace(&document.source);
+    // reStructuredText normalizes implicit target names case-insensitively.
+    // Search the source the same way, otherwise a reference such as
+    // `` `Backward compatibility`_ `` is missed for the heading
+    // ``Backward Compatibility`` and translation breaks the link.
+    let folded_source = document
+        .source
+        .to_ascii_lowercase()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
+    for block in document.sections.iter().flat_map(|section| &section.blocks) {
+        if !matches!(block.role, BlockRole::AdornedTitle { .. })
+            || !block
+                .segments
+                .iter()
+                .any(|segment| translations.contains_key(&segment.id))
+        {
+            continue;
+        }
+        let original = block.raw_content.trim();
+        if original.is_empty() || original.contains(['\n', '\r']) {
+            continue;
+        }
+        let translated_heading = join_segments_with_translations(&block.segments, translations);
+        if translated_heading.trim() == normalize_inline_text(original).trim() {
+            continue;
+        }
+        // Inline literals do not form part of an implicit section target's
+        // name: ````ImageSize`` Class`` is referenced as
+        // `` `ImageSize class`_ ``. Support this common, unambiguous markup
+        // while still declining headings with single-backtick links or roles.
+        let target_name = if original.contains("``") {
+            strip_emphasis_markup(&original.replace("``", ""))
+        } else if original.contains('`') {
+            continue;
+        } else {
+            strip_emphasis_markup(original)
+        };
+        let folded_original = target_name
+            .to_ascii_lowercase()
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ");
+        let quoted_reference = format!("`{folded_original}`_");
+        let bare_reference = format!("{folded_original}_");
+        let embedded_reference = format!("<{folded_original}_>");
+        let sphinx_reference = format!(":ref:`{folded_original}`");
+        let referenced = folded_source.contains(&quoted_reference)
+            || (!original.contains(char::is_whitespace)
+                && contains_bare_rst_reference(&folded_source, &bare_reference))
+            || folded_source.contains(&embedded_reference)
+            || folded_source.contains(&sphinx_reference);
+        if !referenced {
+            continue;
+        }
+        let plain_target = format!(".. _{target_name}:");
+        let quoted_target = format!(".. _`{target_name}`:");
+        if document
+            .source
+            .lines()
+            .any(|line| {
+                let target = line.trim();
+                target == plain_target
+                    || target == quoted_target
+                    || target.starts_with(&format!("{plain_target} "))
+                    || target.starts_with(&format!("{quoted_target} "))
+            })
+        {
+            continue;
+        }
+        let Some(span) = &block.span else { continue };
+        let unique_target = format!("yeokja-{namespace}-target-{}", span.start);
+        let insertion_start = match &block.role {
+            BlockRole::AdornedTitle {
+                overline: Some(overline),
+                ..
+            } => document.source[..overline.start]
+                .rfind('\n')
+                .map_or(0, |at| at + 1),
+            _ => span.start,
+        };
+        edits.push((
+            insertion_start..insertion_start,
+            format!(".. _{unique_target}:\n\n"),
+        ));
+        aliases.push((target_name, unique_target));
+    }
+    (edits, aliases)
+}
+
+fn strip_emphasis_markup(text: &str) -> String {
+    if text.matches('*').count() >= 2 {
+        text.replace('*', "")
+    } else {
+        text.to_string()
+    }
+}
+
+fn document_target_namespace(source: &str) -> String {
+    if let Some(number) = source
+        .lines()
+        .next()
+        .and_then(|line| line.strip_prefix("PEP:"))
+        .map(str::trim)
+        .filter(|number| number.chars().all(|character| character.is_ascii_digit()))
+    {
+        return format!("pep-{number:0>4}");
+    }
+
+    let hash = source.as_bytes().iter().fold(0xcbf29ce484222325u64, |hash, byte| {
+        (hash ^ u64::from(*byte)).wrapping_mul(0x100000001b3)
+    });
+    format!("doc-{hash:016x}")
+}
+
+fn rewrite_heading_references(
+    translations: &mut TranslationMap,
+    aliases: &[(String, String)],
+) {
+    for translation in translations.values_mut() {
+        rewrite_heading_references_in_text(translation, aliases);
+    }
+}
+
+fn rewrite_heading_references_in_text(text: &mut String, aliases: &[(String, String)]) {
+    for (target_name, unique_target) in aliases {
+        let embedded = format!("<{target_name}_>");
+        *text = replace_ascii_case_insensitive(
+            text,
+            &embedded,
+            &format!("<{unique_target}_>"),
+        );
+
+        let sphinx = format!(":ref:`{target_name}`");
+        *text = replace_ascii_case_insensitive(
+            text,
+            &sphinx,
+            &format!(":ref:`{target_name} <{unique_target}>`"),
+        );
+
+        let quoted = format!("`{target_name}`_");
+        let quoted_replacement = format!("`{target_name} <{unique_target}_>`_");
+        *text = replace_flexible_quoted_reference(text, target_name, &quoted_replacement);
+        *text = replace_ascii_case_insensitive(text, &quoted, &quoted_replacement);
+
+        if !target_name.contains(char::is_whitespace) {
+            *text = replace_bare_rst_reference(
+                text,
+                &format!("{target_name}_"),
+                &format!("`{target_name} <{unique_target}_>`_"),
+            );
+        }
+    }
+}
+
+fn replace_ascii_case_insensitive(input: &str, needle: &str, replacement: &str) -> String {
+    if needle.is_empty() {
+        return input.to_string();
+    }
+    let folded_input = input.to_ascii_lowercase();
+    let folded_needle = needle.to_ascii_lowercase();
+    let mut output = String::with_capacity(input.len());
+    let mut offset = 0usize;
+    while let Some(found) = folded_input[offset..].find(&folded_needle) {
+        let start = offset + found;
+        output.push_str(&input[offset..start]);
+        output.push_str(replacement);
+        offset = start + needle.len();
+    }
+    output.push_str(&input[offset..]);
+    output
+}
+
+fn replace_flexible_quoted_reference(input: &str, target_name: &str, replacement: &str) -> String {
+    let folded_target = target_name
+        .to_ascii_lowercase()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
+    let mut output = String::with_capacity(input.len());
+    let mut offset = 0usize;
+    while let Some(open) = input[offset..].find('`') {
+        let start = offset + open;
+        let content_start = start + 1;
+        let Some(close) = input[content_start..].find("`_") else {
+            break;
+        };
+        let content_end = content_start + close;
+        let folded_content = input[content_start..content_end]
+            .to_ascii_lowercase()
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ");
+        if folded_content == folded_target {
+            output.push_str(&input[offset..start]);
+            output.push_str(replacement);
+            offset = content_end + 2;
+        } else {
+            output.push_str(&input[offset..content_start]);
+            offset = content_start;
+        }
+    }
+    output.push_str(&input[offset..]);
+    output
+}
+
+fn replace_bare_rst_reference(input: &str, reference: &str, replacement: &str) -> String {
+    let folded_input = input.to_ascii_lowercase();
+    let folded_reference = reference.to_ascii_lowercase();
+    let mut output = String::with_capacity(input.len());
+    let mut offset = 0usize;
+    while let Some(found) = folded_input[offset..].find(&folded_reference) {
+        let start = offset + found;
+        let end = start + reference.len();
+        let before = input[..start].chars().next_back();
+        let after = input[end..].chars().next();
+        let is_name_character = |character: char| {
+            character.is_alphanumeric() || matches!(character, '_' | '-')
+        };
+        if before.is_none_or(|character| !is_name_character(character))
+            && after.is_none_or(|character| !is_name_character(character))
+        {
+            output.push_str(&input[offset..start]);
+            output.push_str(replacement);
+            offset = end;
+        } else {
+            output.push_str(&input[offset..end]);
+            offset = end;
+        }
+    }
+    output.push_str(&input[offset..]);
+    output
+}
+
+fn contains_bare_rst_reference(source: &str, reference: &str) -> bool {
+    source.match_indices(reference).any(|(start, matched)| {
+        let before = source[..start].chars().next_back();
+        let after = source[start + matched.len()..].chars().next();
+        let is_name_character = |character: char| {
+            character.is_alphanumeric() || matches!(character, '_' | '-')
+        };
+        before.is_none_or(|character| !is_name_character(character))
+            && after.is_none_or(|character| !is_name_character(character))
+    })
 }
 
 /// The last line of the indented block starting under line `at`: lines more
@@ -834,8 +1552,17 @@ fn adornment_edits(
 ) -> Vec<(Range<usize>, String)> {
     let mut edits = Vec::new();
     for block in document.sections.iter().flat_map(|s| s.blocks.iter()) {
-        let BlockRole::AdornedTitle { underline, overline } = &block.role else {
-            continue;
+        let (underline, overline) = match &block.role {
+            BlockRole::AdornedTitle { underline, overline } => {
+                (underline.clone(), overline.clone())
+            }
+            _ if block.block_type == BlockType::ListItem => {
+                let Some(underline) = enumerated_title_underline(document, block) else {
+                    continue;
+                };
+                (underline, None)
+            }
+            _ => continue,
         };
         if !block
             .segments
@@ -847,17 +1574,59 @@ fn adornment_edits(
         let Some(marker) = document.source[underline.clone()].chars().next() else {
             continue;
         };
-        let width = display_width(&join_segments_with_translations(
+        let translated_width = display_width(&join_segments_with_translations(
             &block.segments,
             translations,
         ));
+        let fixed_whitespace_width = block.span.as_ref().map_or(0, |span| {
+            let line_start = document.source[..span.start]
+                .rfind('\n')
+                .map_or(0, |at| at + 1);
+            let line_end = document.source[span.end..]
+                .find('\n')
+                .map_or(document.source.len(), |at| span.end + at);
+            display_width(&document.source[line_start..span.start])
+                + display_width(&document.source[span.end..line_end])
+        });
+        let width = translated_width + fixed_whitespace_width;
         let drawn = marker.to_string().repeat(width.max(4));
-        edits.push((underline.clone(), drawn.clone()));
+        edits.push((underline, drawn.clone()));
         if let Some(over) = overline {
-            edits.push((over.clone(), drawn));
+            edits.push((over, drawn));
         }
     }
     edits
+}
+
+/// A title such as ``6. METH_FASTCALL is private`` initially looks like an
+/// enumerated list item. Keep that legacy block classification (and therefore
+/// stable translation IDs), but recognize its following adornment while
+/// reconstructing so a wider translation receives a sufficiently long line.
+fn enumerated_title_underline(document: &Document, block: &Block) -> Option<Range<usize>> {
+    let span = block.span.as_ref()?;
+    let line_start = document.source[..span.start]
+        .rfind('\n')
+        .map_or(0, |at| at + 1);
+    let line_end = document.source[span.end..]
+        .find('\n')
+        .map(|at| span.end + at)?;
+    let line = &document.source[line_start..line_end];
+    if parse_enumerated_item(line)? != span.start - line_start {
+        return None;
+    }
+
+    let next_start = line_end + 1;
+    let next_end = document.source[next_start..]
+        .find('\n')
+        .map_or(document.source.len(), |at| next_start + at);
+    let next = &document.source[next_start..next_end];
+    let trimmed = next.trim();
+    adornment_char(trimmed)?;
+    if !adornment_covers(trimmed, line) {
+        return None;
+    }
+    let leading = next.len() - next.trim_start().len();
+    Some(next_start + leading..next_start + leading + trimmed.len())
 }
 
 /// Redraw each table that has a translated cell. The anchor block keeps the
@@ -1058,6 +1827,16 @@ mod tests {
     }
 
     #[test]
+    fn translated_overlined_title_counts_preserved_indentation() {
+        let output = translate_all(
+            &RstParser,
+            "==========\n Abstract\n==========\n\nBody.\n",
+            &[("Abstract", "초록"), ("Body.", "본문.")],
+        );
+        assert_eq!(output, "=====\n 초록\n=====\n\n본문.\n");
+    }
+
+    #[test]
     fn literal_block_after_double_colon_is_opaque() {
         let source = "Some code::\n\n    print(\"hi\")\n    more()\n\nAfter text.\n";
         let doc = RstParser.parse(source);
@@ -1163,6 +1942,22 @@ mod tests {
     }
 
     #[test]
+    fn consecutive_anonymous_hyperlink_targets_stay_on_separate_lines() {
+        let source = "See `one`__ and `two`__.\n\n__ https://example.com/one\n__ https://example.com/two\n";
+        let doc = RstParser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 2);
+        assert_eq!(segments[0].source, "See `one`__ and `two`__.");
+        assert_eq!(
+            segments[1].source,
+            "__ https://example.com/one __ https://example.com/two"
+        );
+        let mut translations = TranslationMap::new();
+        translations.insert(segments[1].id.clone(), "broken joined targets".to_string());
+        assert_eq!(RstParser.reconstruct(&doc, &translations), source);
+    }
+
+    #[test]
     fn comment_is_opaque() {
         let source = ".. this is a comment\n   continued here\n\nReal text.\n";
         let doc = RstParser.parse(source);
@@ -1215,6 +2010,63 @@ mod tests {
         let segments = doc.translatable_segments();
         assert_eq!(segments.len(), 3);
         assert!(segments.iter().all(|s| s.block_type == BlockType::ListItem));
+    }
+
+    #[test]
+    fn indented_alpha_enumeration_keeps_each_item_on_its_source_line() {
+        let source = "- Unpack.\n\n  a. Parse the metadata.\n  b. Check the version.\n  c. Finish.\n";
+        let doc = RstParser.parse(source);
+        assert_eq!(RstParser.reconstruct(&doc, &TranslationMap::new()), source);
+
+        let mut translations = TranslationMap::new();
+        for segment in doc.translatable_segments() {
+            translations.insert(segment.id.clone(), segment.source.clone());
+        }
+
+        assert_eq!(RstParser.reconstruct(&doc, &translations), source);
+    }
+
+    #[test]
+    fn enumerated_title_underline_expands_without_changing_its_block_id() {
+        let source = "6. METH_FASTCALL is private\n---------------------------\n";
+        let doc = RstParser.parse(source);
+        let segment = &doc.translatable_segments()[0];
+        assert_eq!(segment.id.0, "section:0/block:0/seg:0");
+        assert_eq!(segment.block_type, BlockType::ListItem);
+
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[("METH_FASTCALL is private", "METH_FASTCALL은 비공개입니다")],
+        );
+        assert_eq!(
+            output,
+            "6. METH_FASTCALL은 비공개입니다\n-------------------------------\n"
+        );
+    }
+
+    #[test]
+    fn enumerated_title_with_inline_literal_expands_its_underline() {
+        let source = "1. Add an operator for ``Union[type1, type2]``?\n--------------------------------------------------\n";
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[(
+                "Add an operator for ``Union[type1, type2]``?",
+                "``Union[type1, type2]``\\ 를 위한 새 연산자를 추가할까요?",
+            )],
+        );
+        let mut lines = output.lines();
+        let title = lines.next().unwrap();
+        let underline = lines.next().unwrap();
+        assert!(underline.len() > 50, "{title}\n{underline}");
+    }
+
+    #[test]
+    fn alpha_enumerator_rejects_short_and_non_ascii_text() {
+        assert_eq!(alpha_enumerator("a."), None);
+        assert_eq!(alpha_enumerator("안."), None);
+        assert_eq!(alpha_enumerator("a. item"), Some("a. "));
     }
 
     #[test]
@@ -1299,6 +2151,19 @@ mod tests {
             output,
             "+------+----+\n| 가나 | b  |\n+======+====+\n| c    | d  |\n+------+----+\n\n이후.\n"
         );
+    }
+
+    #[test]
+    fn translated_grid_table_restores_each_line_block_marker() {
+        let source = "+----+----------+\n| x  | | first  |\n|    | | second |\n+----+----------+\n";
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[("x", "x"), ("| first | second", "| one two | three")],
+        );
+
+        assert!(output.lines().filter(|line| line.contains("| | ")).count() >= 2);
+        assert!(!output.contains("two |"));
     }
 
     #[test]
@@ -1419,6 +2284,362 @@ mod tests {
         let source = "Title\n=====\n\nBody text::\n\n    code\n\n* item\n\n.. note::\n\n   text\n";
         let doc = RstParser.parse(source);
         assert_eq!(RstParser.reconstruct(&doc, &TranslationMap::new()), source);
+    }
+
+    #[test]
+    fn pep_parser_translates_only_title_and_body_prose() {
+        let source = "PEP: 9999\nTitle: A Useful Proposal\nAuthor: Jane Example <jane@example.com>\nStatus: Draft\nType: Standards Track\nCreated: 01-Jan-2026\nPost-History:\n\nAbstract\n========\n\nThis proposal helps readers.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let segments = doc.translatable_segments();
+        let sources: Vec<&str> = segments.iter().map(|segment| segment.source.as_str()).collect();
+        assert_eq!(
+            sources,
+            vec!["A Useful Proposal", "Abstract", "This proposal helps readers."]
+        );
+
+        let mut translations = TranslationMap::new();
+        for segment in segments {
+            let translation = match segment.source.as_str() {
+                "A Useful Proposal" => "유용한 제안",
+                "Abstract" => "초록",
+                "This proposal helps readers." => "이 제안은 독자에게 도움이 됩니다.",
+                other => panic!("unexpected segment: {other}"),
+            };
+            translations.insert(segment.id.clone(), translation.to_string());
+        }
+        assert_eq!(
+            PepParser.reconstruct(&doc, &translations),
+            "PEP: 9999\nTitle: 유용한 제안\nAuthor: Jane Example <jane@example.com>\nStatus: Draft\nType: Standards Track\nCreated: 01-Jan-2026\nPost-History:\n\n초록\n====\n\n이 제안은 독자에게 도움이 됩니다.\n"
+        );
+    }
+
+    #[test]
+    fn pep_parser_rejects_non_pep_input() {
+        let error = PepParser.parse_checked("Title: Not a PEP\n\nBody.\n").unwrap_err();
+        assert!(error.0.contains("must begin"));
+    }
+
+    #[test]
+    fn pep_parser_keeps_license_notice_verbatim() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nBody text.\n\nCopyright\n=========\n\nThis document has been placed in the public domain.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|segment| segment.source.as_str())
+            .collect();
+        assert_eq!(sources, vec!["Example", "Body text."]);
+        assert_eq!(PepParser.reconstruct(&doc, &TranslationMap::new()), source);
+    }
+
+    #[test]
+    fn pep_parser_preserves_a_referenced_heading_target_when_translated() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nSee `Future Directions`_ below.\n\nFuture Directions\n=================\n\nMore details.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let heading = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source == "Future Directions")
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(heading.id.clone(), "향후 방향".to_string());
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(rebuilt.contains(".. _yeokja-pep-9999-target-"));
+        assert!(rebuilt.contains("\n\n향후 방향\n========="));
+        assert!(rebuilt.contains("See `Future Directions <yeokja-pep-9999-target-"));
+    }
+
+    #[test]
+    fn pep_parser_matches_referenced_heading_targets_case_insensitively() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nSee `Backward compatibility`_ below.\n\nBackward Compatibility\n======================\n\nMore details.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let heading = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source == "Backward Compatibility")
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(heading.id.clone(), "하위 호환성".to_string());
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(rebuilt.contains(".. _yeokja-pep-9999-target-"));
+        assert!(rebuilt.contains("\n\n하위 호환성"));
+        assert!(rebuilt.contains(
+            "See `Backward Compatibility <yeokja-pep-9999-target-"
+        ));
+    }
+
+    #[test]
+    fn pep_parser_matches_referenced_heading_targets_across_line_breaks() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nSee the `Docutils\nProject Model`_ below.\n\nDocutils Project Model\n======================\n\nMore details.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let heading = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source == "Docutils Project Model")
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(heading.id.clone(), "Docutils 프로젝트 모델".to_string());
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(rebuilt.contains(".. _yeokja-pep-9999-target-"));
+        assert!(rebuilt.contains("\n\nDocutils 프로젝트 모델"));
+        assert!(rebuilt.contains(
+            "`Docutils Project Model <yeokja-pep-9999-target-"
+        ));
+    }
+
+    #[test]
+    fn pep_parser_preserves_the_plain_target_name_of_a_literal_heading() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nSee the `ImageSize class`_.\n\n``ImageSize`` Class\n-------------------\n\nMore details.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let heading = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source == "``ImageSize`` Class")
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(heading.id.clone(), "``ImageSize`` 클래스".to_string());
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(rebuilt.contains(".. _yeokja-pep-9999-target-"));
+        assert!(rebuilt.contains("\n\n``ImageSize`` 클래스"));
+        assert!(rebuilt.contains("`ImageSize Class <yeokja-pep-9999-target-"));
+    }
+
+    #[test]
+    fn pep_parser_places_an_anchor_before_an_overlined_heading() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nSee `Fancy Heading`_.\n\n=============\nFancy Heading\n=============\n\nMore details.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let heading = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source == "Fancy Heading")
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(heading.id.clone(), "화려한 제목".to_string());
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(rebuilt.contains(".. _yeokja-pep-9999-target-"));
+        assert!(rebuilt.contains("\n\n.. _yeokja-pep-9999-target-"));
+        assert!(rebuilt.contains("\n\n===========\n화려한 제목\n==========="));
+        assert!(!rebuilt.contains("===========\n.. _yeokja"));
+    }
+
+    #[test]
+    fn pep_parser_preserves_the_plain_target_name_of_an_emphasized_heading() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nSee the `Distutils register Command`_.\n\nDistutils *register* Command\n----------------------------\n\nMore details.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let heading = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source == "Distutils *register* Command")
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(heading.id.clone(), "Distutils *register* 명령".to_string());
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(rebuilt.contains(".. _yeokja-pep-9999-target-"));
+        assert!(rebuilt.contains("\n\nDistutils *register* 명령"));
+        assert!(rebuilt.contains(
+            "`Distutils register Command <yeokja-pep-9999-target-"
+        ));
+    }
+
+    #[test]
+    fn pep_parser_preserves_a_literal_escaped_star_in_a_heading_target() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nSee `Programming Without 'except \\*'`_.\n\nProgramming Without 'except \\*'\n--------------------------------\n\nMore details.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let heading = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source == "Programming Without 'except \\*'")
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(
+            heading.id.clone(),
+            "'except \\*' 없는 프로그래밍".to_string(),
+        );
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(rebuilt.contains(".. _yeokja-pep-9999-target-"));
+        assert!(rebuilt.contains("\n\n'except \\*' 없는 프로그래밍"));
+        assert!(rebuilt.contains(
+            "`Programming Without 'except \\*' <yeokja-pep-9999-target-"
+        ));
+    }
+
+    #[test]
+    fn reconstruction_repairs_a_korean_particle_after_a_split_embedded_link() {
+        assert_eq!(
+            repair_korean_reference_boundaries(
+                "`DaCapo Benchmarks\nAnalysis <https://example.com>`_입니다."
+            ),
+            "`DaCapo Benchmarks\nAnalysis <https://example.com>`_\\ 입니다."
+        );
+        assert_eq!(
+            repair_korean_reference_boundaries("참고문헌 [#named]_에서 설명합니다."),
+            "참고문헌 [#named]_\\ 에서 설명합니다."
+        );
+    }
+
+    #[test]
+    fn pep_parser_does_not_add_an_anchor_to_an_unreferenced_heading() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nFuture Directions\n=================\n\nMore details.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let heading = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source == "Future Directions")
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(heading.id.clone(), "향후 방향".to_string());
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(!rebuilt.contains(".. _`Future Directions`:"));
+    }
+
+    #[test]
+    fn pep_parser_does_not_treat_a_suffix_of_another_reference_as_a_heading_reference() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nSee git-svn_.\n\nsvn\n---\n\nMore details.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let heading = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source == "svn")
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(heading.id.clone(), "서브버전".to_string());
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(!rebuilt.contains(".. _`svn`:"));
+    }
+
+    #[test]
+    fn pep_parser_does_not_duplicate_an_explicit_link_target_named_like_a_heading() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nSee PyPy_.\n\n.. _PyPy: https://www.pypy.org/\n\nPyPy\n----\n\nMore details.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let heading = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source == "PyPy")
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(heading.id.clone(), "파이파이".to_string());
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert_eq!(rebuilt.matches(".. _PyPy:").count(), 1);
+        assert!(!rebuilt.contains(".. _`PyPy`:"));
+    }
+
+    #[test]
+    fn pep_parser_preserves_a_heading_target_used_by_an_embedded_alias() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nSee `the old role <Python's BDFL_>`_.\n\nPython's BDFL\n=============\n\nMore details.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let heading = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source == "Python's BDFL")
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(heading.id.clone(), "파이썬의 BDFL".to_string());
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(rebuilt.contains(".. _yeokja-pep-9999-target-"));
+        assert!(rebuilt.contains("\n\n파이썬의 BDFL"));
+        assert!(rebuilt.contains("<yeokja-pep-9999-target-"));
+    }
+
+    #[test]
+    fn pep_parser_preserves_a_reused_embedded_link_target() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nSee the `PEPs repository`_.\n\nThe source is in the `PEPs repository <https://github.com/python/peps/>`_.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let link = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source.contains("source is in"))
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(
+            link.id.clone(),
+            "소스는 `PEP 저장소 <https://github.com/python/peps/>`_\\ 에 있습니다."
+                .to_string(),
+        );
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(rebuilt.contains(
+            "Post-History:\n\n.. _`PEPs repository`: https://github.com/python/peps/\n\n"
+        ));
+        assert!(rebuilt.contains("`PEPs repository`_"));
+        assert!(rebuilt.contains("`PEP 저장소 <https://github.com/python/peps/>`_"));
+    }
+
+    #[test]
+    fn pep_parser_preserves_a_reused_multiline_embedded_link_target() {
+        let source = "PEP: 9999\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nSee the `Python recipe 576540`_.\n\n* `Python recipe\n  576540 <https://example.com/576540/>`_ by Jane.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let link = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source.starts_with("`Python recipe"))
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(
+            link.id.clone(),
+            "`Python 레시피 576540 <https://example.com/576540/>`_".to_string(),
+        );
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(rebuilt.contains(".. _`Python recipe 576540`: https://example.com/576540/"));
+    }
+
+    #[test]
+    fn plaintext_pep_parser_exposes_the_outer_literal_as_prose() {
+        let source = "PEP: 9\nTitle: Plaintext Template\nAuthor: Jane Example\nStatus: Withdrawn\nType: Process\nCreated: 01-Jan-2001\nPost-History:\n\n::\n\n  Abstract\n\n      Reader-facing prose.\n\n  Copyright\n  =========\n\n  This document has been placed in the public domain.\n";
+        let doc = PepPlaintextParser.parse_checked(source).unwrap();
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|segment| segment.source.as_str())
+            .collect();
+        assert_eq!(sources, vec!["Plaintext Template", "Abstract", "Reader-facing prose."]);
+        assert_eq!(PepPlaintextParser.reconstruct(&doc, &TranslationMap::new()), source);
+    }
+
+    #[test]
+    fn text_block_pep_parser_exposes_selected_aphorisms_but_not_python() {
+        let source = "PEP: 20\nTitle: Example\nAuthor: Jane Example\nStatus: Active\nType: Informational\nCreated: 01-Jan-2001\nPost-History:\n\n.. code-block:: text\n\n    Beautiful is better than ugly.\n    Explicit is better than implicit.\n\n.. code-block:: pycon\n\n    >>> import this\n\nCopyright\n=========\n\nThis document has been placed in the public domain.\n";
+        let doc = PepTextBlockParser.parse_checked(source).unwrap();
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|segment| segment.source.as_str())
+            .collect();
+        assert_eq!(
+            sources,
+            vec![
+                "Example",
+                "Beautiful is better than ugly.",
+                "Explicit is better than implicit."
+            ]
+        );
+        assert_eq!(PepTextBlockParser.reconstruct(&doc, &TranslationMap::new()), source);
+
+        let mut translations = TranslationMap::new();
+        for segment in doc.translatable_segments() {
+            let translation = match segment.source.as_str() {
+                "Beautiful is better than ugly." => "추한 것보다 아름다운 것이 낫다.",
+                "Explicit is better than implicit." => "암시적인 것보다 명시적인 것이 낫다.",
+                _ => continue,
+            };
+            translations.insert(segment.id.clone(), translation.to_string());
+        }
+        assert!(
+            PepTextBlockParser
+                .reconstruct(&doc, &translations)
+                .contains("    추한 것보다 아름다운 것이 낫다.\n    암시적인 것보다 명시적인 것이 낫다.\n")
+        );
     }
 
     #[test]

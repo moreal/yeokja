@@ -1,0 +1,1400 @@
+{
+  "version": 1,
+  "source_hash": 17402575353146000240,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Python Virtual Environments",
+      "source_hash": 17816585380731595028,
+      "context_hash": 16530898886277989957,
+      "translation": "Python 가상 환경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010242Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 12105901892586708964,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010247Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes to add to Python a mechanism for lightweight \"virtual environments\" with their own site directories, optionally isolated from system site directories.",
+      "source_hash": 1377085435751144189,
+      "context_hash": 5373252503418630635,
+      "translation": "이 PEP는 자체 사이트 디렉터리를 가지며 선택적으로 시스템 사이트 디렉터리와 격리할 수 있는 경량 \"가상 환경\" 메커니즘을 Python에 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010247Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "Each virtual environment has its own Python binary (allowing creation of environments with various Python versions) and can have its own independent set of installed Python packages in its site directories, but shares the standard library with the base installed Python.",
+      "source_hash": 5643552754729636216,
+      "context_hash": 6628229094764908834,
+      "translation": "각 가상 환경은 자체 Python 바이너리를 가지며(다양한 Python 버전의 환경을 생성할 수 있음), 사이트 디렉터리에 설치된 Python 패키지의 독립적인 집합을 자체적으로 가질 수 있지만, 기본 설치 Python과 표준 라이브러리를 공유합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리",
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:09.010247Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 11350140248610228430,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010250Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The utility of Python virtual environments has already been well established by the popularity of existing third-party virtual-environment tools, primarily Ian Bicking's `virtualenv`_.",
+      "source_hash": 8514741195183314709,
+      "context_hash": 18037309824898297734,
+      "translation": "Python 가상 환경의 유용성은 기존 서드파티 가상 환경 도구, 특히 Ian Bicking의 `virtualenv`_\\ 가 널리 사용되면서 이미 충분히 입증되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010250Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Virtual environments are already widely used for dependency management and isolation, ease of installing and using Python packages without system-administrator access, and automated testing of Python software across multiple Python versions, among other uses.",
+      "source_hash": 13608262537973986441,
+      "context_hash": 7784062953057590827,
+      "translation": "가상 환경은 의존성 관리 및 격리, 시스템 관리자 권한 없이 Python 패키지를 쉽게 설치하고 사용하는 작업, 여러 Python 버전에 걸친 Python 소프트웨어의 자동화된 테스트 등을 비롯한 다양한 용도로 이미 널리 사용되고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010250Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Existing virtual environment tools suffer from lack of support from the behavior of Python itself.",
+      "source_hash": 5791882731381024866,
+      "context_hash": 1574982301734900275,
+      "translation": "기존 가상 환경 도구는 Python 자체의 동작으로부터 지원을 받지 못하는 문제를 겪고 있습니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:09.010251Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "Tools such as `rvirtualenv`_, which do not copy the Python binary into the virtual environment, cannot provide reliable isolation from system site directories.",
+      "source_hash": 5220414101842933901,
+      "context_hash": 13791583547157819590,
+      "translation": "Python 바이너리를 가상 환경에 복사하지 않는 `rvirtualenv`_\\ 와 같은 도구는 시스템 사이트 디렉터리로부터의 안정적인 격리를 제공할 수 없습니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:09.010251Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "Virtualenv, which does copy the Python binary, is forced to duplicate much of Python's ``site`` module and manually symlink/copy an ever-changing set of standard-library modules into the virtual environment in order to perform a delicate boot-strapping dance at every startup. (Virtualenv must copy the binary in order to provide isolation, as Python dereferences a symlinked executable before searching for ``sys.prefix``.)",
+      "source_hash": 1585243495824334152,
+      "context_hash": 17059580211189880877,
+      "translation": "Python 바이너리를 복사하는 Virtualenv는 Python의 ``site`` 모듈 상당 부분을 중복 구현하고, 시작할 때마다 복잡한 부트스트랩 절차를 수행하기 위해 끊임없이 변경되는 표준 라이브러리 모듈 집합을 가상 환경에 수동으로 심볼릭 링크하거나 복사해야 합니다. (Python은 ``sys.prefix``\\ 를 검색하기 전에 심볼릭 링크된 실행 파일의 실제 대상을 확인하므로, 격리를 제공하려면 Virtualenv가 바이너리를 복사해야 합니다.)",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:09.010252Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "The ``PYTHONHOME`` environment variable, Python's only existing built-in solution for virtual environments, requires copying/symlinking the entire standard library into every environment.",
+      "source_hash": 4590591147694865580,
+      "context_hash": 15028831235323870804,
+      "translation": "Python의 가상 환경을 위한 유일한 기존 내장 솔루션인 ``PYTHONHOME`` 환경 변수는 전체 표준 라이브러리를 모든 환경에 복사하거나 심볼릭 링크할 것을 요구합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:04:09.010253Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "Copying the whole standard library is not a lightweight solution, and cross-platform support for symlinks remains inconsistent (even on Windows platforms that do support them, creating them often requires administrator privileges).",
+      "source_hash": 14511848822890613350,
+      "context_hash": 5223632659085528821,
+      "translation": "전체 표준 라이브러리를 복사하는 것은 경량 솔루션이 아니며, 심볼릭 링크에 대한 플랫폼 간 지원도 여전히 일관되지 않습니다(심볼릭 링크를 지원하는 Windows 플랫폼에서도 심볼릭 링크를 만들려면 관리자 권한이 필요한 경우가 많습니다).",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:04:09.010254Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "A virtual environment mechanism integrated with Python and drawing on years of experience with existing third-party tools can lower maintenance, raise reliability, and be more easily available to all Python users.",
+      "source_hash": 11123204809573781827,
+      "context_hash": 13198592928180997125,
+      "translation": "Python에 통합되고 기존 서드파티 도구를 수년간 사용하며 얻은 경험을 활용하는 가상 환경 메커니즘은 유지 관리 부담을 낮추고, 신뢰성을 높이며, 모든 Python 사용자가 더 쉽게 이용할 수 있도록 합니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:09.010255Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 16375424497542249055,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010255Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "When the Python binary is executed, it attempts to determine its prefix (which it stores in ``sys.prefix``), which is then used to find the standard library and other key files, and by the ``site`` module to determine the location of the site-package directories.",
+      "source_hash": 6744552315602251274,
+      "context_hash": 12959093266910424851,
+      "translation": "Python 바이너리가 실행되면 접두사(``sys.prefix``\\ 에 저장됨)를 확인하려고 시도하며, 이 접두사는 표준 라이브러리와 기타 주요 파일을 찾는 데 사용되고 ``site`` 모듈이 사이트 패키지 디렉터리의 위치를 확인하는 데 사용합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:04:09.010256Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "Currently the prefix is found (assuming ``PYTHONHOME`` is not set) by first walking up the filesystem tree looking for a marker file (``os.py``) that signifies the presence of the standard library, and if none is found, falling back to the build-time prefix hardcoded in the binary.",
+      "source_hash": 9075442967812652992,
+      "context_hash": 17525101491250846477,
+      "translation": "현재 접두사는(``PYTHONHOME``\\ 이 설정되지 않았다고 가정할 때) 표준 라이브러리의 존재를 나타내는 마커 파일(``os.py``)을 찾으며 파일 시스템 트리를 먼저 상위 방향으로 탐색하여 확인하고, 파일을 찾지 못하면 바이너리에 하드코딩된 빌드 시점 접두사로 대체합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:04:09.010257Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "This PEP proposes to add a new first step to this search.",
+      "source_hash": 10641374771249999269,
+      "context_hash": 11993441903994875491,
+      "translation": "이 PEP는 이 검색에 새로운 첫 단계를 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010257Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "If a ``pyvenv.cfg`` file is found either adjacent to the Python executable or one directory above it (if the executable is a symlink, it is not dereferenced), this file is scanned for lines of the form ``key = value``.",
+      "source_hash": 10746056529510457675,
+      "context_hash": 16958205403057463895,
+      "translation": "Python 실행 파일과 인접한 위치 또는 그보다 한 디렉터리 위에서 ``pyvenv.cfg`` 파일을 찾으면(실행 파일이 심볼릭 링크인 경우 실제 대상을 확인하지 않음), 이 파일에서 ``key = value``\\ 형식의 줄을 검색합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010258Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "If a ``home`` key is found, this signifies that the Python binary belongs to a virtual environment, and the value of the ``home`` key is the directory containing the Python executable used to create this virtual environment.",
+      "source_hash": 3538166543617218830,
+      "context_hash": 7907572012832152861,
+      "translation": "``home`` 키가 발견되면 이는 Python 바이너리가 가상 환경에 속한다는 의미이며, ``home`` 키의 값은 이 가상 환경을 생성하는 데 사용된 Python 실행 파일이 포함된 디렉터리입니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:09.010258Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "In this case, prefix-finding continues as normal using the value of the ``home`` key as the effective Python binary location, which finds the prefix of the base installation.  ``sys.base_prefix`` is set to this value, while ``sys.prefix`` is set to the directory containing ``pyvenv.cfg``.",
+      "source_hash": 9135799065820510164,
+      "context_hash": 5885091208571576626,
+      "translation": "이 경우 ``home`` 키의 값을 유효한 Python 바이너리 위치로 사용하여 접두사 확인을 정상적으로 계속하며, 이를 통해 기본 설치의 접두사를 찾습니다. ``sys.base_prefix``\\ 는 이 값으로 설정되고, ``sys.prefix``\\ 는 ``pyvenv.cfg``\\ 가 포함된 디렉터리로 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010259Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "(If ``pyvenv.cfg`` is not found or does not contain the ``home`` key, prefix-finding continues normally, and ``sys.prefix`` will be equal to ``sys.base_prefix``.)",
+      "source_hash": 7246116727494169913,
+      "context_hash": 14244915078758049834,
+      "translation": "(``pyvenv.cfg``\\ 를 찾지 못했거나 ``home`` 키가 포함되어 있지 않으면 접두사 확인은 정상적으로 계속되며, ``sys.prefix``\\ 는 ``sys.base_prefix``\\ 와 같아집니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010259Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "Also, ``sys.base_exec_prefix`` is added, and handled similarly with regard to ``sys.exec_prefix``. (``sys.exec_prefix`` is the equivalent of ``sys.prefix``, but for platform-specific files; by default it has the same value as ``sys.prefix``.)",
+      "source_hash": 12102599354467497400,
+      "context_hash": 1023295627484659849,
+      "translation": "또한 ``sys.base_exec_prefix``\\ 를 추가하고 ``sys.exec_prefix``\\ 와 관련하여 동일한 방식으로 처리합니다. (``sys.exec_prefix``\\ 는 플랫폼별 파일에 대한 ``sys.prefix``\\ 의 대응 항목이며, 기본적으로 ``sys.prefix``\\ 와 같은 값을 가집니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010259Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "The ``site`` and ``sysconfig`` standard-library modules are modified such that the standard library and header files are found relative to ``sys.base_prefix`` / ``sys.base_exec_prefix``, while site-package directories (\"purelib\" and \"platlib\", in ``sysconfig`` terms) are still found relative to ``sys.prefix`` / ``sys.exec_prefix``.",
+      "source_hash": 10267338132139354019,
+      "context_hash": 15827872703102428465,
+      "translation": "``site`` 및 ``sysconfig`` 표준 라이브러리 모듈을 수정하여 표준 라이브러리와 헤더 파일은 ``sys.base_prefix`` / ``sys.base_exec_prefix``\\ 를 기준으로 찾고, 사이트 패키지 디렉터리(``sysconfig`` 용어로는 \"purelib\" 및 \"platlib\")는 여전히 ``sys.prefix`` / ``sys.exec_prefix``\\ 를 기준으로 찾도록 합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:04:09.010260Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "Thus, a Python virtual environment in its simplest form would consist of nothing more than a copy or symlink of the Python binary accompanied by a ``pyvenv.cfg`` file and a site-packages directory.",
+      "source_hash": 277060910843963821,
+      "context_hash": 9637903621060056605,
+      "translation": "따라서 가장 단순한 형태의 Python 가상 환경은 Python 바이너리의 복사본 또는 심볼릭 링크에 ``pyvenv.cfg`` 파일과 사이트 패키지 디렉터리가 함께 있는 것만으로 구성됩니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:09.010260Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Isolation from system site-packages",
+      "source_hash": 12367801064919286918,
+      "context_hash": 15106644638000138546,
+      "translation": "시스템 사이트 패키지로부터의 격리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010261Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "By default, a virtual environment is entirely isolated from the system-level site-packages directories.",
+      "source_hash": 11264760564704347967,
+      "context_hash": 4780662393562145622,
+      "translation": "기본적으로 가상 환경은 시스템 수준의 사이트 패키지 디렉터리와 완전히 격리됩니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:09.010261Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "If the ``pyvenv.cfg`` file also contains a key ``include-system-site-packages`` with a value of ``true`` (not case sensitive), the ``site`` module will also add the system site directories to ``sys.path`` after the virtual environment site directories.",
+      "source_hash": 6271293350201249014,
+      "context_hash": 8093696099915051663,
+      "translation": "``pyvenv.cfg`` 파일에 값이 ``true``\\ (대소문자를 구분하지 않음)인 ``include-system-site-packages`` 키도 포함되어 있으면, ``site`` 모듈은 가상 환경 사이트 디렉터리 뒤에 시스템 사이트 디렉터리도 ``sys.path``\\ 에 추가합니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:49:59.933117Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "Thus system-installed packages will still be importable, but a package of the same name installed in the virtual environment will take precedence.",
+      "source_hash": 10380029259526375013,
+      "context_hash": 9736804454663628358,
+      "translation": "따라서 시스템에 설치된 패키지를 계속 임포트할 수 있지만, 같은 이름의 패키지가 가상 환경에 설치되어 있으면 해당 패키지가 우선합니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:09.010263Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": ":pep:`370` user-level site-packages are considered part of the system site-packages for venv purposes: they are not available from an isolated venv, but are available from an ``include-system-site-packages = true`` venv.",
+      "source_hash": 3687881974067416186,
+      "context_hash": 15072676229712052018,
+      "translation": ":pep:`370` 사용자 수준 사이트 패키지는 venv 목적상 시스템 사이트 패키지의 일부로 간주됩니다. 즉, 격리된 venv에서는 사용할 수 없지만 ``include-system-site-packages = true`` venv에서는 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010264Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Creating virtual environments",
+      "source_hash": 16486354285659127031,
+      "context_hash": 13898066365162981129,
+      "translation": "가상 환경 생성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010264Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "This PEP also proposes adding a new ``venv`` module to the standard library which implements the creation of virtual environments.",
+      "source_hash": 10861425738118492364,
+      "context_hash": 13335831448931754405,
+      "translation": "이 PEP는 가상 환경 생성을 구현하는 새로운 ``venv`` 모듈을 표준 라이브러리에 추가할 것도 제안합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:04:09.010265Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "This module can be executed using the ``-m`` flag",
+      "source_hash": 10571763637223892114,
+      "context_hash": 12918522516470904393,
+      "translation": "이 모듈은 ``-m`` 플래그를 사용하여 실행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:09.010266Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "A ``pyvenv`` installed script is also provided to make this more convenient",
+      "source_hash": 2315401662563789440,
+      "context_hash": 15765815967590402416,
+      "translation": "``pyvenv``\\ 로 설치된 스크립트도 이를 더 편리하게 만들기 위해 제공됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506166Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "Running this command creates the target directory (creating any parent directories that don't exist already) and places a ``pyvenv.cfg`` file in it with a ``home`` key pointing to the Python installation the command was run from.",
+      "source_hash": 11077634068444349696,
+      "context_hash": 4542296495773456506,
+      "translation": "이 명령을 실행하면 대상 디렉터리가 생성되고(아직 존재하지 않는 모든 상위 디렉터리도 생성됨) 명령이 실행된 Python 설치를 가리키는 ``home``\\ 키가 포함된 ``pyvenv.cfg`` 파일이 해당 디렉터리에 배치됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506171Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:1",
+      "source": "It also creates a ``bin/`` (or ``Scripts`` on Windows) subdirectory containing a copy (or symlink) of the ``python3`` executable, and the ``pysetup3`` script from the ``packaging`` standard library module (to facilitate easy installation of packages from PyPI into the new venv).",
+      "source_hash": 17306562534466768843,
+      "context_hash": 2137269570842865077,
+      "translation": "또한 ``python3`` 실행 파일의 복사본(또는 심볼릭 링크)과 ``packaging`` 표준 라이브러리 모듈의 ``pysetup3`` 스크립트를 포함하는 ``bin/`` (Windows에서는 ``Scripts``) 하위 디렉터리가 생성됩니다(PyPI에서 새 가상 환경으로 패키지를 쉽게 설치하기 위한 것입니다).",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:04:05.506171Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:2",
+      "source": "And it creates an (initially empty) ``lib/pythonX.Y/site-packages`` (or ``Lib\\site-packages`` on Windows) subdirectory.",
+      "source_hash": 8320506949225118175,
+      "context_hash": 742650176927354548,
+      "translation": "그리고 (처음에는 비어 있는) ``lib/pythonX.Y/site-packages`` (Windows에서는 ``Lib\\site-packages``) 하위 디렉터리도 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506173Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "If the target directory already exists an error will be raised, unless the ``--clear`` option was provided, in which case the target directory will be deleted and virtual environment creation will proceed as usual.",
+      "source_hash": 5160747876850967284,
+      "context_hash": 6840502841647655183,
+      "translation": "대상 디렉터리가 이미 존재하면 오류가 발생하지만, ``--clear`` 옵션이 제공된 경우에는 대상 디렉터리가 삭제되고 가상 환경 생성이 평소와 같이 진행됩니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:05.506173Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "The created ``pyvenv.cfg`` file also includes the ``include-system-site-packages`` key, set to ``true`` if ``pyvenv`` is run with the ``--system-site-packages`` option, ``false`` by default.",
+      "source_hash": 4794852041317609845,
+      "context_hash": 4510395551925924663,
+      "translation": "생성된 ``pyvenv.cfg`` 파일에는 ``include-system-site-packages``\\ 키도 포함되며, ``pyvenv``\\ 가 ``--system-site-packages`` 옵션으로 실행되면 ``true``\\ 로, 기본적으로는 ``false``\\ 로 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506174Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "Multiple paths can be given to ``pyvenv``, in which case an identical venv will be created, according to the given options, at each provided path.",
+      "source_hash": 8106410305470839108,
+      "context_hash": 18160446842172082533,
+      "translation": "``pyvenv``\\ 에 여러 경로를 지정할 수 있으며, 이 경우 지정된 각 경로에 주어진 옵션에 따라 동일한 가상 환경이 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506175Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "The ``venv`` module also places \"shell activation scripts\" for POSIX and Windows systems in the ``bin`` or ``Scripts`` directory of the venv.",
+      "source_hash": 848420818782372633,
+      "context_hash": 6255751708026765811,
+      "translation": "``venv`` 모듈은 POSIX 및 Windows 시스템을 위한 \"셸 활성화 스크립트\"도 가상 환경의 ``bin`` 또는 ``Scripts`` 디렉터리에 배치합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506175Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:1",
+      "source": "These scripts simply add the virtual environment's ``bin`` (or ``Scripts``) directory to the front of the user's shell PATH.",
+      "source_hash": 7183441761821632561,
+      "context_hash": 4200048800702557748,
+      "translation": "이러한 스크립트는 가상 환경의 ``bin`` (또는 ``Scripts``) 디렉터리를 사용자의 셸 PATH 앞에 추가할 뿐입니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:05.506175Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:2",
+      "source": "This is not strictly necessary for use of a virtual environment (as an explicit path to the venv's python binary or scripts can just as well be used), but it is convenient.",
+      "source_hash": 15441976925181717796,
+      "context_hash": 18388844537547471470,
+      "translation": "이는 가상 환경을 사용하는 데 반드시 필요한 것은 아니지만(가상 환경의 Python 바이너리나 스크립트에 대한 명시적 경로를 사용해도 동일하게 이용할 수 있음) 편리합니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:05.506176Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "In order to allow ``pysetup`` and other Python package managers to install packages into the virtual environment the same way they would install into a normal Python installation, and avoid special-casing virtual environments in ``sysconfig`` beyond using ``sys.base_prefix`` in place of ``sys.prefix`` where appropriate, the internal virtual environment layout mimics the layout of the Python installation itself on each platform.",
+      "source_hash": 3056678135084167848,
+      "context_hash": 11490948793210236135,
+      "translation": "``pysetup``\\ 및 기타 Python 패키지 관리자가 일반적인 Python 설치에 패키지를 설치하는 것과 동일한 방식으로 가상 환경에 패키지를 설치하도록 하고, 적절한 경우 ``sys.prefix``\\ 대신 ``sys.base_prefix``\\ 를 사용하는 것 외에는 ``sysconfig``\\ 에서 가상 환경을 특별히 처리하지 않도록 하기 위해, 내부 가상 환경 레이아웃은 각 플랫폼에서 Python 설치 자체의 레이아웃을 모방합니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:05.506177Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:1",
+      "source": "So a typical virtual environment layout on a POSIX system would be",
+      "source_hash": 17867418688524311742,
+      "context_hash": 12984240344358596127,
+      "translation": "따라서 POSIX 시스템에서 일반적인 가상 환경 레이아웃은 다음과 같습니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:05.506178Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "While on a Windows system",
+      "source_hash": 8162469276293706568,
+      "context_hash": 2389200517809797945,
+      "translation": "Windows 시스템에서는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506179Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "Third-party packages installed into the virtual environment will have their Python modules placed in the ``site-packages`` directory, and their executables placed in ``bin/`` or ``Scripts``.",
+      "source_hash": 11390244189033117008,
+      "context_hash": 3312331488394925504,
+      "translation": "가상 환경에 설치된 서드파티 패키지의 Python 모듈은 ``site-packages`` 디렉터리에 배치되고, 실행 파일은 ``bin/`` 또는 ``Scripts``\\ 에 배치됩니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:05.506179Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "On a normal Windows system-level installation, the Python binary itself wouldn't go inside the \"Scripts/\" subdirectory, as it does in the default venv layout.",
+      "source_hash": 2187770222383255362,
+      "context_hash": 12793341518910910133,
+      "translation": "일반적인 Windows 시스템 수준 설치에서는 기본 가상 환경 레이아웃에서와 달리 Python 바이너리 자체가 \"Scripts/\" 하위 디렉터리 안에 들어가지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506180Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:1",
+      "source": "This is useful in a virtual environment so that a user only has to add a single directory to their shell PATH in order to effectively \"activate\" the virtual environment.",
+      "source_hash": 16951756913293290978,
+      "context_hash": 4432171164539308940,
+      "translation": "이는 사용자가 가상 환경을 효과적으로 \"활성화\"하기 위해 셸 PATH에 단일 디렉터리만 추가하면 되도록 가상 환경에서 유용합니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:05.506180Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:0",
+      "source": "On Windows, it is necessary to also copy or symlink DLLs and pyd files from compiled stdlib modules into the env, because if the venv is created from a non-system-wide Python installation, Windows won't be able to find the Python installation's copies of those files when Python is run from the venv.",
+      "source_hash": 1834084645537403241,
+      "context_hash": 3923445448766274995,
+      "translation": "Windows에서는 컴파일된 표준 라이브러리 모듈의 DLL 및 pyd 파일도 환경에 복사하거나 심볼릭 링크해야 합니다. 시스템 전체에 설치되지 않은 Python 설치에서 가상 환경이 생성된 경우, 가상 환경에서 Python을 실행할 때 Windows가 Python 설치에 있는 해당 파일의 복사본을 찾지 못하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506180Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Sysconfig install schemes and user-site",
+      "source_hash": 6357720970750179060,
+      "context_hash": 11021629240985431666,
+      "translation": "Sysconfig 설치 체계 및 사용자 사이트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506181Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "This approach explicitly chooses not to introduce a new sysconfig install scheme for venvs.",
+      "source_hash": 18001585432211623307,
+      "context_hash": 15653804527210090461,
+      "translation": "이 방식은 가상 환경을 위한 새로운 sysconfig 설치 체계를 도입하지 않도록 명시적으로 선택합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506181Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "Rather, by modifying ``sys.prefix`` we ensure that existing install schemes which base locations on ``sys.prefix`` will simply work in a venv.",
+      "source_hash": 1075085684791845780,
+      "context_hash": 200416248412343023,
+      "translation": "대신 ``sys.prefix``\\ 를 수정함으로써, 위치를 ``sys.prefix``\\ 에 기반하는 기존 설치 체계가 가상 환경에서 그대로 작동하도록 보장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506181Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:2",
+      "source": "Installation to other install schemes (for instance, the user-site schemes) whose paths are not relative to ``sys.prefix``, will not be affected by a venv at all.",
+      "source_hash": 4811585748580931089,
+      "context_hash": 1536729112941847769,
+      "translation": "경로가 ``sys.prefix``\\ 에 상대적이지 않은 다른 설치 체계(예를 들어 사용자 사이트 체계)에 대한 설치는 가상 환경의 영향을 전혀 받지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506182Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "It may be feasible to create an alternative implementation of Python virtual environments based on a virtual-specific sysconfig scheme, but it would be less robust, as it would require more code to be aware of whether it is operating within a virtual environment or not.",
+      "source_hash": 17742707640230321700,
+      "context_hash": 2466526953237331095,
+      "translation": "가상 환경에 특화된 sysconfig 체계를 기반으로 Python 가상 환경의 대체 구현을 만드는 것이 가능할 수도 있지만, 해당 구현이 가상 환경 내부에서 작동하는지 여부를 인식해야 하는 코드가 더 많이 필요하므로 견고성이 떨어집니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:05.506182Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Copies versus symlinks",
+      "source_hash": 7621979749170412872,
+      "context_hash": 2235173169492430329,
+      "translation": "복사본과 심볼릭 링크",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506183Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The technique in this PEP works equally well in general with a copied or symlinked Python binary (and other needed DLLs on Windows).",
+      "source_hash": 13677220907414206804,
+      "context_hash": 14163906125906390480,
+      "translation": "이 PEP의 기법은 일반적으로 복사되거나 심볼릭 링크된 Python 바이너리(및 Windows에서 필요한 기타 DLL) 모두에서 동일하게 잘 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506183Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "Symlinking is preferable where possible, because in the case of an upgrade to the underlying Python installation, a Python executable copied in a venv might become out-of-sync with the installed standard library and require manual upgrade.",
+      "source_hash": 5609997480908912008,
+      "context_hash": 521870405463472719,
+      "translation": "가능한 경우 심볼릭 링크가 바람직합니다. 기반이 되는 Python 설치를 업그레이드할 때 가상 환경에 복사된 Python 실행 파일이 설치된 표준 라이브러리와 동기화되지 않아 수동 업그레이드가 필요할 수 있기 때문입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:04:05.506183Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "There are some cross-platform difficulties with symlinks:",
+      "source_hash": 6375251045522905105,
+      "context_hash": 2098526034109232777,
+      "translation": "심볼릭 링크에는 플랫폼 간에 몇 가지 어려움이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506184Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Not all Windows versions support symlinks, and even on those that do, creating them often requires administrator privileges.",
+      "source_hash": 5132064543479382141,
+      "context_hash": 7573199621404922150,
+      "translation": "모든 Windows 버전이 심볼릭 링크를 지원하는 것은 아니며, 지원하는 버전에서도 심볼릭 링크를 생성하려면 관리자 권한이 필요한 경우가 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506184Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "On OS X framework builds of Python, sys.executable is just a stub that executes the real Python binary.",
+      "source_hash": 529750465281736824,
+      "context_hash": 17092530226321800642,
+      "translation": "OS X 프레임워크 빌드의 Python에서는 sys.executable이 실제 Python 바이너리를 실행하는 스텁일 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506184Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "Symlinking this stub does not work; it must be copied.  (Fortunately the stub is also small, and not changed by bugfix upgrades to Python, so copying it is not an issue).",
+      "source_hash": 2441071973876232355,
+      "context_hash": 18358401371748675342,
+      "translation": "이 스텁을 심볼릭 링크하는 것은 작동하지 않으므로 복사해야 합니다. (다행히 스텁은 크기도 작고 Python의 버그 수정 업그레이드로 변경되지 않으므로 복사해도 문제가 되지 않습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506185Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "Thus, this PEP proposes to symlink the binary on all platforms except for Windows, and OS X framework builds.",
+      "source_hash": 9287844513118515718,
+      "context_hash": 9491056428785495666,
+      "translation": "따라서 이 PEP는 Windows 및 OS X 프레임워크 빌드를 제외한 모든 플랫폼에서 바이너리를 심볼릭 링크할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506185Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:1",
+      "source": "A ``--symlink`` option is available to force the use of symlinks on Windows versions that support them, if the appropriate permissions are available. (This option has no effect on OS X framework builds, since symlinking can never work there, and has no advantages).",
+      "source_hash": 2323799005193827433,
+      "context_hash": 86008458312770606,
+      "translation": "적절한 권한을 사용할 수 있고 심볼릭 링크를 지원하는 Windows 버전에서는 ``--symlink`` 옵션을 사용하여 심볼릭 링크를 강제로 사용할 수 있습니다. (이 옵션은 심볼릭 링크가 절대 작동할 수 없고 장점도 없으므로 OS X 프레임워크 빌드에는 영향을 주지 않습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.506185Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "On Windows, if ``--symlink`` is not used, this means that if the underlying Python installation is upgraded, the Python binary and DLLs in the venv should be updated, or there could be issues of mismatch with the upgraded standard library.",
+      "source_hash": 8489260701331773151,
+      "context_hash": 10295858544905200235,
+      "translation": "Windows에서 ``--symlink``\\ 를 사용하지 않는 경우, 기반 Python 설치가 업그레이드되면 venv의 Python 바이너리와 DLL도 업데이트해야 하며, 그렇지 않으면 업그레이드된 표준 라이브러리와 불일치하는 문제가 발생할 수 있음을 의미합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:04:05.657885Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:1",
+      "source": "The pyvenv script accepts a ``--upgrade`` option for easily performing this upgrade on an existing venv.",
+      "source_hash": 16764776341351891471,
+      "context_hash": 6934051155839823037,
+      "translation": "pyvenv 스크립트는 기존 venv에서 이 업그레이드를 쉽게 수행할 수 있도록 ``--upgrade`` 옵션을 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657890Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Include files",
+      "source_hash": 9605707665161406664,
+      "context_hash": 13486933490175743313,
+      "translation": "Include 파일",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657890Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Current virtualenv handles include files in this way:",
+      "source_hash": 18133280355397491569,
+      "context_hash": 8300916543818724427,
+      "translation": "현재 virtualenv는 다음과 같은 방식으로 include 파일을 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657891Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "On POSIX systems where the installed Python's include files are found in ``${base_prefix}/include/pythonX.X``, virtualenv creates ``${venv}/include/`` and symlinks ``${base_prefix}/include/pythonX.X`` to ``${venv}/include/pythonX.X``.",
+      "source_hash": 15980452026188661658,
+      "context_hash": 12323944950737996046,
+      "translation": "설치된 Python의 include 파일이 ``${base_prefix}/include/pythonX.X``\\ 에 있는 POSIX 시스템에서는 virtualenv가 ``${venv}/include/``\\ 를 생성하고 ``${base_prefix}/include/pythonX.X``\\ 를 ``${venv}/include/pythonX.X``\\ 로 심볼릭 링크합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657891Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "On Windows, where Python's include files are found in ``{{ sys.prefix }}/Include`` and symlinks are not reliably available, virtualenv copies ``{{ sys.prefix }}/Include`` to ``${venv}/Include``.",
+      "source_hash": 1529831058876448333,
+      "context_hash": 17038191289844464535,
+      "translation": "Python의 include 파일이 ``{{ sys.prefix }}/Include``\\ 에 있고 심볼릭 링크를 안정적으로 사용할 수 없는 Windows에서는 virtualenv가 ``{{ sys.prefix }}/Include``\\ 를 ``${venv}/Include``\\ 로 복사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657891Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:2",
+      "source": "This ensures that extension modules built and installed within the virtualenv will always find the Python header files they need in the expected location relative to ``sys.prefix``.",
+      "source_hash": 107122805886447251,
+      "context_hash": 11775320366030380305,
+      "translation": "이를 통해 virtualenv 내에서 빌드되고 설치된 확장 모듈은 ``sys.prefix``\\ 를 기준으로 예상되는 위치에서 필요한 Python 헤더 파일을 항상 찾을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657892Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "This solution is not ideal when an extension module installs its own header files, as the default installation location for those header files may be a symlink to a system directory that may not be writable.",
+      "source_hash": 3576705341682805969,
+      "context_hash": 16339652872120754572,
+      "translation": "확장 모듈이 자체 헤더 파일을 설치하는 경우에는 이 방식이 이상적이지 않습니다. 해당 헤더 파일의 기본 설치 위치가 쓰기 가능하지 않을 수 있는 시스템 디렉터리를 가리키는 심볼릭 링크일 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657892Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "One installer, pip, explicitly works around this by installing header files to a nonstandard location ``${venv}/include/site/pythonX.X/``, as in Python there's currently no standard abstraction for a site-specific include directory.",
+      "source_hash": 15060611639887738201,
+      "context_hash": 6912991112999836901,
+      "translation": "설치 프로그램 중 하나인 pip는 명시적으로 헤더 파일을 비표준 위치인 ``${venv}/include/site/pythonX.X/``\\ 에 설치하여 이 문제를 우회합니다. Python에는 현재 사이트별 include 디렉터리를 위한 표준 추상화가 없기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657892Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "This PEP proposes a slightly different approach, though one with essentially the same effect and the same set of advantages and disadvantages.",
+      "source_hash": 3993437964016213676,
+      "context_hash": 13786510734421087364,
+      "translation": "이 PEP는 본질적으로 동일한 효과와 동일한 장단점을 갖지만 약간 다른 접근 방식을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657892Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:1",
+      "source": "Rather than symlinking or copying include files into the venv, we simply modify the sysconfig schemes so that header files are always sought relative to ``base_prefix`` rather than ``prefix``. (We also create an ``include/`` directory within the venv, so installers have somewhere to put include files installed within the env).",
+      "source_hash": 14400101734364953060,
+      "context_hash": 6279294664637800145,
+      "translation": "include 파일을 venv에 심볼릭 링크하거나 복사하는 대신, 헤더 파일이 항상 ``prefix``\\ 가 아니라 ``base_prefix``\\ 를 기준으로 검색되도록 sysconfig 스킴을 간단히 수정합니다. (또한 venv 내부에 ``include/``\\ 디렉터리를 생성하여 설치 프로그램이 환경 내에 설치되는 include 파일을 저장할 위치를 제공합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657893Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "Better handling of include files in distutils/packaging and, by extension, pyvenv, is an area that may deserve its own future PEP.",
+      "source_hash": 12824845610440432834,
+      "context_hash": 14897906303369695724,
+      "translation": "distutils/패키징에서, 더 나아가 pyvenv에서 include 파일을 더 잘 처리하는 것은 향후 별도의 PEP가 필요할 수 있는 영역입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657893Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:1",
+      "source": "For now, we propose that the behavior of virtualenv has thus far proved itself to be at least \"good enough\" in practice.",
+      "source_hash": 8425348620059404863,
+      "context_hash": 1954785255857579304,
+      "translation": "현재로서는 virtualenv의 동작이 실무에서 적어도 \"충분히 괜찮은\" 것으로 입증되었다고 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657893Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "API",
+      "source_hash": 17306549135961116108,
+      "context_hash": 12903747138693015986,
+      "translation": "API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657893Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "The high-level method described above makes use of a simple API which provides mechanisms for third-party virtual environment creators to customize environment creation according to their needs.",
+      "source_hash": 17863603267814006081,
+      "context_hash": 10327395854005180799,
+      "translation": "위에서 설명한 상위 수준의 방법은 타사 가상 환경 생성자가 필요에 따라 환경 생성을 사용자 지정할 수 있는 메커니즘을 제공하는 간단한 API를 사용합니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:05.657894Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "The ``venv`` module contains an ``EnvBuilder`` class which accepts the following keyword arguments on instantiation:",
+      "source_hash": 9651594036148735037,
+      "context_hash": 4471103377671030224,
+      "translation": "``venv`` 모듈에는 인스턴스화할 때 다음 키워드 인자를 허용하는 ``EnvBuilder`` 클래스가 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657895Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "``system_site_packages`` - A Boolean value indicating that the system Python site-packages should be available to the environment.",
+      "source_hash": 9308295201353690737,
+      "context_hash": 11948413294775238201,
+      "translation": "``system_site_packages`` - 시스템 Python 사이트 패키지를 환경에서 사용할 수 있음을 나타내는 불리언 값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657895Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:1",
+      "source": "Defaults to ``False``.",
+      "source_hash": 16897660751562899638,
+      "context_hash": 9517057073307797148,
+      "translation": "기본값은 ``False``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657895Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "``clear`` - A Boolean value which, if true, will delete any existing target directory instead of raising an exception.",
+      "source_hash": 10242274701170721754,
+      "context_hash": 16767615791534538241,
+      "translation": "``clear`` - true인 경우 예외를 발생시키는 대신 기존 대상 디렉터리를 삭제하는 불리언 값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657896Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:1",
+      "source": "Defaults to ``False``.",
+      "source_hash": 16897660751562899638,
+      "context_hash": 6699333584350533802,
+      "translation": "기본값은 ``False``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657896Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "``symlinks`` - A Boolean value indicating whether to attempt to symlink the Python binary (and any necessary DLLs or other binaries, e.g. ``pythonw.exe``), rather than copying.",
+      "source_hash": 1848438410138715275,
+      "context_hash": 16767615791534538241,
+      "translation": "``symlinks`` - 복사하는 대신 Python 바이너리(및 필요한 DLL이나 ``pythonw.exe``\\ 와 같은 기타 바이너리)를 심볼릭 링크하려고 시도할지 나타내는 불리언 값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657896Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:1",
+      "source": "Defaults to ``False``.",
+      "source_hash": 16897660751562899638,
+      "context_hash": 18011044874485596305,
+      "translation": "기본값은 ``False``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657897Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "The instantiated env-builder has a ``create`` method, which takes as required argument the path (absolute or relative to the current directory) of the target directory which is to contain the virtual environment.",
+      "source_hash": 27294622499501211,
+      "context_hash": 11604335525155253967,
+      "translation": "인스턴스화된 환경 빌더에는 가상 환경을 포함할 대상 디렉터리의 경로(현재 디렉터리에 대한 절대 경로 또는 상대 경로)를 필수 인자로 받는 ``create`` 메서드가 있습니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:05.657897Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:1",
+      "source": "The ``create`` method either creates the environment in the specified directory, or raises an appropriate exception.",
+      "source_hash": 5384841183115615265,
+      "context_hash": 2726466123084319824,
+      "translation": "``create`` 메서드는 지정된 디렉터리에 환경을 생성하거나 적절한 예외를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657898Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "The ``venv`` module also provides a module-level ``create`` function as a convenience",
+      "source_hash": 1463728505302185410,
+      "context_hash": 4955229193320943845,
+      "translation": "``venv`` 모듈은 편의를 위해 모듈 수준의 ``create`` 함수도 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657898Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:0",
+      "source": "Creators of third-party virtual environment tools are free to use the provided ``EnvBuilder`` class as a base class.",
+      "source_hash": 6581490542845211752,
+      "context_hash": 1507663623254639776,
+      "translation": "타사 가상 환경 도구의 생성자는 제공된 ``EnvBuilder`` 클래스를 자유롭게 베이스 클래스로 사용할 수 있습니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T19:04:05.657898Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:10/seg:0",
+      "source": "The ``create`` method of the ``EnvBuilder`` class illustrates the hooks available for customization",
+      "source_hash": 6336258063483616746,
+      "context_hash": 14366472093984458416,
+      "translation": "``EnvBuilder`` 클래스의 ``create`` 메서드는 사용자 지정에 사용할 수 있는 훅을 보여 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657899Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:12/seg:0",
+      "source": "Each of the methods ``create_directories``, ``create_configuration``, ``setup_python``, and ``post_setup`` can be overridden.",
+      "source_hash": 6591074736405946112,
+      "context_hash": 6207013167811731364,
+      "translation": "``create_directories``, ``create_configuration``, ``setup_python``, ``post_setup`` 각 메서드는 재정의할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657899Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:12/seg:1",
+      "source": "The functions of these methods are:",
+      "source_hash": 5857874049789470437,
+      "context_hash": 1079351080844633967,
+      "translation": "이러한 메서드의 기능은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657899Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:13/seg:0",
+      "source": "``create_directories`` - creates the environment directory and all necessary directories, and returns a context object.",
+      "source_hash": 9171661418120883811,
+      "context_hash": 14474300531379406732,
+      "translation": "``create_directories`` - 환경 디렉터리와 필요한 모든 디렉터리를 생성하고 컨텍스트 객체를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657900Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:13/seg:1",
+      "source": "This is just a holder for attributes (such as paths), for use by the other methods.",
+      "source_hash": 6131737095302575982,
+      "context_hash": 4391001609063216705,
+      "translation": "이는 다른 메서드에서 사용할 속성(예: 경로)을 보관하는 역할만 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657900Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:14/seg:0",
+      "source": "``create_configuration`` - creates the ``pyvenv.cfg`` configuration file in the environment.",
+      "source_hash": 5368753362098057307,
+      "context_hash": 12658645392212303738,
+      "translation": "``create_configuration`` - 환경에 ``pyvenv.cfg`` 구성 파일을 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:05.657900Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:15/seg:0",
+      "source": "``setup_python`` - creates a copy of the Python executable (and, under Windows, DLLs) in the environment.",
+      "source_hash": 1611688762692745204,
+      "context_hash": 4228075571440473778,
+      "translation": "``setup_python`` - 환경에 Python 실행 파일의 사본을 생성합니다(Windows에서는 DLL도 생성합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729116Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:16/seg:0",
+      "source": "``post_setup`` - A (no-op by default) hook method which can be overridden in third party subclasses to pre-install packages or install scripts in the virtual environment.",
+      "source_hash": 752520198701161094,
+      "context_hash": 614244650293386340,
+      "translation": "``post_setup`` - 기본적으로 아무 작업도 수행하지 않으며, 가상 환경에 패키지를 사전 설치하거나 스크립트를 설치하도록 서드파티 서브클래스에서 재정의할 수 있는 후크 메서드입니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T18:21:48.729120Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:17/seg:0",
+      "source": "In addition, ``EnvBuilder`` provides a utility method that can be called from ``post_setup`` in subclasses to assist in installing custom scripts into the virtual environment.",
+      "source_hash": 1590333739904581144,
+      "context_hash": 18140311603694966630,
+      "translation": "또한 ``EnvBuilder``\\ 는 서브클래스의 ``post_setup``\\ 에서 호출하여 가상 환경에 사용자 정의 스크립트를 설치하는 데 도움을 주는 유틸리티 메서드를 제공합니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T18:21:48.729121Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:17/seg:1",
+      "source": "The method ``install_scripts`` accepts as arguments the ``context`` object (see above) and a path to a directory.",
+      "source_hash": 5055287601709271921,
+      "context_hash": 11339539528178567491,
+      "translation": "``install_scripts`` 메서드는 인수로 ``context`` 객체(위 참조)와 디렉터리 경로를 받습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729122Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:17/seg:2",
+      "source": "The directory should contain subdirectories \"common\", \"posix\", \"nt\", each containing scripts destined for the bin directory in the environment.",
+      "source_hash": 11717113284586325644,
+      "context_hash": 16988923648007761822,
+      "translation": "디렉터리에는 \"common\", \"posix\", \"nt\" 서브디렉터리가 포함되어야 하며, 각 서브디렉터리에는 환경의 bin 디렉터리에 배치할 스크립트가 포함되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729122Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:17/seg:3",
+      "source": "The contents of \"common\" and the directory corresponding to ``os.name`` are copied after doing some text replacement of placeholders:",
+      "source_hash": 4830193949141577504,
+      "context_hash": 958378875032655036,
+      "translation": "\"common\"의 내용과 ``os.name``\\ 에 해당하는 디렉터리의 내용은 자리 표시자를 일부 텍스트 치환한 후 복사됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729122Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:18/seg:0",
+      "source": "``__VENV_DIR__`` is replaced with absolute path of the environment directory.",
+      "source_hash": 8956047203113158061,
+      "context_hash": 12513149719340928870,
+      "translation": "``__VENV_DIR__``\\ 는 환경 디렉터리의 절대 경로로 치환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729123Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:19/seg:0",
+      "source": "``__VENV_NAME__`` is replaced with the environment name (final path segment of environment directory).",
+      "source_hash": 8932197238070677813,
+      "context_hash": 9262852535022332618,
+      "translation": "``__VENV_NAME__``\\ 은 환경 이름(환경 디렉터리 경로의 마지막 구성 요소)으로 치환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729123Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:20/seg:0",
+      "source": "``__VENV_BIN_NAME__`` is replaced with the name of the bin directory (either ``bin`` or ``Scripts``).",
+      "source_hash": 12992857431157618107,
+      "context_hash": 6743166046001181220,
+      "translation": "``__VENV_BIN_NAME__``\\ 은 bin 디렉터리의 이름(``bin`` 또는 ``Scripts``)으로 치환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729123Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:21/seg:0",
+      "source": "``__VENV_PYTHON__`` is replaced with the absolute path of the environment's executable.",
+      "source_hash": 9103381784162110220,
+      "context_hash": 8024266929111919199,
+      "translation": "``__VENV_PYTHON__``\\ 은 환경 실행 파일의 절대 경로로 치환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729124Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:22/seg:0",
+      "source": "The ``DistributeEnvBuilder`` subclass in the reference implementation illustrates how the customization hook can be used in practice to pre-install Distribute into the virtual environment.",
+      "source_hash": 7198430362861852323,
+      "context_hash": 8982797545567410268,
+      "translation": "참조 구현의 ``DistributeEnvBuilder`` 서브클래스는 사용자 정의 후크를 실제로 사용하여 가상 환경에 Distribute를 사전 설치하는 방법을 보여 줍니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경",
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:21:48.729124Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:22/seg:1",
+      "source": "It's not envisaged that ``DistributeEnvBuilder`` will be actually added to Python core, but it makes the reference implementation more immediately useful for testing and exploratory purposes.",
+      "source_hash": 17523662256571583368,
+      "context_hash": 9488175947607077286,
+      "translation": "``DistributeEnvBuilder``\\ 가 실제로 Python 코어에 추가될 예정은 아니지만, 이를 통해 테스트 및 탐색 목적에서 참조 구현을 더욱 즉시 유용하게 사용할 수 있습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:21:48.729125Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 1134265129578616692,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729126Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Splitting the meanings of ``sys.prefix``",
+      "source_hash": 7309533721936742958,
+      "context_hash": 11550085936530014686,
+      "translation": "``sys.prefix``\\ 의 의미 분리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729126Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "Any virtual environment tool along these lines (which attempts to isolate site-packages, while still making use of the base Python's standard library with no need for it to be symlinked into the virtual environment) is proposing a split between two different meanings (among others) that are currently both wrapped up in ``sys.prefix``: the answers to the questions \"Where is the standard library?\" and \"Where is the site-packages location where third-party modules should be installed?\"",
+      "source_hash": 17619066484118433984,
+      "context_hash": 13870431821559539224,
+      "translation": "이러한 방식의 가상 환경 도구(사이트 패키지를 격리하면서도 기본 Python의 표준 라이브러리를 계속 사용하고, 이를 가상 환경에 심볼릭 링크로 연결할 필요가 없도록 하는 도구)는 현재 ``sys.prefix``\\ 에 함께 담겨 있는 여러 의미 중 두 가지를 분리하자는 제안입니다. 즉, \"표준 라이브러리는 어디에 있습니까?\"와 \"서드파티 모듈을 설치해야 하는 site-packages 위치는 어디입니까?\"라는 질문에 대한 답을 분리하는 것입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리",
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T18:21:48.729126Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "This split could be handled by introducing a new ``sys`` attribute for either the former prefix or the latter prefix.",
+      "source_hash": 13887751846411062507,
+      "context_hash": 5351896694553260553,
+      "translation": "이러한 분리는 앞의 접두사 또는 뒤의 접두사 중 하나를 위한 새로운 ``sys`` 속성을 도입하여 처리할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729127Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "Either option potentially introduces some backwards-incompatibility with software written to assume the other meaning for ``sys.prefix``.  (Such software should preferably be using the APIs in the ``site`` and ``sysconfig`` modules to answer these questions rather than using ``sys.prefix`` directly, in which case there is no backwards-compatibility issue, but in practice ``sys.prefix`` is sometimes used.)",
+      "source_hash": 16532622814069282830,
+      "context_hash": 9659074823242074204,
+      "translation": "어느 쪽을 선택하든 ``sys.prefix``\\ 의 다른 의미를 전제로 작성된 소프트웨어와 하위 호환성 문제가 발생할 가능성이 있습니다. (이러한 소프트웨어는 ``sys.prefix``\\ 를 직접 사용하는 대신 ``site`` 및 ``sysconfig`` 모듈의 API를 사용하여 이러한 질문에 답하는 것이 바람직하며, 이 경우 하위 호환성 문제는 없습니다. 그러나 실제로는 ``sys.prefix``\\ 가 때때로 사용됩니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729128Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "The `documentation`__ for ``sys.prefix`` describes it as \"A string giving the site-specific directory prefix where the platform independent Python files are installed,\" and specifically mentions the standard library and header files as found under ``sys.prefix``.",
+      "source_hash": 10538048756016210563,
+      "context_hash": 582197349149532162,
+      "translation": "``sys.prefix``\\ 에 대한 `documentation`__\\ 은 이를 \"플랫폼 독립적인 Python 파일이 설치되는 사이트별 디렉터리 접두사를 제공하는 문자열\"로 설명하며, ``sys.prefix``\\ 아래에 있는 표준 라이브러리와 헤더 파일을 구체적으로 언급합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:21:48.729128Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:1",
+      "source": "It does not mention ``site-packages``.",
+      "source_hash": 16016058437745812633,
+      "context_hash": 4290012802999646563,
+      "translation": "``site-packages``\\ 는 언급하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729129Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "__ http://docs.python.org/dev/library/sys.html#sys.prefix",
+      "source_hash": 1568127411837317174,
+      "context_hash": 3671157302273635942,
+      "translation": "__ http://docs.python.org/dev/library/sys.html#sys.prefix",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729129Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "Maintaining this documented definition would mean leaving ``sys.prefix`` pointing to the base system installation (which is where the standard library and header files are found), and introducing a new value in ``sys`` (something like ``sys.site_prefix``) to point to the prefix for ``site-packages``.",
+      "source_hash": 15130946295794293917,
+      "context_hash": 11056979397647854853,
+      "translation": "이 문서화된 정의를 유지하려면 ``sys.prefix``\\ 가 기본 시스템 설치를 가리키도록 두어야 하며(표준 라이브러리와 헤더 파일이 이곳에 있음), ``site-packages``\\ 의 접두사를 가리키도록 ``sys``\\ 에 새 값(예: ``sys.site_prefix``)을 도입해야 합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:21:48.729129Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:1",
+      "source": "This would maintain the documented semantics of ``sys.prefix``, but risk breaking isolation if third-party code uses ``sys.prefix`` rather than ``sys.site_prefix`` or the appropriate ``site`` API to find site-packages directories.",
+      "source_hash": 10980749847849893338,
+      "context_hash": 15412550764587479078,
+      "translation": "이렇게 하면 ``sys.prefix``\\ 의 문서화된 의미는 유지되지만, 서드파티 코드가 site-packages 디렉터리를 찾을 때 ``sys.site_prefix`` 또는 적절한 ``site`` API 대신 ``sys.prefix``\\ 를 사용하면 격리가 깨질 위험이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729130Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "The most notable case is probably `setuptools`_ and its fork `distribute`_, which mostly use ``distutils`` and ``sysconfig`` APIs, but do use ``sys.prefix`` directly to build up a list of site directories for pre-flight checking where ``pth`` files can usefully be placed.",
+      "source_hash": 14240714077750721257,
+      "context_hash": 4344135999043749668,
+      "translation": "가장 주목할 만한 사례는 아마도 `setuptools`_\\ 와 그 포크인 `distribute`_\\ 일 것입니다. 이들은 대부분 ``distutils`` 및 ``sysconfig`` API를 사용하지만, ``pth`` 파일을 유용하게 배치할 수 있는 위치를 사전 점검하기 위해 사이트 디렉터리 목록을 구성할 때 ``sys.prefix``\\ 를 직접 사용하기도 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729131Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "Otherwise, a Google Code Search turns up what appears to be a roughly even mix of usage between packages using ``sys.prefix`` to build up a site-packages path and packages using it to e.g. eliminate the standard-library from code-execution tracing.",
+      "source_hash": 10736282303455889305,
+      "context_hash": 11935158852382481018,
+      "translation": "그 밖에는 Google Code Search를 통해, ``sys.prefix``\\ 를 사용하여 site-packages 경로를 구성하는 패키지와 이를 사용하여 예를 들어 표준 라이브러리를 코드 실행 추적에서 제외하는 패키지가 대략 균등하게 섞여 있는 것으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729131Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:0",
+      "source": "Although it requires modifying the documented definition of ``sys.prefix``, this PEP prefers to have ``sys.prefix`` point to the virtual environment (where ``site-packages`` is found), and introduce ``sys.base_prefix`` to point to the standard library and Python header files.",
+      "source_hash": 11386670773721574979,
+      "context_hash": 16854663412267868909,
+      "translation": "문서화된 ``sys.prefix``\\ 의 정의를 수정해야 하지만, 이 PEP에서는 ``sys.prefix``\\ 가 가상 환경(``site-packages``\\ 를 찾을 수 있는 곳)을 가리키도록 하고, 표준 라이브러리와 Python 헤더 파일을 가리키도록 ``sys.base_prefix``\\ 를 도입하는 방식을 선호합니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경",
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:49:59.933122Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:1",
+      "source": "Rationale for this choice:",
+      "source_hash": 5700187475454212223,
+      "context_hash": 14684875440132153928,
+      "translation": "이 선택의 근거는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729133Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:9/seg:0",
+      "source": "It is preferable to err on the side of greater isolation of the virtual environment.",
+      "source_hash": 15264004670432683169,
+      "context_hash": 10535881503163725731,
+      "translation": "가상 환경을 더 철저히 격리하는 방향으로 잘못을 감수하는 것이 바람직합니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T18:21:48.729133Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:10/seg:0",
+      "source": "Virtualenv already modifies ``sys.prefix`` to point at the virtual environment, and in practice this has not been a problem.",
+      "source_hash": 14222451841352545481,
+      "context_hash": 733522154967097456,
+      "translation": "Virtualenv는 이미 ``sys.prefix``\\ 를 수정하여 가상 환경을 가리키도록 하며, 실제로 이는 문제가 되지 않았습니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T18:21:48.729134Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:11/seg:0",
+      "source": "No modification is required to setuptools/distribute.",
+      "source_hash": 2284340556757803933,
+      "context_hash": 2354771769657577719,
+      "translation": "setuptools/distribute를 수정할 필요가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729135Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Impact on other Python implementations",
+      "source_hash": 2619405317713725526,
+      "context_hash": 8084995440987409805,
+      "translation": "다른 Python 구현에 미치는 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:48.729135Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "The majority of this PEP's changes occur in the standard library, which is shared by other Python implementations and should not present any problem.",
+      "source_hash": 9318935493485266728,
+      "context_hash": 11482178546574527382,
+      "translation": "이 PEP의 변경 사항 대부분은 다른 Python 구현과 공유되는 표준 라이브러리에서 발생하므로 특별한 문제가 발생하지 않을 것입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:21:48.729135Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "Other Python implementations will need to replicate the new ``sys.prefix``-finding behavior of the interpreter bootstrap, including locating and parsing the ``pyvenv.cfg`` file, if it is present.",
+      "source_hash": 8433500693740881618,
+      "context_hash": 15188307414980123821,
+      "translation": "다른 Python 구현은 인터프리터 부트스트랩의 새로운 ``sys.prefix``\\ 찾기 동작을 재현해야 하며, 여기에는 ``pyvenv.cfg`` 파일이 존재하는 경우 이를 찾고 구문 분석하는 작업이 포함됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:21:48.729136Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 14709684744354063137,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:28:31.422443Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "The reference implementation is found in `a clone of the CPython Mercurial repository`_.",
+      "source_hash": 7678565329120868191,
+      "context_hash": 3289284728894777968,
+      "translation": "참조 구현은 `a clone of the CPython Mercurial repository`_\\ 에서 찾을 수 있습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:28:31.422447Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "To test it, build and run ``bin/pyvenv /path/to/new/venv`` to create a virtual environment.",
+      "source_hash": 15802783314914021575,
+      "context_hash": 7737676112433619082,
+      "translation": "이를 테스트하려면, ``bin/pyvenv /path/to/new/venv``\\ 를 빌드하고 실행하여 가상 환경을 생성하십시오.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T17:28:31.422447Z",
+      "issues": []
+    }
+  ]
+}

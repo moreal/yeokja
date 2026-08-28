@@ -1,0 +1,306 @@
+{
+  "version": 1,
+  "source_hash": 15100765212386303964,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Making PyObject_HEAD conform to standard C",
+      "source_hash": 4360925788541355123,
+      "context_hash": 16530898886277989957,
+      "translation": "표준 C에 맞도록 PyObject_HEAD 만들기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976696Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 4870762820229212115,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976699Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Python currently relies on undefined C behavior, with its usage of ``PyObject_HEAD``.",
+      "source_hash": 4399047754905034535,
+      "context_hash": 16302594142633748759,
+      "translation": "Python은 현재 ``PyObject_HEAD``\\ 를 사용하면서 정의되지 않은 C 동작에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976699Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This PEP proposes to change that into standard C.",
+      "source_hash": 14855071332659291051,
+      "context_hash": 6717658333154569238,
+      "translation": "이 PEP는 이를 표준 C로 변경할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976700Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 14968750576160575864,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976700Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Standard C defines that an object must be accessed only through a pointer of its type, and that all other accesses are undefined behavior, with a few exceptions.",
+      "source_hash": 5525156890440671653,
+      "context_hash": 262837233661878457,
+      "translation": "표준 C에서는 객체를 해당 타입의 포인터를 통해서만 접근해야 하며, 몇 가지 예외를 제외한 다른 모든 접근은 정의되지 않은 동작이라고 규정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976700Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "In particular, the following code has undefined behavior",
+      "source_hash": 5066825228640646892,
+      "context_hash": 3232567316604396955,
+      "translation": "특히 다음 코드는 정의되지 않은 동작을 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976700Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "The problem here is that the storage is both accessed as if it where struct ``PyObject``, and as struct ``FooObject``.",
+      "source_hash": 45610662179582703,
+      "context_hash": 4765543422135897505,
+      "translation": "여기서 문제는 저장 공간에 구조체 ``PyObject``\\ 인 것처럼 접근하는 동시에 구조체 ``FooObject``\\ 인 것처럼 접근한다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976701Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "Historically, compilers did not have any problems with this code.",
+      "source_hash": 10694789374179818232,
+      "context_hash": 13630041485788935223,
+      "translation": "역사적으로 컴파일러는 이 코드에서 아무런 문제도 일으키지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976701Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "However, modern compilers use that clause as an optimization opportunity, finding that ``f->ob_refcnt`` and ``o->ob_refcnt`` cannot possibly refer to the same memory, and that therefore the function should return 0, without having to fetch the value of ob_refcnt at all in the return statement.",
+      "source_hash": 16962093031051247887,
+      "context_hash": 580287562406569593,
+      "translation": "그러나 최신 컴파일러는 이 조항을 최적화 기회로 활용하여 ``f->ob_refcnt``\\ 와 ``o->ob_refcnt``\\ 가 동일한 메모리를 가리킬 수 없고, 따라서 반환문에서 ob_refcnt 값을 전혀 가져오지 않아도 함수가 0을 반환해야 한다고 판단합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976701Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "For GCC, Python now uses ``-fno-strict-aliasing`` to work around that problem; with other compilers, it may just see undefined behavior.",
+      "source_hash": 3272204150970058745,
+      "context_hash": 11449440415792050415,
+      "translation": "GCC의 경우 Python은 이제 이 문제를 우회하기 위해 ``-fno-strict-aliasing``\\ 을 사용합니다. 다른 컴파일러에서는 단순히 정의되지 않은 동작으로 처리할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976701Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:3",
+      "source": "Even with GCC, using ``-fno-strict-aliasing`` may pessimize the generated code unnecessarily.",
+      "source_hash": 10600748109462560674,
+      "context_hash": 8534102352321460292,
+      "translation": "GCC에서도 ``-fno-strict-aliasing``\\ 을 사용하면 생성된 코드가 불필요하게 성능 저하를 일으킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976702Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 8505940563363421884,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976702Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Standard C has one specific exception to its aliasing rules precisely designed to support the case of Python: a value of a struct type may also be accessed through a pointer to the first field.",
+      "source_hash": 10310344241768544161,
+      "context_hash": 15342496497082647759,
+      "translation": "표준 C에는 Python의 경우를 지원하도록 정확히 설계된 별칭 규칙의 특정 예외가 하나 있습니다. 구조체 타입의 값은 첫 번째 필드를 가리키는 포인터를 통해서도 접근할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976702Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "E.g. if a struct starts with an ``int``, the ``struct *`` may also be cast to an ``int *``, allowing to write int values into the first field.",
+      "source_hash": 6024253033290480740,
+      "context_hash": 12105434605699387775,
+      "translation": "예를 들어 구조체가 ``int``\\ 로 시작하는 경우 ``struct *``\\ 를 ``int *``\\ 로 캐스팅하여 첫 번째 필드에 int 값을 쓸 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976703Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "For Python, ``PyObject_HEAD`` and ``PyObject_VAR_HEAD`` will be changed to not list all fields anymore, but list a single field of type ``PyObject``/``PyVarObject``",
+      "source_hash": 10427901414995381828,
+      "context_hash": 13941397468716615405,
+      "translation": "Python에서는 ``PyObject_HEAD``\\ 와 ``PyObject_VAR_HEAD``\\ 를 더 이상 모든 필드의 목록으로 정의하지 않고, ``PyObject``/``PyVarObject`` 타입의 단일 필드 목록으로 변경합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976703Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "Types defined as fixed-size structure will then include PyObject as its first field, PyVarObject for variable-sized objects.",
+      "source_hash": 4501685742283661190,
+      "context_hash": 11496844975128748979,
+      "translation": "그러면 고정 크기 구조체로 정의된 타입에는 PyObject가 첫 번째 필드로 포함되고, 가변 크기 객체에는 PyVarObject가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976703Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:1",
+      "source": "E.g.",
+      "source_hash": 7410681984054565405,
+      "context_hash": 11587316308136784056,
+      "translation": "예를 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976704Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "The above definitions of ``PyObject_HEAD`` are normative, so extension authors MAY either use the macro, or put the ``ob_base`` field explicitly into their structs.",
+      "source_hash": 16295638394739126015,
+      "context_hash": 2459835926594338161,
+      "translation": "위의 ``PyObject_HEAD``\\ 정의는 규범적이므로, 확장 모듈 작성자는 매크로를 사용하거나 구조체에 ``ob_base`` 필드를 명시적으로 넣을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976704Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "As a convention, the base field SHOULD be called ob_base.",
+      "source_hash": 12576548545039258942,
+      "context_hash": 14601030952225909734,
+      "translation": "관례상 기본 필드의 이름은 ob_base로 지정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976704Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:1",
+      "source": "However, all accesses to ob_refcnt and ob_type MUST cast the object pointer to PyObject* (unless the pointer is already known to have that type), and SHOULD use the respective accessor macros.",
+      "source_hash": 16265797582758680313,
+      "context_hash": 10127340879111887952,
+      "translation": "그러나 ob_refcnt와 ob_type에 대한 모든 접근에서는 객체 포인터를 PyObject*로 캐스팅해야 하며(포인터가 이미 해당 타입인 것으로 알려진 경우는 제외), 각각의 접근자 매크로를 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976705Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:2",
+      "source": "To simplify access to ob_type, ob_refcnt, and ob_size, macros",
+      "source_hash": 11351365944222973136,
+      "context_hash": 6643135012461436648,
+      "translation": "ob_type, ob_refcnt 및 ob_size에 대한 접근을 단순화하기 위해 매크로가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976705Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "are added.",
+      "source_hash": 2740955648600167469,
+      "context_hash": 8621805788984052119,
+      "translation": "추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976705Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:1",
+      "source": "E.g. the code blocks",
+      "source_hash": 7724806877634029169,
+      "context_hash": 15199461948982346976,
+      "translation": "예를 들어 코드 블록은",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976705Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:11/seg:0",
+      "source": "needs to be changed to",
+      "source_hash": 2244941877964158950,
+      "context_hash": 7789884286712319006,
+      "translation": "다음과 같이 변경해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976705Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:0",
+      "source": "For initialization of type objects, the current sequence",
+      "source_hash": 8690244956340442171,
+      "context_hash": 6426807137147847245,
+      "translation": "타입 객체를 초기화할 때 현재 순서는",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976705Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:0",
+      "source": "becomes incorrect, and must be replaced with",
+      "source_hash": 17012079859099283459,
+      "context_hash": 12434487599880608832,
+      "translation": "올바르지 않게 되므로 다음과 같이 바꾸어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976706Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Compatibility with Python 2.6",
+      "source_hash": 11162784045668195724,
+      "context_hash": 9562117554048764378,
+      "translation": "Python 2.6과의 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976706Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "To support modules that compile with both Python 2.6 and Python 3.0, the ``Py_*`` macros are added to Python 2.6.",
+      "source_hash": 16835289132156550736,
+      "context_hash": 7555168964664535202,
+      "translation": "Python 2.6과 Python 3.0 모두에서 컴파일되는 모듈을 지원하기 위해 ``Py_*`` 매크로가 Python 2.6에 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976707Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "The macros ``Py_INCREF`` and ``Py_DECREF`` will be changed to cast their argument to ``PyObject *``, so that module authors can also explicitly declare the ``ob_base`` field in modules designed for Python 2.6.",
+      "source_hash": 412158809053204045,
+      "context_hash": 8591190731350859244,
+      "translation": "``Py_INCREF``\\ 와 ``Py_DECREF``\\ 매크로는 인자를 ``PyObject *``\\ 로 캐스팅하도록 변경되므로, 모듈 작성자는 Python 2.6용으로 설계된 모듈에서도 ``ob_base`` 필드를 명시적으로 선언할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:36.976707Z",
+      "issues": []
+    }
+  ]
+}

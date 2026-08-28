@@ -1,0 +1,1280 @@
+{
+  "version": 1,
+  "source_hash": 9527293175402921438,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Migration of dict iteration code to Python 3",
+      "source_hash": 3427435259604705930,
+      "context_hash": 16530898886277989957,
+      "translation": "Python 3로의 dict 반복 코드 마이그레이션",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912415Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 8427468887536701892,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912418Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "For Python 3, :pep:`3106` changed the design of the ``dict`` builtin and the mapping API in general to replace the separate list based and iterator based APIs in Python 2 with a merged, memory efficient set and multiset view based API.",
+      "source_hash": 15550698571891363259,
+      "context_hash": 1371783361038684406,
+      "translation": "Python 3에서는 :pep:`3106`\\ 이 ``dict`` 내장 기능의 설계와 전반적인 매핑 API를 변경하여, Python 2의 분리된 리스트 기반 API와 이터레이터 기반 API를 병합된 메모리 효율적인 집합 및 멀티셋 뷰 기반 API로 대체했습니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터",
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:40.912418Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This new style of dict iteration was also added to the Python 2.7 ``dict`` type as a new set of iteration methods.",
+      "source_hash": 9465494342666387522,
+      "context_hash": 17962265284474234870,
+      "translation": "이 새로운 방식의 dict 반복은 새로운 반복 메서드 집합으로 Python 2.7의 ``dict`` 형에도 추가되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912419Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "This means that there are now 3 different kinds of dict iteration that may need to be migrated to Python 3 when an application makes the transition:",
+      "source_hash": 16185679133107522470,
+      "context_hash": 8344385816270549219,
+      "translation": "이는 애플리케이션을 전환할 때 Python 3으로 마이그레이션해야 할 수 있는 dict 반복 방식이 이제 3가지 종류라는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912419Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "Lists as mutable snapshots: ``d.items()`` -> ``list(d.items())``",
+      "source_hash": 15320723381337618199,
+      "context_hash": 14978576576300709456,
+      "translation": "변경 가능한 스냅샷으로서의 리스트: ``d.items()`` -> ``list(d.items())``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912419Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:0",
+      "source": "Iterator objects: ``d.iteritems()`` -> ``iter(d.items())``",
+      "source_hash": 5076772511543144997,
+      "context_hash": 4153919525759223893,
+      "translation": "이터레이터 객체: ``d.iteritems()`` -> ``iter(d.items())``",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:44:40.912420Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:5/seg:0",
+      "source": "Set based dynamic views: ``d.viewitems()`` -> ``d.items()``",
+      "source_hash": 17522435770101481023,
+      "context_hash": 11760515484215684890,
+      "translation": "집합 기반 동적 뷰: ``d.viewitems()`` -> ``d.items()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912420Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:6/seg:0",
+      "source": "There is currently no widely agreed best practice on how to reliably convert all Python 2 dict iteration code to the common subset of Python 2 and 3, especially when test coverage of the ported code is limited.",
+      "source_hash": 8401579195861817765,
+      "context_hash": 12210191603063938396,
+      "translation": "현재 모든 Python 2 dict 반복 코드를 Python 2와 Python 3의 공통 부분집합으로 안정적으로 변환하는 방법에 대해 널리 합의된 모범 사례는 없습니다. 특히 포팅된 코드의 테스트 커버리지가 제한적인 경우에는 더욱 그렇습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912420Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:6/seg:1",
+      "source": "This PEP reviews the various ways the Python 2 iteration APIs may be accessed, and looks at the available options for migrating that code to Python 3 by way of the common subset of Python 2.6+ and Python 3.0+.",
+      "source_hash": 15893512645218247262,
+      "context_hash": 13656009630416240678,
+      "translation": "이 PEP는 Python 2 반복 API에 접근할 수 있는 다양한 방법을 검토하고, Python 2.6 이상과 Python 3.0 이상의 공통 부분집합을 통해 해당 코드를 Python 3으로 마이그레이션하는 데 사용할 수 있는 선택지를 살펴봅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912420Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:7/seg:0",
+      "source": "The PEP also considers the question of whether or not there are any additions that may be worth making to Python 3.5 that may ease the transition process for application code that doesn't need to worry about supporting earlier versions when eventually making the leap to Python 3.",
+      "source_hash": 13252463191635733966,
+      "context_hash": 7499848864735424847,
+      "translation": "또한 이 PEP는 이전 버전 지원을 걱정할 필요가 없는 애플리케이션 코드를 결국 Python 3으로 전환할 때, 전환 과정을 용이하게 하기 위해 Python 3.5에 추가할 만한 사항이 있는지 여부도 검토합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912421Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "PEP Withdrawal",
+      "source_hash": 100271571744256071,
+      "context_hash": 17349096928701936965,
+      "translation": "PEP 철회",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912421Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "In writing the second draft of this PEP, I came to the conclusion that the readability of hybrid Python 2/3 mapping code can actually be best enhanced by better helper functions rather than by making changes to Python 3.5+.",
+      "source_hash": 10001803825531352768,
+      "context_hash": 8005732851378504890,
+      "translation": "이 PEP의 두 번째 초안을 작성하면서, Python 3.5+를 변경하는 것보다 더 나은 헬퍼 함수를 통해 하이브리드 Python 2/3 매핑 코드의 가독성을 실제로 더 향상할 수 있다는 결론에 도달했습니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:40.912421Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "The main value I now see in this PEP is as a clear record of the recommended approaches to migrating mapping iteration code from Python 2 to Python 3, as well as suggesting ways to keep things readable and maintainable when writing hybrid code that supports both versions.",
+      "source_hash": 14960160121538635348,
+      "context_hash": 16538956382066721994,
+      "translation": "이제 제가 이 PEP에서 보는 주요 가치는 매핑 반복 코드를 Python 2에서 Python 3으로 마이그레이션하기 위한 권장 접근법을 명확히 기록하고, 두 버전을 모두 지원하는 하이브리드 코드를 작성할 때 가독성과 유지 관리성을 유지하는 방법을 제안하는 데 있습니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:40.912422Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Notably, I recommend that hybrid code avoid calling mapping iteration methods directly, and instead rely on builtin functions where possible, and some additional helper functions for cases that would be a simple combination of a builtin and a mapping method in pure Python 3 code, but need to be handled slightly differently to get the exact same semantics in Python 2.",
+      "source_hash": 12392116507277377681,
+      "context_hash": 5662551485635397328,
+      "translation": "특히 하이브리드 코드에서는 매핑 반복 메서드를 직접 호출하지 말고 가능한 경우 내장 함수에 의존할 것을 권장합니다. 또한 순수 Python 3 코드에서는 내장 함수와 매핑 메서드의 간단한 조합으로 처리할 수 있지만 Python 2에서 정확히 동일한 의미를 얻으려면 약간 다르게 처리해야 하는 경우를 위한 추가 헬퍼 함수도 사용하십시오.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:40.912423Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Static code checkers like pylint could potentially be extended with an optional warning regarding direct use of the mapping iteration methods in a hybrid code base.",
+      "source_hash": 17424398810629264323,
+      "context_hash": 10281670799188994603,
+      "translation": "pylint와 같은 정적 코드 검사기는 하이브리드 코드베이스에서 매핑 반복 메서드를 직접 사용하는 것에 관한 선택적 경고를 제공하도록 확장할 수 있습니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:40.912423Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Mapping iteration models",
+      "source_hash": 8450203453908255957,
+      "context_hash": 12365592296876842949,
+      "translation": "매핑 반복 모델",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:40.912423Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Python 2.7 provides three different sets of methods to extract the keys, values and items from a ``dict`` instance, accounting for 9 out of the 18 public methods of the ``dict`` type.",
+      "source_hash": 16215464083062068138,
+      "context_hash": 3716419742535955662,
+      "translation": "Python 2.7은 ``dict``\\ 인스턴스에서 키, 값 및 항목을 추출하는 세 가지 서로 다른 메서드 집합을 제공하며, 이는 ``dict`` 형의 공개 메서드 18개 중 9개를 차지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912424Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "In Python 3, this has been rationalised to just 3 out of 11 public methods (as the ``has_key`` method has also been removed).",
+      "source_hash": 1805569844603885690,
+      "context_hash": 1796943991049508440,
+      "translation": "Python 3에서는 ``has_key`` 메서드도 제거되었으므로, 이것이 공개 메서드 11개 중 3개로 정리되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912424Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Lists as mutable snapshots",
+      "source_hash": 6021718821760190983,
+      "context_hash": 8362696356627654901,
+      "translation": "변경 가능한 스냅샷으로서의 리스트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912424Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "This is the oldest of the three styles of dict iteration, and hence the one implemented by the ``d.keys()``, ``d.values()`` and ``d.items()`` methods in Python 2.",
+      "source_hash": 12663529456353172862,
+      "context_hash": 15336811887264643031,
+      "translation": "이는 세 가지 dict 반복 방식 중 가장 오래된 것이며, 따라서 Python 2에서 ``d.keys()``, ``d.values()`` 및 ``d.items()`` 메서드로 구현된 방식입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912425Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "These methods all return lists that are snapshots of the state of the mapping at the time the method was called.",
+      "source_hash": 6266453440319623391,
+      "context_hash": 2533691928744865100,
+      "translation": "이러한 메서드는 모두 메서드가 호출된 시점의 매핑 상태를 담은 스냅샷인 리스트를 반환합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:40.912425Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "This has a few consequences:",
+      "source_hash": 12114825119320144794,
+      "context_hash": 1093093415695498295,
+      "translation": "여기에는 몇 가지 결과가 따릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912425Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "the original object can be mutated freely without affecting iteration over the snapshot",
+      "source_hash": 4570052142026467087,
+      "context_hash": 164036442599537687,
+      "translation": "원본 객체는 스냅샷에 대한 반복에 영향을 주지 않고 자유롭게 변경할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912426Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "the snapshot can be modified independently of the original object",
+      "source_hash": 1213416204978528501,
+      "context_hash": 7150474732334015914,
+      "translation": "스냅샷은 원본 객체와 독립적으로 수정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912426Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "the snapshot consumes memory proportional to the size of the original mapping",
+      "source_hash": 15109059367607063113,
+      "context_hash": 8281996075878642401,
+      "translation": "스냅샷은 원본 매핑의 크기에 비례하는 메모리를 사용합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:40.912426Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "The semantic equivalent of these operations in Python 3 are ``list(d.keys())``, ``list(d.values())`` and ``list(d.iteritems())``.",
+      "source_hash": 4700249153511607138,
+      "context_hash": 6218607606546443078,
+      "translation": "Python 3에서 이러한 연산에 의미상 대응하는 것은 ``list(d.keys())``, ``list(d.values())`` 및 ``list(d.iteritems())``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912427Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Iterator objects",
+      "source_hash": 18050004758263257322,
+      "context_hash": 8437432815614398421,
+      "translation": "이터레이터 객체",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:44:40.912427Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "In Python 2.2, ``dict`` objects gained support for the then-new iterator protocol, allowing direct iteration over the keys stored in the dictionary, thus avoiding the need to build a list just to iterate over the dictionary contents one entry at a time. ``iter(d)`` provides direct access to the iterator object for the keys.",
+      "source_hash": 4030221686367792009,
+      "context_hash": 6594160531251216287,
+      "translation": "Python 2.2에서 ``dict`` 객체는 당시 새로 도입된 이터레이터 프로토콜을 지원하게 되었으며, 이를 통해 딕셔너리에 저장된 키를 직접 반복할 수 있게 되었습니다. 따라서 딕셔너리의 내용을 한 항목씩 반복하기 위해 리스트를 만들 필요가 없어졌습니다. ``iter(d)``\\ 는 키에 대한 이터레이터 객체에 직접 접근할 수 있도록 합니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터",
+        "protocol": "프로토콜",
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:44:40.912427Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Python 2 also provides a ``d.iterkeys()`` method that is essentially synonymous with ``iter(d)``, along with ``d.itervalues()`` and ``d.iteritems()`` methods.",
+      "source_hash": 10469647750618715199,
+      "context_hash": 4982200989531741862,
+      "translation": "Python 2는 ``iter(d)``\\ 와 사실상 동의어인 ``d.iterkeys()`` 메서드와 함께 ``d.itervalues()`` 및 ``d.iteritems()`` 메서드도 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912428Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "These iterators provide live views of the underlying object, and hence may fail if the set of keys in the underlying object is changed during iteration",
+      "source_hash": 6283700009836975251,
+      "context_hash": 818315413048770035,
+      "translation": "이러한 이터레이터는 기본 객체의 실시간 뷰를 제공하므로, 반복 중에 기본 객체의 키 집합이 변경되면 실패할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:40.912428Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "As iterators, iteration over these objects is also a one-time operation: once the iterator is exhausted, you have to go back to the original mapping in order to iterate again.",
+      "source_hash": 11924525623971540100,
+      "context_hash": 4521553623098887123,
+      "translation": "이 객체들에 대한 반복도 이터레이터의 특성상 한 번만 수행할 수 있습니다. 이터레이터가 소진되면 다시 반복하려면 원래 매핑으로 돌아가야 합니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터",
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:40.912428Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "In Python 3, direct iteration over mappings works the same way as it does in Python 2.",
+      "source_hash": 10862109531858543620,
+      "context_hash": 2063929588845069,
+      "translation": "Python 3에서 매핑을 직접 반복하는 방식은 Python 2에서와 동일하게 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873262Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:1",
+      "source": "There are no method based equivalents - the semantic equivalents of ``d.itervalues()`` and ``d.iteritems()`` in Python 3 are ``iter(d.values())`` and ``iter(d.items())``.",
+      "source_hash": 8105235082775788388,
+      "context_hash": 1492852451432866782,
+      "translation": "메서드 기반 대응물은 없으며, Python 3에서 ``d.itervalues()`` 및 ``d.iteritems()``\\ 의 의미상 대응물은 ``iter(d.values())`` 및 ``iter(d.items())``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873266Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "The ``six`` and ``future.utils`` compatibility modules also both provide ``iterkeys()``, ``itervalues()`` and ``iteritems()`` helper functions that provide efficient iterator semantics in both Python 2 and 3.",
+      "source_hash": 6874802619737241442,
+      "context_hash": 4027529672509680337,
+      "translation": "``six`` 및 ``future.utils`` 호환성 모듈은 모두 Python 2와 3에서 효율적인 이터레이터 의미론을 제공하는 ``iterkeys()``, ``itervalues()`` 및 ``iteritems()`` 헬퍼 함수도 제공합니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:44:43.873266Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Set based dynamic views",
+      "source_hash": 12451298566234440153,
+      "context_hash": 7357832183152391185,
+      "translation": "집합 기반 동적 뷰",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873268Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The model that is provided in Python 3 as a method based API is that of set based dynamic views (technically multisets in the case of the ``values()`` view).",
+      "source_hash": 2881959409376672146,
+      "context_hash": 9405160349839326057,
+      "translation": "Python 3에서 메서드 기반 API로 제공되는 모델은 집합 기반 동적 뷰의 모델입니다(``values()`` 뷰의 경우 기술적으로 멀티셋입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873268Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "In Python 3, the objects returned by ``d.keys()``, ``d.values()`` and ``d. items()`` provide a live view of the current state of the underlying object, rather than taking a full snapshot of the current state as they did in Python 2.",
+      "source_hash": 2815881247323848561,
+      "context_hash": 2665403062534967753,
+      "translation": "Python 3에서 ``d.keys()``, ``d.values()`` 및 ``d. items()``\\ 가 반환하는 객체는 Python 2에서처럼 현재 상태의 전체 스냅샷을 생성하는 대신 기본 객체의 현재 상태를 실시간으로 보여 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873268Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "This change is safe in many circumstances, but does mean that, as with the direct iteration API, it is necessary to avoid adding or removing keys during iteration, in order to avoid encountering the following error",
+      "source_hash": 583930126711429432,
+      "context_hash": 17850198477102806189,
+      "translation": "이러한 변경은 많은 상황에서 안전하지만, 직접 반복 API와 마찬가지로 반복 중에 키를 추가하거나 제거하지 않아야 다음 오류가 발생하는 것을 피할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873269Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "Unlike the iteration API, these objects are iterables, rather than iterators: you can iterate over them multiple times, and each time they will iterate over the entire underlying mapping.",
+      "source_hash": 4570554294692900473,
+      "context_hash": 5360616781618632796,
+      "translation": "반복 API와 달리 이러한 객체는 이터레이터가 아니라 이터러블입니다. 여러 번 반복할 수 있으며, 반복할 때마다 기본 매핑 전체를 반복합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:43.873269Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "These semantics are also available in Python 2.7 as the ``d.viewkeys()``, ``d.viewvalues()`` and ``d.viewitems()`` methods.",
+      "source_hash": 3323406575385799631,
+      "context_hash": 11567136951951240884,
+      "translation": "이러한 의미론은 Python 2.7에서도 ``d.viewkeys()``, ``d.viewvalues()`` 및 ``d.viewitems()`` 메서드로 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873270Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "The ``future.utils`` compatibility module also provides ``viewkeys()``, ``viewvalues()`` and ``viewitems()`` helper functions when running on Python 2.7 or Python 3.x.",
+      "source_hash": 18398778509830551086,
+      "context_hash": 2738732619071347667,
+      "translation": "``future.utils`` 호환성 모듈은 Python 2.7 또는 Python 3.x에서 실행할 때 ``viewkeys()``, ``viewvalues()`` 및 ``viewitems()`` 헬퍼 함수도 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873270Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Migrating directly to Python 3",
+      "source_hash": 2323083068096431854,
+      "context_hash": 7719036493927609180,
+      "translation": "Python 3으로 직접 마이그레이션하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873270Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The ``2to3`` migration tool handles direct migrations to Python 3 in accordance with the semantic equivalents described above:",
+      "source_hash": 3002903511039613954,
+      "context_hash": 5559964223110268638,
+      "translation": "``2to3`` 마이그레이션 도구는 위에서 설명한 의미상 대응물에 따라 Python 3으로의 직접 마이그레이션을 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873271Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "``d.keys()`` -> ``list(d.keys())``",
+      "source_hash": 10123411115478602791,
+      "context_hash": 10019674745341712437,
+      "translation": "``d.keys()`` -> ``list(d.keys())``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873271Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "``d.values()`` -> ``list(d.values())``",
+      "source_hash": 4667579071412227727,
+      "context_hash": 10660153040816152929,
+      "translation": "``d.values()`` -> ``list(d.values())``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873271Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "``d.items()`` -> ``list(d.items())``",
+      "source_hash": 10990707136107687280,
+      "context_hash": 4117985299565740130,
+      "translation": "``d.items()`` -> ``list(d.items())``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873271Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "``d.iterkeys()`` -> ``iter(d.keys())``",
+      "source_hash": 17193181697156464198,
+      "context_hash": 6086860921440620579,
+      "translation": "``d.iterkeys()`` -> ``iter(d.keys())``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873272Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "``d.itervalues()`` -> ``iter(d.values())``",
+      "source_hash": 5439092033320627305,
+      "context_hash": 1658626314578316449,
+      "translation": "``d.itervalues()`` -> ``iter(d.values())``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873272Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "``d.iteritems()`` -> ``iter(d.items())``",
+      "source_hash": 3772326472431427469,
+      "context_hash": 2955129080174963492,
+      "translation": "``d.iteritems()`` -> ``iter(d.items())``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873272Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "``d.viewkeys()`` -> ``d.keys()``",
+      "source_hash": 9306169785743728019,
+      "context_hash": 15555999324257693908,
+      "translation": "``d.viewkeys()`` -> ``d.keys()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873272Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:0",
+      "source": "``d.viewvalues()`` -> ``d.values()``",
+      "source_hash": 254441753960327681,
+      "context_hash": 16581124573344816057,
+      "translation": "``d.viewvalues()`` -> ``d.values()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873272Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:0",
+      "source": "``d.viewitems()`` -> ``d.items()``",
+      "source_hash": 6227163502432744270,
+      "context_hash": 15944228852136344287,
+      "translation": "``d.viewitems()`` -> ``d.items()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873273Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:11/seg:0",
+      "source": "Rather than 9 distinct mapping methods for iteration, there are now only the 3 view methods, which combine in straightforward ways with the two relevant builtin functions to cover all of the behaviours that are available as ``dict`` methods in Python 2.7.",
+      "source_hash": 5614955365720965110,
+      "context_hash": 1165689758386027641,
+      "translation": "반복을 위한 서로 다른 매핑 메서드는 9개가 아니라 이제 3개의 뷰 메서드만 있으며, 이 메서드들은 관련된 두 내장 함수와 간단한 방식으로 결합되어 Python 2.7에서 ``dict`` 메서드로 사용할 수 있는 모든 동작을 지원합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:43.873273Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:12/seg:0",
+      "source": "Note that in many cases ``d.keys()`` can be replaced by just ``d``, but the ``2to3`` migration tool doesn't attempt that replacement.",
+      "source_hash": 8124792535979646293,
+      "context_hash": 14155457862403486476,
+      "translation": "많은 경우 ``d.keys()``\\ 는 단순히 ``d``\\ 로 대체할 수 있지만, ``2to3`` 마이그레이션 도구는 이러한 대체를 시도하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873274Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:13/seg:0",
+      "source": "The ``2to3`` migration tool also *does not* provide any automatic assistance for migrating references to these objects as bound or unbound methods - it only automates conversions where the API is called immediately.",
+      "source_hash": 6873052588953890464,
+      "context_hash": 15770837134420431955,
+      "translation": "``2to3`` 마이그레이션 도구는 이러한 객체에 대한 참조가 바인딩된 메서드 또는 바인딩되지 않은 메서드인 경우의 마이그레이션에 대해 자동 지원을 *제공하지 않으며*, API가 즉시 호출되는 경우에만 변환을 자동화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873274Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Migrating to the common subset of Python 2 and 3",
+      "source_hash": 5529529155770974538,
+      "context_hash": 11626426098764295531,
+      "translation": "Python 2와 3의 공통 부분집합으로 마이그레이션하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873274Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "When migrating to the common subset of Python 2 and 3, the above transformations are not generally appropriate, as they all either result in the creation of a redundant list in Python 2, have unexpectedly different semantics in at least some cases, or both.",
+      "source_hash": 6494373386956653399,
+      "context_hash": 17558665936572628590,
+      "translation": "Python 2와 3의 공통 부분집합으로 마이그레이션할 때는 위 변환이 일반적으로 적절하지 않습니다. 이러한 변환은 모두 Python 2에서 불필요한 리스트를 생성하거나, 적어도 일부 경우에 예상과 다른 의미론을 갖게 하거나, 두 가지 모두를 초래하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873275Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Since most code running in the common subset of Python 2 and 3 supports at least as far back as Python 2.6, the currently recommended approach to conversion of mapping iteration operation depends on two helper functions for efficient iteration over mapping values and mapping item tuples:",
+      "source_hash": 18268205023388230906,
+      "context_hash": 1774937586929748162,
+      "translation": "Python 2와 3의 공통 부분집합에서 실행되는 대부분의 코드는 최소한 Python 2.6까지 지원하므로, 매핑 반복 작업을 변환할 때 현재 권장되는 방식은 매핑 값과 매핑 항목 튜플을 효율적으로 반복하기 위한 두 헬퍼 함수에 의존합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:43.873275Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "``d.keys()`` -> ``list(d)``",
+      "source_hash": 14498995773749375509,
+      "context_hash": 6039190452252508284,
+      "translation": "``d.keys()`` -> ``list(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873276Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "``d.values()`` -> ``list(itervalues(d))``",
+      "source_hash": 2948854399743070147,
+      "context_hash": 2799713908471348950,
+      "translation": "``d.values()`` -> ``list(itervalues(d))``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873276Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "``d.items()`` -> ``list(iteritems(d))``",
+      "source_hash": 2786088346204127798,
+      "context_hash": 2429921342918658649,
+      "translation": "``d.items()`` -> ``list(iteritems(d))``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873276Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "``d.iterkeys()`` -> ``iter(d)``",
+      "source_hash": 3631385663110705303,
+      "context_hash": 9122214320861343580,
+      "translation": "``d.iterkeys()`` -> ``iter(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873277Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "``d.itervalues()`` -> ``itervalues(d)``",
+      "source_hash": 7118314643502122053,
+      "context_hash": 5612742719102029109,
+      "translation": "``d.itervalues()`` -> ``itervalues(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:43.873277Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:0",
+      "source": "``d.iteritems()`` -> ``iteritems(d)``",
+      "source_hash": 6027414917718264788,
+      "context_hash": 13946876188632876451,
+      "translation": "``d.iteritems()`` -> ``iteritems(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849955Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:0",
+      "source": "Both ``six`` and ``future.utils`` provide appropriate definitions of ``itervalues()`` and ``iteritems()`` (along with essentially redundant definitions of ``iterkeys()``).",
+      "source_hash": 17348036255543424937,
+      "context_hash": 12052722204903994947,
+      "translation": "``six`` 및 ``future.utils``\\ 는 ``itervalues()`` 및 ``iteritems()``\\ 에 대한 적절한 정의를 제공하며, ``iterkeys()``\\ 에 대한 정의도 사실상 중복되지만 함께 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849961Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:1",
+      "source": "Creating your own definitions of these functions in a custom compatibility module is also relatively straightforward",
+      "source_hash": 14143615236635398110,
+      "context_hash": 3750957214293323307,
+      "translation": "사용자 정의 호환성 모듈에서 이러한 함수의 정의를 직접 만드는 작업도 비교적 간단합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849962Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:11/seg:0",
+      "source": "The greatest loss of readability currently arises when converting code that actually *needs* the list based snapshots that were the default in Python",
+      "source_hash": 13853687380483379212,
+      "context_hash": 7882062835129933050,
+      "translation": "현재 가독성이 가장 크게 저하되는 경우는 Python에서 기본값이었던 리스트 기반 스냅샷을 실제로 *필요로 하는*\\ 코드를 변환할 때 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:57:37.017499Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:12/seg:0",
+      "source": "This readability loss could likely be mitigated by also providing",
+      "source_hash": 12585680929697191107,
+      "context_hash": 7894074224452190282,
+      "translation": "이러한 가독성 저하는 다음도 제공함으로써 완화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849964Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:13/seg:0",
+      "source": "``listvalues`` and ``listitems`` helper functions, allowing the affected conversions to be simplified to:",
+      "source_hash": 5547191085425420043,
+      "context_hash": 18038697336262000317,
+      "translation": "``listvalues`` 및 ``listitems`` 도우미 함수를 제공하면, 영향을 받는 변환을 다음과 같이 단순화할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849965Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:14/seg:0",
+      "source": "``d.values()`` -> ``listvalues(d)``",
+      "source_hash": 925317756294430059,
+      "context_hash": 10869841136998117375,
+      "translation": "``d.values()`` -> ``listvalues(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849965Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:15/seg:0",
+      "source": "``d.items()`` -> ``listitems(d)``",
+      "source_hash": 377804169755418187,
+      "context_hash": 17873705816136106273,
+      "translation": "``d.items()`` -> ``listitems(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849966Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:16/seg:0",
+      "source": "The corresponding compatibility function definitions are as straightforward as their iterator counterparts",
+      "source_hash": 13076011397540289192,
+      "context_hash": 4816009258232657648,
+      "translation": "이에 대응하는 호환성 함수 정의는 이터레이터에 대응하는 함수 정의만큼 간단합니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:44:46.849966Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:18/seg:0",
+      "source": "With that expanded set of compatibility functions, Python 2 code would then be converted to \"idiomatic\" hybrid 2/3 code as:",
+      "source_hash": 16087644258132296360,
+      "context_hash": 16852943923398430602,
+      "translation": "이렇게 확장된 호환성 함수 집합을 사용하면 Python 2 코드는 다음과 같은 \"관용적인\" 혼합 2/3 코드로 변환됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849968Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:19/seg:0",
+      "source": "``d.keys()`` -> ``list(d)``",
+      "source_hash": 14498995773749375509,
+      "context_hash": 7520439925949944951,
+      "translation": "``d.keys()`` -> ``list(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849969Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:20/seg:0",
+      "source": "``d.values()`` -> ``listvalues(d)``",
+      "source_hash": 925317756294430059,
+      "context_hash": 13084000293131388051,
+      "translation": "``d.values()`` -> ``listvalues(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849969Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:21/seg:0",
+      "source": "``d.items()`` -> ``listitems(d)``",
+      "source_hash": 377804169755418187,
+      "context_hash": 11637259106622268214,
+      "translation": "``d.items()`` -> ``listitems(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849969Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:22/seg:0",
+      "source": "``d.iterkeys()`` -> ``iter(d)``",
+      "source_hash": 3631385663110705303,
+      "context_hash": 9909782369436227995,
+      "translation": "``d.iterkeys()`` -> ``iter(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849969Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:23/seg:0",
+      "source": "``d.itervalues()`` -> ``itervalues(d)``",
+      "source_hash": 7118314643502122053,
+      "context_hash": 5612742719102029109,
+      "translation": "``d.itervalues()`` -> ``itervalues(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849970Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:24/seg:0",
+      "source": "``d.iteritems()`` -> ``iteritems(d)``",
+      "source_hash": 6027414917718264788,
+      "context_hash": 5615387565830048234,
+      "translation": "``d.iteritems()`` -> ``iteritems(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849970Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:25/seg:0",
+      "source": "This compares well for readability with the idiomatic pure Python 3 code that uses the mapping methods and builtins directly:",
+      "source_hash": 4479245351228036663,
+      "context_hash": 2433895956144411257,
+      "translation": "이는 매핑 메서드와 내장 함수를 직접 사용하는 관용적인 순수 Python 3 코드와 가독성 측면에서 잘 비교됩니다:",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:46.849970Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:26/seg:0",
+      "source": "``d.keys()`` -> ``list(d)``",
+      "source_hash": 14498995773749375509,
+      "context_hash": 11404012963391055215,
+      "translation": "``d.keys()`` -> ``list(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849971Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:27/seg:0",
+      "source": "``d.values()`` -> ``list(d.values())``",
+      "source_hash": 4667579071412227727,
+      "context_hash": 194111249960790768,
+      "translation": "``d.values()`` -> ``list(d.values())``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849971Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:28/seg:0",
+      "source": "``d.items()`` -> ``list(d.items())``",
+      "source_hash": 10990707136107687280,
+      "context_hash": 1011399674146969500,
+      "translation": "``d.items()`` -> ``list(d.items())``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849971Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:29/seg:0",
+      "source": "``d.iterkeys()`` -> ``iter(d)``",
+      "source_hash": 3631385663110705303,
+      "context_hash": 6086860921440620579,
+      "translation": "``d.iterkeys()`` -> ``iter(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849971Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:30/seg:0",
+      "source": "``d.itervalues()`` -> ``iter(d.values())``",
+      "source_hash": 5439092033320627305,
+      "context_hash": 9021502946730990907,
+      "translation": "``d.itervalues()`` -> ``iter(d.values())``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849972Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:31/seg:0",
+      "source": "``d.iteritems()`` -> ``iter(d.items())``",
+      "source_hash": 3772326472431427469,
+      "context_hash": 546534430649553922,
+      "translation": "``d.iteritems()`` -> ``iter(d.items())``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849972Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:32/seg:0",
+      "source": "It's also notable that when using this approach, hybrid code would *never* invoke the mapping methods directly: it would always invoke either a builtin or helper function instead, in order to ensure the exact same semantics on both Python 2 and 3.",
+      "source_hash": 4967343790480206476,
+      "context_hash": 17301574550603171041,
+      "translation": "이 접근 방식을 사용할 때 하이브리드 코드가 매핑 메서드를 직접 *절대로* 호출하지 않는다는 점도 주목할 만합니다. Python 2와 3에서 정확히 동일한 의미론을 보장하기 위해, 대신 항상 내장 함수나 도우미 함수 중 하나를 호출합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T19:57:37.017503Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Migrating from Python 3 to the common subset with Python 2.7",
+      "source_hash": 12506103910614097618,
+      "context_hash": 11109229942994853223,
+      "translation": "Python 3에서 Python 2.7과의 공통 부분집합으로 마이그레이션하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849973Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "While the majority of migrations are currently from Python 2 either directly to Python 3 or to the common subset of Python 2 and Python 3, there are also some migrations of newer projects that start in Python 3 and then later add Python 2 support, either due to user demand, or to gain access to Python 2 libraries that are not yet available in Python 3 (and porting them to Python 3 or creating a Python 3 compatible replacement is not a trivial exercise).",
+      "source_hash": 6097307061095735928,
+      "context_hash": 2930038028679064333,
+      "translation": "현재 대부분의 마이그레이션은 Python 2에서 Python 3으로 직접 진행되거나 Python 2와 Python 3의 공통 부분집합으로 진행되지만, Python 3에서 시작한 후 사용자 요구에 따라 Python 2 지원을 추가하거나 Python 3에서 아직 사용할 수 없는 Python 2 라이브러리에 접근하기 위해 나중에 Python 2 지원을 추가하는 최신 프로젝트의 마이그레이션도 일부 있습니다. 이러한 라이브러리를 Python 3으로 포팅하거나 Python 3 호환 대체물을 만드는 일은 간단한 작업이 아니기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849974Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "In these cases, Python 2.7 compatibility is often sufficient, and the 2.7+ only view based helper functions provided by ``future.utils`` allow the bare accesses to the Python 3 mapping view methods to be replaced with code that is compatible with both Python 2.7 and Python 3 (note, this is the only migration chart in the PEP that has Python 3 code on the left of the conversion):",
+      "source_hash": 7886960718844872245,
+      "context_hash": 4296814615815090302,
+      "translation": "이러한 경우에는 Python 2.7 호환성으로 충분한 경우가 많으며, ``future.utils``\\ 가 제공하는 2.7 이상 전용 뷰 기반 도우미 함수를 사용하면 Python 3의 매핑 뷰 메서드에 대한 단순한 접근을 Python 2.7과 Python 3 모두와 호환되는 코드로 대체할 수 있습니다(참고로 이는 변환 전 왼쪽에 Python 3 코드가 있는 PEP의 유일한 마이그레이션 표입니다):",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:44:46.849974Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "``d.keys()`` -> ``viewkeys(d)``",
+      "source_hash": 2484515090108233723,
+      "context_hash": 11291495622889159963,
+      "translation": "``d.keys()`` -> ``viewkeys(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849975Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "``d.values()`` -> ``viewvalues(d)``",
+      "source_hash": 4873311038676373273,
+      "context_hash": 4196787650550637080,
+      "translation": "``d.values()`` -> ``viewvalues(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849975Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "``d.items()`` -> ``viewitems(d)``",
+      "source_hash": 5521521591843371360,
+      "context_hash": 8031856853480551892,
+      "translation": "``d.items()`` -> ``viewitems(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849975Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "``list(d.keys())`` -> ``list(d)``",
+      "source_hash": 7874380220075452928,
+      "context_hash": 480221108977371821,
+      "translation": "``list(d.keys())`` -> ``list(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849976Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "``list(d.values())`` -> ``listvalues(d)``",
+      "source_hash": 9926768240333880646,
+      "context_hash": 14191247138452009618,
+      "translation": "``list(d.values())`` -> ``listvalues(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:46.849976Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:0",
+      "source": "``list(d.items())`` -> ``listitems(d)``",
+      "source_hash": 14933950939628717895,
+      "context_hash": 15559803776120921363,
+      "translation": "``list(d.items())`` -> ``listitems(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782439Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:0",
+      "source": "``iter(d.keys())`` -> ``iter(d)``",
+      "source_hash": 12322489620030967934,
+      "context_hash": 11438520296596788583,
+      "translation": "``iter(d.keys())`` -> ``iter(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782443Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:10/seg:0",
+      "source": "``iter(d.values())`` -> ``itervalues(d)``",
+      "source_hash": 14604793145900521827,
+      "context_hash": 16046429214706757999,
+      "translation": "``iter(d.values())`` -> ``itervalues(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782443Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:11/seg:0",
+      "source": "``iter(d.items())`` -> ``iteritems(d)``",
+      "source_hash": 11075810802518570319,
+      "context_hash": 10981287549648036764,
+      "translation": "``iter(d.items())`` -> ``iteritems(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782443Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:12/seg:0",
+      "source": "As with migrations from Python 2 to the common subset, note that the hybrid code ends up never invoking the mapping methods directly - it only calls builtins and helper methods, with the latter addressing the semantic differences between Python 2 and Python 3.",
+      "source_hash": 14984124879687877477,
+      "context_hash": 4035407569029822071,
+      "translation": "Python 2에서 공통 부분집합으로 마이그레이션할 때와 마찬가지로, 하이브리드 코드는 결국 매핑 메서드를 직접 호출하지 않고 내장 함수와 헬퍼 메서드만 호출하며, 후자는 Python 2와 Python 3 간의 의미적 차이를 처리한다는 점에 유의하십시오.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:08:07.782444Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Possible changes to Python 3.5+",
+      "source_hash": 18333892457280381144,
+      "context_hash": 5854979215256080999,
+      "translation": "Python 3.5+에 대한 가능한 변경 사항입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782445Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The main proposal put forward to potentially aid migration of existing Python 2 code to Python 3 is the restoration of some or all of the alternate iteration APIs to the Python 3 mapping API.",
+      "source_hash": 4204911139433723522,
+      "context_hash": 242666830500100802,
+      "translation": "기존 Python 2 코드의 Python 3으로의 마이그레이션을 지원하기 위해 제안된 주요 방안은 Python 3 매핑 API에 대체 이터레이션 API의 일부 또는 전부를 복원하는 것입니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:08:07.782446Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "In particular, the initial draft of this PEP proposed making the following conversions possible when migrating to the common subset of Python 2 and Python 3.5+:",
+      "source_hash": 125171995293901524,
+      "context_hash": 7708322174724414606,
+      "translation": "특히 이 PEP의 초기 초안에서는 Python 2와 Python 3.5+의 공통 부분집합으로 마이그레이션할 때 다음 변환이 가능하도록 제안했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782447Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "``d.keys()`` -> ``list(d)``",
+      "source_hash": 14498995773749375509,
+      "context_hash": 2178920775986625935,
+      "translation": "``d.keys()`` -> ``list(d)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782447Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "``d.values()`` -> ``list(d.itervalues())``",
+      "source_hash": 15829619330013892790,
+      "context_hash": 3727538000772119728,
+      "translation": "``d.values()`` -> ``list(d.itervalues())``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782447Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "``d.items()`` -> ``list(d.iteritems())``",
+      "source_hash": 9254315338700172910,
+      "context_hash": 3406198596898768326,
+      "translation": "``d.items()`` -> ``list(d.iteritems())``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782448Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "``d.iterkeys()`` -> ``d.iterkeys()``",
+      "source_hash": 9567802119038803674,
+      "context_hash": 3808082412153463375,
+      "translation": "``d.iterkeys()`` -> ``d.iterkeys()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782448Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "``d.itervalues()`` -> ``d.itervalues()``",
+      "source_hash": 11346759185421525791,
+      "context_hash": 7811863550921703782,
+      "translation": "``d.itervalues()`` -> ``d.itervalues()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782448Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "``d.iteritems()`` -> ``d.iteritems()``",
+      "source_hash": 12879290462285783666,
+      "context_hash": 14782618469857811109,
+      "translation": "``d.iteritems()`` -> ``d.iteritems()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782448Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "Possible mitigations of the additional language complexity in Python 3 created by restoring these methods included immediately deprecating them, as well as potentially hiding them from the ``dir()`` function (or perhaps even defining a way to make ``pydoc`` aware of function deprecations).",
+      "source_hash": 22956560831641611,
+      "context_hash": 6055209281418930560,
+      "translation": "이러한 메서드를 즉시 사용 중단으로 지정하는 것과 더불어, ``dir()`` 함수에서 해당 메서드를 숨기거나 함수의 사용 중단을 ``pydoc``\\ 이 인식하도록 하는 방법을 정의하는 것까지, 이러한 메서드를 복원함으로써 Python 3에 추가되는 언어 복잡성을 완화할 수 있는 방안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782448Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "However, in the case where the list output is actually desired, the end result of that proposal is actually less readable than an appropriately defined helper function, and the function and method forms of the iterator versions are pretty much equivalent from a readability perspective.",
+      "source_hash": 12749984759851224090,
+      "context_hash": 18233957536170898842,
+      "translation": "그러나 실제로 리스트 출력이 필요한 경우에는 적절하게 정의된 헬퍼 함수보다 이 제안의 최종 결과가 오히려 가독성이 떨어지며, 이터레이터 버전의 함수 형식과 메서드 형식은 가독성 측면에서 거의 동등합니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:08:07.782449Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:10/seg:0",
+      "source": "So unless I've missed something critical, readily available ``listvalues()`` and ``listitems()`` helper functions look like they will improve the readability of hybrid code more than anything we could add back to the Python 3.5+ mapping API, and won't have any long-term impact on the complexity of Python 3 itself.",
+      "source_hash": 14600352968377191979,
+      "context_hash": 11872804696477472560,
+      "translation": "따라서 제가 중요한 무언가를 놓친 것이 아니라면, 바로 사용할 수 있는 ``listvalues()`` 및 ``listitems()`` 헬퍼 함수는 Python 3.5+ 매핑 API에 무엇을 되돌려 추가할 수 있는지보다 하이브리드 코드의 가독성을 더 크게 향상할 것으로 보이며, Python 3 자체의 복잡성에도 장기적인 영향을 주지 않을 것입니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:08:07.782450Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Discussion",
+      "source_hash": 14315283418082301837,
+      "context_hash": 4971180677640168834,
+      "translation": "토론입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782451Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "The fact that 5 years in to the Python 3 migration we still have users considering the dict API changes a significant barrier to migration suggests that there are problems with previously recommended approaches.",
+      "source_hash": 7478404137382601301,
+      "context_hash": 8226697702672003391,
+      "translation": "Python 3으로의 마이그레이션이 시작된 지 5년이 지난 지금도 딕셔너리 API 변경을 마이그레이션의 중요한 장벽으로 여기는 사용자가 있다는 사실은, 이전에 권장된 접근 방식에 문제가 있음을 시사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782451Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "This PEP attempts to explore those issues and tries to isolate those cases where previous advice (such as it was) could prove problematic.",
+      "source_hash": 10361356156498178758,
+      "context_hash": 15532174680641005545,
+      "translation": "이 PEP는 이러한 문제를 살펴보고, 이전의 조언이(그러한 조언이 존재했다면) 문제가 될 수 있는 경우를 분리해 보려고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782451Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "My assessment (largely based on feedback from Twisted devs) is that problems are most likely to arise when attempting to use ``d.keys()``, ``d.values()``, and ``d.items()`` in hybrid code.",
+      "source_hash": 346386235928930695,
+      "context_hash": 11420426204985360757,
+      "translation": "제 평가(대체로 Twisted 개발자들의 피드백에 기반함)는 하이브리드 코드에서 ``d.keys()``, ``d.values()``, ``d.items()``\\ 를 사용하려고 할 때 문제가 발생할 가능성이 가장 높다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782452Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "While superficially it seems as though there should be cases where it is safe to ignore the semantic differences, in practice, the change from \"mutable snapshot\" to \"dynamic view\" is significant enough that it is likely better to just force the use of either list or iterator semantics for hybrid code, and leave the use of the view semantics to pure Python 3 code.",
+      "source_hash": 47981568931435675,
+      "context_hash": 12322709317841131875,
+      "translation": "표면적으로는 의미적 차이를 무시해도 안전한 경우가 있을 것처럼 보이지만, 실제로는 \"변경 가능한 스냅샷\"에서 \"동적 뷰\"로의 변경이 충분히 중요하므로, 하이브리드 코드에서는 리스트 의미 체계나 이터레이터 의미 체계 중 하나만 사용하도록 강제하고 뷰 의미 체계의 사용은 순수 Python 3 코드에 맡기는 편이 나을 가능성이 높습니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:08:07.782452Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "This approach also creates rules that are simple enough and safe enough that it should be possible to automate them in code modernisation scripts that target the common subset of Python 2 and Python 3, just as ``2to3`` converts them automatically when targeting pure Python 3 code.",
+      "source_hash": 7010539444323385449,
+      "context_hash": 1620009922961966915,
+      "translation": "이 접근 방식은 Python 2와 Python 3의 공통 부분집합을 대상으로 하는 코드 현대화 스크립트에서 자동화할 수 있을 만큼 단순하고 안전한 규칙도 만들며, 순수 Python 3 코드를 대상으로 할 때 ``2to3``\\ 이 이를 자동으로 변환하는 것과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782453Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Acknowledgements",
+      "source_hash": 16326275492144793040,
+      "context_hash": 1362329903097844185,
+      "translation": "감사의 말입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782453Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "Thanks to the folks at the Twisted sprint table at PyCon for a very vigorous discussion of this idea (and several other topics), and especially to Hynek Schlawack for acting as a moderator when things got a little too heated :)",
+      "source_hash": 10613222455202402072,
+      "context_hash": 8383970650526926601,
+      "translation": "이 아이디어와 여러 다른 주제에 대해 매우 열띤 토론을 벌여 주신 PyCon의 Twisted 스프린트 테이블 참가자분들께 감사드리며, 상황이 조금 지나치게 과열되었을 때 중재자 역할을 해 주신 Hynek Schlawack에게 특히 감사드립니다 :)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782453Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "Thanks also to JP Calderone and Itamar Turner-Trauring for their email feedback, as well to the participants in the `python-dev review <https://mail.python.org/pipermail/python-dev/2014-April/134168.html>`__ of the initial version of the PEP.",
+      "source_hash": 5877713024942697079,
+      "context_hash": 12188782640537882391,
+      "translation": "또한 이메일로 의견을 보내 주신 JP Calderone과 Itamar Turner-Trauring, 그리고 이 PEP의 초기 버전에 대한 `python-dev review <https://mail.python.org/pipermail/python-dev/2014-April/134168.html>`__ 에 참여해 주신 분들께도 감사드립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:07.782454Z",
+      "issues": []
+    }
+  ]
+}

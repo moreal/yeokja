@@ -1,0 +1,798 @@
+{
+  "version": 1,
+  "source_hash": 13408192952086284776,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Python Bytecode Verification",
+      "source_hash": 16031940504142158216,
+      "context_hash": 16530898886277989957,
+      "translation": "Python 바이트코드 검증",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594961Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 244327908674732674,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:02.594966Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "If Python Virtual Machine (PVM) bytecode is not \"well-formed\" it is possible to crash or exploit the PVM by causing various errors such as under/overflowing the value stack or reading/writing into arbitrary areas of the PVM program space.",
+      "source_hash": 4006288783922693283,
+      "context_hash": 7102790794543176245,
+      "translation": "Python 가상 머신(PVM)의 바이트코드가 \"올바른 형식\"이 아니면 값 스택의 언더플로 또는 오버플로를 일으키거나 PVM 프로그램 공간의 임의 영역을 읽고 쓰는 등의 다양한 오류를 발생시켜 PVM을 충돌시키거나 악용할 수 있습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594966Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "Most of these kinds of errors can be eliminated by verifying that PVM bytecode does not violate a set of simple constraints before execution.",
+      "source_hash": 13037230114563131382,
+      "context_hash": 10444834409672412620,
+      "translation": "실행 전에 PVM 바이트코드가 일련의 간단한 제약을 위반하지 않는지 검증하면 이러한 종류의 오류 대부분을 제거할 수 있습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594967Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "This PEP proposes a set of constraints on the format and structure of Python Virtual Machine (PVM) bytecode and provides an implementation in Python of this verification process.",
+      "source_hash": 5669072795906027554,
+      "context_hash": 12214386280778483383,
+      "translation": "이 PEP는 Python 가상 머신(PVM) 바이트코드의 형식과 구조에 대한 일련의 제약을 제안하고, 이 검증 과정의 Python 구현을 제공합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594967Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Pronouncement",
+      "source_hash": 10407322542891560542,
+      "context_hash": 8189871701397707236,
+      "translation": "선언",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:02.594968Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Guido believes that a verification tool has some value.",
+      "source_hash": 11112659398157939864,
+      "context_hash": 4807829317142983280,
+      "translation": "Guido는 검증 도구가 어느 정도 가치가 있다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:02.594968Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "If someone wants to add it to ``Tools/scripts``, no PEP is required.",
+      "source_hash": 10029299070123886280,
+      "context_hash": 5944802666907464907,
+      "translation": "누군가 이를 ``Tools/scripts``\\ 에 추가하려 한다면 PEP는 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:02.594968Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Such a tool may have value for validating the output from \"bytecodehacks\" or from direct edits of PYC files.",
+      "source_hash": 14150435048764851838,
+      "context_hash": 17805001333449711299,
+      "translation": "이러한 도구는 \"bytecodehacks\"의 출력이나 PYC 파일을 직접 편집한 결과를 검증하는 데 유용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:02.594969Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "As security measure, its value is somewhat limited because perfectly valid bytecode can still do horrible things.",
+      "source_hash": 15150923627315927322,
+      "context_hash": 11019806292828274835,
+      "translation": "완전히 유효한 바이트코드도 여전히 끔찍한 일을 할 수 있으므로, 보안 수단으로서의 가치는 어느 정도 제한적입니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594969Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "That situation could change if the concept of restricted execution were to be successfully resurrected.",
+      "source_hash": 15952867277623795407,
+      "context_hash": 10939108070781267056,
+      "translation": "제한된 실행이라는 개념이 성공적으로 부활한다면 이러한 상황은 바뀔 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:02.594970Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 15409839655482524015,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:02.594970Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "The Python Virtual Machine executes Python programs that have been compiled from the Python language into a bytecode representation.",
+      "source_hash": 1222013536571620756,
+      "context_hash": 11578575276009262668,
+      "translation": "Python 가상 머신은 Python 언어에서 바이트코드 표현으로 컴파일된 Python 프로그램을 실행합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594970Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "The PVM assumes that any bytecode being executed is \"well-formed\" with regard to a number implicit constraints.",
+      "source_hash": 8455249307730929276,
+      "context_hash": 17741565090177077169,
+      "translation": "PVM은 실행되는 모든 바이트코드가 암묵적인 여러 제약과 관련하여 \"올바른 형식\"이라고 가정합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594971Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "Some of these constraints are checked at run-time, but most of them are not due to the overhead they would create.",
+      "source_hash": 4155539822698296808,
+      "context_hash": 16273269608664658816,
+      "translation": "이러한 제약 중 일부는 런타임에 검사되지만, 대부분은 발생시키는 오버헤드 때문에 검사되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:02.594971Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "When running in debug mode the PVM does do several run-time checks to ensure that any particular bytecode cannot violate these constraints that, to a degree, prevent bytecode from crashing or exploiting the interpreter.",
+      "source_hash": 15239627247158672739,
+      "context_hash": 1913759625395340530,
+      "translation": "디버그 모드로 실행할 때 PVM은 특정 바이트코드가 이러한 제약을 위반하지 않도록 여러 런타임 검사를 수행하며, 이러한 검사는 어느 정도 바이트코드가 인터프리터를 충돌시키거나 악용하는 것을 방지합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594972Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "These checks add a measurable overhead to the interpreter, and are typically turned off in common use.",
+      "source_hash": 12839760303804989305,
+      "context_hash": 9345084026688947156,
+      "translation": "이러한 검사는 인터프리터에 측정 가능한 오버헤드를 추가하므로 일반적인 사용에서는 대개 비활성화됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:15:02.594972Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Bytecode that is not well-formed and executed by a PVM not running in debug mode may create a variety of fatal and non-fatal errors.",
+      "source_hash": 2104518852196964715,
+      "context_hash": 9891197862672716319,
+      "translation": "올바른 형식이 아니며 디버그 모드로 실행되지 않는 PVM에서 실행되는 바이트코드는 다양한 치명적 및 비치명적 오류를 일으킬 수 있습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594973Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "Typically, ill-formed code will cause the PVM to seg-fault and cause the OS to immediately and abruptly terminate the interpreter.",
+      "source_hash": 3862460421733191890,
+      "context_hash": 10217908414066182536,
+      "translation": "일반적으로 잘못된 형식의 코드는 PVM에서 세그폴트를 일으키고 운영 체제가 인터프리터를 즉시 갑작스럽게 종료하게 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:15:02.594973Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "Conceivably, ill-formed bytecode could exploit the interpreter and allow Python bytecode to execute arbitrary C-level machine instructions or to modify private, internal data structures in the interpreter.",
+      "source_hash": 10997123901017866693,
+      "context_hash": 2808908864245617698,
+      "translation": "잘못된 형식의 바이트코드는 인터프리터를 악용하여 Python 바이트코드가 임의의 C 수준 기계 명령을 실행하거나 인터프리터의 비공개 내부 데이터 구조를 수정하도록 만들 수도 있습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:15:02.594974Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:1",
+      "source": "If used cleverly this could subvert any form of security policy an application may want to apply to its objects.",
+      "source_hash": 7587302125608761317,
+      "context_hash": 312038798485337155,
+      "translation": "이를 영리하게 사용하면 애플리케이션이 객체에 적용하려는 어떤 형태의 보안 정책도 무력화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:02.594975Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "Practically, it would be difficult for a malicious user to \"inject\" invalid bytecode into a PVM for the purposes of exploitation, but not impossible.",
+      "source_hash": 8005791552685281982,
+      "context_hash": 8532046131500374991,
+      "translation": "현실적으로 악의적인 사용자가 악용을 목적으로 PVM에 유효하지 않은 바이트코드를 \"주입\"하는 것은 어렵겠지만 불가능하지는 않습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594975Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "Buffer overflow and memory overwrite attacks are commonly understood, particularly when the exploit payload is transmitted unencrypted over a network or when a file or network security permission weakness is used as a foothold for further attacks.",
+      "source_hash": 2522330092480359376,
+      "context_hash": 548885745682931590,
+      "translation": "버퍼 오버플로 및 메모리 덮어쓰기 공격은 일반적으로 잘 알려져 있으며, 특히 공격 페이로드가 네트워크를 통해 암호화되지 않은 상태로 전송되거나 파일 또는 네트워크 보안 권한의 취약점이 추가 공격의 발판으로 사용되는 경우에 그러합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:02.594976Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "Ideally, no bytecode should ever be allowed to read or write underlying C-level data structures to subvert the operation of the PVM, whether the bytecode was maliciously crafted or not.",
+      "source_hash": 3794142879872740236,
+      "context_hash": 5837804810831325366,
+      "translation": "이상적으로는 바이트코드가 악의적으로 만들어졌는지 여부와 관계없이 PVM의 작동을 무력화하기 위해 기반 C 수준 데이터 구조를 읽거나 쓰는 것이 어떤 바이트코드에도 허용되어서는 안 됩니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594977Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:1",
+      "source": "A simple pre-execution verification step could ensure that bytecode cannot over/underflow the value stack or access other sensitive areas of PVM program space at run-time.",
+      "source_hash": 12324720560393061365,
+      "context_hash": 17486973667406976062,
+      "translation": "간단한 실행 전 검증 단계로 바이트코드가 런타임에 값 스택을 오버플로 또는 언더플로하거나 PVM 프로그램 공간의 다른 민감한 영역에 접근할 수 없도록 보장할 수 있습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594977Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "This PEP proposes several validation steps that should be taken on Python bytecode before it is executed by the PVM so that it compiles with static and structure constraints on its instructions and their operands.",
+      "source_hash": 12978063536928700476,
+      "context_hash": 17564649483826084240,
+      "translation": "이 PEP는 Python 바이트코드가 PVM에서 실행되기 전에 해당 명령과 피연산자에 대한 정적 및 구조적 제약을 준수하도록 수행해야 하는 몇 가지 검증 단계를 제안합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594978Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:1",
+      "source": "These steps are simple and catch a large class of invalid bytecode that can cause crashes.",
+      "source_hash": 13374013341951549836,
+      "context_hash": 9102120810289246775,
+      "translation": "이러한 단계는 간단하며 충돌을 일으킬 수 있는 유효하지 않은 바이트코드의 많은 유형을 찾아냅니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594978Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:2",
+      "source": "There is also some possibility that some run-time checks can be eliminated up front by a verification pass.",
+      "source_hash": 5928793327190433593,
+      "context_hash": 5270922457909346810,
+      "translation": "검증 패스를 통해 일부 런타임 검사를 사전에 제거할 수 있는 가능성도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:02.594978Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "There is, of course, no way to verify that bytecode is \"completely safe\", for every definition of complete and safe.",
+      "source_hash": 15586468036864976676,
+      "context_hash": 16913748433601494213,
+      "translation": "물론 완전성과 안전성에 대한 모든 정의를 고려할 때 바이트코드가 \"완전히 안전하다\"고 검증할 방법은 없습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594979Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:1",
+      "source": "Even with bytecode verification, Python programs can and most likely in the future will seg-fault for a variety of reasons and continue to cause many different classes of run-time errors, fatal or not.",
+      "source_hash": 6705684153499066695,
+      "context_hash": 2895985722939173595,
+      "translation": "바이트코드 검증을 수행하더라도 Python 프로그램은 다양한 이유로 세그폴트를 일으킬 수 있으며, 앞으로도 그럴 가능성이 높고, 치명적이든 아니든 여러 유형의 런타임 오류를 계속 일으킬 수 있습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594979Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:2",
+      "source": "The verification step proposed here simply plugs an easy hole that can cause a large class of fatal and subtle errors at the bytecode level.",
+      "source_hash": 17057416643092077673,
+      "context_hash": 7368215910187609125,
+      "translation": "여기서 제안하는 검증 단계는 바이트코드 수준에서 많은 유형의 치명적이고 미묘한 오류를 일으킬 수 있는 쉽게 악용 가능한 허점을 단순히 막습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:02.594980Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "Currently, the Java Virtual Machine (JVM) verifies Java bytecode in a way very similar to what is proposed here.",
+      "source_hash": 7006466584180397089,
+      "context_hash": 1954519663001452392,
+      "translation": "현재 Java 가상 머신(JVM)은 여기서 제안하는 방식과 매우 유사한 방식으로 Java 바이트코드를 검증합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:06.157161Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:1",
+      "source": "The JVM Specification version 2 [1]_, Sections 4.8 and 4.9 were therefore used as a basis for some of the constraints explained below.",
+      "source_hash": 2330840493131980598,
+      "context_hash": 12846654957840096871,
+      "translation": "따라서 JVM Specification version 2 [1]_, Sections 4.8 및 4.9를 아래에서 설명하는 제약 조건 일부의 기반으로 사용했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157167Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:2",
+      "source": "Any Python bytecode verification implementation at a minimum must enforce these constraints, but may not be limited to them.",
+      "source_hash": 14146800474463160580,
+      "context_hash": 422488322993504485,
+      "translation": "모든 Python 바이트코드 검증 구현은 최소한 이러한 제약 조건을 적용해야 하지만, 이러한 제약 조건으로만 제한될 필요는 없습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:06.157168Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Static Constraints on Bytecode Instructions",
+      "source_hash": 18077123822851594785,
+      "context_hash": 1155154310121142251,
+      "translation": "바이트코드 명령어의 정적 제약 조건",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:06.157169Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "The bytecode string must not be empty. (``len(co_code) > 0``).",
+      "source_hash": 6675002035578376359,
+      "context_hash": 10779116980887407848,
+      "translation": "바이트코드 문자열은 비어 있으면 안 됩니다. (``len(co_code) > 0``).",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:06.157169Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "The bytecode string cannot exceed a maximum size (``len(co_code) < sizeof(unsigned char) - 1``).",
+      "source_hash": 8355202672035042836,
+      "context_hash": 17495934877134535980,
+      "translation": "바이트코드 문자열은 최대 크기를 초과할 수 없습니다 (``len(co_code) < sizeof(unsigned char) - 1``).",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:06.157170Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "The first instruction in the bytecode string begins at index 0.",
+      "source_hash": 11758305019838239351,
+      "context_hash": 15783757001555755306,
+      "translation": "바이트코드 문자열의 첫 번째 명령어는 인덱스 0에서 시작합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:06.157170Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "Only valid byte-codes with the correct number of operands can be in the bytecode string.",
+      "source_hash": 13577160441920990499,
+      "context_hash": 16215976785875127146,
+      "translation": "올바른 피연산자 수를 가진 유효한 바이트코드만 바이트코드 문자열에 포함될 수 있습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:06.157170Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Static Constraints on Bytecode Instruction Operands",
+      "source_hash": 1467685037110021170,
+      "context_hash": 1545892929654736667,
+      "translation": "바이트코드 명령어 피연산자의 정적 제약 조건",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:06.157171Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "The target of a jump instruction must be within the code boundaries and must fall on an instruction, never between an instruction and its operands.",
+      "source_hash": 9453727229041834677,
+      "context_hash": 4808096504506644202,
+      "translation": "점프 명령어의 대상은 코드 경계 내에 있어야 하며, 명령어와 해당 피연산자 사이가 아니라 명령어 위치에 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157172Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "The operand of a ``LOAD_*`` instruction must be a valid index into its corresponding data structure.",
+      "source_hash": 11929982467900146333,
+      "context_hash": 15503731310147795378,
+      "translation": "``LOAD_*`` 명령어의 피연산자는 해당 데이터 구조에 대한 유효한 인덱스여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157172Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "The operand of a ``STORE_*`` instruction must be a valid index into its corresponding data structure.",
+      "source_hash": 13503177468517802950,
+      "context_hash": 324248445942536315,
+      "translation": "``STORE_*`` 명령어의 피연산자는 해당 데이터 구조에 대한 유효한 인덱스여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157172Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Structural Constraints between Bytecode Instructions",
+      "source_hash": 11028687643732997,
+      "context_hash": 17818262340740961991,
+      "translation": "바이트코드 명령어 간 구조적 제약 조건",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:06.157173Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Each instruction must only be executed with the appropriate number of arguments in the value stack, regardless of the execution path that leads to its invocation.",
+      "source_hash": 10366072850728367004,
+      "context_hash": 5427046731386536699,
+      "translation": "각 명령어는 해당 명령어의 실행으로 이어지는 실행 경로와 관계없이 값 스택에 적절한 수의 인자가 있을 때만 실행되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157173Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "If an instruction can be executed along several different execution paths, the value stack must have the same depth prior to the execution of the instruction, regardless of the path taken.",
+      "source_hash": 6125861171389032132,
+      "context_hash": 4198901855962531294,
+      "translation": "하나의 명령어가 여러 다른 실행 경로를 따라 실행될 수 있다면, 어떤 경로를 거쳤는지와 관계없이 해당 명령어가 실행되기 전에 값 스택의 깊이가 같아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157173Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "At no point during execution can the value stack grow to a depth greater than that implied by ``co_stacksize``.",
+      "source_hash": 13790938157808497445,
+      "context_hash": 12564476883228600123,
+      "translation": "실행 중 어느 시점에도 값 스택은 ``co_stacksize``\\ 가 나타내는 깊이보다 더 깊어질 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157174Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "Execution never falls off the bottom of ``co_code``.",
+      "source_hash": 13777600639473544889,
+      "context_hash": 13223546814693667082,
+      "translation": "실행이 ``co_code``\\ 의 끝을 벗어나서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157174Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 11074066570568175728,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157174Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "This PEP is the working document for a Python bytecode verification implementation written in Python.",
+      "source_hash": 2460796282721638863,
+      "context_hash": 1040230278505007037,
+      "translation": "이 PEP는 Python으로 작성된 Python 바이트코드 검증 구현을 위한 작업 문서입니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:06.157174Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "This implementation is not used implicitly by the PVM before executing any bytecode, but is to be used explicitly by users concerned about possibly invalid bytecode with the following snippet",
+      "source_hash": 3592896913773826514,
+      "context_hash": 10734624499663837541,
+      "translation": "이 구현은 바이트코드를 실행하기 전에 PVM에서 암묵적으로 사용되지 않으며, 잘못된 바이트코드일 가능성을 우려하는 사용자가 다음 코드 조각을 사용하여 명시적으로 사용해야 합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:06.157175Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "The ``verify`` module provides a ``verify`` function which accepts the same kind of arguments as ``dis.dis``: classes, methods, functions, or code objects.",
+      "source_hash": 4860702958842798207,
+      "context_hash": 16979394360009585572,
+      "translation": "``verify`` 모듈은 ``dis.dis``\\ 와 동일한 종류의 인자, 즉 클래스, 메서드, 함수 또는 코드 객체를 받는 ``verify`` 함수를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157176Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "It verifies that the object's bytecode is well-formed according to the specifications of this PEP.",
+      "source_hash": 7690910181177958485,
+      "context_hash": 14987309727650883528,
+      "translation": "이 함수는 이 PEP의 사양에 따라 객체의 바이트코드가 올바른 형식인지 검증합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:15:06.157176Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "If the code is well-formed the call to ``verify`` returns silently without error.",
+      "source_hash": 16960806793770402431,
+      "context_hash": 5596344096363528934,
+      "translation": "코드 형식이 올바르면 ``verify`` 호출은 오류 없이 조용히 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157177Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "If an error is encountered, it throws a ``VerificationError`` whose argument indicates the cause of the failure.",
+      "source_hash": 844185601490047173,
+      "context_hash": 15609053145910197174,
+      "translation": "오류가 발견되면 실패 원인을 나타내는 인자를 가진 ``VerificationError``\\ 를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157177Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:2",
+      "source": "It is up to the programmer whether or not to handle the error in some way or execute the invalid code regardless.",
+      "source_hash": 6614987015414372827,
+      "context_hash": 14619052910391651465,
+      "translation": "어떤 방식으로든 오류를 처리할지, 아니면 그와 관계없이 잘못된 코드를 실행할지는 프로그래머에게 달려 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157177Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "Phillip Eby has proposed a pseudo-code algorithm for bytecode stack depth verification used by the reference implementation.",
+      "source_hash": 16267941200384551103,
+      "context_hash": 4984154121704295769,
+      "translation": "Phillip Eby는 참조 구현에서 사용하는 바이트코드 스택 깊이 검증을 위한 의사 코드 알고리즘을 제안했습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T19:15:06.157178Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Verification Issues",
+      "source_hash": 14909183606783347047,
+      "context_hash": 8659398825408025181,
+      "translation": "검증 관련 문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157178Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "This PEP describes only a small number of verifications.",
+      "source_hash": 15330997150621380894,
+      "context_hash": 9924033911397010113,
+      "translation": "이 PEP는 소수의 검증만 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157179Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "While discussion and analysis will lead to many more, it is highly possible that future verification may need to be done or custom, project-specific verifications.",
+      "source_hash": 5070635340712596785,
+      "context_hash": 17312818971334525179,
+      "translation": "논의와 분석을 통해 훨씬 더 많은 검증이 이루어지겠지만, 향후 검증을 수행하거나 사용자 정의된 프로젝트별 검증을 수행해야 할 가능성이 매우 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157179Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "For this reason, it might be desirable to add a verification registration interface to the test implementation to register future verifiers.",
+      "source_hash": 17182990594023177465,
+      "context_hash": 3299165511653782769,
+      "translation": "이러한 이유로 테스트 구현에 향후 검증기를 등록할 수 있는 검증 등록 인터페이스를 추가하는 것이 바람직할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157179Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:3",
+      "source": "The need for this is minimal since custom verifiers can subclass and extend the current implementation for added behavior.",
+      "source_hash": 341884019190554647,
+      "context_hash": 6857258119090811291,
+      "translation": "사용자 정의 검증기는 현재 구현을 서브클래싱하고 확장하여 기능을 추가할 수 있으므로 이러한 기능의 필요성은 크지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157180Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Required Changes",
+      "source_hash": 6065668067013566099,
+      "context_hash": 8193396374800205642,
+      "translation": "필요한 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:06.157180Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Armin Rigo noted that several byte-codes will need modification in order for their stack effect to be statically analyzed.",
+      "source_hash": 17629503950994855552,
+      "context_hash": 12514970426982007709,
+      "translation": "Armin Rigo는 여러 바이트코드의 스택 효과를 정적으로 분석할 수 있도록 수정이 필요하다고 지적했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:36.974810Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "These are ``END_FINALLY``, ``POP_BLOCK``, and ``MAKE_CLOSURE``.",
+      "source_hash": 14211218334652951406,
+      "context_hash": 4519549264054959172,
+      "translation": "다음과 같습니다: ``END_FINALLY``, ``POP_BLOCK``, ``MAKE_CLOSURE``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:36.974813Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "Armin and Guido have already agreed on how to correct the instructions.",
+      "source_hash": 14881954698289207345,
+      "context_hash": 9054847114624913198,
+      "translation": "Armin과 Guido는 이미 해당 명령어를 수정하는 방법에 동의했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:36.974813Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:3",
+      "source": "Currently the Python implementation punts on these instructions.",
+      "source_hash": 11300931958117646450,
+      "context_hash": 2432292522153518279,
+      "translation": "현재 Python 구현은 이러한 명령어에 대한 처리를 하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:36.974813Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "This PEP does not propose to add the verification step to the interpreter, but only to provide the Python implementation in the standard library for optional use.",
+      "source_hash": 6621814964305072027,
+      "context_hash": 5488699808654393524,
+      "translation": "이 PEP는 검증 단계를 인터프리터에 추가하자고 제안하는 것이 아니라, 선택적으로 사용할 수 있도록 표준 라이브러리에 Python 구현을 제공하기만 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:17:36.974814Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "Whether or not this verification procedure is translated into C, included with the PVM or enforced in any way is left for future discussion.",
+      "source_hash": 11552050167222531097,
+      "context_hash": 69476213454847041,
+      "translation": "이 검증 절차를 C로 변환할지, PVM에 포함할지, 어떤 방식으로든 강제할지는 향후 논의로 남겨 둡니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:36.974815Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 12741219531637921449,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:36.974815Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The Java Virtual Machine Specification 2nd Edition",
+      "source_hash": 9385557992065845221,
+      "context_hash": 6612996179916102532,
+      "translation": "자바 가상 머신 사양 제2판",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:36.974815Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "http://java.sun.com/docs/books/vmspec/2nd-edition/html/ClassFile.doc.html",
+      "source_hash": 482651081985158032,
+      "context_hash": 12344493481444243009,
+      "translation": "http://java.sun.com/docs/books/vmspec/2nd-edition/html/ClassFile.doc.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:36.974816Z",
+      "issues": []
+    }
+  ]
+}

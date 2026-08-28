@@ -1,0 +1,3508 @@
+{
+  "version": 1,
+  "source_hash": 14322191526989027176,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Subtyping Built-in Types",
+      "source_hash": 593674845170680144,
+      "context_hash": 16530898886277989957,
+      "translation": "내장 타입의 서브타이핑",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213039Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 1988509366959334901,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213043Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes additions to the type object API that will allow the creation of subtypes of built-in types, in C and in Python.",
+      "source_hash": 16898782053752225654,
+      "context_hash": 11681391272960515937,
+      "translation": "이 PEP는 C와 Python에서 내장 타입의 서브타입을 생성할 수 있도록 타입 객체 API를 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213044Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "[Editor's note: the ideas described in this PEP have been incorporated into Python.",
+      "source_hash": 10318976504071636653,
+      "context_hash": 8585188491731611396,
+      "translation": "[편집자 주: 이 PEP에서 설명한 아이디어는 Python에 통합되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213044Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "The PEP no longer accurately describes the implementation.]",
+      "source_hash": 607554691168612959,
+      "context_hash": 5122821972517856975,
+      "translation": "이 PEP는 더 이상 구현을 정확하게 설명하지 않습니다.]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213045Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Introduction",
+      "source_hash": 17143975622463353612,
+      "context_hash": 13457497270626794796,
+      "translation": "서론",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213045Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Traditionally, types in Python have been created statically, by declaring a global variable of type PyTypeObject and initializing it with a static initializer.",
+      "source_hash": 10578857193194641325,
+      "context_hash": 11803145081427624689,
+      "translation": "전통적으로 Python의 타입은 PyTypeObject 타입의 전역 변수를 선언하고 정적 초기화자로 초기화하여 정적으로 생성되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213045Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "The slots in the type object describe all aspects of a Python type that are relevant to the Python interpreter.",
+      "source_hash": 10172109874983948929,
+      "context_hash": 11600478524950811,
+      "translation": "타입 객체의 슬롯은 Python 인터프리터와 관련된 Python 타입의 모든 측면을 설명합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:01:55.213046Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "A few slots contain dimensional information (like the basic allocation size of instances), others contain various flags, but most slots are pointers to functions to implement various kinds of behaviors.",
+      "source_hash": 1042102750429287893,
+      "context_hash": 4612375475505165703,
+      "translation": "일부 슬롯에는 차원 정보(인스턴스의 기본 할당 크기 등)가 들어 있고, 다른 슬롯에는 다양한 플래그가 들어 있지만, 대부분의 슬롯은 여러 종류의 동작을 구현하는 함수에 대한 포인터입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213047Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:3",
+      "source": "A NULL pointer means that the type does not implement the specific behavior; in that case the system may provide a default behavior or raise an exception when the behavior is invoked for an instance of the type.",
+      "source_hash": 720966759492915271,
+      "context_hash": 11916783378589299150,
+      "translation": "NULL 포인터는 해당 타입이 특정 동작을 구현하지 않는다는 의미입니다. 이 경우 시스템은 기본 동작을 제공하거나, 해당 타입의 인스턴스에 대해 그 동작이 호출될 때 예외를 발생시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213048Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:4",
+      "source": "Some collections of function pointers that are usually defined together are obtained indirectly via a pointer to an additional structure containing more function pointers.",
+      "source_hash": 15100869729561350649,
+      "context_hash": 8366943251984410787,
+      "translation": "일반적으로 함께 정의되는 일부 함수 포인터 모음은 더 많은 함수 포인터를 포함하는 추가 구조체에 대한 포인터를 통해 간접적으로 얻습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213048Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "While the details of initializing a PyTypeObject structure haven't been documented as such, they are easily gleaned from the examples in the source code, and I am assuming that the reader is sufficiently familiar with the traditional way of creating new Python types in C.",
+      "source_hash": 280406188679267935,
+      "context_hash": 12221881944081659386,
+      "translation": "PyTypeObject 구조체를 초기화하는 세부 사항은 그러한 형태로 문서화되지는 않았지만 소스 코드의 예제에서 쉽게 파악할 수 있으며, 독자가 C에서 새로운 Python 타입을 생성하는 전통적인 방식에 충분히 익숙하다고 가정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213048Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "This PEP will introduce the following features:",
+      "source_hash": 11782608700455080179,
+      "context_hash": 3430101579522739368,
+      "translation": "이 PEP는 다음 기능을 도입합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213049Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "a type can be a factory function for its instances",
+      "source_hash": 14870861675053401260,
+      "context_hash": 15772369093207499076,
+      "translation": "타입이 해당 인스턴스를 위한 팩토리 함수가 될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213049Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "types can be subtyped in C",
+      "source_hash": 16758448286227364858,
+      "context_hash": 1456349771847578352,
+      "translation": "C에서 타입의 서브타입을 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213049Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "types can be subtyped in Python with the class statement",
+      "source_hash": 12731990155113120532,
+      "context_hash": 9402944909049306398,
+      "translation": "class 문을 사용하여 Python에서 타입의 서브타입을 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213050Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "multiple inheritance from types is supported (insofar as practical -- you still can't multiply inherit from list and dictionary)",
+      "source_hash": 14313384338262312785,
+      "context_hash": 17653377788789188011,
+      "translation": "타입으로부터의 다중 상속이 가능한 범위에서 지원됩니다. 다만 list와 딕셔너리로부터 다중 상속을 받을 수는 없습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:01:55.213050Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "the standard coercion functions (int, tuple, str etc.) will be redefined to be the corresponding type objects, which serve as their own factory functions",
+      "source_hash": 17043414536070063310,
+      "context_hash": 11841071483160088971,
+      "translation": "표준 강제 변환 함수(int, tuple, str 등)는 해당 타입 객체로 재정의되며, 이 타입 객체는 자체 팩토리 함수 역할을 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213051Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "a class statement can contain a ``__metaclass__`` declaration, specifying the metaclass to be used to create the new class",
+      "source_hash": 18253428989566265261,
+      "context_hash": 10384154854397697505,
+      "translation": "class 문에는 새 클래스를 생성하는 데 사용할 메타클래스를 지정하는 ``__metaclass__`` 선언을 포함할 수 있습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:01:55.213052Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "a class statement can contain a ``__slots__`` declaration, specifying the specific names of the instance variables supported",
+      "source_hash": 16154580934521861471,
+      "context_hash": 11788715816027677237,
+      "translation": "class 문에는 지원되는 인스턴스 변수의 구체적인 이름을 지정하는 ``__slots__`` 선언을 포함할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213052Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:0",
+      "source": "This PEP builds on :pep:`252`, which adds standard introspection to types; for example, when a particular type object initializes the ``tp_hash`` slot, that type object has a ``__hash__`` method when introspected.  :pep:`252` also adds a dictionary to type objects which contains all methods.",
+      "source_hash": 4940424161754070190,
+      "context_hash": 352297243825274600,
+      "translation": "이 PEP는 타입에 표준 내성을 추가하는 :pep:`252`\\ 를 기반으로 합니다. 예를 들어 특정 타입 객체가 ``tp_hash`` 슬롯을 초기화하면, 해당 타입 객체를 내성 검사할 때 ``__hash__`` 메서드를 갖습니다. :pep:`252`\\ 는 모든 메서드를 포함하는 딕셔너리도 타입 객체에 추가합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:01:55.213053Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:1",
+      "source": "At the Python level, this dictionary is read-only for built-in types; at the C level, it is accessible directly (but it should not be modified except as part of initialization).",
+      "source_hash": 14319094566794553134,
+      "context_hash": 14931696197843330339,
+      "translation": "Python 수준에서 이 딕셔너리는 내장 타입에 대해 읽기 전용이며, C 수준에서는 직접 액세스할 수 있습니다. 단, 초기화 과정의 일부인 경우를 제외하고 수정해서는 안 됩니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:01:55.213053Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:0",
+      "source": "For binary compatibility, a flag bit in the tp_flags slot indicates the existence of the various new slots in the type object introduced below.",
+      "source_hash": 11318748405700123139,
+      "context_hash": 9310839679607765532,
+      "translation": "이진 호환성을 위해 tp_flags 슬롯의 플래그 비트는 아래에서 타입 객체에 도입되는 여러 새로운 슬롯의 존재를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213054Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:1",
+      "source": "Types that don't have the ``Py_TPFLAGS_HAVE_CLASS`` bit set in their ``tp_flags`` slot are assumed to have NULL values for all the subtyping slots.  (Warning: the current implementation prototype is not yet consistent in its checking of this flag bit.",
+      "source_hash": 1944928237277648661,
+      "context_hash": 5314585831835960592,
+      "translation": "``Py_TPFLAGS_HAVE_CLASS``\\ 비트가 해당 ``tp_flags`` 슬롯에 설정되지 않은 타입은 모든 서브타이핑 슬롯에 NULL 값이 있는 것으로 간주합니다. (경고: 현재 구현 프로토타입은 이 플래그 비트를 검사하는 방식이 아직 일관되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213055Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:2",
+      "source": "This should be fixed before the final release.)",
+      "source_hash": 17327189009778352718,
+      "context_hash": 11712276373497610349,
+      "translation": "최종 릴리스 전에 이를 수정해야 합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213055Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:0",
+      "source": "In current Python, a distinction is made between types and classes.",
+      "source_hash": 987630886906590839,
+      "context_hash": 8547931923499955666,
+      "translation": "현재 Python에서는 타입과 클래스가 구분됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213055Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:1",
+      "source": "This PEP together with :pep:`254` will remove that distinction.",
+      "source_hash": 16412490556612314577,
+      "context_hash": 9081079590660956549,
+      "translation": "이 PEP는 :pep:`254`\\ 와 함께 이러한 구분을 없앱니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213056Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:2",
+      "source": "However, for backwards compatibility the distinction will probably remain for years to come, and without :pep:`254`, the distinction is still large: types ultimately have a built-in type as a base class, while classes ultimately derive from a user-defined class.",
+      "source_hash": 5141696379857467772,
+      "context_hash": 15511881011978777675,
+      "translation": "그러나 하위 호환성을 위해 이 구분은 앞으로 수년간 남아 있을 가능성이 높으며, :pep:`254`\\ 가 없다면 그 차이는 여전히 큽니다. 타입은 궁극적으로 내장 타입을 베이스 클래스로 가지지만, 클래스는 궁극적으로 사용자 정의 클래스에서 파생됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213056Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:3",
+      "source": "Therefore, in the rest of this PEP, I will use the word type whenever I can -- including base type or supertype, derived type or subtype, and metatype.",
+      "source_hash": 822121389277505643,
+      "context_hash": 14304325726046008598,
+      "translation": "따라서 이 PEP의 나머지 부분에서는 가능한 한 타입이라는 단어를 사용합니다. 여기에는 베이스 타입 또는 상위 타입, 파생 타입 또는 서브타입, 메타타입이 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213056Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:4",
+      "source": "However, sometimes the terminology necessarily blends, for example an object's type is given by its ``__class__`` attribute, and subtyping in Python is spelled with a class statement.",
+      "source_hash": 13255162838903657896,
+      "context_hash": 1023706740503569549,
+      "translation": "그러나 경우에 따라 용어가 불가피하게 혼용됩니다. 예를 들어 객체의 타입은 해당 객체의 ``__class__`` 속성으로 지정되며, Python에서 서브타이핑은 class 문으로 표현됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213056Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:5",
+      "source": "If further distinction is necessary, user-defined classes can be referred to as \"classic\" classes.",
+      "source_hash": 6890715933319647476,
+      "context_hash": 822560848816039954,
+      "translation": "추가적인 구분이 필요한 경우 사용자 정의 클래스를 \"클래식\" 클래스라고 부를 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213057Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "About metatypes",
+      "source_hash": 5053500243215983594,
+      "context_hash": 10111419139885859525,
+      "translation": "메타타입에 관하여",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:55.213057Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Inevitably the discussion comes to metatypes (or metaclasses).",
+      "source_hash": 17597889598738737679,
+      "context_hash": 18289737917209510668,
+      "translation": "필연적으로 논의는 메타타입(또는 메타클래스)에 이릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865407Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "Metatypes are nothing new in Python: Python has always been able to talk about the type of a type",
+      "source_hash": 10959057302437259998,
+      "context_hash": 4159138774164359218,
+      "translation": "메타타입은 Python에서 전혀 새로운 것이 아닙니다. Python은 항상 타입의 타입에 대해 말할 수 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865411Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "In this example, ``type(a)`` is a \"regular\" type, and ``type(type(a))`` is a metatype.",
+      "source_hash": 1727299722930786435,
+      "context_hash": 17357349945257442355,
+      "translation": "이 예제에서 ``type(a)``\\ 는 \"일반\" 타입이고, ``type(type(a))``\\ 는 메타타입입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865411Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "While as distributed all types have the same metatype (``PyType_Type``, which is also its own metatype), this is not a requirement, and in fact a useful and relevant 3rd party extension (ExtensionClasses by Jim Fulton) creates an additional metatype.",
+      "source_hash": 2027785992984523652,
+      "context_hash": 13761792367853634074,
+      "translation": "배포된 상태에서는 모든 타입이 동일한 메타타입(``PyType_Type``\\ 이며, 이 자체도 자신의 메타타입입니다)을 가지지만, 이것이 필수 조건은 아닙니다. 실제로 유용하고 관련성 있는 서드파티 확장 기능인 Jim Fulton의 ExtensionClasses는 추가 메타타입을 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865412Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:2",
+      "source": "The type of classic classes, known as ``types.ClassType``, can also be considered a distinct metatype.",
+      "source_hash": 5541529764000673585,
+      "context_hash": 14528564101562373614,
+      "translation": "``types.ClassType``\\ 로 알려진 클래식 클래스의 타입도 별개의 메타타입으로 간주할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865412Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "A feature closely connected to metatypes is the \"Don Beaudry hook\", which says that if a metatype is callable, its instances (which are regular types) can be subclassed (really subtyped) using a Python class statement.",
+      "source_hash": 4111890275117102157,
+      "context_hash": 8450410581775263765,
+      "translation": "메타타입과 밀접하게 연결된 기능은 \"Don Beaudry hook\"입니다. 이 기능은 메타타입이 호출 가능 객체라면 그 인스턴스(일반 타입인 객체)를 Python 클래스 문을 사용하여 서브클래스로 만들 수 있다(실제로는 서브타이핑할 수 있다)고 말합니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T18:01:58.865412Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:1",
+      "source": "I will use this rule to support subtyping of built-in types, and in fact it greatly simplifies the logic of class creation to always simply call the metatype.",
+      "source_hash": 6956017776928463981,
+      "context_hash": 8957390133661170919,
+      "translation": "저는 내장 타입의 서브타이핑을 지원하기 위해 이 규칙을 사용할 것이며, 실제로 클래스 생성을 항상 단순히 메타타입을 호출하는 방식으로 처리하면 로직이 크게 단순해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865413Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:2",
+      "source": "When no base class is specified, a default metatype is called -- the default metatype is the \"ClassType\" object, so the class statement will behave as before in the normal case.  (This default can be changed per module by setting the global variable ``__metaclass__``.)",
+      "source_hash": 16392102601366302681,
+      "context_hash": 12024645157740444814,
+      "translation": "베이스 클래스가 지정되지 않으면 기본 메타타입이 호출됩니다. 기본 메타타입은 \"ClassType\" 객체이므로, 일반적인 경우 클래스 문은 이전과 동일하게 동작합니다. (전역 변수 ``__metaclass__``\\ 를 설정하여 모듈별로 이 기본값을 변경할 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865414Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "Python uses the concept of metatypes or metaclasses in a different way than Smalltalk.",
+      "source_hash": 5099115894266459470,
+      "context_hash": 2976945645114536015,
+      "translation": "Python은 Smalltalk와는 다른 방식으로 메타타입 또는 메타클래스 개념을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865414Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "In Smalltalk-80, there is a hierarchy of metaclasses that mirrors the hierarchy of regular classes, metaclasses map 1-1 to classes (except for some funny business at the root of the hierarchy), and each class statement creates both a regular class and its metaclass, putting class methods in the metaclass and instance methods in the regular class.",
+      "source_hash": 18191091458484664055,
+      "context_hash": 10520433350801276457,
+      "translation": "Smalltalk-80에는 일반 클래스의 계층 구조를 그대로 반영하는 메타클래스 계층 구조가 있으며, 메타클래스는 클래스에 1대1로 대응합니다(계층 구조의 루트에서 발생하는 몇 가지 특이한 경우는 제외합니다). 또한 각 클래스 문은 일반 클래스와 그 메타클래스를 모두 생성하여, 클래스 메서드는 메타클래스에 넣고 인스턴스 메서드는 일반 클래스에 넣습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:01:58.865415Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "Nice though this may be in the context of Smalltalk, it's not compatible with the traditional use of metatypes in Python, and I prefer to continue in the Python way.",
+      "source_hash": 6178258101121270157,
+      "context_hash": 4361491086192512931,
+      "translation": "Smalltalk의 맥락에서는 이것이 훌륭할 수 있지만, Python에서 메타타입을 전통적으로 사용하는 방식과는 호환되지 않으며, 저는 Python 방식으로 계속 진행하는 것을 선호합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865415Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:1",
+      "source": "This means that Python metatypes are typically written in C, and may be shared between many regular types. (It will be possible to subtype metatypes in Python, so it won't be absolutely necessary to write C to use metatypes; but the power of Python metatypes will be limited.",
+      "source_hash": 535821800301344909,
+      "context_hash": 4279948054216813708,
+      "translation": "이는 Python의 메타타입이 일반적으로 C로 작성되며 여러 일반 타입 사이에서 공유될 수 있음을 의미합니다. (Python에서 메타타입을 서브타이핑할 수 있게 되므로 메타타입을 사용하기 위해 반드시 C를 작성할 필요는 없게 되지만, Python 메타타입의 기능은 제한됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865416Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:2",
+      "source": "For example, Python code will never be allowed to allocate raw memory and initialize it at will.)",
+      "source_hash": 3099123152897042500,
+      "context_hash": 6359067996610996722,
+      "translation": "예를 들어 Python 코드가 원시 메모리를 할당하고 원하는 대로 초기화하는 것은 결코 허용되지 않습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865416Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "Metatypes determine various **policies** for types, such as what happens when a type is called, how dynamic types are (whether a type's ``__dict__`` can be modified after it is created), what the method resolution order is, how instance attributes are looked up, and so on.",
+      "source_hash": 9218619341524157398,
+      "context_hash": 14595782071042673724,
+      "translation": "메타타입은 타입에 대한 다양한 **정책**\\ 을 결정합니다. 예를 들어 타입이 호출될 때 발생하는 일, 타입이 얼마나 동적인지(생성된 후 타입의 ``__dict__``\\ 를 수정할 수 있는지 여부), 메서드 결정 순서, 인스턴스 속성을 조회하는 방식 등을 결정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865416Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "I'll argue that left-to-right depth-first is not the best solution when you want to get the most use from multiple inheritance.",
+      "source_hash": 7881935420802286524,
+      "context_hash": 1527005437441594674,
+      "translation": "다중 상속을 최대한 활용하려는 경우에는 왼쪽에서 오른쪽으로 진행하는 깊이 우선 방식이 최선의 해결책이 아니라고 주장하겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865417Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "I'll argue that with multiple inheritance, the metatype of the subtype must be a descendant of the metatypes of all base types.",
+      "source_hash": 16948781424924824496,
+      "context_hash": 12725993077944057914,
+      "translation": "다중 상속에서는 서브타입의 메타타입이 모든 베이스 타입 메타타입의 자손이어야 한다고 주장하겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865417Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:0",
+      "source": "I'll come back to metatypes later.",
+      "source_hash": 8132785894575823635,
+      "context_hash": 1355182217725481218,
+      "translation": "메타타입에 대해서는 나중에 다시 다루겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865417Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Making a type a factory for its instances",
+      "source_hash": 3558521275194767637,
+      "context_hash": 6611082792096588015,
+      "translation": "타입을 인스턴스의 팩토리로 만들기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865418Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Traditionally, for each type there is at least one C factory function that creates instances of the type (``PyTuple_New()``, ``PyInt_FromLong()`` and so on).",
+      "source_hash": 2513230476426246544,
+      "context_hash": 15118641160255028197,
+      "translation": "전통적으로 각 타입에는 해당 타입의 인스턴스를 생성하는 C 팩토리 함수가 하나 이상 있습니다(``PyTuple_New()``, ``PyInt_FromLong()`` 등).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865418Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "These factory functions take care of both allocating memory for the object and initializing that memory.",
+      "source_hash": 4527962230087410583,
+      "context_hash": 2781924293924864411,
+      "translation": "이러한 팩토리 함수는 객체를 위한 메모리를 할당하고 해당 메모리를 초기화하는 일을 모두 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865418Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "As of Python 2.0, they also have to interface with the garbage collection subsystem, if the type chooses to participate in garbage collection (which is optional, but strongly recommended for so-called \"container\" types: types that may contain references to other objects, and hence may participate in reference cycles).",
+      "source_hash": 10027961994975768409,
+      "context_hash": 15179680317351874088,
+      "translation": "Python 2.0부터는 타입이 가비지 컬렉션에 참여하기로 선택한 경우 가비지 컬렉션 하위 시스템과도 연동해야 합니다(가비지 컬렉션 참여는 선택 사항이지만, 다른 객체에 대한 참조를 포함할 수 있어 참조 순환에 참여할 수 있는 이른바 \"컨테이너\" 타입에는 강력히 권장됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865418Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "In this proposal, type objects can be factory functions for their instances, making the types directly callable from Python.",
+      "source_hash": 13657258476026505587,
+      "context_hash": 8719790328743712840,
+      "translation": "이 제안에서는 타입 객체가 해당 인스턴스의 팩토리 함수가 될 수 있어, 타입이 Python에서 직접 호출 가능 객체가 됩니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:46:43.582451Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "This mimics the way classes are instantiated.",
+      "source_hash": 4222692118222781452,
+      "context_hash": 14414847663836393119,
+      "translation": "이는 클래스를 인스턴스화하는 방식을 모방합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865420Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "The C APIs for creating instances of various built-in types will remain valid and in some cases more efficient.",
+      "source_hash": 16544256529050660641,
+      "context_hash": 6830316553731603388,
+      "translation": "다양한 내장 타입의 인스턴스를 생성하기 위한 C API는 유효하게 유지되며, 일부 경우에는 더 효율적일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865420Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:3",
+      "source": "Not all types will become their own factory functions.",
+      "source_hash": 14295912529258139832,
+      "context_hash": 596618525032751332,
+      "translation": "모든 타입이 자신의 팩토리 함수가 되는 것은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865420Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "The type object has a new slot, tp_new, which can act as a factory for instances of the type.",
+      "source_hash": 11409969259021287052,
+      "context_hash": 2486204585143532007,
+      "translation": "타입 객체에는 새로운 슬롯인 tp_new가 있으며, 이 슬롯은 해당 타입의 인스턴스를 위한 팩토리로 동작할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:58.865421Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "Types are now callable, because the tp_call slot is set in ``PyType_Type`` (the metatype); the function looks for the tp_new slot of the type that is being called.",
+      "source_hash": 1947817319188266034,
+      "context_hash": 9225270872995744569,
+      "translation": "이제 타입은 호출 가능 객체입니다. 메타타입인 ``PyType_Type``\\ 에서 tp_call 슬롯이 설정되기 때문이며, 이 함수는 호출되는 타입의 tp_new 슬롯을 찾습니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:46:43.582455Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "Explanation: the ``tp_call`` slot of a regular type object (such as ``PyInt_Type`` or ``PyList_Type``) defines what happens when **instances** of that type are called; in particular, the ``tp_call`` slot in the function type, ``PyFunction_Type``, is the key to making functions callable.",
+      "source_hash": 1536861746206334203,
+      "context_hash": 12859476109605230638,
+      "translation": "설명: 일반 타입 객체(예: ``PyInt_Type`` 또는 ``PyList_Type``)의 ``tp_call`` 슬롯은 해당 타입의 **인스턴스**\\ 가 호출될 때 어떤 일이 발생하는지 정의합니다. 특히 함수 타입인 ``PyFunction_Type``\\ 의 ``tp_call`` 슬롯은 함수를 호출 가능 객체로 만드는 핵심입니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T18:02:00.894880Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:1",
+      "source": "As another example, ``PyInt_Type.tp_call`` is ``NULL``, because integers are not callable.",
+      "source_hash": 3795231613864958274,
+      "context_hash": 2883686919864036072,
+      "translation": "또 다른 예로, 정수는 호출 가능 객체가 아니므로 ``PyInt_Type.tp_call``\\ 은 ``NULL``\\ 입니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T18:02:00.894884Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:2",
+      "source": "The new paradigm makes **type objects** callable.",
+      "source_hash": 16164904811521795510,
+      "context_hash": 18158021087059139258,
+      "translation": "새로운 패러다임에서는 **타입 객체**\\ 를 호출 가능 객체로 만듭니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T18:02:00.894885Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:3",
+      "source": "Since type objects are instances of their metatype (``PyType_Type``), the metatype's ``tp_call`` slot (``PyType_Type.tp_call``) points to a function that is invoked when any type object is called.",
+      "source_hash": 10093130221368398718,
+      "context_hash": 224507479639617229,
+      "translation": "타입 객체는 자신의 메타클래스(``PyType_Type``)의 인스턴스이므로, 메타클래스의 ``tp_call`` 슬롯(``PyType_Type.tp_call``)은 어떤 타입 객체가 호출될 때 호출되는 함수를 가리킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894886Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:4",
+      "source": "Now, since each type has to do something different to create an instance of itself, ``PyType_Type.tp_call`` immediately defers to the ``tp_new`` slot of the type that is being called. ``PyType_Type`` itself is also callable: its ``tp_new`` slot creates a new type.",
+      "source_hash": 2400428077848629040,
+      "context_hash": 3704410642458944074,
+      "translation": "이제 각 타입은 자신의 인스턴스를 생성하기 위해 서로 다른 작업을 수행해야 하므로, ``PyType_Type.tp_call``\\ 은 호출되는 타입의 ``tp_new`` 슬롯으로 즉시 처리를 위임합니다. ``PyType_Type`` 자체도 호출 가능 객체입니다. 해당 타입의 ``tp_new`` 슬롯이 새 타입을 생성합니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T18:02:00.894886Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:5",
+      "source": "This is used by the class statement (formalizing the Don Beaudry hook, see above).",
+      "source_hash": 1785186509327791387,
+      "context_hash": 7916499651915387585,
+      "translation": "이는 클래스 문이 사용합니다(위에서 설명한 Don Beaudry 훅을 공식화합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894887Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:6",
+      "source": "And what makes ``PyType_Type`` callable?",
+      "source_hash": 11533932184380006344,
+      "context_hash": 3605129300223858126,
+      "translation": "그렇다면 ``PyType_Type``\\ 을 호출 가능 객체로 만드는 것은 무엇입니까?",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:46:43.582456Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:7",
+      "source": "The ``tp_call`` slot of **its** metatype -- but since it is its own metatype, that is its own ``tp_call`` slot!",
+      "source_hash": 9477936759883756907,
+      "context_hash": 12893232142706438806,
+      "translation": "**그것의** 메타클래스의 ``tp_call`` 슬롯입니다. 그러나 그것은 자신의 메타클래스이므로, 결국 자신의 ``tp_call`` 슬롯입니다!",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894888Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "If the type's ``tp_new`` slot is NULL, an exception is raised.",
+      "source_hash": 9802688447527862350,
+      "context_hash": 7627293366097136242,
+      "translation": "타입의 ``tp_new`` 슬롯이 NULL이면 예외가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894889Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:1",
+      "source": "Otherwise, the tp_new slot is called.",
+      "source_hash": 2753810113220393974,
+      "context_hash": 12037515148359989963,
+      "translation": "그렇지 않으면 tp_new 슬롯이 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894889Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:2",
+      "source": "The signature for the ``tp_new`` slot is",
+      "source_hash": 8620482050068187005,
+      "context_hash": 10375468987433579208,
+      "translation": "``tp_new`` 슬롯의 시그니처는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894889Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "where 'type' is the type whose ``tp_new`` slot is called, and 'args' and 'kwds' are the sequential and keyword arguments to the call, passed unchanged from tp_call.  (The 'type' argument is used in combination with inheritance, see below.)",
+      "source_hash": 2181689868629797028,
+      "context_hash": 131297002451585275,
+      "translation": "여기서 'type'은 ``tp_new`` 슬롯이 호출되는 타입이며, 'args'와 'kwds'는 호출에 전달되는 위치 인자와 키워드 인자로, tp_call에서 변경 없이 전달됩니다. ('type' 인자는 상속과 함께 사용됩니다. 자세한 내용은 아래를 참조하십시오.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894889Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "There are no constraints on the object type that is returned, although by convention it should be an instance of the given type.",
+      "source_hash": 15246990894284176567,
+      "context_hash": 4913460762930447623,
+      "translation": "반환되는 객체 타입에는 제약이 없지만, 관례상 주어진 타입의 인스턴스여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894890Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:1",
+      "source": "It is not necessary that a new object is returned; a reference to an existing object is fine too.",
+      "source_hash": 17168248454701016943,
+      "context_hash": 3365675179509991364,
+      "translation": "새 객체를 반환할 필요는 없으며, 기존 객체에 대한 참조를 반환해도 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894890Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:2",
+      "source": "The return value should always be a new reference, owned by the caller.",
+      "source_hash": 167763249842262121,
+      "context_hash": 8384387804687024945,
+      "translation": "반환 값은 항상 호출자가 소유하는 새로운 참조여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894890Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "Once the ``tp_new`` slot has returned an object, further initialization is attempted by calling the ``tp_init()`` slot of the resulting object's type, if not NULL.",
+      "source_hash": 1037634464268814340,
+      "context_hash": 10920883162977236699,
+      "translation": "``tp_new`` 슬롯이 객체를 반환하면, 결과 객체 타입의 ``tp_init()`` 슬롯이 NULL이 아닌 경우 이를 호출하여 추가 초기화를 시도합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894891Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:1",
+      "source": "This has the following signature",
+      "source_hash": 4403779929088232901,
+      "context_hash": 13539277211579403561,
+      "translation": "이 슬롯의 시그니처는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894891Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "It corresponds more closely to the ``__init__()`` method of classic classes, and in fact is mapped to that by the slot/special-method correspondence rules.",
+      "source_hash": 12975194104397525157,
+      "context_hash": 10742643900622283103,
+      "translation": "이는 고전 클래스의 ``__init__()`` 메서드에 더 가깝게 대응하며, 실제로 슬롯/특수 메서드 대응 규칙에 따라 해당 메서드로 매핑됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894891Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:1",
+      "source": "The difference in responsibilities between the ``tp_new()`` slot and the ``tp_init()`` slot lies in the invariants they ensure.",
+      "source_hash": 16517585262456926808,
+      "context_hash": 10483864718959259769,
+      "translation": "``tp_new()`` 슬롯과 ``tp_init()`` 슬롯의 책임 차이는 이들이 보장하는 불변식에 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894891Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:2",
+      "source": "The ``tp_new()`` slot should ensure only the most essential invariants, without which the C code that implements the objects would break.",
+      "source_hash": 1665782762299214062,
+      "context_hash": 2070340545939240762,
+      "translation": "``tp_new()`` 슬롯은 가장 필수적인 불변식만 보장해야 하며, 이러한 불변식이 없으면 객체를 구현하는 C 코드가 중단됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894892Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:3",
+      "source": "The ``tp_init()`` slot should be used for overridable user-specific initializations.",
+      "source_hash": 14814898465318489886,
+      "context_hash": 4047510627234727802,
+      "translation": "``tp_init()`` 슬롯은 재정의 가능한 사용자별 초기화에 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894892Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:4",
+      "source": "Take for example the dictionary type.",
+      "source_hash": 9069460242038967177,
+      "context_hash": 7438145814124401397,
+      "translation": "딕셔너리 타입을 예로 들어 보겠습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:00.894892Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:5",
+      "source": "The implementation has an internal pointer to a hash table which should never be NULL.",
+      "source_hash": 10377897444744507392,
+      "context_hash": 217288707572785183,
+      "translation": "구현에는 절대 NULL이어서는 안 되는 해시 테이블에 대한 내부 포인터가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894893Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:6",
+      "source": "This invariant is taken care of by the ``tp_new()`` slot for dictionaries.",
+      "source_hash": 874635917843289335,
+      "context_hash": 16323447945194116893,
+      "translation": "딕셔너리의 ``tp_new()`` 슬롯이 이 불변식을 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894893Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:7",
+      "source": "The dictionary ``tp_init()`` slot, on the other hand, could be used to give the dictionary an initial set of keys and values based on the arguments passed in.",
+      "source_hash": 13019622711534377005,
+      "context_hash": 10320128780817571612,
+      "translation": "반면 딕셔너리의 ``tp_init()`` 슬롯은 전달된 인자를 바탕으로 딕셔너리에 초기 키와 값 집합을 제공하는 데 사용할 수 있습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:00.894893Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:0",
+      "source": "Note that for immutable object types, the initialization cannot be done by the ``tp_init()`` slot: this would provide the Python user with a way to change the initialization.",
+      "source_hash": 8934492328175647406,
+      "context_hash": 984689618525433910,
+      "translation": "불변 객체 타입에서는 ``tp_init()`` 슬롯으로 초기화를 수행할 수 없다는 점에 유의하십시오. 이렇게 하면 Python 사용자가 초기화를 변경할 방법이 제공되기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894894Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:1",
+      "source": "Therefore, immutable objects typically have an empty ``tp_init()`` implementation and do all their initialization in their ``tp_new()`` slot.",
+      "source_hash": 9787046232127051461,
+      "context_hash": 16126618325098785841,
+      "translation": "따라서 불변 객체는 일반적으로 빈 ``tp_init()`` 구현을 가지며, 모든 초기화를 ``tp_new()`` 슬롯에서 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894894Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:0",
+      "source": "You may wonder why the ``tp_new()`` slot shouldn't call the ``tp_init()`` slot itself.",
+      "source_hash": 13179037883445923448,
+      "context_hash": 17525852983395825186,
+      "translation": "``tp_new()`` 슬롯이 ``tp_init()`` 슬롯을 직접 호출해서는 안 되는 이유가 궁금할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894895Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:1",
+      "source": "The reason is that in certain circumstances (like support for persistent objects), it is important to be able to create an object of a particular type without initializing it any further than necessary.",
+      "source_hash": 1594229430878363907,
+      "context_hash": 8635912076227541347,
+      "translation": "그 이유는 특정 상황(예: 영속 객체 지원)에서는 객체를 필요 이상으로 추가 초기화하지 않고 특정 타입의 객체를 생성할 수 있어야 하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894895Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:2",
+      "source": "This may conveniently be done by calling the ``tp_new()`` slot without calling ``tp_init()``.",
+      "source_hash": 8482524364681965839,
+      "context_hash": 330854332622986750,
+      "translation": "이는 ``tp_init()``\\ 을 호출하지 않고 ``tp_new()`` 슬롯을 호출하여 편리하게 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894895Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:3",
+      "source": "It is also possible that ``tp_init()`` is not called, or called more than once -- its operation should be robust even in these anomalous cases.",
+      "source_hash": 16548666172474779795,
+      "context_hash": 3417756834867642363,
+      "translation": "또한 ``tp_init()``\\ 이 호출되지 않거나 두 번 이상 호출될 수도 있으므로, 그 동작은 이러한 비정상적인 경우에도 견고해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:00.894896Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:0",
+      "source": "For some objects, ``tp_new()`` may return an existing object.",
+      "source_hash": 8190385165052950300,
+      "context_hash": 7608616887191600288,
+      "translation": "일부 객체의 경우 ``tp_new()``\\ 은 기존 객체를 반환할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113861Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:1",
+      "source": "For example, the factory function for integers caches the integers -1 through 99.",
+      "source_hash": 15154872008546835815,
+      "context_hash": 9632729126364574769,
+      "translation": "예를 들어, 정수의 팩토리 함수는 -1부터 99까지의 정수를 캐시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113864Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:2",
+      "source": "This is permissible only when the type argument to ``tp_new()`` is the type that defined the ``tp_new()`` function (in the example, if ``type == &PyInt_Type``), and when the ``tp_init()`` slot for this type does nothing.",
+      "source_hash": 1410292598898060452,
+      "context_hash": 15622039135804342087,
+      "translation": "이는 ``tp_new()``\\ 의 타입 인자가 ``tp_new()`` 함수를 정의한 타입일 때(이 예에서는 ``type == &PyInt_Type``\\ 인 경우) 그리고 이 타입의 ``tp_init()`` 슬롯이 아무 작업도 수행하지 않을 때만 허용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113864Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:3",
+      "source": "If the type argument differs, the ``tp_new()`` call is initiated by a derived type's ``tp_new()`` to create the object and initialize the base type portion of the object; in this case ``tp_new()`` should always return a new object (or raise an exception).",
+      "source_hash": 3032565056854554263,
+      "context_hash": 11921820819024401706,
+      "translation": "타입 인자가 다른 경우, 객체를 생성하고 객체의 베이스 타입 부분을 초기화하기 위해 파생 타입의 ``tp_new()``\\ 가 ``tp_new()`` 호출을 시작합니다. 이 경우 ``tp_new()``\\ 는 항상 새 객체를 반환하거나 예외를 발생시켜야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113865Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:15/seg:0",
+      "source": "Both ``tp_new()`` and ``tp_init()`` should receive exactly the same 'args' and 'kwds' arguments, and both should check that the arguments are acceptable, because they may be called independently.",
+      "source_hash": 11936023253210481642,
+      "context_hash": 12521252405290667616,
+      "translation": "``tp_new()``\\ 와 ``tp_init()``\\ 는 정확히 동일한 'args' 및 'kwds' 인자를 받아야 하며, 독립적으로 호출될 수 있으므로 두 함수 모두 인자가 허용 가능한지 확인해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113865Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:16/seg:0",
+      "source": "There's a third slot related to object creation: ``tp_alloc()``.",
+      "source_hash": 12272418173653869327,
+      "context_hash": 14730384749141897719,
+      "translation": "객체 생성과 관련된 세 번째 슬롯이 있습니다. ``tp_alloc()``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113865Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:16/seg:1",
+      "source": "Its responsibility is to allocate the memory for the object, initialize the reference count (``ob_refcnt``) and the type pointer (``ob_type``), and initialize the rest of the object to all zeros.",
+      "source_hash": 1931814298218740029,
+      "context_hash": 9699570764135848941,
+      "translation": "이 슬롯은 객체에 필요한 메모리를 할당하고, 참조 카운트(``ob_refcnt``)와 타입 포인터(``ob_type``)를 초기화하며, 객체의 나머지 부분을 모두 0으로 초기화하는 역할을 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113865Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:16/seg:2",
+      "source": "It should also register the object with the garbage collection subsystem if the type supports garbage collection.",
+      "source_hash": 1625431322897521976,
+      "context_hash": 18197401005353616853,
+      "translation": "또한 타입이 가비지 컬렉션을 지원하는 경우 객체를 가비지 컬렉션 서브시스템에 등록해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113866Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:16/seg:3",
+      "source": "This slot exists so that derived types can override the memory allocation policy (like which heap is being used) separately from the initialization code.",
+      "source_hash": 3776910408273216521,
+      "context_hash": 12472672380655130404,
+      "translation": "이 슬롯은 파생 타입이 초기화 코드와 별도로 메모리 할당 정책(예: 사용할 힙)을 재정의할 수 있도록 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113866Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:16/seg:4",
+      "source": "The signature is",
+      "source_hash": 14343472801426278034,
+      "context_hash": 16897247337809159755,
+      "translation": "시그니처는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113866Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:0",
+      "source": "The type argument is the type of the new object.",
+      "source_hash": 14402024496502774310,
+      "context_hash": 9892760685091598842,
+      "translation": "타입 인자는 새 객체의 타입입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113866Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:1",
+      "source": "The nitems argument is normally zero, except for objects with a variable allocation size (basically strings, tuples, and longs).",
+      "source_hash": 14590019829129108146,
+      "context_hash": 14824428514845684442,
+      "translation": "nitems 인자는 일반적으로 0이지만, 가변 할당 크기를 갖는 객체(기본적으로 문자열, 튜플 및 long)의 경우에는 예외입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113867Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:2",
+      "source": "The allocation size is given by the following expression",
+      "source_hash": 11967604648590548903,
+      "context_hash": 18404270547931295217,
+      "translation": "할당 크기는 다음 표현식으로 지정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113867Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:20/seg:0",
+      "source": "The ``tp_alloc`` slot is only used for subclassable types.",
+      "source_hash": 17700476468497114588,
+      "context_hash": 15628146982665816616,
+      "translation": "``tp_alloc`` 슬롯은 서브클래스화할 수 있는 타입에만 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113867Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:20/seg:1",
+      "source": "The ``tp_new()`` function of the base class must call the ``tp_alloc()`` slot of the type passed in as its first argument.",
+      "source_hash": 4362465133859726430,
+      "context_hash": 8685036314066810988,
+      "translation": "베이스 클래스의 ``tp_new()`` 함수는 첫 번째 인자로 전달된 타입의 ``tp_alloc()`` 슬롯을 호출해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113867Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:20/seg:2",
+      "source": "It is the ``tp_new()`` function's responsibility to calculate the number of items.",
+      "source_hash": 16617985464736729004,
+      "context_hash": 15400082215345239101,
+      "translation": "항목 수를 계산하는 것은 ``tp_new()`` 함수의 책임입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113868Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:20/seg:3",
+      "source": "The ``tp_alloc()`` slot will set the ob_size member of the new object if the ``type->tp_itemsize`` member is nonzero.",
+      "source_hash": 164982424606565699,
+      "context_hash": 12214278435096542529,
+      "translation": "``type->tp_itemsize`` 멤버가 0이 아니면 ``tp_alloc`` 슬롯은 새 객체의 ob_size 멤버를 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113868Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:21/seg:0",
+      "source": "(Note: in certain debugging compilation modes, the type structure used to have members named ``tp_alloc`` and a ``tp_free`` slot already, counters for the number of allocations and deallocations.",
+      "source_hash": 5130055013372757327,
+      "context_hash": 17615901464976209684,
+      "translation": "(참고: 특정 디버깅 컴파일 모드에서는 타입 구조체에 이미 ``tp_alloc``\\ 이라는 이름의 멤버와 ``tp_free`` 슬롯, 그리고 할당 및 할당 해제 횟수를 나타내는 카운터가 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113868Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:21/seg:1",
+      "source": "These are renamed to ``tp_allocs`` and ``tp_deallocs``.)",
+      "source_hash": 16417577157002816292,
+      "context_hash": 7053423434211351486,
+      "translation": "이들은 ``tp_allocs``\\ 와 ``tp_deallocs``\\ 로 이름이 변경되었습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113868Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:22/seg:0",
+      "source": "Standard implementations for ``tp_alloc()`` and ``tp_new()`` are available.  ``PyType_GenericAlloc()`` allocates an object from the standard heap and initializes it properly.",
+      "source_hash": 10464475754716570952,
+      "context_hash": 110169441230174630,
+      "translation": "``tp_alloc()`` 및 ``tp_new()``\\ 에 대한 표준 구현을 사용할 수 있습니다. ``PyType_GenericAlloc()``\\ 은 표준 힙에서 객체를 할당하고 올바르게 초기화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113868Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:22/seg:1",
+      "source": "It uses the above formula to determine the amount of memory to allocate, and takes care of GC registration.",
+      "source_hash": 14093982394824035416,
+      "context_hash": 14500912388134382653,
+      "translation": "이 함수는 위의 공식을 사용하여 할당할 메모리 양을 결정하고 GC 등록을 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113869Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:22/seg:2",
+      "source": "The only reason not to use this implementation would be to allocate objects from a different heap (as is done by some very small frequently used objects like ints and tuples).  ``PyType_GenericNew()`` adds very little: it just calls the type's ``tp_alloc()`` slot with zero for nitems.",
+      "source_hash": 16568690906636512548,
+      "context_hash": 12794602985500969605,
+      "translation": "이 구현을 사용하지 않을 유일한 이유는 다른 힙에서 객체를 할당하기 위해서입니다(정수나 튜플처럼 매우 작고 자주 사용되는 일부 객체가 이에 해당합니다). ``PyType_GenericNew()``\\ 는 거의 아무것도 추가하지 않으며, 단지 nitems에 0을 지정하여 해당 타입의 ``tp_alloc()`` 슬롯을 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113869Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:22/seg:3",
+      "source": "But for mutable types that do all their initialization in their ``tp_init()`` slot, this may be just the ticket.",
+      "source_hash": 16252634245166402368,
+      "context_hash": 18156638831562203278,
+      "translation": "그러나 모든 초기화를 ``tp_init()`` 슬롯에서 수행하는 변경 가능한 타입의 경우에는 이것이 바로 적합한 방법일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113869Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Preparing a type for subtyping",
+      "source_hash": 6070016760683276591,
+      "context_hash": 13121934428628308674,
+      "translation": "서브타이핑을 위한 타입 준비",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113869Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "The idea behind subtyping is very similar to that of single inheritance in C++.",
+      "source_hash": 17976455172693626593,
+      "context_hash": 592651260791846801,
+      "translation": "서브타이핑의 기본 개념은 C++의 단일 상속과 매우 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113870Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "A base type is described by a structure declaration (similar to the C++ class declaration) plus a type object (similar to the C++ vtable).",
+      "source_hash": 1873609305153534182,
+      "context_hash": 10530320074894461576,
+      "translation": "베이스 타입은 구조체 선언(C++ 클래스 선언과 유사함)과 타입 객체(C++ vtable과 유사함)로 설명됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113870Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "A derived type can extend the structure (but must leave the names, order and type of the members of the base structure unchanged) and can override certain slots in the type object, leaving others the same.  (Unlike C++ vtables, all Python type objects have the same memory layout.)",
+      "source_hash": 7036946137399345059,
+      "context_hash": 13862058540186195327,
+      "translation": "파생 타입은 구조체를 확장할 수 있지만(베이스 구조체 멤버의 이름, 순서 및 타입은 변경하지 않아야 함), 타입 객체의 특정 슬롯을 재정의하고 나머지 슬롯은 동일하게 유지할 수 있습니다. (C++ vtable과 달리 모든 Python 타입 객체는 동일한 메모리 레이아웃을 가집니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113870Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "The base type must do the following:",
+      "source_hash": 2927126162528214643,
+      "context_hash": 2584381145859081290,
+      "translation": "베이스 타입은 다음을 수행해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113870Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "Add the flag value ``Py_TPFLAGS_BASETYPE`` to ``tp_flags``.",
+      "source_hash": 6721513108378081576,
+      "context_hash": 6017968538003036721,
+      "translation": "``tp_flags``\\ 에 플래그 값 ``Py_TPFLAGS_BASETYPE``\\ 을 추가해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113870Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "Declare and use ``tp_new()``, ``tp_alloc()`` and optional ``tp_init()`` slots.",
+      "source_hash": 11504368057699829523,
+      "context_hash": 6009214698394342243,
+      "translation": "``tp_new()``, ``tp_alloc()`` 및 선택적 ``tp_init()`` 슬롯을 선언하고 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113871Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "Declare and use ``tp_dealloc()`` and ``tp_free()``.",
+      "source_hash": 17845464725889581962,
+      "context_hash": 14245850803466671126,
+      "translation": "``tp_dealloc()`` 및 ``tp_free()``\\ 를 선언하고 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113871Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "Export its object structure declaration.",
+      "source_hash": 6443789834107017068,
+      "context_hash": 1163501361061470937,
+      "translation": "객체 구조체 선언을 내보내야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:08.113871Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "Export a subtyping-aware type-checking macro.",
+      "source_hash": 12891641085928127741,
+      "context_hash": 10092763235115558222,
+      "translation": "서브타이핑을 인식하는 타입 검사 매크로를 내보내십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757487Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "The requirements and signatures for ``tp_new()``, ``tp_alloc()`` and ``tp_init()`` have already been discussed above: ``tp_alloc()`` should allocate the memory and initialize it to mostly zeros; ``tp_new()`` should call the ``tp_alloc()`` slot and then proceed to do the minimally required initialization; ``tp_init()`` should be used for more extensive initialization of mutable objects.",
+      "source_hash": 16995940691947091628,
+      "context_hash": 5176452887670826347,
+      "translation": "``tp_new()``, ``tp_alloc()`` 및 ``tp_init()``\\ 의 요구 사항과 시그니처는 앞에서 이미 논의했습니다. ``tp_alloc()``\\ 은 메모리를 할당하고 대부분 0으로 초기화해야 하며, ``tp_new()``\\ 는 ``tp_alloc()`` 슬롯을 호출한 다음 최소한으로 필요한 초기화를 진행해야 합니다. ``tp_init()``\\ 은 변경 가능한 객체를 보다 광범위하게 초기화할 때 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757490Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "It should come as no surprise that there are similar conventions at the end of an object's lifetime.",
+      "source_hash": 4567362280025218900,
+      "context_hash": 15615681323154184640,
+      "translation": "객체의 수명이 끝날 때에도 이와 유사한 규칙이 있다는 것은 놀랍지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757490Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:1",
+      "source": "The slots involved are ``tp_dealloc()`` (familiar to all who have ever implemented a Python extension type) and ``tp_free()``, the new kid on the block.  (The names aren't quite symmetric; ``tp_free()`` corresponds to ``tp_alloc()``, which is fine, but ``tp_dealloc()`` corresponds to ``tp_new()``.",
+      "source_hash": 8169173634355625471,
+      "context_hash": 15314678344321477082,
+      "translation": "관련 슬롯은 지금까지 Python 확장 타입을 구현한 사람이라면 누구나 익숙한 ``tp_dealloc()``\\ 과 새로 등장한 ``tp_free()``\\ 입니다. (이름이 완전히 대칭적이지는 않습니다. ``tp_free()``\\ 가 ``tp_alloc()``\\ 에 대응하는 것은 괜찮지만, ``tp_dealloc()``\\ 은 ``tp_new()``\\ 에 대응합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757491Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:2",
+      "source": "Maybe the tp_dealloc slot should be renamed?)",
+      "source_hash": 2402481273498585826,
+      "context_hash": 2540404862256163975,
+      "translation": "tp_dealloc 슬롯의 이름을 바꾸어야 할지도 모릅니다?)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757491Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "The ``tp_free()`` slot should be used to free the memory and unregister the object with the garbage collection subsystem, and can be overridden by a derived class; ``tp_dealloc()`` should deinitialize the object (usually by calling ``Py_XDECREF()`` for various sub-objects) and then call ``tp_free()`` to deallocate the memory.",
+      "source_hash": 3453173181286174173,
+      "context_hash": 13352543977527173291,
+      "translation": "``tp_free()`` 슬롯은 메모리를 해제하고 객체를 가비지 컬렉션 하위 시스템에서 등록 해제하는 데 사용해야 하며, 파생 클래스에서 재정의할 수 있습니다. ``tp_dealloc()``\\ 은 객체를 초기화 해제한 다음(일반적으로 다양한 하위 객체에 ``Py_XDECREF()``\\ 를 호출하여 수행합니다) ``tp_free()``\\ 를 호출해 메모리를 할당 해제해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757491Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:1",
+      "source": "The signature for ``tp_dealloc()`` is the same as it always was",
+      "source_hash": 16165702255291435970,
+      "context_hash": 17362772094553445239,
+      "translation": "``tp_dealloc()``\\ 의 시그니처는 예전부터 늘 동일했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757491Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "The signature for tp_free() is the same",
+      "source_hash": 9545693147798477637,
+      "context_hash": 15477627898570045653,
+      "translation": "tp_free()의 시그니처도 동일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757492Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "(In a previous version of this PEP, there was also a role reserved for the ``tp_clear()`` slot.",
+      "source_hash": 16728833436386076384,
+      "context_hash": 13990556113620870002,
+      "translation": "(이 PEP의 이전 버전에서는 ``tp_clear()`` 슬롯에 별도의 역할을 부여하기도 했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757492Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:1",
+      "source": "This turned out to be a bad idea.)",
+      "source_hash": 1014608224231602689,
+      "context_hash": 16261019288064551715,
+      "translation": "이는 좋지 않은 생각으로 판명되었습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757492Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "To be usefully subtyped in C, a type must export the structure declaration for its instances through a header file, as it is needed to derive a subtype.",
+      "source_hash": 11179207430793728028,
+      "context_hash": 17207552403246741195,
+      "translation": "C에서 유용하게 서브타이핑하려면, 타입은 서브타입을 파생하는 데 필요하므로 헤더 파일을 통해 해당 인스턴스의 구조 선언을 내보내야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757493Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:1",
+      "source": "The type object for the base type must also be exported.",
+      "source_hash": 14606610505647683372,
+      "context_hash": 8313728599906792777,
+      "translation": "베이스 타입의 타입 객체도 내보내야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757493Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:0",
+      "source": "If the base type has a type-checking macro (like ``PyDict_Check()``), this macro should be made to recognize subtypes.",
+      "source_hash": 16753890622916229117,
+      "context_hash": 14108218858739044233,
+      "translation": "베이스 타입에 타입 검사 매크로(예: ``PyDict_Check()``)가 있다면, 이 매크로가 서브타입을 인식하도록 만들어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757493Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:1",
+      "source": "This can be done by using the new ``PyObject_TypeCheck(object, type)`` macro, which calls a function that follows the base class links.",
+      "source_hash": 6692863116988747208,
+      "context_hash": 9783603289764695499,
+      "translation": "이는 새로운 ``PyObject_TypeCheck(object, type)`` 매크로를 사용하여 수행할 수 있으며, 이 매크로는 베이스 클래스 링크를 따라가는 함수를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757494Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:0",
+      "source": "The ``PyObject_TypeCheck()`` macro contains a slight optimization: it first compares ``object->ob_type`` directly to the type argument, and if this is a match, bypasses the function call.",
+      "source_hash": 7438349901401079535,
+      "context_hash": 4338864972221052065,
+      "translation": "``PyObject_TypeCheck()`` 매크로에는 약간의 최적화가 포함되어 있습니다. 먼저 ``object->ob_type``\\ 을 타입 인자와 직접 비교하고, 일치하면 함수 호출을 우회합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757494Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:1",
+      "source": "This should make it fast enough for most situations.",
+      "source_hash": 1623152755246615033,
+      "context_hash": 4200357666270352945,
+      "translation": "이렇게 하면 대부분의 상황에서 충분히 빠르게 동작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757494Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:18/seg:0",
+      "source": "Note that this change in the type-checking macro means that C functions that require an instance of the base type may be invoked with instances of the derived type.",
+      "source_hash": 8529252829691813082,
+      "context_hash": 9741768740864047498,
+      "translation": "타입 검사 매크로의 이러한 변경으로 인해 베이스 타입의 인스턴스를 요구하는 C 함수가 파생 타입의 인스턴스로 호출될 수 있다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757494Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:18/seg:1",
+      "source": "Before enabling subtyping of a particular type, its code should be checked to make sure that this won't break anything.",
+      "source_hash": 130742530668742240,
+      "context_hash": 1744214207111326141,
+      "translation": "특정 타입의 서브타이핑을 활성화하기 전에, 문제가 발생하지 않도록 해당 타입의 코드를 점검해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757494Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:18/seg:2",
+      "source": "It has proved useful in the prototype to add another type-checking macro for the built-in Python object types, to check for exact type match too (for example, ``PyDict_Check(x)`` is true if x is an instance of dictionary or of a dictionary subclass, while ``PyDict_CheckExact(x)`` is true only if x is a dictionary).",
+      "source_hash": 7586138295082459763,
+      "context_hash": 15646109183126651239,
+      "translation": "프로토타입에서는 내장 Python 객체 타입에 대해 정확한 타입 일치도 검사하는 또 다른 타입 검사 매크로를 추가하는 것이 유용한 것으로 입증되었습니다. (예를 들어, ``PyDict_Check(x)``\\ 는 x가 딕셔너리의 인스턴스이거나 딕셔너리 서브클래스의 인스턴스이면 참인 반면, ``PyDict_CheckExact(x)``\\ 는 x가 딕셔너리인 경우에만 참입니다.)",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:11.757495Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Creating a subtype of a built-in type in C",
+      "source_hash": 14967130804867627358,
+      "context_hash": 8540400065862783872,
+      "translation": "C에서 내장 타입의 서브타입 만들기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757496Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The simplest form of subtyping is subtyping in C.",
+      "source_hash": 14419948155289430897,
+      "context_hash": 6057029921766357906,
+      "translation": "가장 단순한 형태의 서브타이핑은 C에서의 서브타이핑입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757496Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "It is the simplest form because we can require the C code to be aware of some of the problems, and it's acceptable for C code that doesn't follow the rules to dump core.",
+      "source_hash": 3979497100062793771,
+      "context_hash": 12965378406179403214,
+      "translation": "이는 C 코드가 일부 문제를 인식하도록 요구할 수 있고, 규칙을 따르지 않는 C 코드가 코어 덤프를 일으키는 것도 허용할 수 있기 때문에 가장 단순한 형태입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757496Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:2",
+      "source": "For added simplicity, it is limited to single inheritance.",
+      "source_hash": 2254870815026409349,
+      "context_hash": 15794668776868258137,
+      "translation": "더욱 단순하게 하기 위해 단일 상속으로 제한됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757497Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "Let's assume we're deriving from a mutable base type whose tp_itemsize is zero.",
+      "source_hash": 8346345705081686612,
+      "context_hash": 141941889814055941,
+      "translation": "tp_itemsize가 0인 변경 가능한 베이스 타입에서 파생한다고 가정하겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757497Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "The subtype code is not GC-aware, although it may inherit GC-awareness from the base type (this is automatic).",
+      "source_hash": 7486229402806726518,
+      "context_hash": 1182619367062111215,
+      "translation": "서브타입 코드는 GC를 인식하지 않지만, 베이스 타입에서 GC 인식을 상속할 수 있습니다(이는 자동으로 이루어집니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757497Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:2",
+      "source": "The base type's allocation uses the standard heap.",
+      "source_hash": 12240492585448932660,
+      "context_hash": 7087665878188720226,
+      "translation": "베이스 타입은 표준 힙을 사용하여 할당됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757497Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "The derived type begins by declaring a type structure which contains the base type's structure.",
+      "source_hash": 15172259106065420771,
+      "context_hash": 2347073020078208023,
+      "translation": "파생 타입은 베이스 타입의 구조를 포함하는 타입 구조를 선언하는 것으로 시작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757498Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "For example, here's the type structure for a subtype of the built-in list type",
+      "source_hash": 16090729830123613320,
+      "context_hash": 18134632234179899371,
+      "translation": "예를 들어 다음은 내장 리스트 타입의 서브타입에 대한 타입 구조입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757498Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "Note that the base type structure member (here ``PyListObject``) must be the first member of the structure; any following members are additions.",
+      "source_hash": 16753901676086524580,
+      "context_hash": 10467373690204095573,
+      "translation": "베이스 타입 구조 멤버(여기서는 ``PyListObject``\\ )는 구조의 첫 번째 멤버여야 하며, 그 뒤에 오는 멤버는 추가 항목이라는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757498Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:1",
+      "source": "Also note that the base type is not referenced via a pointer; the actual contents of its structure must be included! (The goal is for the memory layout of the beginning of the subtype instance to be the same as that of the base type instance.)",
+      "source_hash": 1680371388967279613,
+      "context_hash": 13737633457120312332,
+      "translation": "또한 베이스 타입이 포인터를 통해 참조되지 않는다는 점에도 유의하십시오. 베이스 타입 구조의 실제 내용을 포함해야 합니다! (목표는 서브타입 인스턴스의 시작 부분 메모리 배치가 베이스 타입 인스턴스의 메모리 배치와 동일하도록 하는 것입니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:11.757498Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "Next, the derived type must declare a type object and initialize it.",
+      "source_hash": 2040815492618604145,
+      "context_hash": 1963042592309157280,
+      "translation": "다음으로, 파생 형식은 타입 객체를 선언하고 초기화해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305805Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:1",
+      "source": "Most of the slots in the type object may be initialized to zero, which is a signal that the base type slot must be copied into it.",
+      "source_hash": 6469834586433782355,
+      "context_hash": 12007288530047695338,
+      "translation": "타입 객체의 대부분 슬롯은 0으로 초기화할 수 있으며, 이는 베이스 형식의 슬롯을 해당 슬롯에 복사해야 함을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305809Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:2",
+      "source": "Some slots that must be initialized properly:",
+      "source_hash": 3313195723938926667,
+      "context_hash": 13655163960460529205,
+      "translation": "다음과 같은 일부 슬롯은 올바르게 초기화해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305809Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "The object header must be filled in as usual; the type should be ``&PyType_Type``.",
+      "source_hash": 11708620778506011525,
+      "context_hash": 5731377229973096486,
+      "translation": "객체 헤더는 평소와 같이 채워야 하며, 타입은 ``&PyType_Type``\\ 이어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305809Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "The tp_basicsize slot must be set to the size of the subtype instance struct (in the above example: ``sizeof(spamlistobject)``).",
+      "source_hash": 8912981455069712243,
+      "context_hash": 124194106685436752,
+      "translation": "tp_basicsize 슬롯은 서브타입 인스턴스 구조체의 크기로 설정해야 합니다(위의 예에서는 ``sizeof(spamlistobject)``\\ 입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:46:43.582457Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "The tp_base slot must be set to the address of the base type's type object.",
+      "source_hash": 15732858858597457875,
+      "context_hash": 17431709377436433500,
+      "translation": "tp_base 슬롯은 기본 타입의 타입 객체 주소로 설정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:46:43.582458Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:0",
+      "source": "If the derived slot defines any pointer members, the ``tp_dealloc`` slot function requires special attention, see below; otherwise, it can be set to zero, to inherit the base type's deallocation function.",
+      "source_hash": 5184228622434292,
+      "context_hash": 15416508795604405450,
+      "translation": "파생 슬롯이 포인터 멤버를 정의하는 경우 ``tp_dealloc`` 슬롯 함수에 특별한 주의가 필요합니다. 아래를 참조하십시오. 그렇지 않은 경우 베이스 형식의 할당 해제 함수를 상속하도록 0으로 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305811Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:11/seg:0",
+      "source": "The ``tp_flags`` slot must be set to the usual ``Py_TPFLAGS_DEFAULT`` value.",
+      "source_hash": 9568746447770665169,
+      "context_hash": 11635344704790034590,
+      "translation": "``tp_flags`` 슬롯은 일반적인 ``Py_TPFLAGS_DEFAULT`` 값으로 설정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305811Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:12/seg:0",
+      "source": "The ``tp_name`` slot must be set; it is recommended to set ``tp_doc`` as well (these are not inherited).",
+      "source_hash": 12382628644817752242,
+      "context_hash": 10573882065402061132,
+      "translation": "``tp_name`` 슬롯은 설정해야 하며, ``tp_doc``\\ 도 설정하는 것이 좋습니다(이들은 상속되지 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305811Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:13/seg:0",
+      "source": "If the subtype defines no additional structure members (it only defines new behavior, no new data), the ``tp_basicsize`` and the ``tp_dealloc`` slots may be left set to zero.",
+      "source_hash": 10409146873353709179,
+      "context_hash": 715318228848965889,
+      "translation": "하위 형식이 추가 구조체 멤버를 정의하지 않는 경우(새로운 데이터가 아닌 새로운 동작만 정의하는 경우), ``tp_basicsize`` 및 ``tp_dealloc`` 슬롯은 0으로 설정된 상태로 둘 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305812Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:14/seg:0",
+      "source": "The subtype's ``tp_dealloc`` slot deserves special attention.",
+      "source_hash": 6550512249534581606,
+      "context_hash": 6017334540274499193,
+      "translation": "하위 형식의 ``tp_dealloc`` 슬롯에는 특별한 주의가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305812Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:14/seg:1",
+      "source": "If the derived type defines no additional pointer members that need to be DECREF'ed or freed when the object is deallocated, it can be set to zero.",
+      "source_hash": 8111200918891294191,
+      "context_hash": 132421977778667604,
+      "translation": "파생 형식이 객체 할당 해제 시 DECREF하거나 해제해야 하는 추가 포인터 멤버를 정의하지 않는 경우, 이를 0으로 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305812Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:14/seg:2",
+      "source": "Otherwise, the subtype's ``tp_dealloc()`` function must call ``Py_XDECREF()`` for any ``PyObject *`` members and the correct memory freeing function for any other pointers it owns, and then call the base class's ``tp_dealloc()`` slot.",
+      "source_hash": 13325894753966136785,
+      "context_hash": 6502353290941559628,
+      "translation": "그렇지 않으면 하위 형식의 ``tp_dealloc()`` 함수는 모든 ``PyObject *`` 멤버에 대해 ``Py_XDECREF()``\\ 를 호출하고, 소유한 다른 포인터에 대해서는 올바른 메모리 해제 함수를 호출한 다음, 베이스 클래스의 ``tp_dealloc()`` 슬롯을 호출해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305813Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:14/seg:3",
+      "source": "This call has to be made via the base type's type structure, for example, when deriving from the standard list type",
+      "source_hash": 8409978063774900131,
+      "context_hash": 15264572312609497089,
+      "translation": "이 호출은 베이스 형식의 타입 구조체를 통해 수행해야 하며, 표준 리스트 형식에서 파생하는 경우를 예로 들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305813Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:16/seg:0",
+      "source": "If the subtype wants to use a different allocation heap than the base type, the subtype must override both the ``tp_alloc()`` and the ``tp_free()`` slots.",
+      "source_hash": 7299950104025562814,
+      "context_hash": 10870765503372147770,
+      "translation": "하위 형식이 베이스 형식과 다른 할당 힙을 사용하려면 ``tp_alloc()`` 및 ``tp_free()`` 슬롯을 모두 재정의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305813Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:16/seg:1",
+      "source": "These will be called by the base class's ``tp_new()`` and ``tp_dealloc()`` slots, respectively.",
+      "source_hash": 4779110178138986108,
+      "context_hash": 7921221260861125280,
+      "translation": "이들은 각각 베이스 클래스의 ``tp_new()`` 및 ``tp_dealloc()`` 슬롯에 의해 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305813Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:17/seg:0",
+      "source": "To complete the initialization of the type, ``PyType_InitDict()`` must be called.",
+      "source_hash": 15244828483749582854,
+      "context_hash": 185595060602671935,
+      "translation": "타입 초기화를 완료하려면 ``PyType_InitDict()``\\ 를 호출해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305814Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:17/seg:1",
+      "source": "This replaces slots initialized to zero in the subtype with the value of the corresponding base type slots.  (It also fills in ``tp_dict``, the type's dictionary, and does various other initializations necessary for type objects.)",
+      "source_hash": 9836763312715919158,
+      "context_hash": 6481945105769993950,
+      "translation": "이는 하위 형식에서 0으로 초기화된 슬롯을 해당 베이스 형식 슬롯의 값으로 대체합니다. (또한 타입의 딕셔너리인 ``tp_dict``\\ 를 채우고, 타입 객체에 필요한 여러 다른 초기화도 수행합니다.)",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:12.305814Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:18/seg:0",
+      "source": "A subtype is not usable until ``PyType_InitDict()`` is called for it; this is best done during module initialization, assuming the subtype belongs to a module.",
+      "source_hash": 12900437205056385902,
+      "context_hash": 11948377009133489907,
+      "translation": "하위 형식은 해당 형식에 대해 ``PyType_InitDict()``\\ 를 호출하기 전까지 사용할 수 없습니다. 하위 형식이 모듈에 속한다고 가정하면 모듈 초기화 중에 이를 수행하는 것이 가장 좋습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305815Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:18/seg:1",
+      "source": "An alternative for subtypes added to the Python core (which don't live in a particular module) would be to initialize the subtype in their constructor function.",
+      "source_hash": 13766914682833906887,
+      "context_hash": 614556376882227011,
+      "translation": "특정 모듈에 속하지 않는 Python 코어에 추가된 하위 형식의 경우, 생성자 함수에서 하위 형식을 초기화하는 방법도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305815Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:18/seg:2",
+      "source": "It is allowed to call ``PyType_InitDict()`` more than once; the second and further calls have no effect.",
+      "source_hash": 15535988169749827470,
+      "context_hash": 8640587523480954157,
+      "translation": "``PyType_InitDict()``\\ 를 두 번 이상 호출해도 됩니다. 두 번째 호출과 그 이후의 호출은 아무런 효과가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305816Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:18/seg:3",
+      "source": "To avoid unnecessary calls, a test for ``tp_dict==NULL`` can be made.",
+      "source_hash": 2200617609250015630,
+      "context_hash": 4601570444847581937,
+      "translation": "불필요한 호출을 피하려면 ``tp_dict==NULL``\\ 에 대한 검사를 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305816Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:19/seg:0",
+      "source": "(During initialization of the Python interpreter, some types are actually used before they are initialized.",
+      "source_hash": 9237266217851645805,
+      "context_hash": 12488675740544759781,
+      "translation": "(Python 인터프리터 초기화 중에는 일부 타입이 실제로 초기화되기 전에 사용됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:02:12.305816Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:19/seg:1",
+      "source": "As long as the slots that are actually needed are initialized, especially ``tp_dealloc``, this works, but it is fragile and not recommended as a general practice.)",
+      "source_hash": 6264131355448201701,
+      "context_hash": 7922842778583743154,
+      "translation": "실제로 필요한 슬롯, 특히 ``tp_dealloc``\\ 이 초기화되어 있으면 이는 작동하지만, 취약한 방식이므로 일반적인 관행으로 권장하지 않습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305818Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:20/seg:0",
+      "source": "To create a subtype instance, the subtype's ``tp_new()`` slot is called.",
+      "source_hash": 6565066168299170418,
+      "context_hash": 14209089833154060897,
+      "translation": "하위 형식 인스턴스를 생성하려면 하위 형식의 ``tp_new()`` 슬롯을 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305818Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:20/seg:1",
+      "source": "This should first call the base type's ``tp_new()`` slot and then initialize the subtype's additional data members.",
+      "source_hash": 13180614489269053440,
+      "context_hash": 13675297556520446655,
+      "translation": "이 함수는 먼저 베이스 형식의 ``tp_new()`` 슬롯을 호출한 다음 하위 형식의 추가 데이터 멤버를 초기화해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305818Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:20/seg:2",
+      "source": "To further initialize the instance, the ``tp_init()`` slot is typically called.",
+      "source_hash": 14620185773167750722,
+      "context_hash": 1636232358912050682,
+      "translation": "인스턴스를 추가로 초기화하려면 일반적으로 ``tp_init()`` 슬롯을 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305819Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:20/seg:3",
+      "source": "Note that the ``tp_new()`` slot should **not** call the ``tp_init()`` slot; this is up to ``tp_new()``'s caller (typically a factory function).",
+      "source_hash": 11537309346530304451,
+      "context_hash": 6335907611955630428,
+      "translation": "``tp_new()`` 슬롯은 **``tp_init()`` 슬롯을 호출해서는 안 된다는 점에 유의하십시오**. 이는 ``tp_new()``\\ 의 호출자(일반적으로 팩토리 함수)가 수행할 일입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305819Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:20/seg:4",
+      "source": "There are circumstances where it is appropriate not to call ``tp_init()``.",
+      "source_hash": 14831967652189468361,
+      "context_hash": 9279881655749011600,
+      "translation": "``tp_init()``\\ 를 호출하지 않는 것이 적절한 경우도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305819Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:21/seg:0",
+      "source": "If a subtype defines a ``tp_init()`` slot, the ``tp_init()`` slot should normally first call the base type's ``tp_init()`` slot.",
+      "source_hash": 10899619075079647849,
+      "context_hash": 14780402503362617457,
+      "translation": "하위 형식이 ``tp_init()`` 슬롯을 정의하는 경우, ``tp_init()`` 슬롯은 일반적으로 먼저 베이스 형식의 ``tp_init()`` 슬롯을 호출해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305819Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:22/seg:0",
+      "source": "(XXX There should be a paragraph or two about argument passing here.)",
+      "source_hash": 9210033547967357071,
+      "context_hash": 14708256928247439662,
+      "translation": "(XXX 여기에는 인자 전달에 관한 문단이 한두 개 있어야 합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305819Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Subtyping in Python",
+      "source_hash": 16149878037233918767,
+      "context_hash": 9526060118812121721,
+      "translation": "Python에서의 하위 형식화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:12.305820Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The next step is to allow subtyping of selected built-in types through a class statement in Python.",
+      "source_hash": 15342972404644320690,
+      "context_hash": 3102801036697496955,
+      "translation": "Python에서 선택된 내장 타입의 서브타이핑을 클래스 문을 통해 허용하는 것이 다음 단계입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280080Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "Limiting ourselves to single inheritance for now, here is what happens for a simple class statement",
+      "source_hash": 17200034441145173861,
+      "context_hash": 12903963847348525551,
+      "translation": "지금은 단일 상속으로 제한하면, 간단한 클래스 문에서는 다음과 같이 동작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280083Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "The body of the class statement is executed in a fresh environment (basically, a new dictionary used as local namespace), and then C is created.",
+      "source_hash": 3002235891278088665,
+      "context_hash": 519983009847996565,
+      "translation": "클래스 문의 본문은 새로운 환경(기본적으로 로컬 네임스페이스로 사용되는 새 딕셔너리)에서 실행된 다음 C가 생성됩니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스",
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:22.280083Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "The following explains how C is created.",
+      "source_hash": 14791249152821537443,
+      "context_hash": 17310313969771741997,
+      "translation": "다음에서는 C가 생성되는 방식을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280084Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "Assume B is a type object.",
+      "source_hash": 6019217732801620189,
+      "context_hash": 17859663891814871955,
+      "translation": "B가 타입 객체라고 가정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280084Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "Since type objects are objects, and every object has a type, B has a type.",
+      "source_hash": 16382130937645231852,
+      "context_hash": 8349937171186410950,
+      "translation": "타입 객체는 객체이고 모든 객체에는 타입이 있으므로 B에도 타입이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280085Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:2",
+      "source": "Since B is itself a type, we also call its type its metatype.",
+      "source_hash": 15937315263481841501,
+      "context_hash": 5796808094530053715,
+      "translation": "B 자체가 타입이므로 그 타입을 메타타입이라고도 부릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280085Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:3",
+      "source": "B's metatype is accessible via ``type(B)`` or ``B.__class__`` (the latter notation is new for types; it is introduced in :pep:`252`).",
+      "source_hash": 14089632760632793939,
+      "context_hash": 15292046583319066289,
+      "translation": "B의 메타타입은 ``type(B)`` 또는 ``B.__class__``\\ 를 통해 접근할 수 있습니다(후자의 표기법은 타입에 새로 도입된 것으로, :pep:`252`\\ 에서 소개되었습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280085Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:4",
+      "source": "Let's say this metatype is M (for Metatype).",
+      "source_hash": 286093327509943315,
+      "context_hash": 4415999080600327542,
+      "translation": "이 메타타입을 M(Metatype의 약자)이라고 하겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280086Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:5",
+      "source": "The class statement will create a new type, C.",
+      "source_hash": 17480989828323673065,
+      "context_hash": 1382421650432010510,
+      "translation": "클래스 문은 새로운 타입 C를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280086Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:6",
+      "source": "Since C will be a type object just like B, we view the creation of C as an instantiation of the metatype, M.",
+      "source_hash": 6673397592731289856,
+      "context_hash": 10056524869032645577,
+      "translation": "C는 B와 마찬가지로 타입 객체가 되므로, C의 생성을 메타타입 M의 인스턴스화로 간주합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280086Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:7",
+      "source": "The information that needs to be provided for the creation of a subclass is:",
+      "source_hash": 16647462612249454955,
+      "context_hash": 14654482497633470895,
+      "translation": "서브클래스를 생성하려면 다음 정보가 제공되어야 합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280086Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "its name (in this example the string \"C\");",
+      "source_hash": 12619838812422397725,
+      "context_hash": 8803394668497407752,
+      "translation": "이름(이 예에서는 문자열 \"C\")입니다;",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280087Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "its bases (a singleton tuple containing B);",
+      "source_hash": 16503280885267862819,
+      "context_hash": 9706521086253513698,
+      "translation": "베이스( B를 포함하는 싱글턴 튜플)입니다;",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280087Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "the results of executing the class body, in the form of a dictionary (for example ``{\"var1\": 1, \"method1\": <functionmethod1 at ...>, ...}``).",
+      "source_hash": 14248066113329386545,
+      "context_hash": 6356849762763819413,
+      "translation": "클래스 본문을 실행한 결과를 딕셔너리 형식으로 나타낸 것입니다(예: ``{\"var1\": 1, \"method1\": <functionmethod1 at ...>, ...}``).",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:22.280087Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "The class statement will result in the following call",
+      "source_hash": 1864925614871644525,
+      "context_hash": 15625560300153374370,
+      "translation": "클래스 문은 다음 호출을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280088Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:0",
+      "source": "where dict is the dictionary resulting from execution of the class body.",
+      "source_hash": 12838903377020315215,
+      "context_hash": 6795541236425088589,
+      "translation": "여기서 dict는 클래스 본문을 실행한 결과인 딕셔너리입니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:22.280088Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:1",
+      "source": "In other words, the metatype (M) is called.",
+      "source_hash": 2670779999726986231,
+      "context_hash": 4593059800787596832,
+      "translation": "다시 말해 메타타입(M)이 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280088Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:11/seg:0",
+      "source": "Note that even though the example has only one base, we still pass in a (singleton) sequence of bases; this makes the interface uniform with the multiple-inheritance case.",
+      "source_hash": 13461711983880215033,
+      "context_hash": 11267349369408900086,
+      "translation": "이 예에는 베이스가 하나뿐이지만, 여전히 베이스의 (싱글턴) 시퀀스를 전달한다는 점에 유의하십시오. 이렇게 하면 다중 상속의 경우와 인터페이스가 동일해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280088Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:12/seg:0",
+      "source": "In current Python, this is called the \"Don Beaudry hook\" after its inventor; it is an exceptional case that is only invoked when a base class is not a regular class.",
+      "source_hash": 10908278027289536710,
+      "context_hash": 2281731830168912681,
+      "translation": "현재 Python에서는 이를 발명자의 이름을 따서 \"Don Beaudry hook\"이라고 부릅니다. 이는 베이스 클래스가 일반 클래스가 아닐 때만 호출되는 예외적인 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280089Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:12/seg:1",
+      "source": "For a regular base class (or when no base class is specified), current Python calls ``PyClass_New()``, the C level factory function for classes, directly.",
+      "source_hash": 4695356042155158751,
+      "context_hash": 7944411448810205305,
+      "translation": "일반 베이스 클래스의 경우(또는 베이스 클래스가 지정되지 않은 경우), 현재 Python은 클래스의 C 수준 팩토리 함수인 ``PyClass_New()``\\ 를 직접 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280089Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:13/seg:0",
+      "source": "Under the new system this is changed so that Python **always** determines a metatype and calls it as given above.",
+      "source_hash": 15805413277163930324,
+      "context_hash": 5146319125265985006,
+      "translation": "새로운 시스템에서는 Python이 **always** 메타타입을 결정하고 위와 같이 호출하도록 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280089Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:13/seg:1",
+      "source": "When one or more bases are given, the type of the first base is used as the metatype; when no base is given, a default metatype is chosen.",
+      "source_hash": 8983344297620065451,
+      "context_hash": 13147710443937900106,
+      "translation": "하나 이상의 베이스가 지정되면 첫 번째 베이스의 타입이 메타타입으로 사용되고, 베이스가 지정되지 않으면 기본 메타타입이 선택됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280089Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:13/seg:2",
+      "source": "By setting the default metatype to ``PyClass_Type``, the metatype of \"classic\" classes, the classic behavior of the class statement is retained.",
+      "source_hash": 11436052430091833357,
+      "context_hash": 1741450517555065572,
+      "translation": "기본 메타타입을 \"classic\" 클래스의 메타타입인 ``PyClass_Type``\\ 으로 설정하면 클래스 문의 고전적 동작이 유지됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280090Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:13/seg:3",
+      "source": "This default can be changed per module by setting the global variable ``__metaclass__``.",
+      "source_hash": 11828719972853553490,
+      "context_hash": 10957900478182514989,
+      "translation": "이 기본값은 전역 변수 ``__metaclass__``\\ 를 설정하여 모듈별로 변경할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280090Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:14/seg:0",
+      "source": "There are two further refinements here.",
+      "source_hash": 1181197041416478078,
+      "context_hash": 18205642881424562402,
+      "translation": "여기에는 두 가지 추가적인 개선 사항이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280090Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:14/seg:1",
+      "source": "First, a useful feature is to be able to specify a metatype directly.",
+      "source_hash": 1517494068097473018,
+      "context_hash": 17364057249393815124,
+      "translation": "첫째, 메타타입을 직접 지정할 수 있다는 점이 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280091Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:14/seg:2",
+      "source": "If the class suite defines a variable ``__metaclass__``, that is the metatype to call.  (Note that setting ``__metaclass__`` at the module level only affects class statements without a base class and without an explicit ``__metaclass__`` declaration; but setting ``__metaclass__`` in a class suite overrides the default metatype unconditionally.)",
+      "source_hash": 16195231397173141401,
+      "context_hash": 13449556392893160043,
+      "translation": "클래스 본문에서 ``__metaclass__``\\ 라는 변수를 정의하면 그것이 호출할 메타타입이 됩니다. (모듈 수준에서 ``__metaclass__``\\ 를 설정하는 것은 베이스 클래스와 명시적인 ``__metaclass__`` 선언이 없는 클래스 문에만 영향을 줍니다. 그러나 클래스 본문에서 ``__metaclass__``\\ 를 설정하면 기본 메타타입을 무조건 재정의합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280091Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:15/seg:0",
+      "source": "Second, with multiple bases, not all bases need to have the same metatype.",
+      "source_hash": 10829910489406999587,
+      "context_hash": 4098202967868321939,
+      "translation": "둘째, 다중 베이스를 사용할 때 모든 베이스가 동일한 메타타입을 가질 필요는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280091Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:15/seg:1",
+      "source": "This is called a metaclass conflict [1]_.",
+      "source_hash": 3242764176021566383,
+      "context_hash": 7911794792800161440,
+      "translation": "이를 메타클래스 충돌이라고 합니다 [1]_.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:02:22.280092Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:15/seg:2",
+      "source": "Some metaclass conflicts can be resolved by searching through the set of bases for a metatype that derives from all other given metatypes.",
+      "source_hash": 6348255287617211124,
+      "context_hash": 6903792524001174148,
+      "translation": "일부 메타클래스 충돌은 모든 다른 주어진 메타타입에서 파생되는 메타타입을 베이스 집합에서 검색하여 해결할 수 있습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:02:22.280092Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:15/seg:3",
+      "source": "If such a metatype cannot be found, an exception is raised and the class statement fails.",
+      "source_hash": 13849466680309401926,
+      "context_hash": 5883821068356823805,
+      "translation": "그러한 메타타입을 찾을 수 없으면 예외가 발생하고 클래스 문이 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:22.280093Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:16/seg:0",
+      "source": "This conflict resolution can be implemented by the metatype constructors: the class statement just calls the metatype of the first base (or that specified by the ``__metaclass__`` variable), and this metatype's constructor looks for the most derived metatype.",
+      "source_hash": 1250891820688135821,
+      "context_hash": 12391987185710350254,
+      "translation": "이 충돌 해결은 메타타입 생성자를 통해 구현할 수 있습니다. 클래스 문은 첫 번째 베이스의 메타타입(또는 ``__metaclass__`` 변수로 지정된 메타타입)을 호출할 뿐이며, 이 메타타입의 생성자는 가장 파생된 메타타입을 찾습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861501Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:16/seg:1",
+      "source": "If that is itself, it proceeds; otherwise, it calls that metatype's constructor.  (Ultimate flexibility: another metatype might choose to require that all bases have the same metatype, or that there's only one base class, or whatever.)",
+      "source_hash": 15256600032891726669,
+      "context_hash": 2763067579055554517,
+      "translation": "그것이 자기 자신이면 계속 진행하고, 그렇지 않으면 해당 메타타입의 생성자를 호출합니다. (궁극적인 유연성을 위해 다른 메타타입이 모든 베이스가 동일한 메타타입을 가져야 한다거나, 베이스 클래스가 하나뿐이어야 한다거나, 그 밖의 조건을 요구하도록 선택할 수도 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861505Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:17/seg:0",
+      "source": "(In [1]_, a new metaclass is automatically derived that is a subclass of all given metaclasses.",
+      "source_hash": 15363658666545940081,
+      "context_hash": 12494653989441359106,
+      "translation": "([1]_\\ 에서는 지정된 모든 메타클래스의 서브클래스인 새로운 메타클래스가 자동으로 파생됩니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:02:24.861505Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:17/seg:1",
+      "source": "But since it is questionable in Python how conflicting method definitions of the various metaclasses should be merged, I don't think this is feasible.",
+      "source_hash": 6062899396201265201,
+      "context_hash": 10171736072224537203,
+      "translation": "그러나 Python에서 다양한 메타클래스의 충돌하는 메서드 정의를 어떻게 병합해야 하는지는 논란의 여지가 있으므로, 저는 이것이 실현 가능하다고 생각하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861506Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:17/seg:2",
+      "source": "Should the need arise, the user can derive such a metaclass manually and specify it using the ``__metaclass__`` variable.",
+      "source_hash": 14095720459973101086,
+      "context_hash": 2813681184233220664,
+      "translation": "필요하다면 사용자가 이러한 메타클래스를 수동으로 파생하고 ``__metaclass__`` 변수로 지정할 수 있습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:02:24.861507Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:17/seg:3",
+      "source": "It is also possible to have a new metaclass that does this.)",
+      "source_hash": 10683776756693581205,
+      "context_hash": 5219761498151655311,
+      "translation": "이를 수행하는 새로운 메타클래스를 만드는 것도 가능합니다.)",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:02:24.861507Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:18/seg:0",
+      "source": "Note that calling M requires that M itself has a type: the meta-metatype.",
+      "source_hash": 85684678363351349,
+      "context_hash": 14332914347357400017,
+      "translation": "M을 호출하려면 M 자체에도 타입, 즉 메타-메타타입이 있어야 한다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861508Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:18/seg:1",
+      "source": "And the meta-metatype has a type, the meta-meta-metatype.",
+      "source_hash": 10107957912664807109,
+      "context_hash": 1173340540486165526,
+      "translation": "그리고 메타-메타타입에도 타입, 즉 메타-메타-메타타입이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861508Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:18/seg:2",
+      "source": "And so on.",
+      "source_hash": 1192093823531627100,
+      "context_hash": 2562057613789422266,
+      "translation": "이런 식으로 계속됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861509Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:18/seg:3",
+      "source": "This is normally cut short at some level by making a metatype be its own metatype.",
+      "source_hash": 18296281232024200706,
+      "context_hash": 10455028570654262934,
+      "translation": "일반적으로 메타타입을 자신의 메타타입으로 만들어 어느 단계에서 이 연쇄를 중단합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861509Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:18/seg:4",
+      "source": "This is indeed what happens in Python: the ``ob_type`` reference in ``PyType_Type`` is set to ``&PyType_Type``.",
+      "source_hash": 5123212581163757653,
+      "context_hash": 5250587969622429852,
+      "translation": "실제로 Python에서 그렇게 합니다. ``PyType_Type``\\ 의 ``ob_type`` 참조는 ``&PyType_Type``\\ 로 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861509Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:18/seg:5",
+      "source": "In the absence of third party metatypes, ``PyType_Type`` is the only metatype in the Python interpreter.",
+      "source_hash": 2747094551495851389,
+      "context_hash": 17434218679489620078,
+      "translation": "서드 파티 메타타입이 없는 경우 ``PyType_Type``\\ 은 Python 인터프리터에서 유일한 메타타입입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:02:24.861509Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:19/seg:0",
+      "source": "(In a previous version of this PEP, there was one additional meta-level, and there was a meta-metatype called \"turtle\".",
+      "source_hash": 11877729651439990425,
+      "context_hash": 297001820380984867,
+      "translation": "(이 PEP의 이전 버전에는 메타 수준이 하나 더 있었고, \"turtle\"이라는 메타-메타타입이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861510Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:19/seg:1",
+      "source": "This turned out to be unnecessary.)",
+      "source_hash": 14740415032495171011,
+      "context_hash": 494668644868845801,
+      "translation": "이것은 불필요한 것으로 밝혀졌습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861510Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:20/seg:0",
+      "source": "In any case, the work for creating C is done by M's ``tp_new()`` slot.",
+      "source_hash": 14619169141466961808,
+      "context_hash": 7315732853364629266,
+      "translation": "어쨌든 C를 생성하는 작업은 M의 ``tp_new()`` 슬롯이 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861511Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:20/seg:1",
+      "source": "It allocates space for an \"extended\" type structure, containing: the type object; the auxiliary structures (as_sequence etc.); the string object containing the type name (to ensure that this object isn't deallocated while the type object is still referencing it); and some auxiliary storage (to be described later).",
+      "source_hash": 9838623034700798040,
+      "context_hash": 14060344767020784999,
+      "translation": "이 슬롯은 다음을 포함하는 \"확장된\" 타입 구조체를 위한 공간을 할당합니다. 타입 객체, 보조 구조체(as_sequence 등), 타입 이름을 포함하는 문자열 객체(타입 객체가 여전히 이 객체를 참조하는 동안 이 객체가 할당 해제되지 않도록 하기 위한 것), 그리고 일부 보조 저장 공간(이는 나중에 설명합니다)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861511Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:20/seg:2",
+      "source": "It initializes this storage to zeros except for a few crucial slots (for example, tp_name is set to point to the type name) and then sets the tp_base slot to point to B.",
+      "source_hash": 16846652248774953031,
+      "context_hash": 14781408637680042011,
+      "translation": "이 슬롯은 몇몇 중요한 슬롯을 제외한 이 저장 공간을 0으로 초기화합니다(예를 들어 tp_name은 타입 이름을 가리키도록 설정합니다). 그런 다음 tp_base 슬롯을 B를 가리키도록 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861511Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:20/seg:3",
+      "source": "Then ``PyType_InitDict()`` is called to inherit B's slots.",
+      "source_hash": 1163972551229182889,
+      "context_hash": 11394337397096474354,
+      "translation": "그런 다음 ``PyType_InitDict()``\\ 를 호출하여 B의 슬롯을 상속합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861512Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:20/seg:4",
+      "source": "Finally, C's ``tp_dict`` slot is updated with the contents of the namespace dictionary (the third argument to the call to M).",
+      "source_hash": 6430261819263740606,
+      "context_hash": 3498641312145164979,
+      "translation": "마지막으로 C의 ``tp_dict`` 슬롯을 네임스페이스 딕셔너리의 내용으로 갱신합니다(M 호출의 세 번째 인자).",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리",
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:02:24.861512Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Multiple inheritance",
+      "source_hash": 1044515713912031585,
+      "context_hash": 11701420741207458988,
+      "translation": "다중 상속",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861513Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The Python class statement supports multiple inheritance, and we will also support multiple inheritance involving built-in types.",
+      "source_hash": 7525929626647545336,
+      "context_hash": 17934403630908914922,
+      "translation": "Python 클래스 문은 다중 상속을 지원하며, 내장 타입이 관여하는 다중 상속도 지원할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861513Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "However, there are some restrictions.",
+      "source_hash": 6031489187921031975,
+      "context_hash": 14470162559017604416,
+      "translation": "그러나 몇 가지 제한이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861513Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "The C runtime architecture doesn't make it feasible to have a meaningful subtype of two different built-in types except in a few degenerate cases.",
+      "source_hash": 2432321682283603109,
+      "context_hash": 4536748194417472963,
+      "translation": "C 런타임 아키텍처에서는 몇몇 특수한 경우를 제외하면 서로 다른 두 내장 타입의 의미 있는 서브타입을 만드는 것이 실현 가능하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861514Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:2",
+      "source": "Changing the C runtime to support fully general multiple inheritance would be too much of an upheaval of the code base.",
+      "source_hash": 6644206120084467382,
+      "context_hash": 12519449484432618006,
+      "translation": "완전히 일반적인 다중 상속을 지원하도록 C 런타임을 변경하는 것은 코드 기반을 지나치게 크게 뒤흔드는 일이 될 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861514Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "The main problem with multiple inheritance from different built-in types stems from the fact that the C implementation of built-in types accesses structure members directly; the C compiler generates an offset relative to the object pointer and that's that.",
+      "source_hash": 6434947953090399023,
+      "context_hash": 12349093169032650805,
+      "translation": "서로 다른 내장 타입에서 다중 상속을 할 때의 주요 문제는 내장 타입의 C 구현이 구조체 멤버에 직접 접근한다는 사실에서 비롯됩니다. C 컴파일러는 객체 포인터를 기준으로 오프셋을 생성하며, 그것으로 끝입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861514Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "For example, the list and dictionary type structures each declare a number of different but overlapping structure members.",
+      "source_hash": 14782001047948256454,
+      "context_hash": 6899334437160699072,
+      "translation": "예를 들어 리스트 타입 구조체와 딕셔너리 타입 구조체는 각각 서로 다르지만 겹치는 구조체 멤버를 여러 개 선언합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:24.861514Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:2",
+      "source": "A C function accessing an object expecting a list won't work when passed a dictionary, and vice versa, and there's not much we could do about this without rewriting all code that accesses lists and dictionaries.",
+      "source_hash": 169752916546295513,
+      "context_hash": 2286151613368100392,
+      "translation": "리스트를 예상하고 객체에 접근하는 C 함수에 딕셔너리를 전달하면 작동하지 않으며 그 반대도 마찬가지입니다. 리스트와 딕셔너리에 접근하는 모든 코드를 다시 작성하지 않고는 이를 해결할 방법도 거의 없습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:24.861515Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:3",
+      "source": "This would be too much work, so we won't do this.",
+      "source_hash": 8571269154510006105,
+      "context_hash": 6241968554790416762,
+      "translation": "이는 너무 많은 작업이므로 그렇게 하지 않을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861515Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "The problem with multiple inheritance is caused by conflicting structure member allocations.",
+      "source_hash": 15017489953742682311,
+      "context_hash": 16017700168708510159,
+      "translation": "다중 상속의 문제는 충돌하는 구조체 멤버 할당 때문에 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861516Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:1",
+      "source": "Classes defined in Python normally don't store their instance variables in structure members: they are stored in an instance dictionary.",
+      "source_hash": 8453346551021437151,
+      "context_hash": 15313688601022193186,
+      "translation": "Python에서 정의된 클래스는 일반적으로 인스턴스 변수를 구조체 멤버에 저장하지 않습니다. 인스턴스 변수는 인스턴스 딕셔너리에 저장됩니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:24.861516Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:2",
+      "source": "This is the key to a partial solution.",
+      "source_hash": 1573694452143527174,
+      "context_hash": 16743368651931166317,
+      "translation": "이것이 부분적인 해결책의 핵심입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861517Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:3",
+      "source": "Suppose we have the following two classes",
+      "source_hash": 8205783037619255906,
+      "context_hash": 17021498128935583549,
+      "translation": "다음과 같은 두 클래스를 가정해 보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:24.861517Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "(Here, 'dictionary' is the type of built-in dictionary objects, a.k.a. ``type({})`` or ``{}.__class__`` or ``types.DictType``.)  If we look at the structure layout, we find that an A instance has the layout of a dictionary followed by the ``__dict__`` pointer, and a B instance has the same layout; since there are no structure member layout conflicts, this is okay.",
+      "source_hash": 1340734325941793644,
+      "context_hash": 9518035258823857659,
+      "translation": "(여기서 'dictionary'는 내장 딕셔너리 객체의 타입, 즉 ``type({})`` 또는 ``{}.__class__`` 또는 ``types.DictType``\\ 입니다.) 구조 레이아웃을 살펴보면 A 인스턴스는 딕셔너리 다음에 ``__dict__`` 포인터가 오는 레이아웃을 가지며, B 인스턴스도 같은 레이아웃을 가집니다. 구조 멤버 레이아웃 간 충돌이 없으므로 이는 문제가 없습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:37.116132Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "Here's another example",
+      "source_hash": 17995150699109769802,
+      "context_hash": 5676500110467922441,
+      "translation": "다음은 또 다른 예입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116136Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:0",
+      "source": "(Here, 'object' is the base for all built-in types; its structure layout only contains the ``ob_refcnt`` and ``ob_type`` members.)  This example is more complicated, because the ``__dict__`` pointer for X instances has a different offset than that for Y instances.",
+      "source_hash": 5010267913226544315,
+      "context_hash": 4517880975696029687,
+      "translation": "(여기서 'object'는 모든 내장 타입의 기반이며, 그 구조 레이아웃에는 ``ob_refcnt`` 및 ``ob_type`` 멤버만 포함됩니다.) 이 예는 X 인스턴스의 ``__dict__`` 포인터가 Y 인스턴스의 것과 다른 오프셋을 가지므로 더 복잡합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116136Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:1",
+      "source": "Where is the ``__dict__`` pointer for Z instances?",
+      "source_hash": 2143262906003301542,
+      "context_hash": 11228643098954561428,
+      "translation": "Z 인스턴스의 ``__dict__`` 포인터는 어디에 있습니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116137Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:2",
+      "source": "The answer is that the offset for the ``__dict__`` pointer is not hardcoded, it is stored in the type object.",
+      "source_hash": 17069677300578583666,
+      "context_hash": 17551611511518693623,
+      "translation": "답은 ``__dict__`` 포인터의 오프셋이 하드코딩되어 있지 않고 타입 객체에 저장된다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116137Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:0",
+      "source": "Suppose on a particular machine an 'object' structure is 8 bytes long, and a 'dictionary' struct is 60 bytes, and an object pointer is 4 bytes.",
+      "source_hash": 8138788415883223895,
+      "context_hash": 6759738068484302745,
+      "translation": "특정 머신에서 'object' 구조체의 길이가 8바이트이고, '딕셔너리' 구조체의 크기가 60바이트이며, 객체 포인터의 크기가 4바이트라고 가정합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:46:43.582459Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:1",
+      "source": "Then an X structure is 12 bytes (an object structure followed by a ``__dict__`` pointer), and a Y structure is 64 bytes (a dictionary structure followed by a ``__dict__`` pointer).",
+      "source_hash": 7811388170186360644,
+      "context_hash": 8417226497068082870,
+      "translation": "그러면 X 구조체는 12바이트이고(객체 구조체 다음에 ``__dict__`` 포인터가 옵니다), Y 구조체는 64바이트입니다(딕셔너리 구조체 다음에 ``__dict__`` 포인터가 옵니다).",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:37.116139Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:2",
+      "source": "The Z structure has the same layout as the Y structure in this example.",
+      "source_hash": 642666447954395003,
+      "context_hash": 18131709000689732128,
+      "translation": "이 예에서 Z 구조체는 Y 구조체와 동일한 레이아웃을 가집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116139Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:3",
+      "source": "Each type object (X, Y and Z) has a \"__dict__ offset\" which is used to find the ``__dict__`` pointer.",
+      "source_hash": 10055980146166064492,
+      "context_hash": 4438518758474864874,
+      "translation": "각 타입 객체(X, Y 및 Z)에는 ``__dict__`` 포인터를 찾는 데 사용되는 \"__dict__ offset\"이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116140Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:4",
+      "source": "Thus, the recipe for looking up an instance variable is:",
+      "source_hash": 7580447880970923509,
+      "context_hash": 11424692453873214219,
+      "translation": "따라서 인스턴스 변수를 조회하는 절차는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116140Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:11/seg:0",
+      "source": "get the type of the instance",
+      "source_hash": 4010044367138312215,
+      "context_hash": 15756810526064345881,
+      "translation": "인스턴스의 타입을 가져오십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116140Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:12/seg:0",
+      "source": "get the ``__dict__`` offset from the type object",
+      "source_hash": 12211680992112932393,
+      "context_hash": 8197056225218630943,
+      "translation": "타입 객체에서 ``__dict__`` 오프셋을 가져오십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116141Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:13/seg:0",
+      "source": "add the ``__dict__`` offset to the instance pointer",
+      "source_hash": 10058463898132153697,
+      "context_hash": 7992086721370663120,
+      "translation": "인스턴스 포인터에 ``__dict__`` 오프셋을 더하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116141Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:14/seg:0",
+      "source": "look in the resulting address to find a dictionary reference",
+      "source_hash": 8293758465508385232,
+      "context_hash": 3151647317433944359,
+      "translation": "그 결과로 얻은 주소에서 딕셔너리 참조를 찾으십시오.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:37.116141Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:15/seg:0",
+      "source": "look up the instance variable name in that dictionary",
+      "source_hash": 8195595376558935848,
+      "context_hash": 6260441360799417384,
+      "translation": "해당 딕셔너리에서 인스턴스 변수 이름을 조회하십시오.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:02:37.116142Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:16/seg:0",
+      "source": "Of course, this recipe can only be implemented in C, and I have left out some details.",
+      "source_hash": 10228924597933097453,
+      "context_hash": 15837673347314409084,
+      "translation": "물론 이 절차는 C로만 구현할 수 있으며, 일부 세부 사항은 생략했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116143Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:16/seg:1",
+      "source": "But this allows us to use multiple inheritance patterns similar to the ones we can use with classic classes.",
+      "source_hash": 12941507279145442303,
+      "context_hash": 11775448602928674103,
+      "translation": "그러나 이를 통해 클래식 클래스에서 사용할 수 있는 것과 유사한 다중 상속 패턴을 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116143Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:17/seg:0",
+      "source": "XXX I should write up the complete algorithm here to determine base class compatibility, but I can't be bothered right now.",
+      "source_hash": 5654863769349524506,
+      "context_hash": 3311004691425066167,
+      "translation": "XXX 기반 클래스 호환성을 결정하는 완전한 알고리즘을 여기에 작성해야 하지만, 지금은 그럴 엄두가 나지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116143Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:17/seg:1",
+      "source": "Look at ``best_base()`` in typeobject.c in the implementation mentioned below.",
+      "source_hash": 11049503969057846090,
+      "context_hash": 3765221664124789828,
+      "translation": "아래에 언급된 구현의 typeobject.c에 있는 ``best_base()``\\ 를 살펴보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116143Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "MRO:  Method resolution order (the lookup rule)",
+      "source_hash": 9958446531180250073,
+      "context_hash": 8393182245061062899,
+      "translation": "MRO: 메서드 결정 순서 (조회 규칙)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116144Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "With multiple inheritance comes the question of method resolution order: the order in which a class or type and its bases are searched looking for a method of a given name.",
+      "source_hash": 8212179073172173472,
+      "context_hash": 16182125709567331493,
+      "translation": "다중 상속을 사용하면 메서드 결정 순서에 관한 문제가 생깁니다. 즉, 주어진 이름의 메서드를 찾기 위해 클래스나 타입 및 그 기반 클래스들을 검색하는 순서입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116144Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "In classic Python, the rule is given by the following recursive function, also known as the left-to-right depth-first rule",
+      "source_hash": 1151079886222896047,
+      "context_hash": 6715409883583688250,
+      "translation": "클래식 Python에서는 다음 재귀 함수로 규칙을 정의하며, 이를 왼쪽에서 오른쪽으로 깊이 우선 탐색하는 규칙이라고도 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116144Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "The problem with this becomes apparent when we consider a \"diamond diagram\"",
+      "source_hash": 11350099085072057813,
+      "context_hash": 3252304548254828344,
+      "translation": "이 규칙의 문제점은 \"다이아몬드 다이어그램\"을 고려하면 분명해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116145Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "Arrows point from a subtype to its base ``type(s)``.",
+      "source_hash": 12446995712312099903,
+      "context_hash": 4531705578098541523,
+      "translation": "화살표는 서브타입에서 기반 타입인 ``type(s)``\\ 를 가리킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116145Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:1",
+      "source": "This particular diagram means B and C derive from A, and D derives from B and C (and hence also, indirectly, from A).",
+      "source_hash": 16538526310760830659,
+      "context_hash": 1186363637665231081,
+      "translation": "이 특정 다이어그램은 B와 C가 A에서 파생되고, D가 B와 C에서 파생된다는 뜻입니다(따라서 간접적으로 A에서도 파생됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116146Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "Assume that C overrides the method ``save()``, which is defined in the base A.  (``C.save()`` probably calls ``A.save()`` and then saves some of its own state.)  B and D don't override ``save()``.",
+      "source_hash": 13264113909271671972,
+      "context_hash": 13877572839607231036,
+      "translation": "기반 클래스 A에 정의된 메서드 ``save()``\\ 를 C가 재정의한다고 가정하십시오. (``C.save()``\\ 는 아마 ``A.save()``\\ 를 호출한 다음 자체 상태의 일부를 저장할 것입니다.) B와 D는 ``save()``\\ 를 재정의하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116146Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:1",
+      "source": "When we invoke ``save()`` on a D instance, which method is called?",
+      "source_hash": 15547025048774916977,
+      "context_hash": 3533816281730621358,
+      "translation": "D 인스턴스에서 ``save()``\\ 를 호출하면 어떤 메서드가 호출됩니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116146Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:2",
+      "source": "According to the classic lookup rule, ``A.save()`` is called, ignoring ``C.save()``!",
+      "source_hash": 14686727321976028304,
+      "context_hash": 2189044723522457998,
+      "translation": "클래식 조회 규칙에 따르면 ``A.save()``\\ 가 호출되고 ``C.save()``\\ 는 무시됩니다!",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116147Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:0",
+      "source": "This is not good.",
+      "source_hash": 16721846456060972991,
+      "context_hash": 5501852442339715411,
+      "translation": "이는 좋지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116147Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:1",
+      "source": "It probably breaks C (its state doesn't get saved), defeating the whole purpose of inheriting from C in the first place.",
+      "source_hash": 10142299496240467684,
+      "context_hash": 13585901661495656837,
+      "translation": "아마도 C가 망가질 것입니다(C의 상태가 저장되지 않음). 이는 애초에 C를 상속하는 전체 목적을 무너뜨립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:02:37.116147Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:0",
+      "source": "Why was this not a problem in classic Python?",
+      "source_hash": 3808862231734623368,
+      "context_hash": 9444769091094481996,
+      "translation": "왜 이것은 기존 Python에서는 문제가 되지 않았습니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891338Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:1",
+      "source": "Diamond diagrams are rarely found in classic Python class hierarchies.",
+      "source_hash": 9616186673915090120,
+      "context_hash": 10647790689181134011,
+      "translation": "다이아몬드 도식은 기존 Python 클래스 계층에서는 거의 나타나지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891345Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:2",
+      "source": "Most class hierarchies use single inheritance, and multiple inheritance is usually confined to mix-in classes.",
+      "source_hash": 2652083826061845441,
+      "context_hash": 12285969203922790420,
+      "translation": "대부분의 클래스 계층은 단일 상속을 사용하며, 다중 상속은 대개 믹스인 클래스로 제한됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891346Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:3",
+      "source": "In fact, the problem shown here is probably the reason why multiple inheritance is unpopular in classic Python.",
+      "source_hash": 16714302338046745189,
+      "context_hash": 17395964020806096116,
+      "translation": "사실 여기에서 보이는 문제가 기존 Python에서 다중 상속이 인기가 없는 이유일 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891347Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:10/seg:0",
+      "source": "Why will this be a problem in the new system?",
+      "source_hash": 15094265418191828980,
+      "context_hash": 12309237566021128851,
+      "translation": "왜 이것이 새 시스템에서는 문제가 됩니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891347Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:10/seg:1",
+      "source": "The 'object' type at the top of the type hierarchy defines a number of methods that can usefully be extended by subtypes, for example ``__getattr__()``.",
+      "source_hash": 4434116910213023266,
+      "context_hash": 16983690460868692416,
+      "translation": "타입 계층의 최상위에 있는 'object' 타입은 서브타입에서 유용하게 확장할 수 있는 여러 메서드를 정의하며, 예를 들어 ``__getattr__()``\\ 가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891348Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:11/seg:0",
+      "source": "(Aside: in classic Python, the ``__getattr__()`` method is not really the implementation for the get-attribute operation; it is a hook that only gets invoked when an attribute cannot be found by normal means.",
+      "source_hash": 730224436508016240,
+      "context_hash": 11079783968281123850,
+      "translation": "(참고로, 기존 Python에서 ``__getattr__()`` 메서드는 실제로 속성 가져오기 연산의 구현이 아니라, 일반적인 방법으로 속성을 찾을 수 없을 때만 호출되는 훅입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891348Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:11/seg:1",
+      "source": "This has often been cited as a shortcoming -- some class designs have a legitimate need for a ``__getattr__()`` method that gets called for **all** attribute references.",
+      "source_hash": 4500917372464435860,
+      "context_hash": 18133206936755622852,
+      "translation": "이것은 단점으로 자주 지적되어 왔습니다 -- 일부 클래스 설계에는 **모든** 속성 참조에 대해 호출되는 ``__getattr__()`` 메서드가 필요할 타당한 이유가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891348Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:11/seg:2",
+      "source": "But then of course this method has to be able to invoke the default implementation directly.",
+      "source_hash": 16082361494043576848,
+      "context_hash": 17337395609382415384,
+      "translation": "그러나 물론 그러려면 이 메서드가 기본 구현을 직접 호출할 수 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891349Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:11/seg:3",
+      "source": "The most natural way is to make the default implementation available as ``object.__getattr__(self, name)``.)",
+      "source_hash": 6212250482457898343,
+      "context_hash": 3696126578152704744,
+      "translation": "가장 자연스러운 방법은 기본 구현을 ``object.__getattr__(self, name)``\\ 으로 사용할 수 있게 만드는 것입니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891349Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:12/seg:0",
+      "source": "Thus, a classic class hierarchy like this",
+      "source_hash": 8087944140822797615,
+      "context_hash": 5379270569982008591,
+      "translation": "따라서 다음과 같은 기존 클래스 계층은",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891349Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:14/seg:0",
+      "source": "will change into a diamond diagram under the new system",
+      "source_hash": 7840230854363496843,
+      "context_hash": 10426935162523329306,
+      "translation": "새 시스템에서는 다이아몬드 도식으로 바뀌며",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891349Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:16/seg:0",
+      "source": "and while in the original diagram ``C.__getattr__()`` is invoked, under the new system with the classic lookup rule, ``object.__getattr__()`` would be invoked!",
+      "source_hash": 17792343980345648686,
+      "context_hash": 7879125722532113319,
+      "translation": "원래 도식에서는 ``C.__getattr__()``\\ 이 호출되지만, 새 시스템에서 기존 조회 규칙을 사용하면 ``object.__getattr__()``\\ 이 호출됩니다!",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891350Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:17/seg:0",
+      "source": "Fortunately, there's a lookup rule that's better.",
+      "source_hash": 4640484014183061036,
+      "context_hash": 7428614462112454171,
+      "translation": "다행히 더 나은 조회 규칙이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891351Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:17/seg:1",
+      "source": "It's a bit difficult to explain, but it does the right thing in the diamond diagram, and it is the same as the classic lookup rule when there are no diamonds in the inheritance graph (when it is a tree).",
+      "source_hash": 2890789927848148055,
+      "context_hash": 7527418281683660138,
+      "translation": "설명하기는 조금 어렵지만, 다이아몬드 도식에서 올바르게 작동하며, 상속 그래프에 다이아몬드가 없을 때(즉 트리일 때)에는 기존 조회 규칙과 동일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891351Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:18/seg:0",
+      "source": "The new lookup rule constructs a list of all classes in the inheritance diagram in the order in which they will be searched.",
+      "source_hash": 10186164493918461488,
+      "context_hash": 1820652980442409790,
+      "translation": "새 조회 규칙은 상속 도식의 모든 클래스를 검색될 순서대로 나열한 목록을 구성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891351Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:18/seg:1",
+      "source": "This construction is done at class definition time to save time.",
+      "source_hash": 13097674817057591974,
+      "context_hash": 11183749770389485555,
+      "translation": "이 목록은 시간을 절약하기 위해 클래스 정의 시점에 구성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891352Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:18/seg:2",
+      "source": "To explain the new lookup rule, let's first consider what such a list would look like for the classic lookup rule.",
+      "source_hash": 12280944667338315496,
+      "context_hash": 4935031051335150745,
+      "translation": "새 조회 규칙을 설명하기 위해, 먼저 기존 조회 규칙에서 그러한 목록이 어떤 모습일지 살펴보겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891352Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:18/seg:3",
+      "source": "Note that in the presence of diamonds the classic lookup visits some classes multiple times.",
+      "source_hash": 17260611355130050159,
+      "context_hash": 6522668888757610468,
+      "translation": "다이아몬드가 있으면 기존 조회가 일부 클래스를 여러 번 방문한다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891352Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:18/seg:4",
+      "source": "For example, in the ABCD diamond diagram above, the classic lookup rule visits the classes in this order",
+      "source_hash": 81624015267141913,
+      "context_hash": 16676235942044311856,
+      "translation": "예를 들어, 위의 ABCD 다이아몬드 도식에서 기존 조회 규칙은 다음 순서로 클래스들을 방문합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891352Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:20/seg:0",
+      "source": "Note how A occurs twice in the list.",
+      "source_hash": 6360633838311409809,
+      "context_hash": 11812171701514480593,
+      "translation": "목록에서 A가 두 번 나타나는 것을 확인하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891353Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:20/seg:1",
+      "source": "The second occurrence is redundant, since anything that could be found there would already have been found when searching the first occurrence.",
+      "source_hash": 251723987284852132,
+      "context_hash": 8874706661352206948,
+      "translation": "두 번째 항목은 중복입니다. 첫 번째 항목을 검색할 때 이미 그곳에서 찾을 수 있는 모든 것을 찾았을 것이기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891353Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:21/seg:0",
+      "source": "We use this observation to explain our new lookup rule.",
+      "source_hash": 16609305535025687178,
+      "context_hash": 16615837587090425610,
+      "translation": "이 점을 이용해 새 조회 규칙을 설명하겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891353Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:21/seg:1",
+      "source": "Using the classic lookup rule, construct the list of classes that would be searched, including duplicates.",
+      "source_hash": 7856201272029412017,
+      "context_hash": 8230723217122960297,
+      "translation": "기존 조회 규칙을 사용하여 검색될 클래스 목록을 중복 항목을 포함해 구성하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891354Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:21/seg:2",
+      "source": "Now for each class that occurs in the list multiple times, remove all occurrences except for the last.",
+      "source_hash": 1054613522291343313,
+      "context_hash": 7110195797937185632,
+      "translation": "이제 목록에 여러 번 나타나는 각 클래스에 대해 마지막 항목만 남기고 나머지 모든 항목을 제거하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891354Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:21/seg:3",
+      "source": "The resulting list contains each ancestor class exactly once (including the most derived class, D in the example).",
+      "source_hash": 8351060983701744795,
+      "context_hash": 5845955798029692243,
+      "translation": "이렇게 만들어진 목록에는 각 조상 클래스가 정확히 한 번씩 포함됩니다(예제의 가장 많이 파생된 클래스인 D도 포함됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891354Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:22/seg:0",
+      "source": "Searching for methods in this order will do the right thing for the diamond diagram.",
+      "source_hash": 3950721405303743236,
+      "context_hash": 12055744597483184963,
+      "translation": "이 순서로 메서드를 검색하면 다이아몬드 도식에서 올바르게 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891355Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:22/seg:1",
+      "source": "Because of the way the list is constructed, it does not change the search order in situations where no diamond is involved.",
+      "source_hash": 3571494763902847550,
+      "context_hash": 12429283753617662148,
+      "translation": "목록을 구성하는 방식 때문에 다이아몬드가 관련되지 않은 상황에서는 검색 순서가 바뀌지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:19.891355Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:23/seg:0",
+      "source": "Isn't this backwards incompatible?",
+      "source_hash": 13185078744481854784,
+      "context_hash": 6365309612222764179,
+      "translation": "이것은 하위 호환성이 깨지는 것이 아닙니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884029Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:23/seg:1",
+      "source": "Won't it break existing code?",
+      "source_hash": 5664188106608076975,
+      "context_hash": 11457412044658902824,
+      "translation": "기존 코드가 손상되지 않겠습니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884032Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:23/seg:2",
+      "source": "It would, if we changed the method resolution order for all classes.",
+      "source_hash": 11183287836912759300,
+      "context_hash": 11404717077944838392,
+      "translation": "모든 클래스의 메서드 결정 순서를 변경한다면 그렇게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884032Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:23/seg:3",
+      "source": "However, in Python 2.2, the new lookup rule will only be applied to types derived from built-in types, which is a new feature.",
+      "source_hash": 3629505249707775029,
+      "context_hash": 9806878954713498724,
+      "translation": "그러나 Python 2.2에서는 새로운 조회 규칙이 새로운 기능인 내장 타입에서 파생된 타입에만 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884032Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:23/seg:4",
+      "source": "Class statements without a base class create \"classic classes\", and so do class statements whose base classes are themselves classic classes.",
+      "source_hash": 11303410210142940585,
+      "context_hash": 16571795086684807191,
+      "translation": "베이스 클래스가 없는 클래스 문은 \"클래식 클래스\"를 생성하며, 베이스 클래스 자체가 클래식 클래스인 클래스 문도 마찬가지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884033Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:23/seg:5",
+      "source": "For classic classes the classic lookup rule will be used. (To experiment with the new lookup rule for classic classes, you will be able to specify a different metaclass explicitly.)  We'll also provide a tool that analyzes a class hierarchy looking for methods that would be affected by a change in method resolution order.",
+      "source_hash": 5836155687089667607,
+      "context_hash": 7742949839229696274,
+      "translation": "클래식 클래스에는 클래식 조회 규칙을 사용합니다. (클래식 클래스에 새로운 조회 규칙을 시험하려면 다른 메타클래스를 명시적으로 지정할 수 있습니다.) 또한 메서드 결정 순서의 변경으로 영향을 받을 메서드를 찾도록 클래스 계층 구조를 분석하는 도구도 제공합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:00:06.884033Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:24/seg:0",
+      "source": "XXX Another way to explain the motivation for the new MRO, due to Damian Conway: you never use the method defined in a base class if it is defined in a derived class that you haven't explored yet (using the old search order).",
+      "source_hash": 359618525046598330,
+      "context_hash": 10713761205131486671,
+      "translation": "XXX Damian Conway가 제시한 새로운 MRO의 동기를 설명하는 또 다른 방식은 다음과 같습니다. (이전 검색 순서를 사용할 때) 아직 탐색하지 않은 파생 클래스에 해당 메서드가 정의되어 있다면 베이스 클래스에 정의된 메서드를 절대로 사용하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884035Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "XXX To be done",
+      "source_hash": 3394235172250596988,
+      "context_hash": 15053913859072090772,
+      "translation": "XXX 수행할 작업",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884035Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Additional topics to be discussed in this PEP:",
+      "source_hash": 7040310427661446099,
+      "context_hash": 18088996998112322080,
+      "translation": "이 PEP에서 논의할 추가 주제:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884036Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "backwards compatibility issues!!!",
+      "source_hash": 5366687387437382765,
+      "context_hash": 13638661740639895873,
+      "translation": "하위 호환성 문제!!!",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884036Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "class methods and static methods",
+      "source_hash": 13593972458111232635,
+      "context_hash": 5560059172339537193,
+      "translation": "클래스 메서드와 정적 메서드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884036Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "cooperative methods and ``super()``",
+      "source_hash": 4064978225501295364,
+      "context_hash": 7646188687645774884,
+      "translation": "협력 메서드와 ``super()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884036Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "mapping between type object slots (tp_foo) and special methods (``__foo__``) (actually, this may belong in :pep:`252`)",
+      "source_hash": 17769381523508546212,
+      "context_hash": 7983771152220838314,
+      "translation": "타입 객체 슬롯(tp_foo)과 특수 메서드(``__foo__``) 간의 매핑(실제로는 :pep:`252`\\ 에 속할 수도 있습니다)",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:00:06.884036Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "built-in names for built-in types (object, int, str, list etc.)",
+      "source_hash": 13392563881971218485,
+      "context_hash": 5397346074190307969,
+      "translation": "내장 타입(object, int, str, list 등)의 내장 이름",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884037Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "``__dict__`` and ``__dictoffset__``",
+      "source_hash": 5424512965547526143,
+      "context_hash": 5938618075795197053,
+      "translation": "``__dict__`` 및 ``__dictoffset__``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884037Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "``__slots__``",
+      "source_hash": 10956327706950693239,
+      "context_hash": 588552230749578276,
+      "translation": "``__slots__``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884038Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "the ``HEAPTYPE`` flag bit",
+      "source_hash": 432316632520637325,
+      "context_hash": 6611121041453197167,
+      "translation": "``HEAPTYPE`` 플래그 비트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884039Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:10/seg:0",
+      "source": "GC support",
+      "source_hash": 17132702524922392581,
+      "context_hash": 976989842106721647,
+      "translation": "GC 지원",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884039Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:0",
+      "source": "API docs for all the new functions",
+      "source_hash": 8264363281552255615,
+      "context_hash": 1240979307279048516,
+      "translation": "새로운 모든 함수에 대한 API 문서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884039Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:12/seg:0",
+      "source": "how to use ``__new__``",
+      "source_hash": 8581570484541171762,
+      "context_hash": 658254050909960416,
+      "translation": "``__new__`` 사용 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884039Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:13/seg:0",
+      "source": "writing metaclasses (using ``mro()`` etc.)",
+      "source_hash": 11878965535823451031,
+      "context_hash": 14659459556660135488,
+      "translation": "메타클래스 작성(``mro()`` 등 사용)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884039Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:14/seg:0",
+      "source": "high level user overview",
+      "source_hash": 5104208187782641627,
+      "context_hash": 2818397701189178404,
+      "translation": "고수준 사용자 개요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884039Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "open issues",
+      "source_hash": 17083210044659979836,
+      "context_hash": 16213187709375071040,
+      "translation": "미해결 문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884041Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "do we need ``__del__``?",
+      "source_hash": 5118743419046179100,
+      "context_hash": 4388075148609942094,
+      "translation": "``__del__``\\ 이 필요합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884041Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "assignment to ``__dict__``, ``__bases__``",
+      "source_hash": 11936152795998211273,
+      "context_hash": 16822232526227297580,
+      "translation": "``__dict__`` 및 ``__bases__``\\ 에 대한 할당",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884041Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "inconsistent naming (e.g. tp_dealloc/tp_new/tp_init/tp_alloc/tp_free)",
+      "source_hash": 3251973447399372837,
+      "context_hash": 3948166478920814050,
+      "translation": "일관되지 않은 이름 지정 (예: tp_dealloc/tp_new/tp_init/tp_alloc/tp_free)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884041Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "add builtin alias 'dict' for 'dictionary'?",
+      "source_hash": 12487832445783995245,
+      "context_hash": 13767886731634091113,
+      "translation": "내장 별칭 'dict'를 '딕셔너리'에 추가합니까?",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:00:06.884042Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "when subclasses of dict/list etc. are passed to system functions, the ``__getitem__`` overrides (etc.) aren't always used",
+      "source_hash": 13885995928009623713,
+      "context_hash": 7156033567787103789,
+      "translation": "dict/list 등의 서브클래스를 시스템 함수에 전달할 때 ``__getitem__`` 재정의 등이 항상 사용되는 것은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884042Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 8501684978301429103,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884042Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "A prototype implementation of this PEP (and for :pep:`252`) is available from CVS, and in the series of Python 2.2 alpha and beta releases.",
+      "source_hash": 2928273258002929294,
+      "context_hash": 2428674428688842769,
+      "translation": "이 PEP(및 :pep:`252`)의 프로토타입 구현은 CVS와 Python 2.2 알파 및 베타 릴리스 시리즈에서 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884043Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "For some examples of the features described here, see the file Lib/test/test_descr.py and the extension module Modules/xxsubtype.c.",
+      "source_hash": 13245262584346138073,
+      "context_hash": 5989496884199048200,
+      "translation": "여기에 설명된 기능의 몇 가지 예제는 Lib/test/test_descr.py 파일과 확장 모듈 Modules/xxsubtype.c를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884043Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 17345930507705635529,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:00:06.884043Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "\"Putting Metaclasses to Work\", by Ira R.",
+      "source_hash": 17846971442414702414,
+      "context_hash": 2009243843053051589,
+      "translation": "Ira R.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:10:41.270409Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "Forman and Scott",
+      "source_hash": 10021824253687476129,
+      "context_hash": 15207160944170771415,
+      "translation": "Forman과 Scott",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:10:41.270412Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "H.",
+      "source_hash": 15033444087498683763,
+      "context_hash": 3813875861910880776,
+      "translation": "H.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:10:41.270412Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:1",
+      "source": "Danforth, Addison-Wesley 1999. (http://www.aw.com/product/0,2627,0201433052,00.html)",
+      "source_hash": 10898086898536548086,
+      "context_hash": 16935869059486490626,
+      "translation": "Danforth 지음, \"Putting Metaclasses to Work\", Addison-Wesley 1999. (http://www.aw.com/product/0,2627,0201433052,00.html)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:10:41.270412Z",
+      "issues": []
+    }
+  ]
+}

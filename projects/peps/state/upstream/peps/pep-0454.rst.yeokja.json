@@ -1,0 +1,2276 @@
+{
+  "version": 1,
+  "source_hash": 10250376399424487740,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Add a new tracemalloc module to trace Python memory allocations",
+      "source_hash": 1477204316680364426,
+      "context_hash": 16530898886277989957,
+      "translation": "Python 메모리 할당을 추적하는 새로운 tracemalloc 모듈을 추가합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021165Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 4068064357385581745,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021168Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes to add a new ``tracemalloc`` module to trace memory blocks allocated by Python.",
+      "source_hash": 7247689931651192765,
+      "context_hash": 10356062162691928027,
+      "translation": "이 PEP에서는 Python이 할당한 메모리 블록을 추적하는 새로운 ``tracemalloc`` 모듈의 추가를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021168Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 4024322223945751696,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021168Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Classic generic tools like Valgrind can get the C traceback where a memory block was allocated.",
+      "source_hash": 6192410539742736444,
+      "context_hash": 6809491401177338214,
+      "translation": "Valgrind와 같은 고전적인 범용 도구는 메모리 블록이 할당된 C 트레이스백을 가져올 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021169Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Using such tools to analyze Python memory allocations does not help because most memory blocks are allocated in the same C function, in ``PyMem_Malloc()`` for example.",
+      "source_hash": 4289760507688295141,
+      "context_hash": 18135376358324039979,
+      "translation": "이러한 도구를 사용하여 Python 메모리 할당을 분석해도 도움이 되지 않습니다. 대부분의 메모리 블록이 예를 들어 ``PyMem_Malloc()``\\ 에서와 같이 동일한 C 함수에서 할당되기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021169Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "Moreover, Python has an allocator for small objects called \"pymalloc\" which keeps free blocks for efficiency.",
+      "source_hash": 16546560003724814092,
+      "context_hash": 11790530837266734241,
+      "translation": "또한 Python에는 효율성을 위해 사용 가능한 블록을 유지하는 \"pymalloc\"이라는 작은 객체용 할당자가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021169Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:3",
+      "source": "This is not well handled by these tools.",
+      "source_hash": 4065703859005461332,
+      "context_hash": 8644093918611328750,
+      "translation": "이러한 도구는 이를 제대로 처리하지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021169Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "There are debug tools dedicated to the Python language like ``Heapy`` ``Pympler`` and ``Meliae`` which lists all alive objects using the garbage collector module (functions like ``gc.get_objects()``, ``gc.get_referrers()`` and ``gc.get_referents()``), compute their size (ex: using ``sys.getsizeof()``) and group objects by type.",
+      "source_hash": 12419145832108176247,
+      "context_hash": 12248987675968859202,
+      "translation": "Python 언어 전용 디버그 도구로는 ``Heapy``, ``Pympler`` 및 ``Meliae``\\ 가 있으며, 이 도구들은 가비지 수집기 모듈(``gc.get_objects()``, ``gc.get_referrers()`` 및 ``gc.get_referents()``\\ 와 같은 함수)을 사용하여 살아 있는 모든 객체를 나열하고, 객체의 크기(예: ``sys.getsizeof()``\\ 를 사용하여)를 계산하며, 객체를 유형별로 그룹화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021169Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "These tools provide a better estimation of the memory usage of an application.",
+      "source_hash": 18315833661283312589,
+      "context_hash": 10168485455192185400,
+      "translation": "이러한 도구는 애플리케이션의 메모리 사용량을 더 잘 추정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021170Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "They are useful when most memory leaks are instances of the same type and this type is only instantiated in a few functions.",
+      "source_hash": 10317824487696974003,
+      "context_hash": 9378970267453313815,
+      "translation": "대부분의 메모리 누수가 동일한 유형의 인스턴스이고 이 유형이 소수의 함수에서만 인스턴스화될 때 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021170Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:3",
+      "source": "Problems arise when the object type is very common like ``str`` or ``tuple``, and it is hard to identify where these objects are instantiated.",
+      "source_hash": 11395613266607334913,
+      "context_hash": 8761144278187759899,
+      "translation": "``str`` 또는 ``tuple``\\ 처럼 객체 유형이 매우 일반적인 경우 문제가 발생하며, 이러한 객체가 어디에서 인스턴스화되었는지 식별하기 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021170Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Finding reference cycles is also a difficult problem.",
+      "source_hash": 13348440941410206350,
+      "context_hash": 18211279824838524308,
+      "translation": "참조 순환을 찾는 것 또한 어려운 문제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021170Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "There are different tools to draw a diagram of all references.",
+      "source_hash": 11648438013432297460,
+      "context_hash": 17189091234115247188,
+      "translation": "모든 참조의 다이어그램을 그리는 다양한 도구가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021170Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:2",
+      "source": "These tools cannot be used on large applications with thousands of objects because the diagram is too huge to be analyzed manually.",
+      "source_hash": 14879109633142104198,
+      "context_hash": 6124264443902411477,
+      "translation": "수천 개의 객체가 있는 대규모 애플리케이션에서는 다이어그램이 너무 커서 수동으로 분석할 수 없기 때문에 이러한 도구를 사용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021171Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Proposal",
+      "source_hash": 17139217736364358932,
+      "context_hash": 17477373611145085307,
+      "translation": "제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021171Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Using the customized allocation API from :pep:`445`, it becomes easy to set up a hook on Python memory allocators.",
+      "source_hash": 7845914587121634081,
+      "context_hash": 10339125221858193579,
+      "translation": "사용자 지정 할당 API(:pep:`445`)를 사용하면 파이썬 메모리 할당자에 훅을 쉽게 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:51:57.454539Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "A hook can inspect Python internals to retrieve Python tracebacks.",
+      "source_hash": 3490504704030888118,
+      "context_hash": 3203475211483252702,
+      "translation": "후크는 Python 내부를 검사하여 Python 트레이스백을 가져올 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021171Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "The idea of getting the current traceback comes from the faulthandler module.",
+      "source_hash": 4613044528734270177,
+      "context_hash": 8067419315526722341,
+      "translation": "현재 트레이스백을 가져온다는 아이디어는 faulthandler 모듈에서 비롯되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021172Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:3",
+      "source": "The faulthandler dumps the traceback of all Python threads on a crash, here is the idea is to get the traceback of the current Python thread when a memory block is allocated by Python.",
+      "source_hash": 5629013324813119483,
+      "context_hash": 2582044278906533210,
+      "translation": "faulthandler는 충돌이 발생하면 모든 Python 스레드의 트레이스백을 덤프합니다. 여기서의 아이디어는 Python이 메모리 블록을 할당할 때 현재 Python 스레드의 트레이스백을 가져오는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021172Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "This PEP proposes to add a new ``tracemalloc`` module, a debug tool to trace memory blocks allocated by Python.",
+      "source_hash": 17359831910852543453,
+      "context_hash": 3885072474686867383,
+      "translation": "이 PEP에서는 Python이 할당한 메모리 블록을 추적하는 디버그 도구인 새로운 ``tracemalloc`` 모듈의 추가를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021172Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "The module provides the following information:",
+      "source_hash": 5682927776969984041,
+      "context_hash": 13517316373407123291,
+      "translation": "이 모듈은 다음 정보를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021172Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Traceback where an object was allocated",
+      "source_hash": 9024059760765625066,
+      "context_hash": 16745123635839686157,
+      "translation": "객체가 할당된 위치의 트레이스백",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021173Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "Statistics on allocated memory blocks per filename and per line number: total size, number and average size of allocated memory blocks",
+      "source_hash": 8647344346647762100,
+      "context_hash": 9364111182524356483,
+      "translation": "파일 이름 및 줄 번호별로 할당된 메모리 블록에 대한 통계: 할당된 메모리 블록의 총 크기, 개수 및 평균 크기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021173Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "Computed differences between two snapshots to detect memory leaks",
+      "source_hash": 10888802123587230122,
+      "context_hash": 11275830060467879395,
+      "translation": "메모리 누수를 감지하기 위해 두 스냅샷 간의 차이를 계산한 결과",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021173Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "The API of the tracemalloc module is similar to the API of the faulthandler module: ``enable()`` / ``start()``, ``disable()`` / ``stop()`` and ``is_enabled()`` / ``is_tracing()`` functions, an environment variable (``PYTHONFAULTHANDLER`` and ``PYTHONTRACEMALLOC``), and a ``-X`` command line option (``-X faulthandler`` and ``-X tracemalloc``).",
+      "source_hash": 7634693383767056378,
+      "context_hash": 12645674243992108734,
+      "translation": "tracemalloc 모듈의 API는 faulthandler 모듈의 API와 유사합니다. ``enable()`` / ``start()``, ``disable()`` / ``stop()`` 및 ``is_enabled()`` / ``is_tracing()`` 함수, 환경 변수(``PYTHONFAULTHANDLER`` 및 ``PYTHONTRACEMALLOC``), 그리고 ``-X`` 명령줄 옵션(``-X faulthandler`` 및 ``-X tracemalloc``)\\ 을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021173Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:1",
+      "source": "See the `documentation of the faulthandler module <http://docs.python.org/3/library/faulthandler.html>`_.",
+      "source_hash": 4835610435245557356,
+      "context_hash": 10781360875420583185,
+      "translation": "`faulthandler 모듈 문서 <http://docs.python.org/3/library/faulthandler.html>`_\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021173Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "The idea of tracing memory allocations is not new.",
+      "source_hash": 8689043842407377586,
+      "context_hash": 13301757628788215468,
+      "translation": "메모리 할당을 추적한다는 아이디어는 새로운 것이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021174Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:1",
+      "source": "It was first implemented in the PySizer project in 2005.",
+      "source_hash": 17305514930443385675,
+      "context_hash": 14366633068930405424,
+      "translation": "2005년에 PySizer 프로젝트에서 처음 구현되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021174Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:2",
+      "source": "PySizer was implemented differently: the traceback was stored in frame objects and some Python types were linked the trace with the name of object type.",
+      "source_hash": 3763126871589452612,
+      "context_hash": 12543542763961748219,
+      "translation": "PySizer는 다르게 구현되었습니다. 트레이스백은 프레임 객체에 저장되었고 일부 Python 유형은 트레이스를 객체 유형의 이름과 연결했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021174Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:3",
+      "source": "PySizer patch on CPython adds an overhead on performances and memory footprint, even if the PySizer was not used. tracemalloc attaches a traceback to the underlying layer, to memory blocks, and has no overhead when the module is not tracing memory allocations.",
+      "source_hash": 4976463758665319253,
+      "context_hash": 6175450185638108203,
+      "translation": "CPython용 PySizer 패치는 PySizer를 사용하지 않았더라도 성능과 메모리 사용 공간에 오버헤드를 추가합니다. tracemalloc은 하위 계층인 메모리 블록에 트레이스백을 연결하며, 모듈이 메모리 할당을 추적하지 않을 때는 오버헤드가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:29.021174Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "The tracemalloc module has been written for CPython.",
+      "source_hash": 8489680718911193572,
+      "context_hash": 12502592043826160158,
+      "translation": "tracemalloc 모듈은 CPython용으로 작성되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780462Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:1",
+      "source": "Other implementations of Python may not be able to provide it.",
+      "source_hash": 587841438583115518,
+      "context_hash": 14874461213995151470,
+      "translation": "다른 Python 구현에서는 이를 제공하지 못할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780465Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "API",
+      "source_hash": 17306549135961116108,
+      "context_hash": 3673722770475146130,
+      "translation": "API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780466Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "To trace most memory blocks allocated by Python, the module should be started as early as possible by setting the ``PYTHONTRACEMALLOC`` environment variable to ``1``, or by using ``-X tracemalloc`` command line option.",
+      "source_hash": 5404765886791791526,
+      "context_hash": 5376352283489856918,
+      "translation": "Python이 할당하는 대부분의 메모리 블록을 추적하려면 ``PYTHONTRACEMALLOC`` 환경 변수를 ``1``\\ 로 설정하거나 ``-X tracemalloc``\\ 명령줄 옵션을 사용하여 모듈을 가능한 한 일찍 시작해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780466Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "The ``tracemalloc.start()`` function can be called at runtime to start tracing Python memory allocations.",
+      "source_hash": 3563030895602420256,
+      "context_hash": 8459289624575136613,
+      "translation": "``tracemalloc.start()`` 함수는 런타임에 호출하여 Python 메모리 할당 추적을 시작할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780466Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "By default, a trace of an allocated memory block only stores the most recent frame (1 frame).",
+      "source_hash": 511949005783140413,
+      "context_hash": 2143076058968793869,
+      "translation": "기본적으로 할당된 메모리 블록의 추적 정보에는 가장 최근 프레임 하나(1개 프레임)만 저장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780467Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "To store 25 frames at startup: set the ``PYTHONTRACEMALLOC`` environment variable to ``25``, or use the ``-X tracemalloc=25`` command line option.",
+      "source_hash": 16871487931863519420,
+      "context_hash": 17644169278986753239,
+      "translation": "시작 시 프레임 25개를 저장하려면 ``PYTHONTRACEMALLOC`` 환경 변수를 ``25``\\ 로 설정하거나 ``-X tracemalloc=25``\\ 명령줄 옵션을 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780467Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "The ``set_traceback_limit()`` function can be used at runtime to set the limit.",
+      "source_hash": 11522467681173746801,
+      "context_hash": 8916976659888802420,
+      "translation": "``set_traceback_limit()`` 함수는 런타임에 제한을 설정하는 데 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780467Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Functions",
+      "source_hash": 8409902782067925136,
+      "context_hash": 3165639575331690099,
+      "translation": "함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780468Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "``clear_traces()`` function:",
+      "source_hash": 6937960271179345649,
+      "context_hash": 4398567651850254302,
+      "translation": "``clear_traces()`` 함수:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780468Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Clear traces of memory blocks allocated by Python.",
+      "source_hash": 3297684692260946852,
+      "context_hash": 13884974790604693452,
+      "translation": "Python이 할당한 메모리 블록의 추적을 지웁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780468Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "See also ``stop()``.",
+      "source_hash": 3474612168430132245,
+      "context_hash": 3684600745521277038,
+      "translation": "``stop()``\\ 도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780468Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "``get_object_traceback(obj)`` function:",
+      "source_hash": 13050847544305291956,
+      "context_hash": 12646929662443878255,
+      "translation": "``get_object_traceback(obj)`` 함수:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780469Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "Get the traceback where the Python object *obj* was allocated.",
+      "source_hash": 6085930032864656987,
+      "context_hash": 116159653005188140,
+      "translation": "Python 객체 *obj*\\ 가 할당된 위치의 트레이스백을 가져옵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780469Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:1",
+      "source": "Return a ``Traceback`` instance, or ``None`` if the ``tracemalloc`` module is not tracing memory allocations or did not trace the allocation of the object.",
+      "source_hash": 3308792125087513825,
+      "context_hash": 3808883499558214430,
+      "translation": "``Traceback`` 인스턴스를 반환하거나, ``tracemalloc`` 모듈이 메모리 할당을 추적하고 있지 않거나 해당 객체의 할당을 추적하지 않았다면 ``None``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780469Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "See also ``gc.get_referrers()`` and ``sys.getsizeof()`` functions.",
+      "source_hash": 18424332063099908889,
+      "context_hash": 2313986968144208105,
+      "translation": "``gc.get_referrers()`` 및 ``sys.getsizeof()`` 함수도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780469Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "``get_traceback_limit()`` function:",
+      "source_hash": 4007552154179710344,
+      "context_hash": 1002956547568881962,
+      "translation": "``get_traceback_limit()`` 함수:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780470Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "Get the maximum number of frames stored in the traceback of a trace.",
+      "source_hash": 15239857373190866656,
+      "context_hash": 42142073256748099,
+      "translation": "추적 정보의 트레이스백에 저장되는 최대 프레임 수를 가져옵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780470Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "The ``tracemalloc`` module must be tracing memory allocations to get the limit, otherwise an exception is raised.",
+      "source_hash": 3558979532905703008,
+      "context_hash": 13032048363319626487,
+      "translation": "제한을 가져오려면 ``tracemalloc`` 모듈이 메모리 할당을 추적하고 있어야 하며, 그렇지 않으면 예외가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780470Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "The limit is set by the ``start()`` function.",
+      "source_hash": 10910843616421852048,
+      "context_hash": 3138825338636469300,
+      "translation": "제한은 ``start()`` 함수로 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780471Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "``get_traced_memory()`` function:",
+      "source_hash": 18206624569994529893,
+      "context_hash": 17108093360288581655,
+      "translation": "``get_traced_memory()`` 함수:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780471Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "Get the current size and maximum size of memory blocks traced by the ``tracemalloc`` module as a tuple: ``(size: int, max_size: int)``.",
+      "source_hash": 9096422142064795524,
+      "context_hash": 17685662250711204766,
+      "translation": "``tracemalloc`` 모듈이 추적하는 메모리 블록의 현재 크기와 최대 크기를 튜플 ``(size: int, max_size: int)``\\ 로 가져옵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780471Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "``get_tracemalloc_memory()`` function:",
+      "source_hash": 9904389356285723669,
+      "context_hash": 8123244984997124797,
+      "translation": "``get_tracemalloc_memory()`` 함수:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780472Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "Get the memory usage in bytes of the ``tracemalloc`` module used to store traces of memory blocks.",
+      "source_hash": 7887637864629444339,
+      "context_hash": 1965307483206469287,
+      "translation": "메모리 블록의 추적 정보를 저장하는 데 사용되는 ``tracemalloc`` 모듈의 메모리 사용량을 바이트 단위로 가져옵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780472Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:1",
+      "source": "Return an ``int``.",
+      "source_hash": 17592320282094430410,
+      "context_hash": 8840606847733852710,
+      "translation": "``int``\\ 를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780472Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "``is_tracing()`` function:",
+      "source_hash": 10339257138281915767,
+      "context_hash": 16582481905999370805,
+      "translation": "``is_tracing()`` 함수:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780472Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:0",
+      "source": "``True`` if the ``tracemalloc`` module is tracing Python memory allocations, ``False`` otherwise.",
+      "source_hash": 8209690051309390283,
+      "context_hash": 2723447507072151971,
+      "translation": "``tracemalloc`` 모듈이 Python 메모리 할당을 추적하고 있으면 ``True``\\ 를, 그렇지 않으면 ``False``\\ 를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780472Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:0",
+      "source": "See also ``start()`` and ``stop()`` functions.",
+      "source_hash": 17927766944471430742,
+      "context_hash": 5506865018236317130,
+      "translation": "``start()`` 및 ``stop()`` 함수도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780473Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:18/seg:0",
+      "source": "``start(nframe: int=1)`` function:",
+      "source_hash": 4264718590502347217,
+      "context_hash": 8353034610667735870,
+      "translation": "``start(nframe: int=1)`` 함수:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780473Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:19/seg:0",
+      "source": "Start tracing Python memory allocations: install hooks on Python memory allocators.",
+      "source_hash": 9541987131107245723,
+      "context_hash": 4838502812924311717,
+      "translation": "Python 메모리 할당 추적을 시작합니다. Python 메모리 할당자에 후크를 설치합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780473Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:19/seg:1",
+      "source": "Collected tracebacks of traces will be limited to *nframe* frames.",
+      "source_hash": 14105321259119160475,
+      "context_hash": 4689437545460905094,
+      "translation": "수집되는 추적 정보의 트레이스백은 *nframe* 프레임으로 제한됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780474Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:19/seg:2",
+      "source": "By default, a trace of a memory block only stores the most recent frame: the limit is ``1``. *nframe* must be greater or equal to ``1``.",
+      "source_hash": 10972892382649698221,
+      "context_hash": 5700293462696169164,
+      "translation": "기본적으로 메모리 블록의 추적 정보에는 가장 최근 프레임만 저장되므로 제한은 ``1``\\ 입니다. *nframe*\\ 은 ``1`` 이상이어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:32.780474Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:20/seg:0",
+      "source": "Storing more than ``1`` frame is only useful to compute statistics grouped by ``'traceback'`` or to compute cumulative statistics: see the ``Snapshot.compare_to()`` and ``Snapshot.statistics()`` methods.",
+      "source_hash": 12213597007593002387,
+      "context_hash": 6976329932729509342,
+      "translation": "``1``\\ 개를 초과하는 프레임을 저장하는 것은 ``'traceback'``\\ 별로 그룹화된 통계를 계산하거나 누적 통계를 계산할 때만 유용합니다. ``Snapshot.compare_to()`` 및 ``Snapshot.statistics()`` 메서드를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527143Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:21/seg:0",
+      "source": "Storing more frames increases the memory and CPU overhead of the ``tracemalloc`` module.",
+      "source_hash": 8906048994387128159,
+      "context_hash": 4117983398480702889,
+      "translation": "더 많은 프레임을 저장하면 ``tracemalloc`` 모듈의 메모리 및 CPU 오버헤드가 증가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527146Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:21/seg:1",
+      "source": "Use the ``get_tracemalloc_memory()`` function to measure how much memory is used by the ``tracemalloc`` module.",
+      "source_hash": 9750175901289050845,
+      "context_hash": 12865561155783931296,
+      "translation": "``get_tracemalloc_memory()`` 함수를 사용하여 ``tracemalloc`` 모듈이 사용하는 메모리 양을 측정하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527146Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:22/seg:0",
+      "source": "The ``PYTHONTRACEMALLOC`` environment variable (``PYTHONTRACEMALLOC=NFRAME``) and the ``-X`` ``tracemalloc=NFRAME`` command line option can be used to start tracing at startup.",
+      "source_hash": 11526233076923430845,
+      "context_hash": 16665354675327772604,
+      "translation": "``PYTHONTRACEMALLOC`` 환경 변수(``PYTHONTRACEMALLOC=NFRAME``)와 ``-X`` ``tracemalloc=NFRAME`` 명령줄 옵션을 사용하여 시작 시 추적을 시작할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527146Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:23/seg:0",
+      "source": "See also ``stop()``, ``is_tracing()`` and ``get_traceback_limit()`` functions.",
+      "source_hash": 272550855712654275,
+      "context_hash": 14783494881456762582,
+      "translation": "``stop()``, ``is_tracing()`` 및 ``get_traceback_limit()`` 함수도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527147Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:24/seg:0",
+      "source": "``stop()`` function:",
+      "source_hash": 10718661886209925305,
+      "context_hash": 14481814849570925500,
+      "translation": "``stop()`` 함수:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527147Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:25/seg:0",
+      "source": "Stop tracing Python memory allocations: uninstall hooks on Python memory allocators.",
+      "source_hash": 17736632485933129844,
+      "context_hash": 13499107569701155253,
+      "translation": "Python 메모리 할당 추적을 중지하십시오. Python 메모리 할당자의 훅을 제거하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527147Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:25/seg:1",
+      "source": "Clear also traces of memory blocks allocated by Python",
+      "source_hash": 14336615546030382063,
+      "context_hash": 8237561397502618697,
+      "translation": "Python이 할당한 메모리 블록의 추적도 지우십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527147Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:26/seg:0",
+      "source": "Call ``take_snapshot()`` function to take a snapshot of traces before clearing them.",
+      "source_hash": 6770173860725063024,
+      "context_hash": 7208626436414223723,
+      "translation": "추적을 지우기 전에 스냅샷을 생성하려면 ``take_snapshot()`` 함수를 호출하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527148Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:27/seg:0",
+      "source": "See also ``start()`` and ``is_tracing()`` functions.",
+      "source_hash": 12649410911941663573,
+      "context_hash": 14945409660502891794,
+      "translation": "``start()`` 및 ``is_tracing()`` 함수도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527148Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:28/seg:0",
+      "source": "``take_snapshot()`` function:",
+      "source_hash": 16157166788126044066,
+      "context_hash": 461378413274924321,
+      "translation": "``take_snapshot()`` 함수:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527148Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:29/seg:0",
+      "source": "Take a snapshot of traces of memory blocks allocated by Python.",
+      "source_hash": 10999723953971437534,
+      "context_hash": 2741775302066925300,
+      "translation": "Python이 할당한 메모리 블록 추적의 스냅샷을 생성하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527148Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:29/seg:1",
+      "source": "Return a new ``Snapshot`` instance.",
+      "source_hash": 4532905627604155822,
+      "context_hash": 13912788390185445433,
+      "translation": "새 ``Snapshot`` 인스턴스를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527148Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:30/seg:0",
+      "source": "The snapshot does not include memory blocks allocated before the ``tracemalloc`` module started to trace memory allocations.",
+      "source_hash": 6789320358745833127,
+      "context_hash": 7509404290436878688,
+      "translation": "스냅샷에는 ``tracemalloc`` 모듈이 메모리 할당 추적을 시작하기 전에 할당된 메모리 블록이 포함되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527149Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:31/seg:0",
+      "source": "Tracebacks of traces are limited to ``get_traceback_limit()`` frames.",
+      "source_hash": 6521217243982309336,
+      "context_hash": 2724484253221154358,
+      "translation": "추적의 트레이스백은 ``get_traceback_limit()`` 프레임으로 제한됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527149Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:31/seg:1",
+      "source": "Use the *nframe* parameter of the ``start()`` function to store more frames.",
+      "source_hash": 6589611293546148122,
+      "context_hash": 17236553053907606466,
+      "translation": "더 많은 프레임을 저장하려면 ``start()`` 함수의 *nframe* 매개변수를 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527149Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:32/seg:0",
+      "source": "The ``tracemalloc`` module must be tracing memory allocations to take a snapshot, see the ``start()`` function.",
+      "source_hash": 8242846519294218824,
+      "context_hash": 12933603559640526956,
+      "translation": "스냅샷을 생성하려면 ``tracemalloc`` 모듈이 메모리 할당을 추적하고 있어야 합니다. ``start()`` 함수를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527150Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:33/seg:0",
+      "source": "See also the ``get_object_traceback()`` function.",
+      "source_hash": 11404323093837102152,
+      "context_hash": 7899189785642879086,
+      "translation": "``get_object_traceback()`` 함수도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527150Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Filter",
+      "source_hash": 1725791535074363263,
+      "context_hash": 14725646403930049989,
+      "translation": "필터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527150Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "``Filter(inclusive: bool, filename_pattern: str, lineno: int=None, all_frames: bool=False)`` class:",
+      "source_hash": 11208660288705974524,
+      "context_hash": 17203279605141983341,
+      "translation": "``Filter(inclusive: bool, filename_pattern: str, lineno: int=None, all_frames: bool=False)`` 클래스:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527151Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "Filter on traces of memory blocks.",
+      "source_hash": 9019950608576890891,
+      "context_hash": 438516367142258994,
+      "translation": "메모리 블록의 추적을 필터링합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527151Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "See the ``fnmatch.fnmatch()`` function for the syntax of *filename_pattern*.",
+      "source_hash": 17070897436540599264,
+      "context_hash": 4815504617278731930,
+      "translation": "*filename_pattern*\\ 의 구문은 ``fnmatch.fnmatch()`` 함수를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527151Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "The ``'.pyc'`` and ``'.pyo'`` file extensions are replaced with ``'.py'``.",
+      "source_hash": 8008541150584701874,
+      "context_hash": 3520370557042265927,
+      "translation": "``'.pyc'`` 및 ``'.pyo'`` 파일 확장자는 ``'.py'``\\ 로 대체됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527151Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "Examples:",
+      "source_hash": 5956079259256418663,
+      "context_hash": 805688676088344910,
+      "translation": "예:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527152Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "``Filter(True, subprocess.__file__)`` only includes traces of the ``subprocess`` module",
+      "source_hash": 7746501505934671981,
+      "context_hash": 814123321110276705,
+      "translation": "``Filter(True, subprocess.__file__)``\\ 는 ``subprocess`` 모듈의 추적만 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527152Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "``Filter(False, tracemalloc.__file__)`` excludes traces of the ``tracemalloc`` module",
+      "source_hash": 3365557548009770291,
+      "context_hash": 8024167401168399936,
+      "translation": "``Filter(False, tracemalloc.__file__)``\\ 는 ``tracemalloc`` 모듈의 추적을 제외합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527152Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "``Filter(False, \"<unknown>\")`` excludes empty tracebacks",
+      "source_hash": 878267834482721154,
+      "context_hash": 13910193499060768983,
+      "translation": "``Filter(False, \"<unknown>\")``\\ 는 빈 트레이스백을 제외합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527152Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "``inclusive`` attribute:",
+      "source_hash": 17712939687007334599,
+      "context_hash": 10800719753058086623,
+      "translation": "``inclusive`` 특성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527152Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "If *inclusive* is ``True`` (include), only trace memory blocks allocated in a file with a name matching ``filename_pattern`` at line number ``lineno``.",
+      "source_hash": 15632195113489376307,
+      "context_hash": 15943903797694576201,
+      "translation": "*inclusive*\\ 가 ``True``\\ (포함)이면 ``filename_pattern``\\ 과 일치하는 이름을 가진 파일의 ``lineno``\\ 번째 줄에서 할당된 메모리 블록의 추적만 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527153Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:0",
+      "source": "If *inclusive* is ``False`` (exclude), ignore memory blocks allocated in a file with a name matching ``filename_pattern`` at line number ``lineno``.",
+      "source_hash": 6739765397832533193,
+      "context_hash": 8417290137325470904,
+      "translation": "*inclusive*\\ 가 ``False``\\ (제외)이면 ``filename_pattern``\\ 과 일치하는 이름을 가진 파일의 ``lineno``\\ 번째 줄에서 할당된 메모리 블록을 무시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527153Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:11/seg:0",
+      "source": "``lineno`` attribute:",
+      "source_hash": 16400962556814444330,
+      "context_hash": 6312770524488996687,
+      "translation": "``lineno`` 특성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:33.527153Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:12/seg:0",
+      "source": "Line number (``int``) of the filter.",
+      "source_hash": 4138661617458341227,
+      "context_hash": 8165890675080756451,
+      "translation": "필터의 줄 번호 (``int``)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356479Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:12/seg:1",
+      "source": "If *lineno* is ``None``, the filter matches any line number.",
+      "source_hash": 5385781887421864249,
+      "context_hash": 14709449076516823871,
+      "translation": "*lineno*\\ 이 ``None``\\ 이면 필터는 모든 줄 번호와 일치합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356484Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:13/seg:0",
+      "source": "``filename_pattern`` attribute:",
+      "source_hash": 14816994704608575498,
+      "context_hash": 8641905052110523950,
+      "translation": "``filename_pattern`` 특성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356485Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:14/seg:0",
+      "source": "Filename pattern of the filter (``str``).",
+      "source_hash": 16232447202117075114,
+      "context_hash": 13304239288761598418,
+      "translation": "필터의 파일 이름 패턴 (``str``)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356485Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:15/seg:0",
+      "source": "``all_frames`` attribute:",
+      "source_hash": 2427778002258356151,
+      "context_hash": 4275636150184025849,
+      "translation": "``all_frames`` 특성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356486Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:16/seg:0",
+      "source": "If *all_frames* is ``True``, all frames of the traceback are checked.",
+      "source_hash": 11484573198669951119,
+      "context_hash": 14182806515189022546,
+      "translation": "*all_frames*\\ 이 ``True``\\ 이면 트레이스백의 모든 프레임을 검사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356486Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:16/seg:1",
+      "source": "If *all_frames* is ``False``, only the most recent frame is checked.",
+      "source_hash": 11123538908532201787,
+      "context_hash": 12790952843030343862,
+      "translation": "*all_frames*\\ 이 ``False``\\ 이면 가장 최근 프레임만 검사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356486Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:17/seg:0",
+      "source": "This attribute is ignored if the traceback limit is less than ``2``.",
+      "source_hash": 12598814581527004224,
+      "context_hash": 9155091019965247922,
+      "translation": "트레이스백 제한이 ``2``\\ 보다 작으면 이 특성은 무시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356486Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:17/seg:1",
+      "source": "See the ``get_traceback_limit()`` function and ``Snapshot.traceback_limit`` attribute.",
+      "source_hash": 6048613862748096873,
+      "context_hash": 4637814535246293582,
+      "translation": "``get_traceback_limit()`` 함수와 ``Snapshot.traceback_limit`` 특성을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356487Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Frame",
+      "source_hash": 17725281025618573670,
+      "context_hash": 434369370093133948,
+      "translation": "프레임",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356487Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "``Frame`` class:",
+      "source_hash": 2410544885097048038,
+      "context_hash": 17392048591855343530,
+      "translation": "``Frame`` 클래스:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356487Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "Frame of a traceback.",
+      "source_hash": 4376623240726622613,
+      "context_hash": 1531457076957752447,
+      "translation": "트레이스백의 프레임입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356488Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "The ``Traceback`` class is a sequence of ``Frame`` instances.",
+      "source_hash": 12955461340267419156,
+      "context_hash": 5781895490882754072,
+      "translation": "``Traceback`` 클래스는 ``Frame`` 인스턴스의 시퀀스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356488Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "``filename`` attribute:",
+      "source_hash": 8713908166935153053,
+      "context_hash": 1162616814610032914,
+      "translation": "``filename`` 특성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356488Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "Filename (``str``).",
+      "source_hash": 1225808125132923461,
+      "context_hash": 1801859700775022418,
+      "translation": "파일 이름 (``str``)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356488Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "``lineno`` attribute:",
+      "source_hash": 16400962556814444330,
+      "context_hash": 17542285913643798872,
+      "translation": "``lineno`` 특성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356488Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "Line number (``int``).",
+      "source_hash": 12857184596832950954,
+      "context_hash": 6484881411215987189,
+      "translation": "줄 번호 (``int``)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356489Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Snapshot",
+      "source_hash": 18030372608818533270,
+      "context_hash": 5563168091539265274,
+      "translation": "스냅샷",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356489Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "``Snapshot`` class:",
+      "source_hash": 3271813819229013179,
+      "context_hash": 16093142480065310405,
+      "translation": "``Snapshot`` 클래스:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356489Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Snapshot of traces of memory blocks allocated by Python.",
+      "source_hash": 6780116050556244605,
+      "context_hash": 11764028004216591192,
+      "translation": "Python이 할당한 메모리 블록의 트레이스 스냅샷입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356489Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "The ``take_snapshot()`` function creates a snapshot instance.",
+      "source_hash": 17627139070392913723,
+      "context_hash": 17814947459931191960,
+      "translation": "``take_snapshot()`` 함수는 스냅샷 인스턴스를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356489Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "``compare_to(old_snapshot: Snapshot, group_by: str, cumulative: bool=False)`` method:",
+      "source_hash": 7413637366735610341,
+      "context_hash": 6479033361465830959,
+      "translation": "``compare_to(old_snapshot: Snapshot, group_by: str, cumulative: bool=False)`` 메서드:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356490Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "Compute the differences with an old snapshot.",
+      "source_hash": 7789718896636078777,
+      "context_hash": 8991181008283984055,
+      "translation": "이전 스냅샷과의 차이를 계산합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356490Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:1",
+      "source": "Get statistics as a sorted list of ``StatisticDiff`` instances grouped by *group_by*.",
+      "source_hash": 5988905551842686227,
+      "context_hash": 5748177996664514969,
+      "translation": "*group_by*\\ 로 그룹화한 ``StatisticDiff`` 인스턴스의 통계를 정렬된 목록으로 가져옵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356490Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "See the ``statistics()`` method for *group_by* and *cumulative* parameters.",
+      "source_hash": 6096802616855581940,
+      "context_hash": 6982542737669462771,
+      "translation": "*group_by* 및 *cumulative* 매개변수에 대해서는 ``statistics()`` 메서드를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356491Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "The result is sorted from the biggest to the smallest by: absolute value of ``StatisticDiff.size_diff``, ``StatisticDiff.size``, absolute value of ``StatisticDiff.count_diff``, ``Statistic.count`` and then by ``StatisticDiff.traceback``.",
+      "source_hash": 16641898732216218942,
+      "context_hash": 4627429915299228714,
+      "translation": "결과는 ``StatisticDiff.size_diff``\\ 의 절댓값, ``StatisticDiff.size``, ``StatisticDiff.count_diff``\\ 의 절댓값, ``Statistic.count``, 그리고 마지막으로 ``StatisticDiff.traceback``\\ 을 기준으로 가장 큰 값부터 가장 작은 값 순으로 정렬됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356491Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:0",
+      "source": "``dump(filename)`` method:",
+      "source_hash": 478678656491143634,
+      "context_hash": 13812581456868429208,
+      "translation": "``dump(filename)`` 메서드:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356491Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:0",
+      "source": "Write the snapshot into a file.",
+      "source_hash": 715862975494536861,
+      "context_hash": 10072900849881967047,
+      "translation": "스냅샷을 파일에 기록합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356492Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:0",
+      "source": "Use ``load()`` to reload the snapshot.",
+      "source_hash": 2549336705785634216,
+      "context_hash": 16130380725093830343,
+      "translation": "스냅샷을 다시 로드하려면 ``load()``\\ 를 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356492Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:11/seg:0",
+      "source": "``filter_traces(filters)`` method:",
+      "source_hash": 14047089934462218160,
+      "context_hash": 6819368265496436631,
+      "translation": "``filter_traces(filters)`` 메서드:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356492Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:12/seg:0",
+      "source": "Create a new ``Snapshot`` instance with a filtered ``traces`` sequence, *filters* is a list of ``Filter`` instances.",
+      "source_hash": 2653620436124086379,
+      "context_hash": 15525022936787589166,
+      "translation": "필터링된 ``traces`` 시퀀스를 사용하는 새 ``Snapshot`` 인스턴스를 생성합니다. *filters*\\ 는 ``Filter`` 인스턴스의 목록입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356493Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:12/seg:1",
+      "source": "If *filters* is an empty list, return a new ``Snapshot`` instance with a copy of the traces.",
+      "source_hash": 12673587202503796400,
+      "context_hash": 8419856252796923774,
+      "translation": "*filters*\\ 가 빈 목록이면 트레이스의 복사본을 사용하는 새 ``Snapshot`` 인스턴스를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:42.356493Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:13/seg:0",
+      "source": "All inclusive filters are applied at once, a trace is ignored if no inclusive filters match it.",
+      "source_hash": 3561510630711233772,
+      "context_hash": 12354485054574541476,
+      "translation": "모든 포함 필터는 동시에 적용되며, 어떤 포함 필터와도 일치하지 않는 추적은 무시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106840Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:13/seg:1",
+      "source": "A trace is ignored if at least one exclusive filter matches it.",
+      "source_hash": 13436400925806574337,
+      "context_hash": 5937638999977488064,
+      "translation": "하나 이상의 제외 필터와 일치하는 추적은 무시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106846Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:14/seg:0",
+      "source": "``load(filename)`` classmethod:",
+      "source_hash": 18154283961297095780,
+      "context_hash": 11054760456111333757,
+      "translation": "``load(filename)`` 클래스 메서드:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106847Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:15/seg:0",
+      "source": "Load a snapshot from a file.",
+      "source_hash": 11668213545159265518,
+      "context_hash": 11655985485035593737,
+      "translation": "파일에서 스냅샷을 로드합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106847Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:16/seg:0",
+      "source": "See also ``dump()``.",
+      "source_hash": 17571201937392403802,
+      "context_hash": 10285645713575367723,
+      "translation": "``dump()``\\ 도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106848Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:17/seg:0",
+      "source": "``statistics(group_by: str, cumulative: bool=False)`` method:",
+      "source_hash": 12833550120456975905,
+      "context_hash": 11811192285396866289,
+      "translation": "``statistics(group_by: str, cumulative: bool=False)`` 메서드:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106849Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:18/seg:0",
+      "source": "Get statistics as a sorted list of ``Statistic`` instances grouped by *group_by*:",
+      "source_hash": 7634352727538235163,
+      "context_hash": 12562360714132939897,
+      "translation": "*group_by*\\ 를 기준으로 그룹화된 ``Statistic`` 인스턴스의 정렬된 목록으로 통계를 가져옵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106849Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:20/seg:0",
+      "source": "group_by",
+      "source_hash": 3850060746572761036,
+      "context_hash": 16851041678824624137,
+      "translation": "group_by",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106850Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:21/seg:0",
+      "source": "description",
+      "source_hash": 6101248067392796388,
+      "context_hash": 8505544175732357711,
+      "translation": "설명",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106851Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:22/seg:0",
+      "source": "``'filename'``",
+      "source_hash": 3978037887915443656,
+      "context_hash": 18016708239933382466,
+      "translation": "``'filename'``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106851Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:23/seg:0",
+      "source": "filename",
+      "source_hash": 13331637199470275031,
+      "context_hash": 12893770100714208522,
+      "translation": "파일 이름",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106851Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:24/seg:0",
+      "source": "``'lineno'``",
+      "source_hash": 4478173092982748879,
+      "context_hash": 9599734278907618742,
+      "translation": "``'lineno'``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106852Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:25/seg:0",
+      "source": "filename and line number",
+      "source_hash": 10490492750538254111,
+      "context_hash": 158686858635321350,
+      "translation": "파일 이름 및 줄 번호",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106852Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:26/seg:0",
+      "source": "``'traceback'``",
+      "source_hash": 6720962556380710165,
+      "context_hash": 5445678721298091643,
+      "translation": "``'traceback'``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106853Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:27/seg:0",
+      "source": "traceback",
+      "source_hash": 4135977762413785976,
+      "context_hash": 15098607633583539746,
+      "translation": "트레이스백",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106853Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:28/seg:0",
+      "source": "If *cumulative* is ``True``, cumulate size and count of memory blocks of all frames of the traceback of a trace, not only the most recent frame.",
+      "source_hash": 10107604779301553065,
+      "context_hash": 6640033672749179577,
+      "translation": "*cumulative*\\ 가 ``True``\\ 이면 추적에서 가장 최근 프레임뿐만 아니라 트레이스백의 모든 프레임에 대한 메모리 블록의 크기와 개수를 누적합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106853Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:28/seg:1",
+      "source": "The cumulative mode can only be used with *group_by* equals to ``'filename'`` and ``'lineno'`` and ``traceback_limit`` greater than ``1``.",
+      "source_hash": 11050320578662954965,
+      "context_hash": 6590214006522681624,
+      "translation": "누적 모드는 *group_by*\\ 가 ``'filename'`` 및 ``'lineno'``\\ 와 같고 ``traceback_limit``\\ 이 ``1``\\ 보다 큰 경우에만 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106854Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:29/seg:0",
+      "source": "The result is sorted from the biggest to the smallest by: ``Statistic.size``, ``Statistic.count`` and then by ``Statistic.traceback``.",
+      "source_hash": 1249389434692149641,
+      "context_hash": 12847001311783146507,
+      "translation": "결과는 ``Statistic.size``, ``Statistic.count``\\ 및 ``Statistic.traceback``\\ 순으로 큰 값에서 작은 값으로 정렬됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106854Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:30/seg:0",
+      "source": "``traceback_limit`` attribute:",
+      "source_hash": 14808189329419465748,
+      "context_hash": 2654615052341043997,
+      "translation": "``traceback_limit`` 속성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106854Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:31/seg:0",
+      "source": "Maximum number of frames stored in the traceback of ``traces``: result of the ``get_traceback_limit()`` when the snapshot was taken.",
+      "source_hash": 7057920684200048317,
+      "context_hash": 17766667888133534262,
+      "translation": "``traces``\\ 의 트레이스백에 저장되는 최대 프레임 수입니다. 스냅샷을 생성할 때의 ``get_traceback_limit()`` 호출 결과입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106855Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:32/seg:0",
+      "source": "``traces`` attribute:",
+      "source_hash": 7231755426709123666,
+      "context_hash": 4130007369030573585,
+      "translation": "``traces`` 속성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106855Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:33/seg:0",
+      "source": "Traces of all memory blocks allocated by Python: sequence of ``Trace`` instances.",
+      "source_hash": 1186196417336326186,
+      "context_hash": 929854027693567751,
+      "translation": "Python이 할당한 모든 메모리 블록의 추적입니다. ``Trace`` 인스턴스의 시퀀스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106855Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:34/seg:0",
+      "source": "The sequence has an undefined order.",
+      "source_hash": 5040551298719084000,
+      "context_hash": 4814148237841855208,
+      "translation": "시퀀스의 순서는 정의되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106856Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:34/seg:1",
+      "source": "Use the ``Snapshot.statistics()`` method to get a sorted list of statistics.",
+      "source_hash": 16568406583777200640,
+      "context_hash": 15238577772124805526,
+      "translation": "정렬된 통계 목록을 가져오려면 ``Snapshot.statistics()`` 메서드를 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106856Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Statistic",
+      "source_hash": 18426186424161703185,
+      "context_hash": 10730144582423358350,
+      "translation": "Statistic",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106857Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "``Statistic`` class:",
+      "source_hash": 4515431997923320471,
+      "context_hash": 3323714736854606568,
+      "translation": "``Statistic`` 클래스:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106857Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "Statistic on memory allocations.",
+      "source_hash": 7319563197886814849,
+      "context_hash": 8999540445990273699,
+      "translation": "메모리 할당에 대한 통계입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106857Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "``Snapshot.statistics()`` returns a list of ``Statistic`` instances.",
+      "source_hash": 2473662785001203941,
+      "context_hash": 15046454412749010376,
+      "translation": "``Snapshot.statistics()``\\ 는 ``Statistic`` 인스턴스의 목록을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106858Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "See also the ``StatisticDiff`` class.",
+      "source_hash": 9693353473463279083,
+      "context_hash": 6908822491552324811,
+      "translation": "``StatisticDiff`` 클래스도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106858Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "``count`` attribute:",
+      "source_hash": 6793602692956106227,
+      "context_hash": 16852149575805466367,
+      "translation": "``count`` 속성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106858Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "Number of memory blocks (``int``).",
+      "source_hash": 1473388412630385480,
+      "context_hash": 4816143420799086918,
+      "translation": "메모리 블록의 개수(``int``)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106859Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "``size`` attribute:",
+      "source_hash": 4371598996533712452,
+      "context_hash": 9129366368163355553,
+      "translation": "``size`` 속성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:31:11.106859Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:0",
+      "source": "Total size of memory blocks in bytes (``int``).",
+      "source_hash": 878134726630498189,
+      "context_hash": 2651761407848494571,
+      "translation": "메모리 블록의 총 크기(바이트 단위)(``int``)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973746Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:0",
+      "source": "``traceback`` attribute:",
+      "source_hash": 4958464456857879377,
+      "context_hash": 16131604792469166266,
+      "translation": "``traceback``\\ 속성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973749Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:10/seg:0",
+      "source": "Traceback where the memory block was allocated, ``Traceback`` instance.",
+      "source_hash": 12371308348870892851,
+      "context_hash": 1248669503367623323,
+      "translation": "메모리 블록이 할당된 트레이스백(``Traceback`` 인스턴스)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973749Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "StatisticDiff",
+      "source_hash": 15681867854817479895,
+      "context_hash": 2732159490461902473,
+      "translation": "StatisticDiff",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973750Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "``StatisticDiff`` class:",
+      "source_hash": 14155945282546489374,
+      "context_hash": 4796860728759875776,
+      "translation": "``StatisticDiff``\\ 클래스:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973750Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Statistic difference on memory allocations between an old and a new ``Snapshot`` instance.",
+      "source_hash": 6403173077446115189,
+      "context_hash": 8589124024330388825,
+      "translation": "이전 인스턴스와 새로운 ``Snapshot`` 인스턴스 간 메모리 할당 통계 차이입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:51:57.454552Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "``Snapshot.compare_to()`` returns a list of ``StatisticDiff`` instances.",
+      "source_hash": 8179652893786130360,
+      "context_hash": 4543612071475679745,
+      "translation": "``Snapshot.compare_to()``\\ 는 ``StatisticDiff``\\ 인스턴스의 목록을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973751Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:1",
+      "source": "See also the ``Statistic`` class.",
+      "source_hash": 17474920992640939905,
+      "context_hash": 5149037038006077346,
+      "translation": "``Statistic``\\ 클래스도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973751Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "``count`` attribute:",
+      "source_hash": 6793602692956106227,
+      "context_hash": 8218305139009091715,
+      "translation": "``count``\\ 속성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973752Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "Number of memory blocks in the new snapshot (``int``): ``0`` if the memory blocks have been released in the new snapshot.",
+      "source_hash": 16843998956806809452,
+      "context_hash": 12302909957881275895,
+      "translation": "새 스냅샷의 메모리 블록 수(``int``)입니다: 새 스냅샷에서 메모리 블록이 해제된 경우 ``0``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973752Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "``count_diff`` attribute:",
+      "source_hash": 7858762533444253729,
+      "context_hash": 5147999871068621664,
+      "translation": "``count_diff``\\ 속성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973752Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "Difference of number of memory blocks between the old and the new snapshots (``int``): ``0`` if the memory blocks have been allocated in the new snapshot.",
+      "source_hash": 7208838858051484093,
+      "context_hash": 4879723943856611791,
+      "translation": "이전 스냅샷과 새 스냅샷 간 메모리 블록 수의 차이(``int``)입니다: 새 스냅샷에서 메모리 블록이 할당된 경우 ``0``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973753Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "``size`` attribute:",
+      "source_hash": 4371598996533712452,
+      "context_hash": 828303863768422973,
+      "translation": "``size``\\ 속성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973753Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "Total size of memory blocks in bytes in the new snapshot (``int``): ``0`` if the memory blocks have been released in the new snapshot.",
+      "source_hash": 13107112206964534850,
+      "context_hash": 7913750978234572341,
+      "translation": "새 스냅샷의 메모리 블록 총 크기(바이트 단위)(``int``)입니다: 새 스냅샷에서 메모리 블록이 해제된 경우 ``0``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973753Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:10/seg:0",
+      "source": "``size_diff`` attribute:",
+      "source_hash": 1902981334899768843,
+      "context_hash": 17458770622240166821,
+      "translation": "``size_diff``\\ 속성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973754Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:0",
+      "source": "Difference of total size of memory blocks in bytes between the old and the new snapshots (``int``): ``0`` if the memory blocks have been allocated in the new snapshot.",
+      "source_hash": 374798739405726851,
+      "context_hash": 1263952640073509995,
+      "translation": "이전 스냅샷과 새 스냅샷 간 메모리 블록 총 크기(바이트 단위)의 차이(``int``)입니다: 새 스냅샷에서 메모리 블록이 할당된 경우 ``0``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973754Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:12/seg:0",
+      "source": "``traceback`` attribute:",
+      "source_hash": 4958464456857879377,
+      "context_hash": 6714429397871012775,
+      "translation": "``traceback``\\ 속성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973754Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:13/seg:0",
+      "source": "Traceback where the memory blocks were allocated, ``Traceback`` instance.",
+      "source_hash": 14147626395543294193,
+      "context_hash": 1222991833421501892,
+      "translation": "메모리 블록이 할당된 트레이스백(``Traceback`` 인스턴스)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973754Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Trace",
+      "source_hash": 16359107263436754058,
+      "context_hash": 7708560716430261704,
+      "translation": "Trace",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973755Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "``Trace`` class:",
+      "source_hash": 2938390673352698898,
+      "context_hash": 9524784178158836749,
+      "translation": "``Trace``\\ 클래스:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973755Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "Trace of a memory block.",
+      "source_hash": 8854165885117734451,
+      "context_hash": 18308349722834217103,
+      "translation": "메모리 블록의 트레이스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973755Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "The ``Snapshot.traces`` attribute is a sequence of ``Trace`` instances.",
+      "source_hash": 1708915746226641974,
+      "context_hash": 2010689151153203717,
+      "translation": "``Snapshot.traces``\\ 속성은 ``Trace``\\ 인스턴스의 시퀀스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973755Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "``size`` attribute:",
+      "source_hash": 4371598996533712452,
+      "context_hash": 10426046309759039694,
+      "translation": "``size``\\ 속성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973755Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "Size of the memory block in bytes (``int``).",
+      "source_hash": 13323269381812635352,
+      "context_hash": 2651761407848494571,
+      "translation": "메모리 블록의 크기(바이트 단위)(``int``)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973756Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "``traceback`` attribute:",
+      "source_hash": 4958464456857879377,
+      "context_hash": 4385840396151344905,
+      "translation": "``traceback``\\ 속성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973756Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "Traceback where the memory block was allocated, ``Traceback`` instance.",
+      "source_hash": 12371308348870892851,
+      "context_hash": 9332403244774769451,
+      "translation": "메모리 블록이 할당된 트레이스백(``Traceback`` 인스턴스)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973756Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Traceback",
+      "source_hash": 14019700362004498731,
+      "context_hash": 1570827722765693,
+      "translation": "Traceback",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973756Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "``Traceback`` class:",
+      "source_hash": 12178692151284374725,
+      "context_hash": 13272370839773292401,
+      "translation": "``Traceback``\\ 클래스:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973757Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "Sequence of ``Frame`` instances sorted from the most recent frame to the oldest frame.",
+      "source_hash": 3504379783972982620,
+      "context_hash": 15464922759530417627,
+      "translation": "가장 최근 프레임부터 가장 오래된 프레임 순으로 정렬된 ``Frame``\\ 인스턴스의 시퀀스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973757Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "A traceback contains at least ``1`` frame.",
+      "source_hash": 7493112418757049822,
+      "context_hash": 14291398458880427408,
+      "translation": "트레이스백에는 하나 이상의 ``1`` 프레임이 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973757Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:1",
+      "source": "If the ``tracemalloc`` module failed to get a frame, the filename ``\"<unknown>\"`` at line number ``0`` is used.",
+      "source_hash": 3252190688394155863,
+      "context_hash": 12875717564282627887,
+      "translation": "``tracemalloc`` 모듈이 프레임을 가져오지 못한 경우 줄 번호 ``0``\\ 의 파일 이름 ``\"<unknown>\"``\\ 이 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:33:39.973757Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "When a snapshot is taken, tracebacks of traces are limited to ``get_traceback_limit()`` frames.",
+      "source_hash": 12854115951690373849,
+      "context_hash": 14468944535319133632,
+      "translation": "스냅샷을 생성하면 트레이스의 트레이스백은 ``get_traceback_limit()``\\ 프레임으로 제한됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:12.382239Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:1",
+      "source": "See the ``take_snapshot()`` function.",
+      "source_hash": 12696632050972392244,
+      "context_hash": 3601282932052932546,
+      "translation": "``take_snapshot()``\\ 함수를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:12.382244Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "The ``Trace.traceback`` attribute is an instance of ``Traceback`` instance.",
+      "source_hash": 14847004207717221313,
+      "context_hash": 16099707601462205633,
+      "translation": "``Trace.traceback``\\ 속성은 ``Traceback``\\ 인스턴스의 인스턴스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:12.382244Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Rejected Alternatives",
+      "source_hash": 4665383330312454579,
+      "context_hash": 3775816183600525288,
+      "translation": "거부된 대안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630851Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Log calls to the memory allocator",
+      "source_hash": 3778557638544822390,
+      "context_hash": 10996447011886879999,
+      "translation": "메모리 할당자 호출 기록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630855Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "A different approach is to log calls to ``malloc()``, ``realloc()`` and ``free()`` functions.",
+      "source_hash": 2415979874136031519,
+      "context_hash": 6092497356800297288,
+      "translation": "다른 접근 방식은 ``malloc()``, ``realloc()`` 및 ``free()`` 함수 호출을 기록하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630855Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "Calls can be logged into a file or send to another computer through the network.",
+      "source_hash": 6329169523047077116,
+      "context_hash": 1838931320275592223,
+      "translation": "호출을 파일에 기록하거나 네트워크를 통해 다른 컴퓨터로 보낼 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630855Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:2",
+      "source": "Example of a log entry: name of the function, size of the memory block, address of the memory block, Python traceback where the allocation occurred, timestamp.",
+      "source_hash": 6573349735883663523,
+      "context_hash": 1711800237942403371,
+      "translation": "로그 항목의 예: 함수 이름, 메모리 블록의 크기, 메모리 블록의 주소, 할당이 발생한 Python 트레이스백, 타임스탬프입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630856Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "Logs cannot be used directly, getting the current status of the memory requires to parse previous logs.",
+      "source_hash": 6526181522877797727,
+      "context_hash": 2916699431712180039,
+      "translation": "로그는 직접 사용할 수 없으며, 메모리의 현재 상태를 확인하려면 이전 로그를 파싱해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630856Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:1",
+      "source": "For example, it is not possible to get directly the traceback of a Python object, like ``get_object_traceback(obj)`` does with traces.",
+      "source_hash": 4750446838864137349,
+      "context_hash": 11477433998865957592,
+      "translation": "예를 들어, 트레이스를 사용할 때 ``get_object_traceback(obj)``\\ 가 수행하는 것처럼 Python 객체의 트레이스백을 직접 가져올 수는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630857Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "Python uses objects with a very short lifetime and so makes an extensive use of memory allocators.",
+      "source_hash": 11766809342914744720,
+      "context_hash": 852844217859319248,
+      "translation": "Python은 수명이 매우 짧은 객체를 사용하므로 메모리 할당자를 광범위하게 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630857Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:1",
+      "source": "It has an allocator optimized for small objects (less than 512 bytes) with a short lifetime.",
+      "source_hash": 8094029818105294108,
+      "context_hash": 13722105491010584288,
+      "translation": "수명이 짧은 작은 객체(512바이트 미만)에 최적화된 할당자를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630857Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:2",
+      "source": "For example, the Python test suites calls ``malloc()``, ``realloc()`` or ``free()`` 270,000 times per second in average.",
+      "source_hash": 13061600929705133539,
+      "context_hash": 11697660540546176032,
+      "translation": "예를 들어, Python 테스트 모음은 초당 평균 270,000회 ``malloc()``, ``realloc()`` 또는 ``free()`` 를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630858Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:3",
+      "source": "If the size of log entry is 32 bytes, logging produces 8.2 MB per second or 29.0 GB per hour.",
+      "source_hash": 15902868406042886869,
+      "context_hash": 13204502619723049420,
+      "translation": "로그 항목의 크기가 32바이트라면 로깅으로 초당 8.2MB, 시간당 29.0GB가 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630858Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "The alternative was rejected because it is less efficient and has less features.",
+      "source_hash": 9771509335515777805,
+      "context_hash": 16932348306411047185,
+      "translation": "이 대안은 효율성이 낮고 기능도 적기 때문에 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630858Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:1",
+      "source": "Parsing logs in a different process or a different computer is slower than maintaining traces on allocated memory blocks in the same process.",
+      "source_hash": 5068110829968714656,
+      "context_hash": 17593460587574370821,
+      "translation": "다른 프로세스나 다른 컴퓨터에서 로그를 파싱하는 것은 동일한 프로세스에서 할당된 메모리 블록의 트레이스를 유지하는 것보다 느립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630859Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Prior Work",
+      "source_hash": 9107983570097281359,
+      "context_hash": 16564861238993089780,
+      "translation": "선행 작업",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630859Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "`Python Memory Validator <http://www.softwareverify.com/python/memory/index.html>`_ (2005-2013): commercial Python memory validator developed by Software Verification.",
+      "source_hash": 3580725832340894976,
+      "context_hash": 11586380350555990300,
+      "translation": "`Python Memory Validator <http://www.softwareverify.com/python/memory/index.html>`_ (2005-2013): Software Verification에서 개발한 상용 Python 메모리 검사기입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630859Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "It uses the Python Reflection API.",
+      "source_hash": 2892341480897111373,
+      "context_hash": 12178573934583529498,
+      "translation": "Python Reflection API를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630860Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "`PySizer <http://pysizer.8325.org/>`_: Google Summer of Code 2005 project by Nick Smallbone.",
+      "source_hash": 6073625127719085598,
+      "context_hash": 1504655090812822716,
+      "translation": "`PySizer <http://pysizer.8325.org/>`_: Nick Smallbone이 개발한 2005년 Google Summer of Code 프로젝트입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630860Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "`Heapy <http://guppy-pe.sourceforge.net/>`_ (2006-2013): part of the Guppy-PE project written by Sverker Nilsson.",
+      "source_hash": 567117322510304976,
+      "context_hash": 7052362022999004480,
+      "translation": "`Heapy <http://guppy-pe.sourceforge.net/>`_ (2006-2013): Sverker Nilsson이 작성한 Guppy-PE 프로젝트의 일부입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630860Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "Draft PEP: `Support Tracking Low-Level Memory Usage in CPython <http://svn.python.org/projects/python/branches/bcannon-sandboxing/PEP.txt>`_ (Brett Canon, 2006)",
+      "source_hash": 4669653810804363350,
+      "context_hash": 16212100934099202443,
+      "translation": "초안 PEP: `Support Tracking Low-Level Memory Usage in CPython <http://svn.python.org/projects/python/branches/bcannon-sandboxing/PEP.txt>`_ (Brett Canon, 2006)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630861Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:0",
+      "source": "Muppy: project developed in 2008 by Robert Schuppenies.",
+      "source_hash": 10868222148814450312,
+      "context_hash": 9795415546000379060,
+      "translation": "Muppy: Robert Schuppenies가 2008년에 개발한 프로젝트입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630861Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:6/seg:0",
+      "source": "`asizeof <http://code.activestate.com/recipes/546530/>`_: a pure Python module to estimate the size of objects by Jean Brouwers (2008).",
+      "source_hash": 17740077927669468876,
+      "context_hash": 7135561686557201665,
+      "translation": "`asizeof <http://code.activestate.com/recipes/546530/>`_: Jean Brouwers가 작성한 객체 크기 추정용 순수 Python 모듈입니다(2008년).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630861Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:7/seg:0",
+      "source": "`Heapmonitor <http://www.scons.org/wiki/LudwigHaehne/HeapMonitor>`_: It provides facilities to size individual objects and can track all objects of certain classes.",
+      "source_hash": 13945291582668853445,
+      "context_hash": 40992714711660194,
+      "translation": "`Heapmonitor <http://www.scons.org/wiki/LudwigHaehne/HeapMonitor>`_: 개별 객체의 크기를 측정하고 특정 클래스의 모든 객체를 추적할 수 있는 기능을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630862Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:7/seg:1",
+      "source": "It was developed in 2008 by Ludwig Haehne.",
+      "source_hash": 393073702471353895,
+      "context_hash": 2049392083761625703,
+      "translation": "Ludwig Haehne가 2008년에 개발했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630862Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:8/seg:0",
+      "source": "`Pympler <http://code.google.com/p/pympler/>`_ (2008-2011): project based on asizeof, muppy and HeapMonitor",
+      "source_hash": 4210324052777694081,
+      "context_hash": 17079816596898286838,
+      "translation": "`Pympler <http://code.google.com/p/pympler/>`_ (2008-2011): asizeof, muppy 및 HeapMonitor를 기반으로 한 프로젝트입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630862Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:9/seg:0",
+      "source": "`objgraph <http://mg.pov.lt/objgraph/>`_ (2008-2012)",
+      "source_hash": 11020451157690566634,
+      "context_hash": 16628671558480167427,
+      "translation": "`objgraph <http://mg.pov.lt/objgraph/>`_ (2008-2012)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630863Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:10/seg:0",
+      "source": "`Dozer <https://pypi.python.org/pypi/Dozer>`_: WSGI Middleware version of the CherryPy memory leak debugger, written by Marius Gedminas (2008-2013)",
+      "source_hash": 13253094735537161998,
+      "context_hash": 14697899690250508079,
+      "translation": "`Dozer <https://pypi.python.org/pypi/Dozer>`_: Marius Gedminas가 작성한 CherryPy 메모리 누수 디버거의 WSGI 미들웨어 버전입니다(2008-2013).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630863Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:11/seg:0",
+      "source": "`Meliae <https://pypi.python.org/pypi/meliae>`_: Python Memory Usage Analyzer developed by John A Meinel since 2009",
+      "source_hash": 5788204603025439196,
+      "context_hash": 15959053617962941027,
+      "translation": "`Meliae <https://pypi.python.org/pypi/meliae>`_: John A Meinel이 2009년부터 개발한 Python 메모리 사용량 분석기입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630863Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:12/seg:0",
+      "source": "`gdb-heap <https://fedorahosted.org/gdb-heap/>`_: gdb script written in Python by Dave Malcolm (2010-2011) to analyze the usage of the heap memory",
+      "source_hash": 2785027651204790485,
+      "context_hash": 10483879680469400653,
+      "translation": "`gdb-heap <https://fedorahosted.org/gdb-heap/>`_: 힙 메모리 사용량을 분석하기 위해 Dave Malcolm이 Python으로 작성한 gdb 스크립트입니다(2010-2011).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630864Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:13/seg:0",
+      "source": "`memory_profiler <https://pypi.python.org/pypi/memory_profiler>`_: written by Fabian Pedregosa (2011-2013)",
+      "source_hash": 4893359241952057307,
+      "context_hash": 12622878432290554836,
+      "translation": "`memory_profiler <https://pypi.python.org/pypi/memory_profiler>`_: Fabian Pedregosa가 작성했습니다(2011-2013).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:06:02.630864Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:14/seg:0",
+      "source": "`caulk <https://github.com/smartfile/caulk/>`_: written by Ben Timby in 2012",
+      "source_hash": 7400939445340147266,
+      "context_hash": 5518803829074101358,
+      "translation": "`caulk <https://github.com/smartfile/caulk/>`_: 2012년 Ben Timby가 작성했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:44.688369Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:15/seg:0",
+      "source": "See also `Pympler Related Work <http://pythonhosted.org/Pympler/related.html>`_.",
+      "source_hash": 2722882736359009901,
+      "context_hash": 16811337984719640157,
+      "translation": "`Pympler Related Work <http://pythonhosted.org/Pympler/related.html>`_\\ 도 참고하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:44.688374Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Links",
+      "source_hash": 5907915396745706827,
+      "context_hash": 958406339811469975,
+      "translation": "링크",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:44.688375Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "tracemalloc:",
+      "source_hash": 13184899502058457903,
+      "context_hash": 9893399731607412712,
+      "translation": "tracemalloc:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:44.688375Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "`#18874: Add a new tracemalloc module to trace Python memory allocations <http://bugs.python.org/issue18874>`_",
+      "source_hash": 12248314691223862785,
+      "context_hash": 14513138561936805461,
+      "translation": "`#18874: Add a new tracemalloc module to trace Python memory allocations <http://bugs.python.org/issue18874>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:44.688376Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "`pytracemalloc on PyPI <https://pypi.python.org/pypi/pytracemalloc>`_",
+      "source_hash": 17688582894738259175,
+      "context_hash": 8437442915715436980,
+      "translation": "`pytracemalloc on PyPI <https://pypi.python.org/pypi/pytracemalloc>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:44.688376Z",
+      "issues": []
+    }
+  ]
+}

@@ -1,0 +1,864 @@
+{
+  "version": 1,
+  "source_hash": 15133772126522993793,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Robust Stack Overflow Handling",
+      "source_hash": 17719847286720377446,
+      "context_hash": 5664304435715748606,
+      "translation": "강력한 스택 오버플로 처리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889324Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Rejection Notice",
+      "source_hash": 13288005455860318677,
+      "context_hash": 1569266933805235546,
+      "translation": "거부 통지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889326Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP has been `rejected by the Python Steering Council <https://mail.python.org/archives/list/python-dev@python.org/thread/75BFSBM5AJWXOF5OSPLMJQSTP3TDOKRP/>`_.",
+      "source_hash": 4547662859799316746,
+      "context_hash": 5118290104669931454,
+      "translation": "이 PEP는 `rejected by the Python Steering Council <https://mail.python.org/archives/list/python-dev@python.org/thread/75BFSBM5AJWXOF5OSPLMJQSTP3TDOKRP/>`_\\ 에 의해 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889327Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 14224332077306432437,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889327Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "This PEP proposes that Python should treat machine stack overflow differently from runaway recursion.",
+      "source_hash": 7347156769473646947,
+      "context_hash": 11442594051698787133,
+      "translation": "이 PEP는 Python이 머신 스택 오버플로를 무한 재귀와 다르게 처리해야 한다고 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889327Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "This would allow programs to set the maximum recursion depth to fit their needs and provide additional safety guarantees.",
+      "source_hash": 5635216556637730609,
+      "context_hash": 11498106722926965530,
+      "translation": "이를 통해 프로그램은 필요에 맞게 최대 재귀 깊이를 설정하고 추가적인 안전 보장을 제공할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889328Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "If this PEP is accepted, then the following program will run safely to completion",
+      "source_hash": 15458985707575440521,
+      "context_hash": 2093707144213262889,
+      "translation": "이 PEP가 승인되면 다음 프로그램은 안전하게 끝까지 실행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889328Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "and the following program will raise a ``StackOverflow``, without causing a VM crash",
+      "source_hash": 12902163162789652739,
+      "context_hash": 16363009371564173684,
+      "translation": "그리고 다음 프로그램은 VM 충돌을 일으키지 않고 ``StackOverflow``\\ 를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889328Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 13405292393177623425,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889328Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "CPython uses a single recursion depth counter to prevent both runaway recursion and C stack overflow.",
+      "source_hash": 11048423120899994191,
+      "context_hash": 15464950738083269004,
+      "translation": "CPython은 무한 재귀와 C 스택 오버플로를 모두 방지하기 위해 하나의 재귀 깊이 카운터를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889329Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "However, runaway recursion and machine stack overflow are two different things.",
+      "source_hash": 16699170275767416232,
+      "context_hash": 4868193916202208918,
+      "translation": "그러나 무한 재귀와 머신 스택 오버플로는 서로 다른 문제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889329Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "Allowing machine stack overflow is a potential security vulnerability, but limiting recursion depth can prevent the use of some algorithms in Python.",
+      "source_hash": 7711907105795618041,
+      "context_hash": 5318216039480061834,
+      "translation": "머신 스택 오버플로를 허용하는 것은 잠재적인 보안 취약점이지만, 재귀 깊이를 제한하면 Python에서 일부 알고리즘을 사용할 수 없게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889329Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Currently, if a program needs to deeply recurse it must manage the maximum recursion depth allowed, hopefully managing to set it in the region between the minimum needed to run correctly and the maximum that is safe to avoid a memory protection error.",
+      "source_hash": 7820685954840300020,
+      "context_hash": 14098342524993929154,
+      "translation": "현재 프로그램이 깊은 재귀 호출을 수행해야 하는 경우 허용되는 최대 재귀 깊이를 관리해야 하며, 올바르게 실행하는 데 필요한 최소값과 메모리 보호 오류를 방지하기에 안전한 최대값 사이의 범위로 설정할 수 있기를 기대해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889330Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "By separating the checks for C stack overflow from checks for recursion depth, pure Python programs can run safely, using whatever level of recursion they require.",
+      "source_hash": 8020090090708260625,
+      "context_hash": 17790729438366930051,
+      "translation": "C 스택 오버플로 검사와 재귀 깊이 검사를 분리하면 순수 Python 프로그램은 필요한 수준의 재귀를 사용하면서 안전하게 실행될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889330Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 6348092536425495443,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889330Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "CPython currently relies on a single limit to guard against potentially dangerous stack overflow in the virtual machine and to guard against run away recursion in the Python program.",
+      "source_hash": 16962630221409277711,
+      "context_hash": 16546804460345552560,
+      "translation": "CPython은 현재 가상 머신에서 잠재적으로 위험한 스택 오버플로를 방지하고 Python 프로그램에서 무한 재귀를 방지하기 위해 하나의 한도에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889330Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "This is a consequence of the implementation which couples the C and Python call stacks.",
+      "source_hash": 5527731639433492561,
+      "context_hash": 3552719506683804729,
+      "translation": "이는 C 호출 스택과 Python 호출 스택을 결합하는 구현의 결과입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889331Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "By breaking this coupling, we can improve both the usability of CPython and its safety.",
+      "source_hash": 14519406692012107060,
+      "context_hash": 6617346400661200205,
+      "translation": "이러한 결합을 해제하면 CPython의 사용 편의성과 안전성을 모두 향상할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889331Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "The recursion limit exists to protect against runaway recursion, the integrity of the virtual machine should not depend on it.",
+      "source_hash": 12975010582741324921,
+      "context_hash": 16255396379928467271,
+      "translation": "재귀 한도는 무한 재귀를 방지하기 위해 존재하며, 가상 머신의 무결성이 이 한도에 의존해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889331Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "Similarly, recursion should not be limited by implementation details.",
+      "source_hash": 10243710156645294944,
+      "context_hash": 404825210350105748,
+      "translation": "마찬가지로 재귀가 구현 세부 사항에 의해 제한되어서도 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889331Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 10417662617398931312,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889331Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Two new exception classes will be added, ``StackOverflow`` and ``RecursionOverflow``, both of which will be sub-classes of ``RecursionError``",
+      "source_hash": 9250684393074139884,
+      "context_hash": 3808356166030817457,
+      "translation": "``StackOverflow`` 및 ``RecursionOverflow``\\ 라는 두 개의 새 예외 클래스가 추가되며, 둘 다 ``RecursionError``\\ 의 서브클래스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889332Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "StackOverflow exception",
+      "source_hash": 13205382961702386842,
+      "context_hash": 6679814205247636623,
+      "translation": "StackOverflow 예외",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889332Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "A ``StackOverflow`` exception will be raised whenever the interpreter or builtin module code determines that the C stack is at or nearing a limit of safety. ``StackOverflow`` is a sub-class of ``RecursionError``, so any code that handles ``RecursionError`` will handle ``StackOverflow``",
+      "source_hash": 2937002472881112,
+      "context_hash": 9230437556609865947,
+      "translation": "인터프리터 또는 내장 모듈 코드가 C 스택이 안전 한도에 도달했거나 근접했다고 판단할 때마다 ``StackOverflow`` 예외가 발생합니다. ``StackOverflow``\\ 는 ``RecursionError``\\ 의 서브클래스이므로 ``RecursionError``\\ 를 처리하는 코드는 ``StackOverflow``\\ 도 처리합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:58:38.889332Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "RecursionOverflow exception",
+      "source_hash": 2943983924909144711,
+      "context_hash": 13925940137395526132,
+      "translation": "RecursionOverflow 예외",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889333Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "A ``RecursionOverflow`` exception will be raised when a call to a Python function causes the recursion limit to be exceeded.",
+      "source_hash": 5541513105190863516,
+      "context_hash": 12347451593870750978,
+      "translation": "Python 함수 호출로 인해 재귀 한도를 초과하면 ``RecursionOverflow`` 예외가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889334Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "This is a slight change from current behavior which raises a ``RecursionError``. ``RecursionOverflow`` is a sub-class of ``RecursionError``, so any code that handles ``RecursionError`` will continue to work as before.",
+      "source_hash": 11686225526429143688,
+      "context_hash": 8050106880848771465,
+      "translation": "이는 현재 ``RecursionError``\\ 를 발생시키는 동작에서 약간 변경된 것입니다. ``RecursionOverflow``\\ 는 ``RecursionError``\\ 의 서브클래스이므로 ``RecursionError``\\ 를 처리하는 코드는 이전과 동일하게 계속 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889334Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Decoupling the Python stack from the C stack",
+      "source_hash": 11265413583548485271,
+      "context_hash": 5303969413463824354,
+      "translation": "Python 스택과 C 스택의 결합 해제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889334Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "In order to provide the above guarantees and ensure that any program that worked previously continues to do so, the Python and C stack will need to be separated.",
+      "source_hash": 351370315923845889,
+      "context_hash": 2415057072800465291,
+      "translation": "위의 보장을 제공하고 이전에 작동하던 모든 프로그램이 계속 작동하도록 하려면 Python 스택과 C 스택을 분리해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889334Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "That is, calls to Python functions from Python functions, should not consume space on the C stack.",
+      "source_hash": 10059825510880380499,
+      "context_hash": 2480655303246612870,
+      "translation": "즉, Python 함수에서 Python 함수를 호출해도 C 스택의 공간을 소비하지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889335Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "Calls to and from builtin functions will continue to consume space on the C stack.",
+      "source_hash": 10245711656069842111,
+      "context_hash": 7613976202913192225,
+      "translation": "내장 함수 호출과 내장 함수에서의 호출은 계속해서 C 스택의 공간을 소비합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:38.889335Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "The size of the C stack will be implementation defined, and may vary from machine to machine.",
+      "source_hash": 16913844892589432348,
+      "context_hash": 6740545224683776486,
+      "translation": "C 스택의 크기는 구현에 따라 정의되며, 시스템마다 다를 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968316Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "It may even differ between threads.",
+      "source_hash": 4463245068346755207,
+      "context_hash": 5479076694261626329,
+      "translation": "스레드마다 다를 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968321Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:2",
+      "source": "However, there is an expectation that any code that could run with the recursion limit set to the previous default value, will continue to run.",
+      "source_hash": 7961938753283270129,
+      "context_hash": 2346352324300110139,
+      "translation": "그러나 재귀 한도를 이전 기본값으로 설정했을 때 실행될 수 있었던 코드는 계속 실행될 것이라는 기대가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968321Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "Many operations in Python perform some sort of call at the C level.",
+      "source_hash": 17188830333395461899,
+      "context_hash": 10901132429866586352,
+      "translation": "Python의 많은 연산은 C 수준에서 어떤 형태로든 호출을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968322Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "Most of these will continue to consume C stack, and will result in a ``StackOverflow`` exception if uncontrolled recursion occurs.",
+      "source_hash": 15600992807515476382,
+      "context_hash": 240428361809450423,
+      "translation": "이러한 연산 대부분은 계속 C 스택을 소비하며, 제어되지 않는 재귀가 발생하면 ``StackOverflow`` 예외가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968322Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Other Implementations",
+      "source_hash": 5283320896796583245,
+      "context_hash": 12434197962095707351,
+      "translation": "기타 구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968322Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Other implementations are required to fail safely regardless of what value the recursion limit is set to.",
+      "source_hash": 3487850438054963048,
+      "context_hash": 18119726878875051348,
+      "translation": "기타 구현은 재귀 한도가 어떤 값으로 설정되어 있더라도 안전하게 실패해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968323Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "If the implementation couples the Python stack to the underlying VM or hardware stack, then it should raise a ``RecursionOverflow`` exception when the recursion limit is exceeded, but the underlying stack does not overflow.",
+      "source_hash": 14786935720290958635,
+      "context_hash": 11181991347874689584,
+      "translation": "구현이 Python 스택을 기반 VM 스택 또는 하드웨어 스택에 결합하는 경우, 재귀 한도를 초과했지만 기반 스택이 오버플로되지 않았다면 ``RecursionOverflow`` 예외를 발생시켜야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968323Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "If the underlying stack overflows, or is near to overflow, then a ``StackOverflow`` exception should be raised.",
+      "source_hash": 4167757226338040171,
+      "context_hash": 14462498387460538814,
+      "translation": "기반 스택이 오버플로되거나 오버플로에 가까운 경우에는 ``StackOverflow`` 예외를 발생시켜야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968323Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "C-API",
+      "source_hash": 5664545844492850945,
+      "context_hash": 160613362487336535,
+      "translation": "C API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968324Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "A new function, ``Py_CheckStackDepth()`` will be added, and the behavior of ``Py_EnterRecursiveCall()`` will be modified slightly.",
+      "source_hash": 1282810791776004254,
+      "context_hash": 5277749223151485916,
+      "translation": "새 함수인 ``Py_CheckStackDepth()``\\ 가 추가되며, ``Py_EnterRecursiveCall()``\\ 의 동작이 약간 수정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968324Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Py_CheckStackDepth()",
+      "source_hash": 859256200880314233,
+      "context_hash": 10621039708977529483,
+      "translation": "Py_CheckStackDepth()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968324Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "``int Py_CheckStackDepth(const char *where)`` will return 0 if there is no immediate danger of C stack overflow.",
+      "source_hash": 16732915585112941167,
+      "context_hash": 3525462698940381032,
+      "translation": "``int Py_CheckStackDepth(const char *where)``\\ 는 C 스택 오버플로의 즉각적인 위험이 없으면 0을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968325Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:1",
+      "source": "It will return -1 and set an exception, if the C stack is near to overflowing.",
+      "source_hash": 2789129821768430559,
+      "context_hash": 4893095480547151473,
+      "translation": "C 스택이 오버플로되기 가까운 경우에는 -1을 반환하고 예외를 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968325Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:2",
+      "source": "The ``where`` parameter is used in the exception message, in the same fashion as the ``where`` parameter of ``Py_EnterRecursiveCall()``.",
+      "source_hash": 14069053697064870688,
+      "context_hash": 8475547255217057284,
+      "translation": "``where`` 매개변수는 ``Py_EnterRecursiveCall()``\\ 의 ``where`` 매개변수와 동일한 방식으로 예외 메시지에 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968325Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "Py_EnterRecursiveCall()",
+      "source_hash": 2139645603120196559,
+      "context_hash": 10386447086045555659,
+      "translation": "Py_EnterRecursiveCall()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968326Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "``Py_EnterRecursiveCall()`` will be modified to call ``Py_CheckStackDepth()`` before performing its current function.",
+      "source_hash": 15870980000338700604,
+      "context_hash": 3630548151558345069,
+      "translation": "``Py_EnterRecursiveCall()``\\ 은 현재 기능을 수행하기 전에 ``Py_CheckStackDepth()``\\ 를 호출하도록 수정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968326Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "PyLeaveRecursiveCall()",
+      "source_hash": 1554811853221669458,
+      "context_hash": 4427919633615411371,
+      "translation": "PyLeaveRecursiveCall()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968326Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "``Py_LeaveRecursiveCall()`` will remain unchanged.",
+      "source_hash": 11504350427013736491,
+      "context_hash": 3596176600498216782,
+      "translation": "``Py_LeaveRecursiveCall()``\\ 은 변경되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968326Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 10824236162018016487,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968327Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "This feature is fully backwards compatible at the Python level.",
+      "source_hash": 18057612548905759647,
+      "context_hash": 12861256874532339154,
+      "translation": "이 기능은 Python 수준에서 완전히 하위 호환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968327Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "Some low-level tools, such as machine-code debuggers, will need to be modified.",
+      "source_hash": 10775705842927969061,
+      "context_hash": 13087390191518064131,
+      "translation": "기계어 디버거와 같은 일부 저수준 도구는 수정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968327Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:2",
+      "source": "For example, the gdb scripts for Python will need to be aware that there may be more than one Python frame per C frame.",
+      "source_hash": 7782396029908258152,
+      "context_hash": 10482201972414621692,
+      "translation": "예를 들어 Python용 gdb 스크립트는 C 프레임 하나당 Python 프레임이 둘 이상 있을 수 있음을 인식해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968327Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "C code that uses the ``Py_EnterRecursiveCall()``, ``PyLeaveRecursiveCall()`` pair of functions will continue to work correctly.",
+      "source_hash": 7121231169959354400,
+      "context_hash": 12855456991370886088,
+      "translation": "``Py_EnterRecursiveCall()``, ``PyLeaveRecursiveCall()`` 함수 쌍을 사용하는 C 코드는 계속 올바르게 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968328Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "In addition, ``Py_EnterRecursiveCall()`` may raise a ``StackOverflow`` exception.",
+      "source_hash": 6550363798287227448,
+      "context_hash": 15489384698261138777,
+      "translation": "또한 ``Py_EnterRecursiveCall()``\\ 은 ``StackOverflow`` 예외를 발생시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968328Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "New code should use the ``Py_CheckStackDepth()`` function, unless the code wants to count as a Python function call with regard to the recursion limit.",
+      "source_hash": 5555356667504421834,
+      "context_hash": 3733722007348330711,
+      "translation": "새 코드는 재귀 한도와 관련하여 Python 함수 호출로 계산되기를 원하는 경우가 아니라면 ``Py_CheckStackDepth()`` 함수를 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968328Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "We recommend that \"python-like\" code, such as Cython-generated functions, use ``Py_EnterRecursiveCall()``, but other code use ``Py_CheckStackDepth()``.",
+      "source_hash": 14649880188487623116,
+      "context_hash": 17284516828161251091,
+      "translation": "Cython으로 생성된 함수와 같은 \"python-like\" 코드는 ``Py_EnterRecursiveCall()``\\ 을 사용하고, 그 외의 코드는 ``Py_CheckStackDepth()``\\ 를 사용할 것을 권장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968329Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 3722135580080558484,
+      "translation": "보안 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968329Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "It will no longer be possible to crash the CPython virtual machine through recursion.",
+      "source_hash": 8988060961686184075,
+      "context_hash": 9051669749203716816,
+      "translation": "이제 재귀를 통해 CPython 가상 머신을 충돌시킬 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968329Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Performance Impact",
+      "source_hash": 973191060228717559,
+      "context_hash": 9857709937243755919,
+      "translation": "성능 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968329Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "It is unlikely that the performance impact will be significant.",
+      "source_hash": 6079421076767252557,
+      "context_hash": 10651685328575164681,
+      "translation": "성능에 미치는 영향은 크지 않을 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:29.968329Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "The additional logic required will probably have a very small negative impact on performance.",
+      "source_hash": 1844439973641587481,
+      "context_hash": 9386409887502930611,
+      "translation": "필요한 추가 로직은 성능에 아주 작은 부정적인 영향을 미칠 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980447Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:1",
+      "source": "The improved locality of reference from reduced C stack use should have some small positive impact.",
+      "source_hash": 7661331406594977016,
+      "context_hash": 4042369328111632786,
+      "translation": "C 스택 사용량 감소로 참조 지역성이 향상되면 약간의 긍정적인 영향이 있을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980453Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "It is hard to predict whether the overall effect will be positive or negative, but it is quite likely that the net effect will be too small to be measured.",
+      "source_hash": 16067140566639237493,
+      "context_hash": 1885828098376850147,
+      "translation": "전체적인 효과가 긍정적일지 부정적일지 예측하기는 어렵지만, 순효과는 측정할 수 없을 정도로 작을 가능성이 매우 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980454Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 15909645647393461256,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980454Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Monitoring C stack consumption",
+      "source_hash": 16052635679699400706,
+      "context_hash": 2509729536418615753,
+      "translation": "C 스택 사용량 모니터링",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980455Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Gauging whether a C stack overflow is imminent is difficult.",
+      "source_hash": 4256591432592328056,
+      "context_hash": 10102728924610153055,
+      "translation": "C 스택 오버플로가 임박했는지 판단하기는 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980456Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "So we need to be conservative.",
+      "source_hash": 10000550051598531929,
+      "context_hash": 6234538426947623064,
+      "translation": "따라서 보수적으로 접근해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980456Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:2",
+      "source": "We need to determine a safe bounds for the stack, which is not something possible in portable C code.",
+      "source_hash": 8604008159288615121,
+      "context_hash": 4518888209818270341,
+      "translation": "스택에 대한 안전한 경계를 결정해야 하지만, 이는 이식 가능한 C 코드로는 가능한 일이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980457Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "For major platforms, the platform specific API will be used to provide an accurate stack bounds.",
+      "source_hash": 871866188679311590,
+      "context_hash": 6375279754513310064,
+      "translation": "주요 플랫폼에서는 플랫폼별 API를 사용하여 정확한 스택 경계를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980457Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:1",
+      "source": "However, for minor platforms some amount of guessing may be required.",
+      "source_hash": 17891656309443906713,
+      "context_hash": 15733801692703627134,
+      "translation": "그러나 일부 플랫폼에서는 어느 정도 추정이 필요할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980458Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:2",
+      "source": "While this might sound bad, it is no worse than the current situation, where we guess that the size of the C stack is at least 1000 times the stack space required for the chain of calls from ``_PyEval_EvalFrameDefault`` to ``_PyEval_EvalFrameDefault``.",
+      "source_hash": 6184570137971595794,
+      "context_hash": 7439680000635285867,
+      "translation": "이것이 좋지 않게 들릴 수 있지만, ``_PyEval_EvalFrameDefault``\\ 에서 ``_PyEval_EvalFrameDefault``\\ 까지의 호출 체인에 필요한 스택 공간의 최소 1000배가 C 스택의 크기라고 추정하는 현재 상황보다 나쁘지는 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980458Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "This means that in some cases the amount of recursion possible may be reduced.",
+      "source_hash": 5331800320368562311,
+      "context_hash": 8407998249423163880,
+      "translation": "이는 일부 경우에 가능한 재귀 횟수가 줄어들 수 있음을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980459Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:1",
+      "source": "In general, however, the amount of recursion possible should be increased, as many calls will use no C stack.",
+      "source_hash": 915248203697051623,
+      "context_hash": 11050232490596694303,
+      "translation": "그러나 일반적으로는 가능한 재귀 횟수가 증가해야 합니다. 많은 호출이 C 스택을 전혀 사용하지 않을 것이기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980459Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "Our general approach to determining a limit for the C stack is to get an address within the current C frame, as early as possible in the call chain.",
+      "source_hash": 7187226712061216380,
+      "context_hash": 13699414038589293121,
+      "translation": "C 스택의 한계를 결정하는 일반적인 접근 방식은 호출 체인에서 가능한 한 이른 시점에 현재 C 프레임 내의 주소를 얻는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980459Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:1",
+      "source": "The limit can then be guessed by adding some constant to that.",
+      "source_hash": 16052154097389371847,
+      "context_hash": 17542794943785903932,
+      "translation": "그런 다음 해당 주소에 어떤 상수를 더하여 한계를 추정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980459Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Making Python-to-Python calls without consuming the C stack",
+      "source_hash": 1722753738741283243,
+      "context_hash": 11139181707421464955,
+      "translation": "C 스택을 소비하지 않고 Python 간 호출하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980460Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "Calls in the interpreter are handled by the ``CALL_FUNCTION``, ``CALL_FUNCTION_KW``, ``CALL_FUNCTION_EX`` and ``CALL_METHOD`` instructions.",
+      "source_hash": 13523975182232799807,
+      "context_hash": 6186928886211998097,
+      "translation": "인터프리터의 호출은 ``CALL_FUNCTION``, ``CALL_FUNCTION_KW``, ``CALL_FUNCTION_EX`` 및 ``CALL_METHOD`` 명령으로 처리됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:19:51.980460Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "The code for those instructions will be modified so that when a Python function or method is called, instead of making a call in C, the interpreter will setup the callee's frame and continue interpretation as normal.",
+      "source_hash": 7216327469573292658,
+      "context_hash": 3780619780534818896,
+      "translation": "해당 명령어들의 코드는 Python 함수나 메서드가 호출될 때 C에서 호출을 수행하는 대신 인터프리터가 피호출자의 프레임을 설정하고 평소처럼 해석을 계속하도록 수정됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:53:13.197495Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "The ``RETURN_VALUE`` instruction will perform the reverse operation, except when the current frame is the entry frame of the interpreter when it will return as normal.",
+      "source_hash": 14009797042141012199,
+      "context_hash": 3262069805783164003,
+      "translation": "``RETURN_VALUE`` 명령은 역연산을 수행하지만, 현재 프레임이 인터프리터의 진입 프레임인 경우에는 정상적으로 반환합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:19:51.980464Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 17920363446372382410,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980464Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "None, as yet.",
+      "source_hash": 11817332221374404038,
+      "context_hash": 13880477305878365068,
+      "translation": "아직 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980465Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Open Issues",
+      "source_hash": 15188361361114285070,
+      "context_hash": 5425072641881736950,
+      "translation": "미해결 문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980465Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "None, as yet.",
+      "source_hash": 11817332221374404038,
+      "context_hash": 8970595477026518092,
+      "translation": "아직 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:51.980465Z",
+      "issues": []
+    }
+  ]
+}

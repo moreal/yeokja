@@ -1,0 +1,1128 @@
+{
+  "version": 1,
+  "source_hash": 5702432096332085877,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "C API to import-export Python integers",
+      "source_hash": 8234135154211620124,
+      "context_hash": 16530898886277989957,
+      "translation": "Python 정수를 가져오고 내보내기 위한 C API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883116Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 17484766481657677126,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883119Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Add a new C API to import and export Python integers, :class:`int` objects: especially :c:func:`PyLongWriter_Create()` and :c:func:`PyLong_Export()` functions.",
+      "source_hash": 12754283179643018179,
+      "context_hash": 10356062162691928027,
+      "translation": "Python 정수인 :class:`int` 객체를 가져오고 내보내기 위한 새로운 C API를 추가합니다. 특히 :c:func:`PyLongWriter_Create()` 및 :c:func:`PyLong_Export()` 함수를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883120Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 13898592345178467626,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883120Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Projects such as `gmpy2 <https://github.com/aleaxit/gmpy>`_, `SAGE <https://www.sagemath.org/>`_ and `Python-FLINT <https://github.com/flintlib/python-flint>`_ access directly Python \"internals\" (the :c:type:`PyLongObject` structure) or use an inefficient temporary format (hex strings for Python-FLINT) to import and export Python :class:`int` objects.",
+      "source_hash": 17899584652756957364,
+      "context_hash": 9323839463923665897,
+      "translation": "`gmpy2 <https://github.com/aleaxit/gmpy>`_, `SAGE <https://www.sagemath.org/>`_ 및 `Python-FLINT <https://github.com/flintlib/python-flint>`_\\ 와 같은 프로젝트는 Python :class:`int` 객체를 가져오고 내보내기 위해 Python \"내부\"( :c:type:`PyLongObject` 구조)에 직접 접근하거나 비효율적인 임시 형식(Python-FLINT의 경우 16진수 문자열)을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883120Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "The Python :class:`int` implementation changed in Python 3.12 to add a tag and \"compact values\".",
+      "source_hash": 1942459166547065305,
+      "context_hash": 17096164944462300529,
+      "translation": "Python :class:`int` 구현은 Python 3.12에서 태그와 \"컴팩트 값\"을 추가하도록 변경되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883120Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "In the 3.13 alpha 1 release, the private undocumented :c:func:`!_PyLong_New()` function had been removed, but it is being used by these projects to import Python integers.",
+      "source_hash": 14222635243614026386,
+      "context_hash": 16876721159765837546,
+      "translation": "3.13 alpha 1 릴리스에서는 비공개이며 문서화되지 않은 :c:func:`!_PyLong_New()` 함수가 제거되었지만, 이러한 프로젝트에서는 Python 정수를 가져오기 위해 이 함수를 사용하고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883121Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "The private function has been restored in 3.13 alpha 2.",
+      "source_hash": 477453449026818351,
+      "context_hash": 11976971268680215961,
+      "translation": "이 비공개 함수는 3.13 alpha 2에서 복원되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883121Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "A public efficient abstraction is needed to interface Python with these projects without exposing implementation details.",
+      "source_hash": 10653561081446988456,
+      "context_hash": 4373305499876326350,
+      "translation": "구현 세부 사항을 노출하지 않고 Python과 이러한 프로젝트를 연동하려면 공개적이고 효율적인 추상화가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883121Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "It would allow Python to change its internals without breaking these projects.",
+      "source_hash": 13039064994414426880,
+      "context_hash": 8969626073389919476,
+      "translation": "이를 통해 이러한 프로젝트를 중단하지 않고 Python의 내부 구현을 변경할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883121Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:2",
+      "source": "For example, implementation for gmpy2 was changed recently for CPython 3.9 and for CPython 3.12.",
+      "source_hash": 3029584505782692224,
+      "context_hash": 12810231799451888779,
+      "translation": "예를 들어 gmpy2의 구현은 최근 CPython 3.9 및 CPython 3.12에 맞게 변경되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883122Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 13632936489377855985,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883122Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Layout API",
+      "source_hash": 9695281828356682639,
+      "context_hash": 15922387159730032279,
+      "translation": "레이아웃 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883122Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Data needed by `GMP <https://gmplib.org/>`_-like `import <https://gmplib.org/manual/Integer-Import-and-Export#index-mpz_005fimport>`_-`export <https://gmplib.org/manual/Integer-Import-and-Export#index-mpz_005fexport>`_ functions.",
+      "source_hash": 14987073714254397462,
+      "context_hash": 500371250650209614,
+      "translation": "`GMP <https://gmplib.org/>`_\\ 와 같은 `import <https://gmplib.org/manual/Integer-Import-and-Export#index-mpz_005fimport>`_–`export <https://gmplib.org/manual/Integer-Import-and-Export#index-mpz_005fexport>`_ 함수에 필요한 데이터입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883122Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Export API",
+      "source_hash": 16042171204303656626,
+      "context_hash": 7927716032598726018,
+      "translation": "내보내기 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883123Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "If :c:member:`PyLongExport.digits` is not ``NULL``, a private field of the :c:struct:`PyLongExport` structure stores a strong reference to the Python :class:`int` object to make sure that that structure remains valid until :c:func:`PyLong_FreeExport()` is called.",
+      "source_hash": 14224410952319668458,
+      "context_hash": 4045473258018074856,
+      "translation": "해당 멤버 :c:member:`PyLongExport.digits`\\ 가 ``NULL``\\ 이 아닌 경우, :c:struct:`PyLongExport` 구조체의 비공개 필드가 Python :class:`int`\\ 객체에 대한 강한 참조를 저장하여 :c:func:`PyLong_FreeExport()`\\ 가 호출될 때까지 해당 구조체가 유효하게 유지되도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:58:19.126484Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "On CPython 3.14, no memory copy is needed in :c:func:`PyLong_Export`, it's just a thin wrapper to expose Python :class:`int` internal digits array.",
+      "source_hash": 3020830107143729245,
+      "context_hash": 12138156908657000362,
+      "translation": "CPython 3.14에서는 :c:func:`PyLong_Export`\\ 에서 메모리 복사가 필요하지 않으며, Python :class:`int`\\ 의 내부 digits 배열을 노출하는 얇은 래퍼일 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883123Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Import API",
+      "source_hash": 1769249796480572306,
+      "context_hash": 17899288131525154548,
+      "translation": "가져오기 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883123Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The :c:type:`PyLongWriter` API can be used to import an integer.",
+      "source_hash": 7344339641717550468,
+      "context_hash": 14886313695700567869,
+      "translation": "정수를 가져오는 데 :c:type:`PyLongWriter` API를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883123Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "On CPython 3.14, the :c:func:`PyLongWriter_Create` implementation is a thin wrapper to the private :c:func:`!_PyLong_New()` function.",
+      "source_hash": 3498773754382863727,
+      "context_hash": 14859012326248740693,
+      "translation": "CPython 3.14에서 :c:func:`PyLongWriter_Create` 구현은 비공개 :c:func:`!_PyLong_New()` 함수에 대한 얇은 래퍼입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883124Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Optimize import for small integers",
+      "source_hash": 16179468358353430419,
+      "context_hash": 7191262733374206390,
+      "translation": "작은 정수 가져오기 최적화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883124Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Proposed import API is efficient for large integers.",
+      "source_hash": 5623414998879264574,
+      "context_hash": 18064036468838226426,
+      "translation": "제안된 가져오기 API는 큰 정수에 효율적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883124Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "Compared to accessing directly Python internals, the proposed import API can have a significant performance overhead on small integers.",
+      "source_hash": 4436841902898523229,
+      "context_hash": 12792943014391916536,
+      "translation": "Python 내부에 직접 접근하는 것과 비교하면, 제안된 가져오기 API는 작은 정수에서 상당한 성능 오버헤드를 일으킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883124Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "For small integers of a few digits (for example, 1 or 2 digits), existing APIs can be used:",
+      "source_hash": 18028307575703496174,
+      "context_hash": 1135980095538078952,
+      "translation": "몇 자리뿐인 작은 정수(예: 1자리 또는 2자리)에는 기존 API를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883125Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": ":external+py3.14:c:func:`PyLong_FromUInt64()`;",
+      "source_hash": 1412292014691071615,
+      "context_hash": 4048052577775815765,
+      "translation": ":external+py3.14:c:func:`PyLong_FromUInt64()`;",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883125Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": ":c:func:`PyLong_FromLong()`;",
+      "source_hash": 523136056354818764,
+      "context_hash": 12008101785011487924,
+      "translation": ":c:func:`PyLong_FromLong()`;",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883125Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": ":c:func:`PyLong_FromNativeBytes()`.",
+      "source_hash": 14603656563613320363,
+      "context_hash": 17341637954344374983,
+      "translation": ":c:func:`PyLong_FromNativeBytes()`.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883125Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 2914089966252038844,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883125Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "CPython:",
+      "source_hash": 13786725200176640987,
+      "context_hash": 13194154540356767683,
+      "translation": "CPython:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883126Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "https://github.com/python/cpython/pull/121339",
+      "source_hash": 10246800459442469631,
+      "context_hash": 3341291734795030810,
+      "translation": "https://github.com/python/cpython/pull/121339",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883126Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "https://github.com/vstinner/cpython/pull/5",
+      "source_hash": 11113240783873754349,
+      "context_hash": 18014842256197662161,
+      "translation": "https://github.com/vstinner/cpython/pull/5",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883126Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "gmpy:",
+      "source_hash": 837959578188947445,
+      "context_hash": 17127430028998498301,
+      "translation": "gmpy:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:01.883126Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "https://github.com/aleaxit/gmpy/pull/495",
+      "source_hash": 575165053090668193,
+      "context_hash": 2928271586102522398,
+      "translation": "https://github.com/aleaxit/gmpy/pull/495",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604358Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Benchmarks",
+      "source_hash": 4806496260838560046,
+      "context_hash": 16195502674376631161,
+      "translation": "벤치마크",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604362Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Code",
+      "source_hash": 3030809606868828590,
+      "context_hash": 8079828150032028562,
+      "translation": "코드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604362Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Export: :c:func:`PyLong_Export()` with gmpy2",
+      "source_hash": 15870990656897984626,
+      "context_hash": 2268078038595169922,
+      "translation": "내보내기: :c:func:`PyLong_Export()`\\ 를 gmpy2와 함께 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604362Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Code",
+      "source_hash": 3030809606868828590,
+      "context_hash": 7617007627546370942,
+      "translation": "코드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604363Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "Reference code: `mpz_set_PyLong() in the gmpy2 master for commit 9177648 <https://github.com/aleaxit/gmpy/blob/9177648c23f5c507e46b81c1eb7d527c79c96f00/src/gmpy2_convert_gmp.c#L42-L69>`_.",
+      "source_hash": 6843136661354345558,
+      "context_hash": 2942679530862433600,
+      "translation": "참조 코드: `mpz_set_PyLong() in the gmpy2 master for commit 9177648 <https://github.com/aleaxit/gmpy/blob/9177648c23f5c507e46b81c1eb7d527c79c96f00/src/gmpy2_convert_gmp.c#L42-L69>`_\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604363Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "Benchmark:",
+      "source_hash": 17151177502681238442,
+      "context_hash": 497827156352945728,
+      "translation": "벤치마크:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604363Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "Results on Linux Fedora 40 with CPU isolation, Python built in release mode:",
+      "source_hash": 12260283319136185569,
+      "context_hash": 1856848481077639276,
+      "translation": "CPU 격리 환경에서 Python을 릴리스 모드로 빌드한 Linux Fedora 40에서의 결과:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604363Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "Benchmark",
+      "source_hash": 10378892356231695205,
+      "context_hash": 698733375993284671,
+      "translation": "벤치마크",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604364Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "ref",
+      "source_hash": 14243167463934992959,
+      "context_hash": 12201480015320867271,
+      "translation": "참조",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604364Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:10/seg:0",
+      "source": "pep757",
+      "source_hash": 4125862035976865105,
+      "context_hash": 10176781847883168826,
+      "translation": "pep757",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604364Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:0",
+      "source": "1<<7",
+      "source_hash": 1267397624254755277,
+      "context_hash": 3616129691575537107,
+      "translation": "1<<7",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604364Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:12/seg:0",
+      "source": "91.3 ns",
+      "source_hash": 4922334617499910413,
+      "context_hash": 17700218595276433159,
+      "translation": "91.3 ns",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604364Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:13/seg:0",
+      "source": "89.9 ns: 1.02x faster",
+      "source_hash": 9265046292079934370,
+      "context_hash": 1671410902748965844,
+      "translation": "89.9 ns: 1.02배 빠름",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604365Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:14/seg:0",
+      "source": "1<<38",
+      "source_hash": 1109145627168467475,
+      "context_hash": 9871479106720945955,
+      "translation": "1<<38",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604365Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:15/seg:0",
+      "source": "120 ns",
+      "source_hash": 6819911665117649950,
+      "context_hash": 3633720583293306457,
+      "translation": "120 ns",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604368Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:16/seg:0",
+      "source": "94.9 ns: 1.27x faster",
+      "source_hash": 7587572379835093371,
+      "context_hash": 6527438278889262293,
+      "translation": "94.9 ns: 1.27배 빠름",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604368Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:17/seg:0",
+      "source": "1<<300",
+      "source_hash": 14127219461762951464,
+      "context_hash": 12041061847071779613,
+      "translation": "1<<300",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604368Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:18/seg:0",
+      "source": "196 ns",
+      "source_hash": 6080441531853791689,
+      "context_hash": 16749310126784889204,
+      "translation": "196 ns",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604368Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:19/seg:0",
+      "source": "203 ns: 1.04x slower",
+      "source_hash": 17576477654722107923,
+      "context_hash": 1950862819796255125,
+      "translation": "203 ns: 1.04배 느림",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604369Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:20/seg:0",
+      "source": "1<<3000",
+      "source_hash": 7821223774796871609,
+      "context_hash": 8007590808019216836,
+      "translation": "1<<3000",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604369Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:21/seg:0",
+      "source": "939 ns",
+      "source_hash": 7231173999614886440,
+      "context_hash": 3162549655692416539,
+      "translation": "939 ns",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604369Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:22/seg:0",
+      "source": "945 ns: 1.01x slower",
+      "source_hash": 4426479466277568130,
+      "context_hash": 1445338507506642812,
+      "translation": "945 ns: 1.01배 느림",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604369Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:23/seg:0",
+      "source": "Geometric mean",
+      "source_hash": 11468453218780172757,
+      "context_hash": 15186195054673275071,
+      "translation": "기하 평균",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604369Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:24/seg:0",
+      "source": "(ref)",
+      "source_hash": 7128939585045967214,
+      "context_hash": 13534082023351236361,
+      "translation": "(참조)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604369Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:25/seg:0",
+      "source": "1.05x faster",
+      "source_hash": 7686329552977239388,
+      "context_hash": 4717042192631500915,
+      "translation": "1.05배 빠름",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604370Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Import: :c:func:`PyLongWriter_Create()` with gmpy2",
+      "source_hash": 2936181391506123458,
+      "context_hash": 14635437355944266643,
+      "translation": "가져오기: :c:func:`PyLongWriter_Create()`\\ 를 gmpy2와 함께 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604370Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "Code",
+      "source_hash": 3030809606868828590,
+      "context_hash": 1925248324423705889,
+      "translation": "코드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604370Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "Reference code: `GMPy_PyLong_From_MPZ() in the gmpy2 master for commit 9177648 <https://github.com/aleaxit/gmpy/blob/9177648c23f5c507e46b81c1eb7d527c79c96f00/src/gmpy2_convert_gmp.c#L128-L156>`_.",
+      "source_hash": 3579222708714508697,
+      "context_hash": 2942679530862433600,
+      "translation": "참조 코드: `GMPy_PyLong_From_MPZ() in the gmpy2 master for commit 9177648 <https://github.com/aleaxit/gmpy/blob/9177648c23f5c507e46b81c1eb7d527c79c96f00/src/gmpy2_convert_gmp.c#L128-L156>`_\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604370Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "Benchmark:",
+      "source_hash": 17151177502681238442,
+      "context_hash": 4139482148478885606,
+      "translation": "벤치마크:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604370Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "Results on Linux Fedora 40 with CPU isolation, Python built in release mode:",
+      "source_hash": 12260283319136185569,
+      "context_hash": 1856848481077639276,
+      "translation": "CPU 격리 환경에서 Python을 릴리스 모드로 빌드한 Linux Fedora 40에서의 결과:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604371Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:0",
+      "source": "Benchmark",
+      "source_hash": 10378892356231695205,
+      "context_hash": 698733375993284671,
+      "translation": "벤치마크",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:51:58.604371Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:9/seg:0",
+      "source": "ref",
+      "source_hash": 14243167463934992959,
+      "context_hash": 12201480015320867271,
+      "translation": "ref",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960140Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:10/seg:0",
+      "source": "pep757",
+      "source_hash": 4125862035976865105,
+      "context_hash": 10176781847883168826,
+      "translation": "pep757",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960142Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:11/seg:0",
+      "source": "1<<7",
+      "source_hash": 1267397624254755277,
+      "context_hash": 7854955994540607708,
+      "translation": "1<<7",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960142Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:12/seg:0",
+      "source": "56.7 ns",
+      "source_hash": 3423887997621378075,
+      "context_hash": 8051072389207978147,
+      "translation": "56.7 ns",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960143Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:13/seg:0",
+      "source": "56.2 ns: 1.01x faster",
+      "source_hash": 18148171906659044979,
+      "context_hash": 17162124345841836613,
+      "translation": "56.2 ns: 1.01배 빠릅니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960143Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:14/seg:0",
+      "source": "1<<300",
+      "source_hash": 14127219461762951464,
+      "context_hash": 4499475109489052945,
+      "translation": "1<<300",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960143Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:15/seg:0",
+      "source": "191 ns",
+      "source_hash": 13032914127877458957,
+      "context_hash": 10726497876472768185,
+      "translation": "191 ns",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960143Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:16/seg:0",
+      "source": "213 ns: 1.12x slower",
+      "source_hash": 7514153097396834181,
+      "context_hash": 6694777674094083570,
+      "translation": "213 ns: 1.12배 느립니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960144Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:17/seg:0",
+      "source": "Geometric mean",
+      "source_hash": 11468453218780172757,
+      "context_hash": 17364832795154494438,
+      "translation": "기하 평균",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960144Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:18/seg:0",
+      "source": "(ref)",
+      "source_hash": 7128939585045967214,
+      "context_hash": 1563149794344223951,
+      "translation": "(ref)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960144Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:19/seg:0",
+      "source": "1.03x slower",
+      "source_hash": 13599111082270980863,
+      "context_hash": 690362900463455161,
+      "translation": "1.03배 느립니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960144Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:20/seg:0",
+      "source": "Benchmark hidden because not significant (2): 1<<38, 1<<3000.",
+      "source_hash": 16645248379311930112,
+      "context_hash": 13429740953833676826,
+      "translation": "유의미하지 않아 벤치마크가 숨겨졌습니다(2): 1<<38, 1<<3000.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960144Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 1142041077753451205,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960145Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "There is no impact on the backward compatibility, only new APIs are added.",
+      "source_hash": 9770235532879289832,
+      "context_hash": 2685966588954910066,
+      "translation": "하위 호환성에는 영향이 없으며, 새로운 API만 추가됩니다.",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T18:52:12.960145Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 5905621063031036353,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960146Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Support arbitrary layout",
+      "source_hash": 14446006302880086457,
+      "context_hash": 7669474187036865534,
+      "translation": "임의 레이아웃 지원",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960146Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "It would be convenient to support arbitrary layout to import-export Python integers.",
+      "source_hash": 1973785912130298455,
+      "context_hash": 9330202718596060832,
+      "translation": "Python 정수를 가져오고 내보낼 때 임의의 레이아웃을 지원하면 편리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960146Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "For example, it was proposed to add a *layout* parameter to :c:func:`PyLongWriter_Create()` and a *layout* member to the :c:struct:`PyLongExport` structure.",
+      "source_hash": 15339198532111688913,
+      "context_hash": 5857586140660192584,
+      "translation": "예를 들어, :c:func:`PyLongWriter_Create()`\\ 에 *layout* 매개변수를 추가하고 :c:struct:`PyLongExport` 구조체에 *layout* 멤버를 추가하자는 제안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960147Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "The problem is that it's more complex to implement and not really needed.",
+      "source_hash": 16175117612773077929,
+      "context_hash": 6193099868408517147,
+      "translation": "문제는 구현이 더 복잡하고 실제로 필요하지 않다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960147Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:1",
+      "source": "What's strictly needed is only an API to import-export using the Python \"native\" layout.",
+      "source_hash": 10766868524901270516,
+      "context_hash": 5781297089379836176,
+      "translation": "엄밀히 필요한 것은 Python의 \"native\" 레이아웃을 사용하여 가져오고 내보내는 API뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960147Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "If later there are use cases for arbitrary layouts, new APIs can be added.",
+      "source_hash": 12351165323247362262,
+      "context_hash": 14936149236157867934,
+      "translation": "나중에 임의 레이아웃에 대한 사용 사례가 생기면 새로운 API를 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960147Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Don't add :c:func:`PyLong_GetNativeLayout` function",
+      "source_hash": 5129060368349870327,
+      "context_hash": 1901478168314039097,
+      "translation": "관련 :c:func:`PyLong_GetNativeLayout` 함수를 추가하지 마십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:09:19.848868Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Currently, most required information for :class:`int` import/export is already available via :c:func:`PyLong_GetInfo()` (and :data:`sys.int_info`).",
+      "source_hash": 11711806682418767271,
+      "context_hash": 7728227640466134365,
+      "translation": "현재 :class:`int` 가져오기/내보내기에 필요한 정보 대부분은 이미 :c:func:`PyLong_GetInfo()`\\ 를 통해(그리고 :data:`sys.int_info`\\ 를 통해) 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960148Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "We also can add more (like order of digits), this interface doesn't poses any constraints on future evolution of the :c:type:`PyLongObject`.",
+      "source_hash": 11607253122973490615,
+      "context_hash": 5449183713373185358,
+      "translation": "더 많은 정보(예: 숫자의 순서)도 추가할 수 있으며, 이 인터페이스는 :c:type:`PyLongObject`\\ 의 향후 발전에 어떠한 제약도 가하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960148Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "The problem is that the :c:func:`PyLong_GetInfo()` returns a Python object, :term:`named tuple`, not a convenient C structure and that might distract people from using it in favor e.g. of current semi-private macros like :c:macro:`!PyLong_SHIFT` and :c:macro:`!PyLong_BASE`.",
+      "source_hash": 10141930656962380996,
+      "context_hash": 2675208143067151299,
+      "translation": "문제는 :c:func:`PyLong_GetInfo()`\\ 가 편리한 C 구조체가 아닌 Python 객체인 :term:`named tuple`\\ 을 반환한다는 점이며, 이로 인해 사람들이 현재의 반(半)비공개 매크로인 :c:macro:`!PyLong_SHIFT` 및 :c:macro:`!PyLong_BASE` 대신 이를 사용하지 않게 될 수 있다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960149Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Provide mpz_import/export-like API instead",
+      "source_hash": 9001558193578677514,
+      "context_hash": 2601043880923170714,
+      "translation": "대신 mpz_import/export와 유사한 API 제공",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960149Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "The other approach to import/export data from :class:`int` objects might be following: expect, that C extensions provide contiguous buffers that CPython then exports (or imports) the *absolute* value of an integer.",
+      "source_hash": 12438833827934184431,
+      "context_hash": 14384256667926983493,
+      "translation": "관련 :class:`int` 객체에서 데이터를 가져오거나 내보내는 또 다른 접근 방식은 다음과 같을 수 있습니다: C 확장이 연속 버퍼를 제공하고, CPython이 그 버퍼로 정수의 *절댓값*\\ 을 내보내거나 가져온다고 가정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:09:19.848871Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "API example",
+      "source_hash": 12138374731283519966,
+      "context_hash": 1768348595097403818,
+      "translation": "API 예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960150Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:4/seg:0",
+      "source": "This might work for the GMP, as it has :c:func:`!mpz_limbs_read()` and :c:func:`!mpz_limbs_write()` functions, that can provide required access to internals of :c:struct:`!mpz_t`.",
+      "source_hash": 5119434204715332195,
+      "context_hash": 13729247871247200863,
+      "translation": "GMP에는 :c:func:`!mpz_limbs_read()` 및 :c:func:`!mpz_limbs_write()` 함수가 있어 :c:struct:`!mpz_t`\\ 의 내부에 필요한 접근을 제공할 수 있으므로 이 방식이 GMP에서 작동할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960150Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:4/seg:1",
+      "source": "Other libraries may require using temporary buffers and then mpz_import/export-like functions on their side.",
+      "source_hash": 11552606008287004167,
+      "context_hash": 3498817892288644032,
+      "translation": "다른 라이브러리에서는 임시 버퍼를 사용한 다음 해당 라이브러리 측에서 mpz_import/export와 유사한 함수를 사용해야 할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960150Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:0",
+      "source": "The major drawback of this approach is that it's much more complex on the CPython side (i.e. actual conversion between different layouts).",
+      "source_hash": 8840885379179603742,
+      "context_hash": 9678468869522591892,
+      "translation": "이 접근 방식의 주요 단점은 CPython 측에서 훨씬 더 복잡하다는 점입니다(즉, 서로 다른 레이아웃 간의 실제 변환이 필요합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960151Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:1",
+      "source": "For example, implementation of the :c:func:`PyLong_FromNativeBytes()` and the :c:func:`PyLong_AsNativeBytes()` (together provided restricted version of the required API) in the CPython took ~500 LOC (c.f. ~100 LOC in the current implementation).",
+      "source_hash": 1365810934022705145,
+      "context_hash": 7762948445473122307,
+      "translation": "예를 들어, CPython에서 :c:func:`PyLong_FromNativeBytes()` 및 :c:func:`PyLong_AsNativeBytes()`\\ 의 구현(둘을 함께 사용하면 필요한 API의 제한된 버전을 제공함)에는 약 500 LOC가 소요되었지만(현재 구현에서는 약 100 LOC), 비교하면 상당히 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:12.960151Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Drop :c:member:`~PyLongExport.value` field from the export API",
+      "source_hash": 5988472635325899903,
+      "context_hash": 6883385743561290628,
+      "translation": "내보내기 API에서 :c:member:`~PyLongExport.value` 필드를 제거합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257025Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "With this suggestion, only one export type will exist (array of \"digits\").",
+      "source_hash": 6920577938076491600,
+      "context_hash": 15912734171507099288,
+      "translation": "이 제안에 따르면 내보내기 유형은 하나만 존재합니다(\"digits\" 배열).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257029Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "If such view is not available for a given integer, it will be either emulated by export functions or the :c:func:`PyLong_Export` will return an error.",
+      "source_hash": 9508125650487943726,
+      "context_hash": 6901270175108261145,
+      "translation": "주어진 정수에 이러한 뷰를 사용할 수 없는 경우, 내보내기 함수로 에뮬레이션하거나 :c:func:`PyLong_Export`\\ 은 오류를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257029Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:2",
+      "source": "In both cases, it's assumed that users will use other C-API functions to get \"small enough\" integers (i.e., that fits to some machine integer types), like the :c:func:`PyLong_AsLongAndOverflow`.",
+      "source_hash": 3741228251476251826,
+      "context_hash": 9895163662137416386,
+      "translation": "두 경우 모두 사용자가 일부 머신 정수 유형에 들어갈 만큼 \"충분히 작은\" 정수를 얻기 위해 :c:func:`PyLong_AsLongAndOverflow`\\ 처럼 다른 C API 함수를 사용할 것으로 가정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257030Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:3",
+      "source": "The :c:func:`PyLong_Export` will be inefficient (or just fail) in this case.",
+      "source_hash": 867544507843970375,
+      "context_hash": 5191859009046795561,
+      "translation": "이 경우 :c:func:`PyLong_Export`\\ 은 비효율적이거나 단순히 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257030Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "An example",
+      "source_hash": 14613974505844111414,
+      "context_hash": 16790208855785814876,
+      "translation": "예시",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257030Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:0",
+      "source": "This might look as a simplification from the API designer point of view, but will be less convenient for end users.",
+      "source_hash": 3862068590245672926,
+      "context_hash": 3997045173656633322,
+      "translation": "API 설계자의 관점에서는 이것이 단순화처럼 보일 수 있지만, 최종 사용자에게는 덜 편리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257031Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:1",
+      "source": "They will have to follow Python development, benchmark different variants for exporting small integers (is that obvious why above case was chosen instead of :c:func:`PyLong_AsInt64`?), maybe support different code paths for various CPython versions or across different Python implementations.",
+      "source_hash": 1597611475345893321,
+      "context_hash": 6547091519378641572,
+      "translation": "사용자는 Python 개발을 따라가고, 작은 정수를 내보내는 여러 변형을 벤치마크하며(위의 경우가 :c:func:`PyLong_AsInt64`\\ 대신 선택된 이유가 분명합니까?), 다양한 CPython 버전에서 또는 서로 다른 Python 구현 간에 서로 다른 코드 경로를 지원해야 할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257031Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Discussions",
+      "source_hash": 10987630735954210954,
+      "context_hash": 11046121647387883617,
+      "translation": "논의",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257032Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Discourse: `PEP 757 – C API to import-export Python integers <https://discuss.python.org/t/63895>`_",
+      "source_hash": 15356241696674779516,
+      "context_hash": 3155314491596926815,
+      "translation": "Discourse: `PEP 757 – Python 정수 가져오기 및 내보내기를 위한 C API <https://discuss.python.org/t/63895>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257032Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "`C API Working Group decision issue #35 <https://github.com/capi-workgroup/decisions/issues/35>`_",
+      "source_hash": 33391914365010351,
+      "context_hash": 15610893772723197507,
+      "translation": "`C API 작업 그룹 결정 이슈 #35 <https://github.com/capi-workgroup/decisions/issues/35>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257032Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "`Pull request #121339 <https://github.com/python/cpython/pull/121339>`_",
+      "source_hash": 8894583978572314088,
+      "context_hash": 16088575745872985375,
+      "translation": "`풀 리퀘스트 #121339 <https://github.com/python/cpython/pull/121339>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257032Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "`Issue #102471 <https://github.com/python/cpython/issues/102471>`_: The C-API for Python to C integer conversion is, to be frank, a mess.",
+      "source_hash": 4210237702328085450,
+      "context_hash": 11573945859061361395,
+      "translation": "`이슈 #102471 <https://github.com/python/cpython/issues/102471>`_: Python 정수를 C 정수로 변환하는 C API는 솔직히 말해 엉망입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257033Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "`Add public function PyLong_GetDigits() <https://github.com/capi-workgroup/decisions/issues/31>`_",
+      "source_hash": 17935435924324109416,
+      "context_hash": 17437033261009603984,
+      "translation": "`공개 함수 PyLong_GetDigits() 추가 <https://github.com/capi-workgroup/decisions/issues/31>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257033Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:0",
+      "source": "`Consider restoring _PyLong_New() function as public <https://github.com/python/cpython/issues/111415>`_",
+      "source_hash": 1543113794450544205,
+      "context_hash": 6524972435483307093,
+      "translation": "`_PyLong_New() 함수를 공개 함수로 복원하는 것을 고려 <https://github.com/python/cpython/issues/111415>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257033Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:0",
+      "source": "`Pull request gh-106320 <https://github.com/python/cpython/pull/108604>`_: Remove private _PyLong_New() function.",
+      "source_hash": 3065540120107266955,
+      "context_hash": 12095219282681559817,
+      "translation": "`풀 리퀘스트 gh-106320 <https://github.com/python/cpython/pull/108604>`_: 비공개 _PyLong_New() 함수를 제거합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:47.257034Z",
+      "issues": []
+    }
+  ]
+}

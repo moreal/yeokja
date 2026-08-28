@@ -1,0 +1,1556 @@
+{
+  "version": 1,
+  "source_hash": 14998101410218094221,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Vectorcall: a fast calling protocol for CPython",
+      "source_hash": 909458582519045348,
+      "context_hash": 16530898886277989957,
+      "translation": "Vectorcall: CPython을 위한 고속 호출 프로토콜",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:39:54.721808Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 7699866259221875270,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721812Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP introduces a new C API to optimize calls of objects.",
+      "source_hash": 6352863419725303532,
+      "context_hash": 8144607465639617193,
+      "translation": "이 PEP는 객체 호출을 최적화하기 위한 새로운 C API를 도입합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721812Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "It introduces a new \"vectorcall\" protocol and calling convention.",
+      "source_hash": 5237797989220135626,
+      "context_hash": 13099211968876832784,
+      "translation": "새로운 \"vectorcall\" 프로토콜과 호출 규약을 도입합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:39:54.721812Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "This is based on the \"fastcall\" convention, which is already used internally by CPython.",
+      "source_hash": 8843128410001103185,
+      "context_hash": 143679678848309403,
+      "translation": "이는 CPython 내부에서 이미 사용되는 \"fastcall\" 규약을 기반으로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721813Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:3",
+      "source": "The new features can be used by any user-defined extension class.",
+      "source_hash": 10915278718776479282,
+      "context_hash": 7537349841145443156,
+      "translation": "새로운 기능은 모든 사용자 정의 확장 클래스에서 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721813Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "Most of the new API is private in CPython 3.8.",
+      "source_hash": 14029329912386443292,
+      "context_hash": 12774264575545281185,
+      "translation": "새로운 API 대부분은 CPython 3.8에서 비공개입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721814Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "The plan is to finalize semantics and make it public in Python 3.9.",
+      "source_hash": 12527922522183004351,
+      "context_hash": 13037488207086648708,
+      "translation": "Python 3.9에서 의미를 확정하고 공개하는 것이 계획입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721814Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "**NOTE**: This PEP deals only with the Python/C API, it does not affect the Python language or standard library.",
+      "source_hash": 1748073430195830870,
+      "context_hash": 17174682632694400210,
+      "translation": "**NOTE**: 이 PEP는 Python/C API만 다루며, Python 언어나 표준 라이브러리에는 영향을 주지 않습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:39:54.721814Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 7820289193397734391,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721815Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The choice of a calling convention impacts the performance and flexibility of code on either side of the call.",
+      "source_hash": 12793671167113886574,
+      "context_hash": 3018957169082153648,
+      "translation": "호출 규약의 선택은 호출 양쪽 코드의 성능과 유연성에 영향을 미칩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721815Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Often there is tension between performance and flexibility.",
+      "source_hash": 11270220336428079548,
+      "context_hash": 14478830582096015603,
+      "translation": "성능과 유연성 사이에는 긴장이 발생하는 경우가 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721815Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "The current ``tp_call`` [2]_ calling convention is sufficiently flexible to cover all cases, but its performance is poor.",
+      "source_hash": 13025451704367106866,
+      "context_hash": 3307675222794778244,
+      "translation": "현재 ``tp_call`` [2]_ 호출 규약은 모든 경우를 처리할 만큼 충분히 유연하지만, 성능이 낮습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721815Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "The poor performance is largely a result of having to create intermediate tuples, and possibly intermediate dicts, during the call.",
+      "source_hash": 13294277853826663177,
+      "context_hash": 7137962598164924499,
+      "translation": "낮은 성능은 호출 중간에 중간 튜플과 경우에 따라 중간 딕셔너리를 생성해야 하기 때문에 발생하는 경우가 대부분입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721815Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "This is mitigated in CPython by including special-case code to speed up calls to Python and builtin functions.",
+      "source_hash": 3365765403073688009,
+      "context_hash": 16438680057561466726,
+      "translation": "CPython에서는 Python 함수와 내장 함수 호출을 빠르게 처리하는 특수 사례 코드를 포함하여 이를 완화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721816Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:3",
+      "source": "Unfortunately, this means that other callables such as classes and third party extension objects are called using the slower, more general ``tp_call`` calling convention.",
+      "source_hash": 5622147050325306128,
+      "context_hash": 2583318173282356867,
+      "translation": "안타깝게도 이는 클래스나 서드 파티 확장 객체와 같은 다른 호출 가능 객체가 더 느리고 일반적인 ``tp_call`` 호출 규약을 사용하여 호출된다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721816Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "This PEP proposes that the calling convention used internally for Python and builtin functions is generalized and published so that all calls can benefit from better performance.",
+      "source_hash": 15234659639890661621,
+      "context_hash": 3173206209919048272,
+      "translation": "이 PEP는 Python 함수와 내장 함수에 내부적으로 사용되는 호출 규약을 일반화하고 공개하여 모든 호출이 더 나은 성능의 이점을 얻을 수 있도록 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721816Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "The new proposed calling convention is not fully general, but covers the large majority of calls.",
+      "source_hash": 8942475863598235181,
+      "context_hash": 9889650106119076793,
+      "translation": "새로 제안된 호출 규약은 완전히 일반적이지는 않지만, 대부분의 호출을 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721817Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:2",
+      "source": "It is designed to remove the overhead of temporary object creation and multiple indirections.",
+      "source_hash": 16030900972433275014,
+      "context_hash": 11542646902825120374,
+      "translation": "이는 임시 객체 생성과 여러 단계의 간접 참조에 따른 오버헤드를 제거하도록 설계되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721817Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "Another source of inefficiency in the ``tp_call`` convention is that it has one function pointer per class, rather than per object.",
+      "source_hash": 6893536680455098266,
+      "context_hash": 16471863748193643581,
+      "translation": "``tp_call`` 규약의 또 다른 비효율성은 객체별이 아니라 클래스별로 함수 포인터를 하나씩 둔다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721817Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "This is inefficient for calls to classes as several intermediate objects need to be created.",
+      "source_hash": 10175333039803337501,
+      "context_hash": 10019856737084559828,
+      "translation": "여러 중간 객체를 생성해야 하므로 클래스 호출에서는 이것이 비효율적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721817Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "For a class ``cls``, at least one intermediate object is created for each call in the sequence ``type.__call__``, ``cls.__new__``, ``cls.__init__``.",
+      "source_hash": 15368820198392091064,
+      "context_hash": 1228938556411900921,
+      "translation": "``cls`` 클래스의 경우 ``type.__call__``, ``cls.__new__``, ``cls.__init__`` 순서의 각 호출마다 하나 이상의 중간 객체가 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721817Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "This PEP proposes an interface for use by extension modules.",
+      "source_hash": 1095666690408803348,
+      "context_hash": 5317235838688413901,
+      "translation": "이 PEP는 확장 모듈에서 사용할 인터페이스를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721818Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "Such interfaces cannot effectively be tested, or designed, without having the consumers in the loop.",
+      "source_hash": 1881571959061688959,
+      "context_hash": 9378616088798467171,
+      "translation": "이러한 인터페이스는 소비자가 개발 과정에 참여하지 않으면 효과적으로 테스트하거나 설계할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721818Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:2",
+      "source": "For that reason, we provide private (underscore-prefixed) names.",
+      "source_hash": 9064957609639961130,
+      "context_hash": 18267496350215333135,
+      "translation": "이러한 이유로 비공개(밑줄 접두사가 붙은) 이름을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721818Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:3",
+      "source": "The API may change (based on consumer feedback) in Python 3.9, where we expect it to be finalized, and the underscores removed.",
+      "source_hash": 6102395460708482194,
+      "context_hash": 1249726618664360345,
+      "translation": "Python 3.9에서는 소비자 의견을 바탕으로 API가 변경될 수 있으며, 이때 API가 확정되고 밑줄이 제거될 것으로 예상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721818Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 7915345185566044488,
+      "translation": "명세",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721819Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "The function pointer type",
+      "source_hash": 12912001710502247488,
+      "context_hash": 5965669069173507265,
+      "translation": "함수 포인터 타입",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721819Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Calls are made through a function pointer taking the following parameters:",
+      "source_hash": 10279017915701728398,
+      "context_hash": 8644007570746862679,
+      "translation": "호출은 다음 매개변수를 받는 함수 포인터를 통해 이루어집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721819Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "``PyObject *callable``: The called object",
+      "source_hash": 4230048455625076984,
+      "context_hash": 1352768488954791850,
+      "translation": "``PyObject *callable``: 호출 대상 객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721819Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "``PyObject *const *args``: A vector of arguments",
+      "source_hash": 657696941698754853,
+      "context_hash": 15025752752484576107,
+      "translation": "``PyObject *const *args``: 인자 벡터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721820Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "``size_t nargs``: The number of arguments plus the optional flag ``PY_VECTORCALL_ARGUMENTS_OFFSET`` (see below)",
+      "source_hash": 1151114115841417920,
+      "context_hash": 12505396521987971323,
+      "translation": "``size_t nargs``: 인수 개수에 선택적 플래그 ``PY_VECTORCALL_ARGUMENTS_OFFSET``\\ 을 더한 값(아래 참조)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:39:54.721820Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "``PyObject *kwnames``: Either ``NULL`` or a tuple with the names of the keyword arguments",
+      "source_hash": 5707721652748819570,
+      "context_hash": 6218712552478225355,
+      "translation": "``PyObject *kwnames``: ``NULL``\\ 이거나 키워드 인자의 이름을 포함하는 튜플입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322481Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "This is implemented by the function pointer type: ``typedef PyObject *(*vectorcallfunc)(PyObject *callable, PyObject *const *args, size_t nargs, PyObject *kwnames);``",
+      "source_hash": 10180725878979580162,
+      "context_hash": 11501459375905325588,
+      "translation": "다음 함수 포인터 형식으로 구현됩니다: ``typedef PyObject *(*vectorcallfunc)(PyObject *callable, PyObject *const *args, size_t nargs, PyObject *kwnames);``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322485Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Changes to the ``PyTypeObject`` struct",
+      "source_hash": 9624189255721655976,
+      "context_hash": 1761569351982324527,
+      "translation": "``PyTypeObject`` 구조체의 변경 사항입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322485Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "The unused slot ``printfunc tp_print`` is replaced with ``tp_vectorcall_offset``.",
+      "source_hash": 514695556652787211,
+      "context_hash": 1902545532421159247,
+      "translation": "사용되지 않는 ``printfunc tp_print`` 슬롯이 ``tp_vectorcall_offset``\\ 로 대체됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322485Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "It has the type ``Py_ssize_t``.",
+      "source_hash": 13729567751200822617,
+      "context_hash": 17731513846654334893,
+      "translation": "그 형식은 ``Py_ssize_t``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322486Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "A new ``tp_flags`` flag is added, ``_Py_TPFLAGS_HAVE_VECTORCALL``, which must be set for any class that uses the vectorcall protocol.",
+      "source_hash": 6115846177982388372,
+      "context_hash": 2711172216673571914,
+      "translation": "새로운 ``tp_flags`` 플래그인 ``_Py_TPFLAGS_HAVE_VECTORCALL``\\ 이 추가되며, 벡터콜 프로토콜을 사용하는 모든 클래스에 설정해야 합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:40:12.322486Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "If ``_Py_TPFLAGS_HAVE_VECTORCALL`` is set, then ``tp_vectorcall_offset`` must be a positive integer.",
+      "source_hash": 16739921205476017885,
+      "context_hash": 7988828631358597995,
+      "translation": "``_Py_TPFLAGS_HAVE_VECTORCALL``\\ 이 설정된 경우 ``tp_vectorcall_offset``\\ 은 양의 정수여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322487Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "It is the offset into the object of the vectorcall function pointer of type ``vectorcallfunc``.",
+      "source_hash": 1145293442165181214,
+      "context_hash": 14295566164184353019,
+      "translation": "이는 ``vectorcallfunc`` 형식인 벡터콜 함수 포인터의 객체 내 오프셋입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322487Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:2",
+      "source": "This pointer may be ``NULL``, in which case the behavior is the same as if ``_Py_TPFLAGS_HAVE_VECTORCALL`` was not set.",
+      "source_hash": 8389190443407803909,
+      "context_hash": 4617480153425683956,
+      "translation": "이 포인터는 ``NULL``\\ 일 수 있으며, 이 경우의 동작은 ``_Py_TPFLAGS_HAVE_VECTORCALL``\\ 이 설정되지 않은 경우와 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322488Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "The ``tp_print`` slot is reused as the ``tp_vectorcall_offset`` slot to make it easier for external projects to backport the vectorcall protocol to earlier Python versions.",
+      "source_hash": 5606948120789106630,
+      "context_hash": 1858675350598085039,
+      "translation": "외부 프로젝트가 이전 Python 버전에 벡터콜 프로토콜을 백포트하기 쉽도록 ``tp_print`` 슬롯을 ``tp_vectorcall_offset`` 슬롯으로 재사용합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:40:12.322488Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "In particular, the Cython project has shown interest in doing that (see https://mail.python.org/pipermail/python-dev/2018-June/153927.html).",
+      "source_hash": 7934085578696895459,
+      "context_hash": 285221211358735718,
+      "translation": "특히 Cython 프로젝트가 이를 수행하는 데 관심을 보였습니다(https://mail.python.org/pipermail/python-dev/2018-June/153927.html 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322489Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Descriptor behavior",
+      "source_hash": 3133152289508238244,
+      "context_hash": 10845358125454935260,
+      "translation": "디스크립터 동작입니다.",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T19:40:12.322489Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "One additional type flag is specified: ``Py_TPFLAGS_METHOD_DESCRIPTOR``.",
+      "source_hash": 3047875278909560786,
+      "context_hash": 6168866906670052644,
+      "translation": "추가 형식 플래그 하나가 지정됩니다: ``Py_TPFLAGS_METHOD_DESCRIPTOR``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322490Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "``Py_TPFLAGS_METHOD_DESCRIPTOR`` should be set if the callable uses the descriptor protocol to create a bound method-like object.",
+      "source_hash": 10112465731621208974,
+      "context_hash": 16228021163507804678,
+      "translation": "호출 가능 객체가 디스크립터 프로토콜을 사용하여 바운드 메서드와 유사한 객체를 생성하는 경우 ``Py_TPFLAGS_METHOD_DESCRIPTOR``\\ 를 설정해야 합니다.",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터",
+        "protocol": "프로토콜",
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:40:12.322490Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "This is used by the interpreter to avoid creating temporary objects when calling methods (see ``_PyObject_GetMethod`` and the ``LOAD_METHOD``/``CALL_METHOD`` opcodes).",
+      "source_hash": 16120267504845072694,
+      "context_hash": 629169892021396389,
+      "translation": "이는 인터프리터가 메서드를 호출할 때 임시 객체를 생성하지 않도록 하기 위해 사용됩니다(``_PyObject_GetMethod`` 및 ``LOAD_METHOD``/``CALL_METHOD`` 연산 코드 참조).",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:40:12.322491Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "Concretely, if ``Py_TPFLAGS_METHOD_DESCRIPTOR`` is set for ``type(func)``, then:",
+      "source_hash": 8350385236169781486,
+      "context_hash": 11508452878460967945,
+      "translation": "구체적으로 ``type(func)``\\ 에 ``Py_TPFLAGS_METHOD_DESCRIPTOR``\\ 가 설정되어 있으면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322492Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "``func.__get__(obj, cls)(*args, **kwds)`` (with ``obj`` not None) must be equivalent to ``func(obj, *args, **kwds)``.",
+      "source_hash": 3662461922453413161,
+      "context_hash": 11474933560214666380,
+      "translation": "``obj``\\ 가 None이 아닌 경우 ``func.__get__(obj, cls)(*args, **kwds)``\\ 는 ``func(obj, *args, **kwds)``\\ 와 동등해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322492Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "``func.__get__(None, cls)(*args, **kwds)`` must be equivalent to ``func(*args, **kwds)``.",
+      "source_hash": 890367683275855534,
+      "context_hash": 17707475193737297129,
+      "translation": "``func.__get__(None, cls)(*args, **kwds)``\\ 는 ``func(*args, **kwds)``\\ 와 동등해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322492Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "There are no restrictions on the object ``func.__get__(obj, cls)``.",
+      "source_hash": 13763660070997536094,
+      "context_hash": 16721485913420857711,
+      "translation": "``func.__get__(obj, cls)`` 객체에는 어떠한 제한도 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322492Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:1",
+      "source": "The latter is not required to implement the vectorcall protocol.",
+      "source_hash": 6566004234009598266,
+      "context_hash": 13142928086166189951,
+      "translation": "후자는 벡터콜 프로토콜을 구현할 필요가 없습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:40:12.322493Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "The call",
+      "source_hash": 7893056844659914301,
+      "context_hash": 16609975237239188330,
+      "translation": "호출입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322493Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The call takes the form ``((vectorcallfunc)(((char *)o)+offset))(o, args, n, kwnames)`` where ``offset`` is ``Py_TYPE(o)->tp_vectorcall_offset``.",
+      "source_hash": 16556477098042220151,
+      "context_hash": 10229058096315780048,
+      "translation": "호출은 ``((vectorcallfunc)(((char *)o)+offset))(o, args, n, kwnames)``\\ 의 형태를 취하며, 여기서 ``offset``\\ 은 ``Py_TYPE(o)->tp_vectorcall_offset``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322494Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "The caller is responsible for creating the ``kwnames`` tuple and ensuring that there are no duplicates in it.",
+      "source_hash": 3734527996356887197,
+      "context_hash": 15070872766213900975,
+      "translation": "호출자는 ``kwnames`` 튜플을 생성하고 그 안에 중복 항목이 없도록 할 책임이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322494Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "``n`` is the number of positional arguments plus possibly the ``PY_VECTORCALL_ARGUMENTS_OFFSET`` flag.",
+      "source_hash": 4642086740048768708,
+      "context_hash": 13075405234173003880,
+      "translation": "``n``\\ 은 위치 인수의 개수에 ``PY_VECTORCALL_ARGUMENTS_OFFSET`` 플래그가 추가될 수도 있는 값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322494Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "PY_VECTORCALL_ARGUMENTS_OFFSET",
+      "source_hash": 7514670554631875990,
+      "context_hash": 18398969734989065097,
+      "translation": "PY_VECTORCALL_ARGUMENTS_OFFSET",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322494Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The flag ``PY_VECTORCALL_ARGUMENTS_OFFSET`` should be added to ``n`` if the callee is allowed to temporarily change ``args[-1]``.",
+      "source_hash": 5587670630318498059,
+      "context_hash": 4477485343965414492,
+      "translation": "피호출자가 ``args[-1]``\\ 을 일시적으로 변경할 수 있는 경우 ``PY_VECTORCALL_ARGUMENTS_OFFSET`` 플래그를 ``n``\\ 에 추가해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322495Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "In other words, this can be used if ``args`` points to argument 1 in the allocated vector.",
+      "source_hash": 3182229712507257353,
+      "context_hash": 15889434012138119433,
+      "translation": "다시 말해, 이는 ``args``\\ 가 할당된 벡터의 인수 1을 가리키는 경우에 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322495Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "The callee must restore the value of ``args[-1]`` before returning.",
+      "source_hash": 17329411321199677612,
+      "context_hash": 2292530674336754632,
+      "translation": "피호출자는 반환하기 전에 ``args[-1]``\\ 의 값을 복원해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322495Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Whenever they can do so cheaply (without allocation), callers are encouraged to use ``PY_VECTORCALL_ARGUMENTS_OFFSET``.",
+      "source_hash": 13100668153307215639,
+      "context_hash": 2335015545034553795,
+      "translation": "호출자는 추가 할당 없이 저렴하게 수행할 수 있는 경우 ``PY_VECTORCALL_ARGUMENTS_OFFSET``\\ 을 사용하도록 권장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322496Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "Doing so will allow callables such as bound methods to make their onward calls cheaply.",
+      "source_hash": 10953990770868297782,
+      "context_hash": 6226329439026220804,
+      "translation": "이렇게 하면 바운드 메서드와 같은 호출 가능 객체가 후속 호출을 저렴하게 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322496Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:2",
+      "source": "The bytecode interpreter already allocates space on the stack for the callable, so it can use this trick at no additional cost.",
+      "source_hash": 8280489679699631443,
+      "context_hash": 4340414334649311177,
+      "translation": "바이트코드 인터프리터는 이미 호출 가능 객체를 위한 스택 공간을 할당하므로 추가 비용 없이 이 방법을 사용할 수 있습니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체",
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:40:12.322496Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "See [3]_ for an example of how ``PY_VECTORCALL_ARGUMENTS_OFFSET`` is used by a callee to avoid allocation.",
+      "source_hash": 5270105894164828850,
+      "context_hash": 13785230940253073035,
+      "translation": "``PY_VECTORCALL_ARGUMENTS_OFFSET``\\ 을 피호출자가 할당을 피하기 위해 사용하는 방법의 예는 [3]_\\ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:12.322497Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "For getting the actual number of arguments from the parameter ``n``, the macro ``PyVectorcall_NARGS(n)`` must be used.",
+      "source_hash": 11202142317962408536,
+      "context_hash": 1636297571982882016,
+      "translation": "매개변수 ``n``\\ 에서 실제 인수 개수를 가져오려면 매크로 ``PyVectorcall_NARGS(n)``\\ 을 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947262Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:1",
+      "source": "This allows for future changes or extensions.",
+      "source_hash": 3186659063287827871,
+      "context_hash": 3196920135635860317,
+      "translation": "이를 통해 향후 변경이나 확장이 가능해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947267Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "New C API and changes to CPython",
+      "source_hash": 6078566429491198078,
+      "context_hash": 12337213293993937160,
+      "translation": "새로운 C API 및 CPython 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947267Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "The following functions or macros are added to the C API:",
+      "source_hash": 18415715701994395444,
+      "context_hash": 8887780984503676515,
+      "translation": "다음 함수 또는 매크로가 C API에 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947268Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "``PyObject *_PyObject_Vectorcall(PyObject *obj, PyObject *const *args, size_t nargs, PyObject *keywords)``: Calls ``obj`` with the given arguments.",
+      "source_hash": 11244904404018399105,
+      "context_hash": 16675764002521203209,
+      "translation": "``PyObject *_PyObject_Vectorcall(PyObject *obj, PyObject *const *args, size_t nargs, PyObject *keywords)``: 주어진 인수로 ``obj``\\ 를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947268Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "Note that ``nargs`` may include the flag ``PY_VECTORCALL_ARGUMENTS_OFFSET``.",
+      "source_hash": 5509306203315912766,
+      "context_hash": 6220995750380645903,
+      "translation": "``nargs``\\ 에 플래그 ``PY_VECTORCALL_ARGUMENTS_OFFSET``\\ 가 포함될 수 있다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947268Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:2",
+      "source": "The actual number of positional arguments is given by ``PyVectorcall_NARGS(nargs)``.",
+      "source_hash": 7722901834224739169,
+      "context_hash": 2098668359132072021,
+      "translation": "실제 위치 인수 개수는 ``PyVectorcall_NARGS(nargs)``\\ 로 주어집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947269Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:3",
+      "source": "The argument ``keywords`` is a tuple of keyword names or ``NULL``.",
+      "source_hash": 3891570601693757580,
+      "context_hash": 5693991708898156209,
+      "translation": "``keywords`` 인수는 키워드 이름의 튜플이거나 ``NULL``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947269Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:4",
+      "source": "An empty tuple has the same effect as passing ``NULL``.",
+      "source_hash": 6224964501401526961,
+      "context_hash": 17197266202734624520,
+      "translation": "빈 튜플은 ``NULL``\\ 을 전달하는 것과 같은 효과를 냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947269Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:5",
+      "source": "This uses either the vectorcall protocol or ``tp_call`` internally; if neither is supported, an exception is raised.",
+      "source_hash": 10434858355970378728,
+      "context_hash": 8362672275225353627,
+      "translation": "내부적으로 벡터콜 프로토콜 또는 ``tp_call``\\ 을 사용하며, 둘 다 지원되지 않으면 예외가 발생합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:40:08.947270Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "``PyObject *PyVectorcall_Call(PyObject *obj, PyObject *tuple, PyObject *dict)``: Call the object (which must support vectorcall) with the old ``*args`` and ``**kwargs`` calling convention.",
+      "source_hash": 12029483197273885383,
+      "context_hash": 9137247605902952028,
+      "translation": "``PyObject *PyVectorcall_Call(PyObject *obj, PyObject *tuple, PyObject *dict)``: 기존 ``*args``\\ 와 ``**kwargs``\\ 호출 규약으로 객체(벡터콜을 지원해야 합니다)를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947271Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:1",
+      "source": "This is mostly meant to put in the ``tp_call`` slot.",
+      "source_hash": 826108765838145564,
+      "context_hash": 7760367358869039203,
+      "translation": "이는 주로 ``tp_call`` 슬롯에 배치하기 위한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947272Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "``Py_ssize_t PyVectorcall_NARGS(size_t nargs)``: Given a vectorcall ``nargs`` argument, return the actual number of arguments.",
+      "source_hash": 7130141823175205041,
+      "context_hash": 14705414586785480615,
+      "translation": "``Py_ssize_t PyVectorcall_NARGS(size_t nargs)``: 벡터콜 ``nargs`` 인수가 주어지면 실제 인수 개수를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947272Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:1",
+      "source": "Currently equivalent to ``nargs & ~PY_VECTORCALL_ARGUMENTS_OFFSET``.",
+      "source_hash": 12707800992478962837,
+      "context_hash": 1672735200367732754,
+      "translation": "현재는 ``nargs & ~PY_VECTORCALL_ARGUMENTS_OFFSET``\\ 와 동등합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947272Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Subclassing",
+      "source_hash": 5339074551186639848,
+      "context_hash": 14847854624423305225,
+      "translation": "서브클래싱",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947273Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Extension types inherit the type flag ``_Py_TPFLAGS_HAVE_VECTORCALL`` and the value ``tp_vectorcall_offset`` from the base class, provided that they implement ``tp_call`` the same way as the base class.",
+      "source_hash": 6104929867072161411,
+      "context_hash": 6148596948554978172,
+      "translation": "확장 타입은 기본 클래스와 동일한 방식으로 ``tp_call``\\ 을 구현하는 경우 기본 클래스에서 타입 플래그 ``_Py_TPFLAGS_HAVE_VECTORCALL``\\ 과 값 ``tp_vectorcall_offset``\\ 을 상속합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947273Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "Additionally, the flag ``Py_TPFLAGS_METHOD_DESCRIPTOR`` is inherited if ``tp_descr_get`` is implemented the same way as the base class.",
+      "source_hash": 10926567093582220697,
+      "context_hash": 9802195140618107126,
+      "translation": "또한 ``tp_descr_get``\\ 이 기본 클래스와 동일한 방식으로 구현되어 있으면 플래그 ``Py_TPFLAGS_METHOD_DESCRIPTOR``\\ 도 상속됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947273Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Heap types never inherit the vectorcall protocol because that would not be safe (heap types can be changed dynamically).",
+      "source_hash": 15031668268862981843,
+      "context_hash": 17448762427008122479,
+      "translation": "힙 타입은 벡터콜 프로토콜을 절대 상속하지 않습니다. 이는 안전하지 않기 때문입니다(힙 타입은 동적으로 변경될 수 있습니다).",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:40:08.947273Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:1",
+      "source": "This restriction may be lifted in the future, but that would require special-casing ``__call__`` in ``type.__setattribute__``.",
+      "source_hash": 10098338517587376177,
+      "context_hash": 15726504889121910549,
+      "translation": "향후 이 제한이 해제될 수 있지만, 그러려면 ``type.__setattribute__``\\ 에서 ``__call__``\\ 을 특별히 처리해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947274Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Finalizing the API",
+      "source_hash": 12015802616791731018,
+      "context_hash": 5814143068433527160,
+      "translation": "API 마무리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947274Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "The underscore in the names ``_PyObject_Vectorcall`` and ``_Py_TPFLAGS_HAVE_VECTORCALL`` indicates that this API may change in minor Python versions.",
+      "source_hash": 17136235858573457623,
+      "context_hash": 18027658529266101954,
+      "translation": "``_PyObject_Vectorcall`` 및 ``_Py_TPFLAGS_HAVE_VECTORCALL``\\ 이라는 이름의 밑줄은 이 API가 Python 마이너 버전에서 변경될 수 있음을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947275Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "When finalized (which is planned for Python 3.9), they will be renamed to ``PyObject_Vectorcall`` and ``Py_TPFLAGS_HAVE_VECTORCALL``.",
+      "source_hash": 10206263100762320429,
+      "context_hash": 14954516575804582328,
+      "translation": "마무리될 때(이는 Python 3.9에서 진행할 계획입니다) 이 이름은 ``PyObject_Vectorcall`` 및 ``Py_TPFLAGS_HAVE_VECTORCALL``\\ 로 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947275Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:2",
+      "source": "The old underscore-prefixed names will remain available as aliases.",
+      "source_hash": 2953669164174020470,
+      "context_hash": 17002490340688438149,
+      "translation": "기존의 밑줄 접두사가 붙은 이름은 별칭으로 계속 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947275Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "The new API will be documented as normal, but will warn of the above.",
+      "source_hash": 2271723394050447216,
+      "context_hash": 15924567177757589540,
+      "translation": "새로운 API는 일반적인 방식으로 문서화되지만, 위 사항에 대한 경고가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947276Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "Semantics for the other names introduced in this PEP (``PyVectorcall_NARGS``, ``PyVectorcall_Call``, ``Py_TPFLAGS_METHOD_DESCRIPTOR``, ``PY_VECTORCALL_ARGUMENTS_OFFSET``) are final.",
+      "source_hash": 2626080531575381360,
+      "context_hash": 15144632323208428495,
+      "translation": "이 PEP에서 도입된 다른 이름들(``PyVectorcall_NARGS``, ``PyVectorcall_Call``, ``Py_TPFLAGS_METHOD_DESCRIPTOR``, ``PY_VECTORCALL_ARGUMENTS_OFFSET``)의 의미는 확정되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947276Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Internal CPython changes",
+      "source_hash": 17590476878757165554,
+      "context_hash": 10606565621570330153,
+      "translation": "CPython 내부 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947276Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Changes to existing classes",
+      "source_hash": 6077995668246963640,
+      "context_hash": 4924053520640575440,
+      "translation": "기존 클래스 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947277Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "The ``function``, ``builtin_function_or_method``, ``method_descriptor``, ``method``, ``wrapper_descriptor``, ``method-wrapper`` classes will use the vectorcall protocol (not all of these will be changed in the initial implementation).",
+      "source_hash": 892830671002608806,
+      "context_hash": 6824819920118085724,
+      "translation": "``function``, ``builtin_function_or_method``, ``method_descriptor``, ``method``, ``wrapper_descriptor``, ``method-wrapper`` 클래스는 벡터콜 프로토콜을 사용합니다(초기 구현에서 이들 모두가 변경되지는 않습니다).",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:40:08.947277Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "For ``builtin_function_or_method`` and ``method_descriptor`` (which use the ``PyMethodDef`` data structure), one could implement a specific vectorcall wrapper for every existing calling convention.",
+      "source_hash": 4143220641002912979,
+      "context_hash": 6866873974338720255,
+      "translation": "``PyMethodDef`` 데이터 구조를 사용하는 ``builtin_function_or_method`` 및 ``method_descriptor``\\ 에 대해서는 기존의 각 호출 규약에 맞는 특정 벡터콜 래퍼를 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947278Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:1",
+      "source": "Whether or not it is worth doing that remains to be seen.",
+      "source_hash": 11407031661229283026,
+      "context_hash": 15483256315859187638,
+      "translation": "그렇게 하는 것이 가치가 있을지는 아직 지켜봐야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:08.947278Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Using the vectorcall protocol for classes",
+      "source_hash": 321374565821712529,
+      "context_hash": 9474522577854367566,
+      "translation": "클래스에 벡터콜 프로토콜 사용하기",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:40:08.947278Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "For a class ``cls``, creating a new instance using ``cls(xxx)`` requires multiple calls.",
+      "source_hash": 2040332801055343871,
+      "context_hash": 8263210785822190810,
+      "translation": "클래스 ``cls``\\ 의 경우, ``cls(xxx)``\\ 를 사용하여 새 인스턴스를 생성하려면 여러 번 호출해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788249Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "At least one intermediate object is created for each call in the sequence ``type.__call__``, ``cls.__new__``, ``cls.__init__``.",
+      "source_hash": 4143993535569349464,
+      "context_hash": 9196104945132557376,
+      "translation": "``type.__call__``, ``cls.__new__``, ``cls.__init__``\\ 의 호출 시퀀스에서 각 호출마다 적어도 하나의 중간 객체가 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788254Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:2",
+      "source": "So it makes a lot of sense to use vectorcall for calling classes.",
+      "source_hash": 4036333584623148723,
+      "context_hash": 3613738460385712300,
+      "translation": "따라서 클래스를 호출할 때 vectorcall을 사용하는 것은 매우 합리적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:54:37.914932Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:3",
+      "source": "This really means implementing the vectorcall protocol for ``type``.",
+      "source_hash": 7291487239201001481,
+      "context_hash": 17831011028380198410,
+      "translation": "이는 실제로 ``type``\\ 에 vectorcall 프로토콜을 구현한다는 의미입니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:40:30.788256Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:4",
+      "source": "Some of the most commonly used classes will use this protocol, probably ``range``, ``list``, ``str``, and ``type``.",
+      "source_hash": 16671412532895005706,
+      "context_hash": 7124712841198846701,
+      "translation": "가장 자주 사용되는 클래스 중 일부는 이 프로토콜을 사용하게 될 것이며, 아마도 ``range``, ``list``, ``str`` 및 ``type``\\ 일 것입니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:40:30.788258Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "The ``PyMethodDef`` protocol and Argument Clinic",
+      "source_hash": 6306300458446428224,
+      "context_hash": 9976855103424419474,
+      "translation": "``PyMethodDef`` 프로토콜 및 Argument Clinic",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:40:30.788259Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Argument Clinic [4]_ automatically generates wrapper functions around lower-level callables, providing safe unboxing of primitive types and other safety checks.",
+      "source_hash": 17249573542644453123,
+      "context_hash": 16436799554235778945,
+      "translation": "Argument Clinic [4]_\\ 은 하위 수준 호출 가능 객체를 둘러싸는 래퍼 함수를 자동으로 생성하여 기본 타입의 안전한 언박싱과 기타 안전성 검사를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788259Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "Argument Clinic could be extended to generate wrapper objects conforming to the new ``vectorcall`` protocol.",
+      "source_hash": 8151034219535023604,
+      "context_hash": 388561672160459143,
+      "translation": "Argument Clinic을 확장하여 새로운 ``vectorcall`` 프로토콜을 따르는 래퍼 객체를 생성할 수 있습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:40:30.788260Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:2",
+      "source": "This will allow execution to flow from the caller to the Argument Clinic generated wrapper and thence to the hand-written code with only a single indirection.",
+      "source_hash": 8167476083381628977,
+      "context_hash": 9715268768920418966,
+      "translation": "이를 통해 단 한 번의 간접 참조만으로 호출자에서 Argument Clinic이 생성한 래퍼로, 이어서 손으로 작성한 코드로 실행이 전달될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788260Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Third-party extension classes using vectorcall",
+      "source_hash": 7145923880254427292,
+      "context_hash": 11184675062234155182,
+      "translation": "vectorcall을 사용하는 서드파티 확장 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788261Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "To enable call performance on a par with Python functions and built-in functions, third-party callables should include a ``vectorcallfunc`` function pointer, set ``tp_vectorcall_offset`` to the correct value and add the ``_Py_TPFLAGS_HAVE_VECTORCALL`` flag.",
+      "source_hash": 3156179033281773420,
+      "context_hash": 9312966339670118499,
+      "translation": "Python 함수 및 내장 함수와 동등한 호출 성능을 구현하려면, 서드파티 호출 가능 객체는 ``vectorcallfunc``\\ 함수 포인터를 포함하고, ``tp_vectorcall_offset``\\ 을 올바른 값으로 설정하며, ``_Py_TPFLAGS_HAVE_VECTORCALL``\\ 플래그를 추가해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788261Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "Any class that does this must implement the ``tp_call`` function and make sure its behaviour is consistent with the ``vectorcallfunc`` function.",
+      "source_hash": 3479268434958935458,
+      "context_hash": 9205025861339609795,
+      "translation": "이렇게 하는 모든 클래스는 ``tp_call``\\ 함수를 구현하고 그 동작이 ``vectorcallfunc``\\ 함수와 일관되도록 해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788261Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:2",
+      "source": "Setting ``tp_call`` to ``PyVectorcall_Call`` is sufficient.",
+      "source_hash": 61406786200931880,
+      "context_hash": 6428891718367028751,
+      "translation": "``tp_call``\\ 을 ``PyVectorcall_Call``\\ 로 설정하는 것으로 충분합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788262Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Performance implications of these changes",
+      "source_hash": 12781665323624558739,
+      "context_hash": 17569330958291099440,
+      "translation": "이러한 변경 사항이 성능에 미치는 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788262Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "This PEP should not have much impact on the performance of existing code (neither in the positive nor the negative sense).",
+      "source_hash": 10903929018606192458,
+      "context_hash": 9441339976657542685,
+      "translation": "이 PEP는 기존 코드의 성능에 큰 영향을 미치지 않아야 합니다(긍정적인 의미에서도 부정적인 의미에서도 그렇습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788262Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "It is mainly meant to allow efficient new code to be written, not to make existing code faster.",
+      "source_hash": 9507267202424433224,
+      "context_hash": 7458197500154457295,
+      "translation": "이 PEP의 주된 목적은 효율적인 새 코드를 작성할 수 있도록 하는 것이며, 기존 코드를 더 빠르게 만드는 것이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788262Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "Nevertheless, this PEP optimizes for ``METH_FASTCALL`` functions.",
+      "source_hash": 3816714782143169817,
+      "context_hash": 13481725275466634353,
+      "translation": "그럼에도 이 PEP는 ``METH_FASTCALL``\\ 함수를 대상으로 최적화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788263Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:1",
+      "source": "Performance of functions using ``METH_VARARGS`` will become slightly worse.",
+      "source_hash": 6051084507901597137,
+      "context_hash": 6354985428722415160,
+      "translation": "``METH_VARARGS``\\ 를 사용하는 함수의 성능은 약간 저하됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788263Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Stable ABI",
+      "source_hash": 2017471955778429006,
+      "context_hash": 7677880958051874852,
+      "translation": "안정 ABI",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788263Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Nothing from this PEP is added to the stable ABI (:pep:`384`).",
+      "source_hash": 6987666173591905450,
+      "context_hash": 4967985567745929424,
+      "translation": "이 PEP의 어떤 내용도 안정 ABI (:pep:`384`)에 추가되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788263Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Alternative Suggestions",
+      "source_hash": 12053531792096221716,
+      "context_hash": 3838508058399446017,
+      "translation": "대안 제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788264Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "bpo-29259",
+      "source_hash": 14111064070134716073,
+      "context_hash": 8112752681058299445,
+      "translation": "bpo-29259",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788264Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": ":pep:`590` is close to what was proposed in bpo-29259 [#bpo29259]_.",
+      "source_hash": 1683440436160840243,
+      "context_hash": 11553813076427463500,
+      "translation": ":pep:`590`\\ 은 bpo-29259 [#bpo29259]_ 에서 제안된 내용과 거의 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788264Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:1",
+      "source": "The main difference is that this PEP stores the function pointer in the instance rather than in the class.",
+      "source_hash": 15365966844333203079,
+      "context_hash": 18192659940077879125,
+      "translation": "주요 차이점은 이 PEP가 함수 포인터를 클래스가 아니라 인스턴스에 저장한다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788264Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:2",
+      "source": "This makes more sense for implementing functions in C, where every instance corresponds to a different C function.",
+      "source_hash": 12780904121098047963,
+      "context_hash": 8512840619435420053,
+      "translation": "이는 각 인스턴스가 서로 다른 C 함수에 대응하는 C 함수 구현에 더 적합합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788265Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:3",
+      "source": "It also allows optimizing ``type.__call__``, which is not possible with bpo-29259.",
+      "source_hash": 16009898712693431832,
+      "context_hash": 3557592950231204281,
+      "translation": "또한 bpo-29259로는 불가능한 ``type.__call__``\\ 최적화도 가능하게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788265Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "PEP 576 and PEP 580",
+      "source_hash": 6200048277147038612,
+      "context_hash": 3573093626486915783,
+      "translation": "PEP 576 및 PEP 580",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788265Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "Both :pep:`576` and :pep:`580` are designed to enable 3rd party objects to be both expressive and performant (on a par with CPython objects).",
+      "source_hash": 16175321689958673024,
+      "context_hash": 60985790098134170,
+      "translation": "관련 :pep:`576`\\ 과 :pep:`580`\\ 은 모두 서드 파티 객체가 표현력이 풍부하면서도 높은 성능을 발휘하도록(CPython 객체와 동등한 수준으로) 설계되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:09:11.651345Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:1",
+      "source": "The purpose of this PEP is provide a uniform way to call objects in the CPython ecosystem that is both expressive and as performant as possible.",
+      "source_hash": 11724902684999087592,
+      "context_hash": 17032253597241875983,
+      "translation": "이 PEP의 목적은 CPython 생태계의 객체를 표현력이 높고 가능한 한 성능이 뛰어난 방식으로 호출할 수 있는 통일된 방법을 제공하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788266Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "This PEP is broader in scope than :pep:`576` and uses variable rather than fixed offset function-pointers.",
+      "source_hash": 8257033369285007172,
+      "context_hash": 16030323259988612609,
+      "translation": "이 PEP는 :pep:`576`\\ 보다 범위가 넓으며, 고정 오프셋 함수 포인터가 아니라 가변 오프셋 함수 포인터를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788267Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:1",
+      "source": "The underlying calling convention is similar.",
+      "source_hash": 14461669262335563506,
+      "context_hash": 4511262383871291142,
+      "translation": "기반 호출 규약은 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:40:30.788267Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:2",
+      "source": "Because :pep:`576` only allows a fixed offset for the function pointer, it would not allow the improvements to any objects with constraints on their layout.",
+      "source_hash": 12860395743302977889,
+      "context_hash": 10547257433392515111,
+      "translation": "함수 포인터에 고정 오프셋만 허용하기 때문에, :pep:`576`\\ 은 레이아웃에 제약이 있는 객체에 개선 사항을 적용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:54:37.914936Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": ":pep:`580` proposes a major change to the ``PyMethodDef`` protocol used to define builtin functions.",
+      "source_hash": 2862550579430958374,
+      "context_hash": 6751772423656057669,
+      "translation": ":pep:`580`\\ 은 내장 함수를 정의하는 데 사용되는 ``PyMethodDef`` 프로토콜에 대한 주요 변경을 제안합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:19:58.030859Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:1",
+      "source": "This PEP provides a more general and simpler mechanism in the form of a new calling convention.",
+      "source_hash": 7625368624064877912,
+      "context_hash": 17450945160206715865,
+      "translation": "이 PEP는 새로운 호출 규약의 형태로 더 일반적이고 간단한 메커니즘을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:19:58.030863Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:2",
+      "source": "This PEP also extends the ``PyMethodDef`` protocol, but merely to formalise existing conventions.",
+      "source_hash": 17944398601095459990,
+      "context_hash": 12640094577660888382,
+      "translation": "이 PEP는 ``PyMethodDef`` 프로토콜도 확장하지만, 기존 규약을 공식화할 뿐입니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:19:58.030863Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Other rejected approaches",
+      "source_hash": 17028393803579900585,
+      "context_hash": 10829149961820654614,
+      "translation": "기타 거부된 접근 방식",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:19:58.030864Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "A longer, 6 argument, form combining both the vector and optional tuple and dictionary arguments was considered.",
+      "source_hash": 10691503923934810151,
+      "context_hash": 10259869514287660234,
+      "translation": "벡터 인자와 선택적 튜플 및 딕셔너리 인자를 모두 결합한 더 긴 6인자 형식이 고려되었습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:19:58.030864Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:1",
+      "source": "However, it was found that the code to convert between it and the old ``tp_call`` form was overly cumbersome and inefficient.",
+      "source_hash": 6223434352531541669,
+      "context_hash": 2891784580089049216,
+      "translation": "그러나 이 형식과 기존 ``tp_call`` 형식 간에 변환하는 코드가 지나치게 번거롭고 비효율적이라는 사실이 밝혀졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:19:58.030865Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:2",
+      "source": "Also, since only 4 arguments are passed in registers on x64 Windows, the two extra arguments would have non-negligible costs.",
+      "source_hash": 9010317859701601639,
+      "context_hash": 3691961427430464251,
+      "translation": "또한 x64 Windows에서는 레지스터를 통해 전달되는 인자가 4개뿐이므로, 추가되는 2개의 인자에는 무시할 수 없는 비용이 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:19:58.030865Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:0",
+      "source": "Removing any special cases and making all calls use the ``tp_call`` form was also considered.",
+      "source_hash": 15293210448081933918,
+      "context_hash": 2998228532705687376,
+      "translation": "모든 특수한 경우를 제거하고 모든 호출에서 ``tp_call`` 형식을 사용하도록 하는 방안도 고려되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:19:58.030866Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:1",
+      "source": "However, unless a much more efficient way was found to create and destroy tuples, and to a lesser extent dictionaries, then it would be too slow.",
+      "source_hash": 643792567366989332,
+      "context_hash": 15802850291738803335,
+      "translation": "그러나 튜플을 생성하고 제거하는 훨씬 더 효율적인 방법을 찾지 못한다면, 딕셔너리의 경우에는 그 정도가 덜하지만, 너무 느릴 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:19:58.030866Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "Acknowledgements",
+      "source_hash": 16326275492144793040,
+      "context_hash": 8254321725499576689,
+      "translation": "감사의 말",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:19:58.030866Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "Victor Stinner for developing the original \"fastcall\" calling convention internally to CPython.",
+      "source_hash": 7836259312404346957,
+      "context_hash": 16649422659554225864,
+      "translation": "CPython 내부에서 원래의 \"fastcall\" 호출 규약을 개발한 Victor Stinner에게 감사드립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:19:58.030866Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:1",
+      "source": "This PEP codifies and extends his work.",
+      "source_hash": 11485606857136379990,
+      "context_hash": 8310515115277910647,
+      "translation": "이 PEP는 그의 작업을 성문화하고 확장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:19:58.030867Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 8124952475700875770,
+      "translation": "참고 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:19:58.030867Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "Add tp_fastcall to PyTypeObject: support FASTCALL calling convention for all callable objects,",
+      "source_hash": 3244028301628444437,
+      "context_hash": 2268255026898423485,
+      "translation": "PyTypeObject에 tp_fastcall 추가: 모든 호출 가능 객체에 FASTCALL 호출 규약 지원,",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:19:58.030867Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:0",
+      "source": "https://bugs.python.org/issue29259",
+      "source_hash": 12681839809066574388,
+      "context_hash": 15758518152188381100,
+      "translation": "https://bugs.python.org/issue29259",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:19:58.030868Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:0",
+      "source": "tp_call/PyObject_Call calling convention",
+      "source_hash": 1289180785391066518,
+      "context_hash": 9972098498553981025,
+      "translation": "tp_call/PyObject_Call 호출 규약",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:19:58.030868Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:0",
+      "source": "https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_call",
+      "source_hash": 2381602690200334383,
+      "context_hash": 6086522624583083884,
+      "translation": "https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_call",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:32.799653Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:5/seg:0",
+      "source": "Using PY_VECTORCALL_ARGUMENTS_OFFSET in callee",
+      "source_hash": 2202575219351486450,
+      "context_hash": 15749627475150664406,
+      "translation": "호출 측에서 PY_VECTORCALL_ARGUMENTS_OFFSET 사용하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:32.799656Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:6/seg:0",
+      "source": "https://github.com/markshannon/cpython/blob/815cc1a30d85cdf2e3d77d21224db7055a1f07cb/Objects/classobject.c#L53",
+      "source_hash": 14719958979363195419,
+      "context_hash": 4427547522606742952,
+      "translation": "https://github.com/markshannon/cpython/blob/815cc1a30d85cdf2e3d77d21224db7055a1f07cb/Objects/classobject.c#L53",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:32.799656Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:7/seg:0",
+      "source": "Argument Clinic",
+      "source_hash": 17936362038198562610,
+      "context_hash": 2451870646990881344,
+      "translation": "Argument Clinic",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:32.799657Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:8/seg:0",
+      "source": "https://docs.python.org/3/howto/clinic.html",
+      "source_hash": 6178398746320500634,
+      "context_hash": 15258643929540054767,
+      "translation": "https://docs.python.org/3/howto/clinic.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:32.799657Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Reference implementation",
+      "source_hash": 3855301145730187591,
+      "context_hash": 98417993532245139,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:22:32.799657Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "A minimal implementation can be found at https://github.com/markshannon/cpython/tree/vectorcall-minimal",
+      "source_hash": 3557267799444831496,
+      "context_hash": 7255824391228245809,
+      "translation": "최소 구현은 https://github.com/markshannon/cpython/tree/vectorcall-minimal 에서 찾을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:32.799659Z",
+      "issues": []
+    }
+  ]
+}

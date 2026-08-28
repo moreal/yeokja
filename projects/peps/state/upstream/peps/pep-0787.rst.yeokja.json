@@ -1,0 +1,680 @@
+{
+  "version": 1,
+  "source_hash": 11254941948096305676,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Safer subprocess usage using t-strings",
+      "source_hash": 8052511714727542466,
+      "context_hash": 16530898886277989957,
+      "translation": "t-문자열을 사용한 더 안전한 서브프로세스 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070383Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 2255841786212021408,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070387Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": ":pep:`750` introduced template strings (t-strings) as a generalization of f-strings, providing a way to safely handle string interpolation in various contexts.",
+      "source_hash": 1772827253778511885,
+      "context_hash": 1902862988955418365,
+      "translation": ":pep:`750`\\ 은 f-문자열을 일반화한 템플릿 문자열(t-문자열)을 도입하여, 다양한 컨텍스트에서 문자열 보간을 안전하게 처리하는 방법을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070387Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This PEP proposes extending the :mod:`subprocess` and :mod:`shlex` modules to natively support t-strings, enabling safer and more ergonomic shell command execution with interpolated values, as well as serving as a reference implementation for the t-string feature to improve API ergonomics.",
+      "source_hash": 743454323172375904,
+      "context_hash": 18021830988806615721,
+      "translation": "이 PEP는 :mod:`subprocess` 및 :mod:`shlex` 모듈을 확장하여 t-문자열을 기본적으로 지원하고, 보간된 값을 사용한 셸 명령 실행을 더 안전하고 편리하게 하며, API 사용 편의성을 개선하기 위한 t-문자열 기능의 참조 구현 역할도 하도록 제안합니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:25:43.070387Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "PEP Deferral",
+      "source_hash": 17398114116193981670,
+      "context_hash": 10373082696170794258,
+      "translation": "PEP 연기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070388Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "During the discussions of the initial draft of the PEP, it became clear that t-strings provide a potential opportunity to offer ``shell=True`` levels of syntactic convenience for complex subprocess invocations without all of the security and cross-platform compatibility concerns that arise with giving user provided text access to a full system shell.",
+      "source_hash": 1310782337007916074,
+      "context_hash": 14066359594465941562,
+      "translation": "PEP 초안에 대한 초기 논의 과정에서, t-문자열은 복잡한 서브프로세스 호출에 ``shell=True`` 수준의 문법적 편의성을 제공할 수 있는 잠재적 기회를 제공하면서도, 사용자 제공 텍스트에 전체 시스템 셸에 대한 접근 권한을 부여할 때 발생하는 보안 및 플랫폼 간 호환성 문제를 피할 수 있다는 점이 분명해졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070388Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "To that end, the PEP authors now plan to work on an experimental :pypi:`t-string based subprocess invocation library <tstrprocess>` through the Python 3.14 beta period (and beyond), before preparing a revised draft of the proposal for Python 3.15.",
+      "source_hash": 4503372810927120762,
+      "context_hash": 1537912753424741183,
+      "translation": "이에 따라 PEP 작성자들은 Python 3.15를 위한 제안서 수정 초안을 준비하기 전에, Python 3.14 베타 기간과 그 이후까지 실험적인 :pypi:`t-string 기반 서브프로세스 호출 라이브러리 <tstrprocess>`\\ 를 개발할 계획입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070388Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 16563496555772343618,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070388Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Despite the safety benefits and flexibility that template strings offer in PEP 750, they lack a concrete consumer implementation in the standard library that demonstrates their practical application.",
+      "source_hash": 378305348233934960,
+      "context_hash": 8830321262623315767,
+      "translation": "PEP 750에서 템플릿 문자열이 제공하는 안전성 이점과 유연성에도 불구하고, 표준 라이브러리에는 그 실제 적용을 보여 주는 구체적인 사용자 구현이 없습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:25:43.070389Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "One of the most compelling use cases for t-strings is safer shell command execution, as noted in the withdrawn :pep:`501`:",
+      "source_hash": 7289823800521327321,
+      "context_hash": 6216111875320149372,
+      "translation": "철회된 :pep:`501`\\ 에서 언급했듯이, t-문자열의 가장 매력적인 사용 사례 중 하나는 더 안전한 셸 명령 실행입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070389Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Currently, developers must choose between convenience (using f-strings with potential security risks) and safety (using more verbose, list-based APIs).",
+      "source_hash": 5171924120028423122,
+      "context_hash": 7134743218603857087,
+      "translation": "현재 개발자는 편의성(잠재적인 보안 위험이 있는 f-문자열 사용)과 안전성(더 장황한 리스트 기반 API 사용) 중 하나를 선택해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070389Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "By adding native t-string support to the :mod:`subprocess` module, we provide a consumer reference implementation that demonstrates the value of t-strings while addressing a common security concern.",
+      "source_hash": 5990282800312848213,
+      "context_hash": 4620489542677296757,
+      "translation": "네이티브 t-문자열 지원을 :mod:`subprocess` 모듈에 추가함으로써, 일반적인 보안 문제를 해결하면서 t-문자열의 가치를 입증하는 소비자용 참조 구현을 제공합니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T19:59:08.690312Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 9281438010123678198,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070390Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "The subprocess module is an ideal candidate for t-string support for several reasons:",
+      "source_hash": 11462605477035189254,
+      "context_hash": 976694311878115715,
+      "translation": "다음과 같은 몇 가지 이유로 subprocess 모듈은 t-문자열을 지원하기에 이상적인 후보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070390Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Command injection vulnerabilities in shell commands are a well-known security risk.",
+      "source_hash": 10828267534816690212,
+      "context_hash": 15015951808630378299,
+      "translation": "셸 명령의 명령 주입 취약점은 잘 알려진 보안 위험입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070390Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "The :mod:`subprocess` module already supports both string and list-based command specifications.",
+      "source_hash": 10911443265905743108,
+      "context_hash": 17945204302376781402,
+      "translation": "이미 :mod:`subprocess` 모듈은 문자열 및 리스트 기반 명령 사양을 모두 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:59:08.690321Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "There's a natural mapping between t-strings and proper shell escaping that provides both convenience and safety.",
+      "source_hash": 11494283015426738538,
+      "context_hash": 3225593195294399825,
+      "translation": "t-문자열과 적절한 셸 이스케이프 사이에는 편의성과 안전성을 모두 제공하는 자연스러운 매핑이 있습니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:25:43.070391Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "It serves as a practical showcase for t-strings that developers can immediately understand and appreciate.",
+      "source_hash": 3008081945346062783,
+      "context_hash": 12067929491451975727,
+      "translation": "이는 개발자가 즉시 이해하고 가치를 인식할 수 있는 t-문자열의 실용적인 예시가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070391Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "By extending subprocess to handle t-strings natively, we make it easier to write secure code without sacrificing the convenience that led many developers to use potentially unsafe f-strings.",
+      "source_hash": 4837412727891137522,
+      "context_hash": 8932589322731523156,
+      "translation": "subprocess가 t-문자열을 기본적으로 처리하도록 확장하면, 많은 개발자가 잠재적으로 안전하지 않은 f-문자열을 사용하게 만든 편의성을 희생하지 않고도 안전한 코드를 더 쉽게 작성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070392Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 4076246394079120056,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070392Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "This PEP proposes two main additions to the standard library:",
+      "source_hash": 3860235356557856064,
+      "context_hash": 4247189595786100249,
+      "translation": "이 PEP는 표준 라이브러리에 다음과 같은 두 가지 주요 추가 사항을 제안합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:25:43.070393Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "A new ``sh()`` renderer function in the :mod:`shlex` module for safe shell command construction",
+      "source_hash": 4296610803291750726,
+      "context_hash": 6827870179787354379,
+      "translation": "안전한 셸 명령 구성을 위한 :mod:`shlex` 모듈의 새로운 ``sh()`` 렌더러 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070393Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "Adding t-string support to the :mod:`subprocess` module's core functions,",
+      "source_hash": 17879757699870034068,
+      "context_hash": 11173799506461684048,
+      "translation": "t-문자열 지원을 :mod:`subprocess` 모듈의 핵심 함수에 추가하면,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:59:08.690322Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "particularly :class:`subprocess.Popen`, :func:`subprocess.run`, and other related functions that accept a command argument",
+      "source_hash": 6910772239843256586,
+      "context_hash": 656559434922315729,
+      "translation": "특히 명령 인자를 받는 :class:`subprocess.Popen`, :func:`subprocess.run` 및 기타 관련 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070393Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Renderer for shell escaping added to :mod:`shlex`",
+      "source_hash": 8173878982481461374,
+      "context_hash": 8499576333175765349,
+      "translation": "셸 이스케이프를 위한 렌더러를 :mod:`shlex`\\ 에 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070394Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "As a reference implementation, a renderer for safe POSIX shell escaping will be added to the :mod:`shlex` module.",
+      "source_hash": 1268389683617499651,
+      "context_hash": 11157654890008545338,
+      "translation": "참조 구현으로서 안전한 POSIX 셸 이스케이프를 위한 렌더러가 :mod:`shlex` 모듈에 추가됩니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:25:43.070394Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "This renderer would be called ``sh`` and would be equivalent to calling ``shlex.quote`` on each field value in the template literal.",
+      "source_hash": 6660222315077126133,
+      "context_hash": 1692854519447787297,
+      "translation": "이 렌더러의 이름은 ``sh``\\ 가 되며, 템플릿 리터럴의 각 필드 값에 ``shlex.quote``\\ 를 호출하는 것과 동일하게 동작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070395Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "Thus",
+      "source_hash": 10952530581289625369,
+      "context_hash": 3883879358599186957,
+      "translation": "따라서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070395Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "would have the same behavior as",
+      "source_hash": 15825582648255975709,
+      "context_hash": 5514281055028043246,
+      "translation": "다음과 동일하게 동작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070395Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "The addition of ``shlex.sh`` will NOT change the existing admonishments in the :mod:`subprocess` documentation that passing ``shell=True`` is best avoided, nor the reference from the :func:`os.system` documentation to the higher level ``subprocess`` APIs.",
+      "source_hash": 1209876431478075176,
+      "context_hash": 9502246958578138771,
+      "translation": "``shlex.sh``\\ 의 추가는 ``shell=True``\\ 를 전달하는 것을 피하는 것이 가장 좋다는 :mod:`subprocess` 문서의 기존 경고나, :func:`os.system` 문서에서 더 높은 수준의 ``subprocess`` API를 참조하는 내용을 변경하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070395Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "The t-string processor implementation would look like",
+      "source_hash": 7382828022536268374,
+      "context_hash": 2800608778296897311,
+      "translation": "t-문자열 프로세서 구현은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070396Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "This allows for explicit escaping of t-strings for shell usage",
+      "source_hash": 17523418511008907600,
+      "context_hash": 6481341378714302107,
+      "translation": "이를 통해 셸 사용을 위해 t-문자열을 명시적으로 이스케이프할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:25:43.070396Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Changes to subprocess module",
+      "source_hash": 6373973014569393507,
+      "context_hash": 10073462781769756016,
+      "translation": "subprocess 모듈 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729590Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "With the additional renderer in the shlex module, and the addition of template strings, the :mod:`subprocess` module can be changed to handle accepting template strings as an additional input type to ``Popen``, as it already accepts a sequence, or a string, with different behavior for each.",
+      "source_hash": 12433977170925784567,
+      "context_hash": 4986099414119453029,
+      "translation": "shlex 모듈에 추가 렌더러를 제공하고 템플릿 문자열을 추가하면, :mod:`subprocess` 모듈을 변경하여 템플릿 문자열을 ``Popen``\\ 의 추가 입력 유형으로 받아들이도록 처리할 수 있습니다. 이미 시퀀스 또는 문자열을 받아들이며 각각 다르게 동작하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:59:08.690337Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "In return, all :class:`subprocess.Popen` higher level functions such as :func:`subprocess.run` could accept strings in a safe way (on all systems for ``shell=False`` and on :ref:`POSIX systems <pep-0787-defer-non-posix-shells>` for ``shell=True``).",
+      "source_hash": 6651128052427859173,
+      "context_hash": 7377083066365427189,
+      "translation": "그 결과, :class:`subprocess.Popen`\\ 의 모든 고수준 함수, 예를 들어 :func:`subprocess.run`\\ 은 안전한 방식으로 문자열을 받아들일 수 있습니다(``shell=False``\\ 인 모든 시스템에서, 그리고 ``shell=True``\\ 인 :ref:`POSIX 시스템 <pep-0787-defer-non-posix-shells>`\\ 에서).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729594Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "For example",
+      "source_hash": 9117899214634101441,
+      "context_hash": 13628064796063006396,
+      "translation": "예를 들어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729594Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "would automatically use the ``shlex.sh`` renderer provided in this PEP.",
+      "source_hash": 2479896640132732956,
+      "context_hash": 15262116909752123704,
+      "translation": "위 코드는 이 PEP에서 제공하는 ``shlex.sh`` 렌더러를 자동으로 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729594Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "Therefore, using ``shlex`` inside a ``subprocess.run`` call like so",
+      "source_hash": 7455841474430994253,
+      "context_hash": 10536172560510378928,
+      "translation": "따라서 다음과 같이 ``subprocess.run`` 호출 내부에서 ``shlex``\\ 를 사용하는 것은",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729594Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "would be redundant, as ``run`` would automatically render any template literals through ``shlex.sh``",
+      "source_hash": 9438226952785678644,
+      "context_hash": 17786786538543763980,
+      "translation": "``run``\\ 이 모든 템플릿 리터럴을 ``shlex.sh``\\ 를 통해 자동으로 렌더링하므로 중복됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729595Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "When ``subprocess.Popen`` is called without ``shell=True``, t-string support would still provide subprocess with a more ergonomic syntax.",
+      "source_hash": 15106125285545331960,
+      "context_hash": 9181226250712821603,
+      "translation": "``subprocess.Popen``\\ 을 ``shell=True``\\ 없이 호출하는 경우에도 t-문자열 지원은 subprocess에 더욱 인체공학적인 구문을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729595Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:1",
+      "source": "For example",
+      "source_hash": 9117899214634101441,
+      "context_hash": 11305447442382905953,
+      "translation": "예를 들어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729596Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:0",
+      "source": "would be equivalent to",
+      "source_hash": 12484888750514604331,
+      "context_hash": 14899479828777133485,
+      "translation": "다음과 동등합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729596Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:11/seg:0",
+      "source": "or, more accurately",
+      "source_hash": 18333836120889611735,
+      "context_hash": 18084615362777069076,
+      "translation": "또는 더 정확하게는",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729596Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:13/seg:0",
+      "source": "It would do this by first using the ``shlex.sh`` renderer, as above, then using ``shlex.split`` on the result.",
+      "source_hash": 8665470282351885254,
+      "context_hash": 8136329345698156928,
+      "translation": "먼저 위와 같이 ``shlex.sh`` 렌더러를 사용한 다음, 그 결과에 ``shlex.split``\\ 을 적용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729596Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:14/seg:0",
+      "source": "The implementation inside ``subprocess.Popen._execute_child`` would check for t-strings",
+      "source_hash": 5952847033830128162,
+      "context_hash": 10574292430800836764,
+      "translation": "``subprocess.Popen._execute_child`` 내부 구현은 t-문자열을 확인합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729597Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 16626551381279600475,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729597Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "This change is fully backwards compatible as it only adds new functionality without altering existing behavior.",
+      "source_hash": 11027628574955094592,
+      "context_hash": 17824926635244133652,
+      "translation": "이 변경은 기존 동작을 변경하지 않고 새로운 기능만 추가하므로 완전히 하위 호환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729598Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "The subprocess module will continue to handle strings and lists in the same way it currently does.",
+      "source_hash": 3255296129260842701,
+      "context_hash": 17126550004260601399,
+      "translation": "subprocess 모듈은 현재와 동일한 방식으로 문자열과 리스트를 계속 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729598Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 17344836785281700548,
+      "translation": "보안 관련 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729598Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "This PEP is explicitly designed to improve security by providing a safer alternative to using f-strings with shell commands.",
+      "source_hash": 17348477276208837113,
+      "context_hash": 15855649275570556680,
+      "translation": "이 PEP는 셸 명령에 f-문자열을 사용하는 것보다 안전한 대안을 제공하여 보안을 향상하도록 명시적으로 설계되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729598Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "By automatically applying appropriate escaping based on context (shell or non-shell), it helps prevent command injection vulnerabilities.",
+      "source_hash": 14191495303626669407,
+      "context_hash": 14557053682501246186,
+      "translation": "컨텍스트(셸 또는 비셸)에 따라 적절한 이스케이프를 자동으로 적용함으로써 명령 주입 취약점을 방지하는 데 도움이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729599Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "However, it's worth noting that when ``shell=True`` is used, the safety is limited to POSIX-compliant shells.",
+      "source_hash": 3041288447238244789,
+      "context_hash": 14319624176181405440,
+      "translation": "그러나 ``shell=True``\\ 를 사용하는 경우 안전성이 POSIX 호환 셸로 제한된다는 점에 유의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729599Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "On Windows systems where cmd.exe or PowerShell may be used as the shell, the escaping mechanism provided by :func:`shlex.quote` is not sufficient to prevent all forms of command injection.",
+      "source_hash": 3276281161404326588,
+      "context_hash": 6148144936209326566,
+      "translation": "Windows 시스템에서 셸로 cmd.exe 또는 PowerShell을 사용할 수 있는 경우, :func:`shlex.quote`\\ 가 제공하는 이스케이프 메커니즘만으로는 모든 형태의 명령 주입을 방지하기에 충분하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729599Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 14009339238894807205,
+      "translation": "이 기능을 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729599Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "This feature can be taught as a natural extension of t-strings that demonstrates their practical value:",
+      "source_hash": 12116508131640115476,
+      "context_hash": 14567541942797910186,
+      "translation": "이 기능은 t-문자열의 실용적 가치를 보여 주는 자연스러운 확장으로 가르칠 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729600Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Introduce the problem of command injection and why f-strings are dangerous with shell commands",
+      "source_hash": 1163400932756484763,
+      "context_hash": 4974069211003540257,
+      "translation": "명령 주입 문제와 셸 명령에서 f-문자열이 위험한 이유를 소개합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729600Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "Show the traditional solutions (list-based commands, manual escaping)",
+      "source_hash": 3244893622721334059,
+      "context_hash": 2854430099251099537,
+      "translation": "전통적인 해결책(리스트 기반 명령, 수동 이스케이프)을 보여 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729601Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "Introduce the ``shlex.sh`` renderer for explicit shell escaping",
+      "source_hash": 5870257689043709464,
+      "context_hash": 7495338420869288701,
+      "translation": "명시적인 셸 이스케이프를 위한 ``shlex.sh`` 렌더러를 소개합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729601Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "Introduce the subprocess module's native t-string support",
+      "source_hash": 15578291970603592703,
+      "context_hash": 4099253932367387126,
+      "translation": "subprocess 모듈의 기본 t-문자열 지원을 소개합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729601Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "The implementation should be added to both the shlex and subprocess module documentation with clear examples and security advisories.",
+      "source_hash": 9583868771162793780,
+      "context_hash": 3705186140903444334,
+      "translation": "명확한 예제와 보안 권고를 포함하여 shlex 및 subprocess 모듈 문서에 구현을 추가해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729602Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Deferring escaped rendering support for non-POSIX shells",
+      "source_hash": 14705052793565162653,
+      "context_hash": 9026169964562859881,
+      "translation": "비-POSIX 셸에 대한 이스케이프된 렌더링 지원 연기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729602Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": ":func:`shlex.quote` works by classifying the regex character set ``[\\w@%+=:,./-]`` to be safe, deeming all other characters to be unsafe, and hence requiring quoting of the string containing them.",
+      "source_hash": 4805233958958171226,
+      "context_hash": 8263558532747715398,
+      "translation": ":func:`shlex.quote`\\ 는 정규식 문자 집합 ``[\\w@%+=:,./-]``\\ 을 안전한 것으로 분류하고, 그 밖의 모든 문자를 안전하지 않은 것으로 간주하여 해당 문자가 포함된 문자열을 인용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729603Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "The quoting mechanism used is then specific to the way that string quoting works in POSIX shells, so it cannot be trusted when running a shell that doesn't follow POSIX shell string quoting rules.",
+      "source_hash": 13436434168565516100,
+      "context_hash": 8169943143093878076,
+      "translation": "이때 사용되는 인용 메커니즘은 POSIX 셸에서 문자열 인용이 작동하는 방식에 특화되어 있으므로, POSIX 셸 문자열 인용 규칙을 따르지 않는 셸을 실행할 때는 신뢰할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729603Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "For example, running ``subprocess.run(f\"echo {shlex.quote(sys.argv[1])}\", shell=True)`` is safe when using a shell that follows POSIX quoting rules:",
+      "source_hash": 15933692776205429427,
+      "context_hash": 11427914517361317689,
+      "translation": "예를 들어 POSIX 인용 규칙을 따르는 셸을 사용할 때 ``subprocess.run(f\"echo {shlex.quote(sys.argv[1])}\", shell=True)``\\ 를 실행하는 것은 안전합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:51.729604Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "but remains unsafe when running a shell from Python invokes ``cmd.exe`` (or Powershell):",
+      "source_hash": 15112793424964927786,
+      "context_hash": 15388370654465156794,
+      "translation": "그러나 Python에서 셸을 실행할 때 ``cmd.exe``\\ (또는 Powershell)를 호출하는 경우에는 여전히 안전하지 않습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:05.665876Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "Resolving this standard library limitation is beyond the scope of this PEP.",
+      "source_hash": 5105416116309598308,
+      "context_hash": 10585840534482145736,
+      "translation": "이 표준 라이브러리 제한 사항을 해결하는 것은 이 PEP의 범위를 벗어납니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:19:05.665880Z",
+      "issues": []
+    }
+  ]
+}

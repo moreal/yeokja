@@ -1,0 +1,1286 @@
+{
+  "version": 1,
+  "source_hash": 628620113570603113,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Adding a frame evaluation API to CPython",
+      "source_hash": 8961408356284951557,
+      "context_hash": 16530898886277989957,
+      "translation": "CPython에 프레임 평가 API 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891666Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 13953320660468600014,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891670Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes to expand CPython's C API [#c-api]_ to allow for the specification of a per-interpreter function pointer to handle the evaluation of frames [#pyeval_evalframeex]_.",
+      "source_hash": 18277735605704453288,
+      "context_hash": 14295214204718371116,
+      "translation": "이 PEP는 프레임 평가 [#pyeval_evalframeex]_\\ 를 처리하는 인터프리터별 함수 포인터를 지정할 수 있도록 CPython의 C API [#c-api]_\\ 를 확장할 것을 제안합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:07:42.891670Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This proposal also suggests adding a new field to code objects [#pycodeobject]_ to store arbitrary data for use by the frame evaluation function.",
+      "source_hash": 8213214402598630991,
+      "context_hash": 6399913503701012175,
+      "translation": "이 제안은 프레임 평가 함수가 사용할 임의의 데이터를 저장하기 위해 코드 객체 [#pycodeobject]_\\ 에 새 필드를 추가할 것도 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891671Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 17896502324739828547,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891672Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "One place where flexibility has been lacking in Python is in the direct execution of Python code.",
+      "source_hash": 2101669478100435301,
+      "context_hash": 3159236712016946523,
+      "translation": "Python에서 유연성이 부족했던 영역 중 하나는 Python 코드의 직접 실행입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891672Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "While CPython's C API [#c-api]_ allows for constructing the data going into a frame object and then evaluating it via ``PyEval_EvalFrameEx()`` [#pyeval_evalframeex]_, control over the execution of Python code comes down to individual objects instead of a holistic control of execution at the frame level.",
+      "source_hash": 9459161613106587257,
+      "context_hash": 2864893041975912061,
+      "translation": "CPython의 C API [#c-api]_\\ 는 프레임 객체에 들어갈 데이터를 구성한 다음 ``PyEval_EvalFrameEx()`` [#pyeval_evalframeex]_\\ 를 통해 이를 평가할 수 있게 하지만, Python 코드 실행에 대한 제어는 프레임 수준에서 전체적으로 제어하는 대신 개별 객체에 국한됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891672Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "While wanting to have influence over frame evaluation may seem a bit too low-level, it does open the possibility for things such as a method-level JIT to be introduced into CPython without CPython itself having to provide one.",
+      "source_hash": 8030909388691429875,
+      "context_hash": 13798192275628415854,
+      "translation": "프레임 평가에 영향을 주는 것이 다소 지나치게 저수준인 것처럼 보일 수 있지만, 이를 통해 CPython 자체가 JIT를 제공하지 않아도 메서드 수준 JIT와 같은 기능을 CPython에 도입할 가능성이 열립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891672Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "By allowing external C code to control frame evaluation, a JIT can participate in the execution of Python code at the key point where evaluation occurs.",
+      "source_hash": 14652359493828124601,
+      "context_hash": 11172904318972856601,
+      "translation": "외부 C 코드가 프레임 평가를 제어할 수 있도록 하면, JIT는 평가가 수행되는 핵심 지점에서 Python 코드 실행에 참여할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891673Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "This then allows for a JIT to conditionally recompile Python bytecode to machine code as desired while still allowing for executing regular CPython bytecode when running the JIT is not desired.",
+      "source_hash": 11514947226656763331,
+      "context_hash": 4650405108849206259,
+      "translation": "그러면 JIT는 필요에 따라 Python 바이트코드를 조건부로 기계 코드로 재컴파일하면서도, JIT 실행을 원하지 않을 때는 일반적인 CPython 바이트코드를 실행할 수 있습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:07:42.891673Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:3",
+      "source": "This can be accomplished by allowing interpreters to specify what function to call to evaluate a frame.",
+      "source_hash": 6675741004534844437,
+      "context_hash": 6754951021438853068,
+      "translation": "이는 인터프리터가 프레임을 평가하기 위해 호출할 함수를 지정할 수 있도록 함으로써 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891674Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:4",
+      "source": "And by placing the API at the frame evaluation level it allows for a complete view of the execution environment of the code for the JIT.",
+      "source_hash": 13358353748890102343,
+      "context_hash": 12668652894518126765,
+      "translation": "또한 API를 프레임 평가 수준에 배치하면 JIT가 코드의 실행 환경을 완전히 파악할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891674Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "This ability to specify a frame evaluation function also allows for other use-cases beyond just opening CPython up to a JIT.",
+      "source_hash": 3779604897933859679,
+      "context_hash": 763747995113762385,
+      "translation": "프레임 평가 함수를 지정하는 이 기능은 CPython을 JIT에 개방하는 것 외에도 다른 사용 사례를 가능하게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891674Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "For instance, it would not be difficult to implement a tracing or profiling function at the call level with this API.",
+      "source_hash": 11030218518204547459,
+      "context_hash": 17657380057649486551,
+      "translation": "예를 들어 이 API를 사용하면 호출 수준에서 추적 또는 프로파일링 함수를 어렵지 않게 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891675Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:2",
+      "source": "While CPython does provide the ability to set a tracing or profiling function at the Python level, this would be able to match the data collection of the profiler and quite possibly be faster for tracing by simply skipping per-line tracing support.",
+      "source_hash": 982861404183452258,
+      "context_hash": 6600665745571553302,
+      "translation": "CPython은 Python 수준에서 추적 또는 프로파일링 함수를 설정하는 기능을 제공하지만, 이를 사용하면 프로파일러의 데이터 수집 기능에 부합할 수 있으며 줄별 추적 지원을 단순히 건너뜀으로써 추적 성능이 더 빠를 가능성도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891675Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "It also opens up the possibility of debugging where the frame evaluation function only performs special debugging work when it detects it is about to execute a specific code object.",
+      "source_hash": 17609282532513444498,
+      "context_hash": 13118224511381705618,
+      "translation": "또한 프레임 평가 함수가 특정 코드 객체를 곧 실행하려 한다는 것을 감지했을 때만 특별한 디버깅 작업을 수행하는 방식으로 디버깅할 가능성도 열립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891675Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "In that instance the bytecode could be theoretically rewritten in-place to inject a breakpoint function call at the proper point for help in debugging while not having to do a heavy-handed approach as required by ``sys.settrace()``.",
+      "source_hash": 11922991729273645651,
+      "context_hash": 8748127947215801317,
+      "translation": "이 경우 디버깅을 지원하기 위해 적절한 지점에 중단점 함수 호출을 삽입하도록 바이트코드를 이론적으로 제자리에서 다시 작성할 수 있으므로, ``sys.settrace()`` 에서 요구하는 것과 같은 강제적인 접근 방식을 사용할 필요가 없습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:07:42.891676Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "To help facilitate these use-cases, we are also proposing the adding of a \"scratch space\" on code objects via a new field.",
+      "source_hash": 3980729027077966083,
+      "context_hash": 6988820949724894560,
+      "translation": "이러한 사용 사례를 지원하기 위해 새 필드를 통해 코드 객체에 \"스크래치 공간\"을 추가할 것도 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891676Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "This will allow per-code object data to be stored with the code object itself for easy retrieval by the frame evaluation function as necessary.",
+      "source_hash": 18434092911634336945,
+      "context_hash": 3272952230767571939,
+      "translation": "이를 통해 코드 객체별 데이터를 코드 객체 자체에 저장하여 필요할 때 프레임 평가 함수가 쉽게 검색할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891676Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:2",
+      "source": "The field itself will simply be a ``PyObject *`` type so that any data stored in the field will participate in normal object memory management.",
+      "source_hash": 1181675343013305570,
+      "context_hash": 14891788343487936279,
+      "translation": "필드 자체는 단순히 ``PyObject *``\\ 형식이므로, 필드에 저장된 모든 데이터가 일반적인 객체 메모리 관리에 참여합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891677Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Proposal",
+      "source_hash": 17139217736364358932,
+      "context_hash": 6180264838726553213,
+      "translation": "제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891677Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "All proposed C API changes below will not be part of the stable ABI.",
+      "source_hash": 7139635827314816222,
+      "context_hash": 6113947587847620142,
+      "translation": "아래에서 제안하는 모든 C API 변경 사항은 안정 ABI의 일부가 되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891677Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Expanding ``PyCodeObject``",
+      "source_hash": 7114612827282773622,
+      "context_hash": 17779944458331796932,
+      "translation": "``PyCodeObject`` 확장",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891677Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "One field is to be added to the ``PyCodeObject`` struct [#pycodeobject]_",
+      "source_hash": 277784871533084190,
+      "context_hash": 12865888562130657158,
+      "translation": "``PyCodeObject`` 구조체에 필드 하나를 추가합니다 [#pycodeobject]_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891678Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "The ``co_extra`` will be ``NULL`` by default and only filled in as needed.",
+      "source_hash": 9201701052132190648,
+      "context_hash": 16126154337498598235,
+      "translation": "``co_extra``\\ 는 기본적으로 ``NULL``\\ 이며 필요할 때만 채워집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891678Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "Values stored in the field are expected to not be required in order for the code object to function, allowing the loss of the data of the field to be acceptable.",
+      "source_hash": 13273158326133553513,
+      "context_hash": 1395652593972973352,
+      "translation": "필드에 저장되는 값은 코드 객체가 작동하는 데 필요하지 않을 것으로 예상되므로, 해당 필드의 데이터가 손실되어도 허용될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891678Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "A private API has been introduced to work with the field",
+      "source_hash": 1818437789366791664,
+      "context_hash": 2830217445993504866,
+      "translation": "이 필드와 연동하기 위한 비공개 API가 도입되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891678Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "Users of the field are expected to call ``_PyEval_RequestCodeExtraIndex()`` to receive (what should be considered) an opaque index value to adding data into ``co-extra``.",
+      "source_hash": 15691772307657974071,
+      "context_hash": 14932684118482418539,
+      "translation": "이 필드의 사용자는 ``_PyEval_RequestCodeExtraIndex()``\\ 를 호출하여 ``co-extra``\\ 에 데이터를 추가하기 위한 불투명한 인덱스 값으로 간주해야 하는 값을 받아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891679Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:1",
+      "source": "With that index, users can set data using ``_PyCode_SetExtra()`` and later retrieve the data with ``_PyCode_GetExtra()``.",
+      "source_hash": 6900201261275940437,
+      "context_hash": 3990470525439275116,
+      "translation": "사용자는 해당 인덱스를 사용하여 ``_PyCode_SetExtra()``\\ 로 데이터를 설정하고, 나중에 ``_PyCode_GetExtra()``\\ 로 데이터를 검색할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891679Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:2",
+      "source": "The API is purposefully listed as private to communicate the fact that there are no semantic guarantees of the API between Python releases.",
+      "source_hash": 7835778204616898790,
+      "context_hash": 566718557153690907,
+      "translation": "이 API가 Python 릴리스 간에 의미론적 보장을 제공하지 않는다는 사실을 알리기 위해 의도적으로 비공개 API로 명시했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891679Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "Using a list and tuple were considered but was found to be less performant, and with a key use-case being JIT usage the performance consideration won out for using a custom struct instead of a Python object.",
+      "source_hash": 618694643817442387,
+      "context_hash": 3597982090230862748,
+      "translation": "리스트와 튜플을 사용하는 방안도 고려되었지만 성능이 더 낮은 것으로 확인되었으며, 핵심 사용 사례가 JIT 사용인 만큼 Python 객체 대신 사용자 정의 구조체를 사용하는 쪽으로 성능상의 고려가 기울었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:42.891680Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "A dict was also considered, but once again performance was more important.",
+      "source_hash": 15123522322138133366,
+      "context_hash": 17643101167715624753,
+      "translation": "딕셔너리도 고려되었지만, 다시 한번 성능이 더 중요했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516466Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:1",
+      "source": "While a dict will have constant overhead in looking up data, the overhead for the common case of a single object being stored in the data structure leads to a tuple having better performance characteristics (i.e. iterating a tuple of length 1 is faster than the overhead of hashing and looking up an object in a dict).",
+      "source_hash": 2602924010010572781,
+      "context_hash": 8544160835533457831,
+      "translation": "딕셔너리는 데이터를 조회할 때 일정한 오버헤드가 발생하지만, 데이터 구조에 단일 객체가 저장되는 일반적인 경우의 오버헤드 때문에 튜플의 성능 특성이 더 우수합니다(즉, 길이가 1인 튜플을 순회하는 것이 딕셔너리에서 객체를 해싱하고 조회하는 오버헤드보다 빠릅니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516470Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Expanding ``PyInterpreterState``",
+      "source_hash": 9845061054256846448,
+      "context_hash": 11356063837592346004,
+      "translation": "``PyInterpreterState`` 확장",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516470Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "The entrypoint for the frame evaluation function is per-interpreter",
+      "source_hash": 14116491348253954650,
+      "context_hash": 1152994950007885811,
+      "translation": "프레임 평가 함수의 진입점은 인터프리터별로 존재합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:07:27.516471Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "By default, the ``eval_frame`` field will be initialized to a function pointer that represents what ``PyEval_EvalFrameEx()`` currently is (called ``_PyEval_EvalFrameDefault()``, discussed later in this PEP).",
+      "source_hash": 17374417735390845090,
+      "context_hash": 16836049056383446100,
+      "translation": "기본적으로 ``eval_frame`` 필드는 현재 ``PyEval_EvalFrameEx()``\\ 를 나타내는 함수 포인터로 초기화됩니다(이 함수는 ``_PyEval_EvalFrameDefault()``\\ 라고 하며, 이 PEP의 뒷부분에서 논의합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516472Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "Third-party code may then set their own frame evaluation function instead to control the execution of Python code.",
+      "source_hash": 4643918515298891099,
+      "context_hash": 13674563887473510638,
+      "translation": "그런 다음 서드파티 코드는 Python 코드의 실행을 제어하기 위해 자체 프레임 평가 함수를 대신 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516472Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:2",
+      "source": "A pointer comparison can be used to detect if the field is set to ``_PyEval_EvalFrameDefault()`` and thus has not been mutated yet.",
+      "source_hash": 15873925641049178375,
+      "context_hash": 8413907348232990331,
+      "translation": "포인터 비교를 사용하여 필드가 ``_PyEval_EvalFrameDefault()``\\ 로 설정되었는지, 따라서 아직 변경되지 않았는지를 감지할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516472Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Changes to ``Python/ceval.c``",
+      "source_hash": 1614813284582446,
+      "context_hash": 1713635841154507903,
+      "translation": "``Python/ceval.c`` 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516473Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "``PyEval_EvalFrameEx()`` [#pyeval_evalframeex]_ as it currently stands will be renamed to ``_PyEval_EvalFrameDefault()``.",
+      "source_hash": 1418186564330304523,
+      "context_hash": 3770929787198284108,
+      "translation": "현재 존재하는 ``PyEval_EvalFrameEx()`` [#pyeval_evalframeex]_\\ 는 ``_PyEval_EvalFrameDefault()``\\ 로 이름이 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516473Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "The new ``PyEval_EvalFrameEx()`` will then become",
+      "source_hash": 3671511059844958407,
+      "context_hash": 14578745912081693354,
+      "translation": "그러면 새로운 ``PyEval_EvalFrameEx()``\\ 는 다음과 같이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516473Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "This allows third-party code to place themselves directly in the path of Python code execution while being backwards-compatible with code already using the pre-existing C API.",
+      "source_hash": 17252786675567959099,
+      "context_hash": 17763415883416980371,
+      "translation": "이를 통해 서드파티 코드는 기존 C API를 이미 사용하고 있는 코드와 하위 호환성을 유지하면서 Python 코드 실행 경로에 직접 참여할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516473Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Updating ``python-gdb.py``",
+      "source_hash": 17037050936794051681,
+      "context_hash": 17128197502998327327,
+      "translation": "``python-gdb.py`` 업데이트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516474Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The generated ``python-gdb.py`` file used for Python support in GDB makes some hard-coded assumptions about ``PyEval_EvalFrameEx()``, e.g. the names of local variables.",
+      "source_hash": 14363067148540122054,
+      "context_hash": 1960742311678021352,
+      "translation": "GDB에서 Python 지원에 사용되는 생성된 ``python-gdb.py`` 파일은 ``PyEval_EvalFrameEx()``\\ 에 대해 일부 하드코딩된 가정을 합니다. 예를 들어 지역 변수의 이름을 가정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516474Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "It will need to be updated to work with the proposed changes.",
+      "source_hash": 14827238947083838360,
+      "context_hash": 6862251299206491827,
+      "translation": "제안된 변경 사항과 함께 작동하도록 업데이트해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516474Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Performance impact",
+      "source_hash": 17923655955533533270,
+      "context_hash": 7892169608889396651,
+      "translation": "성능 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516475Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "As this PEP is proposing an API to add pluggability, performance impact is considered only in the case where no third-party code has made any changes.",
+      "source_hash": 11684140547928431685,
+      "context_hash": 7184304744071699453,
+      "translation": "이 PEP는 플러그 가능성을 추가하는 API를 제안하므로, 성능 영향은 서드파티 코드가 어떠한 변경도 하지 않은 경우에만 고려합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516475Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Several runs of pybench [#pybench]_ consistently showed no performance cost from the API change alone.",
+      "source_hash": 15022469696365791719,
+      "context_hash": 18251007593054417936,
+      "translation": "pybench [#pybench]_\\ 를 여러 차례 실행한 결과, API 변경만으로 인한 성능 비용은 일관되게 나타나지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516476Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "A run of the Python benchmark suite [#py-benchmarks]_ showed no measurable cost in performance.",
+      "source_hash": 16669235018081401323,
+      "context_hash": 11698249212696851642,
+      "translation": "Python 벤치마크 모음 [#py-benchmarks]_\\ 을 한 차례 실행한 결과, 측정 가능한 성능 비용은 나타나지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516477Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "In terms of memory impact, since there are typically not many CPython interpreters executing in a single process that means the impact of ``co_extra`` being added to ``PyCodeObject`` is the only worry.",
+      "source_hash": 4156852588911769795,
+      "context_hash": 16874204086085916833,
+      "translation": "메모리 영향 측면에서는 일반적으로 하나의 프로세스에서 실행되는 CPython 인터프리터가 많지 않으므로, ``PyCodeObject``\\ 에 ``co_extra``\\ 가 추가되는 영향만 우려됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516477Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:1",
+      "source": "According to [#code-object-count]_, a run of the Python test suite results in about 72,395 code objects being created.",
+      "source_hash": 5288126153916169109,
+      "context_hash": 4554473860598484404,
+      "translation": "[#code-object-count]_\\ 에 따르면 Python 테스트 모음을 한 차례 실행할 때 약 72,395개의 코드 객체가 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516477Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:2",
+      "source": "On a 64-bit CPU that would result in 579,160 bytes of extra memory being used if all code objects were alive at once and had nothing set in their ``co_extra`` fields.",
+      "source_hash": 15496716551230540879,
+      "context_hash": 14801512287069165351,
+      "translation": "64비트 CPU에서 모든 코드 객체가 한꺼번에 살아 있고 ``co_extra`` 필드에 아무것도 설정되어 있지 않다면, 그 결과 579,160바이트의 추가 메모리가 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516477Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Example Usage",
+      "source_hash": 13196725719624086168,
+      "context_hash": 10458019150624741249,
+      "translation": "사용 예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516478Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "A JIT for CPython",
+      "source_hash": 12809000563421793709,
+      "context_hash": 13308108327410623769,
+      "translation": "CPython용 JIT",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516478Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Pyjion",
+      "source_hash": 1874576943551750868,
+      "context_hash": 8165369130073429871,
+      "translation": "Pyjion",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516478Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "The Pyjion project [#pyjion]_ has used this proposed API to implement a JIT for CPython using the CoreCLR's JIT [#coreclr]_.",
+      "source_hash": 17217317058529001018,
+      "context_hash": 17718781734519941004,
+      "translation": "Pyjion 프로젝트 [#pyjion]_\\ 는 CoreCLR의 JIT [#coreclr]_\\ 를 사용하여 CPython용 JIT를 구현하는 데 이 제안된 API를 사용했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516479Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:1",
+      "source": "Each code object has its ``co_extra`` field set to a ``PyjionJittedCode`` object which stores four pieces of information:",
+      "source_hash": 8309302791004909456,
+      "context_hash": 5061023674077942332,
+      "translation": "각 코드 객체의 ``co_extra`` 필드에는 네 가지 정보를 저장하는 ``PyjionJittedCode`` 객체가 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516479Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "Execution count",
+      "source_hash": 3323655545942176311,
+      "context_hash": 17751774034687342851,
+      "translation": "실행 횟수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516479Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "A boolean representing whether a previous attempt to JIT failed",
+      "source_hash": 1262871349641109624,
+      "context_hash": 6430659396710564283,
+      "translation": "이전 JIT 시도가 실패했는지를 나타내는 부울값",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516480Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "A function pointer to a trampoline (which can be type tracing or not)",
+      "source_hash": 17826952261466469489,
+      "context_hash": 15579668817567145495,
+      "translation": "트램펄린에 대한 함수 포인터(타입 추적을 수행할 수도 있고 수행하지 않을 수도 있음)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516480Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "A void pointer to any JIT-compiled machine code",
+      "source_hash": 5121358345703087522,
+      "context_hash": 17028919451273961192,
+      "translation": "JIT로 컴파일된 모든 기계 코드에 대한 void 포인터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516480Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "The frame evaluation function has (roughly) the following algorithm",
+      "source_hash": 2252215526085926264,
+      "context_hash": 763163041920014774,
+      "translation": "프레임 평가 함수는 (대략적으로) 다음 알고리즘을 가집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:27.516480Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "The key point, though, is that all of this work and logic is separate from CPython and yet with the proposed API changes it is able to provide a JIT that is compliant with Python semantics (as of this writing, performance is almost equivalent to CPython without the new API).",
+      "source_hash": 932219604960722377,
+      "context_hash": 14586378783341062940,
+      "translation": "핵심은 이 모든 작업과 로직이 CPython과는 별개이지만, 제안된 API 변경 사항을 사용하면 Python 의미론을 준수하는 JIT를 제공할 수 있다는 점입니다(이 글을 작성하는 시점에서 성능은 새로운 API가 없는 CPython과 거의 동등합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761239Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:1",
+      "source": "This means there's nothing technically preventing others from implementing their own JITs for CPython by utilizing the proposed API.",
+      "source_hash": 6872646467473010110,
+      "context_hash": 16586848204941726241,
+      "translation": "이는 제안된 API를 활용하여 다른 사람들이 CPython용 자체 JIT를 구현하는 것을 기술적으로 막는 요소가 전혀 없다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761244Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:10/seg:0",
+      "source": "Other JITs",
+      "source_hash": 5195828066751477857,
+      "context_hash": 14706520708590369693,
+      "translation": "기타 JIT",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761244Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:0",
+      "source": "It should be mentioned that the Pyston [#pyston]_ team was consulted on an earlier version of this PEP that was more JIT-specific and they were not interested in utilizing the changes proposed because they want control over memory layout they had no interest in directly supporting CPython itself.",
+      "source_hash": 16002425684586941376,
+      "context_hash": 12445147462838380346,
+      "translation": "Pyston [#pyston]_ 팀이 보다 JIT에 특화된 이 PEP의 이전 버전에 대해 자문을 받았다는 점을 언급할 필요가 있습니다. 그러나 이들은 메모리 레이아웃을 제어하기를 원했고 CPython 자체를 직접 지원하는 데에는 관심이 없었기 때문에 제안된 변경 사항을 활용하는 데 관심이 없었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761245Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:1",
+      "source": "An informal discussion with a developer on the PyPy [#pypy]_ team led to a similar comment.",
+      "source_hash": 7111589385473026724,
+      "context_hash": 4904194625148155179,
+      "translation": "PyPy [#pypy]_ 팀의 한 개발자와 나눈 비공식적인 논의에서도 비슷한 의견이 나왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761245Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:12/seg:0",
+      "source": "Numba [#numba]_, on the other hand, suggested that they would be interested in the proposed change in a post-1.0 future for themselves [#numba-interest]_.",
+      "source_hash": 6708866679579159119,
+      "context_hash": 15276928639774869460,
+      "translation": "반면 Numba [#numba]_ 는 자신들의 경우 1.0 이후의 미래에 제안된 변경 사항을 활용하는 데 관심이 있을 것이라고 밝혔습니다 [#numba-interest]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761245Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:13/seg:0",
+      "source": "The experimental Coconut JIT [#coconut]_ could have benefitted from this PEP.",
+      "source_hash": 7900194160910923352,
+      "context_hash": 884794125605970306,
+      "translation": "실험적인 Coconut JIT [#coconut]_ 는 이 PEP의 혜택을 받을 수 있었을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761245Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:13/seg:1",
+      "source": "In private conversations with Coconut's creator we were told that our API was probably superior to the one they developed for Coconut to add JIT support to CPython.",
+      "source_hash": 3252191417855826517,
+      "context_hash": 8759084919558972934,
+      "translation": "Coconut의 제작자와 비공개로 나눈 대화에서, CPython에 JIT 지원을 추가하기 위해 Coconut용으로 개발한 API보다 우리의 API가 아마도 더 우수하다는 이야기를 들었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761246Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Debugging",
+      "source_hash": 15467645757768540752,
+      "context_hash": 14823630950617726761,
+      "translation": "디버깅",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761246Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "In conversations with the Python Tools for Visual Studio team (PTVS) [#ptvs]_, they thought they would find these API changes useful for implementing more performant debugging.",
+      "source_hash": 8991620926524151757,
+      "context_hash": 2132512419850681223,
+      "translation": "Python Tools for Visual Studio 팀(PTVS) [#ptvs]_ 과 나눈 대화에서, 이들은 더 높은 성능의 디버깅을 구현하는 데 이러한 API 변경 사항이 유용할 것이라고 생각했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761246Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "As mentioned in the Rationale_ section, this API would allow for switching on debugging functionality only in frames where it is needed.",
+      "source_hash": 16770708516105010407,
+      "context_hash": 5084423339132067116,
+      "translation": "Rationale_ 절에서 언급했듯이, 이 API를 사용하면 디버깅 기능이 필요한 프레임에서만 디버깅 기능을 활성화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761247Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:2",
+      "source": "This could allow for either skipping information that ``sys.settrace()`` normally provides and even go as far as to dynamically rewrite bytecode prior to execution to inject e.g. breakpoints in the bytecode.",
+      "source_hash": 4268009182751032842,
+      "context_hash": 16037104715267148257,
+      "translation": "이를 통해 ``sys.settrace()``\\ 이 일반적으로 제공하는 정보를 건너뛸 수 있을 뿐만 아니라, 실행 전에 바이트코드를 동적으로 다시 작성하여 바이트코드에 중단점 등을 삽입할 수도 있습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:07:31.761247Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "It also turns out that Google provides a very similar API internally.",
+      "source_hash": 12428850516871077690,
+      "context_hash": 17768488088148160176,
+      "translation": "또한 Google이 내부적으로 매우 유사한 API를 제공한다는 사실도 밝혀졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761248Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "It has been used for performant debugging purposes.",
+      "source_hash": 15522504633312627160,
+      "context_hash": 13908353274485433698,
+      "translation": "이 API는 고성능 디버깅을 목적으로 사용되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761248Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 5540818028353615576,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761248Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "A set of patches implementing the proposed API is available through the Pyjion project [#pyjion]_.",
+      "source_hash": 13266297681875931246,
+      "context_hash": 2236214424649290454,
+      "translation": "제안된 API를 구현하는 패치 모음은 Pyjion 프로젝트 [#pyjion]_ 를 통해 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761249Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "In its current form it has more changes to CPython than just this proposed API, but that is for ease of development instead of strict requirements to accomplish its goals.",
+      "source_hash": 1815054161581173759,
+      "context_hash": 1441654813850663787,
+      "translation": "현재 형태에서는 제안된 API 외에도 CPython에 더 많은 변경 사항이 포함되어 있지만, 이는 목표 달성을 위한 엄격한 요구 사항 때문이 아니라 개발을 용이하게 하기 위한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761249Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Open Issues",
+      "source_hash": 15188361361114285070,
+      "context_hash": 5288293952370457013,
+      "translation": "미해결 문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761249Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Allow ``eval_frame`` to be ``NULL``",
+      "source_hash": 8548667145137512956,
+      "context_hash": 4206686146519176067,
+      "translation": "``eval_frame``\\ 을 ``NULL``\\ 로 허용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761250Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Currently the frame evaluation function is expected to always be set.",
+      "source_hash": 2217226195191836674,
+      "context_hash": 2121826748590428026,
+      "translation": "현재는 프레임 평가 함수가 항상 설정되어 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761250Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "It could very easily simply default to ``NULL`` instead which would signal to use ``_PyEval_EvalFrameDefault()``.",
+      "source_hash": 17445396591876000041,
+      "context_hash": 304410124219817050,
+      "translation": "대신 이 값을 아주 간단히 ``NULL``\\ 로 기본 설정할 수 있으며, 이는 ``_PyEval_EvalFrameDefault()``\\ 를 사용하라는 신호가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761250Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:2",
+      "source": "The current proposal of not special-casing the field seemed the most straightforward, but it does require that the field not accidentally be cleared, else a crash may occur.",
+      "source_hash": 8154464510681373427,
+      "context_hash": 18230619426970643064,
+      "translation": "필드를 특수 처리하지 않는 현재 제안이 가장 간단해 보였지만, 이 경우 필드가 실수로 지워지지 않도록 해야 하며, 그렇지 않으면 충돌이 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761250Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 6245996118518170017,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761251Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "A JIT-specific C API",
+      "source_hash": 11520539557315323498,
+      "context_hash": 15159813382610079893,
+      "translation": "JIT에 특화된 C API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761251Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "Originally this PEP was going to propose a much larger API change which was more JIT-specific.",
+      "source_hash": 2418510091619374023,
+      "context_hash": 9580422646540540870,
+      "translation": "원래 이 PEP에서는 훨씬 더 규모가 크고 JIT에 특화된 API 변경을 제안할 예정이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761251Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "After soliciting feedback from the Numba team [#numba]_, though, it became clear that the API was unnecessarily large.",
+      "source_hash": 16312532612708391431,
+      "context_hash": 2618935732000690898,
+      "translation": "그러나 Numba 팀 [#numba]_ 에 피드백을 요청한 후, 해당 API가 불필요하게 크다는 점이 분명해졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761251Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:2",
+      "source": "The realization was made that all that was truly needed was the opportunity to provide a trampoline function to handle execution of Python code that had been JIT-compiled and a way to attach that compiled machine code along with other critical data to the corresponding Python code object.",
+      "source_hash": 17301365040710036698,
+      "context_hash": 15365206268415120926,
+      "translation": "실제로 필요한 것은 JIT로 컴파일된 Python 코드의 실행을 처리할 트램펄린 함수를 제공할 기회와, 해당 컴파일된 기계어 코드를 다른 핵심 데이터와 함께 대응하는 Python 코드 객체에 연결할 방법뿐이라는 사실을 깨달았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761252Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:3",
+      "source": "Once it was shown that there was no loss in functionality or in performance while minimizing the API changes required, the proposal was changed to its current form.",
+      "source_hash": 11427042597398091695,
+      "context_hash": 1019513761721530833,
+      "translation": "필요한 API 변경을 최소화하면서도 기능이나 성능의 손실이 없다는 점이 입증되자, 제안은 현재 형태로 변경되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761252Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Is co_extra needed?",
+      "source_hash": 15581369406129877571,
+      "context_hash": 3276034061855627706,
+      "translation": "co_extra가 필요합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761252Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "While discussing this PEP at PyCon US 2016, some core developers expressed their worry of the ``co_extra`` field making code objects mutable.",
+      "source_hash": 11332538178857798400,
+      "context_hash": 11596769323765229511,
+      "translation": "PyCon US 2016에서 이 PEP를 논의하는 동안 일부 핵심 개발자들은 ``co_extra``\\ 필드가 코드 객체를 변경 가능하게 만들 수 있다는 우려를 표명했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761252Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "The thinking seemed to be that having a field that was mutated after the creation of the code object made the object seem mutable, even though no other aspect of code objects changed.",
+      "source_hash": 16848183297171906686,
+      "context_hash": 7048104887989202434,
+      "translation": "코드 객체가 생성된 후 변경되는 필드를 두면 다른 코드 객체의 어떤 측면도 변경되지 않더라도 해당 객체가 변경 가능한 것처럼 보인다는 것이 이들의 생각인 듯했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:31.761253Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "The view of this PEP is that the ``co_extra`` field doesn't change the fact that code objects are immutable.",
+      "source_hash": 6068068251264989336,
+      "context_hash": 15204497801657504475,
+      "translation": "이 PEP의 관점은 ``co_extra`` 필드가 코드 객체가 불변이라는 사실을 바꾸지 않는다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235505Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:1",
+      "source": "The field is specified in this PEP to not contain information required to make the code object usable, making it more of a caching field.",
+      "source_hash": 9606191482175372401,
+      "context_hash": 5983242050008541873,
+      "translation": "이 필드는 코드 객체를 사용할 수 있도록 하는 데 필요한 정보를 포함하지 않도록 이 PEP에서 지정되어 있으므로, 캐시 필드에 더 가깝습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235509Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:2",
+      "source": "It could be viewed as similar to the UTF-8 cache that string objects have internally; strings are still considered immutable even though they have a field that is conditionally set.",
+      "source_hash": 3193652941819702943,
+      "context_hash": 2029605450110984903,
+      "translation": "문자열 객체가 내부적으로 갖는 UTF-8 캐시와 유사하다고 볼 수 있습니다. 문자열에는 조건부로 설정되는 필드가 있더라도 여전히 불변으로 간주됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235510Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "Performance measurements were also made where the field was not available for JIT workloads.",
+      "source_hash": 16796244733212974749,
+      "context_hash": 7915127139797270186,
+      "translation": "또한 JIT 작업에서 이 필드를 사용할 수 없는 경우에 대한 성능 측정도 수행했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235510Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:1",
+      "source": "The loss of the field was deemed too costly to performance when using an unordered map from C++ or Python's dict to associated a code object with JIT-specific data objects.",
+      "source_hash": 17926679563416928551,
+      "context_hash": 3105743868790999994,
+      "translation": "C++의 비순서 맵이나 Python의 딕셔너리를 사용하여 코드 객체를 JIT별 데이터 객체와 연결할 때 이 필드가 없으면 성능 저하 비용이 너무 크다고 판단했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235510Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 5277057952386580526,
+      "translation": "참조",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235511Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Pyjion project",
+      "source_hash": 3393815876041918821,
+      "context_hash": 5069067483582919687,
+      "translation": "Pyjion 프로젝트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235512Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "(https://github.com/microsoft/pyjion)",
+      "source_hash": 287412914498634401,
+      "context_hash": 17290640878081972207,
+      "translation": "(https://github.com/microsoft/pyjion)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235512Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "CPython's C API",
+      "source_hash": 5253468076662884862,
+      "context_hash": 16758932996951442502,
+      "translation": "CPython의 C API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235512Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "(https://docs.python.org/3/c-api/index.html)",
+      "source_hash": 15870300666088182490,
+      "context_hash": 12149098873623752810,
+      "translation": "(https://docs.python.org/3/c-api/index.html)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235512Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "``PyCodeObject``",
+      "source_hash": 15592228866943924704,
+      "context_hash": 18020674328040698485,
+      "translation": "``PyCodeObject``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235513Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:0",
+      "source": "(https://docs.python.org/3/c-api/code.html#c.PyCodeObject)",
+      "source_hash": 1679591144760214101,
+      "context_hash": 4712737723137920500,
+      "translation": "(https://docs.python.org/3/c-api/code.html#c.PyCodeObject)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235513Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:0",
+      "source": ".NET Core Runtime (CoreCLR)",
+      "source_hash": 17022273015305014394,
+      "context_hash": 16190905346410010412,
+      "translation": ".NET Core 런타임(CoreCLR)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235513Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:8/seg:0",
+      "source": "(https://github.com/dotnet/coreclr)",
+      "source_hash": 6891766548550903152,
+      "context_hash": 16093032560822599980,
+      "translation": "(https://github.com/dotnet/coreclr)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235514Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:9/seg:0",
+      "source": "``PyEval_EvalFrameEx()``",
+      "source_hash": 16136404014703833900,
+      "context_hash": 2232379670255196984,
+      "translation": "``PyEval_EvalFrameEx()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235514Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:10/seg:0",
+      "source": "(https://docs.python.org/3/c-api/veryhigh.html?highlight=pyframeobject#c.PyEval_EvalFrameEx)",
+      "source_hash": 15134503039200961914,
+      "context_hash": 12713061137463750374,
+      "translation": "(https://docs.python.org/3/c-api/veryhigh.html?highlight=pyframeobject#c.PyEval_EvalFrameEx)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235514Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:11/seg:0",
+      "source": "Numba",
+      "source_hash": 17712851552122518727,
+      "context_hash": 4500110430486671343,
+      "translation": "Numba",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235515Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:12/seg:0",
+      "source": "(http://numba.pydata.org/)",
+      "source_hash": 14427446542915650397,
+      "context_hash": 3031017165726543967,
+      "translation": "(http://numba.pydata.org/)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235515Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:13/seg:0",
+      "source": "numba-users mailing list:",
+      "source_hash": 6615853360022579606,
+      "context_hash": 6161886201707925957,
+      "translation": "numba-users 메일링 리스트:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235515Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:14/seg:0",
+      "source": "\"Would the C API for a JIT entrypoint being proposed by Pyjion help out Numba?\" (https://groups.google.com/a/continuum.io/forum/#!topic/numba-users/yRl_0t8-m1g)",
+      "source_hash": 14825493484028444500,
+      "context_hash": 14232983042535682218,
+      "translation": "\"Pyjion에서 제안하는 JIT 진입점용 C API가 Numba에 도움이 되겠습니까?\" (https://groups.google.com/a/continuum.io/forum/#!topic/numba-users/yRl_0t8-m1g)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235515Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:15/seg:0",
+      "source": "[Python-Dev] Opcode cache in ceval loop",
+      "source_hash": 12192158200286938187,
+      "context_hash": 17145514551235018143,
+      "translation": "[Python-Dev] ceval 루프의 opcode 캐시",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235516Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:16/seg:0",
+      "source": "(https://mail.python.org/pipermail/python-dev/2016-February/143025.html)",
+      "source_hash": 13993636741190072260,
+      "context_hash": 219546717778166872,
+      "translation": "(https://mail.python.org/pipermail/python-dev/2016-February/143025.html)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235516Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:17/seg:0",
+      "source": "Python benchmark suite",
+      "source_hash": 15933553276496763594,
+      "context_hash": 16515869833367627755,
+      "translation": "Python 벤치마크 모음",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235516Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:18/seg:0",
+      "source": "(https://hg.python.org/benchmarks)",
+      "source_hash": 11462796214509624502,
+      "context_hash": 7965419832440896272,
+      "translation": "(https://hg.python.org/benchmarks)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235517Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:19/seg:0",
+      "source": "Pyston",
+      "source_hash": 14342532123465692394,
+      "context_hash": 8390526865632027954,
+      "translation": "Pyston",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235517Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:20/seg:0",
+      "source": "(http://pyston.org)",
+      "source_hash": 4936675638336858516,
+      "context_hash": 11474285786178298482,
+      "translation": "(http://pyston.org)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235517Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:21/seg:0",
+      "source": "PyPy",
+      "source_hash": 14530732896986546368,
+      "context_hash": 328381553622832107,
+      "translation": "PyPy",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235517Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:22/seg:0",
+      "source": "(http://pypy.org/)",
+      "source_hash": 7407801280618461139,
+      "context_hash": 833517473686507000,
+      "translation": "(http://pypy.org/)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235517Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:23/seg:0",
+      "source": "Python Tools for Visual Studio",
+      "source_hash": 17784919174939314071,
+      "context_hash": 2530160980621941143,
+      "translation": "Visual Studio용 Python 도구",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235518Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:24/seg:0",
+      "source": "(http://microsoft.github.io/PTVS/)",
+      "source_hash": 6849323669772762625,
+      "context_hash": 8297338036059373356,
+      "translation": "(http://microsoft.github.io/PTVS/)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235518Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:25/seg:0",
+      "source": "Coconut",
+      "source_hash": 4889222409464894182,
+      "context_hash": 1665603824742456125,
+      "translation": "Coconut",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235518Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:26/seg:0",
+      "source": "(https://github.com/davidmalcolm/coconut)",
+      "source_hash": 17759782151705119648,
+      "context_hash": 11950150002678996823,
+      "translation": "(https://github.com/davidmalcolm/coconut)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:46.235519Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:27/seg:0",
+      "source": "pybench",
+      "source_hash": 13151817830541912262,
+      "context_hash": 16353734888425819494,
+      "translation": "pybench",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:22.605019Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:28/seg:0",
+      "source": "(https://hg.python.org/cpython/file/default/Tools/pybench)",
+      "source_hash": 4861909017251240972,
+      "context_hash": 403683842287063322,
+      "translation": "(https://hg.python.org/cpython/file/default/Tools/pybench)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:22.605027Z",
+      "issues": []
+    }
+  ]
+}

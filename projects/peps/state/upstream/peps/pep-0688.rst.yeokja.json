@@ -1,0 +1,1467 @@
+{
+  "version": 1,
+  "source_hash": 10459685150067668321,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Making the buffer protocol accessible in Python",
+      "source_hash": 15699077596204079855,
+      "context_hash": 16530898886277989957,
+      "translation": "Python에서 버퍼 프로토콜에 접근 가능하게 하기",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:36.251657Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 7220755452949870829,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251661Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes a Python-level API for the buffer protocol, which is currently accessible only to C code.",
+      "source_hash": 11049669602490928169,
+      "context_hash": 16214323618335683979,
+      "translation": "이 PEP는 현재 C 코드에서만 접근할 수 있는 버퍼 프로토콜을 위한 Python 수준 API를 제안합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:36.251662Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This allows type checkers to evaluate whether objects implement the protocol.",
+      "source_hash": 12315358950990439268,
+      "context_hash": 2232860770167299130,
+      "translation": "이를 통해 타입 검사기가 객체가 프로토콜을 구현하는지 평가할 수 있습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:36.251662Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 347277069955219925,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251663Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The CPython C API provides a versatile mechanism for accessing the underlying memory of an object—the `buffer protocol <https://docs.python.org/3/c-api/buffer.html>`__ introduced in :pep:`3118`.",
+      "source_hash": 2890550078407882497,
+      "context_hash": 15446510774613900197,
+      "translation": "CPython C API는 객체의 기본 메모리에 접근하기 위한 다목적 메커니즘인 `버퍼 프로토콜 <https://docs.python.org/3/c-api/buffer.html>`__\\ 을 제공합니다. 이 프로토콜은 :pep:`3118`\\ 에서 도입되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251663Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Functions that accept binary data are usually written to handle any object implementing the buffer protocol.",
+      "source_hash": 15225397578310708832,
+      "context_hash": 5990200468387503622,
+      "translation": "바이너리 데이터를 허용하는 함수는 일반적으로 버퍼 프로토콜을 구현하는 모든 객체를 처리하도록 작성됩니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:36.251663Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "For example, at the time of writing, there are around 130 functions in CPython using the Argument Clinic ``Py_buffer`` type, which accepts the buffer protocol.",
+      "source_hash": 8726164146961839339,
+      "context_hash": 9745282211485226002,
+      "translation": "예를 들어, 이 문서를 작성하는 시점에 CPython에는 버퍼 프로토콜을 허용하는 Argument Clinic ``Py_buffer`` 타입을 사용하는 함수가 약 130개 있습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:36.251664Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Currently, there is no way for Python code to inspect whether an object supports the buffer protocol.",
+      "source_hash": 10673201694460253551,
+      "context_hash": 6949554825831233530,
+      "translation": "현재 Python 코드에서 객체가 버퍼 프로토콜을 지원하는지 검사할 방법은 없습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:36.251665Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "Moreover, the static type system does not provide a type annotation to represent the protocol.",
+      "source_hash": 1847036276615424442,
+      "context_hash": 1847313185161650598,
+      "translation": "또한 정적 타입 시스템은 프로토콜을 나타내는 타입 어노테이션을 제공하지 않습니다.",
+      "glossary_snapshot": {
+        "type annotation": "타입 어노테이션",
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:36.251665Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "This is a `common problem <https://github.com/python/typing/issues/593>`__ when writing type annotations for code that accepts generic buffers.",
+      "source_hash": 211427736313914668,
+      "context_hash": 5873506793394472366,
+      "translation": "이는 일반 버퍼를 허용하는 코드의 타입 어노테이션을 작성할 때 발생하는 `흔한 문제 <https://github.com/python/typing/issues/593>`__\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251666Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Similarly, it is impossible for a class written in Python to support the buffer protocol.",
+      "source_hash": 18325811329842530184,
+      "context_hash": 18190267057746391414,
+      "translation": "마찬가지로 Python으로 작성된 클래스가 버퍼 프로토콜을 지원하는 것도 불가능합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:36.251666Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "A buffer class in Python would give users the ability to easily wrap a C buffer object, or to test the behavior of an API that consumes the buffer protocol.",
+      "source_hash": 1079590219885087212,
+      "context_hash": 13919870594550218250,
+      "translation": "Python의 버퍼 클래스는 사용자가 C 버퍼 객체를 쉽게 래핑하거나 버퍼 프로토콜을 사용하는 API의 동작을 테스트할 수 있게 합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:36.251667Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:2",
+      "source": "Granted, this is not a particularly common need.",
+      "source_hash": 3355582957931460994,
+      "context_hash": 261747485189444328,
+      "translation": "물론 이는 특히 흔한 요구 사항은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251668Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:3",
+      "source": "However, there has been a `CPython feature request <https://github.com/python/cpython/issues/58006>`__ for supporting buffer classes written in Python that has been open since 2012.",
+      "source_hash": 12236030989300072615,
+      "context_hash": 4872475954820367561,
+      "translation": "그러나 Python으로 작성된 버퍼 클래스의 지원을 요청하는 `CPython 기능 요청 <https://github.com/python/cpython/issues/58006>`__\\ 이 2012년부터 열려 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251668Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 4025839067407220547,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251668Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Current options",
+      "source_hash": 3829723141935033384,
+      "context_hash": 12536136948418522592,
+      "translation": "현재 선택지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251668Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "There are two known workarounds for annotating buffer types in the type system, but neither is adequate.",
+      "source_hash": 16699487111388360977,
+      "context_hash": 3118999134180081282,
+      "translation": "타입 시스템에서 버퍼 타입에 어노테이션을 지정하기 위한 알려진 우회 방법은 두 가지가 있지만, 어느 것도 충분하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251668Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "First, the `current workaround <https://github.com/python/typeshed/blob/2a0fc1b582ef84f7a82c0beb39fa617de2539d3d/stdlib/_typeshed/__init__.pyi#L194>`__ for buffer types in typeshed is a type alias that lists well-known buffer types in the standard library, such as ``bytes``, ``bytearray``, ``memoryview``, and ``array.array``.",
+      "source_hash": 3540452142407283829,
+      "context_hash": 5012580363672152402,
+      "translation": "첫째, typeshed에서 버퍼 타입에 사용하는 `현재의 우회 방법 <https://github.com/python/typeshed/blob/2a0fc1b582ef84f7a82c0beb39fa617de2539d3d/stdlib/_typeshed/__init__.pyi#L194>`__\\ 은 표준 라이브러리에서 잘 알려진 버퍼 타입인 ``bytes``, ``bytearray``, ``memoryview``, ``array.array``\\ 를 나열하는 타입 별칭입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:37:36.251669Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "This approach works for the standard library, but it does not extend to third-party buffer types.",
+      "source_hash": 10936797561411618584,
+      "context_hash": 11810459988229838,
+      "translation": "이 방식은 표준 라이브러리에서는 작동하지만 서드 파티 버퍼 타입으로 확장되지는 않습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:37:36.251669Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Second, the `documentation <https://docs.python.org/3.10/library/typing.html#typing.ByteString>`__ for ``typing.ByteString`` currently states:",
+      "source_hash": 1461994937693142940,
+      "context_hash": 13763427547370361129,
+      "translation": "둘째, ``typing.ByteString``\\ 에 대한 `문서 <https://docs.python.org/3.10/library/typing.html#typing.ByteString>`__\\ 는 현재 다음과 같이 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251670Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "This type represents the types ``bytes``, ``bytearray``, and ``memoryview`` of byte sequences.",
+      "source_hash": 10095359300161736138,
+      "context_hash": 11192796479140899926,
+      "translation": "이 타입은 바이트 시퀀스의 ``bytes``, ``bytearray``, ``memoryview`` 타입을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251670Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "As a shorthand for this type, ``bytes`` can be used to annotate arguments of any of the types mentioned above.",
+      "source_hash": 10356462322679395479,
+      "context_hash": 7243693008960489140,
+      "translation": "이 타입의 약식 표기로 ``bytes``\\ 를 사용하여 위에 언급한 모든 타입의 인자에 어노테이션을 지정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251670Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "Although this sentence has been in the documentation `since 2015 <https://github.com/python/cpython/commit/2a19d956ab92fc9084a105cc11292cb0438b322f>`__, the use of ``bytes`` to include these other types is not specified in any of the typing PEPs.",
+      "source_hash": 2250720252458490360,
+      "context_hash": 2927777013254647854,
+      "translation": "이 문장은 `2015년부터 <https://github.com/python/cpython/commit/2a19d956ab92fc9084a105cc11292cb0438b322f>`__ 문서에 포함되어 있었지만, 이러한 다른 타입을 포함하도록 ``bytes``\\ 를 사용하는 방식은 어떤 typing PEP에도 명시되어 있지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251671Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:1",
+      "source": "Furthermore, this mechanism has a number of problems.",
+      "source_hash": 3376795597126640656,
+      "context_hash": 18427366413880378300,
+      "translation": "게다가 이 메커니즘에는 여러 문제가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251671Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:2",
+      "source": "It does not include all possible buffer types, and it makes the ``bytes`` type ambiguous in type annotations.",
+      "source_hash": 16841301484424591160,
+      "context_hash": 4078032096817488235,
+      "translation": "모든 가능한 버퍼 타입을 포함하지 않으며, 타입 어노테이션에서 ``bytes`` 타입을 모호하게 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251671Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:3",
+      "source": "After all, there are many operations that are valid on ``bytes`` objects, but not on ``memoryview`` objects, and it is perfectly possible for a function to accept ``bytes`` but not ``memoryview`` objects.",
+      "source_hash": 13179085323706365262,
+      "context_hash": 9770283285733485786,
+      "translation": "결국 ``bytes`` 객체에서는 유효하지만 ``memoryview`` 객체에서는 유효하지 않은 연산이 많으며, 함수가 ``bytes``\\ 는 허용하지만 ``memoryview`` 객체는 허용하지 않는 것도 충분히 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251671Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:4",
+      "source": "A mypy user `reports <https://github.com/python/mypy/issues/12643#issuecomment-1105914159>`__ that this shortcut has caused significant problems for the ``psycopg`` project.",
+      "source_hash": 12108177040239478646,
+      "context_hash": 12311009323265227965,
+      "translation": "한 mypy 사용자는 이 단축 표기로 인해 ``psycopg`` 프로젝트에 상당한 문제가 발생했다고 `보고합니다 <https://github.com/python/mypy/issues/12643#issuecomment-1105914159>`__.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251672Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Kinds of buffers",
+      "source_hash": 12057325771360836928,
+      "context_hash": 6113693746430419605,
+      "translation": "버퍼의 종류",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251672Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "The C buffer protocol supports `many options <https://docs.python.org/3.10/c-api/buffer.html#buffer-request-types>`__, affecting strides, contiguity, and support for writing to the buffer.",
+      "source_hash": 10212810684969134758,
+      "context_hash": 1517797791473161442,
+      "translation": "C 버퍼 프로토콜은 스트라이드, 연속성, 버퍼 쓰기 지원에 영향을 미치는 `많은 옵션 <https://docs.python.org/3.10/c-api/buffer.html#buffer-request-types>`__\\ 을 지원합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:36.251672Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "Some of these options would be useful in the type system.",
+      "source_hash": 4203584307814848195,
+      "context_hash": 7243867158228267533,
+      "translation": "이러한 옵션 중 일부는 타입 시스템에서 유용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251673Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "For example, typeshed currently provides separate type aliases for writable and read-only buffers.",
+      "source_hash": 3976457436220793065,
+      "context_hash": 16362207119276930135,
+      "translation": "예를 들어, typeshed는 현재 쓰기 가능한 버퍼와 읽기 전용 버퍼에 대해 별도의 타입 별칭을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:36.251673Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "However, in the C buffer protocol, most of these options cannot be queried directly on the type object.",
+      "source_hash": 8456230379683170400,
+      "context_hash": 1741008626515409677,
+      "translation": "그러나 C 버퍼 프로토콜에서는 이러한 옵션 대부분을 타입 객체에서 직접 조회할 수 없습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:12.942217Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "The only way to figure out whether an object supports a particular flag is to actually ask for the buffer.",
+      "source_hash": 6365165126810851881,
+      "context_hash": 9194201433352291386,
+      "translation": "객체가 특정 플래그를 지원하는지 확인하는 유일한 방법은 실제로 버퍼를 요청하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942222Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:2",
+      "source": "For some types, such as ``memoryview``, the supported flags depend on the instance.",
+      "source_hash": 6778447849739463165,
+      "context_hash": 8752126420456666545,
+      "translation": "``memoryview``\\ 와 같은 일부 타입에서는 지원되는 플래그가 인스턴스에 따라 달라집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942222Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:3",
+      "source": "As a result, it would be difficult to represent support for these flags in the type system.",
+      "source_hash": 16456942324576920646,
+      "context_hash": 5891763905633644458,
+      "translation": "따라서 타입 시스템에서 이러한 플래그에 대한 지원을 표현하기는 어려울 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942222Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 15106312865080038626,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942223Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Python-level buffer protocol",
+      "source_hash": 17964319197553531264,
+      "context_hash": 2187044686232896305,
+      "translation": "Python 수준 버퍼 프로토콜",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:12.942223Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "We propose to add two Python-level special methods, ``__buffer__`` and ``__release_buffer__``.",
+      "source_hash": 4891279679489736809,
+      "context_hash": 3645287882118255558,
+      "translation": "두 가지 Python 수준 특수 메서드인 ``__buffer__`` 및 ``__release_buffer__``\\ 를 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942224Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "Python classes that implement these methods are usable as buffers from C code.",
+      "source_hash": 6378180807573730823,
+      "context_hash": 2993098117573469799,
+      "translation": "이러한 메서드를 구현하는 Python 클래스는 C 코드에서 버퍼로 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942224Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:2",
+      "source": "Conversely, classes implemented in C that support the buffer protocol acquire synthesized methods accessible from Python code.",
+      "source_hash": 2972357166790069865,
+      "context_hash": 16237856400575506758,
+      "translation": "반대로 버퍼 프로토콜을 지원하도록 C로 구현된 클래스에는 Python 코드에서 접근할 수 있는 합성 메서드가 생성됩니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:12.942224Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "The ``__buffer__`` method is called to create a buffer from a Python object, for example by the ``memoryview()`` constructor.",
+      "source_hash": 12105937116730129873,
+      "context_hash": 2777416839263628708,
+      "translation": "``__buffer__`` 메서드는 Python 객체에서 버퍼를 생성하기 위해 호출되며, 예를 들어 ``memoryview()`` 생성자가 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942225Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "It corresponds to the ``bf_getbuffer`` C slot.",
+      "source_hash": 303097013724600407,
+      "context_hash": 7468264823582937309,
+      "translation": "이는 ``bf_getbuffer`` C 슬롯에 대응합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942225Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:2",
+      "source": "The Python signature for this method is ``def __buffer__(self, flags: int, /) -> memoryview: ...``.",
+      "source_hash": 10135425702868787475,
+      "context_hash": 11045080655627730905,
+      "translation": "이 메서드의 Python 시그니처는 ``def __buffer__(self, flags: int, /) -> memoryview: ...``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942226Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:3",
+      "source": "The method must return a ``memoryview`` object.",
+      "source_hash": 18058941356116786885,
+      "context_hash": 6063252550281792437,
+      "translation": "이 메서드는 ``memoryview`` 객체를 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942226Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:4",
+      "source": "If the ``bf_getbuffer`` slot is invoked on a Python class with a ``__buffer__`` method, the interpreter extracts the underlying ``Py_buffer`` from the ``memoryview`` returned by the method and returns it to the C caller.",
+      "source_hash": 8305984604316386131,
+      "context_hash": 5229050955303651733,
+      "translation": "``__buffer__`` 메서드가 있는 Python 클래스에서 ``bf_getbuffer`` 슬롯이 호출되면, 인터프리터는 메서드가 반환한 ``memoryview``\\ 에서 기저 ``Py_buffer``\\ 를 추출하여 C 호출자에게 반환합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:37:12.942226Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:5",
+      "source": "Similarly, if Python code calls the ``__buffer__`` method on an instance of a C class that implements ``bf_getbuffer``, the returned buffer is wrapped in a ``memoryview`` for consumption by Python code.",
+      "source_hash": 12021427611586294458,
+      "context_hash": 4820349547779048315,
+      "translation": "마찬가지로 ``bf_getbuffer``\\ 를 구현하는 C 클래스의 인스턴스에서 Python 코드가 ``__buffer__`` 메서드를 호출하면, 반환된 버퍼는 Python 코드에서 사용할 수 있도록 ``memoryview``\\ 로 래핑됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942227Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "The ``__release_buffer__`` method should be called when a caller no longer needs the buffer returned by ``__buffer__``.",
+      "source_hash": 13900015242478961243,
+      "context_hash": 12943042681881905502,
+      "translation": "호출자가 ``__buffer__``\\ 가 반환한 버퍼를 더 이상 필요로 하지 않을 때 ``__release_buffer__`` 메서드를 호출해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942230Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "It corresponds to the ``bf_releasebuffer`` C slot.",
+      "source_hash": 17192812609837170647,
+      "context_hash": 9389273376038385954,
+      "translation": "이는 ``bf_releasebuffer`` C 슬롯에 대응합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942230Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:2",
+      "source": "This is an optional part of the buffer protocol.",
+      "source_hash": 17624956606127513435,
+      "context_hash": 10999076798862219883,
+      "translation": "이는 버퍼 프로토콜의 선택적 부분입니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:12.942231Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:3",
+      "source": "The Python signature for this method is ``def __release_buffer__(self, buffer: memoryview, /) -> None: ...``.",
+      "source_hash": 336967929285497352,
+      "context_hash": 10781878390345396276,
+      "translation": "이 메서드의 Python 시그니처는 ``def __release_buffer__(self, buffer: memoryview, /) -> None: ...``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942231Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:4",
+      "source": "The buffer to be released is wrapped in a ``memoryview``.",
+      "source_hash": 1770382471639304340,
+      "context_hash": 18354564654818037087,
+      "translation": "해제할 버퍼는 ``memoryview``\\ 로 래핑됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942231Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:5",
+      "source": "When this method is invoked through CPython's buffer API (for example, through calling ``memoryview.release`` on a ``memoryview`` returned by ``__buffer__``), the passed ``memoryview`` is the same object as was returned by ``__buffer__``.",
+      "source_hash": 7358075654700196631,
+      "context_hash": 13015983461569049565,
+      "translation": "이 메서드가 CPython의 버퍼 API를 통해 호출될 때(예를 들어 ``__buffer__``\\ 가 반환한 ``memoryview``\\ 에서 ``memoryview.release``\\ 를 호출할 때), 전달되는 ``memoryview``\\ 는 ``__buffer__``\\ 가 반환한 객체와 동일한 객체입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942232Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:6",
+      "source": "It is also possible to call ``__release_buffer__`` on a C class that implements ``bf_releasebuffer``.",
+      "source_hash": 2288035486691250567,
+      "context_hash": 15518775634466605817,
+      "translation": "``bf_releasebuffer``\\ 를 구현하는 C 클래스에서 ``__release_buffer__``\\ 를 호출하는 것도 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942232Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "If ``__release_buffer__`` exists on an object, Python code that calls ``__buffer__`` directly on the object must call ``__release_buffer__`` on the same object when it is done with the buffer.",
+      "source_hash": 10381634014284274437,
+      "context_hash": 5399631093579435770,
+      "translation": "객체에 ``__release_buffer__``\\ 가 존재하는 경우, 객체에서 직접 ``__buffer__``\\ 를 호출하는 Python 코드는 버퍼 사용을 마쳤을 때 동일한 객체에서 ``__release_buffer__``\\ 를 호출해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942232Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "Otherwise, resources used by the object may not be reclaimed.",
+      "source_hash": 4260259269993674658,
+      "context_hash": 11347657304944498507,
+      "translation": "그렇지 않으면 객체가 사용하는 리소스가 회수되지 않을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942232Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:2",
+      "source": "Similarly, it is a programming error to call ``__release_buffer__`` without a previous call to ``__buffer__``, or to call it multiple times for a single call to ``__buffer__``.",
+      "source_hash": 7796738344910103275,
+      "context_hash": 7833002373234243677,
+      "translation": "마찬가지로 ``__buffer__``\\ 를 이전에 호출하지 않고 ``__release_buffer__``\\ 를 호출하거나, ``__buffer__``\\ 를 한 번 호출한 것에 대해 이를 여러 번 호출하는 것은 프로그래밍 오류입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942233Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:3",
+      "source": "For objects that implement the C buffer protocol, calls to ``__release_buffer__`` where the argument is not a ``memoryview`` wrapping the same object will raise an exception.",
+      "source_hash": 15257265950483388070,
+      "context_hash": 4602365618184712614,
+      "translation": "C 버퍼 프로토콜을 구현하는 객체의 경우, 인자가 동일한 객체를 래핑하는 ``memoryview``\\ 가 아닌 상태에서 ``__release_buffer__``\\ 를 호출하면 예외가 발생합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:12.942233Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:4",
+      "source": "After a valid call to ``__release_buffer__``, the ``memoryview`` is invalidated (as if its ``release()`` method had been called), and any subsequent calls to ``__release_buffer__`` with the same ``memoryview`` will raise an exception.",
+      "source_hash": 9155190441959762203,
+      "context_hash": 8289219474534217887,
+      "translation": "``__release_buffer__``\\ 를 유효하게 호출한 후에는 ``memoryview``\\ 가 무효화되며(해당 ``release()`` 메서드가 호출된 것처럼 동작함), 동일한 ``memoryview``\\ 를 사용하여 이후에 ``__release_buffer__``\\ 를 호출하면 예외가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942233Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:5",
+      "source": "The interpreter will ensure that misuse of the Python API will not break invariants at the C level -- for example, it will not cause memory safety violations.",
+      "source_hash": 12365059463011268147,
+      "context_hash": 12357438827381063282,
+      "translation": "인터프리터는 Python API의 오용으로 인해 C 수준의 불변 조건이 깨지지 않도록 보장합니다. 예를 들어 메모리 안전성 위반이 발생하지 않습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:37:12.942234Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "``inspect.BufferFlags``",
+      "source_hash": 9985415023177748943,
+      "context_hash": 11373298843872658593,
+      "translation": "``inspect.BufferFlags``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942234Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "To help implementations of ``__buffer__``, we add ``inspect.BufferFlags``, a subclass of ``enum.IntFlag``.",
+      "source_hash": 9118947809520600511,
+      "context_hash": 12713174493245416257,
+      "translation": "``__buffer__``\\ 의 구현을 지원하기 위해 ``enum.IntFlag``\\ 의 서브클래스인 ``inspect.BufferFlags``\\ 를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942234Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "This enum contains all flags defined in the C buffer protocol.",
+      "source_hash": 526439581005091860,
+      "context_hash": 9828294177175078867,
+      "translation": "이 열거형에는 C 버퍼 프로토콜에 정의된 모든 플래그가 포함됩니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:12.942235Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "For example, ``inspect.BufferFlags.SIMPLE`` has the same value as the ``PyBUF_SIMPLE`` constant.",
+      "source_hash": 12302116740051771220,
+      "context_hash": 6193103562781426731,
+      "translation": "예를 들어 ``inspect.BufferFlags.SIMPLE``\\ 은 ``PyBUF_SIMPLE`` 상수와 동일한 값을 가집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:12.942235Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "``collections.abc.Buffer``",
+      "source_hash": 12094335616017008697,
+      "context_hash": 14157441911506497697,
+      "translation": "``collections.abc.Buffer``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970135Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "We add a new abstract base classes, ``collections.abc.Buffer``, which requires the ``__buffer__`` method.",
+      "source_hash": 1195610309502016309,
+      "context_hash": 4547685058277639510,
+      "translation": "새로운 추상 베이스 클래스인 ``collections.abc.Buffer``\\ 를 추가하며, ``__buffer__``\\ 메서드를 요구합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970139Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "This class is intended primarily for use in type annotations:",
+      "source_hash": 17191085198214996446,
+      "context_hash": 9723534813061823010,
+      "translation": "이 클래스는 주로 타입 어노테이션에 사용하기 위한 것입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970140Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "It can also be used in ``isinstance`` and ``issubclass`` checks:",
+      "source_hash": 12136717652396103891,
+      "context_hash": 16584333917701913528,
+      "translation": "``isinstance`` 및 ``issubclass`` 검사에도 사용할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970140Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "In the typeshed stub files, the class should be defined as a ``Protocol``, following the precedent of other simple ABCs in ``collections.abc`` such as ``collections.abc.Iterable`` or ``collections.abc.Sized``.",
+      "source_hash": 8090256521585289834,
+      "context_hash": 6946854058345889538,
+      "translation": "typeshed 스텁 파일에서는 ``collections.abc``\\ 의 ``collections.abc.Iterable``\\ 이나 ``collections.abc.Sized``\\ 와 같은 다른 간단한 ABC의 선례에 따라 이 클래스를 ``Protocol``\\ 로 정의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970141Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Example",
+      "source_hash": 1513857641461741027,
+      "context_hash": 12425632765856191844,
+      "translation": "예시",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970141Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The following is an example of a Python class that implements the buffer protocol:",
+      "source_hash": 1337488186609771301,
+      "context_hash": 2795446220213769961,
+      "translation": "다음은 버퍼 프로토콜을 구현하는 Python 클래스의 예시입니다:",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:26.970142Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Equivalent for older Python versions",
+      "source_hash": 9157786053710090796,
+      "context_hash": 15975794904306415486,
+      "translation": "이전 Python 버전에서의 동등한 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970144Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "New typing features are usually backported to older Python versions in the `typing_extensions <https://pypi.org/project/typing-extensions/>`_ package.",
+      "source_hash": 660445865873744409,
+      "context_hash": 16574466420834668471,
+      "translation": "새로운 타이핑 기능은 일반적으로 `typing_extensions <https://pypi.org/project/typing-extensions/>`_ 패키지에서 이전 Python 버전으로 백포트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970144Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "Because the buffer protocol is currently accessible only in C, this PEP cannot be fully implemented in a pure-Python package like ``typing_extensions``.",
+      "source_hash": 11003041151564501253,
+      "context_hash": 2939263127574026874,
+      "translation": "버퍼 프로토콜은 현재 C에서만 접근할 수 있으므로, 이 PEP는 ``typing_extensions``\\ 와 같은 순수 Python 패키지에서 완전히 구현할 수 없습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:26.970144Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:2",
+      "source": "As a temporary workaround, an abstract base class ``typing_extensions.Buffer`` will be provided for Python versions that do not have ``collections.abc.Buffer`` available.",
+      "source_hash": 7941356263485174022,
+      "context_hash": 10893880492461665117,
+      "translation": "임시 해결 방법으로 ``collections.abc.Buffer``\\ 를 사용할 수 없는 Python 버전에 ``typing_extensions.Buffer``\\ 라는 추상 베이스 클래스를 제공합니다.",
+      "glossary_snapshot": {
+        "abstract base class": "추상 베이스 클래스"
+      },
+      "translated_at": "2026-08-28T18:37:26.970145Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "After this PEP is implemented, inheriting from ``collections.abc.Buffer`` will not be necessary to indicate that an object supports the buffer protocol.",
+      "source_hash": 12522291636963947390,
+      "context_hash": 7053748959566743124,
+      "translation": "이 PEP가 구현된 후에는 객체가 버퍼 프로토콜을 지원함을 나타내기 위해 ``collections.abc.Buffer``\\ 를 상속할 필요가 없습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:26.970146Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "However, in older Python versions, it will be necessary to explicitly inherit from ``typing_extensions.Buffer`` to indicate to type checkers that a class supports the buffer protocol, since objects supporting the buffer protocol will not have a ``__buffer__`` method.",
+      "source_hash": 11484261832538213933,
+      "context_hash": 16881463595447359557,
+      "translation": "그러나 이전 Python 버전에서는 클래스가 버퍼 프로토콜을 지원함을 타입 검사기에 나타내려면 ``typing_extensions.Buffer``\\ 를 명시적으로 상속해야 합니다. 버퍼 프로토콜을 지원하는 객체에는 ``__buffer__``\\ 메서드가 없기 때문입니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:26.970147Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:2",
+      "source": "It is expected that this will happen primarily in stub files, because buffer classes are necessarily implemented in C code, which cannot have types defined inline.",
+      "source_hash": 1194805811873578456,
+      "context_hash": 1275950870865139413,
+      "translation": "버퍼 클래스는 반드시 C 코드로 구현되며 C 코드에는 타입을 인라인으로 정의할 수 없으므로, 이는 주로 스텁 파일에서 이루어질 것으로 예상됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970148Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:3",
+      "source": "For runtime uses, the ``ABC.register`` API can be used to register buffer classes with ``typing_extensions.Buffer``.",
+      "source_hash": 6827720963853606468,
+      "context_hash": 14715068521428137689,
+      "translation": "런타임 용도에서는 ``ABC.register`` API를 사용하여 버퍼 클래스를 ``typing_extensions.Buffer``\\ 에 등록할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970148Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "No special meaning for ``bytes``",
+      "source_hash": 9891262461839159775,
+      "context_hash": 11210044953152337357,
+      "translation": "``bytes``\\ 에 특별한 의미 없음",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970148Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "The special case stating that ``bytes`` may be used as a shorthand for other ``ByteString`` types will be removed from the ``typing`` documentation.",
+      "source_hash": 4862900474507136154,
+      "context_hash": 8749170858655543186,
+      "translation": "``bytes``\\ 를 다른 ``ByteString`` 타입의 약칭으로 사용할 수 있다고 명시한 특례는 ``typing`` 문서에서 제거됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970148Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "With ``collections.abc.Buffer`` available as an alternative, there will be no good reason to allow ``bytes`` as a shorthand.",
+      "source_hash": 16452262137864143854,
+      "context_hash": 5082740848140505527,
+      "translation": "``collections.abc.Buffer``\\ 를 대안으로 사용할 수 있으므로 ``bytes``\\ 를 약칭으로 허용할 타당한 이유가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970149Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:2",
+      "source": "Type checkers currently implementing this behavior should deprecate and eventually remove it.",
+      "source_hash": 6218911405357245714,
+      "context_hash": 6826619397229132341,
+      "translation": "현재 이 동작을 구현하는 타입 검사기는 해당 기능을 사용 중단 대상으로 지정하고 결국 제거해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970149Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 10125105195368259342,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970149Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "``__buffer__`` and ``__release_buffer__`` attributes",
+      "source_hash": 8776411799215284180,
+      "context_hash": 8301078673568497193,
+      "translation": "``__buffer__`` 및 ``__release_buffer__`` 속성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970150Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "As the runtime changes in this PEP only add new functionality, there are few backwards compatibility concerns.",
+      "source_hash": 15622260715570027129,
+      "context_hash": 13941775749439400614,
+      "translation": "이 PEP의 런타임 변경 사항은 새로운 기능만 추가하므로 하위 호환성 우려는 거의 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970150Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "However, code that uses a ``__buffer__`` or ``__release_buffer__`` attribute for other purposes may be affected.",
+      "source_hash": 5554836133870963458,
+      "context_hash": 9846428193656318031,
+      "translation": "그러나 ``__buffer__`` 또는 ``__release_buffer__`` 속성을 다른 목적으로 사용하는 코드에는 영향이 있을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970150Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:1",
+      "source": "While all dunders are technically reserved for the language, it is still good practice to ensure that a new dunder does not interfere with too much existing code, especially widely used packages.",
+      "source_hash": 1200310192347738261,
+      "context_hash": 13135272985745432566,
+      "translation": "모든 던더가 기술적으로 언어를 위해 예약되어 있지만, 새로운 던더가 기존 코드, 특히 널리 사용되는 패키지와 과도하게 충돌하지 않도록 하는 것은 여전히 좋은 관행입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970151Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:2",
+      "source": "A survey of publicly accessible code found:",
+      "source_hash": 17028259275786750484,
+      "context_hash": 2895499175829570814,
+      "translation": "공개적으로 접근 가능한 코드를 조사한 결과 다음이 발견되었습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970151Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "PyPy `supports <https://doc.pypy.org/en/latest/__pypy__-module.html#generally-available-functionality>`__ a ``__buffer__`` method with compatible semantics to those proposed in this PEP.",
+      "source_hash": 16243013556231745600,
+      "context_hash": 18151448515415360651,
+      "translation": "PyPy는 `supports <https://doc.pypy.org/en/latest/__pypy__-module.html#generally-available-functionality>`__\\ 하며, 이 PEP에서 제안한 것과 호환되는 의미의 ``__buffer__``\\ 메서드를 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970151Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:1",
+      "source": "A PyPy core developer `expressed his support <https://discuss.python.org/t/pep-688-making-the-buffer-protocol-accessible-in-python/15265/34>`__ for this PEP.",
+      "source_hash": 4897901054058487767,
+      "context_hash": 890767926273904955,
+      "translation": "PyPy 핵심 개발자는 `expressed his support <https://discuss.python.org/t/pep-688-making-the-buffer-protocol-accessible-in-python/15265/34>`__\\ 를 통해 이 PEP에 대한 지지를 표명했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970152Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "pyzmq `implements <https://github.com/zeromq/pyzmq/blob/fe18dc55516ef50d168fc02f8550a67ff5b5633d/zmq/backend/cffi/message.py#L190>`__ a PyPy-compatible ``__buffer__`` method.",
+      "source_hash": 18404585052357439108,
+      "context_hash": 10132536199903448210,
+      "translation": "pyzmq는 `implements <https://github.com/zeromq/pyzmq/blob/fe18dc55516ef50d168fc02f8550a67ff5b5633d/zmq/backend/cffi/message.py#L190>`__\\ 하는 PyPy 호환 ``__buffer__``\\ 메서드를 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:26.970152Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:0",
+      "source": "mpi4py `defines <https://github.com/mpi4py/mpi4py/blob/453b87d0da37c5914b91afb511b188556dff2a9c/src/mpi4py/typing.py#L66>`__ a ``SupportsBuffer`` protocol that would be equivalent to this PEP's ``collections.abc.Buffer``.",
+      "source_hash": 4827287209905171298,
+      "context_hash": 8819881993121790473,
+      "translation": "mpi4py는 `defines <https://github.com/mpi4py/mpi4py/blob/453b87d0da37c5914b91afb511b188556dff2a9c/src/mpi4py/typing.py#L66>`__\\ 하는 ``SupportsBuffer``\\ 프로토콜을 정의하며, 이는 이 PEP의 ``collections.abc.Buffer``\\ 와 동등합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:26.970152Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:0",
+      "source": "NumPy used to have an undocumented behavior where it would access a ``__buffer__`` attribute (not method) to get an object's buffer.",
+      "source_hash": 5684454110335505752,
+      "context_hash": 10558149186083384779,
+      "translation": "NumPy에는 객체의 버퍼를 가져오기 위해 ``__buffer__`` 속성(메서드가 아님)에 액세스하는 문서화되지 않은 동작이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299526Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:1",
+      "source": "This was `removed <https://github.com/numpy/numpy/pull/13049>`__ in 2019 for NumPy 1.17.",
+      "source_hash": 13184805320618179403,
+      "context_hash": 16133673742982934243,
+      "translation": "이는 2019년에 NumPy 1.17에서 `removed <https://github.com/numpy/numpy/pull/13049>`__\\ 되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299532Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:2",
+      "source": "The behavior would have last worked in NumPy 1.16, which only supported Python 3.7 and older.",
+      "source_hash": 6644999186675700402,
+      "context_hash": 3988840367657967434,
+      "translation": "이 동작은 Python 3.7 이하만 지원했던 NumPy 1.16에서 마지막으로 작동했을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299532Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:3",
+      "source": "Python 3.7 will have reached its end of life by the time this PEP is expected to be implemented.",
+      "source_hash": 2353522745426838229,
+      "context_hash": 18198546074775977317,
+      "translation": "이 PEP가 구현될 것으로 예상되는 시점에는 Python 3.7의 지원 종료 시점이 지났을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299533Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:0",
+      "source": "Thus, this PEP's use of the ``__buffer__`` method will improve interoperability with PyPy and not interfere with the current versions of any major Python packages.",
+      "source_hash": 4079580740385944818,
+      "context_hash": 844201805990035414,
+      "translation": "따라서 이 PEP에서 ``__buffer__`` 메서드를 사용하면 PyPy와의 상호 운용성이 향상되며, 주요 Python 패키지의 현재 버전과 충돌하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299533Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:8/seg:0",
+      "source": "No publicly accessible code uses the name ``__release_buffer__``.",
+      "source_hash": 1417097928431571491,
+      "context_hash": 17226264319227216695,
+      "translation": "공개적으로 액세스할 수 있는 코드에서는 ``__release_buffer__``\\ 라는 이름을 사용하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299534Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Removal of the ``bytes`` special case",
+      "source_hash": 8461317775092519759,
+      "context_hash": 13155675443323014302,
+      "translation": "``bytes`` 특수 사례 제거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299534Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Separately, the recommendation to remove the special behavior for ``bytes`` in type checkers does have a backwards compatibility impact on their users.",
+      "source_hash": 648473800514893637,
+      "context_hash": 11387906019596503121,
+      "translation": "이와 별도로, 타입 검사기에서 ``bytes``\\ 에 대한 특수 동작을 제거하라는 권고는 사용자에게 하위 호환성 영향을 미칩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299534Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "An `experiment <https://github.com/python/mypy/pull/12661>`__ with mypy shows that several major open source projects that use it for type checking will see new errors if the ``bytes`` promotion is removed.",
+      "source_hash": 18200958587180339580,
+      "context_hash": 15423932552371943825,
+      "translation": "mypy를 사용한 `experiment <https://github.com/python/mypy/pull/12661>`__\\ 에 따르면, 타입 검사에 이를 사용하는 여러 주요 오픈 소스 프로젝트에서 ``bytes`` 승격이 제거되면 새로운 오류가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299535Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:2",
+      "source": "Many of these errors can be fixed by improving the stubs in typeshed, as has already been done for the `builtins <https://github.com/python/typeshed/pull/7631>`__, `binascii <https://github.com/python/typeshed/pull/7677>`__, `pickle <https://github.com/python/typeshed/pull/7678>`__, and `re <https://github.com/python/typeshed/pull/7679>`__ modules.",
+      "source_hash": 3380468565121330038,
+      "context_hash": 3107977219889810417,
+      "translation": "이러한 오류 중 상당수는 typeshed의 스텁을 개선하여 수정할 수 있으며, 이는 이미 `builtins <https://github.com/python/typeshed/pull/7631>`__, `binascii <https://github.com/python/typeshed/pull/7677>`__, `pickle <https://github.com/python/typeshed/pull/7678>`__, `re <https://github.com/python/typeshed/pull/7679>`__ 모듈에 대해 수행되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299536Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:3",
+      "source": "A `review <https://github.com/python/typeshed/issues/9006>`__ of all usage of ``bytes`` types in typeshed is in progress.",
+      "source_hash": 11941279103700032469,
+      "context_hash": 1582810178025737637,
+      "translation": "typeshed에서 ``bytes`` 유형의 모든 사용을 `review <https://github.com/python/typeshed/issues/9006>`__\\ 하는 작업이 진행 중입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299536Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:4",
+      "source": "Overall, the change improves type safety and makes the type system more consistent, so we believe the migration cost is worth it.",
+      "source_hash": 1369921777829671187,
+      "context_hash": 3695178167589369937,
+      "translation": "전반적으로 이 변경은 타입 안전성을 향상하고 타입 시스템을 더욱 일관되게 만들므로, 마이그레이션 비용을 감수할 가치가 있다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299537Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 3089461284175359997,
+      "translation": "이 내용을 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299537Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "We will add notes pointing to ``collections.abc.Buffer`` in appropriate places in the documentation, such as `typing.python.org <https://typing.python.org/en/latest/>`__ and the `mypy cheat sheet <https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html>`__.",
+      "source_hash": 14835233994991457589,
+      "context_hash": 14289735110610319720,
+      "translation": "`typing.python.org <https://typing.python.org/en/latest/>`__ 및 `mypy cheat sheet <https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html>`__\\ 와 같은 문서의 적절한 위치에 ``collections.abc.Buffer``\\ 를 가리키는 참고 사항을 추가할 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299538Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "Type checkers may provide additional pointers in their error messages.",
+      "source_hash": 12099205360056138820,
+      "context_hash": 10512018124685767180,
+      "translation": "타입 검사기는 오류 메시지에 추가 안내를 제공할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299538Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:2",
+      "source": "For example, when they encounter a buffer object being passed to a function that is annotated to only accept ``bytes``, the error message could include a note suggesting the use of ``collections.abc.Buffer`` instead.",
+      "source_hash": 6488643176774524137,
+      "context_hash": 3020668175258884625,
+      "translation": "예를 들어 버퍼 객체가 ``bytes``\\ 만 허용하도록 어노테이션된 함수에 전달되는 상황을 발견하면, 오류 메시지에 대신 ``collections.abc.Buffer``\\ 를 사용하라는 참고 사항을 포함할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299539Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 11686415749539389698,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:37:16.299539Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "An implementation of this PEP is `available <https://github.com/python/cpython/compare/main...JelleZijlstra:pep688v2?expand=1>`__ in the author's fork.",
+      "source_hash": 5874019670039416780,
+      "context_hash": 683053942396023572,
+      "translation": "이 PEP의 구현은 작성자의 포크에서 `available <https://github.com/python/cpython/compare/main...JelleZijlstra:pep688v2?expand=1>`__\\ 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299542Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 8265301072569280113,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299542Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "``types.Buffer``",
+      "source_hash": 9540648031199031263,
+      "context_hash": 14791742447481281313,
+      "translation": "``types.Buffer``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299543Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "An earlier version of this PEP proposed adding a new ``types.Buffer`` type with an ``__instancecheck__`` implemented in C so that ``isinstance()`` checks can be used to check whether a type implements the buffer protocol.",
+      "source_hash": 5567141606547189112,
+      "context_hash": 15572724686474557423,
+      "translation": "이 PEP의 이전 버전에서는 C로 구현된 ``__instancecheck__``\\ 를 포함하는 새로운 ``types.Buffer`` 유형을 추가하여, ``isinstance()`` 검사를 사용해 유형이 버퍼 프로토콜을 구현하는지 확인할 수 있도록 제안했습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:16.299543Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "This avoids the complexity of exposing the full buffer protocol to Python code, while still allowing the type system to check for the buffer protocol.",
+      "source_hash": 7644116723511535954,
+      "context_hash": 14398162871447768943,
+      "translation": "이렇게 하면 전체 버퍼 프로토콜을 Python 코드에 노출하는 복잡성을 피하면서도 타입 시스템이 버퍼 프로토콜을 검사할 수 있습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:16.299544Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "However, that approach does not compose well with the rest of the type system, because ``types.Buffer`` would be a nominal type, not a structural one.",
+      "source_hash": 9094479548915578130,
+      "context_hash": 1858182296554124183,
+      "translation": "그러나 ``types.Buffer``\\ 는 구조적 유형이 아닌 명목 유형이 되므로 이 접근 방식은 나머지 타입 시스템과 잘 조합되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299544Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:1",
+      "source": "For example, there would be no way to represent \"an object that supports both the buffer protocol and ``__len__``\".",
+      "source_hash": 1576491150488471627,
+      "context_hash": 17440100288608769628,
+      "translation": "예를 들어 버퍼 프로토콜과 ``__len__``\\ 을 모두 지원하는 객체를 표현할 방법이 없습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:37:16.299545Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:2",
+      "source": "With the current proposal, ``__buffer__`` is like any other special method, so a ``Protocol`` can be defined combining it with another method.",
+      "source_hash": 8242411321623561225,
+      "context_hash": 10353541445775855783,
+      "translation": "현재 제안에서는 ``__buffer__``\\ 가 다른 특수 메서드와 마찬가지이므로, 다른 메서드와 결합하는 ``Protocol``\\ 을 정의할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299545Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "More generally, no other part of Python works like the proposed ``types.Buffer``.",
+      "source_hash": 1522073054209445421,
+      "context_hash": 11309153886747770975,
+      "translation": "더 일반적으로 말해, 제안된 ``types.Buffer``\\ 와 같은 방식으로 작동하는 Python의 다른 부분은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299546Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:1",
+      "source": "The current proposal is more consistent with the rest of the language, where C-level slots usually have corresponding Python-level special methods.",
+      "source_hash": 7708067632635581073,
+      "context_hash": 16028931182253225363,
+      "translation": "C 수준 슬롯에는 대개 이에 대응하는 Python 수준 특수 메서드가 있는 언어의 나머지 부분과 비교할 때, 현재 제안이 더 일관됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299546Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Keep ``bytearray`` compatible with ``bytes``",
+      "source_hash": 1095651187209142831,
+      "context_hash": 4113528330385683558,
+      "translation": "``bytearray``\\ 를 ``bytes``\\ 와 호환되도록 유지하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:37:16.299546Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "It has been suggested to remove the special case where ``memoryview`` is always compatible with ``bytes``, but keep it for ``bytearray``, because the two types have very similar interfaces.",
+      "source_hash": 10618272390481154542,
+      "context_hash": 6385502236335393803,
+      "translation": "``memoryview``\\ 가 항상 ``bytes``\\ 와 호환되는 특수 사례를 제거하되, 두 타입의 인터페이스가 매우 유사하므로 ``bytearray``\\ 에 대해서는 유지하자는 제안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:28.682442Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:1",
+      "source": "However, several standard library functions (e.g., ``re.compile``, ``socket.getaddrinfo``, and most functions accepting path-like arguments) accept ``bytes`` but not ``bytearray``.",
+      "source_hash": 14139588715013777471,
+      "context_hash": 15965771515668572708,
+      "translation": "그러나 여러 표준 라이브러리 함수(예: ``re.compile``, ``socket.getaddrinfo`` 및 경로 유사 인자를 허용하는 대부분의 함수)는 ``bytes``\\ 는 허용하지만 ``bytearray``\\ 는 허용하지 않습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:11:28.682447Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:2",
+      "source": "In most codebases, ``bytearray`` is also not a very common type.",
+      "source_hash": 133693299569777465,
+      "context_hash": 4279643918531693897,
+      "translation": "또한 대부분의 코드베이스에서 ``bytearray``\\ 는 매우 흔한 타입이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:28.682449Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:3",
+      "source": "We prefer to have users spell out accepted types explicitly (or use ``Protocol`` from :pep:`544` if only a specific set of methods is required).",
+      "source_hash": 5200162991608387111,
+      "context_hash": 14528691622874817999,
+      "translation": "사용자가 허용되는 타입을 명시적으로 작성하도록 하는 방식을 선호합니다(특정 메서드 집합만 필요한 경우에는 :pep:`544`\\ 의 ``Protocol``\\ 을 사용하십시오).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:28.682450Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:4",
+      "source": "This aspect of the proposal was `specifically discussed <https://mail.python.org/archives/list/typing-sig@python.org/thread/XH5ZK2MSZIQLL62PYZ6I5532SQKKVCBL/>`__ on the typing-sig mailing list, without any strong disagreement from the typing community.",
+      "source_hash": 12970316361278484132,
+      "context_hash": 12205695287139837463,
+      "translation": "이 제안의 해당 측면은 typing-sig 메일링 리스트에서 `구체적으로 논의되었습니다 <https://mail.python.org/archives/list/typing-sig@python.org/thread/XH5ZK2MSZIQLL62PYZ6I5532SQKKVCBL/>`__\\ 에서, typing 커뮤니티의 강한 이견은 없었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:28.682450Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Distinguish between mutable and immutable buffers",
+      "source_hash": 17929833487743574827,
+      "context_hash": 18070242247591650665,
+      "translation": "변경 가능한 버퍼와 변경 불가능한 버퍼를 구분합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:28.682451Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "The most frequently used distinction within buffer types is whether or not the buffer is mutable.",
+      "source_hash": 14611616261181090724,
+      "context_hash": 7976276412669925321,
+      "translation": "버퍼 타입에서 가장 자주 사용되는 구분은 버퍼가 변경 가능한지 여부입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:28.682451Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:1",
+      "source": "Some functions accept only mutable buffers (e.g., ``bytearray``, some ``memoryview`` objects), others accept all buffers.",
+      "source_hash": 12727384422702896023,
+      "context_hash": 680581013880476127,
+      "translation": "일부 함수는 변경 가능한 버퍼만 허용하고(예: ``bytearray``, 일부 ``memoryview``\\ 객체), 다른 함수는 모든 버퍼를 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:28.682452Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "An earlier version of this PEP proposed using the presence of the ``bf_releasebuffer`` slot to determine whether a buffer type is mutable.",
+      "source_hash": 12324612708942772146,
+      "context_hash": 11331129998151996864,
+      "translation": "이 PEP의 이전 버전에서는 버퍼 타입이 변경 가능한지 판별하기 위해 ``bf_releasebuffer``\\ 슬롯의 존재 여부를 사용하도록 제안했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:28.682453Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:1",
+      "source": "This rule holds for most standard library buffer types, but the relationship between mutability and the presence of this slot is not absolute.",
+      "source_hash": 14176278311271984415,
+      "context_hash": 3120562053993168095,
+      "translation": "이 규칙은 대부분의 표준 라이브러리 버퍼 타입에 적용되지만, 변경 가능성과 이 슬롯의 존재 사이의 관계가 절대적인 것은 아닙니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:11:28.682453Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:2",
+      "source": "For example, ``numpy`` arrays are mutable but do not have this slot.",
+      "source_hash": 2678474117143318680,
+      "context_hash": 17918238980284337814,
+      "translation": "예를 들어 ``numpy``\\ 배열은 변경 가능하지만 이 슬롯을 갖지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:28.682454Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "The current buffer protocol does not provide any way to reliably determine whether a buffer type represents a mutable or immutable buffer.",
+      "source_hash": 11224280755983976462,
+      "context_hash": 15361289045462507322,
+      "translation": "현재 버퍼 프로토콜은 버퍼 타입이 변경 가능한 버퍼를 나타내는지 또는 변경 불가능한 버퍼를 나타내는지 안정적으로 판별할 방법을 제공하지 않습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:11:28.682454Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:1",
+      "source": "Therefore, this PEP does not add type system support for this distinction.",
+      "source_hash": 17388748328718583248,
+      "context_hash": 9224526811406225550,
+      "translation": "따라서 이 PEP는 이러한 구분을 위한 타입 시스템 지원을 추가하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:28.682455Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:2",
+      "source": "The question can be revisited in the future if the buffer protocol is enhanced to provide static introspection support.",
+      "source_hash": 10558560210893407455,
+      "context_hash": 5495756071940258372,
+      "translation": "버퍼 프로토콜이 정적 인트로스펙션 지원을 제공하도록 향상된다면 향후 이 문제를 다시 검토할 수 있습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:11:28.682455Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:3",
+      "source": "A `sketch <https://discuss.python.org/t/introspection-and-mutable-xor-shared-semantics-for-pybuffer/20314>`_ for such a mechanism exists.",
+      "source_hash": 17505590508260972462,
+      "context_hash": 9053765402259394470,
+      "translation": "이러한 메커니즘에 대한 `개요 <https://discuss.python.org/t/introspection-and-mutable-xor-shared-semantics-for-pybuffer/20314>`_\\ 가 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:28.682456Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Acknowledgments",
+      "source_hash": 10274568925451722959,
+      "context_hash": 6798083647633643869,
+      "translation": "감사의 말",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:28.682456Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "Many people have provided useful feedback on drafts of this PEP.",
+      "source_hash": 15724377061314013225,
+      "context_hash": 15704406848506585772,
+      "translation": "많은 분이 이 PEP의 초안에 유용한 피드백을 제공해 주셨습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:28.682456Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:1",
+      "source": "Petr Viktorin has been particularly helpful in improving my understanding of the subtleties of the buffer protocol.",
+      "source_hash": 11690027811927202408,
+      "context_hash": 1920326278656202513,
+      "translation": "Petr Viktorin은 버퍼 프로토콜의 미묘한 부분에 대한 저의 이해를 향상하는 데 특히 큰 도움을 주셨습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:11:28.682456Z",
+      "issues": []
+    }
+  ]
+}

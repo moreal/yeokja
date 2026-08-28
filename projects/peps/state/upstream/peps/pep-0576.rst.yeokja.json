@@ -1,0 +1,670 @@
+{
+  "version": 1,
+  "source_hash": 1407079186152859216,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Rationalize Built-in function classes",
+      "source_hash": 11348008609604944863,
+      "context_hash": 16530898886277989957,
+      "translation": "내장 함수 클래스 합리화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354385Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 16538398885584899002,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354391Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Expose the \"FastcallKeywords\" convention used internally by CPython to third-party code, and make the ``inspect`` module use duck-typing.",
+      "source_hash": 11300759788815850235,
+      "context_hash": 4794122118755606104,
+      "translation": "CPython 내부에서 사용하는 \"FastcallKeywords\" 규약을 서드파티 코드에 공개하고, ``inspect`` 모듈이 덕 타이핑을 사용하도록 하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354392Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "In combination this will allow third-party C extensions and tools like Cython to create objects that use the same calling conventions as built-in and Python functions, thus gaining performance parity with built-in functions like ``len`` or ``print``.",
+      "source_hash": 10445508114671872944,
+      "context_hash": 16114482860264076985,
+      "translation": "이를 결합하면 서드파티 C 확장과 Cython과 같은 도구가 내장 함수 및 Python 함수와 동일한 호출 규약을 사용하는 객체를 생성할 수 있으므로, ``len``\\ 이나 ``print``\\ 와 같은 내장 함수와 동등한 성능을 얻을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354392Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "A small improvement in the performance of existing code is expected.",
+      "source_hash": 3402518258465243051,
+      "context_hash": 15288210387431338011,
+      "translation": "기존 코드의 성능이 소폭 향상될 것으로 예상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354393Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 15841428705376341965,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354393Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Currently third-party module authors face a dilemma when implementing functions in C.",
+      "source_hash": 5425463676506762582,
+      "context_hash": 225223414380836356,
+      "translation": "현재 서드파티 모듈 작성자는 C로 함수를 구현할 때 딜레마에 직면합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354394Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Either they can use one of the pre-existing built-in function or method classes or implement their own custom class in C.",
+      "source_hash": 5643752731801611749,
+      "context_hash": 10454428732759229975,
+      "translation": "기존 내장 함수 또는 메서드 클래스 중 하나를 사용하거나, C로 자체 사용자 정의 클래스를 구현해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354394Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "The first choice causes them to lose the ability to access the internals of the callable object.",
+      "source_hash": 12648887874766982432,
+      "context_hash": 8468359251310923212,
+      "translation": "첫 번째 선택지는 호출 가능 객체의 내부에 접근할 수 있는 능력을 잃게 합니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:11:06.354395Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:3",
+      "source": "The second choice is an additional maintenance burden and, more importantly, has a significant negative impact on performance.",
+      "source_hash": 13802448515135172812,
+      "context_hash": 1567519005993830829,
+      "translation": "두 번째 선택지는 추가적인 유지 관리 부담을 초래하며, 더 중요하게는 성능에 상당한 부정적인 영향을 미칩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354397Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "This PEP aims to allow authors of third-party C modules, and tools like to Cython, to utilize the faster calling convention used internally by CPython for built-in functions and methods, and to do so without a loss of capabilities relative to a function implemented in Python.",
+      "source_hash": 5943838489179535496,
+      "context_hash": 17654534459861354869,
+      "translation": "이 PEP는 서드파티 C 모듈 작성자와 Cython과 같은 도구가 CPython 내부에서 내장 함수 및 메서드에 사용되는 더 빠른 호출 규약을 활용하도록 하며, Python으로 구현된 함수에 비해 기능을 잃지 않도록 하는 것을 목표로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354397Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Introspection",
+      "source_hash": 5164994722865843443,
+      "context_hash": 4201208357155662385,
+      "translation": "인트로스펙션",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354397Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "The inspect module will fully support duck-typing when introspecting callables.",
+      "source_hash": 13330274987892176840,
+      "context_hash": 1377172232384459966,
+      "translation": "inspect 모듈은 호출 가능 객체를 인트로스펙션할 때 덕 타이핑을 완전히 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:48:28.679111Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "The ``inspect.Signature.from_callable()`` function computes the signature of a callable.",
+      "source_hash": 6680798171521783243,
+      "context_hash": 16676618459653433908,
+      "translation": "``inspect.Signature.from_callable()`` 함수는 호출 가능 객체의 시그니처를 계산합니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:11:06.354399Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "If an object has a ``__signature__`` property, then ``inspect.Signature.from_callable()`` simply returns that.",
+      "source_hash": 16132063213283840082,
+      "context_hash": 1811002038454904201,
+      "translation": "객체에 ``__signature__`` 속성이 있으면 ``inspect.Signature.from_callable()`` 은 단순히 해당 속성을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354399Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "To further support duck-typing, if a callable has a ``__text_signature__`` then the ``__signature__`` will be created from that.",
+      "source_hash": 14253229467039688026,
+      "context_hash": 808615604468224680,
+      "translation": "덕 타이핑을 더욱 지원하기 위해 호출 가능 객체에 ``__text_signature__``\\ 가 있으면 ``__signature__``\\ 를 이를 바탕으로 생성합니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:11:06.354400Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "This means that 3rd party builtin-functions can implement ``__text_signature__`` if sufficient, and the more expensive ``__signature__`` if necessary.",
+      "source_hash": 16391665032905447990,
+      "context_hash": 16503643412366556074,
+      "translation": "즉, 서드파티 내장 함수는 적절한 경우 ``__text_signature__``\\ 를 구현하고, 필요한 경우 더 비용이 큰 ``__signature__``\\ 를 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354401Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Efficient calls to third-party callables",
+      "source_hash": 5305834441814912378,
+      "context_hash": 8198293308100976465,
+      "translation": "서드파티 호출 가능 객체에 대한 효율적인 호출",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354401Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Currently the majority of calls are dispatched to ``function``\\s and ``method_descriptor``\\s in custom code, using the \"FastcallKeywords\" internal calling convention.",
+      "source_hash": 3486385677216386380,
+      "context_hash": 14112960219766543734,
+      "translation": "현재 대부분의 호출은 \"FastcallKeywords\" 내부 호출 규약을 사용하여 사용자 정의 코드에서 ``function``\\s 및 ``method_descriptor``\\s로 디스패치됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354401Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "This PEP proposes that this calling convention is implemented via a C function pointer.",
+      "source_hash": 3265963616665061575,
+      "context_hash": 10499775612557317441,
+      "translation": "이 PEP는 이 호출 규약을 C 함수 포인터를 통해 구현할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354402Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "Third-party callables which implement this binary interface will have the potential to be called as fast as a built-in function.",
+      "source_hash": 3733695286544886991,
+      "context_hash": 15618046082226036698,
+      "translation": "이 바이너리 인터페이스를 구현하는 서드파티 호출 가능 객체는 내장 함수만큼 빠르게 호출될 가능성이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354402Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Continued prohibition of callable classes as base classes",
+      "source_hash": 4870433035046576750,
+      "context_hash": 8891038084663470959,
+      "translation": "호출 가능 객체 클래스를 베이스 클래스로 사용하는 행위에 대한 금지 지속",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:48:28.679114Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Currently any attempt to use ``function``, ``method`` or ``method_descriptor`` as a base class for a new class will fail with a ``TypeError``.",
+      "source_hash": 15748815780032604534,
+      "context_hash": 3130106796982058368,
+      "translation": "현재 새 클래스의 베이스 클래스로 ``function``, ``method`` 또는 ``method_descriptor``\\ 를 사용하려는 모든 시도는 ``TypeError``\\ 로 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354403Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "This behaviour is desirable as it prevents errors when a subclass overrides the ``__call__`` method.",
+      "source_hash": 7505662350008844932,
+      "context_hash": 17113378766247148261,
+      "translation": "서브클래스가 ``__call__`` 메서드를 재정의할 때 오류가 발생하는 것을 방지하므로 이러한 동작이 바람직합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354405Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:2",
+      "source": "If callables could be sub-classed then any call to a ``function`` or a ``method_descriptor`` would need an additional check that the ``__call__`` method had not been overridden.",
+      "source_hash": 14407398413685206140,
+      "context_hash": 11103690799961145960,
+      "translation": "호출 가능 객체를 서브클래스화할 수 있다면 ``function`` 또는 ``method_descriptor``\\ 를 호출할 때마다 ``__call__`` 메서드가 재정의되지 않았는지 추가로 확인해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354406Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:3",
+      "source": "By exposing an additional call mechanism, the potential for errors  becomes greater.",
+      "source_hash": 15034509967172573447,
+      "context_hash": 12568419815281576847,
+      "translation": "추가 호출 메커니즘을 공개하면 오류가 발생할 가능성이 더 커집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354406Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:4",
+      "source": "As a consequence, any third-party class implementing the addition call interface will not be usable as a base class.",
+      "source_hash": 2746755602123075545,
+      "context_hash": 277558905278942817,
+      "translation": "결과적으로 추가 호출 인터페이스를 구현하는 서드파티 클래스는 베이스 클래스로 사용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354406Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "New classes and changes to existing classes",
+      "source_hash": 699306194901371252,
+      "context_hash": 11093571779894537707,
+      "translation": "새 클래스 및 기존 클래스의 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354407Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Python visible changes",
+      "source_hash": 18255400639342990672,
+      "context_hash": 15556490129399526042,
+      "translation": "Python에 노출되는 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354407Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "A new built-in class, ``builtin_function``, will be added.",
+      "source_hash": 291287687716697454,
+      "context_hash": 15735778970753571475,
+      "translation": "새로운 내장 클래스인 ``builtin_function``\\ 이 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354407Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "``types.BuiltinFunctionType`` will refer to ``builtin_function`` not ``builtin_function_or_method``.",
+      "source_hash": 6025043312219299338,
+      "context_hash": 18223703325633324612,
+      "translation": "``types.BuiltinFunctionType``\\ 은 ``builtin_function_or_method``\\ 이 아니라 ``builtin_function``\\ 을 참조합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:06.354407Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "Instances of the ``builtin_function`` class will retain the ``__module__`` property of ``builtin_function_or_method`` and gain the ``func_module`` and ``func_globals`` properties.",
+      "source_hash": 13073037737504817476,
+      "context_hash": 15069117115562735177,
+      "translation": "``builtin_function``\\ 클래스의 인스턴스는 ``builtin_function_or_method``\\ 의 ``__module__``\\ 속성을 유지하고, ``func_module``\\ 및 ``func_globals``\\ 속성을 새로 갖게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793765Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "The ``func_module`` allows access to the module to which the function belongs.",
+      "source_hash": 11466276125137061634,
+      "context_hash": 5467874317900756417,
+      "translation": "``func_module``\\ 은 함수가 속한 모듈에 액세스할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793769Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:2",
+      "source": "Note that this is different from the ``__module__`` property which merely returns the name of the module.",
+      "source_hash": 11971328244209999435,
+      "context_hash": 7100640271276395192,
+      "translation": "이는 단순히 모듈의 이름을 반환하는 ``__module__``\\ 속성과는 다르다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793770Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:3",
+      "source": "The ``func_globals`` property is equivalent to ``func_module.__dict__`` and is provided to mimic the Python function property of the same name.",
+      "source_hash": 15662764672518121676,
+      "context_hash": 6089938518759907615,
+      "translation": "``func_globals``\\ 속성은 ``func_module.__dict__``\\ 와 동등하며, 동일한 이름을 가진 Python 함수 속성을 모방하기 위해 제공됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793770Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "When binding a ``method_descriptor`` instance to an instance of its owning class, a ``bound_method`` will be created instead of a ``builtin_function_or_method``.",
+      "source_hash": 11821774106370930253,
+      "context_hash": 16633823175155474924,
+      "translation": "``method_descriptor``\\ 인스턴스를 해당 인스턴스가 속한 클래스의 인스턴스에 바인딩하면 ``builtin_function_or_method``\\ 대신 ``bound_method``\\ 가 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793771Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:1",
+      "source": "This means that the ``method_descriptors`` now mimic the behaviour of Python functions more closely.",
+      "source_hash": 7056100971376179724,
+      "context_hash": 3694598696655604133,
+      "translation": "이는 이제 ``method_descriptors``\\ 가 Python 함수의 동작을 더욱 유사하게 모방한다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793771Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:2",
+      "source": "In other words, ``[].append`` becomes a ``bound_method`` instead of a ``builtin_function_or_method``.",
+      "source_hash": 1242813207494261645,
+      "context_hash": 804635943028749644,
+      "translation": "즉, ``[].append``\\ 는 ``builtin_function_or_method``\\ 대신 ``bound_method``\\ 가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793771Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "C API changes",
+      "source_hash": 1063759848474665982,
+      "context_hash": 11193342155522930444,
+      "translation": "C API 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793772Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "A new function ``PyBuiltinFunction_New(PyMethodDef *ml, PyObject *module)`` is added to create built-in functions.",
+      "source_hash": 1060358661393027328,
+      "context_hash": 16098108309507027126,
+      "translation": "내장 함수를 생성하기 위한 새로운 함수 ``PyBuiltinFunction_New(PyMethodDef *ml, PyObject *module)``\\ 가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793772Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "``PyCFunction_NewEx()`` and ``PyCFunction_New()`` are deprecated and will return a ``PyBuiltinFunction`` if able, otherwise a ``builtin_function_or_method``.",
+      "source_hash": 17722458523570669609,
+      "context_hash": 13078665654740970083,
+      "translation": "``PyCFunction_NewEx()``\\ 및 ``PyCFunction_New()``\\ 는 사용 중단되며, 가능한 경우 ``PyBuiltinFunction``\\ 을 반환하고, 그렇지 않으면 ``builtin_function_or_method``\\ 를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793772Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Retaining backwards compatibility in the C API and ABI",
+      "source_hash": 8142474306202924834,
+      "context_hash": 15423936557094593309,
+      "translation": "C API 및 ABI에서 하위 호환성 유지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793773Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The proposed changes are fully backwards and forwards compatible at both the API and ABI level.",
+      "source_hash": 17109768372849172931,
+      "context_hash": 4653536437133042424,
+      "translation": "제안된 변경 사항은 API 및 ABI 수준 모두에서 완전한 하위 호환성과 상위 호환성을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793773Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Internal C changes",
+      "source_hash": 3031357387420210829,
+      "context_hash": 2747393468520332674,
+      "translation": "내부 C 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793773Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Two new flags will be allowed for the ``typeobject.tp_flags`` field.",
+      "source_hash": 5801001918707779273,
+      "context_hash": 17217165041702060778,
+      "translation": "``typeobject.tp_flags``\\ 필드에 두 개의 새로운 플래그가 허용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793773Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "These are ``Py_TPFLAGS_EXTENDED_CALL`` and ``Py_TPFLAGS_FUNCTION_DESCRIPTOR``",
+      "source_hash": 15214335159315091225,
+      "context_hash": 10326213605010616568,
+      "translation": "이는 ``Py_TPFLAGS_EXTENDED_CALL``\\ 및 ``Py_TPFLAGS_FUNCTION_DESCRIPTOR``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793774Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "Py_TPFLAGS_EXTENDED_CALL",
+      "source_hash": 12806562907901830704,
+      "context_hash": 5698365085637607965,
+      "translation": "Py_TPFLAGS_EXTENDED_CALL",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:43.793774Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "For any built-in class that sets ``Py_TPFLAGS_EXTENDED_CALL`` The C struct corresponding to this built-in class must begin with the struct ``PyExtendedCallable`` which is defined as follows",
+      "source_hash": 5033119505218366556,
+      "context_hash": 14143624818852083844,
+      "translation": "``Py_TPFLAGS_EXTENDED_CALL``\\ 을 설정하는 모든 내장 클래스의 경우, 이 내장 클래스에 대응하는 C 구조체는 다음과 같이 정의되는 ``PyExtendedCallable`` 구조체로 시작해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077244Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "Any class that sets the ``Py_TPFLAGS_EXTENDED_CALL`` cannot be used as a base class and a TypeError will be raised if any Python code tries to use it a base class.",
+      "source_hash": 17238849069944766884,
+      "context_hash": 12635158945447518436,
+      "translation": "``Py_TPFLAGS_EXTENDED_CALL``\\ 을 설정하는 클래스는 베이스 클래스로 사용될 수 없으며, 어떤 파이썬 코드가 이를 베이스 클래스로 사용하려 하면 TypeError가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077249Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "Py_TPFLAGS_FUNCTION_DESCRIPTOR",
+      "source_hash": 10116122708442495288,
+      "context_hash": 15534777040736763714,
+      "translation": "Py_TPFLAGS_FUNCTION_DESCRIPTOR",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077249Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "If this flag is set for a built-in class ``F``, then instances of that class are expected to behave the same as a Python function when used as a class attribute.",
+      "source_hash": 14231365238893515918,
+      "context_hash": 10856203579052087596,
+      "translation": "이 플래그가 내장 클래스 ``F``\\ 에 설정되어 있으면, 해당 클래스의 인스턴스는 클래스 속성으로 사용될 때 파이썬 함수와 동일하게 동작할 것으로 기대됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077250Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:1",
+      "source": "Specifically, this mean that the value of ``c.m`` where ``C.m`` is an instanceof the built-in class ``F`` (and ``c`` is an instance of ``C``) must be a bound-method binding ``C.m`` and ``c``.",
+      "source_hash": 9076707817055258847,
+      "context_hash": 8818981988773008953,
+      "translation": "구체적으로, 이는 ``C.m``\\ 이 내장 클래스 ``F``\\ 의 인스턴스이고 ``c``\\ 가 ``C``\\ 의 인스턴스일 때, ``c.m``\\ 의 값이 ``C.m``\\ 과 ``c``\\ 를 바인딩하는 바운드 메서드여야 함을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077250Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:2",
+      "source": "Without this flag, it would be impossible for custom callables to behave like Python functions *and* be efficient as Python or built-in functions.",
+      "source_hash": 7801247032601692111,
+      "context_hash": 8448396233599858376,
+      "translation": "이 플래그가 없다면, 커스텀 호출 가능 객체가 파이썬 함수처럼 동작하면서 *동시에* 파이썬 함수나 내장 함수만큼 효율적일 수는 없을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077251Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:0",
+      "source": "Changes to existing C structs",
+      "source_hash": 5000657689516658617,
+      "context_hash": 8379722788413122405,
+      "translation": "기존 C 구조체에 대한 변경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077251Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:0",
+      "source": "The ``function``, ``method_descriptor`` and ``method`` classes will have their corresponding structs changed to start with the ``PyExtendedCallable`` struct.",
+      "source_hash": 13639107537270716171,
+      "context_hash": 12494522385438218692,
+      "translation": "``function``, ``method_descriptor``, ``method`` 클래스는 이에 대응하는 구조체가 ``PyExtendedCallable`` 구조체로 시작하도록 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077252Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Third-party built-in classes using the new extended call interface",
+      "source_hash": 1225196755876640971,
+      "context_hash": 15249802553559479975,
+      "translation": "새로운 확장 호출 인터페이스를 사용하는 서드파티 내장 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077253Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "To enable call performance on a par with Python functions and built-in functions, third-party callables should set the ``Py_TPFLAGS_EXTENDED_CALL`` bit of ``tp_flags`` and ensure that the corresponding C struct starts with the ``PyExtendedCallable``.",
+      "source_hash": 6638821303652980753,
+      "context_hash": 1091015906734488711,
+      "translation": "파이썬 함수 및 내장 함수와 대등한 호출 성능을 내려면, 서드파티 호출 가능 객체는 ``tp_flags``\\ 의 ``Py_TPFLAGS_EXTENDED_CALL`` 비트를 설정하고, 이에 대응하는 C 구조체가 ``PyExtendedCallable``\\ 로 시작하도록 해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077253Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "Any built-in class that has the ``Py_TPFLAGS_EXTENDED_CALL`` bit set must also implement the ``tp_call`` function and make sure its behaviour is consistent with the ``ext_call`` function.",
+      "source_hash": 3092536244339675702,
+      "context_hash": 8882866505853102746,
+      "translation": "``Py_TPFLAGS_EXTENDED_CALL`` 비트가 설정된 모든 내장 클래스는 ``tp_call`` 함수도 구현해야 하며, 그 동작이 ``ext_call`` 함수와 일관되도록 해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077253Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Performance implications of these changes",
+      "source_hash": 12781665323624558739,
+      "context_hash": 16920085562757378128,
+      "translation": "이러한 변경이 성능에 미치는 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077254Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "Adding a function pointer to each callable, rather than each class of callable, enables the choice of dispatching function (the code to shuffle arguments about and do error checking) to be made when the callable object is created rather than when it is called.",
+      "source_hash": 17248278213379877728,
+      "context_hash": 13180796626298862930,
+      "translation": "함수 포인터를 각 호출 가능 객체의 클래스가 아니라 각 호출 가능 객체 자체에 추가하면, 디스패치 함수(인자를 정리하고 오류 검사를 수행하는 코드)의 선택을 호출 시점이 아니라 호출 가능 객체가 생성되는 시점에 할 수 있게 됩니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T17:27:48.077254Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:1",
+      "source": "This should reduce the number of instructions executed between the call-site in the interpreter and the execution of the callee.",
+      "source_hash": 14054293259014473776,
+      "context_hash": 17909073112717791299,
+      "translation": "이는 인터프리터의 호출 지점과 피호출자의 실행 사이에서 실행되는 명령어 수를 줄여줄 것입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T17:27:48.077256Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Alternative Suggestions",
+      "source_hash": 12053531792096221716,
+      "context_hash": 15366531564167753569,
+      "translation": "대안 제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077257Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": ":pep:`580` is an alternative approach to solving the same problem as this PEP.",
+      "source_hash": 8191253085494881238,
+      "context_hash": 6448521166258534464,
+      "translation": ":pep:`580`\\ 은 이 PEP와 동일한 문제를 해결하기 위한 대안적 접근 방식입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:48.077258Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Reference implementation",
+      "source_hash": 3855301145730187591,
+      "context_hash": 10505671899505441887,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:21:26.705199Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "A draft implementation can be found at https://github.com/markshannon/cpython/tree/pep-576-minimal",
+      "source_hash": 17949956710558960250,
+      "context_hash": 7255824391228245809,
+      "translation": "초안 구현은 https://github.com/markshannon/cpython/tree/pep-576-minimal 에서 찾을 수 있습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:21:26.705203Z",
+      "issues": []
+    }
+  ]
+}

@@ -1,0 +1,935 @@
+{
+  "version": 1,
+  "source_hash": 4095455943363949064,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Core support for typing module and generic types",
+      "source_hash": 8004821002096749773,
+      "context_hash": 8753222365616748684,
+      "translation": "typing 모듈 및 제네릭 타입의 핵심 지원",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819507Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:1/seg:0",
+      "source": ":external+python:meth:`~object.__class_getitem__` and :external+python:meth:`~object.__mro_entries__`",
+      "source_hash": 7722738239766067508,
+      "context_hash": 9519075121589210837,
+      "translation": ":external+python:meth:`~object.__class_getitem__` 및 :external+python:meth:`~object.__mro_entries__`",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819510Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 1442975231037963826,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819510Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Initially :pep:`484` was designed in such way that it would not introduce *any* changes to the core CPython interpreter.",
+      "source_hash": 13223479734678893184,
+      "context_hash": 13001455136960928870,
+      "translation": "처음에 :pep:`484`\\ 는 CPython 핵심 인터프리터에 *어떠한* 변경도 도입하지 않도록 설계되었습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:34:23.819510Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "Now type hints and the ``typing`` module are extensively used by the community, e.g. :pep:`526` and :pep:`557` extend the usage of type hints, and the backport of ``typing`` on PyPI has 1M downloads/month.",
+      "source_hash": 12612111001924954317,
+      "context_hash": 7959873521341254641,
+      "translation": "이제 타입 힌트와 ``typing`` 모듈은 커뮤니티에서 광범위하게 사용되며, 예를 들어 :pep:`526`\\ 과 :pep:`557`\\ 은 타입 힌트의 사용을 확장하고, PyPI의 ``typing`` 백포트는 월 100만 회의 다운로드를 기록합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819511Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "Therefore, this restriction can be removed.",
+      "source_hash": 16196799766635016377,
+      "context_hash": 15307807731596208461,
+      "translation": "따라서 이 제한은 제거할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819511Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:3",
+      "source": "It is proposed to add two special methods ``__class_getitem__`` and ``__mro_entries__`` to the core CPython for better support of generic types.",
+      "source_hash": 8490493982300600524,
+      "context_hash": 15697356219354547504,
+      "translation": "제네릭 타입을 더 잘 지원하기 위해 CPython 핵심에 두 특수 메서드 ``__class_getitem__`` 및 ``__mro_entries__`` 를 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819511Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 17235550558639823744,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819512Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The restriction to not modify the core CPython interpreter led to some design decisions that became questionable when the ``typing`` module started to be widely used.",
+      "source_hash": 12451152020552351700,
+      "context_hash": 3927856740553487728,
+      "translation": "CPython 핵심 인터프리터를 수정하지 않는다는 제한은 ``typing`` 모듈이 널리 사용되기 시작했을 때 의문스러워진 일부 설계 결정으로 이어졌습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:34:23.819512Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "There are three main points of concern: performance of the ``typing`` module, metaclass conflicts, and the large number of hacks currently used in ``typing``.",
+      "source_hash": 3510669099445062220,
+      "context_hash": 9951985236628323706,
+      "translation": "주요 우려 사항은 ``typing`` 모듈의 성능, 메타클래스 충돌, 그리고 현재 ``typing`` 에서 사용되는 수많은 해크입니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:34:23.819512Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Performance",
+      "source_hash": 1168761202931664327,
+      "context_hash": 6435233186369402918,
+      "translation": "성능",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819513Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "The ``typing`` module is one of the heaviest and slowest modules in the standard library even with all the optimizations made.",
+      "source_hash": 3397717075738768693,
+      "context_hash": 7773321457467653968,
+      "translation": "``typing`` 모듈은 모든 최적화를 적용한 후에도 표준 라이브러리에서 가장 무겁고 느린 모듈 중 하나입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:34:23.819513Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "Mainly this is because subscripted generic types (see :pep:`484` for definition of terms used in this PEP) are class objects (see also [1]_).",
+      "source_hash": 16975496476212411734,
+      "context_hash": 8174520758018628617,
+      "translation": "주된 이유는 첨자가 붙은 제네릭 타입(이 PEP에서 사용되는 용어의 정의는 :pep:`484` 참조)이 클래스 객체이기 때문입니다([1]_\\ 도 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819513Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "There are three main ways how the performance can be improved with the help of the proposed special methods:",
+      "source_hash": 462905597555504160,
+      "context_hash": 16873446457105721848,
+      "translation": "제안된 특수 메서드를 활용하여 성능을 개선할 수 있는 주요 방법은 세 가지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819514Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Creation of generic classes is slow since the ``GenericMeta.__new__`` is very slow; we will not need it anymore.",
+      "source_hash": 5575161944793563005,
+      "context_hash": 12690650869249362107,
+      "translation": "제네릭 클래스 생성은 ``GenericMeta.__new__``\\ 가 매우 느리기 때문에 느립니다. 이제 더 이상 이것이 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819514Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Very long method resolution orders (MROs) for generic classes will be half as long; they are present because we duplicate the ``collections.abc`` inheritance chain in ``typing``.",
+      "source_hash": 17011289322982831039,
+      "context_hash": 1989784712383293572,
+      "translation": "제네릭 클래스의 매우 긴 메서드 해석 순서(MRO)는 절반으로 줄어듭니다. 이는 ``typing`` 에서 ``collections.abc`` 상속 체인을 중복하기 때문에 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819514Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "Instantiation of generic classes will be faster (this is minor however).",
+      "source_hash": 2224168406912193561,
+      "context_hash": 1732207083338571257,
+      "translation": "제네릭 클래스의 인스턴스화는 더 빨라집니다(다만 이는 부차적인 개선입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819515Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Metaclass conflicts",
+      "source_hash": 10666507086945705730,
+      "context_hash": 51861197426281202,
+      "translation": "메타클래스 충돌",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:34:23.819515Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "All generic types are instances of ``GenericMeta``, so if a user uses a custom metaclass, then it is hard to make a corresponding class generic.",
+      "source_hash": 3827353226587504268,
+      "context_hash": 8732729668446615637,
+      "translation": "모든 제네릭 타입은 ``GenericMeta``\\ 의 인스턴스이므로, 사용자가 사용자 지정 메타클래스를 사용하면 이에 대응하는 클래스를 제네릭으로 만들기 어렵습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:34:23.819516Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "This is particularly hard for library classes that a user doesn't control.",
+      "source_hash": 9868886038106873520,
+      "context_hash": 13523296193661854363,
+      "translation": "사용자가 제어하지 않는 라이브러리 클래스의 경우에는 특히 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819516Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "A workaround is to always mix-in ``GenericMeta``",
+      "source_hash": 3514873435182028022,
+      "context_hash": 17787228407146480626,
+      "translation": "한 가지 해결 방법은 항상 ``GenericMeta``\\ 를 믹스인하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819516Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "but this is not always practical or even possible.",
+      "source_hash": 6123353193606990653,
+      "context_hash": 9511581968311652710,
+      "translation": "그러나 이것이 항상 실용적이거나 가능한 것은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819516Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "With the help of the proposed special attributes the ``GenericMeta`` metaclass will not be needed.",
+      "source_hash": 15508464648162287214,
+      "context_hash": 9331266814966694393,
+      "translation": "제안된 특수 속성을 활용하면 ``GenericMeta`` 메타클래스가 필요하지 않게 됩니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:34:23.819517Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Hacks and bugs that will be removed by this proposal",
+      "source_hash": 68473863392714241,
+      "context_hash": 15185617954958817005,
+      "translation": "이 제안으로 제거될 해크와 버그",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819517Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "``_generic_new`` hack that exists because ``__init__`` is not called on instances with a type differing from the type whose ``__new__`` was called, ``C[int]().__class__ is C``.",
+      "source_hash": 10435763695548875173,
+      "context_hash": 3502846322260614555,
+      "translation": "호출된 ``__new__``\\ 의 타입과 다른 타입을 가진 인스턴스에서는 ``__init__``\\ 이 호출되지 않기 때문에 존재하는 ``_generic_new`` 해크입니다. ``C[int]().__class__ is C``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819517Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "``_next_in_mro`` speed hack will be not necessary since subscription will not create new classes.",
+      "source_hash": 4992764757639345355,
+      "context_hash": 12639181258935428754,
+      "translation": "첨자 표기가 새 클래스를 생성하지 않으므로 ``_next_in_mro`` 속도 해크는 필요하지 않게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819518Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "Ugly ``sys._getframe`` hack.",
+      "source_hash": 3701453124919161264,
+      "context_hash": 15854344469424589158,
+      "translation": "추한 ``sys._getframe`` 해크입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819518Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "This one is particularly nasty since it looks like we can't remove it without changes outside ``typing``.",
+      "source_hash": 16610108838779134608,
+      "context_hash": 4078056161527011109,
+      "translation": "이 해크는 ``typing`` 외부의 변경 없이는 제거할 수 없는 것처럼 보이기 때문에 특히 좋지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819518Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "Currently generics do dangerous things with private ABC caches to fix large memory consumption that grows at least as O(N\\ :sup:`2`), see [2]_.",
+      "source_hash": 13125723703145042335,
+      "context_hash": 13059449348576804531,
+      "translation": "현재 제네릭은 최소한 O(N\\ :sup:`2`)만큼 증가하는 대규모 메모리 소비를 해결하기 위해 비공개 ABC 캐시를 위험하게 조작합니다([2]_ 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819518Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:1",
+      "source": "This point is also important because it was recently proposed to re-implement ``ABCMeta`` in C.",
+      "source_hash": 5482192755806923,
+      "context_hash": 8266983886153041411,
+      "translation": "최근 ``ABCMeta`` 를 C로 재구현하자는 제안이 있었기 때문에 이 점도 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819519Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "Problems with sharing attributes between subscripted generics, see [3]_.",
+      "source_hash": 9291700564748671841,
+      "context_hash": 4091445652726764252,
+      "translation": "첨자가 붙은 제네릭 간에 속성을 공유하는 데 문제가 있습니다([3]_ 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819519Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:1",
+      "source": "The current solution already uses ``__getattr__`` and ``__setattr__``, but it is still incomplete, and solving this without the current proposal will be hard and will need ``__getattribute__``.",
+      "source_hash": 4182780007422206936,
+      "context_hash": 15274212895687203156,
+      "translation": "현재 해결책은 이미 ``__getattr__`` 및 ``__setattr__`` 을 사용하지만 여전히 불완전하며, 현재 제안 없이 이를 해결하기는 어렵고 ``__getattribute__``\\ 가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:23.819519Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "``_no_slots_copy`` hack, where we clean up the class dictionary on every subscription thus allowing generics with ``__slots__``.",
+      "source_hash": 4050308506519595030,
+      "context_hash": 11788025567857296243,
+      "translation": "``_no_slots_copy`` 해크는 구독할 때마다 클래스 딕셔너리를 정리하여 ``__slots__``\\ 를 사용하는 제네릭을 허용합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:10:15.712447Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "General complexity of the ``typing`` module.",
+      "source_hash": 14245266038231972476,
+      "context_hash": 10891865644701177770,
+      "translation": "``typing`` 모듈의 일반적인 복잡성입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712452Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:1",
+      "source": "The new proposal will not only allow to remove the above-mentioned hacks/bugs, but also simplify the implementation, so that it will be easier to maintain.",
+      "source_hash": 6839523349129537238,
+      "context_hash": 17716567476443767965,
+      "translation": "새 제안은 앞서 언급한 해크/버그를 제거할 수 있을 뿐만 아니라 구현도 단순화하여 유지 관리하기 쉽게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712452Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 2034406246606051391,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712453Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "``__class_getitem__``",
+      "source_hash": 2131060182633768769,
+      "context_hash": 5908223007819547701,
+      "translation": "``__class_getitem__``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712453Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The idea of ``__class_getitem__`` is simple: it is an exact analog of ``__getitem__`` with an exception that it is called on a class that defines it, not on its instances.",
+      "source_hash": 3661018270177440608,
+      "context_hash": 2612800573441811205,
+      "translation": "``__class_getitem__``\\ 의 개념은 간단합니다. 이는 ``__getitem__``\\ 에 정확히 대응하지만, 인스턴스가 아니라 이를 정의한 클래스에서 호출된다는 차이가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712453Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "This allows us to avoid ``GenericMeta.__getitem__`` for things like ``Iterable[int]``.",
+      "source_hash": 12348515122732960595,
+      "context_hash": 3949124471144267075,
+      "translation": "이를 통해 ``Iterable[int]``\\ 와 같은 경우에 ``GenericMeta.__getitem__``\\ 을 피할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712454Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:2",
+      "source": "The ``__class_getitem__`` is automatically a class method and does not require ``@classmethod`` decorator (similar to ``__init_subclass__``) and is inherited like normal attributes.",
+      "source_hash": 10752702660551172228,
+      "context_hash": 12472878790291343873,
+      "translation": "``__class_getitem__``\\ 은 자동으로 클래스 메서드가 되므로 ``@classmethod`` 데코레이터가 필요하지 않으며(``__init_subclass__``\\ 와 유사합니다), 일반 속성처럼 상속됩니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T18:10:15.712454Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:3",
+      "source": "For example",
+      "source_hash": 9117899214634101441,
+      "context_hash": 7232059196223800579,
+      "translation": "예를 들어 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712455Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Note that this method is used as a fallback, so if a metaclass defines ``__getitem__``, then that will have the priority.",
+      "source_hash": 2646194513215198612,
+      "context_hash": 14174245494426889732,
+      "translation": "이 메서드는 대체 수단으로 사용되므로 메타클래스가 ``__getitem__``\\ 을 정의하면 해당 메서드가 우선됩니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:10:15.712455Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "``__mro_entries__``",
+      "source_hash": 8892806918024651548,
+      "context_hash": 12145568064143134083,
+      "translation": "``__mro_entries__``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712456Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "If an object that is not a class object appears in the tuple of bases of a class definition, then method ``__mro_entries__`` is searched on it.",
+      "source_hash": 17811947314761485717,
+      "context_hash": 11804302118294058915,
+      "translation": "클래스 객체가 아닌 객체가 클래스 정의의 기반 클래스 튜플에 나타나면 해당 객체에서 ``__mro_entries__`` 메서드를 검색합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712457Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "If found, it is called with the original tuple of bases as an argument.",
+      "source_hash": 15088640847525101185,
+      "context_hash": 1814505145129181559,
+      "translation": "찾은 경우 원래 기반 클래스 튜플을 인자로 하여 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712457Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "The result of the call must be a tuple, that is unpacked in the base classes in place of this object. (If the tuple is empty, this means that the original bases is simply discarded.) If there are more than one object with ``__mro_entries__``, then all of them are called with the same original tuple of bases.",
+      "source_hash": 6563169691904178684,
+      "context_hash": 16363379305573978068,
+      "translation": "호출 결과는 튜플이어야 하며, 이 객체 대신 기반 클래스에 풀립니다. (튜플이 비어 있으면 원래 기반 클래스가 단순히 삭제된다는 의미입니다.) ``__mro_entries__``\\ 를 가진 객체가 둘 이상이면 모두 동일한 원래 기반 클래스 튜플을 인자로 하여 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712457Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:3",
+      "source": "This step happens first in the process of creation of a class, all other steps, including checks for duplicate bases and MRO calculation, happen normally with the updated bases.",
+      "source_hash": 6664865590770723870,
+      "context_hash": 1132649521661331843,
+      "translation": "이 단계는 클래스 생성 과정에서 가장 먼저 수행되며, 중복 기반 클래스 검사와 MRO 계산을 포함한 다른 모든 단계는 업데이트된 기반 클래스를 사용하여 정상적으로 수행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712457Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Using the method API instead of just an attribute is necessary to avoid inconsistent MRO errors, and perform other manipulations that are currently done by ``GenericMeta.__new__``.",
+      "source_hash": 18293488699082573710,
+      "context_hash": 16603196630126755033,
+      "translation": "단순히 속성을 사용하는 대신 메서드 API를 사용하는 것은 일관되지 않은 MRO 오류를 방지하고 현재 ``GenericMeta.__new__``\\ 에서 수행하는 다른 조작을 수행하기 위해 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712458Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "The original bases are stored as ``__orig_bases__`` in the class namespace (currently this is also done by the metaclass).",
+      "source_hash": 16153166746043594455,
+      "context_hash": 9194161175782998011,
+      "translation": "원래 기반 클래스는 클래스 네임스페이스에 ``__orig_bases__``\\ 로 저장됩니다(현재도 메타클래스가 이 작업을 수행합니다).",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스",
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:10:15.712458Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:2",
+      "source": "For example",
+      "source_hash": 9117899214634101441,
+      "context_hash": 8269495097844777187,
+      "translation": "예를 들어 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712459Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "Resolution using ``__mro_entries__`` happens *only* in bases of a class definition statement.",
+      "source_hash": 16189338648004514591,
+      "context_hash": 12598797357313592412,
+      "translation": "``__mro_entries__``\\ 를 사용한 해결은 클래스 정의 문장의 베이스에서 *오직* 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:56:35.401289Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:1",
+      "source": "In all other situations where a class object is expected, no such resolution will happen, this includes ``isinstance`` and ``issubclass`` built-in functions.",
+      "source_hash": 12623776515718782235,
+      "context_hash": 4030427952550985275,
+      "translation": "클래스 객체가 필요한 다른 모든 상황에서는 이러한 해석이 발생하지 않으며, 여기에는 ``isinstance`` 및 ``issubclass`` 내장 함수가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712460Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "NOTE: These two method names are reserved for use by the ``typing`` module and the generic types machinery, and any other use is discouraged.",
+      "source_hash": 15783396034545515242,
+      "context_hash": 1710169041601960959,
+      "translation": "참고: 이 두 메서드 이름은 ``typing`` 모듈과 제네릭 타입 처리 메커니즘에서 사용하도록 예약되어 있으며, 다른 용도로 사용하는 것은 권장되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712460Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:1",
+      "source": "The reference implementation (with tests) can be found in [4]_, and the proposal was originally posted and discussed on the ``typing`` tracker, see [5]_.",
+      "source_hash": 1348987670665791996,
+      "context_hash": 5585716458693783441,
+      "translation": "참조 구현(테스트 포함)은 [4]_\\ 에서 확인할 수 있으며, 이 제안은 원래 ``typing`` 트래커에 게시되어 논의되었습니다. [5]_\\ 를 참조하십시오.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:10:15.712460Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Dynamic class creation and ``types.resolve_bases``",
+      "source_hash": 14906664511916753158,
+      "context_hash": 13444880569606164667,
+      "translation": "동적 클래스 생성 및 ``types.resolve_bases``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712461Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "``type.__new__`` will not perform any MRO entry resolution.",
+      "source_hash": 11240186087447763794,
+      "context_hash": 6048565585029542403,
+      "translation": "``type.__new__``\\ 는 MRO 항목 해석을 수행하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712461Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "So that a direct call ``type('Tokens', (List[int],), {})`` will fail.",
+      "source_hash": 1306493831605690647,
+      "context_hash": 3891136918492143678,
+      "translation": "따라서 ``type('Tokens', (List[int],), {})``\\ 을 직접 호출하면 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712461Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "This is done for performance reasons and to minimize the number of implicit transformations.",
+      "source_hash": 11548669279544256941,
+      "context_hash": 3167697606764487698,
+      "translation": "이는 성능상의 이유와 암시적 변환의 수를 최소화하기 위해 수행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712462Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:3",
+      "source": "Instead, a helper function ``resolve_bases`` will be added to the ``types`` module to allow an explicit ``__mro_entries__`` resolution in the context of dynamic class creation.",
+      "source_hash": 8980600677010072854,
+      "context_hash": 8589092414824581338,
+      "translation": "대신 동적 클래스 생성의 맥락에서 명시적인 ``__mro_entries__``\\ 해석을 허용하도록 ``types`` 모듈에 도우미 함수 ``resolve_bases``\\ 가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712462Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:4",
+      "source": "Correspondingly, ``types.new_class`` will be updated to reflect the new class creation steps while maintaining the backwards compatibility",
+      "source_hash": 16278098192832565484,
+      "context_hash": 17802464233622917836,
+      "translation": "이에 따라 ``types.new_class``\\ 는 하위 호환성을 유지하면서 새로운 클래스 생성 단계를 반영하도록 업데이트됩니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712462Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Using ``__class_getitem__`` in C extensions",
+      "source_hash": 5110976302967345177,
+      "context_hash": 16186390076219666893,
+      "translation": "C 확장에서 ``__class_getitem__`` 사용하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712463Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "As mentioned above, ``__class_getitem__`` is automatically a class method if defined in Python code.",
+      "source_hash": 11116420133219535387,
+      "context_hash": 102569143650878899,
+      "translation": "위에서 언급했듯이 ``__class_getitem__``\\ 은 Python 코드에 정의된 경우 자동으로 클래스 메서드가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712464Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "To define this method in a C extension, one should use flags ``METH_O|METH_CLASS``.",
+      "source_hash": 17634097186266591266,
+      "context_hash": 17041097971621347569,
+      "translation": "C 확장에서 이 메서드를 정의하려면 ``METH_O|METH_CLASS`` 플래그를 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712464Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "For example, a simple way to make an extension class generic is to use a method that simply returns the original class objects, thus fully erasing the type information at runtime, and deferring all check to static type checkers only",
+      "source_hash": 13226504779305159330,
+      "context_hash": 10890226371775216077,
+      "translation": "예를 들어 확장 클래스가 제네릭이 되도록 만드는 간단한 방법은 원래 클래스 객체를 단순히 반환하는 메서드를 사용하는 것입니다. 이렇게 하면 런타임에 타입 정보를 완전히 제거하고 모든 검사를 정적 타입 검사기에만 맡길 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:15.712464Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "Such class can be used as a normal generic in Python type annotations (a corresponding stub file should be provided for static type checkers, see :pep:`484` for details)",
+      "source_hash": 455832397394853752,
+      "context_hash": 8175648505691786942,
+      "translation": "이러한 클래스는 파이썬 타입 어노테이션에서 일반적인 제네릭으로 사용할 수 있습니다(정적 타입 검사기를 위해 해당하는 스텁 파일을 제공해야 하며, 자세한 내용은 :pep:`484`\\ 를 참조하십시오).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:51.460254Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Backwards compatibility and impact on users who don't use ``typing``",
+      "source_hash": 9583196241126170882,
+      "context_hash": 2520523333372560017,
+      "translation": "``typing``\\ 을 사용하지 않는 사용자에 대한 하위 호환성과 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:51.460260Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "This proposal may break code that currently uses the names ``__class_getitem__`` and ``__mro_entries__``.  (But the language reference explicitly reserves *all* undocumented dunder names, and allows \"breakage without warning\"; see [6]_.)",
+      "source_hash": 6049367166767283119,
+      "context_hash": 4523683320048231360,
+      "translation": "이 제안은 현재 ``__class_getitem__``\\ 과 ``__mro_entries__``\\ 라는 이름을 사용하는 코드를 깨뜨릴 수 있습니다. (하지만 언어 참조는 문서화되지 않은 *모든* 던더 이름을 명시적으로 예약해 두었으며 \"경고 없는 손상\"을 허용합니다. [6]_\\ 을 참조하십시오.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:51.460260Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "This proposal will support almost complete backwards compatibility with the current public generic types API; moreover the ``typing`` module is still provisional.",
+      "source_hash": 2280280952850793576,
+      "context_hash": 17667648975213797118,
+      "translation": "이 제안은 현재의 공개 제네릭 타입 API와 거의 완전한 하위 호환성을 지원할 것입니다. 또한 ``typing`` 모듈은 여전히 잠정적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:51.460261Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "The only two exceptions are that currently ``issubclass(List[int], List)`` returns True, while with this proposal it will raise ``TypeError``, and ``repr()`` of unsubscripted user-defined generics cannot be tweaked and will coincide with ``repr()`` of normal (non-generic) classes.",
+      "source_hash": 14176358932807458073,
+      "context_hash": 10791473478339587189,
+      "translation": "유일한 두 가지 예외는, 현재 ``issubclass(List[int], List)``\\ 는 True를 반환하지만 이 제안에서는 ``TypeError``\\ 를 발생시킨다는 점과, 첨자를 붙이지 않은 사용자 정의 제네릭의 ``repr()``\\ 은 조정할 수 없으며 일반(비제네릭) 클래스의 ``repr()``\\ 과 동일해진다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:51.460261Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "With the reference implementation I measured negligible performance effects (under 1% on a micro-benchmark) for regular (non-generic) classes.",
+      "source_hash": 16409030694879336607,
+      "context_hash": 4129435848904413688,
+      "translation": "참조 구현을 사용해 일반(비제네릭) 클래스에 대해 무시할 만한 성능 영향(마이크로벤치마크에서 1% 미만)을 측정했습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:32:51.460262Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:1",
+      "source": "At the same time performance of generics is significantly improved:",
+      "source_hash": 16553417879399498254,
+      "context_hash": 11356291064111123721,
+      "translation": "동시에 제네릭의 성능은 크게 향상되었습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:51.460265Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "``importlib.reload(typing)`` is up to 7x faster",
+      "source_hash": 8888299963384820686,
+      "context_hash": 8076407337256014084,
+      "translation": "``importlib.reload(typing)``\\ 은 최대 7배 더 빠릅니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:51.460265Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "Creation of user defined generic classes is up to 4x faster (on a micro-benchmark with an empty body)",
+      "source_hash": 15314993006650980835,
+      "context_hash": 6961223713416391729,
+      "translation": "사용자 정의 제네릭 클래스 생성은 최대 4배 더 빠릅니다(빈 본문을 가진 마이크로벤치마크 기준)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:51.460266Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "Instantiation of generic classes is up to 5x faster (on a micro-benchmark with an empty ``__init__``)",
+      "source_hash": 14874443553088073485,
+      "context_hash": 4967377215481338968,
+      "translation": "제네릭 클래스의 인스턴스화는 최대 5배 더 빠릅니다(빈 ``__init__``\\ 을 가진 마이크로벤치마크 기준)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:51.460267Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "Other operations with generic types and instances (like method lookup and ``isinstance()`` checks) are improved by around 10-20%",
+      "source_hash": 3341255606887297725,
+      "context_hash": 1601438328988279767,
+      "translation": "제네릭 타입 및 인스턴스와 관련된 다른 연산(메서드 조회 및 ``isinstance()`` 검사 등)은 약 10~20% 개선되었습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:51.460267Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:0",
+      "source": "The only aspect that gets slower with the current proof of concept implementation is the subscripted generics cache look-up.",
+      "source_hash": 5313286238514120194,
+      "context_hash": 3900986010862347352,
+      "translation": "현재의 개념 증명 구현에서 유일하게 느려지는 측면은 첨자가 붙은 제네릭의 캐시 조회입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:51.460268Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:1",
+      "source": "However it was already very efficient, so this aspect gives negligible overall impact.",
+      "source_hash": 16894839472650189022,
+      "context_hash": 4240391590532040165,
+      "translation": "하지만 이는 이미 매우 효율적이었으므로, 이 측면이 전체적으로 미치는 영향은 무시할 만합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:51.460268Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 15222313689007418934,
+      "translation": "참고 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:39.806983Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "Discussion following Mark Shannon's presentation at Language Summit",
+      "source_hash": 874059688469499278,
+      "context_hash": 6669171547877009654,
+      "translation": "Language Summit에서 있었던 Mark Shannon의 발표에 이어진 논의",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:39.806987Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "(https://github.com/python/typing/issues/432)",
+      "source_hash": 1043178947050988167,
+      "context_hash": 15515015388315636218,
+      "translation": "(https://github.com/python/typing/issues/432)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:39.806988Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "Pull Request to implement shared generic ABC caches (merged)",
+      "source_hash": 10773528355783730062,
+      "context_hash": 11554032415487525665,
+      "translation": "공유 제네릭 ABC 캐시를 구현하는 풀 리퀘스트(병합됨)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:39.806988Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "(https://github.com/python/typing/pull/383)",
+      "source_hash": 344803194533987566,
+      "context_hash": 8446123934593279844,
+      "translation": "(https://github.com/python/typing/pull/383)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:39.806988Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "An old bug with setting/accessing attributes on generic types",
+      "source_hash": 16453429625967849745,
+      "context_hash": 519846705708805694,
+      "translation": "제네릭 타입에서 속성을 설정/접근하는 것과 관련된 오래된 버그",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:39.806989Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:0",
+      "source": "(https://github.com/python/typing/issues/392)",
+      "source_hash": 11833806678791220676,
+      "context_hash": 5695770705383844104,
+      "translation": "(https://github.com/python/typing/issues/392)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:39.806989Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:7/seg:0",
+      "source": "The reference implementation",
+      "source_hash": 17521711246019595792,
+      "context_hash": 5027740915299527706,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:19:39.806989Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:8/seg:0",
+      "source": "(https://github.com/ilevkivskyi/cpython/pull/2/files, https://github.com/ilevkivskyi/cpython/tree/new-typing)",
+      "source_hash": 3930931774583841765,
+      "context_hash": 8907358696761793446,
+      "translation": "(https://github.com/ilevkivskyi/cpython/pull/2/files, https://github.com/ilevkivskyi/cpython/tree/new-typing)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:39.806991Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:9/seg:0",
+      "source": "Original proposal",
+      "source_hash": 11079051668800397037,
+      "context_hash": 2365919986679521429,
+      "translation": "원래 제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:39.806992Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:10/seg:0",
+      "source": "(https://github.com/python/typing/issues/468)",
+      "source_hash": 17637547142610758771,
+      "context_hash": 4416929120290172010,
+      "translation": "(https://github.com/python/typing/issues/468)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:39.806992Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:11/seg:0",
+      "source": "Reserved classes of identifiers",
+      "source_hash": 13628098093290614763,
+      "context_hash": 4416936078939283628,
+      "translation": "예약된 식별자 종류",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:39.806992Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:12/seg:0",
+      "source": "(https://docs.python.org/3/reference/lexical_analysis.html#reserved-classes-of-identifiers)",
+      "source_hash": 8450191290719138152,
+      "context_hash": 17802386338126460286,
+      "translation": "(https://docs.python.org/3/reference/lexical_analysis.html#reserved-classes-of-identifiers)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:39.806992Z",
+      "issues": []
+    }
+  ]
+}

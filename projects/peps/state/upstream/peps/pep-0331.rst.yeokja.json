@@ -1,0 +1,756 @@
+{
+  "version": 1,
+  "source_hash": 16609229388339312132,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Locale-Independent Float/String Conversions",
+      "source_hash": 4346122141946748581,
+      "context_hash": 16530898886277989957,
+      "translation": "로케일 독립적 부동소수점/문자열 변환",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218675Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 2104990756200172705,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218678Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Support for the ``LC_NUMERIC`` locale category in Python 2.3 is implemented only in Python-space.",
+      "source_hash": 894477811141406442,
+      "context_hash": 15328017193173301895,
+      "translation": "Python 2.3의 ``LC_NUMERIC`` 로케일 범주 지원은 파이썬 영역에서만 구현되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218678Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This causes inconsistent behavior and thread-safety issues for applications that use extension modules and libraries implemented in C that parse and generate floats from strings.",
+      "source_hash": 15672119387336420155,
+      "context_hash": 12314451114400474924,
+      "translation": "이로 인해 문자열에서 부동소수점을 구문 분석하고 생성하는 C로 구현된 확장 모듈과 라이브러리를 사용하는 애플리케이션에서 일관되지 않은 동작과 스레드 안전성 문제가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218679Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "This document proposes a plan for removing this inconsistency by providing and using substitute locale-agnostic functions as necessary.",
+      "source_hash": 5139682921160272624,
+      "context_hash": 11733383095521378161,
+      "translation": "이 문서에서는 필요한 경우 로케일에 종속되지 않는 대체 함수를 제공하고 사용하여 이러한 불일치를 제거하는 계획을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218679Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Introduction",
+      "source_hash": 17143975622463353612,
+      "context_hash": 6127799549344677165,
+      "translation": "소개",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218679Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Python provides generic localization services through the locale module, which among other things allows localizing the display and conversion process of numeric types.",
+      "source_hash": 9533151867593326411,
+      "context_hash": 12280027536845513416,
+      "translation": "Python은 locale 모듈을 통해 일반적인 지역화 서비스를 제공하며, 여기에는 숫자 형식의 표시 및 변환 과정을 지역화하는 기능도 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218680Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Locale categories, such as ``LC_TIME`` and ``LC_COLLATE``, allow configuring precisely what aspects of the application are to be localized.",
+      "source_hash": 5193536129060255199,
+      "context_hash": 6691622985021846795,
+      "translation": "``LC_TIME`` 및 ``LC_COLLATE``\\ 와 같은 로케일 범주를 사용하면 애플리케이션의 어떤 측면을 지역화할지 정확하게 구성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218680Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "The ``LC_NUMERIC`` category specifies formatting for non-monetary numeric information, such as the decimal separator in float and fixed-precision numbers.",
+      "source_hash": 11237496802902413847,
+      "context_hash": 8481643770264849321,
+      "translation": "``LC_NUMERIC`` 범주는 부동소수점 및 고정 정밀도 숫자의 소수점 구분 기호와 같은 비화폐성 숫자 정보의 형식을 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218680Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "Localization of the ``LC_NUMERIC`` category is currently implemented only in Python-space; C libraries invoked from the Python runtime are unaware of Python's ``LC_NUMERIC`` setting.",
+      "source_hash": 4315484172474283748,
+      "context_hash": 14915917573790707296,
+      "translation": "``LC_NUMERIC`` 범주의 지역화는 현재 파이썬 영역에서만 구현되어 있으며, Python 런타임에서 호출하는 C 라이브러리는 Python의 ``LC_NUMERIC`` 설정을 인식하지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218680Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "This is done to avoid changing the behavior of certain low-level functions that are used by the Python parser and related code [2]_.",
+      "source_hash": 16765400653399909615,
+      "context_hash": 8449189836030587038,
+      "translation": "이는 Python 파서 및 관련 코드에서 사용하는 특정 저수준 함수의 동작을 변경하지 않기 위한 것입니다 [2]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218681Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "However, this presents a problem for extension modules that wrap C libraries.",
+      "source_hash": 17860850902487379803,
+      "context_hash": 6735509866369840948,
+      "translation": "그러나 이는 C 라이브러리를 래핑하는 확장 모듈에 문제를 일으킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218681Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "Applications that use these extension modules will inconsistently display and convert floating-point values.",
+      "source_hash": 608806418595201455,
+      "context_hash": 6756966309352458742,
+      "translation": "이러한 확장 모듈을 사용하는 애플리케이션은 부동소수점 값을 일관되지 않게 표시하고 변환하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218681Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "James Henstridge, the author of PyGTK [3]_, has additionally pointed out that the ``setlocale()`` function also presents thread-safety issues, since a thread may call the C library ``setlocale()`` outside of the GIL, and cause Python to parse and generate floats incorrectly.",
+      "source_hash": 7460901123052638856,
+      "context_hash": 4929712641164439441,
+      "translation": "PyGTK [3]_\\ 의 작성자인 James Henstridge는 ``setlocale()`` 함수에도 스레드 안전성 문제가 있다고 지적했습니다. 스레드가 GIL 외부에서 C 라이브러리의 ``setlocale()``\\ 을 호출하여 Python이 부동소수점을 잘못 구문 분석하고 생성하게 만들 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218681Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 421960743760246541,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218682Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "The inconsistency between Python and C library localization for ``LC_NUMERIC`` is a problem for any localized application using C extensions.",
+      "source_hash": 367105954492732094,
+      "context_hash": 1093639871378332565,
+      "translation": "``LC_NUMERIC``\\ 에 대한 Python과 C 라이브러리의 지역화 간 불일치는 C 확장을 사용하는 모든 지역화된 애플리케이션에서 문제가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218682Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "The exact nature of the problem will vary depending on the application, but it will most likely occur when parsing or formatting a floating-point value.",
+      "source_hash": 11627345143570581831,
+      "context_hash": 6172843289036796006,
+      "translation": "문제의 정확한 양상은 애플리케이션에 따라 달라지지만, 대부분 부동소수점 값을 구문 분석하거나 형식화할 때 발생할 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218682Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Example Problem",
+      "source_hash": 17562629208829186907,
+      "context_hash": 8304499672392118131,
+      "translation": "문제 예시",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218682Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "The initial problem that motivated this PEP is related to the GtkSpinButton [4]_ widget in the GTK+ UI toolkit, wrapped by the PyGTK module.",
+      "source_hash": 1866138571572928897,
+      "context_hash": 17043549591999680396,
+      "translation": "이 PEP를 작성하게 된 최초의 문제는 PyGTK 모듈로 래핑된 GTK+ UI 툴킷의 GtkSpinButton [4]_ 위젯과 관련이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218683Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "The widget can be set to numeric mode, and when this occurs, characters typed into it are evaluated as a number.",
+      "source_hash": 15585172620093300859,
+      "context_hash": 7037257809485659602,
+      "translation": "이 위젯은 숫자 모드로 설정할 수 있으며, 이 경우 위젯에 입력된 문자가 숫자로 평가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218683Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Problems occur when ``LC_NUMERIC`` is set to a locale with a float separator that differs from the C locale's standard (for instance, ',' instead of '.' for the Brazilian locale pt_BR).",
+      "source_hash": 6914468825858575632,
+      "context_hash": 10658146856370802414,
+      "translation": "``LC_NUMERIC``\\ 이 C 로케일의 표준과 다른 부동소수점 구분 기호를 사용하는 로케일로 설정되면 문제가 발생합니다(예를 들어 브라질 로케일 pt_BR에서는 '.' 대신 ','를 사용합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218683Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "Because ``LC_NUMERIC`` is not set at the libc level, float values are displayed incorrectly (using '.' as a separator) in the spinbutton's text entry, and it is impossible to enter fractional values using the ',' separator.",
+      "source_hash": 8828321592128304686,
+      "context_hash": 13953347386151577083,
+      "translation": "libc 수준에서 ``LC_NUMERIC``\\ 이 설정되지 않기 때문에 스핀버튼의 텍스트 입력란에 부동소수점 값이 잘못 표시되며(구분 기호로 '.'를 사용함), ',' 구분 기호를 사용하여 소수 값을 입력할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218684Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "This small example demonstrates reduced usability for localized applications using this toolkit when coded in Python.",
+      "source_hash": 4190902202827933241,
+      "context_hash": 405278577174143935,
+      "translation": "이 간단한 예시는 Python으로 코딩한 이 툴킷 기반 지역화 애플리케이션의 사용성이 저하됨을 보여줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218684Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Proposal",
+      "source_hash": 17139217736364358932,
+      "context_hash": 14464412424152193455,
+      "translation": "제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218684Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Martin v.",
+      "source_hash": 17251493118278990328,
+      "context_hash": 14225081540065355670,
+      "translation": "Martin v.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218684Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "Löwis commented on the initial constraints for an acceptable solution to the problem on python-dev:",
+      "source_hash": 12771199856780247512,
+      "context_hash": 5962161302572476415,
+      "translation": "Löwis는 python-dev에서 이 문제에 대한 수용 가능한 해결책의 초기 제약 조건에 대해 다음과 같이 언급했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218685Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "``LC_NUMERIC`` can be set at the C library level without breaking the parser.",
+      "source_hash": 10000079751157520610,
+      "context_hash": 9775635545022025782,
+      "translation": "파서를 손상시키지 않고 C 라이브러리 수준에서 ``LC_NUMERIC``\\ 을 설정할 수 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218685Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "``float()`` and ``str()`` stay locale-unaware.",
+      "source_hash": 7544252880791216317,
+      "context_hash": 8501768391573789495,
+      "translation": "``float()`` 및 ``str()``\\ 은 로케일을 인식하지 않는 상태로 유지해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218685Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "locale-aware ``str()`` and ``atof()`` stay in the locale module.",
+      "source_hash": 16385792468463216613,
+      "context_hash": 18032739612717401189,
+      "translation": "로케일을 인식하는 ``str()`` 및 ``atof()``\\ 은 locale 모듈에 유지해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218685Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "An analysis of the Python source suggests that the following functions currently depend on ``LC_NUMERIC`` being set to the C locale:",
+      "source_hash": 13177370619950313595,
+      "context_hash": 12389645029511288554,
+      "translation": "Python 소스 분석에 따르면 다음 함수는 현재 ``LC_NUMERIC``\\ 이 C 로케일로 설정되어 있는지에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218686Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "``Python/compile.c:parsenumber()``",
+      "source_hash": 14930653864897829000,
+      "context_hash": 16220386906114629343,
+      "translation": "``Python/compile.c:parsenumber()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218686Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "``Python/marshal.c:r_object()``",
+      "source_hash": 3600132641162172065,
+      "context_hash": 1423253031444804903,
+      "translation": "``Python/marshal.c:r_object()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:34:19.218686Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "``Objects/complexobject.c:complex_to_buf()``",
+      "source_hash": 10877454382049803426,
+      "context_hash": 894896390839034563,
+      "translation": "``Objects/complexobject.c:complex_to_buf()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446949Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "``Objects/complexobject.c:complex_subtype_from_string()``",
+      "source_hash": 15487190114674888624,
+      "context_hash": 7106927980625946337,
+      "translation": "``Objects/complexobject.c:complex_subtype_from_string()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446953Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "``Objects/floatobject.c:PyFloat_FromString()``",
+      "source_hash": 15228601236749211261,
+      "context_hash": 656115462396728242,
+      "translation": "``Objects/floatobject.c:PyFloat_FromString()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446954Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "``Objects/floatobject.c:format_float()``",
+      "source_hash": 6796277469950210094,
+      "context_hash": 16902938182200082393,
+      "translation": "``Objects/floatobject.c:format_float()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446954Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "``Objects/stringobject.c:formatfloat()``",
+      "source_hash": 9402349102098611691,
+      "context_hash": 12586504170442836139,
+      "translation": "``Objects/stringobject.c:formatfloat()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446954Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "``Modules/stropmodule.c:strop_atof()``",
+      "source_hash": 519778289325482234,
+      "context_hash": 7740050098130239114,
+      "translation": "``Modules/stropmodule.c:strop_atof()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446955Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "``Modules/cPickle.c:load_float()``",
+      "source_hash": 9392630307964055946,
+      "context_hash": 1398858086093710678,
+      "translation": "``Modules/cPickle.c:load_float()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446955Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "The proposed approach is to implement ``LC_NUMERIC``-agnostic functions for converting from (``strtod()``/``atof()``) and to (``snprintf()``) float formats, using these functions where the formatting should not vary according to the user-specified locale.",
+      "source_hash": 11979262981469127567,
+      "context_hash": 15148140159559526045,
+      "translation": "제안된 접근 방식은 사용자 지정 로캘에 따라 형식이 달라지지 않아야 하는 경우에 이러한 함수를 사용하여, 부동 소수점 형식에서 변환하는(``strtod()``/``atof()``) 함수와 변환하는(``snprintf()``) 함수 중 ``LC_NUMERIC``\\ 에 의존하지 않는 함수를 구현하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446955Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:0",
+      "source": "The locale module should also be changed to remove the special-casing for ``LC_NUMERIC``.",
+      "source_hash": 11243801263045354922,
+      "context_hash": 4354885715260899426,
+      "translation": "locale 모듈도 ``LC_NUMERIC``\\ 에 대한 특수 처리를 제거하도록 변경해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446956Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:0",
+      "source": "This change should also solve the aforementioned thread-safety problems.",
+      "source_hash": 1965687277548342351,
+      "context_hash": 7457430733118185540,
+      "translation": "이 변경으로 앞서 언급한 스레드 안전성 문제도 해결될 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446956Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Potential Code Contributions",
+      "source_hash": 5489857362869198554,
+      "context_hash": 1838869513778330062,
+      "translation": "잠재적인 코드 기여",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446956Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "This problem was initially reported as a problem in the GTK+ libraries [5]_; since then it has been correctly diagnosed as an inconsistency in Python's implementation.",
+      "source_hash": 6848228870769111740,
+      "context_hash": 15857084346682486401,
+      "translation": "이 문제는 처음에 GTK+ 라이브러리의 문제로 보고되었지만 [5]_; 그 이후 Python 구현의 불일치로 정확히 진단되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446957Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "However, in a fortunate coincidence, the glib library (developed primarily for GTK+, not to be confused with the GNU C library) implements a number of ``LC_NUMERIC``-agnostic functions (for an example, see [6]_) for reasons similar to those presented in this paper.",
+      "source_hash": 3918757904719027898,
+      "context_hash": 200854356369360851,
+      "translation": "그러나 다행스러운 우연으로, glib 라이브러리(GTK+용으로 주로 개발되었으며 GNU C 라이브러리와 혼동해서는 안 됩니다)는 이 문서에서 제시한 이유와 유사한 이유로 ``LC_NUMERIC``\\ 에 의존하지 않는 여러 함수를 구현하고 있습니다(예를 들어 [6]_ 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446957Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "In the same GTK+ problem report, Havoc Pennington suggested that the glib authors would be willing to contribute this code to the PSF, which would simplify implementation of this PEP considerably.",
+      "source_hash": 12434795660451791501,
+      "context_hash": 6663503054967249044,
+      "translation": "동일한 GTK+ 문제 보고서에서 Havoc Pennington은 glib 작성자들이 이 코드를 PSF에 기여할 의향이 있을 것이라고 제안했으며, 이는 이 PEP의 구현을 상당히 단순화할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446957Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "Alex Larsson, the original author of the glib code, submitted a PSF Contributor Agreement [7]_ on 2003-08-20 [8]_ to ensure the code could be safely integrated; this agreement has been received and accepted.",
+      "source_hash": 7304804480423947811,
+      "context_hash": 6567927957290284326,
+      "translation": "glib 코드의 원저자인 Alex Larsson은 코드를 안전하게 통합할 수 있도록 2003-08-20에 PSF 기여자 협약 [7]_\\ 을 제출했으며 [8]_; 이 협약은 접수되어 승인되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446958Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Risks",
+      "source_hash": 11522566933757613011,
+      "context_hash": 552120318894623170,
+      "translation": "위험 요소",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446958Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "There may be cross-platform issues with the provided locale-agnostic functions, though this risk is low given that the code supplied simply reverses any locale-dependent changes made to floating-point numbers.",
+      "source_hash": 9314295881810032969,
+      "context_hash": 15986531184291934189,
+      "translation": "제공된 로캘 비의존 함수에는 플랫폼 간 문제가 있을 수 있지만, 제공된 코드가 부동 소수점 수에 적용된 로캘 의존적 변경을 단순히 되돌리므로 이 위험은 낮습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446958Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "Martin and Guido pointed out potential copyright issues with the contributed code.",
+      "source_hash": 18429943703382858295,
+      "context_hash": 14998046843234454607,
+      "translation": "Martin과 Guido는 기여된 코드에 잠재적인 저작권 문제가 있음을 지적했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446959Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "I believe we will have no problems in this area as members of the GTK+ and glib teams have said they are fine with relicensing the code, and a PSF contributor agreement has been mailed in to ensure this safety.",
+      "source_hash": 13904001755184365589,
+      "context_hash": 15023023967639960637,
+      "translation": "GTK+ 및 glib 팀의 구성원들이 코드의 라이선스를 변경하는 데 문제가 없다고 밝혔고, 이러한 안전성을 보장하기 위해 PSF 기여자 협약도 우편으로 제출되었으므로 이 영역에서는 문제가 없을 것으로 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446959Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Tim Peters has pointed out [9]_ that there are situations involving threading in which the proposed change is insufficient to solve the problem completely.",
+      "source_hash": 8041160432191034702,
+      "context_hash": 13985024834171163074,
+      "translation": "Tim Peters는 [9]_\\ 에서 제안된 변경만으로는 문제를 완전히 해결하기에 충분하지 않은 스레딩 관련 상황이 있다고 지적했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446959Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "A complete solution, however, does not currently exist.",
+      "source_hash": 3474846141053480774,
+      "context_hash": 6882209308758437315,
+      "translation": "그러나 현재 완전한 해결책은 존재하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446959Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 980976777304966011,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446960Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "An implementation was developed by Gustavo Carneiro <gjc at inescporto.pt>, and attached to Sourceforge.net bug 774665 [10]_",
+      "source_hash": 6815767852168695605,
+      "context_hash": 6541967299971356690,
+      "translation": "Gustavo Carneiro <gjc at inescporto.pt>가 구현을 개발하여 Sourceforge.net 버그 774665 [10]_\\ 에 첨부했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446960Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "The final patch [11]_ was integrated into Python CVS by Martin v.",
+      "source_hash": 11893372391015854781,
+      "context_hash": 7281311921705198971,
+      "translation": "최종 패치 [11]_\\ 는 Martin v.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446960Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "Löwis on 2004-06-08, as stated in the bug report.",
+      "source_hash": 16070336579709287168,
+      "context_hash": 12948192166273516917,
+      "translation": "Löwis가 버그 보고서에 명시된 대로 2004-06-08에 Python CVS에 통합했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446960Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 15624436508387617400,
+      "translation": "참고 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446961Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Python locale documentation for embedding,",
+      "source_hash": 14821815240224524296,
+      "context_hash": 12442636598815428599,
+      "translation": "임베딩을 위한 Python locale 문서,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446961Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "http://docs.python.org/library/locale.html",
+      "source_hash": 6918589178835069511,
+      "context_hash": 17919922889054356762,
+      "translation": "http://docs.python.org/library/locale.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446961Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "PyGTK homepage, http://www.daa.com.au/~james/pygtk/",
+      "source_hash": 5034935904175907326,
+      "context_hash": 3362587206462414606,
+      "translation": "PyGTK 홈페이지, http://www.daa.com.au/~james/pygtk/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446961Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "GtkSpinButton screenshot (demonstrating problem),",
+      "source_hash": 4404318337041198445,
+      "context_hash": 6844686184644576233,
+      "translation": "GtkSpinButton 스크린샷(문제를 보여 줌),",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446962Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "http://www.async.com.br/~kiko/spin.png",
+      "source_hash": 10399571823575155298,
+      "context_hash": 11173524738075335787,
+      "translation": "http://www.async.com.br/~kiko/spin.png",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446962Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "GNOME bug report, http://bugzilla.gnome.org/show_bug.cgi?id=114132",
+      "source_hash": 111428809459211558,
+      "context_hash": 1511919165883811999,
+      "translation": "GNOME 버그 보고서, http://bugzilla.gnome.org/show_bug.cgi?id=114132",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:57.446962Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "Code submission of g_ascii_strtod and g_ascii_dtostr (later",
+      "source_hash": 9492539574189165215,
+      "context_hash": 11778557621971336695,
+      "translation": "g_ascii_strtod 및 g_ascii_dtostr 코드 제출(나중에",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:09.162116Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:0",
+      "source": "renamed g_ascii_formatd) by Alex Larsson, http://mail.gnome.org/archives/gtk-devel-list/2001-October/msg00114.html",
+      "source_hash": 12442764696326787168,
+      "context_hash": 16920572962402063583,
+      "translation": "g_ascii_formatd로 이름이 변경됨)을 Alex Larsson이 제출함, http://mail.gnome.org/archives/gtk-devel-list/2001-October/msg00114.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:09.162124Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:0",
+      "source": "PSF Contributor Agreement,",
+      "source_hash": 5436745372744202543,
+      "context_hash": 10569653948881985303,
+      "translation": "PSF 기여자 계약서,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:09.162125Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:10/seg:0",
+      "source": "https://www.python.org/psf/contrib/contrib-form/",
+      "source_hash": 17821681517610764038,
+      "context_hash": 8463876004484926000,
+      "translation": "https://www.python.org/psf/contrib/contrib-form/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:09.162126Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:11/seg:0",
+      "source": "Alex Larsson's email confirming his agreement was mailed in,",
+      "source_hash": 3077997030364636194,
+      "context_hash": 15555422511996994979,
+      "translation": "Alex Larsson이 동의함을 확인하는 이메일이 발송되었습니다,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:09.162126Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:12/seg:0",
+      "source": "https://mail.python.org/pipermail/python-dev/2003-August/037755.html",
+      "source_hash": 11196822184391815915,
+      "context_hash": 16333848333673190293,
+      "translation": "https://mail.python.org/pipermail/python-dev/2003-August/037755.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:09.162127Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:13/seg:0",
+      "source": "Tim Peters' email summarizing LC_NUMERIC trouble with Spambayes,",
+      "source_hash": 7725347335689937402,
+      "context_hash": 6088174088552478118,
+      "translation": "Spambayes의 LC_NUMERIC 문제를 요약한 Tim Peters의 이메일,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:09.162127Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:14/seg:0",
+      "source": "https://mail.python.org/pipermail/python-dev/2003-September/037898.html",
+      "source_hash": 9438684857209591782,
+      "context_hash": 15338090057189954121,
+      "translation": "https://mail.python.org/pipermail/python-dev/2003-September/037898.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:09.162127Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:15/seg:0",
+      "source": "Python bug report, https://bugs.python.org/issue774665",
+      "source_hash": 3507349525183755529,
+      "context_hash": 18271162010732065292,
+      "translation": "Python 버그 보고서, https://bugs.python.org/issue774665",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:09.162128Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:16/seg:0",
+      "source": "Integrated LC_NUMERIC-agnostic patch,",
+      "source_hash": 12202239027351711474,
+      "context_hash": 9652734016149916408,
+      "translation": "LC_NUMERIC에 비의존적인 패치를 통합함,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:09.162128Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:17/seg:0",
+      "source": "https://sourceforge.net/tracker/download.php?group_id=5470&atid=305470&file_id=89685&aid=774665",
+      "source_hash": 5715854174171912744,
+      "context_hash": 2980975533206004857,
+      "translation": "https://sourceforge.net/tracker/download.php?group_id=5470&atid=305470&file_id=89685&aid=774665",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:09.162129Z",
+      "issues": []
+    }
+  ]
+}

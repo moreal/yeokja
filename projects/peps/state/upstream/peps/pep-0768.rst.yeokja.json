@@ -1,0 +1,1797 @@
+{
+  "version": 1,
+  "source_hash": 6667163632921131132,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Safe external debugger interface for CPython",
+      "source_hash": 13193987063098733063,
+      "context_hash": 16530898886277989957,
+      "translation": "CPython용 안전한 외부 디버거 인터페이스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092623Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 18339952280923230159,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092628Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes adding a zero-overhead debugging interface to CPython that allows debuggers and profilers to safely attach to running Python processes.",
+      "source_hash": 6583878909111156462,
+      "context_hash": 4922128367465642596,
+      "translation": "이 PEP는 디버거와 프로파일러가 실행 중인 Python 프로세스에 안전하게 연결할 수 있도록 CPython에 오버헤드가 없는 디버깅 인터페이스를 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092629Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "The interface provides safe execution points for attaching debugger code without modifying the interpreter's normal execution path or adding runtime overhead.",
+      "source_hash": 1785590110418396049,
+      "context_hash": 2079664383596834785,
+      "translation": "이 인터페이스는 인터프리터의 일반 실행 경로를 수정하거나 런타임 오버헤드를 추가하지 않고 디버거 코드를 연결할 수 있는 안전한 실행 지점을 제공합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:52.092629Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "A key application of this interface will be enabling pdb to attach to live processes by process ID, similar to ``gdb -p``, allowing developers to inspect and debug Python applications interactively in real-time without stopping or restarting them.",
+      "source_hash": 8210328855082724085,
+      "context_hash": 13915203581531626034,
+      "translation": "이 인터페이스의 주요 활용 사례는 프로세스 ID를 사용하여 ``gdb -p``\\ 와 유사하게 pdb가 실행 중인 프로세스에 연결할 수 있도록 하는 것이며, 이를 통해 개발자는 Python 애플리케이션을 중지하거나 다시 시작하지 않고 실시간으로 대화식 검사와 디버깅을 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092631Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 13975834114485550176,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092631Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Debugging Python processes in production and live environments presents unique challenges.",
+      "source_hash": 4286484207068091140,
+      "context_hash": 18303560616782261438,
+      "translation": "프로덕션 및 실시간 환경에서 Python 프로세스를 디버깅하는 일은 고유한 어려움을 제시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092631Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Developers often need to analyze application behavior without stopping or restarting services, which is especially crucial for high-availability systems.",
+      "source_hash": 6947620893982924489,
+      "context_hash": 4642440801476095386,
+      "translation": "개발자는 서비스를 중지하거나 다시 시작하지 않고 애플리케이션 동작을 분석해야 하는 경우가 많으며, 이는 고가용성 시스템에서 특히 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092632Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "Common scenarios include diagnosing deadlocks, inspecting memory usage, or investigating unexpected behavior in real-time.",
+      "source_hash": 8671732718992590314,
+      "context_hash": 13277728084460626039,
+      "translation": "일반적인 상황으로는 교착 상태 진단, 메모리 사용량 검사 또는 실시간으로 예기치 않은 동작 조사 등이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092632Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Very few Python tools can attach to running processes, primarily because doing so requires deep expertise in both operating system debugging interfaces and CPython internals.",
+      "source_hash": 6237558223044358356,
+      "context_hash": 13058721353835704949,
+      "translation": "실행 중인 프로세스에 연결할 수 있는 Python 도구는 매우 적으며, 주된 이유는 이를 수행하려면 운영 체제 디버깅 인터페이스와 CPython 내부 구조 모두에 대한 깊은 전문 지식이 필요하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092632Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "While C/C++ debuggers like GDB and LLDB can attach to processes using well-understood techniques, Python tools must implement all of these low-level mechanisms plus handle additional complexity.",
+      "source_hash": 16304799849168161674,
+      "context_hash": 14114247974071175605,
+      "translation": "GDB 및 LLDB와 같은 C/C++ 디버거는 잘 알려진 기법을 사용하여 프로세스에 연결할 수 있지만, Python 도구는 이러한 저수준 메커니즘을 모두 구현하는 동시에 추가적인 복잡성도 처리해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092632Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "For example, when GDB needs to execute code in a target process, it:",
+      "source_hash": 9287034877305885168,
+      "context_hash": 7005665250174951490,
+      "translation": "예를 들어 GDB가 대상 프로세스에서 코드를 실행해야 할 때는 다음을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092633Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Uses ptrace to allocate a small chunk of executable memory (easier said than done)",
+      "source_hash": 10017479532663627395,
+      "context_hash": 17189728677891320820,
+      "translation": "ptrace를 사용하여 실행 가능한 메모리의 작은 영역을 할당합니다(말처럼 쉽지는 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092633Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "Writes a small sequence of machine code - typically a function prologue, the desired instructions, and code to restore registers",
+      "source_hash": 16721430111549639357,
+      "context_hash": 7609331706692767048,
+      "translation": "작은 기계어 시퀀스를 작성합니다 - 일반적으로 함수 프롤로그, 원하는 명령어 및 레지스터를 복원하는 코드로 구성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092633Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "Saves all the target thread's registers",
+      "source_hash": 9665372262695998110,
+      "context_hash": 9009959565013184237,
+      "translation": "대상 스레드의 모든 레지스터를 저장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092634Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Changes the instruction pointer to the injected code",
+      "source_hash": 10007067945303132232,
+      "context_hash": 11713289975373344630,
+      "translation": "명령어 포인터를 주입된 코드로 변경합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092634Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "Lets the process run until it hits a breakpoint at the end of the injected code",
+      "source_hash": 6168955990601302462,
+      "context_hash": 4361323551858239267,
+      "translation": "주입된 코드의 끝에 있는 중단점에 도달할 때까지 프로세스를 실행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092634Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "Restores the original registers and continues execution",
+      "source_hash": 3339199927445568084,
+      "context_hash": 18098495025957612787,
+      "translation": "원래 레지스터를 복원하고 실행을 계속합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092634Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "Python tools face this same challenge of code injection, but with an additional layer of complexity.",
+      "source_hash": 2309643106175580861,
+      "context_hash": 1987602171722908578,
+      "translation": "Python 도구도 이와 동일한 코드 주입 문제에 직면하지만, 여기에 추가적인 복잡성 계층이 더해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092635Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:1",
+      "source": "Not only do they need to implement the above mechanism, they must also understand and safely interact with CPython's runtime state, including the interpreter loop, garbage collector, thread state, and reference counting system.",
+      "source_hash": 3190999509334593593,
+      "context_hash": 1779112340186958067,
+      "translation": "이러한 도구는 위 메커니즘을 구현해야 할 뿐만 아니라 인터프리터 루프, 가비지 컬렉터, 스레드 상태 및 참조 카운팅 시스템을 비롯한 CPython의 런타임 상태를 이해하고 안전하게 상호작용해야 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:52.092635Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:2",
+      "source": "This combination of low-level system manipulation and deep domain specific interpreter knowledge makes implementing Python debugging tools exceptionally difficult.",
+      "source_hash": 14309403259688245139,
+      "context_hash": 1788988570448324428,
+      "translation": "이러한 저수준 시스템 조작과 깊은 도메인별 인터프리터 지식의 결합으로 인해 Python 디버깅 도구를 구현하는 일은 매우 어려워집니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:52.092636Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "The few tools (see for example `DebugPy <https://github.com/microsoft/debugpy/blob/43f41029eabce338becbd1fa1a09727b3cfb1140/src/debugpy/_vendored/pydevd/pydevd_attach_to_process/linux_and_mac/attach.cpp#L4>`__ and `Memray <https://github.com/bloomberg/memray/blob/main/src/memray/_memray/inject.cpp>`__) that do attempt this resort to suboptimal and unsafe methods, using system debuggers like GDB and LLDB to forcefully inject code.",
+      "source_hash": 2970761894335348125,
+      "context_hash": 526115986495306997,
+      "translation": "이를 시도하는 소수의 도구(예를 들어 `DebugPy <https://github.com/microsoft/debugpy/blob/43f41029eabce338becbd1fa1a09727b3cfb1140/src/debugpy/_vendored/pydevd/pydevd_attach_to_process/linux_and_mac/attach.cpp#L4>`__ 및 `Memray <https://github.com/bloomberg/memray/blob/main/src/memray/_memray/inject.cpp>`__)는 GDB 및 LLDB와 같은 시스템 디버거를 사용하여 코드를 강제로 주입하는 차선책이자 안전하지 않은 방법에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092636Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:1",
+      "source": "This approach is fundamentally unsafe because the injected code can execute at any point during the interpreter's execution cycle - even during critical operations like memory allocation, garbage collection, or thread state management.",
+      "source_hash": 15682964998214936984,
+      "context_hash": 11274686095789872878,
+      "translation": "주입된 코드가 인터프리터의 실행 주기 중 어느 시점에서든 실행될 수 있기 때문에 이 접근 방식은 근본적으로 안전하지 않습니다 - 메모리 할당, 가비지 컬렉션 또는 스레드 상태 관리와 같은 중요한 작업 중에도 실행될 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:52.092637Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:2",
+      "source": "When this happens, the results are catastrophic: attempting to allocate memory while already inside ``malloc()`` causes crashes, modifying objects during garbage collection corrupts the interpreter's state, and touching thread state at the wrong time leads to deadlocks.",
+      "source_hash": 13994740721540484948,
+      "context_hash": 3580300133726031997,
+      "translation": "이 경우 결과는 치명적입니다. 이미 ``malloc()``\\ 안에 있는 동안 메모리를 할당하려고 하면 충돌이 발생하고, 가비지 컬렉션 중에 객체를 수정하면 인터프리터 상태가 손상되며, 잘못된 시점에 스레드 상태에 접근하면 교착 상태가 발생합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:52.092637Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:0",
+      "source": "Various tools attempt to minimize these risks through complex workarounds, such as spawning separate threads for injected code or carefully timing their operations or trying to select some good points to stop the process.",
+      "source_hash": 1777736601211991836,
+      "context_hash": 5475573312466642755,
+      "translation": "다양한 도구는 주입된 코드를 위한 별도 스레드를 생성하거나, 작업 타이밍을 신중하게 조정하거나, 프로세스를 중지할 적절한 지점을 선택하려고 하는 등 복잡한 우회 방법을 통해 이러한 위험을 최소화하려고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092638Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:1",
+      "source": "However, these mitigations cannot fully solve the underlying problem: without cooperation from the interpreter, there's no way to know if it's safe to execute code at any given moment.",
+      "source_hash": 1833150060674060771,
+      "context_hash": 14948854271673280096,
+      "translation": "그러나 이러한 완화책으로는 근본적인 문제를 완전히 해결할 수 없습니다. 인터프리터의 협력이 없다면 어떤 순간에든 코드를 실행해도 안전한지 알 방법이 없기 때문입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:52.092638Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:2",
+      "source": "Even carefully implemented tools can crash the interpreter because they're fundamentally working against it rather than with it.",
+      "source_hash": 14246399801299125451,
+      "context_hash": 17776041791329600919,
+      "translation": "신중하게 구현된 도구조차 인터프리터와 협력하는 것이 아니라 근본적으로 인터프리터에 맞서 작동하기 때문에 인터프리터를 충돌시킬 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:52.092639Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 5716863079420629745,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092639Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Rather than forcing tools to work around interpreter limitations with unsafe code injection, we can extend CPython with a proper debugging interface that guarantees safe execution.",
+      "source_hash": 4320085164394719703,
+      "context_hash": 9288215306909235676,
+      "translation": "안전하지 않은 코드 주입으로 도구가 인터프리터의 한계를 우회하도록 강요하는 대신, 안전한 실행을 보장하는 적절한 디버깅 인터페이스를 CPython에 확장하여 추가할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:52.092639Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "By adding a few thread state fields and integrating with the interpreter's existing evaluation loop, we can ensure debugging operations only occur at well-defined safe points.",
+      "source_hash": 16384892564450336048,
+      "context_hash": 11914893043577255780,
+      "translation": "몇 가지 스레드 상태 필드를 추가하고 인터프리터의 기존 평가 루프와 통합하면, 디버깅 작업이 명확하게 정의된 안전 지점에서만 발생하도록 보장할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:52.092640Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "This eliminates the possibility of crashes and corruption while maintaining zero overhead during normal execution.",
+      "source_hash": 17481266681409354569,
+      "context_hash": 4448524938840578176,
+      "translation": "이를 통해 정상 실행 중 오버헤드가 없는 상태를 유지하면서 충돌과 손상의 가능성을 제거할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:52.092640Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "The key insight is that we don't need to inject code at arbitrary points - we just need to signal to the interpreter that we want code executed at the next safe opportunity.",
+      "source_hash": 5481921231608927795,
+      "context_hash": 16368504369631780192,
+      "translation": "핵심은 임의의 지점에 코드를 주입할 필요가 없다는 것입니다. 다음 안전한 기회에 코드를 실행하기를 원한다는 신호를 인터프리터에 보내기만 하면 됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:55.401614Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "This approach works with the interpreter's natural execution flow rather than fighting against it.",
+      "source_hash": 13651952683345825649,
+      "context_hash": 9183652745586533574,
+      "translation": "이 접근 방식은 인터프리터의 자연스러운 실행 흐름에 맞춰 작동하며, 그 흐름에 맞서지 않습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:55.401619Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "After describing this idea to the PyPy development team, this proposal has already `been implemented in PyPy <https://github.com/pypy/pypy/pull/5135>`__, proving both its feasibility and effectiveness.",
+      "source_hash": 5158437824243057360,
+      "context_hash": 9869102834325907440,
+      "translation": "이 아이디어를 PyPy 개발 팀에 설명한 후, 이 제안은 이미 PyPy에서 `구현되었으며 <https://github.com/pypy/pypy/pull/5135>`__, 이는 그 실현 가능성과 효과를 모두 입증합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401620Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "Their implementation demonstrates that we can provide safe debugging capabilities with zero runtime overhead during normal execution.",
+      "source_hash": 6651761806009719066,
+      "context_hash": 7473441763755341967,
+      "translation": "이들의 구현은 정상 실행 중 런타임 오버헤드를 전혀 발생시키지 않으면서 안전한 디버깅 기능을 제공할 수 있음을 보여 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401620Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:2",
+      "source": "The proposed mechanism not only reduces risks associated with current debugging approaches but also lays the foundation for future enhancements.",
+      "source_hash": 6302320757552980045,
+      "context_hash": 2378227005427704377,
+      "translation": "제안된 메커니즘은 현재 디버깅 접근 방식과 관련된 위험을 줄일 뿐만 아니라 향후 개선을 위한 기반도 마련합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401621Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:3",
+      "source": "For instance, this framework could enable integration with popular observability tools, providing real-time insights into interpreter performance or memory usage.",
+      "source_hash": 12244142664101177769,
+      "context_hash": 268538506527160402,
+      "translation": "예를 들어, 이 프레임워크를 널리 사용되는 옵저버빌리티 도구와 통합하여 인터프리터 성능이나 메모리 사용량에 대한 실시간 정보를 제공할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:55.401621Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:4",
+      "source": "One compelling use case for this interface is enabling pdb to attach to running Python processes, similar to how gdb allows users to attach to a program by process ID (``gdb -p <pid>``).",
+      "source_hash": 10167280027804568632,
+      "context_hash": 13069087498225253219,
+      "translation": "이 인터페이스의 유력한 사용 사례 중 하나는 pdb가 실행 중인 Python 프로세스에 연결되도록 하는 것입니다. 이는 gdb가 사용자로 하여금 프로세스 ID로 프로그램에 연결할 수 있게 하는 방식(``gdb -p <pid>``)과 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401622Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:5",
+      "source": "With this feature, developers could inspect the state of a running application, evaluate expressions, and step through code dynamically.",
+      "source_hash": 3490400477179523239,
+      "context_hash": 6830490286380559336,
+      "translation": "이 기능을 사용하면 개발자는 실행 중인 애플리케이션의 상태를 검사하고, 식을 평가하며, 코드를 동적으로 단계별로 실행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401622Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:6",
+      "source": "This approach would align Python's debugging capabilities with those of other major programming languages and debugging tools that support this mode.",
+      "source_hash": 13276860868330019461,
+      "context_hash": 14786536414121325461,
+      "translation": "이 접근 방식은 Python의 디버깅 기능을 이러한 모드를 지원하는 다른 주요 프로그래밍 언어 및 디버깅 도구의 기능과 일치시킬 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401622Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 12461760459015916633,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401622Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "This proposal introduces a safe debugging mechanism that allows external processes to trigger code execution in a Python interpreter at well-defined safe points.",
+      "source_hash": 11828485442982031594,
+      "context_hash": 15198706521173308212,
+      "translation": "이 제안은 외부 프로세스가 잘 정의된 안전 지점에서 Python 인터프리터의 코드 실행을 트리거할 수 있도록 하는 안전한 디버깅 메커니즘을 도입합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:55.401622Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "The key insight is that rather than injecting code directly via system debuggers, we can leverage the interpreter's existing evaluation loop and thread state to coordinate debugging operations.",
+      "source_hash": 2317110070505989284,
+      "context_hash": 13577535046590959791,
+      "translation": "핵심은 시스템 디버거를 통해 직접 코드를 주입하는 대신, 인터프리터의 기존 평가 루프와 스레드 상태를 활용하여 디버깅 작업을 조정할 수 있다는 것입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:55.401623Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "The mechanism works by having debuggers write to specific memory locations in the target process that the interpreter then checks during its normal execution cycle.",
+      "source_hash": 6424528360148005357,
+      "context_hash": 6903386812331179715,
+      "translation": "이 메커니즘은 디버거가 대상 프로세스의 특정 메모리 위치에 기록하고, 인터프리터가 정상 실행 주기 중 해당 위치를 확인하는 방식으로 작동합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:55.401624Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "When the interpreter detects that a debugger wants to attach, it executes the requested operations only when it's safe to do so - that is, when no internal locks are held and all data structures are in a consistent state.",
+      "source_hash": 14746492100357897654,
+      "context_hash": 9540744375363691278,
+      "translation": "인터프리터가 디버거가 연결을 요청했음을 감지하면, 안전하게 수행할 수 있을 때에만 요청된 작업을 실행합니다. 즉, 내부 잠금이 유지되지 않고 모든 데이터 구조가 일관된 상태일 때 실행합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:55.401624Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Runtime State Extensions",
+      "source_hash": 18312207684876404452,
+      "context_hash": 1853608050679791452,
+      "translation": "런타임 상태 확장",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401625Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "A new structure is added to PyThreadState to support remote debugging:",
+      "source_hash": 6578953087311396020,
+      "context_hash": 11515751364376796813,
+      "translation": "원격 디버깅을 지원하기 위해 PyThreadState에 새로운 구조체가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401625Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "This structure is appended to ``PyThreadState``, adding only a few fields that are **never accessed during normal execution**.",
+      "source_hash": 892186952349338865,
+      "context_hash": 12251312011862478606,
+      "translation": "이 구조체는 ``PyThreadState``\\ 에 추가되며, **정상 실행 중에는 절대 액세스되지 않는**\\ 필드 몇 개만 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401625Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "The ``debugger_pending_call`` field indicates when a debugger has requested execution, while ``debugger_script_path`` provides a filesystem path to a Python source file (.py) that will be executed when the interpreter reaches a safe point.",
+      "source_hash": 17432164610576329582,
+      "context_hash": 4056034978147567580,
+      "translation": "``debugger_pending_call`` 필드는 디버거가 실행을 요청했는지를 나타내며, ``debugger_script_path``\\ 는 인터프리터가 안전 지점에 도달했을 때 실행될 Python 소스 파일(.py)의 파일 시스템 경로를 제공합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:55.401626Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:2",
+      "source": "The path must point to a Python source file, not compiled Python code (.pyc) or any other format.",
+      "source_hash": 8857235989806161322,
+      "context_hash": 14185717907962853929,
+      "translation": "경로는 컴파일된 Python 코드(.pyc)나 다른 형식이 아닌 Python 소스 파일을 가리켜야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401626Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "The size of ``debugger_script_path`` will be a trade-off between binary size and how big debugging scripts' paths can be.",
+      "source_hash": 3856705930671240501,
+      "context_hash": 2317448268684227508,
+      "translation": "``debugger_script_path``\\ 의 크기는 바이너리 크기와 디버깅 스크립트 경로가 가질 수 있는 최대 길이 사이의 절충이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401627Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:1",
+      "source": "To limit the memory overhead per thread we will be limiting this to 512 bytes.",
+      "source_hash": 16649455968938069509,
+      "context_hash": 14354942389882748068,
+      "translation": "스레드별 메모리 오버헤드를 제한하기 위해 이 값을 512바이트로 제한합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401627Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:2",
+      "source": "This size will also be provided as part of the debugger support structure so debuggers know how much they can write.",
+      "source_hash": 18143894597230085826,
+      "context_hash": 18134387564127127821,
+      "translation": "이 크기는 디버거 지원 구조체의 일부로도 제공되므로 디버거가 얼마만큼 기록할 수 있는지 알 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401627Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:3",
+      "source": "This value can be extended in the future if we ever need to.",
+      "source_hash": 3979092189843901580,
+      "context_hash": 3389530490973873257,
+      "translation": "향후 필요할 경우 이 값을 확장할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401627Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Debug Offsets Table",
+      "source_hash": 7596740840360776582,
+      "context_hash": 15081578340585025455,
+      "translation": "디버그 오프셋 테이블",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401628Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Python 3.12 introduced a debug offsets table placed at the start of the PyRuntime structure.",
+      "source_hash": 11051999954771018244,
+      "context_hash": 7201532055831939940,
+      "translation": "Python 3.12에서는 PyRuntime 구조체의 시작 부분에 배치되는 디버그 오프셋 테이블이 도입되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401628Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "This section contains the ``_Py_DebugOffsets`` structure that allows external tools to reliably find critical runtime structures regardless of `ASLR <https://en.wikipedia.org/wiki/Address_space_layout_randomization>`__ or how Python was compiled.",
+      "source_hash": 16024790915718399662,
+      "context_hash": 11760866313211374650,
+      "translation": "이 섹션에는 외부 도구가 `ASLR <https://en.wikipedia.org/wiki/Address_space_layout_randomization>`__\\ 이나 Python의 컴파일 방식과 관계없이 중요한 런타임 구조체를 안정적으로 찾을 수 있도록 하는 ``_Py_DebugOffsets`` 구조체가 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401629Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "This proposal extends the existing debug offsets table with new fields for debugger support:",
+      "source_hash": 1634361146171172833,
+      "context_hash": 16068363781187375301,
+      "translation": "이 제안은 디버거 지원을 위한 새 필드를 기존 디버그 오프셋 테이블에 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401629Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "These offsets allow debuggers to locate critical debugging control structures in the target process's memory space.",
+      "source_hash": 7237362734032503325,
+      "context_hash": 13159377628053072011,
+      "translation": "이러한 오프셋을 사용하면 디버거가 대상 프로세스의 메모리 공간에서 중요한 디버깅 제어 구조체를 찾을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401629Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:1",
+      "source": "The ``eval_breaker`` and ``remote_debugger_support`` offsets are relative to each ``PyThreadState``, while the ``debugger_pending_call`` and ``debugger_script_path`` offsets are relative to each ``_PyRemoteDebuggerSupport`` structure, allowing the new structure and its fields to be found regardless of where they are in memory. ``debugger_script_path_size`` informs the attaching tool of the size of the buffer.",
+      "source_hash": 14848723926571670725,
+      "context_hash": 17150930436500914311,
+      "translation": "``eval_breaker``\\ 와 ``remote_debugger_support`` 오프셋은 각각의 ``PyThreadState``\\ 를 기준으로 하며, ``debugger_pending_call``\\ 과 ``debugger_script_path`` 오프셋은 각각의 ``_PyRemoteDebuggerSupport`` 구조체를 기준으로 합니다. 따라서 새 구조체와 그 필드를 메모리상의 위치와 관계없이 찾을 수 있습니다. ``debugger_script_path_size``\\ 는 연결하는 도구에 버퍼의 크기를 알려 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401630Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Attachment Protocol",
+      "source_hash": 18172972178173939683,
+      "context_hash": 3347075069459323896,
+      "translation": "연결 프로토콜",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:52:55.401630Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "When a debugger wants to attach to a Python process, it follows these steps:",
+      "source_hash": 16153637381859771982,
+      "context_hash": 8897269276865520241,
+      "translation": "디버거가 Python 프로세스에 연결하려는 경우 다음 단계를 따릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401631Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "Locate ``PyRuntime`` structure in the process:",
+      "source_hash": 8840985326761597828,
+      "context_hash": 5112945463761081808,
+      "translation": "프로세스에서 ``PyRuntime`` 구조체를 찾습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:55.401631Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Find Python binary (executable or libpython) in process memory (OS dependent process)",
+      "source_hash": 1817842132234424002,
+      "context_hash": 4537410023047857263,
+      "translation": "프로세스 메모리에서 Python 바이너리(실행 파일 또는 libpython)를 찾습니다(OS에 따라 달라지는 프로세스).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130767Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "Extract ``.PyRuntime`` section offset from binary's format (ELF/Mach-O/PE)",
+      "source_hash": 10487818494395431553,
+      "context_hash": 11371380799242476833,
+      "translation": "바이너리 형식(ELF/Mach-O/PE)에서 ``.PyRuntime`` 섹션 오프셋을 추출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130771Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "Calculate the actual ``PyRuntime`` address in the running process by relocating the offset to the binary's load address",
+      "source_hash": 7583725237877538204,
+      "context_hash": 14261546191342117282,
+      "translation": "오프셋을 바이너리의 로드 주소로 재배치하여 실행 중인 프로세스에서 실제 ``PyRuntime`` 주소를 계산합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130771Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "Access debug offset information by reading the ``_Py_DebugOffsets`` at the start of the ``PyRuntime`` structure.",
+      "source_hash": 14099636045975617674,
+      "context_hash": 6553263143626580336,
+      "translation": "``PyRuntime`` 구조체 시작 부분의 ``_Py_DebugOffsets``\\ 를 읽어 디버그 오프셋 정보에 액세스합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130771Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "Use the offsets to locate the desired thread state",
+      "source_hash": 13862831407454428603,
+      "context_hash": 12196693025267043166,
+      "translation": "오프셋을 사용하여 원하는 스레드 상태를 찾습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130772Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "Use the offsets to locate the debugger interface fields within that thread state",
+      "source_hash": 4583098631306302586,
+      "context_hash": 7055616261432235211,
+      "translation": "오프셋을 사용하여 해당 스레드 상태 내의 디버거 인터페이스 필드를 찾습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130772Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:0",
+      "source": "Write control information:",
+      "source_hash": 12137757114301817900,
+      "context_hash": 9990648553389526311,
+      "translation": "제어 정보를 기록합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130772Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:0",
+      "source": "Most debuggers will pause the process before writing to its memory.",
+      "source_hash": 421480698473833615,
+      "context_hash": 6764995325579885835,
+      "translation": "대부분의 디버거는 프로세스 메모리에 쓰기 전에 프로세스를 일시 중지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130772Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:1",
+      "source": "This is standard practice for tools like GDB, which use SIGSTOP or ptrace to pause the process.",
+      "source_hash": 10054335493240496185,
+      "context_hash": 18168369679563084125,
+      "translation": "이는 SIGSTOP 또는 ptrace를 사용하여 프로세스를 일시 중지하는 GDB와 같은 도구의 표준 방식입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130773Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:2",
+      "source": "This approach prevents races when writing to process memory.",
+      "source_hash": 9819369315967700733,
+      "context_hash": 10259112742969848419,
+      "translation": "이 접근 방식은 프로세스 메모리에 쓸 때 발생하는 경쟁 상태를 방지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130773Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:3",
+      "source": "Profilers and other tools that don't wish to stop the process can still use this interface, but they need to handle possible races.",
+      "source_hash": 1321786388891866996,
+      "context_hash": 6195849300385937357,
+      "translation": "프로세스를 중지하지 않으려는 프로파일러 및 기타 도구도 이 인터페이스를 사용할 수 있지만, 발생 가능한 경쟁 상태를 처리해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130773Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:4",
+      "source": "This is a normal consideration for profilers.",
+      "source_hash": 11420237173604311694,
+      "context_hash": 17896231496148009699,
+      "translation": "이는 프로파일러에서 일반적으로 고려해야 하는 사항입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130774Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:11/seg:0",
+      "source": "Write a file path to a Python source file (.py) into the ``debugger_script_path`` field in ``_PyRemoteDebuggerSupport``.",
+      "source_hash": 7898297719246734230,
+      "context_hash": 11968358273546323414,
+      "translation": "``_PyRemoteDebuggerSupport``\\ 의 ``debugger_script_path``\\ 필드에 Python 소스 파일(.py)의 파일 경로를 기록합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130774Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:12/seg:0",
+      "source": "Set ``debugger_pending_call`` flag in ``_PyRemoteDebuggerSupport`` to 1",
+      "source_hash": 11048490156481129249,
+      "context_hash": 14924184534290810217,
+      "translation": "``_PyRemoteDebuggerSupport``\\ 의 ``debugger_pending_call``\\ 플래그를 1로 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130774Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:13/seg:0",
+      "source": "Set ``_PY_EVAL_PLEASE_STOP_BIT`` in the ``eval_breaker`` field",
+      "source_hash": 5580347413699761830,
+      "context_hash": 774534142973641775,
+      "translation": "``eval_breaker``\\ 필드의 ``_PY_EVAL_PLEASE_STOP_BIT``\\ 을 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130774Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:14/seg:0",
+      "source": "Once the interpreter reaches the next safe point, it will execute the Python code contained in the file specified by the debugger.",
+      "source_hash": 14757867720399771049,
+      "context_hash": 16322335734131910616,
+      "translation": "인터프리터가 다음 안전 지점에 도달하면 디버거가 지정한 파일에 포함된 Python 코드를 실행합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:56.130774Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Interpreter Integration",
+      "source_hash": 1034315444677413275,
+      "context_hash": 4980303498880959743,
+      "translation": "인터프리터 통합",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:56.130776Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The interpreter's regular evaluation loop already includes a check of the ``eval_breaker`` flag for handling signals, periodic tasks, and other interrupts.",
+      "source_hash": 18097192056374255898,
+      "context_hash": 16824682558162988880,
+      "translation": "인터프리터의 일반 평가 루프에는 이미 신호, 주기적 작업 및 기타 인터럽트를 처리하기 위한 ``eval_breaker``\\ 플래그 검사가 포함되어 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:56.130776Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "We leverage this existing mechanism by checking for debugger pending calls only when the ``eval_breaker`` is set, ensuring zero overhead during normal execution.",
+      "source_hash": 16972113580079284282,
+      "context_hash": 4528546277288062638,
+      "translation": "일반 실행 중 오버헤드가 전혀 발생하지 않도록 ``eval_breaker``\\ 가 설정된 경우에만 디버거 보류 호출을 검사하여 이 기존 메커니즘을 활용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130777Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "This check has no overhead.",
+      "source_hash": 14759959096070324471,
+      "context_hash": 17762490734180208127,
+      "translation": "이 검사에는 오버헤드가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130777Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:3",
+      "source": "Indeed, profiling with Linux ``perf`` shows this branch is highly predictable - the ``debugger_pending_call`` check is never taken during normal execution, allowing modern CPUs to effectively speculate past it.",
+      "source_hash": 6292710185116998930,
+      "context_hash": 4895178010919523183,
+      "translation": "실제로 Linux ``perf``\\ 로 프로파일링하면 이 분기가 매우 예측 가능하다는 것을 확인할 수 있습니다. 정상 실행 중에는 ``debugger_pending_call``\\ 검사가 절대 수행되지 않으므로 최신 CPU가 이 분기를 효과적으로 지나 추측 실행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130777Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "When a debugger has set both the ``eval_breaker`` flag and ``debugger_pending_call``, the interpreter will execute the provided debugging code at the next safe point.",
+      "source_hash": 4880178855969528497,
+      "context_hash": 8374295254189123214,
+      "translation": "디버거가 ``eval_breaker``\\ 플래그와 ``debugger_pending_call``\\ 을 모두 설정하면, 인터프리터는 다음 안전 지점에서 제공된 디버깅 코드를 실행합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:56.130778Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "This all happens in a completely safe context, since the interpreter is guaranteed to be in a consistent state whenever the eval breaker is checked.",
+      "source_hash": 11300968839270638152,
+      "context_hash": 13469585886930014145,
+      "translation": "평가 브레이커가 검사될 때마다 인터프리터가 일관된 상태에 있음이 보장되므로, 이 모든 과정은 완전히 안전한 컨텍스트에서 수행됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:56.130778Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "The only valid values for ``debugger_pending_call`` will initially be 0 and 1 and other values are reserved for future use.",
+      "source_hash": 17957923065844579763,
+      "context_hash": 12013604824892450169,
+      "translation": "처음에는 ``debugger_pending_call``\\ 에 허용되는 값이 0과 1뿐이며, 다른 값은 향후 사용을 위해 예약됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130779Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "An audit event will be raised before the code is executed, allowing this mechanism to be audited or disabled if desired by a system's administrator.",
+      "source_hash": 11846791096063140637,
+      "context_hash": 9562406220265701488,
+      "translation": "코드가 실행되기 전에 감사 이벤트가 발생하므로, 시스템 관리자가 원하는 경우 이 메커니즘을 감사하거나 비활성화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130779Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "If the code being executed raises any Python exception it will be processed as an `unraisable exception <https://docs.python.org/3/c-api/exceptions.html#c.PyErr_WriteUnraisable>`__ in the thread where the code was executed.",
+      "source_hash": 11750171320624214201,
+      "context_hash": 13556058006870229809,
+      "translation": "실행 중인 코드에서 Python 예외가 발생하면 해당 예외는 코드가 실행된 스레드에서 `unraisable exception <https://docs.python.org/3/c-api/exceptions.html#c.PyErr_WriteUnraisable>`__\\ 으로 처리됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130780Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Python API",
+      "source_hash": 3546059048927063531,
+      "context_hash": 10661141021433244156,
+      "translation": "Python API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130780Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "To support safe execution of Python code in a remote process without having to re-implement all these steps in every tool, this proposal extends the ``sys`` module with a new function.",
+      "source_hash": 9365163784648108015,
+      "context_hash": 8269670951430954192,
+      "translation": "모든 도구에서 이러한 단계를 다시 구현하지 않고 원격 프로세스에서 Python 코드를 안전하게 실행할 수 있도록, 이 제안에서는 ``sys`` 모듈을 새 함수로 확장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130780Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "This function allows debuggers or external tools to execute arbitrary Python code within the context of a specified Python process:",
+      "source_hash": 16314225791911319678,
+      "context_hash": 11265186117115092025,
+      "translation": "이 함수는 디버거 또는 외부 도구가 지정된 Python 프로세스의 컨텍스트 내에서 임의의 Python 코드를 실행할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130780Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "An example usage of the API would look like:",
+      "source_hash": 682621547281990617,
+      "context_hash": 10807252449913920764,
+      "translation": "API의 사용 예는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130780Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Configuration API",
+      "source_hash": 6350256361901742744,
+      "context_hash": 7231842694229755476,
+      "translation": "구성 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:52:56.130781Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "To allow redistributors, system administrators, or users to disable this mechanism, several methods will be provided to control the behavior of the interpreter:",
+      "source_hash": 10625417592541828689,
+      "context_hash": 12694348035517465426,
+      "translation": "재배포자, 시스템 관리자 또는 사용자가 이 메커니즘을 비활성화할 수 있도록, 인터프리터의 동작을 제어하는 여러 방법이 제공됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:52:56.130781Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "A new ``PYTHON_DISABLE_REMOTE_DEBUG`` environment variable will be provided to control the behaviour at runtime.",
+      "source_hash": 13466859259645655679,
+      "context_hash": 14666755113639636306,
+      "translation": "런타임 동작을 제어하기 위한 새 ``PYTHON_DISABLE_REMOTE_DEBUG`` 환경 변수가 제공됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092350Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:1",
+      "source": "If set to any value (including an empty string), the interpreter will ignore any attempts to attach a debugger using this mechanism.",
+      "source_hash": 1672997954539251312,
+      "context_hash": 7196569765107178456,
+      "translation": "빈 문자열을 포함하여 어떤 값으로든 설정되면, 인터프리터는 이 메커니즘을 사용한 디버거 연결 시도를 모두 무시합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:53:13.092353Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "This environment variable will be added together with a new ``-X disable-remote-debug`` flag to the Python interpreter to allow users to disable this feature at runtime.",
+      "source_hash": 4023526942844078993,
+      "context_hash": 5373736663444881335,
+      "translation": "사용자가 런타임에 이 기능을 비활성화할 수 있도록 이 환경 변수와 함께 새로운 ``-X disable-remote-debug`` 플래그가 Python 인터프리터에 추가됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:53:13.092354Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "Additionally a new  ``--without-remote-debug`` flag will be added to the ``configure`` script to allow redistributors to build Python without support for remote debugging if they so desire.",
+      "source_hash": 11782263272696041195,
+      "context_hash": 15664597959242664945,
+      "translation": "또한 재배포자가 원하는 경우 원격 디버깅 지원 없이 Python을 빌드할 수 있도록 새로운  ``--without-remote-debug`` 플래그가 ``configure`` 스크립트에 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092355Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "A new flag indicating the status of remote debugging will be made available via the debug offsets so tools can query if a remote process has disabled the feature.",
+      "source_hash": 14473533761161737893,
+      "context_hash": 7666033628568170359,
+      "translation": "원격 디버깅 상태를 나타내는 새 플래그를 디버그 오프셋을 통해 사용할 수 있게 하여, 도구가 원격 프로세스에서 해당 기능이 비활성화되었는지 조회할 수 있게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092355Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:1",
+      "source": "This way, tools can offer a useful error message explaining why they won't work, instead of believing that they have attached and then never having their script run.",
+      "source_hash": 7503082800631087911,
+      "context_hash": 10937806718776963945,
+      "translation": "이렇게 하면 도구는 연결되었다고 잘못 판단한 뒤 스크립트가 실행되지 않는 대신, 작동하지 않는 이유를 설명하는 유용한 오류 메시지를 제공할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092355Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Multi-threading Considerations",
+      "source_hash": 18186597088837279639,
+      "context_hash": 7851775417220837792,
+      "translation": "멀티스레딩 고려 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092355Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "The overall execution pattern resembles how Python handles signals internally.",
+      "source_hash": 2251026289053122829,
+      "context_hash": 8842362902733520788,
+      "translation": "전반적인 실행 방식은 Python이 시그널을 내부적으로 처리하는 방식과 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092356Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "The interpreter guarantees that injected code only runs at safe points, never interrupting atomic operations within the interpreter itself.",
+      "source_hash": 8706175789458086615,
+      "context_hash": 14668124652453131884,
+      "translation": "인터프리터는 주입된 코드가 안전 지점에서만 실행되고 인터프리터 내부의 원자적 연산을 절대 중단하지 않도록 보장합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:53:13.092356Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:2",
+      "source": "This approach ensures that debugging operations cannot corrupt the interpreter state while still providing timely execution in most real-world scenarios.",
+      "source_hash": 13305659468980675649,
+      "context_hash": 12085261659173244669,
+      "translation": "이 방식은 대부분의 실제 상황에서 적시에 실행되도록 하면서 디버깅 작업이 인터프리터 상태를 손상시키지 않게 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:53:13.092357Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "However, debugging code injected through this interface can execute in any thread.",
+      "source_hash": 7415238928112079280,
+      "context_hash": 6735336702778819957,
+      "translation": "그러나 이 인터페이스를 통해 주입된 디버깅 코드는 어느 스레드에서든 실행될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092357Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "This behavior is different than how Python handles signals, since signal handlers can only run in the main thread.",
+      "source_hash": 12568864469651322110,
+      "context_hash": 2031069614124707325,
+      "translation": "시그널 처리기는 메인 스레드에서만 실행될 수 있으므로, 이 동작은 Python이 시그널을 처리하는 방식과 다릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092357Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:2",
+      "source": "If a debugger wants to inject code into every running thread, it must inject it into every ``PyThreadState``.",
+      "source_hash": 4369951008947614561,
+      "context_hash": 15685271298215261343,
+      "translation": "디버거가 실행 중인 모든 스레드에 코드를 주입하려면 모든 ``PyThreadState``\\ 에 코드를 주입해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092358Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:3",
+      "source": "If a debugger wants to run code in the first available thread, it needs to inject it into every ``PyThreadState``, and that injected code must check whether it has already been run by another thread (likely by setting some flag in the globals of some module).",
+      "source_hash": 15336782876136535733,
+      "context_hash": 15963403034537032684,
+      "translation": "디버거가 처음 사용 가능한 스레드에서 코드를 실행하려면 모든 ``PyThreadState``\\ 에 코드를 주입해야 하며, 주입된 코드는 다른 스레드가 이미 실행했는지 확인해야 합니다(아마도 어떤 모듈의 전역 네임스페이스에 플래그를 설정하는 방식일 것입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092358Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "Note that the Global Interpreter Lock (GIL) continues to govern execution as normal when the injected code runs.",
+      "source_hash": 10473827396782736137,
+      "context_hash": 10327949444948195742,
+      "translation": "주입된 코드가 실행될 때에도 전역 인터프리터 잠금(Global Interpreter Lock, GIL)이 평소와 같이 실행을 계속 제어한다는 점에 유의하십시오.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "global interpreter lock": "전역 인터프리터 잠금"
+      },
+      "translated_at": "2026-08-28T18:53:13.092359Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:1",
+      "source": "This means if a target thread is currently executing a C extension that holds the GIL continuously, the injected code won't be able to run until that operation completes and the GIL becomes available.",
+      "source_hash": 14386691686643788304,
+      "context_hash": 8959536510705923234,
+      "translation": "즉, 대상 스레드가 현재 GIL을 계속 보유하는 C 확장 기능을 실행 중이라면 해당 작업이 완료되어 GIL을 사용할 수 있게 될 때까지 주입된 코드를 실행할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092360Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:2",
+      "source": "However, the interface introduces no additional GIL contention beyond what the injected code itself requires.",
+      "source_hash": 1774247480454603639,
+      "context_hash": 5658520587503933388,
+      "translation": "그러나 이 인터페이스는 주입된 코드 자체에 필요한 경우를 넘어 추가적인 GIL 경합을 일으키지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092360Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:3",
+      "source": "Importantly, the interface remains fully compatible with Python's free-threaded mode.",
+      "source_hash": 13689690296083621732,
+      "context_hash": 16669401498329743560,
+      "translation": "중요한 점은 이 인터페이스가 Python의 자유 스레드 모드와 완전히 호환된다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092361Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "It may be useful for a debugger that injected some code to be run to follow that up by sending some pre-registered signal to the process, which can interrupt any blocking I/O or sleep states waiting for external resources, and allow a safe opportunity to run the injected code.",
+      "source_hash": 11083573025691928419,
+      "context_hash": 12915966106794065104,
+      "translation": "디버거가 일부 코드를 주입하여 실행되도록 한 뒤 프로세스에 사전 등록된 시그널을 보내는 것이 유용할 수 있습니다. 이 시그널은 외부 리소스를 기다리며 차단된 I/O 또는 절전 상태를 중단하고 주입된 코드를 실행할 안전한 기회를 제공할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092361Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 1738402796233505506,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092361Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "This change has no impact on existing Python code or interpreter performance.",
+      "source_hash": 15461337966737128740,
+      "context_hash": 2939600555361564058,
+      "translation": "이 변경은 기존 Python 코드나 인터프리터 성능에 영향을 주지 않습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:53:13.092361Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "The added fields are only accessed during debugger attachment, and the checking mechanism piggybacks on existing interpreter safe points.",
+      "source_hash": 18303138919805405665,
+      "context_hash": 14932641905080489333,
+      "translation": "추가된 필드는 디버거 연결 중에만 액세스되며, 확인 메커니즘은 기존 인터프리터 안전 지점을 활용합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:53:13.092362Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 16666320885029695620,
+      "translation": "보안 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092362Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "This interface does not introduce new security concerns as it is only usable by processes that can already write to arbitrary memory within a given process and execute arbitrary code on the machine (in order to create the file containing the Python code to be executed).",
+      "source_hash": 1396110393975317669,
+      "context_hash": 4054409422225361303,
+      "translation": "이 인터페이스는 새로운 보안 문제를 일으키지 않습니다. 주어진 프로세스 내부의 임의 메모리에 이미 쓰고 시스템에서 임의 코드를 실행할 수 있는 프로세스만 사용할 수 있기 때문입니다(실행할 Python 코드가 포함된 파일을 만들기 위해 필요합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092363Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "Furthermore, the execution of the code is gated by the interpreter's audit hooks, which can be used to monitor or prevent the execution of the code in sensitive environments.",
+      "source_hash": 5649772252853485022,
+      "context_hash": 2583093007718305125,
+      "translation": "또한 코드 실행은 인터프리터의 감사 훅에 의해 제어되며, 감사 훅을 사용하여 민감한 환경에서 코드 실행을 모니터링하거나 방지할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:53:13.092363Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "Existing operating system security mechanisms are effective for guarding against attackers gaining arbitrary memory write access.",
+      "source_hash": 8277544999221740594,
+      "context_hash": 2655423137481470446,
+      "translation": "기존 운영 체제 보안 메커니즘은 공격자가 임의의 메모리 쓰기 권한을 획득하지 못하도록 방어하는 데 효과적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092364Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:1",
+      "source": "Although the PEP doesn't specify how memory should be written to the target process, in practice this will be done using standard system calls that are already being used by other debuggers and tools.",
+      "source_hash": 13521831354156485272,
+      "context_hash": 5655026786884925171,
+      "translation": "PEP에서는 대상 프로세스에 메모리를 쓰는 방법을 명시하지 않지만, 실제로는 다른 디버거와 도구가 이미 사용하고 있는 표준 시스템 호출을 사용하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092364Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:2",
+      "source": "Some examples are:",
+      "source_hash": 11195075836280803835,
+      "context_hash": 18256890523246096500,
+      "translation": "몇 가지 예는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092364Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:0",
+      "source": "On Linux, the `process_vm_readv() <https://man7.org/linux/man-pages/man2/process_vm_readv.2.html>`__ and `process_vm_writev() <https://man7.org/linux/man-pages/man2/process_vm_writev.2.html>`__ system calls are used to read and write memory from another process.",
+      "source_hash": 5179517346413426316,
+      "context_hash": 2654873366364525164,
+      "translation": "Linux에서는 `process_vm_readv() <https://man7.org/linux/man-pages/man2/process_vm_readv.2.html>`__ 및 `process_vm_writev() <https://man7.org/linux/man-pages/man2/process_vm_writev.2.html>`__ 시스템 호출을 사용하여 다른 프로세스의 메모리를 읽고 씁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092364Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:1",
+      "source": "These operations are controlled by `ptrace <https://man7.org/linux/man-pages/man2/ptrace.2.html>`__ access mode checks - the same ones that govern debugger attachment.",
+      "source_hash": 9148776345260563845,
+      "context_hash": 14827614350283995221,
+      "translation": "이러한 작업은 `ptrace <https://man7.org/linux/man-pages/man2/ptrace.2.html>`__ 접근 모드 검사에 의해 제어되며, 이는 디버거 연결을 제어하는 검사와 동일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092365Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:2",
+      "source": "A process can only read from or write to another process's memory if it has the appropriate permissions (typically requiring either root or the `CAP_SYS_PTRACE <https://man7.org/linux/man-pages/man7/capabilities.7.html>`__ capability, though less security minded distributions may allow any process running as the same uid to attach).",
+      "source_hash": 7501436495976652370,
+      "context_hash": 15779155996193208103,
+      "translation": "프로세스는 적절한 권한이 있는 경우에만 다른 프로세스의 메모리를 읽거나 쓸 수 있습니다(일반적으로 root 또는 `CAP_SYS_PTRACE <https://man7.org/linux/man-pages/man7/capabilities.7.html>`__ 기능이 필요하지만, 보안에 덜 엄격한 배포판에서는 동일한 uid로 실행되는 모든 프로세스가 연결하도록 허용할 수 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:13.092365Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:5/seg:0",
+      "source": "On macOS, the interface would leverage `mach_vm_read_overwrite() <https://developer.apple.com/documentation/kernel/1402127-mach_vm_read_overwrite>`__ and `mach_vm_write() <https://developer.apple.com/documentation/kernel/1402070-mach_vm_write>`__ through the Mach task system.",
+      "source_hash": 15628073730705867120,
+      "context_hash": 16943975307169954281,
+      "translation": "macOS에서는 Mach 태스크 시스템을 통해 `mach_vm_read_overwrite() <https://developer.apple.com/documentation/kernel/1402127-mach_vm_read_overwrite>`__ 및 `mach_vm_write() <https://developer.apple.com/documentation/kernel/1402070-mach_vm_write>`__\\ 를 활용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264113Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:5/seg:1",
+      "source": "These operations require ``task_for_pid()`` access, which is strictly controlled by the operating system.",
+      "source_hash": 18182801511281968563,
+      "context_hash": 17528880775562198021,
+      "translation": "이러한 작업에는 운영 체제가 엄격하게 제어하는 ``task_for_pid()`` 액세스가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264118Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:5/seg:2",
+      "source": "By default, access is limited to processes running as root or those with specific entitlements granted by Apple's security framework.",
+      "source_hash": 10398965550227325931,
+      "context_hash": 6986779756464400344,
+      "translation": "기본적으로 액세스는 root로 실행 중인 프로세스 또는 Apple의 보안 프레임워크가 부여한 특정 권한을 가진 프로세스로 제한됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264119Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:6/seg:0",
+      "source": "On Windows, the `ReadProcessMemory() <https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-readprocessmemory>`__ and `WriteProcessMemory() <https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-writeprocessmemory>`__ functions provide similar functionality.",
+      "source_hash": 14816735064629493297,
+      "context_hash": 11090413874978288753,
+      "translation": "Windows에서는 `ReadProcessMemory() <https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-readprocessmemory>`__ 및 `WriteProcessMemory() <https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-writeprocessmemory>`__ 함수가 유사한 기능을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264119Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:6/seg:1",
+      "source": "Access is controlled through the Windows security model - a process needs `PROCESS_VM_READ <https://learn.microsoft.com/en-us/windows/win32/procthread/process-security-and-access-rights>`__ and `PROCESS_VM_WRITE <https://learn.microsoft.com/en-us/windows/win32/procthread/process-security-and-access-rights>`__ permissions, which typically require the same user context or appropriate privileges.",
+      "source_hash": 15714486793937979523,
+      "context_hash": 15387029290714549495,
+      "translation": "액세스는 Windows 보안 모델을 통해 제어되며, 프로세스에는 일반적으로 동일한 사용자 컨텍스트 또는 적절한 권한이 필요한 `PROCESS_VM_READ <https://learn.microsoft.com/en-us/windows/win32/procthread/process-security-and-access-rights>`__ 및 `PROCESS_VM_WRITE <https://learn.microsoft.com/en-us/windows/win32/procthread/process-security-and-access-rights>`__ 권한이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264120Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:6/seg:2",
+      "source": "These are the same permissions required by debuggers, ensuring consistent security semantics across platforms.",
+      "source_hash": 12738924694139267215,
+      "context_hash": 4446480878357305571,
+      "translation": "이는 디버거에 필요한 것과 동일한 권한이므로 플랫폼 전반에서 일관된 보안 의미 체계를 보장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264120Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:7/seg:0",
+      "source": "All mechanisms ensure that:",
+      "source_hash": 17680402774620348235,
+      "context_hash": 10630656437943610241,
+      "translation": "모든 메커니즘은 다음을 보장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264121Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:8/seg:0",
+      "source": "Only authorized processes can read/write memory",
+      "source_hash": 6982620843005264793,
+      "context_hash": 9459496185865771422,
+      "translation": "권한이 부여된 프로세스만 메모리를 읽거나 쓸 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264121Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:9/seg:0",
+      "source": "The same security model that governs traditional debugger attachment applies",
+      "source_hash": 17251902208536407360,
+      "context_hash": 6917636809297505968,
+      "translation": "기존 디버거 연결을 관장하는 것과 동일한 보안 모델이 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264121Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:10/seg:0",
+      "source": "No additional attack surface is exposed beyond what the OS already provides for debugging",
+      "source_hash": 1850466227054153224,
+      "context_hash": 14659997428105829288,
+      "translation": "운영 체제가 디버깅을 위해 이미 제공하는 범위를 넘어서는 추가 공격 표면이 노출되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264122Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:11/seg:0",
+      "source": "Even if an attacker can write arbitrary memory, they cannot escalate this to arbitrary code execution unless they already have filesystem access",
+      "source_hash": 15964331529305796087,
+      "context_hash": 7328847042101275623,
+      "translation": "공격자가 임의의 메모리에 쓸 수 있더라도, 이미 파일 시스템 액세스 권한을 보유하고 있지 않은 한 이를 임의 코드 실행으로 확장할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264122Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:12/seg:0",
+      "source": "The memory operations themselves are well-established and have been used safely for decades in tools like GDB, LLDB, and various system profilers.",
+      "source_hash": 8338161341451883714,
+      "context_hash": 4001685632199692853,
+      "translation": "메모리 작업 자체는 충분히 검증되었으며 GDB, LLDB 및 다양한 시스템 프로파일러와 같은 도구에서 수십 년 동안 안전하게 사용되어 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264122Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:13/seg:0",
+      "source": "It's important to note that any attempt to attach to a Python process via this mechanism would be detectable by system-level monitoring tools as well as by Python audit hooks.",
+      "source_hash": 11054055013918032135,
+      "context_hash": 2477477934810917659,
+      "translation": "이 메커니즘을 통해 Python 프로세스에 연결하려는 모든 시도는 시스템 수준의 모니터링 도구와 Python 감사 훅으로 탐지할 수 있다는 점에 유의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264122Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:13/seg:1",
+      "source": "This transparency provides an additional layer of accountability, allowing administrators to audit debugging operations in sensitive environments.",
+      "source_hash": 15835814289118991507,
+      "context_hash": 18037549927345707066,
+      "translation": "이러한 투명성은 추가적인 책임성 계층을 제공하여 관리자가 민감한 환경에서 디버깅 작업을 감사할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264123Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:14/seg:0",
+      "source": "Further, the strict reliance on OS-level security controls ensures that existing system policies remain effective.",
+      "source_hash": 1382769529766943222,
+      "context_hash": 17692876593392781132,
+      "translation": "또한 OS 수준의 보안 제어에 엄격하게 의존하므로 기존 시스템 정책이 계속 유효하게 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264123Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:14/seg:1",
+      "source": "For enterprise environments, this means administrators can continue to enforce debugging restrictions using standard tools and policies without requiring additional configuration.",
+      "source_hash": 14949029618914667406,
+      "context_hash": 8113347053831078375,
+      "translation": "엔터프라이즈 환경에서는 추가 구성 없이 표준 도구와 정책을 사용하여 관리자가 디버깅 제한을 계속 적용할 수 있음을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264123Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:14/seg:2",
+      "source": "For instance, leveraging Linux's `ptrace_scope <https://www.kernel.org/doc/Documentation/security/Yama.txt>`__ or macOS's ``taskgated`` to restrict debugger access will equally govern the proposed interface.",
+      "source_hash": 6953614626211018840,
+      "context_hash": 53394820530142807,
+      "translation": "예를 들어 Linux의 `ptrace_scope <https://www.kernel.org/doc/Documentation/security/Yama.txt>`__ 또는 macOS의 ``taskgated``\\ 를 활용하여 디버거 액세스를 제한하면 제안된 인터페이스에도 동일하게 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264124Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:15/seg:0",
+      "source": "By maintaining compatibility with existing security frameworks, this design ensures that adopting the new interface requires no changes to established.",
+      "source_hash": 5145518111020477206,
+      "context_hash": 17494586281055561622,
+      "translation": "기존 보안 프레임워크와의 호환성을 유지함으로써 이 설계는 새 인터페이스를 도입할 때 기존에 확립된 사항을 변경할 필요가 없도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264124Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Security scenarios",
+      "source_hash": 2190341143760903899,
+      "context_hash": 14634886318109078725,
+      "translation": "보안 시나리오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264124Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "For an external attacker, the ability to write to arbitrary memory in a process is already a severe security issue.",
+      "source_hash": 5295882903854726624,
+      "context_hash": 18206179728503329431,
+      "translation": "외부 공격자에게 프로세스의 임의 메모리에 쓸 수 있는 능력은 이미 심각한 보안 문제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264124Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "This interface does not introduce any new attack surface, as the attacker would already have the ability to execute arbitrary code in the process.",
+      "source_hash": 5304601617170638653,
+      "context_hash": 11383809219877859031,
+      "translation": "공격자는 이미 프로세스에서 임의 코드를 실행할 수 있는 능력을 보유하고 있으므로 이 인터페이스는 새로운 공격 표면을 도입하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264125Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:2",
+      "source": "This interface behaves in exactly the same way as existing debuggers, and does not introduce any new additional security risks.",
+      "source_hash": 14481238872786139217,
+      "context_hash": 1949510502735891333,
+      "translation": "이 인터페이스는 기존 디버거와 정확히 동일한 방식으로 동작하며 추가적인 보안 위험을 도입하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264125Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "For an attacker who has gained arbitrary memory write access to a process but not arbitrary code execution, this interface does not allow them to escalate.",
+      "source_hash": 18390864392205033329,
+      "context_hash": 17308415235773632160,
+      "translation": "임의의 메모리 쓰기 액세스는 얻었지만 임의 코드 실행 권한은 얻지 못한 공격자의 경우, 이 인터페이스로 권한을 확장할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264125Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:1",
+      "source": "The ability to calculate and write to specific memory locations is required, which is not available without compromising other machine resources that are external to the Python process.",
+      "source_hash": 15493954905892571505,
+      "context_hash": 7822371100148498912,
+      "translation": "특정 메모리 위치를 계산하고 해당 위치에 쓰는 능력이 필요하지만, Python 프로세스 외부에 있는 다른 시스템 리소스를 침해하지 않고서는 이를 사용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264126Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "Additionally, the fact that the code to be executed is gated by the interpreter's audit hooks means that the execution of the code can be monitored and controlled by system administrators.",
+      "source_hash": 9837462123283487887,
+      "context_hash": 6529270509793411456,
+      "translation": "또한 실행될 코드가 인터프리터의 감사 훅에 의해 통제된다는 사실은 시스템 관리자가 코드 실행을 모니터링하고 제어할 수 있음을 의미합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:53:05.264126Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:1",
+      "source": "This means that even if the attacker has compromised the application **and the filesystem**, leveraging this interface for malicious purposes provides a very risky proposition for an attacker, as they risk exposing their actions to system administrators that could not only detect the attack but also take action to prevent it.",
+      "source_hash": 16636637520954724642,
+      "context_hash": 6135816583592512235,
+      "translation": "이는 공격자가 애플리케이션 **및 파일 시스템**\\ 을 침해했더라도, 이 인터페이스를 악의적인 목적으로 활용하는 것은 공격자에게 매우 위험한 선택임을 의미합니다. 공격자는 자신의 행위가 시스템 관리자에게 노출될 위험을 감수해야 하며, 관리자는 공격을 탐지할 뿐만 아니라 이를 방지하기 위한 조치도 취할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264127Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "Finally, is important to note that if an attacker has arbitrary memory write access to a process and has compromised the filesystem, they can already escalate to arbitrary code execution using other existing mechanisms, so this interface does not introduce any new risks in this scenario.",
+      "source_hash": 7778670151057339672,
+      "context_hash": 15685564528817484274,
+      "translation": "마지막으로, 공격자가 프로세스에 대한 임의 메모리 쓰기 액세스 권한을 보유하고 파일 시스템을 침해했다면, 이미 다른 기존 메커니즘을 사용하여 임의 코드 실행으로 권한을 확장할 수 있으므로 이 시나리오에서 이 인터페이스는 새로운 위험을 도입하지 않는다는 점에 유의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264128Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 9438861421742998376,
+      "translation": "이를 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264128Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "For tool authors, this interface becomes the standard way to implement debugger attachment, replacing unsafe system debugger approaches.",
+      "source_hash": 14395230478150448995,
+      "context_hash": 12996604385531427836,
+      "translation": "도구 작성자에게 이 인터페이스는 안전하지 않은 시스템 디버거 접근 방식을 대체하여 디버거 연결을 구현하는 표준 방법이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264128Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "A section in the Python Developer Guide could describe the internal workings of the mechanism, including the ``debugger_support`` offsets and how to interact with them using system APIs.",
+      "source_hash": 2746520411207042497,
+      "context_hash": 15358715502684154918,
+      "translation": "Python 개발자 가이드의 한 섹션에서는 ``debugger_support`` 오프셋과 시스템 API를 사용하여 이들과 상호 작용하는 방법을 포함하여 메커니즘의 내부 작동 방식을 설명할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264128Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "End users need not be aware of the interface, benefiting only from improved debugging tool stability and reliability.",
+      "source_hash": 3734449380139232178,
+      "context_hash": 4242141454180891932,
+      "translation": "최종 사용자는 인터페이스를 알 필요가 없으며, 향상된 디버깅 도구의 안정성과 신뢰성만 누리면 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:53:05.264129Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 1449655432678881433,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:53:05.264129Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "A reference implementation with a prototype adding remote support for ``pdb`` can be found `here <https://github.com/pablogsal/cpython/compare/60ff67d010078eca15a74b1429caf779ac4f9c74...remote_pdb>`__.",
+      "source_hash": 8924270258755285346,
+      "context_hash": 683053942396023572,
+      "translation": "``pdb``\\ 에 원격 지원을 추가하는 프로토타입을 포함한 참조 구현은 `여기 <https://github.com/pablogsal/cpython/compare/60ff67d010078eca15a74b1429caf779ac4f9c74...remote_pdb>`__\\ 에서 찾을 수 있습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:17:37.630654Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 16822927485007790096,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:37.630658Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Writing Python code into the buffer",
+      "source_hash": 16508222832081495744,
+      "context_hash": 5927896757595508785,
+      "translation": "버퍼에 Python 코드 작성하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:37.630659Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "We have chosen to have debuggers write the path to a file containing Python code into a buffer in the remote process.",
+      "source_hash": 13731966575357198275,
+      "context_hash": 5083612817316610716,
+      "translation": "디버거가 원격 프로세스의 버퍼에 Python 코드가 포함된 파일의 경로를 기록하도록 하기로 했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:37.630659Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:1",
+      "source": "This has been deemed more secure than writing the Python code to be executed itself into a buffer in the remote process, because it means that an attacker who has gained arbitrary writes in a process but not arbitrary code execution or file system manipulation can't escalate to arbitrary code execution through this interface.",
+      "source_hash": 14536480524059916214,
+      "context_hash": 2148227109407274329,
+      "translation": "이는 원격 프로세스의 버퍼에 실행할 Python 코드 자체를 기록하는 것보다 더 안전한 것으로 판단되었습니다. 프로세스에서 임의 쓰기 권한을 얻었지만 임의 코드 실행이나 파일 시스템 조작 권한은 얻지 못한 공격자가 이 인터페이스를 통해 임의 코드 실행으로 권한을 상승할 수 없기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:37.630659Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "This does require the attaching debugger to pay close attention to filesystem permissions when creating the file containing the code to be executed, however.",
+      "source_hash": 18225957974362502711,
+      "context_hash": 5100638605521828286,
+      "translation": "그러나 이를 위해서는 연결하는 디버거가 실행할 코드가 포함된 파일을 생성할 때 파일 시스템 권한에 각별히 주의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:37.630660Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:1",
+      "source": "If an attacker has the ability to overwrite the file, or to replace a symlink in the file path to point to somewhere attacker controlled, this would allow them to force their malicious code to be executed rather than the code the debugger intends to run.",
+      "source_hash": 6820925397227580582,
+      "context_hash": 14541134499011136238,
+      "translation": "공격자가 해당 파일을 덮어쓰거나, 파일 경로의 심볼릭 링크를 공격자가 제어하는 위치를 가리키도록 바꿀 수 있다면, 디버거가 실행하려는 코드 대신 공격자의 악성 코드가 실행되도록 강제할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:37.630660Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Using a Single Runtime Buffer",
+      "source_hash": 13180800483858506208,
+      "context_hash": 15625092757108126813,
+      "translation": "단일 런타임 버퍼 사용하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:37.630660Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "During the review of this PEP it has been suggested using a single shared buffer at the runtime level for all debugger communications.",
+      "source_hash": 12175730298463131884,
+      "context_hash": 12404607404859307301,
+      "translation": "이 PEP를 검토하는 동안 모든 디버거 통신에 런타임 수준의 단일 공유 버퍼를 사용하자는 제안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:37.630660Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "While this appeared simpler and required less memory, we discovered it would actually prevent scenarios where multiple debuggers need to coordinate operations across different threads, or where a single debugger needs to orchestrate complex debugging operations.",
+      "source_hash": 17619347029509080876,
+      "context_hash": 8942038702669438832,
+      "translation": "이 방식은 더 단순하고 메모리도 덜 필요해 보였지만, 여러 디버거가 서로 다른 스레드에서 작업을 조정해야 하는 경우나 단일 디버거가 복잡한 디버깅 작업을 지휘해야 하는 경우를 실제로 방지한다는 사실을 발견했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:37.630661Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:2",
+      "source": "A single shared buffer would force serialization of all debugging operations, making it impossible for debuggers to work independently on different threads.",
+      "source_hash": 14997899875373328271,
+      "context_hash": 1870174204351132310,
+      "translation": "단일 공유 버퍼를 사용하면 모든 디버깅 작업이 직렬화되므로 디버거가 서로 다른 스레드에서 독립적으로 작업할 수 없게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:37.630661Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "The per-thread buffer approach, despite its memory overhead in highly threaded applications, enables these important debugging scenarios by allowing each debugger to communicate independently with its target thread.",
+      "source_hash": 8909164451417757329,
+      "context_hash": 9549215462493508822,
+      "translation": "스레드별 버퍼 방식은 스레드가 많은 애플리케이션에서 메모리 오버헤드가 발생함에도 불구하고, 각 디버거가 대상 스레드와 독립적으로 통신할 수 있도록 하여 이러한 중요한 디버깅 시나리오를 가능하게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:37.630662Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Thanks",
+      "source_hash": 16795993410409777682,
+      "context_hash": 16563517590000376880,
+      "translation": "감사의 말",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:37.630662Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "We would like to thank CF Bolz-Tereick for their insightful comments and suggestions when discussing this proposal.",
+      "source_hash": 8376679207582734113,
+      "context_hash": 18434573452412924962,
+      "translation": "이 제안을 논의하는 동안 통찰력 있는 의견과 제안을 해 주신 CF Bolz-Tereick 님께 감사드립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:37.630662Z",
+      "issues": []
+    }
+  ]
+}

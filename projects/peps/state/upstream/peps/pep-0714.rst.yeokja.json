@@ -1,0 +1,756 @@
+{
+  "version": 1,
+  "source_hash": 16318821264014653400,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Rename dist-info-metadata in the Simple API",
+      "source_hash": 7390778843452618655,
+      "context_hash": 16530898886277989957,
+      "translation": "Simple API에서 dist-info-metadata 이름 변경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425131Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 6815022842843926980,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425136Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP renames the metadata provided by :pep:`658` in both HTML and JSON formats of the Simple API and provides guidelines for both clients and servers in how to handle the renaming.",
+      "source_hash": 7556429930719750955,
+      "context_hash": 214227753139738897,
+      "translation": "이 PEP는 Simple API의 HTML 및 JSON 형식에서 :pep:`658`\\ 이 제공하는 메타데이터의 이름을 변경하고, 클라이언트와 서버가 이름 변경을 처리하는 방법에 대한 지침을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425137Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 2376763049739043435,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425137Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": ":pep:`658` specified a mechanism to host the core metadata files from an artifact available through the Simple API such that a client could fetch the metadata and use it without having to download the entire artifact.",
+      "source_hash": 4597795283368232078,
+      "context_hash": 5570265606220414580,
+      "translation": ":pep:`658`\\ 은 클라이언트가 전체 아티팩트를 다운로드하지 않고도 메타데이터를 가져와 사용할 수 있도록, Simple API를 통해 제공되는 아티팩트의 핵심 메타데이터 파일을 호스팅하는 메커니즘을 명시했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425138Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Later :pep:`691` was written to add the ability to use JSON rather than HTML on the Simple API, which included support for the :pep:`658` metadata.",
+      "source_hash": 18123206701684763275,
+      "context_hash": 17244077207189627094,
+      "translation": "이후 :pep:`691`\\ 은 Simple API에서 HTML 대신 JSON을 사용할 수 있는 기능을 추가하기 위해 작성되었으며, 여기에는 :pep:`658`\\ 메타데이터에 대한 지원도 포함되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425138Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Unfortunately, PyPI did not support :pep:`658` until just `recently <https://github.com/pypi/warehouse/pull/13649>`__, which released with a `bug <https://github.com/pypi/warehouse/issues/13705>`__ where the ``dist-info-metadata`` key from :pep:`658` was incorrectly named in the JSON representation, to be ``data-dist-info-metadata``.",
+      "source_hash": 15853088326440104833,
+      "context_hash": 14199861051105235918,
+      "translation": "안타깝게도 PyPI는 아주 최근에야 `recently <https://github.com/pypi/warehouse/pull/13649>`__ :pep:`658`\\ 을 지원했으며, 이 지원은 :pep:`658`\\ 의 ``dist-info-metadata``\\ 키가 JSON 표현에서 잘못 ``data-dist-info-metadata``\\ 로 명명되는 `bug <https://github.com/pypi/warehouse/issues/13705>`__ 와 함께 배포되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425139Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "However, when attempting to fix that bug, it was discovered that pip *also* had a `bug <https://github.com/pypa/pip/issues/12042>`__, where any use of ``dist-info-metadata`` in the JSON representation would cause pip to hard fail with an exception.",
+      "source_hash": 17073674105630143093,
+      "context_hash": 15891450565956695832,
+      "translation": "그러나 해당 버그를 수정하려고 시도하던 중, pip도 *또한* `bug <https://github.com/pypa/pip/issues/12042>`__\\ 가 있었으며, JSON 표현에서 ``dist-info-metadata``\\ 를 어떤 방식으로든 사용하면 pip가 예외와 함께 치명적으로 실패한다는 사실이 발견되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:55:22.105659Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "The bug in pip has existed since at least ``v22.3``, which means that it has been released for approximately 8 months, long enough to have been pulled into Python releases, downstream Linux releases, baked into containers, virtual environments, etc.",
+      "source_hash": 7027662579232082003,
+      "context_hash": 2036046639975236275,
+      "translation": "pip의 버그는 적어도 ``v22.3``\\ 부터 존재했으며, 이는 해당 버전이 약 8개월 동안 배포되었다는 뜻입니다. 따라서 Python 릴리스, 하위 Linux 릴리스, 컨테이너, 가상 환경 등에 포함되기에 충분히 긴 기간이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425140Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "This puts us in an awkward position of having a bug on PyPI that cannot be fixed without breaking pip, due to a bug in pip, but that version of pip is old enough to have been widely deployed.",
+      "source_hash": 12774641741523979777,
+      "context_hash": 12386257952995021712,
+      "translation": "이로 인해 pip의 버그 때문에 PyPI의 버그를 수정하면 pip가 작동하지 않게 되어 수정할 수 없지만, 해당 pip 버전은 널리 배포되기에 충분히 오래된 상태라는 난처한 상황에 놓였습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425141Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "To make matters worse, a version of pip that is broken in this way cannot install *anything* from PyPI once it fixes its bug, including installing a new, fixed version of pip.",
+      "source_hash": 9928375525840581871,
+      "context_hash": 6456055484433113394,
+      "translation": "설상가상으로, 이러한 방식으로 손상된 pip 버전은 버그를 수정한 후에는 새로운 수정 버전의 pip를 설치하는 것까지 포함하여 PyPI에서 *어떤 것도* 설치할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425142Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 2004432869987800687,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425142Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "There are 3 main options for a path forward for fixing these bugs:",
+      "source_hash": 15538000419447353753,
+      "context_hash": 10525340464885694334,
+      "translation": "이러한 버그를 수정하기 위한 앞으로의 방안에는 세 가지 주요 선택지가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425142Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Do not change the spec, fix the bug in pip, wait some amount of time, then fix the bug in PyPI, breaking anyone using an unfixed pip such that they cannot even install a new pip from PyPI.",
+      "source_hash": 10240026606342027343,
+      "context_hash": 1786560453635135191,
+      "translation": "사양을 변경하지 않고 pip의 버그를 수정한 다음, 일정 기간 기다렸다가 PyPI의 버그를 수정하여 수정되지 않은 pip를 사용하는 사용자가 PyPI에서 새로운 pip조차 설치할 수 없게 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425143Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Do the same as (1), but special case PyPI so it does not emit the :pep:`658` metadata for pip, even if it is available.",
+      "source_hash": 11589776035871982287,
+      "context_hash": 16053453343421657841,
+      "translation": "(1)과 동일하게 수행하되, PyPI를 특수 처리하여 해당 메타데이터를 사용할 수 있더라도 pip에는 :pep:`658`\\ 메타데이터를 제공하지 않도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425143Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "This allows people to upgrade pip if they're on a broken version, but nothing else.",
+      "source_hash": 13832629071847732308,
+      "context_hash": 5831894579457877381,
+      "translation": "이렇게 하면 손상된 버전을 사용 중인 사람은 pip를 업그레이드할 수 있지만, 다른 작업은 할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425144Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "Change the spec to avoid the key that pip can't handle currently, allowing PyPI to emit that key and a new version of pip to be released to take advantage of that key.",
+      "source_hash": 6047559896810478012,
+      "context_hash": 10558284983776475121,
+      "translation": "현재 pip가 처리할 수 없는 키를 피하도록 사양을 변경하여 PyPI가 해당 키를 제공하고, 새로운 pip 버전이 출시되어 해당 키를 활용할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425144Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "This PEP chooses (3), but goes a little further and also renames the key in the HTML representation.",
+      "source_hash": 6205946002061638226,
+      "context_hash": 1140307722608619042,
+      "translation": "이 PEP는 (3)을 선택하지만, 한 단계 더 나아가 HTML 표현의 키 이름도 변경합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425144Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "Typically we do not change specs because of bugs that only affect one particular implementation, unless the spec itself is at fault, which isn't the case here: the spec is fine and these are just genuine bugs in pip and PyPI.",
+      "source_hash": 17812116410834303483,
+      "context_hash": 7927723961546435541,
+      "translation": "일반적으로 특정 구현 하나에만 영향을 미치는 버그 때문에 사양을 변경하지는 않습니다. 단, 이 경우처럼 사양 자체에 문제가 있는 경우는 예외입니다. 여기서는 사양이 올바르며, 단지 pip와 PyPI에 실제 버그가 있을 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425145Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "However, we choose to do this for 4 reasons:",
+      "source_hash": 15634493622545699932,
+      "context_hash": 2497910079687827601,
+      "translation": "그러나 다음 네 가지 이유로 이렇게 하기로 선택했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425145Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "Bugs that affect pip and PyPI together represent an outsized amount of impact compared to any other client or repository combination.",
+      "source_hash": 789559963643113506,
+      "context_hash": 5062300617283658090,
+      "translation": "pip와 PyPI에 함께 영향을 미치는 버그는 다른 어떤 클라이언트와 저장소의 조합보다 불균형적으로 큰 영향을 미칩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425146Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "The impact of being broken is that installs do not function, at all, rather than degrading gracefully in some way.",
+      "source_hash": 9305629531474767934,
+      "context_hash": 6001416925889208618,
+      "translation": "손상되었을 때의 영향은 어떤 방식으로든 점진적으로 성능이 저하되는 것이 아니라 설치가 전혀 작동하지 않는다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425146Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:0",
+      "source": "The feature that is being blocked by these bugs is of large importance to the ability to quickly and efficiently resolve dependencies from PyPI with pip, and having to delay it for a long period of time while we wait for the broken versions of pip to fall out of use would be of detriment to the entire ecosystem.",
+      "source_hash": 9786995152731987347,
+      "context_hash": 14193506846357479109,
+      "translation": "이러한 버그로 차단된 기능은 pip를 사용하여 PyPI에서 종속성을 빠르고 효율적으로 해결하는 능력에 매우 중요합니다. 또한 손상된 pip 버전이 사용되지 않게 될 때까지 오랜 기간 기다리며 이 기능을 지연해야 한다면 전체 생태계에 해가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425146Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:11/seg:0",
+      "source": "The downsides of changing the spec are fairly limited, given that we do not believe that support for this is widespread, so it affects only a limited number of projects.",
+      "source_hash": 15115089028669902034,
+      "context_hash": 1471874841808588368,
+      "translation": "이 기능에 대한 지원이 널리 퍼져 있다고 생각하지 않으므로 사양 변경의 단점은 상당히 제한적이며, 따라서 제한된 수의 프로젝트에만 영향을 미칩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425147Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 9249456139926040148,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425147Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "The keywords \"**MUST**\", \"**MUST NOT**\", \"**REQUIRED**\", \"**SHALL**\", \"**SHALL NOT**\", \"**SHOULD**\", \"**SHOULD NOT**\", \"**RECOMMENDED**\", \"**MAY**\", and \"**OPTIONAL**\"\" in this document are to be interpreted as described in :rfc:`RFC 2119 <2119>`.",
+      "source_hash": 2082998102200821730,
+      "context_hash": 14315108772241229482,
+      "translation": "이 문서에서 \"**MUST**\", \"**MUST NOT**\", \"**REQUIRED**\", \"**SHALL**\", \"**SHALL NOT**\", \"**SHOULD**\", \"**SHOULD NOT**\", \"**RECOMMENDED**\", \"**MAY**\" 및 \"**OPTIONAL**\"\" 키워드는 :rfc:`RFC 2119 <2119>`\\ 에 설명된 대로 해석해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425147Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Servers",
+      "source_hash": 468067038125162096,
+      "context_hash": 9818406505641774505,
+      "translation": "서버",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425147Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "The :pep:`658` metadata, when used in the HTML representation of the Simple API, **MUST** be emitted using the attribute name ``data-core-metadata``, with the supported values remaining the same.",
+      "source_hash": 802117130975793965,
+      "context_hash": 5576453762553602400,
+      "translation": "Simple API의 HTML 표현에서 :pep:`658`\\ 메타데이터를 사용하는 경우, 지원되는 값은 그대로 유지하면서 ``data-core-metadata``\\ 라는 속성 이름을 사용하여 제공해야 **MUST** 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425148Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "The :pep:`658` metadata, when used in the :pep:`691` JSON representation of the Simple API, **MUST** be emitted using the key ``core-metadata``, with the supported values remaining the same.",
+      "source_hash": 5937520789662675757,
+      "context_hash": 8411188043876149236,
+      "translation": "Simple API의 :pep:`691`\\ JSON 표현에서 :pep:`658`\\ 메타데이터를 사용하는 경우, 지원되는 값은 그대로 유지하면서 ``core-metadata``\\ 라는 키를 사용하여 제공해야 **MUST** 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425148Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "To support clients that used the previous key names, the HTML representation **MAY** also be emitted using the ``data-dist-info-metadata``, and if it does so it **MUST** match the value of ``data-core-metadata``.",
+      "source_hash": 18162855994643374897,
+      "context_hash": 13592090547923768597,
+      "translation": "이전 키 이름을 사용한 클라이언트를 지원하기 위해 HTML 표현은 ``data-dist-info-metadata``\\ 를 사용하여 제공할 수도 **MAY** 있으며, 그렇게 하는 경우 해당 값은 ``data-core-metadata``\\ 의 값과 일치해야 **MUST** 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425148Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Clients",
+      "source_hash": 8815217305452655067,
+      "context_hash": 9531524292557289117,
+      "translation": "클라이언트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:36.425148Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Clients consuming any of the HTML representations of the Simple API **MUST** read the :pep:`658` metadata from the key ``data-core-metadata`` if it is present.",
+      "source_hash": 6883739128760587976,
+      "context_hash": 4564657846138930563,
+      "translation": "Simple API의 HTML 표현을 사용하는 클라이언트는 :pep:`658` 메타데이터가 존재하는 경우 키 ``data-core-metadata``\\ 에서 해당 메타데이터를 **반드시** 읽어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187145Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "They **MAY** optionally use the legacy ``data-dist-info-metadata`` if it is present but ``data-core-metadata`` is not.",
+      "source_hash": 14635544600156781254,
+      "context_hash": 8607213970774665862,
+      "translation": "해당 키가 존재하지만 ``data-core-metadata``\\ 가 존재하지 않는 경우 레거시 ``data-dist-info-metadata``\\ 를 **선택적으로 사용할 수 있습니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:55:22.105663Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "Clients consuming the JSON representation of the Simple API **MUST** read the :pep:`658` metadata from the key ``core-metadata`` if it is present.",
+      "source_hash": 5855147578726341372,
+      "context_hash": 13997927471972449926,
+      "translation": "Simple API의 JSON 표현을 사용하는 클라이언트는 :pep:`658` 메타데이터가 존재하는 경우 키 ``core-metadata``\\ 에서 해당 메타데이터를 **반드시** 읽어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187149Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "They **MAY** optionally use the legacy ``dist-info-metadata`` key if it is present but ``core-metadata`` is not.",
+      "source_hash": 11804102180195481687,
+      "context_hash": 1569459759218579812,
+      "translation": "해당 키가 존재하지만 ``core-metadata``\\ 가 존재하지 않는 경우 레거시 ``dist-info-metadata``\\ 키를 **선택적으로 사용할 수 있습니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:55:22.105663Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 4819188623097784552,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187150Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "There is a minor compatibility break in this PEP, in that clients that currently correctly handle the existing metadata keys will not automatically understand the newer metadata keys, but they should degrade gracefully, and simply act as if the :pep:`658` metadata does not exist.",
+      "source_hash": 11241620018604289437,
+      "context_hash": 16857766230411172253,
+      "translation": "이 PEP에는 사소한 호환성 문제가 있습니다. 현재 기존 메타데이터 키를 올바르게 처리하는 클라이언트가 새로운 메타데이터 키를 자동으로 이해하지는 못하지만, 정상적으로 기능을 축소하고 :pep:`658` 메타데이터가 존재하지 않는 것처럼 동작해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187150Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "Otherwise there should be no compatibility problems with this PEP.",
+      "source_hash": 14898975980179819816,
+      "context_hash": 4576116867538190410,
+      "translation": "그 외에는 이 PEP와 관련된 호환성 문제가 없어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187150Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 12650819220135037207,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187150Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Leave the spec unchanged, and cope with fixing in PyPI and/or pip",
+      "source_hash": 9777820412979614916,
+      "context_hash": 629925089462048390,
+      "translation": "사양을 변경하지 않고 PyPI 및/또는 pip에서 수정하는 방법을 모색합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187151Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "We believe that the improvements brought by :pep:`658` are very important to improving the performance of resolving dependencies from PyPI, and would like to be able to deploy it as quickly as we can.",
+      "source_hash": 965494550279256382,
+      "context_hash": 17991174641912561090,
+      "translation": "우리는 :pep:`658`\\ 이 가져온 개선 사항이 PyPI에서 의존성을 해결하는 성능을 향상하는 데 매우 중요하다고 믿으며, 이를 가능한 한 신속하게 배포할 수 있기를 바랍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:55:22.105663Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "Unfortunately the nature of these bugs is that we cannot deploy them as is without breaking widely deployed and used versions of pip.",
+      "source_hash": 17247466011961513035,
+      "context_hash": 10058845721901855951,
+      "translation": "안타깝게도 이러한 버그의 특성상, 널리 배포되어 사용되는 pip 버전을 손상하지 않고는 이를 현재 상태 그대로 배포할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187151Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "The breakages in this case would be bad enough that affected users would not even be able to directly upgrade their version of pip to fix it, but would have to manually fetch pip another way first (e.g. ``get-pip.py``).",
+      "source_hash": 17345582419788880558,
+      "context_hash": 4494967287022842864,
+      "translation": "이 경우의 손상은 영향을 받는 사용자가 문제를 해결하기 위해 pip 버전을 직접 업그레이드할 수도 없고, 먼저 다른 방법으로 pip를 수동으로 가져와야 할 정도로 심각합니다(예: ``get-pip.py``).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187152Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "This is something that PyPI would be unwilling to do without some way to mitigate those breakages for those users.",
+      "source_hash": 16837631514308286503,
+      "context_hash": 5276079325670527205,
+      "translation": "PyPI는 해당 사용자들을 위한 이러한 손상을 완화할 방법 없이는 이 작업을 수행하지 않으려 할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187152Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:1",
+      "source": "Without some reasonable mitigation strategy, we would have to wait until those versions of pip are no longer in use on PyPI, which would likely be 5+ years from now.",
+      "source_hash": 376438236587206312,
+      "context_hash": 18446027201145728760,
+      "translation": "합리적인 완화 전략이 없다면, PyPI에서 해당 pip 버전이 더 이상 사용되지 않을 때까지 기다려야 하며, 이는 아마도 지금으로부터 5년 이상 걸릴 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187152Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "There are a few possible mitigation strategies that we could use, but we've rejected them as well.",
+      "source_hash": 17156917435084541965,
+      "context_hash": 12749321327978275244,
+      "translation": "사용할 수 있는 완화 전략은 몇 가지 있지만, 이들 역시 거부했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187153Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "Mitigation: Special Case pip",
+      "source_hash": 10187425276784437573,
+      "context_hash": 13560374290876252435,
+      "translation": "완화: pip를 특별히 처리하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187153Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "The breakages are particularly bad in that it prevents users from even upgrading pip to get an unbroken version of pip, so a command like ``pip install --upgrade pip`` would fail.",
+      "source_hash": 1634417811250092041,
+      "context_hash": 6254286694016973834,
+      "translation": "손상이 특히 심각한 이유는 사용자가 손상되지 않은 pip 버전을 얻기 위해 pip를 업그레이드하는 것조차 방지하기 때문이며, 따라서 ``pip install --upgrade pip``\\ 와 같은 명령이 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187153Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:1",
+      "source": "We could mitigate this by having PyPI special case pip itself, so that the JSON endpoint never returns the :pep:`658` metadata and the above still works.",
+      "source_hash": 14268270317237837066,
+      "context_hash": 9982126955207406493,
+      "translation": "PyPI가 pip 자체를 특별히 처리하도록 하여 JSON 엔드포인트가 :pep:`658` 메타데이터를 절대 반환하지 않게 하면 위의 명령이 계속 작동하도록 완화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187154Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "This PEP rejects this idea because while the simple command that only upgrades pip would work, if the user included *anything* else in that command to upgrade then the command would go back to failing, which we consider to be still too large of a breakage.",
+      "source_hash": 9895377267364506878,
+      "context_hash": 2159030995146836254,
+      "translation": "이 PEP에서는 pip만 업그레이드하는 간단한 명령은 작동하더라도, 사용자가 해당 명령에 업그레이드할 다른 항목을 *무엇이든* 포함하면 명령이 다시 실패하게 되므로 이 아이디어를 거부합니다. 이는 여전히 손상이 너무 크다고 판단합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187154Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:0",
+      "source": "Additionally, while this bug happens to be getting exposed right now with PyPI, it is really a bug that would happen with any :pep:`691` repository that correctly exposed the :pep:`658` metadata.",
+      "source_hash": 12585297610613127060,
+      "context_hash": 16960857868830711237,
+      "translation": "또한 이 버그가 현재 PyPI에서 드러나고 있기는 하지만, 실제로는 :pep:`658` 메타데이터를 올바르게 노출하는 모든 :pep:`691` 저장소에서 발생할 수 있는 버그입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187154Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:1",
+      "source": "This would mean that every repository would have to carry this special case for pip.",
+      "source_hash": 4594008365348159975,
+      "context_hash": 531821669468024973,
+      "translation": "이는 모든 저장소가 pip를 위한 이 특별한 처리를 포함해야 한다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187154Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:0",
+      "source": "Mitigation: Have the server use User-Agent Detection",
+      "source_hash": 17133312113671593067,
+      "context_hash": 10511261641875480195,
+      "translation": "완화: 서버가 User-Agent 감지를 사용하도록 하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187155Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:10/seg:0",
+      "source": "pip puts its version number into its ``User-Agent``, which means that the server could detect the version number and serve different responses based on that version number so that we don't serve the :pep:`658` metadata to versions of pip that are broken.",
+      "source_hash": 2723833358726121397,
+      "context_hash": 11293625062560863695,
+      "translation": "pip은 버전 번호를 ``User-Agent``\\ 에 넣으므로, 서버는 버전 번호를 감지하고 해당 버전 번호에 따라 서로 다른 응답을 제공하여 손상된 pip 버전에는 :pep:`658` 메타데이터를 제공하지 않을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187155Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:11/seg:0",
+      "source": "This PEP rejects this idea because supporting ``User-Agent`` detection is too difficult to implement in a reasonable way.",
+      "source_hash": 6627515091985732546,
+      "context_hash": 4660448402221065379,
+      "translation": "이 PEP에서는 ``User-Agent`` 감지를 합리적인 방식으로 구현하기가 너무 어렵기 때문에 이 아이디어를 거부합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187155Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:12/seg:0",
+      "source": "On PyPI we rely heavily on caching the Simple API in our CDN.",
+      "source_hash": 497116710348788729,
+      "context_hash": 249985138717530996,
+      "translation": "PyPI에서는 CDN에 Simple API를 캐시하는 데 크게 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187155Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:12/seg:1",
+      "source": "If we varied the responses based on ``User-Agent``, then our CDN cache would have an explosion of cache keys for the same content, which would make it more likely that any particular request would not be cached and fall back to hitting our backend servers, which would have to scale much higher to support the load.",
+      "source_hash": 8280896080976437023,
+      "context_hash": 6742795418737216944,
+      "translation": "``User-Agent``\\ 에 따라 응답을 달리하면 동일한 콘텐츠에 대한 캐시 키가 CDN 캐시에 폭발적으로 증가하여, 특정 요청이 캐시되지 않고 백엔드 서버에 도달할 가능성이 커집니다. 그러면 부하를 지원하기 위해 백엔드 서버를 훨씬 더 크게 확장해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187156Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:13/seg:0",
+      "source": "PyPI *could* support the ``User-Agent`` detection idea by mutating the ``Accept`` header of the request so that those versions appear to only accept the HTML version, allowing us to maintain the CDNs cache keys.",
+      "source_hash": 12757212852837235702,
+      "context_hash": 1882627940149143285,
+      "translation": "PyPI는 요청의 ``Accept`` 헤더를 변경하여 해당 버전들이 HTML 버전만 허용하는 것처럼 보이게 함으로써, CDN의 캐시 키를 유지하면서 ``User-Agent`` 감지 아이디어를 *지원할 수도* 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:55:22.105664Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:13/seg:1",
+      "source": "This doesn't affect any downstream caches of PyPI though, including pip's HTTP cache which would possibly have JSON versions cached for those requests and we wouldn't emit a ``Vary``  on ``User-Agent`` for them to know that it isn't acceptable to share those caches, and adding a ``Vary: User-Agent`` for downstream caches would have the same problem as (1), but for downstream caches instead of our CDN cache.",
+      "source_hash": 8662576312113738951,
+      "context_hash": 1381292532225417327,
+      "translation": "그러나 이는 pip의 HTTP 캐시를 비롯한 PyPI의 모든 하위 캐시에는 영향을 주지 않습니다. 해당 요청에 대한 JSON 버전이 캐시되어 있을 수 있고, 이러한 캐시를 공유해도 허용되지 않는다는 사실을 하위 캐시가 알 수 있도록 ``User-Agent``\\ 에 대한 ``Vary``\\ 를 내보내지도 않기 때문입니다. 하위 캐시에 ``Vary: User-Agent``\\ 를 추가하면 (1)과 동일한 문제가 발생하지만, 이는 CDN 캐시가 아닌 하위 캐시에 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187157Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:14/seg:0",
+      "source": "The pip bug ultimately isn't PyPI specific, it affects any repository that implements :pep:`691` and :pep:`658` together.",
+      "source_hash": 7744158656746961989,
+      "context_hash": 4856426144305577126,
+      "translation": "pip 버그는 궁극적으로 PyPI에만 해당하는 것이 아니라, :pep:`691`\\ 과 :pep:`658`\\ 을 함께 구현하는 모든 저장소에 영향을 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187157Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:14/seg:1",
+      "source": "This would mean that workarounds that rely on implementation specific fixes have to be replicated for each repository that implements both, which may not be easy or possible in all cases (static mirrors may not be able to do this ``User-Agent`` detection for instance).",
+      "source_hash": 894209632898740165,
+      "context_hash": 6616952988640172800,
+      "translation": "이는 구현별 수정에 의존하는 우회 방법을 두 기능을 모두 구현하는 각 저장소에 복제해야 한다는 의미이며, 모든 경우에 쉽거나 가능한 것은 아닙니다(예를 들어 정적 미러는 이러한 ``User-Agent`` 감지를 수행하지 못할 수 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187157Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Only change the JSON key",
+      "source_hash": 11080081196582978483,
+      "context_hash": 7650751797791633528,
+      "translation": "JSON 키만 변경하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:38.187157Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The bug in pip only affects the JSON representation of the Simple API, so we only *need* to actually change the key in the JSON, and we could leave the existing HTML keys alone.",
+      "source_hash": 2060985100729854361,
+      "context_hash": 7685060746071645953,
+      "translation": "pip의 버그는 Simple API의 JSON 표현에만 영향을 미치므로, 실제로 변경할 *필요*\\ 가 있는 것은 JSON의 키뿐이며 기존 HTML 키는 그대로 둘 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:55:22.105664Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "This PEP rejects doing that because we believe that in the long term, having the HTML and JSON key names diverge would make mistakes like this more likely and make implementing and understanding the spec more confusing.",
+      "source_hash": 396352128255859313,
+      "context_hash": 5768292607961800189,
+      "translation": "이 PEP는 장기적으로 HTML과 JSON의 키 이름이 서로 달라지면 이와 같은 실수가 발생할 가능성이 커지고 사양을 구현하고 이해하는 일이 더 혼란스러워질 것이라고 판단하므로 그렇게 하는 것을 거부합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:07.626263Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "The main reason that we would want to not change the HTML keys is to not lose :pep:`658` support in any HTML only clients or repositories that might already support it.",
+      "source_hash": 2012474416130274580,
+      "context_hash": 13517985286837042426,
+      "translation": "HTML 키를 변경하지 않으려는 주된 이유는 이미 이를 지원하고 있을 수 있는 HTML 전용 클라이언트나 저장소에서 :pep:`658` 지원을 잃지 않기 위해서입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:55:22.105665Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:1",
+      "source": "This PEP mitigates that breakage by allowing both clients and servers to continue to support both keys, with a recommendation of when and how to do that.",
+      "source_hash": 5867172420983749359,
+      "context_hash": 1987932868395253443,
+      "translation": "이 PEP는 클라이언트와 서버 모두 두 키를 계속 지원할 수 있도록 허용하고, 언제 어떻게 그렇게 할지 권고함으로써 이러한 호환성 손상을 완화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:07.626268Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Recommendations",
+      "source_hash": 620471349433888058,
+      "context_hash": 1880224745024062620,
+      "translation": "권고 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:07.626269Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "The recommendations in this section, other than this notice itself, are non-normative, and represent what the PEP authors believe to be the best default implementation decisions for something implementing this PEP, but it does not represent any sort of requirement to match these decisions.",
+      "source_hash": 1485478589447842582,
+      "context_hash": 6250571381241829261,
+      "translation": "이 고지 자체를 제외한 이 절의 권고 사항은 비규범적이며, 이 PEP를 구현하는 무언가에 가장 적합한 기본 구현 결정이라고 PEP 작성자들이 판단하는 내용을 나타내지만, 이러한 결정을 반드시 따를 것을 요구하는 것은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:07.626269Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Servers",
+      "source_hash": 468067038125162096,
+      "context_hash": 12173711189334083694,
+      "translation": "서버",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:07.626269Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "We recommend that servers *only* emit the newer keys, particularly for the JSON representation of the Simple API since the bug itself only affected JSON.",
+      "source_hash": 14008621163704116392,
+      "context_hash": 15821800952108661371,
+      "translation": "특히 버그 자체가 JSON에만 영향을 미쳤으므로, 서버는 더 새로운 키만 *내보내도록* 권장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:55:22.105665Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "Servers that wish to support :pep:`658` in clients that use HTML and have it implemented, can safely emit both keys *only* in HTML.",
+      "source_hash": 3421607064957012148,
+      "context_hash": 4168298341694159384,
+      "translation": "HTML을 사용하고 이를 구현한 클라이언트에서 :pep:`658`\\ 을 지원하려는 서버는 두 키를 *HTML에서만* 안전하게 내보낼 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:55:22.105665Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "Servers should not emit the old keys in JSON unless they know that no broken versions of pip will be used to access their server.",
+      "source_hash": 6531211371288262423,
+      "context_hash": 1947731036720485821,
+      "translation": "서버에 액세스하는 데 문제가 있는 pip 버전이 사용되지 않을 것이라고 확신하는 경우가 아니라면, 서버는 JSON에서 이전 키를 내보내서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:07.626271Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Clients",
+      "source_hash": 8815217305452655067,
+      "context_hash": 12238243120053013208,
+      "translation": "클라이언트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:07.626271Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "We recommend that clients support both keys, for both HTML and JSON, preferring the newer key as this PEP requires.",
+      "source_hash": 5165865213598702853,
+      "context_hash": 12184022566459957950,
+      "translation": "클라이언트는 HTML과 JSON 모두에서 두 키를 지원하고, 이 PEP에서 요구하는 대로 더 새로운 키를 우선하도록 권고합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:07.626272Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "This will allow clients to support repositories that already have correctly implemented :pep:`658` and :pep:`691` but have not implemented this PEP.",
+      "source_hash": 2756456164404240583,
+      "context_hash": 5868762143840281672,
+      "translation": "이를 통해 클라이언트는 :pep:`658` 및 :pep:`691`\\ 를 이미 올바르게 구현했지만 이 PEP는 구현하지 않은 저장소를 지원할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:07.626272Z",
+      "issues": []
+    }
+  ]
+}

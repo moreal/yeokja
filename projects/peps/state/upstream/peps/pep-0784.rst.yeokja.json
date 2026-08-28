@@ -1,0 +1,1631 @@
+{
+  "version": 1,
+  "source_hash": 14308061896608612857,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Adding Zstandard to the standard library",
+      "source_hash": 8358843641685783192,
+      "context_hash": 16530898886277989957,
+      "translation": "표준 라이브러리에 Zstandard 추가",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:55:32.742395Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 17662289717175666521,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742401Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "`Zstandard`_ is a widely adopted, mature, and highly efficient compression standard.",
+      "source_hash": 3811741014823942201,
+      "context_hash": 11156918935334342171,
+      "translation": "`Zstandard`_\\ 는 널리 채택되었으며 성숙하고 매우 효율적인 압축 표준입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742401Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This PEP proposes adding a new module to the Python standard library containing a Python wrapper around Meta's |zstd| library, the default implementation.",
+      "source_hash": 11571987251818358777,
+      "context_hash": 6738479803699482081,
+      "translation": "이 PEP는 기본 구현인 Meta의 |zstd| 라이브러리를 감싸는 Python 래퍼를 포함하는 새 모듈을 Python 표준 라이브러리에 추가할 것을 제안합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:55:32.742401Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "Additionally, to avoid name collisions with packages on PyPI and to present a unified interface to Python users, compression modules in the standard library will be moved under a ``compression.*`` package.",
+      "source_hash": 7679583858589875690,
+      "context_hash": 16446678581551613886,
+      "translation": "또한 PyPI의 패키지와 이름이 충돌하는 것을 방지하고 Python 사용자에게 통합된 인터페이스를 제공하기 위해, 표준 라이브러리의 압축 모듈을 ``compression.*`` 패키지 아래로 이동합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:55:32.742402Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 10835480713852658016,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742403Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "CPython has modules for several different compression formats, such as :mod:`zlib (DEFLATE) <zlib>`, :mod:`gzip <gzip>`, :mod:`bzip2 <bz2>`, and :mod:`lzma <lzma>`, each widely used.",
+      "source_hash": 13845228457544054019,
+      "context_hash": 2376395882256045787,
+      "translation": "CPython에는 널리 사용되는 여러 압축 형식을 위한 모듈이 있으며, 여기에는 :mod:`zlib (DEFLATE) <zlib>`, :mod:`gzip <gzip>`, :mod:`bzip2 <bz2>`, :mod:`lzma <lzma>` 등이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742403Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Including popular compression algorithms matches Python's \"batteries included\" philosophy of incorporating widely useful standards and utilities. :mod:`!lzma` is the most recent such module, added in Python 3.3.",
+      "source_hash": 6259787453031352438,
+      "context_hash": 13956384870820212878,
+      "translation": "널리 사용되는 압축 알고리즘을 포함하는 것은 폭넓게 유용한 표준과 유틸리티를 통합한다는 Python의 \"배터리 포함\" 철학에 부합합니다. :mod:`!lzma` 는 Python 3.3에 추가된 가장 최근의 이러한 모듈입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742403Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Since then, Zstandard has become the modern *de facto* preferred compression library for both high performance compression and decompression attaining high compression ratios at reasonable CPU and memory cost.",
+      "source_hash": 10819626872029420349,
+      "context_hash": 11395640505382904397,
+      "translation": "그 이후 Zstandard는 합리적인 CPU 및 메모리 비용으로 높은 압축률을 달성하면서 고성능 압축과 압축 해제를 모두 수행하는 현대의 *de facto* 선호 압축 라이브러리가 되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742404Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "Zstandard achieves a much higher compression ratio than bzip2 or zlib (DEFLATE) while decompressing significantly faster than LZMA.",
+      "source_hash": 5233583850523388175,
+      "context_hash": 15679729062435933643,
+      "translation": "Zstandard는 bzip2나 zlib (DEFLATE)보다 훨씬 높은 압축률을 달성하며, LZMA보다 훨씬 빠르게 압축을 해제합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742404Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Zstandard has seen `widespread adoption`_ in many different areas of computing.",
+      "source_hash": 14896007972793374058,
+      "context_hash": 2346581974552459698,
+      "translation": "Zstandard는 컴퓨팅의 여러 분야에서 `widespread adoption`_\\ 을 이루었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742404Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "The numerous hardware implementations demonstrate long-term commitment to Zstandard and an expectation that Zstandard will stay the *de facto* choice for compression for years to come.",
+      "source_hash": 18313958834625848341,
+      "context_hash": 7588002285615597444,
+      "translation": "수많은 하드웨어 구현은 Zstandard에 대한 장기적인 헌신과 Zstandard가 앞으로 수년간 압축을 위한 *de facto* 선택으로 남을 것이라는 기대를 보여 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742405Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:2",
+      "source": "This is further evidenced by Zstandard's IETF standardization in :rfc:`8478`.",
+      "source_hash": 15432780600178212297,
+      "context_hash": 4924288057728428719,
+      "translation": "이는 :rfc:`8478` 에서 Zstandard가 IETF 표준으로 제정된 사실로도 뒷받침됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742405Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:3",
+      "source": "Zstandard compression is also implemented in both the ZFS_ and Btrfs_ filesystems.",
+      "source_hash": 9345338686255580014,
+      "context_hash": 1304549844476381102,
+      "translation": "Zstandard 압축은 ZFS_\\ 및 Btrfs_ 파일 시스템에도 구현되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742405Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "Zstandard's highly efficient compression has supplanted other modern compression formats, such as brotli_, lzo_, and ucl_ due to its highly efficient compression.",
+      "source_hash": 5904531803993605769,
+      "context_hash": 5556866598056244943,
+      "translation": "Zstandard의 매우 효율적인 압축은 그 높은 효율성으로 인해 brotli_, lzo_, ucl_ 등의 다른 최신 압축 형식을 대체했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742405Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "While `LZ4`_ is still used in very high throughput scenarios, Zstandard can also be used in some of these contexts.",
+      "source_hash": 17774267284402381054,
+      "context_hash": 3246125720445239697,
+      "translation": "`LZ4`_\\ 는 여전히 매우 높은 처리량이 필요한 시나리오에서 사용되지만, 이러한 일부 상황에서도 Zstandard를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742406Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "While inclusion of LZ4 is out of scope, it would be a compelling future addition to the ``compression`` namespace introduced by this PEP.",
+      "source_hash": 16530398372351412349,
+      "context_hash": 9251792935318958149,
+      "translation": "LZ4를 포함하는 것은 범위 밖이지만, 이 PEP에서 도입하는 ``compression`` 네임스페이스에 향후 추가하기에 매력적인 항목이 될 것입니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:55:32.742406Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "There are several bindings to Zstandard for Python available on PyPI, each with different APIs and choices of how to bind the ``zstd`` library.",
+      "source_hash": 18440800908541795907,
+      "context_hash": 9329019129038172449,
+      "translation": "PyPI에는 Python용 Zstandard 바인딩이 여러 개 있으며, 각각 ``zstd`` 라이브러리를 바인딩하는 방식과 API가 서로 다릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742406Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "One goal with introducing an official module in the standard library is to reduce confusion for Python users who want simple compression/decompression APIs for Zstandard.",
+      "source_hash": 2744745674449209568,
+      "context_hash": 7369985599647955058,
+      "translation": "표준 라이브러리에 공식 모듈을 도입하는 한 가지 목표는 Zstandard를 위한 간단한 압축/압축 해제 API를 원하는 Python 사용자의 혼란을 줄이는 것입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:55:32.742407Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:2",
+      "source": "The existing packages can continue providing extended APIs or integrate features from newer Zstandard versions.",
+      "source_hash": 931285139785821217,
+      "context_hash": 1330670675507047016,
+      "translation": "기존 패키지는 계속해서 확장 API를 제공하거나 최신 Zstandard 버전의 기능을 통합할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742407Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Another reason to add Zstandard support to the standard library is to resolve a long standing open issue (`python/cpython#81276`_) requesting Zstandard support in the :mod:`tarfile` module.",
+      "source_hash": 3302316301252508511,
+      "context_hash": 10611484941293337037,
+      "translation": "표준 라이브러리에 Zstandard 지원을 추가하는 또 다른 이유는 :mod:`tarfile` 모듈에 Zstandard 지원을 요청하는 오랫동안 해결되지 않은 공개 이슈(`python/cpython#81276`_)를 해결하기 위해서입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:55:32.742407Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "This issue has the 5th most \"thumbs up\" of open issues on the CPython tracker, and has garnered a significant amount of discussion and interest.",
+      "source_hash": 17431806421446679181,
+      "context_hash": 13375569789869717660,
+      "translation": "이 이슈는 CPython 추적기의 공개 이슈 중 다섯 번째로 많은 \"좋아요\"를 받았으며, 상당한 논의와 관심을 불러일으켰습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742408Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:2",
+      "source": "Additionally, the ZIP format standardizes a `Zstandard compression format ID`_, and integration with the :mod:`zipfile` module would allow opening ZIP archives using Zstandard compression.",
+      "source_hash": 15309945246915458237,
+      "context_hash": 17573224507059962608,
+      "translation": "또한 ZIP 형식은 `Zstandard compression format ID`_\\ 를 표준화하고 있으며, :mod:`zipfile` 모듈과 통합하면 Zstandard 압축을 사용하는 ZIP 아카이브를 열 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742408Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:3",
+      "source": "The reference implementation for this PEP contains integration with the :mod:`!zipfile`, :mod:`!tarfile`, and :mod:`shutil` modules.",
+      "source_hash": 2539587482152265999,
+      "context_hash": 15149124102782860344,
+      "translation": "이 PEP의 참조 구현에는 :mod:`!zipfile`, :mod:`!tarfile`, :mod:`shutil` 모듈과의 통합이 포함되어 있습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:55:32.742408Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "Zstandard compression could also be used to make Python wheel packages smaller and significantly faster to install.",
+      "source_hash": 9781573505232848657,
+      "context_hash": 17172698079889359134,
+      "translation": "Zstandard 압축은 Python 휠 패키지를 더 작게 만들고 설치 속도를 크게 높이는 데에도 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742409Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:1",
+      "source": "Anaconda found a sizeable speedup when adopting Zstandard for the conda package format:",
+      "source_hash": 5743563737814210132,
+      "context_hash": 11294478051184727770,
+      "translation": "Anaconda는 conda 패키지 형식에 Zstandard를 채택했을 때 상당한 속도 향상을 확인했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742409Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "Conda's download sizes are reduced ~30-40%, and extraction is dramatically faster. [...] We see approximately a 2.5x overall speedup, almost all thanks to the dramatically faster extraction speed of the zstd compression used in the new file format.",
+      "source_hash": 109781178154594833,
+      "context_hash": 16275712014371292073,
+      "translation": "Conda의 다운로드 크기는 약 30~40% 감소하고 추출 속도는 극적으로 빨라집니다. [...] 전체적으로 약 2.5배의 속도 향상을 확인했으며, 이는 거의 전적으로 새 파일 형식에 사용된 zstd 압축의 극적으로 빨라진 추출 속도 덕분입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742410Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "-- `Anaconda blog on Zstandard adoption`_",
+      "source_hash": 14128353997950248674,
+      "context_hash": 7331174499714545317,
+      "translation": "-- `Anaconda blog on Zstandard adoption`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742410Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "Zstandard has a significantly higher compression ratio compared to wheel's existing zlib-based compression, `according to lzbench`_, a comprehensive benchmark of many different compression libraries and formats.",
+      "source_hash": 13365105781706593621,
+      "context_hash": 16636071545649265208,
+      "translation": "Zstandard는 다양한 압축 라이브러리와 형식을 종합적으로 벤치마크한 `according to lzbench`_\\ 에 따르면 wheel의 기존 zlib 기반 압축보다 압축률이 상당히 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:59:24.097783Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:1",
+      "source": "While this PEP does *not* prescribe any changes to the wheel format or other packaging standards, having Zstandard bindings in the standard library would enable a future PEP to improve the user experience for Python wheel packages.",
+      "source_hash": 4729213663428622050,
+      "context_hash": 10344194982691209802,
+      "translation": "이 PEP는 wheel 형식이나 다른 패키징 표준에 대한 변경을 *규정하지* 않지만, 표준 라이브러리에 Zstandard 바인딩이 있으면 향후 PEP에서 Python wheel 패키지의 사용자 경험을 개선할 수 있습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:59:24.097786Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 16946554742999139584,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742412Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Introduction of a ``compression`` package",
+      "source_hash": 6621341627264748915,
+      "context_hash": 15197702711409405652,
+      "translation": "``compression`` 패키지 도입",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:32.742412Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Both the ``zstd`` and ``zstandard`` import names are claimed by projects on PyPI.",
+      "source_hash": 3202772633337038365,
+      "context_hash": 3207097170440224258,
+      "translation": "``zstd`` 및 ``zstandard`` 임포트 이름은 모두 PyPI의 프로젝트들이 사용하고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716863Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "To avoid breaking users of one of the existing bindings, this PEP proposes introducing a new namespace for compression libraries, ``compression``.",
+      "source_hash": 3589698882869163762,
+      "context_hash": 12231062829240268322,
+      "translation": "기존 바인딩 중 하나의 사용자를 위해 호환성을 깨뜨리지 않도록, 이 PEP에서는 압축 라이브러리를 위한 새 네임스페이스인 ``compression``\\ 을 도입할 것을 제안합니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:55:27.716867Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "This name is already reserved on PyPI for use in the standard library.",
+      "source_hash": 13887263628491853138,
+      "context_hash": 11970631030072731291,
+      "translation": "이 이름은 표준 라이브러리에서 사용하도록 PyPI에 이미 예약되어 있습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:55:27.716868Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:3",
+      "source": "The new Zstandard module will be named ``compression.zstd``.",
+      "source_hash": 5062385640749911631,
+      "context_hash": 8165425423515846009,
+      "translation": "새로운 Zstandard 모듈의 이름은 ``compression.zstd``\\ 로 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716869Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:4",
+      "source": "Other compression modules will be re-exported in the new ``compression`` package.",
+      "source_hash": 7734833086856092963,
+      "context_hash": 11275414567609130679,
+      "translation": "다른 압축 모듈은 새로운 ``compression`` 패키지에서 다시 내보냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716869Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Providing a common namespace for compression modules has several advantages.",
+      "source_hash": 17621408647700761636,
+      "context_hash": 5777119205435656386,
+      "translation": "압축 모듈에 공통 네임스페이스를 제공하면 여러 가지 이점이 있습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:55:27.716870Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "First, it reduces user confusion about where to find compression modules.",
+      "source_hash": 12837952333149232363,
+      "context_hash": 1917982223140577959,
+      "translation": "첫째, 압축 모듈을 어디에서 찾아야 하는지에 대한 사용자의 혼란을 줄입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716870Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "Second, the top level ``compression`` module could provide information on which compression formats are available, similar to ``hashlib``'s ``algorithms_available``.",
+      "source_hash": 16910437142614680045,
+      "context_hash": 18265949384580080340,
+      "translation": "둘째, 최상위 ``compression`` 모듈은 ``hashlib``\\ 의 ``algorithms_available``\\ 와 유사하게 어떤 압축 형식을 사용할 수 있는지에 대한 정보를 제공할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716871Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:3",
+      "source": "If :pep:`775` is accepted, a ``compression.algorithms_guaranteed`` could be provided as well, listing ``zlib``.",
+      "source_hash": 9375874991103740133,
+      "context_hash": 8440209780676625635,
+      "translation": "관련 :pep:`775`\\ 가 채택되면 ``zlib``\\ 을 나열하는 ``compression.algorithms_guaranteed``\\ 도 제공할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:09:17.433721Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:4",
+      "source": "Finally, a ``compression`` namespace prevents future issues with merging other compression formats into the standard library.",
+      "source_hash": 12767457452957725418,
+      "context_hash": 2526690666155624455,
+      "translation": "마지막으로, ``compression`` 네임스페이스는 다른 압축 형식을 표준 라이브러리에 병합할 때 발생할 수 있는 향후 문제를 방지합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리",
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:55:27.716872Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:5",
+      "source": "New compression formats will likely be published to PyPI prior to integration into CPython.",
+      "source_hash": 6435434981238967029,
+      "context_hash": 15191594241020206448,
+      "translation": "새로운 압축 형식은 CPython에 통합되기 전에 PyPI에 먼저 게시될 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716873Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:6",
+      "source": "Therefore, any new compression format import name will likely already be claimed by the time a module would be considered for inclusion in CPython.",
+      "source_hash": 12881607067840877185,
+      "context_hash": 5058508268275866178,
+      "translation": "따라서 새로운 압축 형식의 임포트 이름은 모듈이 CPython에 포함될 대상으로 검토될 때 이미 사용 중일 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716873Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:7",
+      "source": "Putting compression modules under a package prefix prevents issues with potential future name clashes.",
+      "source_hash": 12870896422297063721,
+      "context_hash": 2926274409282994578,
+      "translation": "압축 모듈을 패키지 접두사 아래에 배치하면 향후 발생할 수 있는 이름 충돌 문제를 방지할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716874Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Code that would like to remain compatible across Python versions may use the following pattern to ensure compatibility",
+      "source_hash": 7516626049306782569,
+      "context_hash": 13572068129005816475,
+      "translation": "Python 버전 간 호환성을 유지하려는 코드는 호환성을 보장하기 위해 다음 패턴을 사용할 수 있습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716874Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "This will use the newer import name when available and fall back to the old name otherwise.",
+      "source_hash": 13694402807794302856,
+      "context_hash": 11832943506576153825,
+      "translation": "이 패턴은 새로운 임포트 이름을 사용할 수 있을 때 사용하고, 그렇지 않으면 이전 이름으로 대체합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716874Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Implementation based on ``pyzstd``",
+      "source_hash": 4791282078679589805,
+      "context_hash": 4140001340238948563,
+      "translation": "``pyzstd``\\ 를 기반으로 한 구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716875Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "The implementation for this PEP is based on the `pyzstd project`_.",
+      "source_hash": 11949116514824608843,
+      "context_hash": 1424535480820265983,
+      "translation": "이 PEP의 구현은 `pyzstd project`_\\ 를 기반으로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716875Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "This project was chosen as the code was `originally written to be upstreamed`_ to CPython by Ma Lin, who also wrote the `output buffer implementation`_ used in the standard library today.",
+      "source_hash": 4171495888235331213,
+      "context_hash": 15150884309449879768,
+      "translation": "이 프로젝트는 해당 코드가 Ma Lin에 의해 CPython에 `originally written to be upstreamed`_\\ 되었고, Ma Lin이 현재 표준 라이브러리에서 사용하는 `output buffer implementation`_\\ 도 작성했기 때문에 선택되었습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:55:27.716876Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "The project has since been taken over by Rogdham and is published to PyPI.",
+      "source_hash": 15897701219283385596,
+      "context_hash": 13725586561704587553,
+      "translation": "이후 이 프로젝트는 Rogdham이 인수했으며 PyPI에 게시되고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716876Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:3",
+      "source": "The APIs in ``pyzstd`` are similar to the APIs for other compression modules in the standard library such as :mod:`!bz2` and :mod:`!lzma`.",
+      "source_hash": 2112519080805553778,
+      "context_hash": 4714472063967448853,
+      "translation": "``pyzstd``\\ 의 API는 :mod:`!bz2` 및 :mod:`!lzma`\\ 와 같은 표준 라이브러리의 다른 압축 모듈 API와 유사합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:55:27.716876Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Minimum supported Zstandard version",
+      "source_hash": 12110806434990980785,
+      "context_hash": 15610212019834024404,
+      "translation": "지원되는 최소 Zstandard 버전",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716877Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The minimum supported Zstandard was chosen as v1.4.5, released in May of 2020.",
+      "source_hash": 5921305590276636235,
+      "context_hash": 4968298802798861336,
+      "translation": "지원되는 최소 Zstandard 버전은 2020년 5월에 릴리스된 v1.4.5로 선택했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716877Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "This version was chosen as a minimum based on reviewing the versions of Zstandard available in a number of Linux distribution package repositories, including LTS releases.",
+      "source_hash": 8854847207310440609,
+      "context_hash": 15148761824048368248,
+      "translation": "이 버전은 LTS 릴리스를 포함하여 여러 Linux 배포 패키지 저장소에서 사용할 수 있는 Zstandard 버전을 검토한 결과를 바탕으로 최소 버전으로 선택했습니다.",
+      "glossary_snapshot": {
+        "distribution package": "배포 패키지"
+      },
+      "translated_at": "2026-08-28T19:59:24.097799Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:2",
+      "source": "This version choice is rather conservative to maximize compatibility with existing LTS Linux distributions, but a newer Zstandard version could likely be chosen given that newer Python releases are generally packaged as part of newer distribution releases.",
+      "source_hash": 12264073088563576812,
+      "context_hash": 1613589374043563324,
+      "translation": "이 버전 선택은 기존 LTS Linux 배포판과의 호환성을 극대화하기 위한 상당히 보수적인 선택이지만, 최신 Python 릴리스는 일반적으로 최신 배포판 릴리스의 일부로 패키지되므로 더 최신 버전의 Zstandard를 선택할 수도 있을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716878Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 11234620781322858396,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716879Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "The ``compression`` namespace",
+      "source_hash": 17790299986067439910,
+      "context_hash": 16014364953180413789,
+      "translation": "``compression`` 네임스페이스",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:55:27.716879Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "A new namespace for compression modules will be introduced named ``compression``.",
+      "source_hash": 503324984663024334,
+      "context_hash": 5246284094432553075,
+      "translation": "압축 모듈을 위한 새로운 네임스페이스를 ``compression``\\ 이라는 이름으로 도입합니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:55:27.716879Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "The top-level module for this package will be empty to begin with, but a standard API for interacting with compression routines may be added in the future to the toplevel.",
+      "source_hash": 13894247362100658333,
+      "context_hash": 13329586045317385791,
+      "translation": "이 패키지의 최상위 모듈은 처음에는 비어 있지만, 향후 압축 루틴과 상호 작용하기 위한 표준 API가 최상위 모듈에 추가될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716880Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "The ``compression.zstd`` module",
+      "source_hash": 5211759227249146250,
+      "context_hash": 3273949932161095272,
+      "translation": "``compression.zstd`` 모듈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716880Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "A new module, ``compression.zstd`` will be introduced with Zstandard compression APIs that match other compression modules in the standard library, namely",
+      "source_hash": 13544625729680143192,
+      "context_hash": 16207550727807641565,
+      "translation": "표준 라이브러리의 다른 압축 모듈과 일치하는 Zstandard 압축 API를 제공하는 새로운 ``compression.zstd`` 모듈을 도입하며, 구체적으로는",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:55:27.716880Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": ":func:`!compress` / :func:`!decompress` - APIs for one-shot compression or decompression",
+      "source_hash": 14399016836234040772,
+      "context_hash": 1839580395039931779,
+      "translation": ":func:`!compress` / :func:`!decompress` - 한 번에 압축하거나 압축을 해제하기 위한 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716881Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": ":class:`!ZstdFile` / :func:`!open` - APIs for interacting with streams and file-like objects",
+      "source_hash": 13631285409316104867,
+      "context_hash": 4243856868638778961,
+      "translation": ":class:`!ZstdFile` / :func:`!open` - 스트림 및 파일과 유사한 객체와 상호 작용하기 위한 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:55:27.716881Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": ":class:`!ZstdCompressor` / :class:`!ZstdDecompressor` - APIs for incremental compression or decompression",
+      "source_hash": 15120787910338163816,
+      "context_hash": 12138946067025613476,
+      "translation": ":class:`!ZstdCompressor` / :class:`!ZstdDecompressor` - 점진적 압축 또는 압축 해제를 위한 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432182Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "It will also contain some Zstandard-specific functionality:",
+      "source_hash": 4193771893602583358,
+      "context_hash": 15456396633137705003,
+      "translation": "또한 일부 Zstandard 전용 기능도 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432186Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": ":class:`!ZstdDict` / :func:`!train_dict` / :func:`!finalize_dict` - APIs for interacting with Zstandard dictionaries, which are useful for compressing many small chunks of similar data",
+      "source_hash": 3386449509576672834,
+      "context_hash": 9281025502401649395,
+      "translation": ":class:`!ZstdDict` / :func:`!train_dict` / :func:`!finalize_dict` - Zstandard 딕셔너리와 상호 작용하기 위한 API이며, 유사한 데이터로 이루어진 작은 청크를 많이 압축하는 데 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432186Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "``libzstd`` optional dependency",
+      "source_hash": 1779096758868958027,
+      "context_hash": 5362806637076641289,
+      "translation": "``libzstd`` 선택적 종속성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432187Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The ``libzstd`` library will become an optional dependency of CPython.",
+      "source_hash": 17167607582094276943,
+      "context_hash": 7643710459557575991,
+      "translation": "``libzstd`` 라이브러리는 CPython의 선택적 종속성이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432187Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "If the library is not available, the ``compression.zstd`` module will be unavailable.",
+      "source_hash": 2309062235326084878,
+      "context_hash": 14573107478921380324,
+      "translation": "라이브러리를 사용할 수 없는 경우 ``compression.zstd`` 모듈을 사용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432187Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "This is handled automatically on Unix platforms as part of the normal build environment detection.",
+      "source_hash": 16165521479214198602,
+      "context_hash": 2244946476527596398,
+      "translation": "이는 일반 빌드 환경 감지의 일부로 유닉스 플랫폼에서 자동으로 처리됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432187Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "On Windows, ``libzstd`` will be added to `the source dependencies <https://github.com/python/cpython-source-deps>`_ used to build libraries CPython depends on for Windows.",
+      "source_hash": 14654992478020284104,
+      "context_hash": 387424234729146310,
+      "translation": "Windows에서는 CPython이 Windows용으로 의존하는 라이브러리를 빌드하는 데 사용되는 `소스 종속성 <https://github.com/python/cpython-source-deps>`_ 에 ``libzstd``\\ 가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432188Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Other compression modules",
+      "source_hash": 11224605281119730175,
+      "context_hash": 16399394178444550807,
+      "translation": "기타 압축 모듈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432188Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "New import names ``compression.lzma``, ``compression.bz2``, ``compression.gzip`` and ``compression.zlib`` will be introduced in Python 3.14 re-exporting the contents of the existing ``lzma``, ``bz2``, ``gzip`` and ``zlib`` modules respectively.",
+      "source_hash": 8859266999652669525,
+      "context_hash": 6404032801092802557,
+      "translation": "Python 3.14에 새로운 가져오기 이름인 ``compression.lzma``, ``compression.bz2``, ``compression.gzip`` 및 ``compression.zlib``\\ 가 도입되며, 각각 기존 ``lzma``, ``bz2``, ``gzip`` 및 ``zlib`` 모듈의 내용을 다시 내보냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432188Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "The ``compression`` sub-modules will become the canonical import names going forward.",
+      "source_hash": 12496447080310216528,
+      "context_hash": 3383640254923326242,
+      "translation": "앞으로 ``compression`` 서브모듈이 표준 가져오기 이름이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432189Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:2",
+      "source": "The use of the new compression names will be promoted over the original top level module names in the Python documentation when the minimum supported Python version requirements make that feasible.",
+      "source_hash": 11131306151316387020,
+      "context_hash": 16273752717087803309,
+      "translation": "최소 지원 Python 버전 요구 사항상 가능해지는 경우 Python 문서에서는 기존 최상위 모듈 이름보다 새로운 압축 이름의 사용을 권장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432189Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "The ``_compression`` module, given that it is marked private, will be immediately renamed to ``compression._common._streams``.",
+      "source_hash": 17161086686750545224,
+      "context_hash": 10859168775843235610,
+      "translation": "비공개로 표시된 ``_compression`` 모듈은 즉시 ``compression._common._streams``\\ 로 이름이 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432190Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "The new name was selected due to the current contents of the module being I/O related helpers for stream APIs (e.g. ``LZMAFile``) in standard library compression modules.",
+      "source_hash": 13292630049241907974,
+      "context_hash": 4748044969688435191,
+      "translation": "현재 이 모듈의 내용이 표준 라이브러리 압축 모듈의 스트림 API(예: ``LZMAFile``)를 위한 I/O 관련 도우미이므로 새 이름이 선택되었습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:27:10.432190Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 1012800857964426844,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432192Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "This PEP introduces no backwards incompatible changes.",
+      "source_hash": 947206493566043220,
+      "context_hash": 11011705568048151847,
+      "translation": "이 PEP는 하위 호환성을 해치는 변경 사항을 도입하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432192Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "There are currently no plans to deprecate or remove the existing compression modules.",
+      "source_hash": 583972456718889773,
+      "context_hash": 4919523554772749474,
+      "translation": "현재 기존 압축 모듈을 더 이상 사용하지 않도록 하거나 제거할 계획은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432193Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:2",
+      "source": "Any deprecation or removal of the existing modules is left to a future decision but will occur no sooner than 5 years from the acceptance of this PEP.",
+      "source_hash": 1454485931158609382,
+      "context_hash": 9712654432992810003,
+      "translation": "기존 모듈의 사용 중단 또는 제거 여부는 향후 결정에 맡겨지지만, 이 PEP가 수락된 시점으로부터 최소 5년이 지나기 전에는 이루어지지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432193Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 8183191489501914060,
+      "translation": "보안 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432193Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "As with any new C code, especially code operating on potentially untrusted user input, there are risks of memory safety issues.",
+      "source_hash": 17807568113794974031,
+      "context_hash": 15781809707073813103,
+      "translation": "새로운 C 코드와 마찬가지로, 특히 신뢰할 수 없을 가능성이 있는 사용자 입력을 처리하는 코드에는 메모리 안전성 문제가 발생할 위험이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432194Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "The author plans on contributing integration with libfuzzer to enable fuzzing the ``_zstd`` code and ensure it is robust.",
+      "source_hash": 18352045704655258964,
+      "context_hash": 11679289277963832121,
+      "translation": "작성자는 ``_zstd`` 코드를 퍼징하여 견고성을 보장할 수 있도록 libfuzzer와의 통합을 기여할 계획입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432194Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:2",
+      "source": "Furthermore, there are a number of tests that exercise the compression and decompression routines.",
+      "source_hash": 3296111130842687094,
+      "context_hash": 1083393063377719517,
+      "translation": "또한 압축 및 압축 해제 루틴을 실행하는 여러 테스트가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432195Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:3",
+      "source": "These tests pass without error when compiled with AddressSanitizer.",
+      "source_hash": 4916338668811804418,
+      "context_hash": 5336666538758558009,
+      "translation": "이러한 테스트는 AddressSanitizer로 컴파일했을 때 오류 없이 통과합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432195Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "Taking on a new dependency also always has security risks, but the ``zstd`` library is mature, fuzzed on each commit, and `participates in Meta's bug bounty program <https://github.com/facebook/zstd/blob/dev/SECURITY.md>`_.",
+      "source_hash": 6127564257326654653,
+      "context_hash": 16537936678428714677,
+      "translation": "새로운 종속성을 도입하는 데에는 항상 보안 위험도 따르지만, ``zstd`` 라이브러리는 성숙했으며 각 커밋마다 퍼징되고 `Meta의 버그 바운티 프로그램 <https://github.com/facebook/zstd/blob/dev/SECURITY.md>`_\\ 에 참여합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432196Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 11278541642569808926,
+      "translation": "이 내용을 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432196Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Documentation for the new module is in the reference implementation branch.",
+      "source_hash": 13101069812129195027,
+      "context_hash": 11949432055153237331,
+      "translation": "새로운 모듈의 문서는 참조 구현 브랜치에 있습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:27:10.432197Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "The documentation for existing modules will be updated to reference the new names as well.",
+      "source_hash": 9999074340856538143,
+      "context_hash": 9956162171483910629,
+      "translation": "기존 모듈의 문서도 새로운 이름을 참조하도록 업데이트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432197Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 14085130043724571749,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:27:10.432197Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "The `reference implementation <https://github.com/emmatyping/cpython/tree/zstd>`_ contains the ``_zstd`` C code, the ``compression.zstd`` code, modifications to ``tarfile``, ``shutil``, and ``zipfile``, and tests for each new API and integration added.",
+      "source_hash": 14506028364887948941,
+      "context_hash": 15638679497603685999,
+      "translation": "`참조 구현 <https://github.com/emmatyping/cpython/tree/zstd>`_ 에는 ``_zstd`` C 코드, ``compression.zstd`` 코드, ``tarfile``, ``shutil`` 및 ``zipfile``\\ 의 수정 사항, 그리고 추가된 각 새 API 및 통합에 대한 테스트가 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432198Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "It also contains the re-exports of other compression modules.",
+      "source_hash": 14447978548123604723,
+      "context_hash": 3779554822134515329,
+      "translation": "또한 다른 압축 모듈의 재내보내기도 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432199Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 18387860509644179385,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:10.432199Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Name the module ``zstdlib`` and do not make a new ``compression`` namespace",
+      "source_hash": 2385545921264071006,
+      "context_hash": 18123547023029479146,
+      "translation": "모듈 이름을 ``zstdlib``\\ 로 지정하고 새로운 ``compression`` 네임스페이스를 만들지 않습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:27:10.432201Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "One option instead of making a new ``compression`` namespace would be to find a different name, such as ``zstdlib``, as the import name.",
+      "source_hash": 12232363973044453525,
+      "context_hash": 2439733089662556634,
+      "translation": "새로운 ``compression`` 네임스페이스를 만드는 대신, ``zstdlib``\\ 과 같은 다른 이름을 임포트 이름으로 찾는 방법이 있습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:27:18.961554Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "Several other names, such as ``zst``, ``libzstd``, and ``zstdcomp`` were proposed as well.",
+      "source_hash": 132160963557054017,
+      "context_hash": 1693083790612798944,
+      "translation": "``zst``, ``libzstd``, ``zstdcomp``\\ 와 같은 여러 다른 이름도 제안되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961561Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:2",
+      "source": "In discussion, the names were found to either be too easy to typo, or unintuitive.",
+      "source_hash": 6414203997499137526,
+      "context_hash": 4023084836739999486,
+      "translation": "논의 과정에서 이러한 이름은 오타를 내기 너무 쉽거나 직관적이지 않은 것으로 밝혀졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961562Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:3",
+      "source": "Furthermore, the issue of existing import names is likely to persist for future compression formats added to the standard library.",
+      "source_hash": 10251986770721218481,
+      "context_hash": 4860504601353394027,
+      "translation": "또한 표준 라이브러리에 추가되는 향후 압축 형식에서도 기존 임포트 이름 문제는 지속될 가능성이 높습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:27:18.961562Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:4",
+      "source": "LZ4, a common high speed compression format, has `a package on PyPI <https://pypi.org/project/lz4/>`_, ``lz4``, with the import name ``lz4``.",
+      "source_hash": 8979346743115759608,
+      "context_hash": 17876669738843997600,
+      "translation": "일반적으로 사용되는 고속 압축 형식인 LZ4에는 임포트 이름이 ``lz4``\\ 인 `PyPI의 패키지 <https://pypi.org/project/lz4/>`_, ``lz4``\\ 가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961563Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:5",
+      "source": "Instead of solving this issue for each compression format, it is better to solve it once and for all by using the already-claimed ``compression`` namespace.",
+      "source_hash": 6545013426009364090,
+      "context_hash": 5934812226897459471,
+      "translation": "각 압축 형식마다 이 문제를 해결하는 대신, 이미 선점된 ``compression`` 네임스페이스를 사용하여 한 번에 해결하는 것이 더 좋습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:27:18.961564Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Introduce an experimental ``_zstd`` package in Python 3.14",
+      "source_hash": 10544493947855747542,
+      "context_hash": 2612751369399253479,
+      "translation": "Python 3.14에 실험적인 ``_zstd`` 패키지를 도입하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961565Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Since this PEP was published close to the beta cutoff for new features for Python 3.14, one proposal was to name the package a private module ``_zstd`` so that packaging tools could use it sooner, but not deciding on a name.",
+      "source_hash": 800265963821215263,
+      "context_hash": 7223369871394230273,
+      "translation": "이 PEP는 Python 3.14의 새로운 기능에 대한 베타 마감 시점에 가까워 발표되었으므로, 한 가지 제안은 패키징 도구가 더 일찍 사용할 수 있도록 패키지 이름을 비공개 모듈 ``_zstd``\\ 로 지정하되 이름을 확정하지 않는 것이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961565Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:1",
+      "source": "This would allow more time for discussion of the final module name during the 3.15 development window.",
+      "source_hash": 18054491332611545592,
+      "context_hash": 14523873221049491669,
+      "translation": "이렇게 하면 3.15 개발 기간 동안 최종 모듈 이름을 논의할 시간이 더 많아집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961566Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:2",
+      "source": "However, introducing a private module was not popular.",
+      "source_hash": 11948078465964724720,
+      "context_hash": 10737954181871734961,
+      "translation": "그러나 비공개 모듈을 도입하는 방안은 호응을 얻지 못했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961566Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:3",
+      "source": "The expectations and contract for external usage of a private module in the standard library are unclear.",
+      "source_hash": 17812517305189506603,
+      "context_hash": 12756423425008267268,
+      "translation": "표준 라이브러리에서 비공개 모듈을 외부에서 사용할 때의 기대 사항과 계약은 명확하지 않습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:27:18.961567Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Introduce a standard library namespace instead of ``compression``",
+      "source_hash": 8515726102583427884,
+      "context_hash": 13177570834947927806,
+      "translation": "``compression`` 대신 표준 라이브러리 네임스페이스를 도입하십시오",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스",
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:27:18.961567Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "One alternative to a ``compression`` namespace would be to introduce a ``std`` namespace for the entire standard library.",
+      "source_hash": 1930378575703327086,
+      "context_hash": 4526718156240533390,
+      "translation": "``compression`` 네임스페이스의 한 가지 대안은 전체 표준 라이브러리에 ``std`` 네임스페이스를 도입하는 것입니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스",
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:27:18.961568Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "However, this was seen as too significant a change for 3.14, with no agreed upon semantics, migration path, or name for the package.",
+      "source_hash": 4439762815091174381,
+      "context_hash": 11843932341511189540,
+      "translation": "그러나 이는 합의된 의미 체계, 마이그레이션 경로 또는 패키지 이름이 없는 상황에서 Python 3.14에 적용하기에는 너무 큰 변경으로 여겨졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961569Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:2",
+      "source": "Furthermore, a future PEP introducing a ``std`` namespace could always define that the ``compression`` sub-modules be flattened into the ``std`` namespace.",
+      "source_hash": 10914793613214545771,
+      "context_hash": 15086876192979296259,
+      "translation": "또한 향후 ``std`` 네임스페이스를 도입하는 PEP에서 ``compression`` 하위 모듈을 ``std`` 네임스페이스로 평탄화하도록 언제든지 정의할 수 있습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:27:18.961570Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Include ``zipfile`` and ``tarfile`` in ``compression``",
+      "source_hash": 5626560010255580192,
+      "context_hash": 6128276959054944256,
+      "translation": "``compression``\\ 에 ``zipfile``\\ 과 ``tarfile``\\ 을 포함하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961570Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "Compression is often used with archiving tools, so putting both :mod:`zipfile` and :mod:`tarfile` under the ``compression`` namespace is appealing.",
+      "source_hash": 11065304560221227778,
+      "context_hash": 10668789581679658872,
+      "translation": "압축은 보관 도구와 함께 자주 사용되므로 :mod:`zipfile`\\ 과 :mod:`tarfile`\\ 을 모두 ``compression`` 네임스페이스 아래에 두는 방안은 매력적입니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:27:18.961570Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:1",
+      "source": "However, compression can be used beyond just archiving tools.",
+      "source_hash": 5649477798741627308,
+      "context_hash": 9748884253821427251,
+      "translation": "그러나 압축은 보관 도구에만 국한되지 않고 사용될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961571Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:2",
+      "source": "For example, network requests can be gzip compressed.",
+      "source_hash": 2192402405157964748,
+      "context_hash": 12747827813363989425,
+      "translation": "예를 들어 네트워크 요청을 gzip으로 압축할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961572Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:3",
+      "source": "Furthermore, formats like tar do not include compression themselves, instead relying on external compression.",
+      "source_hash": 7605491723813379212,
+      "context_hash": 15851787193896193023,
+      "translation": "또한 tar와 같은 형식은 자체적으로 압축을 포함하지 않고 외부 압축에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961572Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:4",
+      "source": "Therefore, this PEP does not propose moving :mod:`!zipfile` or :mod:`!tarfile` under ``compression``.",
+      "source_hash": 12041586654787670739,
+      "context_hash": 11183879429280675306,
+      "translation": "따라서 이 PEP는 :mod:`!zipfile`\\ 이나 :mod:`!tarfile`\\ 을 ``compression`` 아래로 이동하는 것을 제안하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961572Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Do not include ``gzip`` under ``compression``",
+      "source_hash": 13218691743634523690,
+      "context_hash": 4431928682839471422,
+      "translation": "``compression`` 아래에 ``gzip``\\ 을 포함하지 마십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961573Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "The :rfc:`GZip format RFC <1952>` defines a format which can include multiple blocks and metadata about its contents.",
+      "source_hash": 9360840602509981624,
+      "context_hash": 1524573253756742082,
+      "translation": "관련 :rfc:`GZip format RFC <1952>`\\ 는 여러 블록과 그 내용에 관한 메타데이터를 포함할 수 있는 형식을 정의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:09:17.433724Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:1",
+      "source": "In this way GZip is rather similar to archive formats like ZIP and tar.",
+      "source_hash": 17711173536859682688,
+      "context_hash": 9542844047709794756,
+      "translation": "이러한 점에서 GZip은 ZIP 및 tar와 같은 보관 형식과 매우 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961574Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:2",
+      "source": "Despite that, in usage GZip is often treated as a compression format rather than an archive format.",
+      "source_hash": 12490867114871380352,
+      "context_hash": 12995923107478996750,
+      "translation": "그럼에도 실제 사용에서는 GZip이 보관 형식이라기보다 압축 형식으로 취급되는 경우가 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961574Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:3",
+      "source": "Looking at how different languages classify GZip, the prevailing trend is to classify it as a compression format and not an archiving format.",
+      "source_hash": 4986072489610959867,
+      "context_hash": 13201644452903188386,
+      "translation": "여러 언어에서 GZip을 분류하는 방식을 살펴보면, 압도적인 추세는 GZip을 보관 형식이 아닌 압축 형식으로 분류하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961574Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "Language",
+      "source_hash": 978284141585371650,
+      "context_hash": 7033755371614679720,
+      "translation": "언어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961575Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:4/seg:0",
+      "source": "Compression or Archive",
+      "source_hash": 376344274233406401,
+      "context_hash": 12063263221246062578,
+      "translation": "압축 또는 보관",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961575Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:0",
+      "source": "Documentation Link",
+      "source_hash": 4968049335008040292,
+      "context_hash": 18142376002039705003,
+      "translation": "문서 링크",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961575Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:0",
+      "source": "Golang",
+      "source_hash": 1156430759138633431,
+      "context_hash": 14200557139333664283,
+      "translation": "Golang",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961575Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:7/seg:0",
+      "source": "Compression",
+      "source_hash": 3674794689740069620,
+      "context_hash": 17553419394672187394,
+      "translation": "압축",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961575Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:8/seg:0",
+      "source": "https://pkg.go.dev/compress/gzip",
+      "source_hash": 15090474582107601682,
+      "context_hash": 11913685771551180369,
+      "translation": "https://pkg.go.dev/compress/gzip",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:18.961576Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:9/seg:0",
+      "source": "Ruby",
+      "source_hash": 4619611280318218246,
+      "context_hash": 1991369181393417027,
+      "translation": "루비",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211504Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:10/seg:0",
+      "source": "Compression",
+      "source_hash": 3674794689740069620,
+      "context_hash": 6912343268486971004,
+      "translation": "압축",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211507Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:11/seg:0",
+      "source": "https://docs.ruby-lang.org/en/master/Zlib/GzipFile.html",
+      "source_hash": 18427539178980204413,
+      "context_hash": 44696830009817914,
+      "translation": "https://docs.ruby-lang.org/en/master/Zlib/GzipFile.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211508Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:12/seg:0",
+      "source": "Rust",
+      "source_hash": 10360202319622258134,
+      "context_hash": 12848125070873522905,
+      "translation": "러스트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211508Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:13/seg:0",
+      "source": "Compression",
+      "source_hash": 3674794689740069620,
+      "context_hash": 2128691438575555851,
+      "translation": "압축",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211508Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:14/seg:0",
+      "source": "https://github.com/rust-lang/flate2-rs",
+      "source_hash": 11740280084147275415,
+      "context_hash": 18088009887201357721,
+      "translation": "https://github.com/rust-lang/flate2-rs",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211509Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:15/seg:0",
+      "source": "Haskell",
+      "source_hash": 2474963621207057100,
+      "context_hash": 16351880672643473288,
+      "translation": "하스켈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211509Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:16/seg:0",
+      "source": "Compression",
+      "source_hash": 3674794689740069620,
+      "context_hash": 13220211017437861979,
+      "translation": "압축",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211509Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:17/seg:0",
+      "source": "https://hackage.haskell.org/package/zlib",
+      "source_hash": 15369515106626792020,
+      "context_hash": 2648029194033413382,
+      "translation": "https://hackage.haskell.org/package/zlib",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211509Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:18/seg:0",
+      "source": "C#",
+      "source_hash": 16353607352783150975,
+      "context_hash": 17057321658786092315,
+      "translation": "C#",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211513Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:19/seg:0",
+      "source": "Compression",
+      "source_hash": 3674794689740069620,
+      "context_hash": 7311207628780886262,
+      "translation": "압축",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211513Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:20/seg:0",
+      "source": "https://learn.microsoft.com/en-us/dotnet/api/system.io.compression.gzipstream",
+      "source_hash": 14433301578676226297,
+      "context_hash": 18278490659763070936,
+      "translation": "https://learn.microsoft.com/en-us/dotnet/api/system.io.compression.gzipstream",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211514Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:21/seg:0",
+      "source": "Java",
+      "source_hash": 17836593803005343595,
+      "context_hash": 5236713057836107025,
+      "translation": "자바",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211514Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:22/seg:0",
+      "source": "Archive",
+      "source_hash": 5733786100013090330,
+      "context_hash": 9711784170647219145,
+      "translation": "아카이브",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211514Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:23/seg:0",
+      "source": "https://docs.oracle.com/javase/8/docs/api/java/util/zip/package-summary.html",
+      "source_hash": 15993829631706408907,
+      "context_hash": 3878586749762864121,
+      "translation": "https://docs.oracle.com/javase/8/docs/api/java/util/zip/package-summary.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211514Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:24/seg:0",
+      "source": "NodeJS",
+      "source_hash": 10249181652247182122,
+      "context_hash": 12451593027285501272,
+      "translation": "NodeJS",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211516Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:25/seg:0",
+      "source": "Compression",
+      "source_hash": 3674794689740069620,
+      "context_hash": 5669693393744643002,
+      "translation": "압축",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211516Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:26/seg:0",
+      "source": "https://nodejs.org/api/zlib.html",
+      "source_hash": 2195877901377287456,
+      "context_hash": 16458436476695633277,
+      "translation": "https://nodejs.org/api/zlib.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211516Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:27/seg:0",
+      "source": "Web APIs",
+      "source_hash": 4350861533962258778,
+      "context_hash": 3069102588909925427,
+      "translation": "웹 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211517Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:28/seg:0",
+      "source": "Compression",
+      "source_hash": 3674794689740069620,
+      "context_hash": 1002980537408406926,
+      "translation": "압축",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211517Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:29/seg:0",
+      "source": "https://developer.mozilla.org/en-US/docs/Web/API/Compression_Streams_API",
+      "source_hash": 9067634526913542495,
+      "context_hash": 17564455604881325433,
+      "translation": "https://developer.mozilla.org/en-US/docs/Web/API/Compression_Streams_API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211517Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:30/seg:0",
+      "source": "PHP",
+      "source_hash": 6130187609972024452,
+      "context_hash": 13925114146349501946,
+      "translation": "PHP",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211518Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:31/seg:0",
+      "source": "Compression",
+      "source_hash": 3674794689740069620,
+      "context_hash": 11693383445298382182,
+      "translation": "압축",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211519Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:32/seg:0",
+      "source": "https://www.php.net/manual/en/function.gzcompress.php",
+      "source_hash": 7505445988797205340,
+      "context_hash": 15570512325232435165,
+      "translation": "https://www.php.net/manual/en/function.gzcompress.php",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211519Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:33/seg:0",
+      "source": "Perl",
+      "source_hash": 4024094916420684302,
+      "context_hash": 13427377159177009688,
+      "translation": "펄",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211521Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:34/seg:0",
+      "source": "Compression",
+      "source_hash": 3674794689740069620,
+      "context_hash": 10926971744763952495,
+      "translation": "압축",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211521Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:35/seg:0",
+      "source": "https://perldoc.perl.org/IO::Compress::Gzip",
+      "source_hash": 12123175983041924755,
+      "context_hash": 13119553848448004321,
+      "translation": "https://perldoc.perl.org/IO::Compress::Gzip",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:00.211522Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:36/seg:0",
+      "source": "In addition, the :mod:`!gzip` module in Python mostly focuses on single block content and has an API similar to other compression modules, making it a good fit for the ``compression`` namespace.",
+      "source_hash": 15545750433634604949,
+      "context_hash": 14786840445087093894,
+      "translation": "또한 Python의 :mod:`!gzip` 모듈은 주로 단일 블록 콘텐츠에 중점을 두며 다른 압축 모듈과 유사한 API를 제공하므로 ``compression`` 네임스페이스에 적합합니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:19:00.211522Z",
+      "issues": []
+    }
+  ]
+}

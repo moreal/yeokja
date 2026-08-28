@@ -1,0 +1,1988 @@
+{
+  "version": 1,
+  "source_hash": 8356647712195620820,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Deterministic cleanup for iterators",
+      "source_hash": 8176703770241574077,
+      "context_hash": 16530898886277989957,
+      "translation": "이터레이터를 위한 결정론적 정리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908143Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 18174395487440928276,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908147Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "We propose to extend the iterator protocol with a new ``__(a)iterclose__`` slot, which is called automatically on exit from ``(async) for`` loops, regardless of how they exit.",
+      "source_hash": 10218167052694574705,
+      "context_hash": 12655087869002042627,
+      "translation": "``__(a)iterclose__``\\ 슬롯을 새로 추가하여 이터레이터 프로토콜을 확장할 것을 제안합니다. 이 슬롯은 ``(async) for`` 루프가 어떤 방식으로 종료되든 루프 종료 시 자동으로 호출됩니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜",
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:08:29.908147Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This allows for convenient, deterministic cleanup of resources held by iterators without reliance on the garbage collector.",
+      "source_hash": 16084140860893391900,
+      "context_hash": 16839328679502391164,
+      "translation": "이를 통해 가비지 컬렉터에 의존하지 않고 이터레이터가 보유한 리소스를 편리하고 결정론적으로 정리할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908149Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "This is especially valuable for asynchronous generators.",
+      "source_hash": 16727434630445947852,
+      "context_hash": 16948774875343436703,
+      "translation": "이는 비동기 제너레이터에 특히 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908149Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Note on timing",
+      "source_hash": 9100193040333336771,
+      "context_hash": 11286818012344058486,
+      "translation": "시점에 관한 참고 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908150Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "In practical terms, the proposal here is divided into two separate parts: the handling of async iterators, which should ideally be implemented ASAP, and the handling of regular iterators, which is a larger but more relaxed project that can't start until 3.7 at the earliest.",
+      "source_hash": 16783683450773621267,
+      "context_hash": 6925599293514941630,
+      "translation": "실질적으로 이 제안은 두 부분으로 나뉩니다. 하나는 가능한 한 빨리(ASAP) 구현해야 하는 비동기 이터레이터 처리이고, 다른 하나는 규모가 더 크지만 일정상 여유가 있는 일반 이터레이터 처리로, 빨라도 3.7 이전에는 시작할 수 없는 프로젝트입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908150Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "But since the changes are closely related, and we probably don't want to end up with async iterators and regular iterators diverging in the long run, it seems useful to look at them together.",
+      "source_hash": 6675790400675567986,
+      "context_hash": 1373299215641655381,
+      "translation": "그러나 두 변경 사항은 밀접하게 관련되어 있고, 장기적으로 비동기 이터레이터와 일반 이터레이터가 서로 달라지는 상황은 피하고 싶을 가능성이 크므로, 이들을 함께 살펴보는 것이 유용해 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908150Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Background and motivation",
+      "source_hash": 9188797957877311467,
+      "context_hash": 4629904040559537873,
+      "translation": "배경 및 동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908151Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Python iterables often hold resources which require cleanup.",
+      "source_hash": 13159441616459222582,
+      "context_hash": 17199599721213902242,
+      "translation": "Python의 이터러블은 정리가 필요한 리소스를 보유하는 경우가 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908151Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "For example: ``file`` objects need to be closed; the :pep:`WSGI spec <333>` adds a ``close`` method on top of the regular iterator protocol and demands that consumers call it at the appropriate time (though forgetting to do so is a `frequent source of bugs <http://blog.dscpl.com.au/2012/10/obligations-for-calling-close-on.html>`_); and :pep:`342` (based on :pep:`325`) extended generator objects to add a ``close`` method to allow generators to clean up after themselves.",
+      "source_hash": 1798278245159002970,
+      "context_hash": 10666532268177361506,
+      "translation": "예를 들어 ``file``\\ 객체는 닫아야 하고, :pep:`WSGI spec <333>`\\ 은 일반 이터레이터 프로토콜에 ``close`` 메서드를 추가하며 소비자가 적절한 시점에 이를 호출하도록 요구합니다(이를 잊는 것이 `빈번한 버그의 원인 <http://blog.dscpl.com.au/2012/10/obligations-for-calling-close-on.html>`_\\ 이기는 하지만). 또한 :pep:`342`\\ 는 :pep:`325`\\ 를 기반으로 제너레이터 객체에 ``close`` 메서드를 추가하여 제너레이터가 스스로 정리할 수 있도록 확장했습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜",
+        "generator": "제너레이터",
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:08:29.908151Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Generally, objects that need to clean up after themselves also define a ``__del__`` method to ensure that this cleanup will happen eventually, when the object is garbage collected.",
+      "source_hash": 2568363738425429957,
+      "context_hash": 4362739660861760938,
+      "translation": "일반적으로 스스로 정리해야 하는 객체는 객체가 가비지 컬렉션될 때 이러한 정리가 결국 수행되도록 ``__del__``\\ 메서드도 정의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908152Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "However, relying on the garbage collector for cleanup like this causes serious problems in several cases:",
+      "source_hash": 1050412407934275639,
+      "context_hash": 6722096266241289027,
+      "translation": "그러나 이처럼 가비지 컬렉터에 정리를 의존하면 여러 경우에 심각한 문제가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908152Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "In Python implementations that do not use reference counting (e.g. PyPy, Jython), calls to ``__del__`` may be arbitrarily delayed -- yet many situations require *prompt* cleanup of resources.",
+      "source_hash": 6501512318622854611,
+      "context_hash": 10969733679442884099,
+      "translation": "참조 카운팅을 사용하지 않는 Python 구현(예: PyPy, Jython)에서는 ``__del__``\\ 호출이 임의로 지연될 수 있지만, 많은 상황에서는 리소스를 *신속하게* 정리해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908153Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "Delayed cleanup produces problems like crashes due to file descriptor exhaustion, or WSGI timing middleware that collects bogus times.",
+      "source_hash": 2057924307305509441,
+      "context_hash": 4297107888439649175,
+      "translation": "정리가 지연되면 파일 디스크립터 고갈로 인한 충돌이나 잘못된 시간을 수집하는 WSGI 타이밍 미들웨어와 같은 문제가 발생합니다.",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T19:08:29.908153Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "Async generators (:pep:`525`) can only perform cleanup under the supervision of the appropriate coroutine runner. ``__del__`` doesn't have access to the coroutine runner; indeed, the coroutine runner might be garbage collected before the generator object.",
+      "source_hash": 6065118494167243674,
+      "context_hash": 8704675543475236589,
+      "translation": "비동기 제너레이터(:pep:`525`)는 적절한 코루틴 실행기의 감독 아래에서만 정리를 수행할 수 있습니다. ``__del__``\\ 은 코루틴 실행기에 접근할 수 없으며, 실제로 코루틴 실행기가 제너레이터 객체보다 먼저 가비지 컬렉션될 수도 있습니다.",
+      "glossary_snapshot": {
+        "coroutine": "코루틴",
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:29.908153Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:1",
+      "source": "So relying on the garbage collector is effectively impossible without some kind of language extension. (:pep:`525` does provide such an extension, but it has a number of limitations that this proposal fixes; see the \"alternatives\" section below for discussion.)",
+      "source_hash": 16800628530279037689,
+      "context_hash": 17149462320783920465,
+      "translation": "따라서 어떤 형태로든 언어 확장이 없으면 가비지 컬렉터에 의존하는 것은 사실상 불가능합니다. (:pep:`525`\\ 는 이러한 확장을 제공하지만 여러 제한 사항이 있으며, 이 제안은 이를 해결합니다. 자세한 논의는 아래의 \"대안\" 절을 참조하십시오.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908154Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "Fortunately, Python provides a standard tool for doing resource cleanup in a more structured way: ``with`` blocks.",
+      "source_hash": 4282282818457619458,
+      "context_hash": 5708826153710397093,
+      "translation": "다행히 Python은 리소스를 더 구조적인 방식으로 정리하기 위한 표준 도구인 ``with`` 블록을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908154Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "For example, this code opens a file but relies on the garbage collector to close it",
+      "source_hash": 46838253798491765,
+      "context_hash": 14939326698743702140,
+      "translation": "예를 들어 다음 코드는 파일을 열지만 파일을 닫는 작업을 가비지 컬렉터에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908155Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "and recent versions of CPython will point this out by issuing a ``ResourceWarning``, nudging us to fix it by adding a ``with`` block",
+      "source_hash": 13933820011431379029,
+      "context_hash": 3757339162840767487,
+      "translation": "그리고 최신 버전의 CPython은 ``ResourceWarning``\\ 을 발생시켜 이를 지적하며, ``with`` 블록을 추가하여 수정하도록 유도합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908155Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "But there's a subtlety here, caused by the interaction of ``with`` blocks and generators. ``with`` blocks are Python's main tool for managing cleanup, and they're a powerful one, because they pin the lifetime of a resource to the lifetime of a stack frame.",
+      "source_hash": 7976224900312259102,
+      "context_hash": 1047940132235048250,
+      "translation": "그러나 여기에는 ``with`` 블록과 제너레이터의 상호작용으로 인해 발생하는 미묘한 문제가 있습니다. ``with`` 블록은 Python에서 정리를 관리하는 주요 도구이며 강력한 도구이기도 합니다. 리소스의 수명을 스택 프레임의 수명에 고정하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908155Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:1",
+      "source": "But this assumes that someone will take care of cleaning up the stack frame... and for generators, this requires that someone ``close`` them.",
+      "source_hash": 2440871406429528187,
+      "context_hash": 12699449362189197933,
+      "translation": "그러나 이는 누군가가 스택 프레임을 정리해 준다는 것을 전제로 하며, 제너레이터의 경우 이를 위해서는 누군가가 제너레이터를 ``close``\\ 해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908156Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:0",
+      "source": "In this case, adding the ``with`` block *is* enough to shut up the ``ResourceWarning``, but this is misleading -- the file object cleanup here is still dependent on the garbage collector.",
+      "source_hash": 5977551588011594818,
+      "context_hash": 15702151917446661982,
+      "translation": "이 경우 ``with`` 블록을 추가하는 것만으로도 ``ResourceWarning``\\ 을 *억제하기에는 충분*\\ 하지만, 이는 오해의 소지가 있습니다. 여기서 파일 객체의 정리는 여전히 가비지 컬렉터에 의존하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908156Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:1",
+      "source": "The ``with`` block will only be unwound when the ``read_newline_separated_json`` generator is closed.",
+      "source_hash": 8806610132756408324,
+      "context_hash": 15387730083960265855,
+      "translation": "``with`` 블록은 ``read_newline_separated_json``\\ 제너레이터가 닫힐 때에만 해제됩니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:29.908156Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:2",
+      "source": "If the outer ``for`` loop runs to completion then the cleanup will happen immediately; but if this loop is terminated early by a ``break`` or an exception, then the ``with`` block won't fire until the generator object is garbage collected.",
+      "source_hash": 9351575488461171642,
+      "context_hash": 1714082074448590782,
+      "translation": "바깥쪽 ``for`` 루프가 끝까지 실행되면 정리가 즉시 수행되지만, 이 루프가 ``break`` 또는 예외로 일찍 종료되면 제너레이터 객체가 가비지 컬렉션될 때까지 ``with`` 블록이 실행되지 않습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:29.908157Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:11/seg:0",
+      "source": "The correct solution requires that all *users* of this API wrap every ``for`` loop in its own ``with`` block",
+      "source_hash": 3761458385439323653,
+      "context_hash": 7449328215446463097,
+      "translation": "올바른 해결책은 이 API의 모든 *사용자*\\ 가 모든 ``for``\\ 루프를 각자의 ``with`` 블록으로 감싸도록 요구하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908157Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:0",
+      "source": "This gets even worse if we consider the idiom of decomposing a complex pipeline into multiple nested generators",
+      "source_hash": 3931936641929021959,
+      "context_hash": 8867295373603171917,
+      "translation": "복잡한 파이프라인을 여러 개의 중첩된 제너레이터로 분해하는 관용구를 고려하면 상황은 더욱 나빠집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908158Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:0",
+      "source": "In general if you have N nested generators then you need N+1 ``with`` blocks to clean up 1 file.",
+      "source_hash": 9288255180337806385,
+      "context_hash": 13853584561828511147,
+      "translation": "일반적으로 N개의 중첩된 제너레이터가 있다면 파일 하나를 정리하기 위해 N+1개의 ``with`` 블록이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908158Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:1",
+      "source": "And good defensive programming would suggest that any time we use a generator, we should assume the possibility that there could be at least one ``with`` block somewhere in its (potentially transitive) call stack, either now or in the future, and thus always wrap it in a ``with``.",
+      "source_hash": 8262365798499806144,
+      "context_hash": 1116764548150692162,
+      "translation": "또한 훌륭한 방어적 프로그래밍이라면 제너레이터를 사용할 때마다 그 호출 스택(잠재적으로 전이되는 호출 스택) 어딘가에 현재 또는 미래에 적어도 하나의 ``with`` 블록이 있을 가능성을 가정하고, 항상 제너레이터를 ``with``\\ 로 감싸야 한다고 제안할 것입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:29.908158Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:2",
+      "source": "But in practice, basically nobody does this, because programmers would rather write buggy code than tiresome repetitive code.",
+      "source_hash": 11240490937309440161,
+      "context_hash": 14250824144334323536,
+      "translation": "그러나 실제로는 거의 아무도 이렇게 하지 않습니다. 프로그래머는 번거롭고 반복적인 코드를 작성하기보다는 버그가 있는 코드를 작성하는 편을 택하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908159Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:3",
+      "source": "In simple cases like this there are some workarounds that good Python developers know (e.g. in this simple case it would be idiomatic to pass in a file handle instead of a path and move the resource management to the top level), but in general we cannot avoid the use of ``with``/``finally`` inside of generators, and thus dealing with this problem one way or another.",
+      "source_hash": 12320924377046139080,
+      "context_hash": 17651453438924429149,
+      "translation": "이와 같은 단순한 경우에는 훌륭한 Python 개발자들이 알고 있는 몇 가지 우회 방법이 있습니다(예를 들어 이 단순한 경우에는 경로 대신 파일 핸들을 전달하고 리소스 관리를 최상위 수준으로 옮기는 것이 관용적입니다). 그러나 일반적으로 제너레이터 내부에서 ``with``/``finally``\\ 를 사용하는 것을 피할 수 없으므로, 어떤 방식으로든 이 문제를 처리해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908159Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:4",
+      "source": "When beauty and correctness fight then beauty tends to win, so it's important to make correct code beautiful.",
+      "source_hash": 1159990209544768643,
+      "context_hash": 8809306490524021995,
+      "translation": "아름다움과 정확성이 충돌하면 아름다움이 이기는 경향이 있으므로, 올바른 코드를 아름답게 만드는 것이 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:29.908159Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:16/seg:0",
+      "source": "Still, is this worth fixing?",
+      "source_hash": 696225777246586041,
+      "context_hash": 12366469246502565041,
+      "translation": "그럼에도 불구하고, 이것을 수정할 가치가 있습니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682079Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:16/seg:1",
+      "source": "Until async generators came along I would have argued yes, but that it was a low priority, since everyone seems to be muddling along okay -- but async generators make it much more urgent.",
+      "source_hash": 15285366013195383333,
+      "context_hash": 6022649460987786032,
+      "translation": "비동기 제너레이터가 등장하기 전까지는 그렇다고 주장했겠지만, 모두가 어떻게든 괜찮게 해 나가는 듯하므로 우선순위가 낮다고도 주장했을 것입니다. -- 하지만 비동기 제너레이터 때문에 이 문제는 훨씬 더 시급해졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682084Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:16/seg:2",
+      "source": "Async generators cannot do cleanup *at all* without some mechanism for deterministic cleanup that people will actually use, and async generators are particularly likely to hold resources like file descriptors. (After all, if they weren't doing I/O, they'd be generators, not async generators.) So we have to do something, and it might as well be a comprehensive fix to the underlying problem.",
+      "source_hash": 7470695571665312382,
+      "context_hash": 11805256048641287914,
+      "translation": "사람들이 실제로 사용할 결정적 정리 메커니즘이 없다면 비동기 제너레이터는 정리를 *전혀* 수행할 수 없으며, 비동기 제너레이터는 파일 디스크립터와 같은 리소스를 보유할 가능성이 특히 높습니다. (결국 I/O를 수행하지 않는다면 비동기 제너레이터가 아니라 제너레이터일 것입니다.) 따라서 우리는 무언가를 해야 하며, 기저 문제를 포괄적으로 수정하는 편이 좋을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682085Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:16/seg:3",
+      "source": "And it's much easier to fix this now when async generators are first rolling out, than it will be to fix it later.",
+      "source_hash": 8376168840651113352,
+      "context_hash": 647199514204885838,
+      "translation": "그리고 비동기 제너레이터가 처음 도입되는 지금 이 문제를 수정하는 것이, 나중에 수정하는 것보다 훨씬 쉽습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682086Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:0",
+      "source": "The proposal itself is simple in concept: add a ``__(a)iterclose__`` method to the iterator protocol, and have (async) ``for`` loops call it when the loop is exited, even if this occurs via ``break`` or exception unwinding.",
+      "source_hash": 11515054441359864381,
+      "context_hash": 15713814401853645556,
+      "translation": "제안 자체의 개념은 간단합니다. 이터레이터 프로토콜에 ``__(a)iterclose__`` 메서드를 추가하고, 루프가 종료될 때 (비동기) ``for``\\ 루프가 이를 호출하도록 하는 것입니다. 종료가 ``break``\\ 나 예외 전파 해제를 통해 발생하는 경우에도 마찬가지입니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터",
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:08:27.682086Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:1",
+      "source": "Effectively, we're taking the current cumbersome idiom (``with`` block + ``for`` loop) and merging them together into a fancier ``for``.",
+      "source_hash": 17694694972028820216,
+      "context_hash": 2540471462821302688,
+      "translation": "사실상 현재의 번거로운 관용구(``with``\\ 블록 + ``for``\\ 루프)를 가져와 더 정교한 ``for``\\ 문으로 합치는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682089Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:2",
+      "source": "This may seem non-orthogonal, but makes sense when you consider that the existence of generators means that ``with`` blocks actually depend on iterator cleanup to work reliably, plus experience showing that iterator cleanup is often a desirable feature in its own right.",
+      "source_hash": 17208162278531538280,
+      "context_hash": 6301220242124420981,
+      "translation": "이는 비직교적으로 보일 수 있지만, 제너레이터가 존재한다는 것은 ``with``\\ 블록이 안정적으로 작동하려면 실제로 이터레이터 정리에 의존한다는 점과, 이터레이터 정리가 그 자체로도 바람직한 기능인 경우가 많다는 경험을 고려하면 타당합니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:08:27.682089Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Alternatives",
+      "source_hash": 6705694286064414587,
+      "context_hash": 4065330061170158964,
+      "translation": "대안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682090Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "PEP 525 asyncgen hooks",
+      "source_hash": 2368460738748263244,
+      "context_hash": 13243747016766461132,
+      "translation": "PEP 525 비동기 제너레이터 훅",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682090Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": ":pep:`PEP 525 proposes a set of global thread-local hooks <525#finalization>` managed by new ``sys.{get/set}_asyncgen_hooks()`` functions, which allow event loops to integrate with the garbage collector to run cleanup for async generators.",
+      "source_hash": 17567748269288406098,
+      "context_hash": 6817766976417129168,
+      "translation": ":pep:`PEP 525 proposes a set of global thread-local hooks <525#finalization>`\\ 는 새로운 ``sys.{get/set}_asyncgen_hooks()`` 함수로 관리되는 전역 스레드 로컬 훅 집합을 제안하며, 이 훅을 통해 이벤트 루프가 가비지 컬렉터와 통합되어 비동기 제너레이터의 정리를 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682091Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "In principle, this proposal and :pep:`525` are complementary, in the same way that ``with`` blocks and ``__del__`` are complementary: this proposal takes care of ensuring deterministic cleanup in most cases, while :pep:`525`'s GC hooks clean up anything that gets missed.",
+      "source_hash": 3279489702043946708,
+      "context_hash": 1871803313123513740,
+      "translation": "원칙적으로 이 제안과 :pep:`525`\\ 은 ``with``\\ 블록과 ``__del__``\\ 이 상호 보완적인 것과 같은 방식으로 상호 보완적입니다. 이 제안은 대부분의 경우 결정적 정리를 보장하는 일을 담당하고, :pep:`525`\\ 의 GC 훅은 누락된 정리를 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682091Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "But ``__aiterclose__`` provides a number of advantages over GC hooks alone:",
+      "source_hash": 3623273282178045797,
+      "context_hash": 10491790625643067202,
+      "translation": "그러나 ``__aiterclose__``\\ 는 GC 훅만 사용하는 것보다 여러 가지 장점을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682092Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "The GC hook semantics aren't part of the abstract async iterator protocol, but are instead restricted `specifically to the async generator concrete type <https://mail.python.org/pipermail/python-dev/2016-September/146129.html>`_.",
+      "source_hash": 5229502950731511435,
+      "context_hash": 48818389554182263,
+      "translation": "GC 훅의 의미론은 추상 비동기 이터레이터 프로토콜의 일부가 아니라, `구체적으로 비동기 제너레이터 구체 타입에만 제한됩니다 <https://mail.python.org/pipermail/python-dev/2016-September/146129.html>`_.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜",
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:08:27.682092Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "If you have an async iterator implemented using a class, like",
+      "source_hash": 7503527205538697970,
+      "context_hash": 9730920928648727710,
+      "translation": "다음과 같이 클래스를 사용하여 구현된 비동기 이터레이터가 있다면",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:08:27.682093Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "then you can't refactor this into an async generator without changing its semantics, and vice-versa.",
+      "source_hash": 9520208620692884472,
+      "context_hash": 17155857980815519939,
+      "translation": "의미론을 변경하지 않고 이를 비동기 제너레이터로 리팩터링할 수 없으며, 그 반대도 마찬가지입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:27.682094Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:1",
+      "source": "This seems very unpythonic. (It also leaves open the question of what exactly class-based async iterators are supposed to do, given that they face exactly the same cleanup problems as async generators.) ``__aiterclose__``, on the other hand, is defined at the protocol level, so it's duck-type friendly and works for all iterators, not just generators.",
+      "source_hash": 11119683952600046660,
+      "context_hash": 9710448280158403725,
+      "translation": "이는 매우 비파이썬적인 방식으로 보입니다. (또한 클래스 기반 비동기 이터레이터가 정확히 무엇을 해야 하는지도 여전히 의문으로 남습니다. 비동기 제너레이터와 정확히 동일한 정리 문제에 직면하기 때문입니다.) 반면 ``__aiterclose__``\\ 는 프로토콜 수준에서 정의되므로 덕 타이핑 친화적이며, 제너레이터뿐 아니라 모든 이터레이터에서 작동합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:08:27.682094Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "Code that wants to work on non-CPython implementations like PyPy cannot in general rely on GC for cleanup.",
+      "source_hash": 4755408444101745087,
+      "context_hash": 3526128614009953328,
+      "translation": "PyPy와 같은 비 CPython 구현에서 작동해야 하는 코드는 일반적으로 정리를 GC에 의존할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682095Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:1",
+      "source": "Without ``__aiterclose__``, it's more or less guaranteed that developers who develop and test on CPython will produce libraries that leak resources when used on PyPy.",
+      "source_hash": 13681481578141519939,
+      "context_hash": 10751104553470429289,
+      "translation": "``__aiterclose__``\\ 가 없다면 CPython에서 개발하고 테스트한 개발자가 PyPy에서 사용할 때 리소스가 누수되는 라이브러리를 만들 가능성이 거의 확실합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682096Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:2",
+      "source": "Developers who do want to target alternative implementations will either have to take the defensive approach of wrapping every ``for`` loop in a ``with`` block, or else carefully audit their code to figure out which generators might possibly contain cleanup code and add ``with`` blocks around those only.",
+      "source_hash": 5678293507508026364,
+      "context_hash": 7475524541664136902,
+      "translation": "대체 구현을 대상으로 하려는 개발자는 모든 ``for``\\ 루프를 ``with``\\ 블록으로 감싸는 방어적 접근 방식을 취하거나, 어떤 제너레이터에 정리 코드가 포함될 가능성이 있는지 파악하기 위해 코드를 세심하게 감사한 다음 해당 제너레이터 주위에만 ``with``\\ 블록을 추가해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682096Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:3",
+      "source": "With ``__aiterclose__``, writing portable code becomes easy and natural.",
+      "source_hash": 11440139650399256549,
+      "context_hash": 1315906280119141146,
+      "translation": "``__aiterclose__``\\ 를 사용하면 이식 가능한 코드를 쉽고 자연스럽게 작성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682096Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "An important part of building robust software is making sure that exceptions always propagate correctly without being lost.",
+      "source_hash": 14643085614033452760,
+      "context_hash": 8995147192446592447,
+      "translation": "견고한 소프트웨어를 구축하는 데 중요한 부분은 예외가 손실되지 않고 항상 올바르게 전파되도록 하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682096Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:1",
+      "source": "One of the most exciting things about async/await compared to traditional callback-based systems is that instead of requiring manual chaining, the runtime can now do the heavy lifting of propagating errors, making it *much* easier to write robust code.",
+      "source_hash": 11692512274760841086,
+      "context_hash": 9256825403013169011,
+      "translation": "기존 콜백 기반 시스템과 비교했을 때 async/await의 가장 흥미로운 점 중 하나는 수동으로 연결할 필요 없이 런타임이 이제 오류 전파라는 어려운 작업을 수행할 수 있어 견고한 코드를 작성하기가 *훨씬* 쉬워진다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682097Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:2",
+      "source": "But, this beautiful new picture has one major gap: if we rely on the GC for generator cleanup, then exceptions raised during cleanup are lost.",
+      "source_hash": 1060900882658313903,
+      "context_hash": 1027019489185019451,
+      "translation": "그러나 이 아름다운 새로운 그림에는 한 가지 큰 결함이 있습니다. 제너레이터 정리를 GC에 의존하면 정리 중에 발생한 예외가 손실됩니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:27.682097Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:3",
+      "source": "So, again, with ``__aiterclose__``, developers who care about this kind of robustness will either have to take the defensive approach of wrapping every ``for`` loop in a ``with`` block, or else carefully audit their code to figure out which generators might possibly contain cleanup code. ``__aiterclose__`` plugs this hole by performing cleanup in the caller's context, so writing more robust code becomes the path of least resistance.",
+      "source_hash": 17202363390381361167,
+      "context_hash": 14794179510628909239,
+      "translation": "따라서 다시 말해 ``__aiterclose__``\\ 를 사용하면 이러한 견고성을 중요하게 여기는 개발자는 모든 ``for``\\ 루프를 ``with``\\ 블록으로 감싸는 방어적 접근 방식을 취하거나, 어떤 제너레이터에 정리 코드가 포함될 가능성이 있는지 파악하기 위해 코드를 세심하게 감사해야 합니다. ``__aiterclose__``\\ 는 호출자의 컨텍스트에서 정리를 수행하여 이 문제를 해결하므로, 더욱 견고한 코드를 작성하는 것이 가장 저항이 적은 방법이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682098Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "The WSGI experience suggests that there exist important iterator-based APIs that need prompt cleanup and cannot rely on the GC, even in CPython.",
+      "source_hash": 10831969829500847157,
+      "context_hash": 9323092951628104171,
+      "translation": "WSGI의 경험은 CPython에서도 GC에 의존할 수 없고 즉각적인 정리가 필요한 중요한 이터레이터 기반 API가 존재한다는 점을 보여 줍니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:08:27.682098Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:1",
+      "source": "For example, consider a hypothetical WSGI-like API based around async/await and async iterators, where a response handler is an async generator that takes request headers + an async iterator over the request body, and yields response headers + the response body. (This is actually the use case that got me interested in async generators in the first place, i.e. this isn't hypothetical.) If we follow WSGI in requiring that child iterators must be closed properly, then without ``__aiterclose__`` the absolute most minimalistic middleware in our system looks something like",
+      "source_hash": 1913977876710883725,
+      "context_hash": 17693057930653616269,
+      "translation": "예를 들어 async/await와 비동기 이터레이터를 기반으로 하는 가상의 WSGI 유사 API를 생각해 보십시오. 여기서 응답 핸들러는 요청 헤더와 요청 본문을 순회하는 비동기 이터레이터를 받아 응답 헤더와 응답 본문을 산출하는 비동기 제너레이터입니다. (이는 실제로 제가 처음 비동기 제너레이터에 관심을 갖게 된 사용 사례이므로, 가상이 아닙니다.) WSGI를 따라 자식 이터레이터를 제대로 닫도록 요구한다면, ``__aiterclose__``\\ 가 없을 때 시스템에서 가능한 한 가장 단순한 미들웨어는 대략 다음과 같은 형태가 됩니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터",
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:08:27.682099Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "Arguably in regular code one can get away with skipping the ``with`` block around ``for`` loops, depending on how confident one is that one understands the internal implementation of the generator.",
+      "source_hash": 11786957130255515797,
+      "context_hash": 14108262927769990334,
+      "translation": "일반 코드에서는 제너레이터의 내부 구현을 이해하고 있다고 얼마나 확신하는지에 따라 ``for``\\ 루프 주위의 ``with``\\ 블록을 생략해도 괜찮다고 주장할 수 있습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:27.682100Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:1",
+      "source": "But here we have to cope with arbitrary response handlers, so without ``__aiterclose__``, this ``with`` construction is a mandatory part of every middleware.",
+      "source_hash": 5344543523544953005,
+      "context_hash": 8595538233319282184,
+      "translation": "그러나 여기서는 임의의 응답 핸들러를 처리해야 하므로 ``__aiterclose__``\\ 가 없다면 이 ``with``\\ 구문은 모든 미들웨어의 필수 구성 요소입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682101Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "``__aiterclose__`` allows us to eliminate the mandatory boilerplate and an extra level of indentation from every middleware",
+      "source_hash": 13419827191055091806,
+      "context_hash": 4886498757184729703,
+      "translation": "``__aiterclose__``\\ 를 사용하면 모든 미들웨어에서 필수적인 상용구 코드와 추가 들여쓰기 수준을 제거할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682101Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "So the ``__aiterclose__`` approach provides substantial advantages over GC hooks.",
+      "source_hash": 15305318727740509481,
+      "context_hash": 13751354974738555888,
+      "translation": "따라서 ``__aiterclose__``\\ 방식은 GC 훅보다 상당한 장점을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:27.682101Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "This leaves open the question of whether we want a combination of GC hooks + ``__aiterclose__``, or just ``__aiterclose__`` alone.",
+      "source_hash": 1867496862484640498,
+      "context_hash": 14448596646084028187,
+      "translation": "이로써 GC 후크와 ``__aiterclose__``\\ 를 조합할지, 아니면 ``__aiterclose__``\\ 만 사용할지에 관한 문제가 열려 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745086Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:1",
+      "source": "Since the vast majority of generators are iterated over using a ``for`` loop or equivalent, ``__aiterclose__`` handles most situations before the GC has a chance to get involved.",
+      "source_hash": 10888301982677530188,
+      "context_hash": 14354706651633352690,
+      "translation": "제너레이터의 압도적 다수는 ``for`` 루프 또는 이에 준하는 방식을 사용해 이터레이트되므로, ``__aiterclose__``\\ 는 GC가 관여할 기회를 얻기 전에 대부분의 상황을 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745088Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:2",
+      "source": "The case where GC hooks provide additional value is in code that does manual iteration, e.g.",
+      "source_hash": 9891739762387097853,
+      "context_hash": 11053099760063794263,
+      "translation": "GC 후크가 추가적인 가치를 제공하는 경우는 수동 이터레이션을 수행하는 코드에서입니다. 예를 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745089Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "If we go with the GC-hooks + ``__aiterclose__`` approach, this generator will eventually be cleaned up by GC calling the generator ``__del__`` method, which then will use the hooks to call back into the event loop to run the cleanup code.",
+      "source_hash": 6700806285189566667,
+      "context_hash": 14487097020286664522,
+      "translation": "GC 후크와 ``__aiterclose__``\\ 를 함께 사용하는 접근 방식을 택하면, 이 제너레이터는 결국 GC가 제너레이터의 ``__del__``\\ 메서드를 호출함으로써 정리되며, 그러면 해당 메서드는 후크를 사용해 이벤트 루프에 다시 호출하여 정리 코드를 실행합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:57.745089Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:0",
+      "source": "If we go with the no-GC-hooks approach, this generator will eventually be garbage collected, with the following effects:",
+      "source_hash": 3665894653991944323,
+      "context_hash": 15209648225761391459,
+      "translation": "GC 후크를 사용하지 않는 접근 방식을 택하면, 이 제너레이터는 결국 가비지 컬렉션되며 다음과 같은 효과가 발생합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:57.745089Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:0",
+      "source": "its ``__del__`` method will issue a warning that the generator was not closed (similar to the existing \"coroutine never awaited\" warning).",
+      "source_hash": 5502132424000073719,
+      "context_hash": 8977081630801855229,
+      "translation": "해당 객체의 ``__del__`` 메서드는 제너레이터가 닫히지 않았다는 경고를 발생시킵니다(기존의 \"코루틴이 await되지 않음\" 경고와 유사합니다).",
+      "glossary_snapshot": {
+        "generator": "제너레이터",
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T19:49:11.794683Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:18/seg:0",
+      "source": "The underlying resources involved will still be cleaned up, because the generator frame will still be garbage collected, causing it to drop references to any file handles or sockets it holds, and then those objects's ``__del__`` methods will release the actual operating system resources.",
+      "source_hash": 4777019279651257319,
+      "context_hash": 8490809033297808666,
+      "translation": "관련된 기반 리소스는 여전히 정리됩니다. 제너레이터 프레임도 여전히 가비지 컬렉션되어, 보유하고 있던 파일 핸들이나 소켓에 대한 참조를 제거하고, 그 결과 해당 객체의 ``__del__``\\ 메서드가 실제 운영 체제 리소스를 해제하기 때문입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:57.745091Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:19/seg:0",
+      "source": "But, any cleanup code inside the generator itself (e.g. logging, buffer flushing) will not get a chance to run.",
+      "source_hash": 17577466296132686080,
+      "context_hash": 2507780847970585973,
+      "translation": "그러나 제너레이터 자체에 들어 있는 정리 코드(예: 로깅이나 버퍼 플러시)는 실행될 기회를 얻지 못합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:57.745091Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:20/seg:0",
+      "source": "The solution here -- as the warning would indicate -- is to fix the code so that it calls ``__aiterclose__``, e.g. by using a ``with`` block",
+      "source_hash": 13926967123304950493,
+      "context_hash": 6440110465391918640,
+      "translation": "여기서의 해결책은 경고가 나타내듯이 ``__aiterclose__``\\ 를 호출하도록 코드를 수정하는 것입니다. 예를 들어 ``with`` 블록을 사용하면 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745092Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:22/seg:0",
+      "source": "Basically in this approach, the rule would be that if you want to manually implement the iterator protocol, then it's your responsibility to implement all of it, and that now includes ``__(a)iterclose__``.",
+      "source_hash": 4527308966640337406,
+      "context_hash": 17752659030159074464,
+      "translation": "기본적으로 이 접근 방식의 규칙은 이터레이터 프로토콜을 수동으로 구현하려면 그 모든 부분을 구현할 책임이 있으며, 이제는 ``__(a)iterclose__``\\ 도 여기에 포함된다는 것입니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터",
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:08:57.745092Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:23/seg:0",
+      "source": "GC hooks add non-trivial complexity in the form of (a) new global interpreter state, (b) a somewhat complicated control flow (e.g., async generator GC always involves resurrection, so the details of PEP 442 are important), and (c) a new public API in asyncio (``await loop.shutdown_asyncgens()``) that users have to remember to call at the appropriate time. (This last point in particular somewhat undermines the argument that GC hooks provide a safe backup to guarantee cleanup, since if ``shutdown_asyncgens()`` isn't called correctly then I *think* it's possible for generators to be silently discarded without their cleanup code being called; compare this to the ``__aiterclose__``-only approach where in the worst case we still at least get a warning printed.",
+      "source_hash": 15717657524919628262,
+      "context_hash": 3226889500748741824,
+      "translation": "GC 훅은 (a) 새로운 전역 인터프리터 상태, (b) 다소 복잡한 제어 흐름(예를 들어, 비동기 제너레이터의 GC에는 항상 부활이 포함되므로 PEP 442의 세부 사항이 중요합니다), (c) 사용자가 적절한 시점에 호출해야 한다는 점을 기억해야 하는 asyncio의 새로운 공개 API(``await loop.shutdown_asyncgens()``)라는 형태로 상당한 복잡성을 추가합니다. (특히 이 마지막 점은 GC 훅이 정리를 보장하는 안전한 백업을 제공한다는 주장을 어느 정도 약화시킵니다. ``shutdown_asyncgens()``\\ 가 올바르게 호출되지 않으면 제너레이터가 정리 코드를 호출하지 않은 채 조용히 폐기될 수 있다고 제가 *생각하기* 때문입니다. 최악의 경우에도 적어도 경고가 출력되는 ``__aiterclose__``\\ 만 사용하는 접근 방식과 비교해 보십시오.)",
+      "glossary_snapshot": {
+        "generator": "제너레이터",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:49:11.794686Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:23/seg:1",
+      "source": "This might be fixable.) All this considered, GC hooks arguably aren't worth it, given that the only people they help are those who want to manually call ``__anext__`` yet don't want to manually call ``__aiterclose__``.",
+      "source_hash": 15999674901109510352,
+      "context_hash": 9724083769790121655,
+      "translation": "이는 수정할 수 있을지도 모릅니다. 이 모든 점을 고려하면, GC 후크는 수동으로 ``__anext__``\\ 를 호출하려 하지만 수동으로 ``__aiterclose__``\\ 를 호출하려 하지는 않는 사람들에게만 도움이 된다는 점에서 아마도 그만한 가치가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745093Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:23/seg:2",
+      "source": "But Yury disagrees with me on this :-).",
+      "source_hash": 4720037890882113522,
+      "context_hash": 16109102112524564075,
+      "translation": "그러나 Yury는 이 점에서 저와 의견이 다릅니다 :-).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745093Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:23/seg:3",
+      "source": "And both options are viable.",
+      "source_hash": 14482888651309501639,
+      "context_hash": 10356783356562940418,
+      "translation": "두 선택지 모두 실행 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745094Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Always inject resources, and do all cleanup at the top level",
+      "source_hash": 5120491053585958829,
+      "context_hash": 2440414228886855610,
+      "translation": "항상 리소스를 주입하고 모든 정리를 최상위 수준에서 수행하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745094Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Several commentators on python-dev and python-ideas have suggested that a pattern to avoid these problems is to always pass resources in from above, e.g. ``read_newline_separated_json`` should take a file object rather than a path, with cleanup handled at the top level",
+      "source_hash": 12750007805580618189,
+      "context_hash": 8297679111779874748,
+      "translation": "python-dev와 python-ideas의 여러 논평자는 이러한 문제를 피하는 패턴으로 항상 위에서 리소스를 전달하자고 제안했습니다. 예를 들어 ``read_newline_separated_json``\\ 은 경로가 아니라 파일 객체를 받고, 정리는 최상위 수준에서 처리하도록 하는 방식입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745094Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "This works well in simple cases; here it lets us avoid the \"N+1 ``with`` blocks problem\".",
+      "source_hash": 1304759407811479514,
+      "context_hash": 7733380573418737806,
+      "translation": "이는 단순한 경우에는 잘 작동하며, 여기서는 \"N+1 ``with`` 블록 문제\"를 피할 수 있게 해 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745094Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "But unfortunately, it breaks down quickly when things get more complex.",
+      "source_hash": 1250860592590311,
+      "context_hash": 6272507382813228468,
+      "translation": "그러나 안타깝게도 상황이 더 복잡해지면 빠르게 한계에 부딪힙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745094Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:2",
+      "source": "Consider if instead of reading from a file, our generator was reading from a streaming HTTP GET request -- while handling redirects and authentication via OAUTH.",
+      "source_hash": 7727970937747818733,
+      "context_hash": 5078962244046602602,
+      "translation": "파일에서 읽는 대신 제너레이터가 스트리밍 HTTP GET 요청에서 읽고 있으며, OAUTH를 통해 리디렉션과 인증을 처리한다고 생각해 보십시오.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:57.745095Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:3",
+      "source": "Then we'd really want the sockets to be managed down inside our HTTP client library, not at the top level.",
+      "source_hash": 1234600202720310797,
+      "context_hash": 4687995964795853221,
+      "translation": "그렇다면 소켓은 최상위 수준이 아니라 HTTP 클라이언트 라이브러리 내부 깊숙한 곳에서 관리되기를 정말 원할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745095Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:4",
+      "source": "Plus there are other cases where ``finally`` blocks embedded inside generators are important in their own right: db transaction management, emitting logging information during cleanup (one of the major motivating use cases for WSGI ``close``), and so forth.",
+      "source_hash": 640562680162270473,
+      "context_hash": 11986238203266016686,
+      "translation": "게다가 제너레이터 내부에 포함된 ``finally`` 블록이 그 자체로 중요한 다른 경우도 있습니다. 예를 들면 데이터베이스 트랜잭션 관리, 정리 중 로깅 정보 출력(WSGI ``close``\\ 의 주요 동기 부여 사용 사례 중 하나) 등이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745096Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:5",
+      "source": "So this is really a workaround for simple cases, not a general solution.",
+      "source_hash": 8284653262232975511,
+      "context_hash": 1462344051244957087,
+      "translation": "따라서 이는 일반적인 해결책이 아니라 단순한 경우를 위한 우회책에 불과합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745096Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "More complex variants of __(a)iterclose__",
+      "source_hash": 9422112076011640248,
+      "context_hash": 634869428338002379,
+      "translation": "__(a)iterclose__\\ 의 더 복잡한 변형",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:49:11.794687Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The semantics of ``__(a)iterclose__`` are somewhat inspired by ``with`` blocks, but context managers are more powerful: ``__(a)exit__`` can distinguish between a normal exit versus exception unwinding, and in the case of an exception it can examine the exception details and optionally suppress propagation. ``__(a)iterclose__`` as proposed here does not have these powers, but one can imagine an alternative design where it did.",
+      "source_hash": 13832412074986016938,
+      "context_hash": 16912040024061544310,
+      "translation": "``__(a)iterclose__``\\ 의 의미는 어느 정도 ``with`` 블록에서 영감을 얻었지만, 컨텍스트 관리자는 더 강력합니다. ``__(a)exit__``\\ 는 정상적인 종료와 예외 전파에 따른 스택 풀기를 구분할 수 있으며, 예외가 발생한 경우 예외 세부 정보를 검사하고 전파를 선택적으로 억제할 수 있습니다. 여기서 제안한 ``__(a)iterclose__``\\ 에는 이러한 기능이 없지만, 그러한 기능을 갖춘 대안 설계를 생각해 볼 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745097Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "However, this seems like unwarranted complexity: experience suggests that it's common for iterables to have ``close`` methods, and even to have ``__exit__`` methods that call ``self.close()``, but I'm not aware of any common cases that make use of ``__exit__``'s full power.",
+      "source_hash": 9984607778425229109,
+      "context_hash": 752287418024157809,
+      "translation": "그러나 이는 정당화되지 않는 복잡성으로 보입니다. 경험상 이터러블이 ``close`` 메서드를 갖는 경우와 ``self.close()``\\ 를 호출하는 ``__exit__``\\ 메서드를 갖는 경우는 흔하지만, ``__exit__``\\ 의 모든 기능을 활용하는 일반적인 사례는 알지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745097Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "I also can't think of any examples where this would be useful.",
+      "source_hash": 3461190132263433462,
+      "context_hash": 1497401016923703041,
+      "translation": "또한 이것이 유용할 만한 예도 생각나지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745097Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:2",
+      "source": "And it seems unnecessarily confusing to allow iterators to affect flow control by swallowing exceptions -- if you're in a situation where you really want that, then you should probably use a real ``with`` block anyway.",
+      "source_hash": 6320777512850966468,
+      "context_hash": 6294611304406274372,
+      "translation": "그리고 예외를 삼켜 이터레이터가 흐름 제어에 영향을 줄 수 있도록 허용하는 것은 불필요하게 혼란스러워 보입니다. 정말로 그러한 기능이 필요한 상황이라면 어쨌든 실제 ``with`` 블록을 사용해야 할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745097Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 11470806720495235994,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745097Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "This section describes where we want to eventually end up, though there are some backwards compatibility issues that mean we can't jump directly here.",
+      "source_hash": 7797523324729870368,
+      "context_hash": 2097910094128576803,
+      "translation": "이 절에서는 최종적으로 도달하려는 상태를 설명하지만, 하위 호환성 문제로 인해 여기로 곧바로 이동할 수는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745098Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "A later section describes the transition plan.",
+      "source_hash": 5542169739610429470,
+      "context_hash": 12122037656612036974,
+      "translation": "이후 절에서 전환 계획을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745098Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Guiding principles",
+      "source_hash": 10463920206473059995,
+      "context_hash": 4994115871078009665,
+      "translation": "기본 원칙",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745098Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Generally, ``__(a)iterclose__`` implementations should:",
+      "source_hash": 14282833031309388078,
+      "context_hash": 4174481525330078101,
+      "translation": "일반적으로 ``__(a)iterclose__``\\ 구현은 다음과 같아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:57.745098Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "be idempotent,",
+      "source_hash": 14536748653942986661,
+      "context_hash": 4448849792206599186,
+      "translation": "멱등적이어야 합니다,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880257Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "perform any cleanup that is appropriate on the assumption that the iterator will not be used again after ``__(a)iterclose__`` is called.",
+      "source_hash": 10658372370428272761,
+      "context_hash": 10408470738521208682,
+      "translation": "``__(a)iterclose__``\\ 가 호출된 후에는 이터레이터를 다시 사용하지 않는다는 가정하에 적절한 정리 작업을 수행하십시오.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:08:35.880261Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:1",
+      "source": "In particular, once ``__(a)iterclose__`` has been called then calling ``__(a)next__`` produces undefined behavior.",
+      "source_hash": 15178695889879724051,
+      "context_hash": 1404239180648394414,
+      "translation": "특히, ``__(a)iterclose__``\\ 가 호출된 후 ``__(a)next__``\\ 를 호출하면 정의되지 않은 동작이 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880262Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "And generally, any code which starts iterating through an iterable with the intention of exhausting it, should arrange to make sure that ``__(a)iterclose__`` is eventually called, whether or not the iterator is actually exhausted.",
+      "source_hash": 1932018360479194050,
+      "context_hash": 1816691300451993791,
+      "translation": "일반적으로, 이터러블을 소진할 의도로 반복을 시작하는 모든 코드는 이터레이터가 실제로 소진되었는지 여부와 관계없이 ``__(a)iterclose__``\\ 가 결국 호출되도록 해야 합니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:08:35.880262Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Changes to iteration",
+      "source_hash": 12191549652271385134,
+      "context_hash": 14451879245005278949,
+      "translation": "반복에 대한 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880263Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The core proposal is the change in behavior of ``for`` loops.",
+      "source_hash": 13858146651908917388,
+      "context_hash": 2395795813180939351,
+      "translation": "핵심 제안은 ``for`` 루프의 동작을 변경하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880263Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "Given this Python code",
+      "source_hash": 4958387852481950168,
+      "context_hash": 15510119418278720280,
+      "translation": "다음 Python 코드가 주어지면",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880263Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "we desugar to the equivalent of",
+      "source_hash": 14901424402194683159,
+      "context_hash": 10168238649197161281,
+      "translation": "이를 다음과 동등한 형태로 변환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880264Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "where the \"traditional-for statement\" here is meant as a shorthand for the classic 3.5-and-earlier ``for`` loop semantics.",
+      "source_hash": 4729551241540399575,
+      "context_hash": 12757849208817778726,
+      "translation": "여기서 \"전통적인 for 문\"은 기존의 3.5 이하 ``for`` 루프 의미 체계를 간략히 나타내는 표현입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880264Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "Besides the top-level ``for`` statement, Python also contains several other places where iterators are consumed.",
+      "source_hash": 4332699325520370449,
+      "context_hash": 16908846934650967897,
+      "translation": "최상위 ``for`` 문 외에도 Python에는 이터레이터가 소비되는 여러 다른 위치가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880264Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:1",
+      "source": "For consistency, these should call ``__iterclose__`` as well using semantics equivalent to the above.",
+      "source_hash": 7799683125802965849,
+      "context_hash": 2258621880853687294,
+      "translation": "일관성을 위해 이러한 위치에서도 위와 동등한 의미 체계를 사용하여 ``__iterclose__``\\ 를 호출해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880265Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:2",
+      "source": "This includes:",
+      "source_hash": 528993423387789706,
+      "context_hash": 5200240682068322417,
+      "translation": "여기에는 다음이 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880265Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "``for`` loops inside comprehensions",
+      "source_hash": 17775053412425027183,
+      "context_hash": 1221945307363248064,
+      "translation": "컴프리헨션 내부의 ``for`` 루프",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880265Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "``*`` unpacking",
+      "source_hash": 15704171581711218384,
+      "context_hash": 15009380153451336689,
+      "translation": "``*`` 언패킹",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880265Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "functions which accept and fully consume iterables, like ``list(it)``, ``tuple(it)``, ``itertools.product(it1, it2, ...)``, and others.",
+      "source_hash": 12736843008848165229,
+      "context_hash": 1154578274073571398,
+      "translation": "``list(it)``, ``tuple(it)``, ``itertools.product(it1, it2, ...)``\\ 와 같이 이터러블을 받아 완전히 소비하는 함수 및 기타 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880265Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:10/seg:0",
+      "source": "In addition, a ``yield from`` that successfully exhausts the called generator should as a last step call its ``__iterclose__`` method. (Rationale: ``yield from`` already links the lifetime of the calling generator to the called generator; if the calling generator is closed when half-way through a ``yield from``, then this will already automatically close the called generator.)",
+      "source_hash": 2762812675897341143,
+      "context_hash": 7829406790896050913,
+      "translation": "또한 호출된 제너레이터를 성공적으로 소진하는 ``yield from``\\ 은 마지막 단계로 해당 제너레이터의 ``__iterclose__``\\ 메서드를 호출해야 합니다. (이유: ``yield from``\\ 은 이미 호출하는 제너레이터와 호출된 제너레이터의 수명을 연결하므로, ``yield from``\\ 을 수행하는 도중 호출하는 제너레이터가 닫히면 호출된 제너레이터도 자동으로 닫히기 때문입니다.)",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:35.880266Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Changes to async iteration",
+      "source_hash": 4200032476652139893,
+      "context_hash": 8813091553014635767,
+      "translation": "비동기 반복에 대한 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880266Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "We also make the analogous changes to async iteration constructs, except that the new slot is called ``__aiterclose__``, and it's an async method that gets ``await``\\ed.",
+      "source_hash": 11823690098308124283,
+      "context_hash": 8232236934916177596,
+      "translation": "새로운 슬롯의 이름이 ``__aiterclose__``\\ 이고, ``await``\\ 되는 비동기 메서드라는 점을 제외하면 비동기 반복 구문에도 유사한 변경을 적용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880266Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Modifications to basic iterator types",
+      "source_hash": 14488899436064511795,
+      "context_hash": 3074220259656910244,
+      "translation": "기본 이터레이터 유형에 대한 수정 사항",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:08:35.880267Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "Generator objects (including those created by generator comprehensions):",
+      "source_hash": 6898076760704886277,
+      "context_hash": 15863458395937895720,
+      "translation": "제너레이터 컴프리헨션으로 생성된 것을 포함한 제너레이터 객체:",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:35.880267Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "``__iterclose__`` calls ``self.close()``",
+      "source_hash": 17889250069052385418,
+      "context_hash": 3414154551641692098,
+      "translation": "``__iterclose__``\\ 는 ``self.close()``\\ 를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880268Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "``__del__`` calls ``self.close()`` (same as now), and additionally issues a ``ResourceWarning`` if the generator wasn't exhausted.",
+      "source_hash": 10774508412559394266,
+      "context_hash": 5910264130877124451,
+      "translation": "``__del__``\\ 은 현재와 동일하게 ``self.close()``\\ 를 호출하고, 제너레이터가 소진되지 않은 경우 ``ResourceWarning``\\ 도 발생시킵니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:35.880268Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:1",
+      "source": "This warning is hidden by default, but can be enabled for those who want to make sure they aren't inadvertently relying on CPython-specific GC semantics.",
+      "source_hash": 1702078307943066324,
+      "context_hash": 1845834484255343705,
+      "translation": "이 경고는 기본적으로 숨겨져 있지만, 자신도 모르게 CPython 전용 GC 의미 체계에 의존하고 있지 않은지 확인하려는 사용자는 활성화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880268Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "Async generator objects (including those created by async generator comprehensions):",
+      "source_hash": 230336710349262519,
+      "context_hash": 14644087718291149288,
+      "translation": "비동기 제너레이터 컴프리헨션으로 생성된 것을 포함한 비동기 제너레이터 객체:",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:35.880269Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "``__aiterclose__`` calls ``self.aclose()``",
+      "source_hash": 13543744273546430070,
+      "context_hash": 7489567975125279192,
+      "translation": "``__aiterclose__``\\ 는 ``self.aclose()``\\ 를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880269Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:0",
+      "source": "``__del__`` issues a ``RuntimeWarning`` if ``aclose`` has not been called, since this probably indicates a latent bug, similar to the \"coroutine never awaited\" warning.",
+      "source_hash": 14705637978904061312,
+      "context_hash": 10297697654158538439,
+      "translation": "``aclose``\\ 가 호출되지 않은 경우 ``__del__``\\ 은 ``RuntimeWarning``\\ 을 발생시킵니다. 이는 \"코루틴이 한 번도 await되지 않음\" 경고와 유사하게 잠재적인 버그를 나타낼 가능성이 높기 때문입니다.",
+      "glossary_snapshot": {
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T19:08:35.880270Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:7/seg:0",
+      "source": "QUESTION: should file objects implement ``__iterclose__`` to close the file?",
+      "source_hash": 14447255596270554190,
+      "context_hash": 663667587447064497,
+      "translation": "질문: 파일 객체가 파일을 닫도록 ``__iterclose__``\\ 를 구현해야 합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880270Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:7/seg:1",
+      "source": "On the one hand this would make this change more disruptive; on the other hand people really like writing ``for line in open(...): ...``, and if we get used to iterators taking care of their own cleanup then it might become very weird if files don't.",
+      "source_hash": 6039533093825839730,
+      "context_hash": 2266289717294897849,
+      "translation": "한편으로는 이 변경이 더 큰 영향을 미치게 되지만, 다른 한편으로는 사람들이 `for line in open(...): ...`\\ 을 작성하는 것을 정말 좋아하며, 이터레이터가 자체적으로 정리 작업을 수행하는 데 익숙해지면 파일만 그렇지 않은 경우 매우 이상하게 느껴질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880271Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "New convenience functions",
+      "source_hash": 12628307993795449701,
+      "context_hash": 388363704812154303,
+      "translation": "새로운 편의 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880271Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "The ``operator`` module gains two new functions, with semantics equivalent to the following",
+      "source_hash": 17123947656928958988,
+      "context_hash": 2258414900780504108,
+      "translation": "``operator``\\ 모듈에 다음과 동등한 의미 체계를 갖는 두 개의 새로운 함수가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880271Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "The ``itertools`` module gains a new iterator wrapper that can be used to selectively disable the new ``__iterclose__`` behavior",
+      "source_hash": 363997812002493846,
+      "context_hash": 2689967666407246819,
+      "translation": "``itertools``\\ 모듈에 새로운 ``__iterclose__``\\ 동작을 선택적으로 비활성화하는 데 사용할 수 있는 새로운 이터레이터 래퍼가 추가됩니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:08:35.880271Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:5/seg:0",
+      "source": "Example usage (assuming that file objects implements ``__iterclose__``)",
+      "source_hash": 10654511623705122576,
+      "context_hash": 13775275308684527927,
+      "translation": "파일 객체가 ``__iterclose__``\\ 를 구현한다고 가정한 사용 예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:35.880272Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "__iterclose__ implementations for iterator wrappers",
+      "source_hash": 2989493119381482819,
+      "context_hash": 1099669279024342270,
+      "translation": "이터레이터 래퍼를 위한 __iterclose__ 구현",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:08:22.662886Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Python ships a number of iterator types that act as wrappers around other iterators: ``map``, ``zip``, ``itertools.accumulate``, ``csv.reader``, and others.",
+      "source_hash": 2225637635796305478,
+      "context_hash": 7345725549103006623,
+      "translation": "Python은 다른 이터레이터를 래핑하는 역할을 하는 여러 이터레이터 형식을 제공합니다. 여기에는 ``map``, ``zip``, ``itertools.accumulate``, ``csv.reader`` 등이 있습니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:08:22.662890Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "These iterators should define a ``__iterclose__`` method which calls ``__iterclose__`` in turn on their underlying iterators.",
+      "source_hash": 16766873840516263806,
+      "context_hash": 5467880564779586227,
+      "translation": "이러한 이터레이터는 기반 이터레이터에서 차례로 ``__iterclose__``\\ 를 호출하는 ``__iterclose__`` 메서드를 정의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662891Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:2",
+      "source": "For example, ``map`` could be implemented as",
+      "source_hash": 8469480336596043140,
+      "context_hash": 8326956474486145877,
+      "translation": "예를 들어 ``map``\\ 은 다음과 같이 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662892Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "In some cases this requires some subtlety; for example, `itertools.tee`_ should not call ``__iterclose__`` on the underlying iterator until it has been called on *all* of the clone iterators.",
+      "source_hash": 8435881870917564962,
+      "context_hash": 15494789114810506017,
+      "translation": "일부 경우에는 약간의 세심한 처리가 필요합니다. 예를 들어, `itertools.tee`_\\ 는 *모든* 복제 이터레이터에 대해 호출될 때까지 기반 이터레이터에서 ``__iterclose__``\\ 를 호출해서는 안 됩니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:49:11.794688Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Example / Rationale",
+      "source_hash": 2367355569060980038,
+      "context_hash": 11482731343770406431,
+      "translation": "예제 / 근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662893Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "The payoff for all this is that we can now write straightforward code like",
+      "source_hash": 4939323499672531566,
+      "context_hash": 7358033188452936696,
+      "translation": "이 모든 작업의 성과는 이제 다음과 같은 간단한 코드를 작성할 수 있다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662893Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "and be confident that the file will receive deterministic cleanup *without the end-user having to take any special effort*, even in complex cases.",
+      "source_hash": 2631661761200738377,
+      "context_hash": 3373893133829218537,
+      "translation": "복잡한 경우에도 *최종 사용자가 특별히 어떤 작업을 하지 않아도* 파일이 결정론적으로 정리된다는 확신을 가질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662894Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:1",
+      "source": "For example, consider this silly pipeline",
+      "source_hash": 17319095298482384857,
+      "context_hash": 16434663335080408831,
+      "translation": "예를 들어, 다음과 같은 우스꽝스러운 파이프라인을 생각해 보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662894Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:0",
+      "source": "If our file contains a document where ``doc[\"key\"]`` turns out to be an integer, then the following sequence of events will happen:",
+      "source_hash": 15592169084630096989,
+      "context_hash": 516274222945171555,
+      "translation": "파일에 ``doc[\"key\"]``\\ 가 정수로 판명되는 문서가 들어 있다면 다음과 같은 사건 순서가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662894Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:6/seg:0",
+      "source": "``key.upper()`` raises an ``AttributeError``, which propagates out of the ``map`` and triggers the implicit ``finally`` block inside ``list``.",
+      "source_hash": 8336210174600898202,
+      "context_hash": 1547725884576088975,
+      "translation": "``key.upper()``\\ 가 ``AttributeError``\\ 를 발생시키고, 이 예외가 ``map``\\ 에서 전파되어 ``list`` 내부의 암시적 ``finally`` 블록을 트리거합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662894Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:7/seg:0",
+      "source": "The ``finally`` block in ``list`` calls ``__iterclose__()`` on the map object.",
+      "source_hash": 12348140115442458072,
+      "context_hash": 9764708583304162923,
+      "translation": "``list``\\ 의 ``finally`` 블록이 map 객체에서 ``__iterclose__()``\\ 를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662895Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:8/seg:0",
+      "source": "``map.__iterclose__()`` calls ``__iterclose__()`` on the generator comprehension object.",
+      "source_hash": 13050996468427194814,
+      "context_hash": 5788632466927405930,
+      "translation": "``map.__iterclose__()``\\ 가 제너레이터 컴프리헨션 객체에서 ``__iterclose__()``\\ 를 호출합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:22.662895Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:9/seg:0",
+      "source": "This injects a ``GeneratorExit`` exception into the generator comprehension body, which is currently suspended inside the comprehension's ``for`` loop body.",
+      "source_hash": 7167879876463844164,
+      "context_hash": 17197745025099521469,
+      "translation": "이로 인해 현재 컴프리헨션의 ``for`` 루프 본문에서 실행이 일시 중지된 제너레이터 컴프리헨션 본문에 ``GeneratorExit`` 예외가 주입됩니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:22.662895Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:10/seg:0",
+      "source": "The exception propagates out of the ``for`` loop, triggering the ``for`` loop's implicit ``finally`` block, which calls ``__iterclose__`` on the generator object representing the call to ``read_newline_separated_json``.",
+      "source_hash": 12716503543138053230,
+      "context_hash": 282444102292757776,
+      "translation": "예외가 ``for`` 루프 밖으로 전파되어 ``for`` 루프의 암시적 ``finally`` 블록을 트리거하고, 이 블록은 ``read_newline_separated_json`` 호출을 나타내는 제너레이터 객체에서 ``__iterclose__``\\ 를 호출합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:22.662896Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:11/seg:0",
+      "source": "This injects an inner ``GeneratorExit`` exception into the body of ``read_newline_separated_json``, currently suspended at the ``yield``.",
+      "source_hash": 16917669121117495570,
+      "context_hash": 409341089871785345,
+      "translation": "이로 인해 현재 ``yield``\\ 에서 실행이 일시 중지된 ``read_newline_separated_json``\\ 의 본문에 내부 ``GeneratorExit`` 예외가 주입됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662896Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:12/seg:0",
+      "source": "The inner ``GeneratorExit`` propagates out of the ``for`` loop, triggering the ``for`` loop's implicit ``finally`` block, which calls ``__iterclose__()`` on the file object.",
+      "source_hash": 8825260260383449954,
+      "context_hash": 1993763725998083147,
+      "translation": "내부 ``GeneratorExit``\\ 가 ``for`` 루프 밖으로 전파되어 ``for`` 루프의 암시적 ``finally`` 블록을 트리거하고, 이 블록은 파일 객체에서 ``__iterclose__()``\\ 를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662897Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:13/seg:0",
+      "source": "The file object is closed.",
+      "source_hash": 145442123944386266,
+      "context_hash": 3994050390776474506,
+      "translation": "파일 객체가 닫힙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662897Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:14/seg:0",
+      "source": "The inner ``GeneratorExit`` resumes propagating, hits the boundary of the generator function, and causes ``read_newline_separated_json``'s ``__iterclose__()`` method to return successfully.",
+      "source_hash": 13171306773070726862,
+      "context_hash": 3699490771262289920,
+      "translation": "내부 ``GeneratorExit``\\ 가 계속 전파되어 제너레이터 함수의 경계에 도달하고, ``read_newline_separated_json``\\ 의 ``__iterclose__()`` 메서드가 성공적으로 반환되도록 합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:22.662897Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:15/seg:0",
+      "source": "Control returns to the generator comprehension body, and the outer ``GeneratorExit`` continues propagating, allowing the comprehension's ``__iterclose__()`` to return successfully.",
+      "source_hash": 9146638438233940389,
+      "context_hash": 15552441763938831297,
+      "translation": "제어가 제너레이터 컴프리헨션 본문으로 돌아가고 외부 ``GeneratorExit``\\ 가 계속 전파되어 컴프리헨션의 ``__iterclose__()``\\ 가 성공적으로 반환될 수 있게 합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:08:22.662898Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:16/seg:0",
+      "source": "The rest of the ``__iterclose__()`` calls unwind without incident, back into the body of ``list``.",
+      "source_hash": 7842227266918128924,
+      "context_hash": 17903744734629974379,
+      "translation": "나머지 ``__iterclose__()`` 호출도 문제없이 해제되어 ``list`` 본문으로 돌아갑니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662898Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:17/seg:0",
+      "source": "The original ``AttributeError`` resumes propagating.",
+      "source_hash": 11644875384895605880,
+      "context_hash": 15247473248452223493,
+      "translation": "원래의 ``AttributeError``\\ 가 다시 전파됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662899Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:18/seg:0",
+      "source": "(The details above assume that we implement ``file.__iterclose__``; if not then add a ``with`` block to ``read_newline_separated_json`` and essentially the same logic goes through.)",
+      "source_hash": 9733048827965960353,
+      "context_hash": 11206516859353021027,
+      "translation": "(위의 세부 사항은 ``file.__iterclose__``\\ 를 구현한다고 가정한 것입니다. 구현하지 않는다면 ``read_newline_separated_json``\\ 에 ``with`` 블록을 추가하면 되며, 본질적으로 동일한 로직이 진행됩니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662899Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:19/seg:0",
+      "source": "Of course, from the user's point of view, this can be simplified down to just:",
+      "source_hash": 15555807365456960508,
+      "context_hash": 18126098189131884139,
+      "translation": "물론 사용자의 관점에서는 이를 다음과 같이 간단히 줄여 쓸 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662899Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:20/seg:0",
+      "source": "``int.upper()`` raises an ``AttributeError``",
+      "source_hash": 15553945000932537290,
+      "context_hash": 8605050768575525067,
+      "translation": "``int.upper()``\\ 가 ``AttributeError``\\ 를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662899Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:21/seg:0",
+      "source": "The file object is closed.",
+      "source_hash": 145442123944386266,
+      "context_hash": 4191991992304865846,
+      "translation": "파일 객체가 닫힙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662900Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:22/seg:0",
+      "source": "The ``AttributeError`` propagates out of ``list``",
+      "source_hash": 14471310219753782342,
+      "context_hash": 9334925315499031653,
+      "translation": "``AttributeError``\\ 가 ``list``\\ 에서 전파됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662900Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:23/seg:0",
+      "source": "So we've accomplished our goal of making this \"just work\" without the user having to think about it.",
+      "source_hash": 10205166126818864559,
+      "context_hash": 4303556289633882485,
+      "translation": "따라서 사용자가 이에 대해 생각할 필요 없이 이 기능이 \"그냥 작동\"하도록 만든다는 목표를 달성했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662900Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Transition plan",
+      "source_hash": 7514641799373745132,
+      "context_hash": 13231583154910380645,
+      "translation": "전환 계획",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662900Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "While the majority of existing ``for`` loops will continue to produce identical results, the proposed changes will produce backwards-incompatible behavior in some cases.",
+      "source_hash": 6858042111464889868,
+      "context_hash": 3762791750172396287,
+      "translation": "기존 ``for`` 루프의 대부분은 계속 동일한 결과를 생성하지만, 제안된 변경 사항은 일부 경우에 하위 호환성이 없는 동작을 만들어 냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662901Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "Example",
+      "source_hash": 1513857641461741027,
+      "context_hash": 9982733255613303377,
+      "translation": "예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662901Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "This code used to be correct, but after this proposal is implemented will require an ``itertools.preserve`` call added to the first ``for`` loop.",
+      "source_hash": 1234610096490562979,
+      "context_hash": 10198823215766932767,
+      "translation": "이 코드는 이전에는 올바른 코드였지만, 이 제안이 구현된 후에는 첫 번째 ``for`` 루프에 ``itertools.preserve`` 호출을 추가해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:22.662901Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:4/seg:0",
+      "source": "[QUESTION: currently, if you close a generator and then try to iterate over it then it just raises ``Stop(Async)Iteration``, so code the passes the same generator object to multiple ``for`` loops but forgets to use ``itertools.preserve`` won't see an obvious error -- the second ``for`` loop will just exit immediately.",
+      "source_hash": 3156890272418926158,
+      "context_hash": 11393635782639367690,
+      "translation": "질문: 현재 제너레이터를 닫은 다음 해당 제너레이터를 이터레이트하려고 하면 ``Stop(Async)Iteration``\\ 만 발생하므로, 동일한 제너레이터 객체를 여러 ``for`` 루프에 전달하면서 ``itertools.preserve``\\ 를 사용하는 것을 잊은 코드는 명확한 오류를 확인하지 못합니다. 두 번째 ``for`` 루프는 즉시 종료될 뿐입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:49:11.794690Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:4/seg:1",
+      "source": "Perhaps it would be better if iterating a closed generator raised a ``RuntimeError``?",
+      "source_hash": 1563390076515342881,
+      "context_hash": 7043716502420675832,
+      "translation": "닫힌 제너레이터를 이터레이션하려고 하면 ``RuntimeError`` 가 발생하도록 하는 편이 더 낫지 않을까요?",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:14:48.384723Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:4/seg:2",
+      "source": "Note that files don't have this problem -- attempting to iterate a closed file object already raises ``ValueError``.]",
+      "source_hash": 8165785029664881984,
+      "context_hash": 7262540059936981757,
+      "translation": "파일에는 이러한 문제가 없다는 점에 유의하십시오. 닫힌 파일 객체를 이터레이션하려고 하면 이미 ``ValueError`` 가 발생합니다.]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384724Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:0",
+      "source": "Specifically, the incompatibility happens when all of these factors come together:",
+      "source_hash": 8722584165920652850,
+      "context_hash": 1931136394309517491,
+      "translation": "구체적으로 호환성 문제는 다음 요소가 모두 결합될 때 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384724Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:6/seg:0",
+      "source": "The automatic calling of ``__(a)iterclose__`` is enabled",
+      "source_hash": 18244709474258096722,
+      "context_hash": 11124240876410080541,
+      "translation": "``__(a)iterclose__`` 의 자동 호출이 활성화되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384725Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:7/seg:0",
+      "source": "The iterable did not previously define ``__(a)iterclose__``",
+      "source_hash": 1005791286430678505,
+      "context_hash": 9225137541464255565,
+      "translation": "이터러블이 이전에는 ``__(a)iterclose__`` 를 정의하지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384725Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:8/seg:0",
+      "source": "The iterable does now define ``__(a)iterclose__``",
+      "source_hash": 14511744829190248713,
+      "context_hash": 16448886886340231568,
+      "translation": "이터러블이 이제 ``__(a)iterclose__`` 를 정의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384725Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:9/seg:0",
+      "source": "The iterable is re-used after the ``for`` loop exits",
+      "source_hash": 13604063382304134888,
+      "context_hash": 15263214863851691475,
+      "translation": "``for`` 루프가 종료된 후 이터러블을 다시 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384726Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:10/seg:0",
+      "source": "So the problem is how to manage this transition, and those are the levers we have to work with.",
+      "source_hash": 5689514083917475147,
+      "context_hash": 9075457429382736905,
+      "translation": "따라서 문제는 이 전환을 어떻게 관리할 것인가이며, 이것이 우리가 조정할 수 있는 수단입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384726Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:11/seg:0",
+      "source": "First, observe that the only async iterables where we propose to add ``__aiterclose__`` are async generators, and there is currently no existing code using async generators (though this will start changing very soon), so the async changes do not produce any backwards incompatibilities. (There is existing code using async iterators, but using the new async for loop on an old async iterator is harmless, because old async iterators don't have ``__aiterclose__``.) In addition, :pep:`525` was accepted on a provisional basis, and async generators are by far the biggest beneficiary of this PEP's proposed changes.",
+      "source_hash": 8283815311858133904,
+      "context_hash": 8304519421681651712,
+      "translation": "먼저, ``__aiterclose__`` 를 추가하려는 유일한 비동기 이터러블은 비동기 제너레이터라는 점을 살펴보십시오. 현재 비동기 제너레이터를 사용하는 기존 코드가 없으므로(물론 이는 곧 바뀌기 시작할 것입니다), 비동기 변경 사항은 어떠한 하위 호환성 문제도 일으키지 않습니다. (비동기 이터레이터를 사용하는 기존 코드는 있지만, 기존 비동기 이터레이터에는 ``__aiterclose__`` 가 없으므로 새로운 비동기 for 루프에서 기존 비동기 이터레이터를 사용하는 것은 무해합니다.) 또한 :pep:`525` 는 잠정적인 기준으로 승인되었으며, 비동기 제너레이터는 이 PEP에서 제안하는 변경 사항으로부터 가장 큰 혜택을 받는 대상입니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:14:48.384726Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:11/seg:1",
+      "source": "Therefore, I think we should strongly consider enabling ``__aiterclose__`` for ``async for`` loops and async generators ASAP, ideally for 3.6.0 or 3.6.1.",
+      "source_hash": 11590796317543495461,
+      "context_hash": 7766436504164621183,
+      "translation": "따라서 ``async for`` 루프와 비동기 제너레이터에 ``__aiterclose__`` 를 최대한 빨리, 이상적으로는 3.6.0 또는 3.6.1에 활성화하는 방안을 진지하게 고려해야 한다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384727Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:12/seg:0",
+      "source": "For the non-async world, things are harder, but here's a potential transition path:",
+      "source_hash": 1354428723089816350,
+      "context_hash": 8801828284387396592,
+      "translation": "비동기가 아닌 영역에서는 상황이 더 어렵지만, 다음과 같은 전환 경로를 고려할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384727Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:13/seg:0",
+      "source": "In 3.7:",
+      "source_hash": 4496818725357207430,
+      "context_hash": 2945894230112488296,
+      "translation": "3.7에서는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384727Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:14/seg:0",
+      "source": "Our goal is that existing unsafe code will start emitting warnings, while those who want to opt-in to the future can do that immediately:",
+      "source_hash": 2811650694118504094,
+      "context_hash": 4105198062583860034,
+      "translation": "우리의 목표는 기존의 안전하지 않은 코드가 경고를 발생시키기 시작하도록 하면서, 향후 기능을 사용하려는 사용자는 즉시 이를 선택할 수 있게 하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384728Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:15/seg:0",
+      "source": "We immediately add all the ``__iterclose__`` methods described above.",
+      "source_hash": 8916974968759053177,
+      "context_hash": 4676751387357858062,
+      "translation": "위에서 설명한 모든 ``__iterclose__`` 메서드를 즉시 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384728Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:16/seg:0",
+      "source": "If ``from __future__ import iterclose`` is in effect, then ``for`` loops and ``*`` unpacking call ``__iterclose__`` as specified above.",
+      "source_hash": 10337386376677712380,
+      "context_hash": 5061242613113716641,
+      "translation": "``from __future__ import iterclose`` 가 적용되면 ``for`` 루프와 ``*`` 언패킹이 위에서 지정한 대로 ``__iterclose__`` 를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384728Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:17/seg:0",
+      "source": "If the future is *not* enabled, then ``for`` loops and ``*`` unpacking do *not* call ``__iterclose__``.",
+      "source_hash": 6889957411430950405,
+      "context_hash": 1285807263943374087,
+      "translation": "future가 *활성화되지* 않은 경우 ``for`` 루프와 ``*`` 언패킹은 ``__iterclose__``\\ 를 *호출하지* 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:49:11.794691Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:17/seg:1",
+      "source": "But they do call some other method instead, e.g. ``__iterclose_warning__``.",
+      "source_hash": 5295906511085701255,
+      "context_hash": 9864857638989187378,
+      "translation": "대신 ``__iterclose_warning__`` 와 같은 다른 메서드를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384729Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:18/seg:0",
+      "source": "Similarly, functions like ``list`` use stack introspection (!!) to check whether their direct caller has ``__future__.iterclose`` enabled, and use this to decide whether to call ``__iterclose__`` or ``__iterclose_warning__``.",
+      "source_hash": 15485753834781218489,
+      "context_hash": 13524850588020920760,
+      "translation": "마찬가지로 ``list`` 같은 함수는 스택 인트로스펙션(!!)을 사용하여 직접 호출자에게 ``__future__.iterclose`` 가 활성화되어 있는지 확인하고, 그 결과에 따라 ``__iterclose__`` 또는 ``__iterclose_warning__`` 를 호출할지 결정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384729Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:19/seg:0",
+      "source": "For all the wrapper iterators, we also add ``__iterclose_warning__`` methods that forward to the ``__iterclose_warning__`` method of the underlying iterator or iterators.",
+      "source_hash": 5761370752347556227,
+      "context_hash": 5060756842199014515,
+      "translation": "모든 래퍼 이터레이터에 ``__iterclose_warning__`` 메서드도 추가하여, 기반 이터레이터의 ``__iterclose_warning__`` 메서드 또는 이터레이터들의 해당 메서드로 전달합니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:14:48.384730Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:20/seg:0",
+      "source": "For generators (and files, if we decide to do that), ``__iterclose_warning__`` is defined to set an internal flag, and other methods on the object are modified to check for this flag.",
+      "source_hash": 8923104744318954507,
+      "context_hash": 16067055671923783112,
+      "translation": "제너레이터(그리고 그렇게 하기로 결정한다면 파일)의 경우 ``__iterclose_warning__`` 는 내부 플래그를 설정하도록 정의하고, 객체의 다른 메서드들은 이 플래그를 확인하도록 수정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384730Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:20/seg:1",
+      "source": "If they find the flag set, they issue a ``PendingDeprecationWarning`` to inform the user that in the future this sequence would have led to a use-after-close situation and the user should use ``preserve()``.",
+      "source_hash": 16707597160906732760,
+      "context_hash": 11701704002511102456,
+      "translation": "플래그가 설정된 것을 발견하면 ``PendingDeprecationWarning`` 을 발생시켜, 앞으로는 이 순서가 닫은 후 사용(use-after-close) 상황으로 이어지며 사용자는 ``preserve()`` 를 사용해야 한다고 알립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384730Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:21/seg:0",
+      "source": "In 3.8:",
+      "source_hash": 5012985079309921330,
+      "context_hash": 13743168375152345027,
+      "translation": "3.8에서는:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:48.384730Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:22/seg:0",
+      "source": "Switch from ``PendingDeprecationWarning`` to ``DeprecationWarning``",
+      "source_hash": 243979122206288995,
+      "context_hash": 10000129581830726055,
+      "translation": "``PendingDeprecationWarning``\\ 에서 ``DeprecationWarning``\\ 으로 전환합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:21.484313Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:23/seg:0",
+      "source": "In 3.9:",
+      "source_hash": 13174895146533279908,
+      "context_hash": 10124231556622176462,
+      "translation": "3.9에서는:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:21.484318Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:24/seg:0",
+      "source": "Enable the ``__future__`` unconditionally and remove all the ``__iterclose_warning__`` stuff.",
+      "source_hash": 10999140218619958326,
+      "context_hash": 3120507621990594161,
+      "translation": "``__future__``\\ 를 무조건 활성화하고 ``__iterclose_warning__`` 관련 항목을 모두 제거합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:21.484319Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:25/seg:0",
+      "source": "I believe that this satisfies the normal requirements for this kind of transition -- opt-in initially, with warnings targeted precisely to the cases that will be effected, and a long deprecation cycle.",
+      "source_hash": 7901620019042180696,
+      "context_hash": 13139452035485115508,
+      "translation": "이 방식은 이런 종류의 전환에 필요한 일반적인 요구사항 -- 초기에는 선택적 참여로 시작하고, 영향을 받을 경우에 정확히 맞춘 경고를 제공하며, 긴 사용 중단 주기를 두는 것 -- 을 충족한다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:21.484320Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:26/seg:0",
+      "source": "Probably the most controversial / risky part of this is the use of stack introspection to make the iterable-consuming functions sensitive to a ``__future__`` setting, though I haven't thought of any situation where it would actually go wrong yet...",
+      "source_hash": 6355017593495592169,
+      "context_hash": 3273792243246259454,
+      "translation": "아마 이 중 가장 논란이 되거나 위험한 부분은 스택 인트로스펙션을 사용해 이터러블을 소비하는 함수들이 ``__future__`` 설정에 반응하도록 만드는 것이겠지만, 아직까지는 실제로 문제가 생길 만한 상황을 떠올리지 못했습니다...",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:21.484320Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Acknowledgements",
+      "source_hash": 16326275492144793040,
+      "context_hash": 5688718009522325576,
+      "translation": "감사의 말",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:21.484322Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "Thanks to Yury Selivanov, Armin Rigo, and Carl Friedrich Bolz for helpful discussion on earlier versions of this idea.",
+      "source_hash": 17852342626628524944,
+      "context_hash": 1509161231603585289,
+      "translation": "이 아이디어의 초기 버전에 대해 유익한 논의를 나눠준 Yury Selivanov, Armin Rigo, Carl Friedrich Bolz에게 감사드립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:21.484322Z",
+      "issues": []
+    }
+  ]
+}

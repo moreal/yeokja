@@ -1,0 +1,980 @@
+{
+  "version": 1,
+  "source_hash": 14967048021143796281,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Improved Encapsulation of Import State",
+      "source_hash": 5623349055657535030,
+      "context_hash": 16530898886277989957,
+      "translation": "임포트 상태의 캡슐화 개선",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634059Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 224772226747835159,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634065Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes the introduction of a new 'ImportEngine' class as part of ``importlib`` which would encapsulate all state related to importing modules into a single object.",
+      "source_hash": 15656683165371138549,
+      "context_hash": 10480664561740761925,
+      "translation": "이 PEP는 ``importlib``\\ 의 일부로 새로운 'ImportEngine' 클래스를 도입하여 모듈 임포트와 관련된 모든 상태를 하나의 객체로 캡슐화할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634065Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "Creating new instances of this object would then provide an alternative to completely replacing the built-in implementation of the import statement, by overriding the ``__import__()`` function.",
+      "source_hash": 15073700233038601151,
+      "context_hash": 1842609242310100087,
+      "translation": "이 객체의 새 인스턴스를 생성하면 ``__import__()`` 함수를 재정의하여 내장 임포트 문 구현을 완전히 대체하는 대신 사용할 수 있는 대안이 제공됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634066Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "To work with the builtin import functionality and importing via import engine objects, this PEP proposes a context management based approach to temporarily replacing the global import state.",
+      "source_hash": 18044616155041772317,
+      "context_hash": 16535427610667344216,
+      "translation": "내장 임포트 기능 및 임포트 엔진 객체를 통한 임포트를 함께 사용하기 위해, 이 PEP는 전역 임포트 상태를 일시적으로 대체하는 컨텍스트 관리 기반 접근 방식을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634066Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "The PEP also proposes inclusion of a ``GlobalImportEngine`` subclass and a globally accessible instance of that class, which \"writes through\" to the process global state.",
+      "source_hash": 2472541185857813768,
+      "context_hash": 14818043459712386519,
+      "translation": "이 PEP는 또한 ``GlobalImportEngine`` 서브클래스와 해당 클래스의 전역 접근 가능 인스턴스를 포함할 것을 제안하며, 이 인스턴스는 프로세스 전역 상태에 \"write through\"합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634066Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "This provides a backwards compatible bridge between the proposed encapsulated API and the legacy process global state, and allows straightforward support for related state updates (e.g. selectively invalidating path cache entries when ``sys.path`` is modified).",
+      "source_hash": 11250777686761593258,
+      "context_hash": 77231506121191949,
+      "translation": "이는 제안된 캡슐화 API와 레거시 프로세스 전역 상태 사이에 하위 호환 가능한 연결을 제공하고, 관련 상태 업데이트를 간단하게 지원합니다(예: ``sys.path``\\ 가 수정될 때 경로 캐시 항목을 선택적으로 무효화합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634067Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "PEP Withdrawal",
+      "source_hash": 100271571744256071,
+      "context_hash": 6713320386730014036,
+      "translation": "PEP 철회",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634067Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The import system has seen substantial changes since this PEP was originally written, as part of :pep:`420` in Python 3.3 and :pep:`451` in Python 3.4.",
+      "source_hash": 14479067800864081327,
+      "context_hash": 13178113026519028301,
+      "translation": "이 PEP가 처음 작성된 이후 Python 3.3의 :pep:`420`\\ 과 Python 3.4의 :pep:`451`\\ 의 일환으로 임포트 시스템에 상당한 변경이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634067Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "While providing an encapsulation of the import state is still highly desirable, it is better tackled in a new PEP using :pep:`451` as a foundation, and permitting only the use of :pep:`451` compatible finders and loaders (as those avoid many of the issues of direct manipulation of global state associated with the previous loader API).",
+      "source_hash": 16141100639755839721,
+      "context_hash": 3859696864136600624,
+      "translation": "임포트 상태를 캡슐화하는 것은 여전히 매우 바람직하지만, :pep:`451`\\ 을 기반으로 하고 :pep:`451`\\ 과 호환되는 파인더와 로더만 사용하도록 허용하는 새로운 PEP에서 다루는 것이 더 적절합니다(이들은 이전 로더 API와 관련된 전역 상태의 직접 조작에서 발생하는 여러 문제를 방지하기 때문입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634068Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 11685857065238963524,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634068Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Currently, most state related to the import system is stored as module level attributes in the ``sys`` module.",
+      "source_hash": 3621897397268089136,
+      "context_hash": 10478429381751410542,
+      "translation": "현재 임포트 시스템과 관련된 대부분의 상태는 ``sys`` 모듈의 모듈 수준 속성으로 저장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634068Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "The one exception is the import lock, which is not accessible directly, but only via the related functions in the ``imp`` module.",
+      "source_hash": 10606000408162916137,
+      "context_hash": 7919332370136359787,
+      "translation": "한 가지 예외는 임포트 잠금으로, 직접 액세스할 수 없고 ``imp`` 모듈의 관련 함수를 통해서만 액세스할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634069Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "The current process global import state comprises:",
+      "source_hash": 18150980184154092565,
+      "context_hash": 13695739486083588751,
+      "translation": "현재 프로세스 전역 임포트 상태는 다음으로 구성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634069Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "sys.modules",
+      "source_hash": 12496086794498261693,
+      "context_hash": 8884631207802714219,
+      "translation": "sys.modules",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634069Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "sys.path",
+      "source_hash": 17004360358433084241,
+      "context_hash": 12349260859480916090,
+      "translation": "sys.path",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634069Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "sys.path_hooks",
+      "source_hash": 385611776316139328,
+      "context_hash": 1505291638396824256,
+      "translation": "sys.path_hooks",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634070Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "sys.meta_path",
+      "source_hash": 7488366669296804441,
+      "context_hash": 3224595142066060663,
+      "translation": "sys.meta_path",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634070Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "sys.path_importer_cache",
+      "source_hash": 4699723787827865661,
+      "context_hash": 15847635998470629323,
+      "translation": "sys.path_importer_cache",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634070Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "the import lock (imp.lock_held()/acquire_lock()/release_lock())",
+      "source_hash": 9694680140818271318,
+      "context_hash": 5714309300209918142,
+      "translation": "임포트 잠금 (imp.lock_held()/acquire_lock()/release_lock())",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634071Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "Isolating this state would allow multiple import states to be conveniently stored within a process.",
+      "source_hash": 1193522056967548089,
+      "context_hash": 10714144457216266731,
+      "translation": "이 상태를 격리하면 하나의 프로세스 안에 여러 임포트 상태를 편리하게 저장할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634071Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:1",
+      "source": "Placing the import functionality in a self-contained object would also allow subclassing to add additional features (e.g. module import notifications or fine-grained control over which modules can be imported).",
+      "source_hash": 5424344298927638458,
+      "context_hash": 8318096223004559186,
+      "translation": "임포트 기능을 독립형 객체에 배치하면 서브클래싱을 통해 추가 기능(예: 모듈 임포트 알림 또는 임포트할 수 있는 모듈에 대한 세밀한 제어)을 추가할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634071Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:2",
+      "source": "The engine would also be subclassed to make it possible to use the import engine API to interact with the existing process-global state.",
+      "source_hash": 16497619725637223384,
+      "context_hash": 14947174999875724548,
+      "translation": "또한 기존 프로세스 전역 상태와 상호 작용하기 위해 임포트 엔진 API를 사용할 수 있도록 엔진을 서브클래싱합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634072Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "The namespace PEPs (especially :pep:`402`) raise a potential need for *additional* process global state, in order to correctly update package paths as ``sys.path`` is modified.",
+      "source_hash": 8441089702956502263,
+      "context_hash": 5052930259222920158,
+      "translation": "네임스페이스 PEP(특히 :pep:`402`\\ )는 ``sys.path``\\ 가 수정될 때 패키지 경로를 올바르게 업데이트하기 위해 *추가* 프로세스 전역 상태가 필요할 가능성을 제기합니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:04:06.634072Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:0",
+      "source": "Finally, providing a coherent object for all this state makes it feasible to also provide context management features that allow the import state to be temporarily substituted.",
+      "source_hash": 6250447236981718641,
+      "context_hash": 14037097451901208169,
+      "translation": "마지막으로, 이 모든 상태를 위한 일관된 객체를 제공하면 임포트 상태를 일시적으로 대체할 수 있는 컨텍스트 관리 기능도 제공할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634074Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Proposal",
+      "source_hash": 17139217736364358932,
+      "context_hash": 11347629026473183572,
+      "translation": "제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634074Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "We propose introducing an ImportEngine class to encapsulate import functionality.",
+      "source_hash": 17857338153930043751,
+      "context_hash": 1825403745507263558,
+      "translation": "임포트 기능을 캡슐화하는 ImportEngine 클래스를 도입할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634074Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "This includes an ``__import__()`` method which can be used as an alternative to the built-in ``__import__()`` when desired and also an ``import_module()`` method, equivalent to ``importlib.import_module()`` [3]_.",
+      "source_hash": 15237687938789834441,
+      "context_hash": 10911261761174429725,
+      "translation": "여기에는 필요할 때 내장 ``__import__()``\\ 의 대안으로 사용할 수 있는 ``__import__()`` 메서드와 ``importlib.import_module()``\\ 에 해당하는 ``import_module()`` 메서드가 포함됩니다 [3]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634075Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Since there are global import state invariants that are assumed and should be maintained, we introduce a ``GlobalImportState`` class with an interface identical to ``ImportEngine`` but directly accessing the current global import state.",
+      "source_hash": 3948786746030816465,
+      "context_hash": 12256793616453636493,
+      "translation": "전역 임포트 상태에 대해 가정되고 유지되어야 하는 불변 조건이 있으므로, ``ImportEngine``\\ 과 동일한 인터페이스를 가지면서 현재 전역 임포트 상태에 직접 액세스하는 ``GlobalImportState`` 클래스를 도입합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634075Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "This can be easily implemented using class properties.",
+      "source_hash": 7926661026772852143,
+      "context_hash": 9071929899232106773,
+      "translation": "이는 클래스 속성을 사용하여 쉽게 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634075Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 17037969960013153203,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634075Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "ImportEngine API",
+      "source_hash": 14414455065911640119,
+      "context_hash": 16844804355941348780,
+      "translation": "ImportEngine API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:04:06.634075Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The proposed extension consists of the following objects:",
+      "source_hash": 14685117281370997081,
+      "context_hash": 14406369812420611438,
+      "translation": "제안된 확장은 다음 객체로 구성됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582818Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "``importlib.engine.ImportEngine``",
+      "source_hash": 9508412064823745370,
+      "context_hash": 17108206365674885319,
+      "translation": "``importlib.engine.ImportEngine``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582821Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "``from_engine(self, other)``",
+      "source_hash": 5826962868895561983,
+      "context_hash": 17223314325392946504,
+      "translation": "``from_engine(self, other)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582821Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "Create a new import object from another ImportEngine instance.",
+      "source_hash": 10970667709460465535,
+      "context_hash": 419134247872635735,
+      "translation": "다른 ImportEngine 인스턴스로부터 새로운 임포트 객체를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582822Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:1",
+      "source": "The new object is initialised with a copy of the state in ``other``.",
+      "source_hash": 1993352134215080564,
+      "context_hash": 7701831782963996076,
+      "translation": "새 객체는 ``other``\\ 에 있는 상태의 복사본으로 초기화됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582822Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:2",
+      "source": "When called on ``importlib engine.sysengine``, ``from_engine()`` can be used to create an ``ImportEngine`` object with a **copy** of the global import state.",
+      "source_hash": 2560029639031264618,
+      "context_hash": 467421328336239469,
+      "translation": "``importlib engine.sysengine``\\ 에서 호출할 경우, ``from_engine()``\\ 은 전역 임포트 상태의 **복사본**\\ 을 가진 ``ImportEngine`` 객체를 생성하는 데 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582822Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "``__import__(self, name, globals={}, locals={}, fromlist=[], level=0)``",
+      "source_hash": 11240916363721049355,
+      "context_hash": 10050678995534279396,
+      "translation": "``__import__(self, name, globals={}, locals={}, fromlist=[], level=0)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582822Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "Reimplementation of the builtin ``__import__()`` function.",
+      "source_hash": 9948868141536155156,
+      "context_hash": 17321905970457111479,
+      "translation": "내장 ``__import__()`` 함수의 재구현입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582823Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:1",
+      "source": "The import of a module will proceed using the state stored in the ImportEngine instance rather than the global import state.",
+      "source_hash": 16409984771963822228,
+      "context_hash": 538168455030087132,
+      "translation": "모듈 임포트는 전역 임포트 상태가 아니라 ImportEngine 인스턴스에 저장된 상태를 사용하여 진행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582823Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:2",
+      "source": "For full documentation of ``__import__`` functionality, see [2]_ . ``__import__()`` from ``ImportEngine`` and its subclasses can be used to customise the behaviour of the ``import`` statement by replacing ``__builtin__.__import__`` with ``ImportEngine().__import__``.",
+      "source_hash": 2775960079368385717,
+      "context_hash": 12614490408511392025,
+      "translation": "``__import__`` 기능에 대한 전체 문서는 [2]_ 를 참조하십시오. ``ImportEngine``\\ 및 해당 서브클래스의 ``__import__()``\\ 는 ``__builtin__.__import__``\\ 를 ``ImportEngine().__import__``\\ 로 교체하여 ``import`` 문의 동작을 사용자 정의하는 데 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582823Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "``import_module(name, package=None)``",
+      "source_hash": 15721410034087665285,
+      "context_hash": 10749543938546823615,
+      "translation": "``import_module(name, package=None)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582823Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "A reimplementation of ``importlib.import_module()`` which uses the import state stored in the ImportEngine instance.",
+      "source_hash": 10377593776118352402,
+      "context_hash": 9884540134940592609,
+      "translation": "ImportEngine 인스턴스에 저장된 임포트 상태를 사용하는 ``importlib.import_module()``\\ 의 재구현입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582824Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:1",
+      "source": "See [3]_ for a full reference.",
+      "source_hash": 7343042145081537006,
+      "context_hash": 172667616130016554,
+      "translation": "전체 참조 문서는 [3]_ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582824Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "``modules, path, path_hooks, meta_path, path_importer_cache``",
+      "source_hash": 11795925590472366495,
+      "context_hash": 14971244792587148357,
+      "translation": "``modules, path, path_hooks, meta_path, path_importer_cache``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582824Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:0",
+      "source": "Instance-specific versions of their process global ``sys`` equivalents",
+      "source_hash": 6312203011162112222,
+      "context_hash": 8341769799205786630,
+      "translation": "프로세스 전역 ``sys``\\ 대응 항목의 인스턴스별 버전입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582824Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:11/seg:0",
+      "source": "``importlib.engine.GlobalImportEngine(ImportEngine)``",
+      "source_hash": 17800378769967422268,
+      "context_hash": 17347578484656953320,
+      "translation": "``importlib.engine.GlobalImportEngine(ImportEngine)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582825Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:12/seg:0",
+      "source": "Convenience class to provide engine-like access to the global state.",
+      "source_hash": 959465070570667659,
+      "context_hash": 11764000637964285958,
+      "translation": "전역 상태에 엔진과 같은 방식으로 액세스할 수 있도록 제공하는 편의 클래스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582825Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:12/seg:1",
+      "source": "Provides ``__import__()``, ``import_module()`` and ``from_engine()`` methods like ``ImportEngine`` but writes through to the global state in ``sys``.",
+      "source_hash": 6056527631196683471,
+      "context_hash": 11358047433410589149,
+      "translation": "``ImportEngine``\\ 와 마찬가지로 ``__import__()``, ``import_module()`` 및 ``from_engine()`` 메서드를 제공하지만, ``sys``\\ 의 전역 상태에 직접 기록합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582825Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:13/seg:0",
+      "source": "To support various namespace package mechanisms, when ``sys.path`` is altered, tools like ``pkgutil.extend_path`` should be used to also modify other parts of the import state (in this case, package ``__path__`` attributes).",
+      "source_hash": 4274991496936173890,
+      "context_hash": 15085897721123942291,
+      "translation": "다양한 네임스페이스 패키지 메커니즘을 지원하려면 ``sys.path``\\ 를 변경할 때 ``pkgutil.extend_path``\\ 와 같은 도구를 사용하여 임포트 상태의 다른 부분(이 경우 패키지 ``__path__`` 속성)도 수정해야 합니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:22:17.582826Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:13/seg:1",
+      "source": "The path importer cache should also be invalidated when a variety of changes are made.",
+      "source_hash": 11285526140998879023,
+      "context_hash": 9201345741558729264,
+      "translation": "또한 다양한 변경이 이루어질 때 경로 임포터 캐시를 무효화해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582826Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:14/seg:0",
+      "source": "The ``ImportEngine`` API will provide convenience methods that automatically make related import state updates as part of a single operation.",
+      "source_hash": 4109783254371578643,
+      "context_hash": 11695791089214404150,
+      "translation": "``ImportEngine`` API는 하나의 작업의 일부로 관련 임포트 상태 업데이트를 자동으로 수행하는 편의 메서드를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582827Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Global variables",
+      "source_hash": 284468301840895960,
+      "context_hash": 2435375798087434285,
+      "translation": "전역 변수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582827Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "``importlib.engine.sysengine``",
+      "source_hash": 8290706090992993851,
+      "context_hash": 17933737546318764892,
+      "translation": "``importlib.engine.sysengine``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582827Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "A precreated instance of ``GlobalImportEngine``.",
+      "source_hash": 12390288746542468791,
+      "context_hash": 17099793114181847614,
+      "translation": "미리 생성된 ``GlobalImportEngine`` 인스턴스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582827Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "Intended for use by importers and loaders that have been updated to accept optional ``engine`` parameters and with ``ImportEngine.from_engine(sysengine)`` to start with a copy of the process global import state.",
+      "source_hash": 5334219889401655870,
+      "context_hash": 9771865569449230475,
+      "translation": "선택적 ``engine`` 매개변수를 받아들이도록 업데이트된 임포터와 로더에서 사용하고, ``ImportEngine.from_engine(sysengine)``\\ 와 함께 사용하여 프로세스 전역 임포트 상태의 복사본으로 시작하도록 설계되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582827Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "No changes to finder/loader interfaces",
+      "source_hash": 5589957190988180609,
+      "context_hash": 13707226283977938828,
+      "translation": "파인더/로더 인터페이스 변경 없음",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582828Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Rather than attempting to update the :pep:`302` APIs to accept additional state, this PEP proposes that ``ImportEngine`` support the content management protocol (similar to the context substitution mechanisms in the ``decimal`` module).",
+      "source_hash": 7025792611377636171,
+      "context_hash": 823404679551238961,
+      "translation": "추가 상태를 받아들이도록 :pep:`302` API를 업데이트하려 하지 않고, 이 PEP는 ``ImportEngine``\\ 이 콘텐츠 관리 프로토콜을 지원하도록 제안합니다(``decimal`` 모듈의 컨텍스트 대체 메커니즘과 유사합니다).",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:22:17.582828Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "The context management mechanism for ``ImportEngine`` would:",
+      "source_hash": 834790840392886725,
+      "context_hash": 17903219980174948728,
+      "translation": "``ImportEngine``\\ 의 컨텍스트 관리 메커니즘은 다음과 같이 동작합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582829Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "On entry:",
+      "source_hash": 15897715072284246707,
+      "context_hash": 17232637627115216438,
+      "translation": "진입 시:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582829Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "Acquire the import lock",
+      "source_hash": 14345416011113611963,
+      "context_hash": 8161431764713333913,
+      "translation": "임포트 잠금을 획득합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582829Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "Substitute the global import state with the import engine's own state",
+      "source_hash": 3487076238119115479,
+      "context_hash": 15752053646874441209,
+      "translation": "전역 임포트 상태를 임포트 엔진 자체의 상태로 대체합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582829Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "On exit:",
+      "source_hash": 6485163727279714324,
+      "context_hash": 11836344487682159478,
+      "translation": "종료 시:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.582829Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "Restore the previous global import state",
+      "source_hash": 9144362599552240215,
+      "context_hash": 10169185961907841772,
+      "translation": "이전 전역 임포트 상태를 복원합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928984Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:0",
+      "source": "Release the import lock",
+      "source_hash": 11029334414326707547,
+      "context_hash": 3180849837557744047,
+      "translation": "임포트 잠금을 해제합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928990Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:0",
+      "source": "The precise API for this is TBD (but will probably use a distinct context management object, along the lines of that created by ``decimal.localcontext``).",
+      "source_hash": 10970486307370342463,
+      "context_hash": 14868083376527106506,
+      "translation": "이에 대한 정확한 API는 아직 미정입니다(하지만 ``decimal.localcontext``\\ 가 만드는 것과 비슷한, 별도의 컨텍스트 관리 객체를 사용할 가능성이 높습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928991Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Open Issues",
+      "source_hash": 15188361361114285070,
+      "context_hash": 18415269428160027858,
+      "translation": "미해결 쟁점",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928992Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "API design for falling back to global import state",
+      "source_hash": 2875423897179121826,
+      "context_hash": 7677378752589140550,
+      "translation": "전역 임포트 상태로 대체(fall back)하기 위한 API 설계",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928992Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The current proposal relies on the ``from_engine()`` API to fall back to the global import state.",
+      "source_hash": 12237751809384236608,
+      "context_hash": 13721859534516491257,
+      "translation": "현재 제안은 전역 임포트 상태로 대체하기 위해 ``from_engine()`` API에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928993Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "It may be desirable to offer a variant that instead falls back to the global import state dynamically.",
+      "source_hash": 15859376104784988156,
+      "context_hash": 13381452988807576591,
+      "translation": "대신 전역 임포트 상태로 동적으로 대체하는 변형을 제공하는 것이 바람직할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928994Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "However, one big advantage of starting with an \"as isolated as possible\" design is that it becomes possible to experiment with subclasses that blur the boundaries between the engine instance state and the process global state in various ways.",
+      "source_hash": 4309988951924461422,
+      "context_hash": 13531420870727618291,
+      "translation": "하지만 \"가능한 한 격리된\" 설계에서 시작하는 것의 큰 장점 중 하나는, 엔진 인스턴스 상태와 프로세스 전역 상태 사이의 경계를 다양한 방식으로 흐리는 서브클래스를 실험할 수 있게 된다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928995Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Builtin and extension modules must be process global",
+      "source_hash": 5641072130408838634,
+      "context_hash": 9916195904508692032,
+      "translation": "내장 모듈과 확장 모듈은 반드시 프로세스 전역이어야 합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928995Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "Due to platform limitations, only one copy of each builtin and extension module can readily exist in each process.",
+      "source_hash": 1809817124510494610,
+      "context_hash": 15566874204650037143,
+      "translation": "플랫폼의 제약으로 인해, 각 내장 모듈과 확장 모듈의 사본은 프로세스당 하나만 쉽게 존재할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928996Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "Accordingly, it is impossible for each ``ImportEngine`` instance to load such modules independently.",
+      "source_hash": 14699810715182514269,
+      "context_hash": 13005739050805779423,
+      "translation": "따라서 각 ``ImportEngine`` 인스턴스가 이러한 모듈을 독립적으로 로드하는 것은 불가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928996Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "The simplest solution is for ``ImportEngine`` to refuse to load such modules, raising ``ImportError``. ``GlobalImportEngine`` would be able to load them normally.",
+      "source_hash": 14968626239595000001,
+      "context_hash": 4046844634808512749,
+      "translation": "가장 단순한 해법은 ``ImportEngine``\\ 이 이러한 모듈의 로드를 거부하고 ``ImportError``\\ 를 발생시키는 것입니다. ``GlobalImportEngine``\\ 은 이러한 모듈을 정상적으로 로드할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928997Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "``ImportEngine`` will still return such modules from a prepopulated module cache - it's only loading them directly which causes problems.",
+      "source_hash": 5789753263710916725,
+      "context_hash": 1940251618704984373,
+      "translation": "``ImportEngine``\\ 도 미리 채워진 모듈 캐시에서는 여전히 이러한 모듈을 반환합니다 - 문제가 되는 것은 오직 직접 로드하는 경우뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928999Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Scope of substitution",
+      "source_hash": 11493621478775331576,
+      "context_hash": 13741948056051647080,
+      "translation": "대체(substitution)의 범위",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.928999Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "Related to the previous open issue is the question of what state to substitute when using the context management API.",
+      "source_hash": 17507294492884561322,
+      "context_hash": 16184406191999094294,
+      "translation": "이전 미해결 쟁점과 관련된 것은, 컨텍스트 관리 API를 사용할 때 어떤 상태를 대체할 것인가 하는 문제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "It is currently the case that replacing ``sys.modules`` can be unreliable due to cached references and there's the underlying fact that having independent copies of some modules is simply impossible due to platform limitations.",
+      "source_hash": 14489275180098539614,
+      "context_hash": 17935463267191989053,
+      "translation": "현재는 캐시된 참조 때문에 ``sys.modules``\\ 를 교체하는 것이 신뢰할 수 없을 수 있으며, 플랫폼의 제약으로 인해 일부 모듈의 독립적인 사본을 갖는 것 자체가 근본적으로 불가능하다는 사실도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "As part of this PEP, it will be necessary to document explicitly:",
+      "source_hash": 7748374108769637030,
+      "context_hash": 9482314196748035771,
+      "translation": "이 PEP의 일부로서, 다음 사항을 명시적으로 문서화할 필요가 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "Which parts of the global import state can be substituted (and declare code which caches references to that state without dealing with the substitution case buggy)",
+      "source_hash": 2760260817456347756,
+      "context_hash": 10752798413978465293,
+      "translation": "전역 임포트 상태 중 어느 부분을 대체할 수 있는지 (그리고 대체 상황을 다루지 않고 해당 상태에 대한 참조를 캐시하는 코드를 버그로 선언합니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929001Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "Which parts must be modified in-place (and hence are not substituted by the ``ImportEngine`` context management API, or otherwise scoped to ``ImportEngine`` instances)",
+      "source_hash": 5253163120012811118,
+      "context_hash": 10975774565208158611,
+      "translation": "어느 부분을 반드시 제자리에서(in-place) 수정해야 하는지 (따라서 ``ImportEngine`` 컨텍스트 관리 API로 대체되지 않거나, 그 외의 방식으로 ``ImportEngine`` 인스턴스에 범위가 한정됩니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929001Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 3658966383159216733,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:28:46.929001Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "A reference implementation [4]_ for an earlier draft of this PEP, based on Brett Cannon's importlib has been developed by Greg Slodkowicz as part of the 2011 Google Summer of Code.",
+      "source_hash": 14550684390553435629,
+      "context_hash": 15214983914661548919,
+      "translation": "Brett Cannon의 importlib을 기반으로 한 이 PEP의 이전 초안에 대한 참조 구현 [4]_\\ 은 2011년 Google Summer of Code의 일환으로 Greg Slodkowicz가 개발했습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:28:46.929004Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "Note that the current implementation avoids modifying existing code, and hence duplicates a lot of things unnecessarily.",
+      "source_hash": 14455650090563451988,
+      "context_hash": 2864959101919571339,
+      "translation": "현재 구현은 기존 코드를 수정하는 것을 피하고 있으며, 따라서 많은 것을 불필요하게 중복시키고 있다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929004Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:2",
+      "source": "An actual implementation would just modify any such affected code in place.",
+      "source_hash": 11197499734478558684,
+      "context_hash": 9959142481558837198,
+      "translation": "실제 구현이라면 그러한 영향을 받는 코드를 제자리에서 수정하기만 하면 될 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929005Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "That earlier draft of the PEP proposed change the :pep:`302` APIs to support passing in an optional engine instance.",
+      "source_hash": 18375319730662209387,
+      "context_hash": 17873333905606781980,
+      "translation": "이 PEP의 이전 초안은 선택적 엔진 인스턴스를 전달하는 것을 지원하도록 :pep:`302` API를 변경할 것을 제안했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929005Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:1",
+      "source": "This had the (serious) downside of not correctly affecting further imports from the imported module, hence the change to the context management based proposal for substituting the global state.",
+      "source_hash": 6297603090823173314,
+      "context_hash": 15933640063009448995,
+      "translation": "이는 임포트된 모듈로부터의 추가 임포트에 올바르게 영향을 미치지 못한다는 (심각한) 단점이 있었으며, 이 때문에 전역 상태를 대체하기 위한 컨텍스트 관리 기반 제안으로 변경하게 되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929005Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 5897968168692953012,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929006Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "__import__() builtin function, The Python Standard Library documentation",
+      "source_hash": 17291547233673160400,
+      "context_hash": 8539090426022370392,
+      "translation": "__import__() 내장 함수, 파이썬 표준 라이브러리 문서",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T17:28:46.929006Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "(http://docs.python.org/library/functions.html#__import__)",
+      "source_hash": 12308354443461836505,
+      "context_hash": 5109497144942381996,
+      "translation": "(http://docs.python.org/library/functions.html#__import__)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929007Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "Importlib documentation, Cannon",
+      "source_hash": 989713632480183672,
+      "context_hash": 13640319074180554669,
+      "translation": "Importlib 문서, Cannon",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929007Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "(http://docs.python.org/dev/library/importlib)",
+      "source_hash": 2366368620802130911,
+      "context_hash": 14136271210058247779,
+      "translation": "(http://docs.python.org/dev/library/importlib)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929007Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:0",
+      "source": "Reference implementation",
+      "source_hash": 3855301145730187591,
+      "context_hash": 2039091688720477992,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:28:46.929007Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:0",
+      "source": "(https://bitbucket.org/jergosh/gsoc_import_engine/src/default/Lib/importlib/engine.py)",
+      "source_hash": 1047115523876488341,
+      "context_hash": 7255824391228245809,
+      "translation": "(https://bitbucket.org/jergosh/gsoc_import_engine/src/default/Lib/importlib/engine.py)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:46.929008Z",
+      "issues": []
+    }
+  ]
+}

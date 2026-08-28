@@ -1,0 +1,867 @@
+{
+  "version": 1,
+  "source_hash": 15953659786879090792,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Inlined comprehensions",
+      "source_hash": 2248294540797945387,
+      "context_hash": 16530898886277989957,
+      "translation": "인라인 컴프리헨션",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784928Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 14353261027343877766,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784931Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Comprehensions are currently compiled as nested functions, which provides isolation of the comprehension's iteration variable, but is inefficient at runtime.",
+      "source_hash": 13799285971024665841,
+      "context_hash": 329214579928046559,
+      "translation": "컴프리헨션은 현재 중첩 함수로 컴파일되므로 컴프리헨션의 반복 변수가 격리되지만, 런타임에는 비효율적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784931Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This PEP proposes to inline list, dictionary, and set comprehensions into the code where they are defined, and provide the expected isolation by pushing/popping clashing locals on the stack.",
+      "source_hash": 9621453746549163784,
+      "context_hash": 7211729263023350868,
+      "translation": "이 PEP는 리스트, 딕셔너리 및 집합 컴프리헨션을 해당 컴프리헨션이 정의된 코드에 인라인하고, 충돌하는 로컬 변수를 스택에 푸시하고 팝하여 예상되는 격리를 제공할 것을 제안합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:41:16.784932Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "This change makes comprehensions much faster: up to 2x faster for a microbenchmark of a comprehension alone, translating to an 11% speedup for one sample benchmark derived from real-world code that makes heavy use of comprehensions in the context of doing actual work.",
+      "source_hash": 4877407514505204808,
+      "context_hash": 4281344794853147502,
+      "translation": "이 변경으로 컴프리헨션이 훨씬 빨라집니다. 컴프리헨션만 측정하는 마이크로벤치마크에서는 최대 2배 빨라지며, 실제 작업을 수행하는 과정에서 컴프리헨션을 많이 사용하는 실제 코드에서 도출한 한 샘플 벤치마크에서는 11%의 속도 향상으로 이어집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784934Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 17450057780025971466,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784934Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Comprehensions are a popular and widely-used feature of the Python language.",
+      "source_hash": 8126583252517408250,
+      "context_hash": 338293050974257890,
+      "translation": "컴프리헨션은 Python 언어에서 널리 사용되는 인기 있는 기능입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784934Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "The nested-function compilation of comprehensions optimizes for compiler simplicity at the expense of performance of user code.",
+      "source_hash": 4763387847745815907,
+      "context_hash": 5169776692517395636,
+      "translation": "컴프리헨션을 중첩 함수로 컴파일하면 사용자 코드의 성능을 희생하여 컴파일러의 단순성을 최적화하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784934Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "It is possible to provide near-identical semantics (see `Backwards Compatibility`_) with much better runtime performance for all users of comprehensions, with only a small increase in compiler complexity.",
+      "source_hash": 6803885475873751050,
+      "context_hash": 6516409062849818518,
+      "translation": "컴파일러 복잡성을 조금만 증가시키면서 모든 컴프리헨션 사용자에게 훨씬 더 나은 런타임 성능을 제공하고, 거의 동일한 의미론(`Backwards Compatibility`_ 참조)을 유지할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784935Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 17077851559919933575,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784935Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Inlining is a common compiler optimization in many languages.",
+      "source_hash": 12025948836009039357,
+      "context_hash": 15959565239014578065,
+      "translation": "인라이닝은 많은 언어에서 일반적인 컴파일러 최적화입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784935Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "Generalized inlining of function calls at compile time in Python is near-impossible, since call targets may be patched at runtime.",
+      "source_hash": 13819532928117064431,
+      "context_hash": 17586631332102188239,
+      "translation": "Python에서 함수 호출을 컴파일 시점에 일반적으로 인라인하는 것은 거의 불가능합니다. 호출 대상이 런타임에 패치될 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784936Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "Comprehensions are a special case, where we have a call target known statically in the compiler that can neither be patched (barring undocumented and unsupported fiddling with bytecode directly) nor escape.",
+      "source_hash": 1054962957312862060,
+      "context_hash": 4436509823774671700,
+      "translation": "컴프리헨션은 컴파일러에서 정적으로 알려진 호출 대상을 가지며, 직접 바이트코드를 조작하는 문서화되지 않았고 지원되지 않는 수단을 사용하지 않는 한 패치될 수도 없고 외부로 유출될 수도 없는 특수한 경우입니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:41:16.784936Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Inlining also permits other compiler optimizations of bytecode to be more effective, because they can now \"see through\" the comprehension bytecode, instead of it being an opaque call.",
+      "source_hash": 5076828688135144383,
+      "context_hash": 9384471531982411420,
+      "translation": "인라이닝은 바이트코드의 다른 컴파일러 최적화도 더 효과적으로 수행할 수 있게 합니다. 이제 컴프리헨션 바이트코드가 불투명한 호출로 남는 대신 이를 \"꿰뚫어 볼\" 수 있기 때문입니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:41:16.784937Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Normally a performance improvement would not require a PEP.",
+      "source_hash": 4985797039422081016,
+      "context_hash": 6718345510453513993,
+      "translation": "일반적으로 성능 향상에는 PEP가 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784937Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "In this case, the simplest and most efficient implementation results in some user-visible effects, so this is not just a performance improvement, it is a (small) change to the language.",
+      "source_hash": 2480692218298328079,
+      "context_hash": 18151275653789603791,
+      "translation": "이 경우 가장 단순하고 효율적인 구현이 사용자에게 보이는 일부 효과를 초래하므로, 이는 단순한 성능 향상이 아니라 언어에 대한 (작은) 변경입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784938Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 10236984057037008385,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784938Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Given a simple comprehension",
+      "source_hash": 10017255309386680491,
+      "context_hash": 3074038968242312317,
+      "translation": "간단한 컴프리헨션이 주어졌다고 합시다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784938Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "The compiler currently emits the following bytecode for the function ``f``:",
+      "source_hash": 5168093389026076939,
+      "context_hash": 9385220932852954483,
+      "translation": "컴파일러는 현재 함수 ``f``\\ 에 대해 다음 바이트코드를 방출합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:41:16.784938Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "The bytecode for the comprehension is in a separate code object.",
+      "source_hash": 6491434392545590803,
+      "context_hash": 15718642498521991567,
+      "translation": "컴프리헨션의 바이트코드는 별도의 코드 객체에 있습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:41:16.784939Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:1",
+      "source": "Each time ``f()`` is called, a new single-use function object is allocated (by ``MAKE_FUNCTION``), called (allocating and then destroying a new frame on the Python stack), and then immediately thrown away.",
+      "source_hash": 8839098717831508911,
+      "context_hash": 13118637077551375882,
+      "translation": "``f()``\\ 가 호출될 때마다 새 일회용 함수 객체가 (``MAKE_FUNCTION``\\ 에 의해) 할당되고, 호출된 다음 (Python 스택에 새 프레임을 할당하고 소멸시킴) 즉시 버려집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784940Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "Under this PEP, the compiler will emit the following bytecode for ``f()`` instead:",
+      "source_hash": 102337866750689104,
+      "context_hash": 8355144470611746551,
+      "translation": "이 PEP에 따라 컴파일러는 대신 ``f()``\\ 에 대해 다음 바이트코드를 방출합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:41:16.784940Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "There is no longer a separate code object, nor creation of a single-use function object, nor any need to create and destroy a Python frame.",
+      "source_hash": 9024882390977912102,
+      "context_hash": 1876839473607449475,
+      "translation": "더 이상 별도의 코드 객체나 일회용 함수 객체 생성이 없으며, Python 프레임을 생성하고 소멸시킬 필요도 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784940Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "Isolation of the ``x`` iteration variable is achieved by the combination of the new ``LOAD_FAST_AND_CLEAR`` opcode at offset ``6``, which saves any outer value of ``x`` on the stack before running the comprehension, and ``30 STORE_FAST``, which restores the outer value of ``x`` (if any) after running the comprehension.",
+      "source_hash": 15457029392178535834,
+      "context_hash": 12182584673096011469,
+      "translation": "반복 변수 ``x``\\ 의 격리는 오프셋 ``6``\\ 에 있는 새로운 ``LOAD_FAST_AND_CLEAR`` opcode와, 컴프리헨션을 실행하기 전에 외부 ``x``\\ 의 값이 있으면 이를 스택에 저장하는 기능, 그리고 컴프리헨션을 실행한 후 외부 ``x``\\ 의 값이 있으면 이를 복원하는 ``30 STORE_FAST``\\ 의 조합으로 달성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:56:45.022098Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "If the comprehension accesses variables from the outer scope, inlining avoids the need to place these variables in a cell, allowing the comprehension (and all other code in the outer function) to access them as normal fast locals instead.",
+      "source_hash": 13380616697381972860,
+      "context_hash": 2737486817128380707,
+      "translation": "컴프리헨션이 외부 스코프의 변수에 액세스하는 경우, 인라이닝을 사용하면 이러한 변수를 셀에 배치할 필요가 없어져 컴프리헨션과 외부 함수의 다른 모든 코드가 대신 해당 변수에 일반적인 빠른 로컬 변수로 액세스할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784941Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:1",
+      "source": "This provides further performance gains.",
+      "source_hash": 17073374948532614777,
+      "context_hash": 8828623419941307373,
+      "translation": "이를 통해 추가적인 성능 향상을 얻을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784941Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "In some cases, the comprehension iteration variable may be a global or cellvar or freevar, rather than a simple function local, in the outer scope.",
+      "source_hash": 12174576028284220613,
+      "context_hash": 18388207537050931780,
+      "translation": "일부 경우 외부 스코프에서 컴프리헨션의 반복 변수는 단순한 함수 로컬 변수가 아니라 전역 변수, 셀 변수 또는 자유 변수일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784942Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:1",
+      "source": "In these cases, the compiler also internally pushes and pops the scope information for the variable when entering/leaving the comprehension, so that semantics are maintained.",
+      "source_hash": 8152009748945413104,
+      "context_hash": 974280665594977108,
+      "translation": "이러한 경우 컴파일러는 의미론을 유지하기 위해 컴프리헨션에 진입하거나 컴프리헨션을 빠져나올 때 변수의 스코프 정보도 내부적으로 푸시하고 팝합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784942Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:2",
+      "source": "For example, if the variable is a global outside the comprehension, ``LOAD_GLOBAL`` will still be used where it is referenced outside the comprehension, but ``LOAD_FAST`` / ``STORE_FAST`` will be used within the comprehension.",
+      "source_hash": 2977445227725125055,
+      "context_hash": 3727844195599498269,
+      "translation": "예를 들어 컴프리헨션 외부에서 변수가 전역 변수인 경우, 외부에서 참조될 때는 계속 ``LOAD_GLOBAL``\\ 이 사용되지만 컴프리헨션 내부에서는 ``LOAD_FAST`` / ``STORE_FAST``\\ 가 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784942Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:3",
+      "source": "If it is a cellvar/freevar outside the comprehension, the ``LOAD_FAST_AND_CLEAR`` / ``STORE_FAST`` used to save/restore it do not change (there is no ``LOAD_DEREF_AND_CLEAR``), meaning that the entire cell (not just the value within it) is saved/restored, so the comprehension does not write to the outer cell.",
+      "source_hash": 7614800892028451150,
+      "context_hash": 14417229112354973336,
+      "translation": "컴프리헨션 외부에서 변수가 셀 변수/자유 변수인 경우, 이를 저장하고 복원하는 데 사용되는 ``LOAD_FAST_AND_CLEAR`` / ``STORE_FAST``\\ 는 변경되지 않습니다(``LOAD_DEREF_AND_CLEAR``\\ 는 없음). 이는 전체 셀(셀 안의 값만이 아님)이 저장되고 복원된다는 의미이므로 컴프리헨션이 외부 셀에 쓰지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784943Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:0",
+      "source": "Comprehensions occurring in module or class scope are also inlined.",
+      "source_hash": 12277896000207448243,
+      "context_hash": 5920632275926828459,
+      "translation": "모듈 또는 클래스 스코프에서 발생하는 컴프리헨션도 인라인됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784943Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:1",
+      "source": "In this case, the comprehension will introduce usage of fast-locals (``LOAD_FAST`` / ``STORE_FAST``) for the comprehension iteration variable within the comprehension only, in a scope where otherwise only ``LOAD_NAME`` / ``STORE_NAME`` would be used, maintaining isolation.",
+      "source_hash": 4001222717729160273,
+      "context_hash": 9356433642373147258,
+      "translation": "이 경우 컴프리헨션은 격리를 유지하면서, 그렇지 않다면 ``LOAD_NAME`` / ``STORE_NAME``\\ 만 사용될 스코프에서 컴프리헨션 내부의 컴프리헨션 반복 변수에 대해서만 빠른 로컬 변수(``LOAD_FAST`` / ``STORE_FAST``) 사용을 도입합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:41:16.784943Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:0",
+      "source": "In effect, comprehensions introduce a sub-scope where local variables are fully isolated, but without the performance cost or stack frame entry of a call.",
+      "source_hash": 12140773654729791364,
+      "context_hash": 18215030001780199770,
+      "translation": "실제로 컴프리헨션은 지역 변수가 완전히 격리되는 하위 스코프를 도입하지만, 호출에 따른 성능 비용이나 스택 프레임 진입은 발생하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196793Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:0",
+      "source": "Generator expressions are currently not inlined in the reference implementation of this PEP.",
+      "source_hash": 3397185239956549341,
+      "context_hash": 7626373419990386584,
+      "translation": "제너레이터 표현식은 현재 이 PEP의 참조 구현에서 인라인 처리되지 않습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현",
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:40:53.196796Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:1",
+      "source": "In the future, some generator expressions may be inlined, where the returned generator object does not leak.",
+      "source_hash": 12592674738405860705,
+      "context_hash": 12284173115474776427,
+      "translation": "향후에는 반환된 제너레이터 객체가 누출되지 않는 일부 제너레이터 표현식이 인라인 처리될 수 있습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:40:53.196798Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:15/seg:0",
+      "source": "Asynchronous comprehensions are inlined the same as synchronous ones; no special handling is needed.",
+      "source_hash": 10595918208662747645,
+      "context_hash": 2813841082284654361,
+      "translation": "비동기 컴프리헨션은 동기 컴프리헨션과 동일하게 인라인 처리되므로 특별한 처리가 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196799Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 18256825222858997431,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196799Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Comprehension inlining will cause the following visible behavior changes.",
+      "source_hash": 11317747129411644147,
+      "context_hash": 11266273567836282397,
+      "translation": "컴프리헨션의 인라인 처리로 인해 다음과 같은 가시적인 동작 변경이 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196799Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "No changes in the standard library or test suite were necessary to adapt to these changes in the implementation, suggesting the impact in user code is likely to be minimal.",
+      "source_hash": 7274952663429810560,
+      "context_hash": 14381706161907306083,
+      "translation": "구현에서 이러한 변경에 대응하기 위해 표준 라이브러리나 테스트 모음을 변경할 필요가 없었으므로, 사용자 코드에 미치는 영향은 최소화될 가능성이 높습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:40:53.196800Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Specialized tools depending on undocumented details of compiler bytecode output may of course be affected in ways beyond the below, but these tools already must adapt to bytecode changes in each Python version.",
+      "source_hash": 3738301630428245034,
+      "context_hash": 9263681212233829200,
+      "translation": "문서화되지 않은 컴파일러 바이트코드 출력 세부 사항에 의존하는 특수 도구는 물론 아래에 설명된 범위를 넘어 영향을 받을 수 있지만, 이러한 도구는 이미 각 Python 버전의 바이트코드 변경에 대응해야 합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:40:53.196801Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "locals() includes outer variables",
+      "source_hash": 15396996120732659444,
+      "context_hash": 2880160923940452887,
+      "translation": "locals()에 외부 변수가 포함됩니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196801Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Calling ``locals()`` within a comprehension will include all locals of the function containing the comprehension.",
+      "source_hash": 15210881593053348969,
+      "context_hash": 15451096749049173488,
+      "translation": "컴프리헨션 내부에서 ``locals()``\\ 를 호출하면 해당 컴프리헨션을 포함하는 함수의 모든 지역 변수가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196802Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "E.g. given the following function",
+      "source_hash": 17980367083142947002,
+      "context_hash": 3439275923094394290,
+      "translation": "예를 들어, 다음 함수를 예로 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196802Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "Calling ``f([1])`` in current Python will return",
+      "source_hash": 5568127481391715806,
+      "context_hash": 14422239996732411575,
+      "translation": "현재 Python에서 ``f([1])``\\ 을 호출하면 다음을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196802Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "where ``.0`` is an internal implementation detail: the synthetic sole argument to the comprehension \"function\".",
+      "source_hash": 8938712890866042172,
+      "context_hash": 10483116169217364348,
+      "translation": "여기서 ``.0``\\ 은 내부 구현 세부 사항으로, 컴프리헨션 \"함수\"에 전달되는 합성된 유일한 인자입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196803Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "Under this PEP, it will instead return",
+      "source_hash": 3630783598437569746,
+      "context_hash": 10551551355814970278,
+      "translation": "이 PEP에서는 대신 다음을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196803Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "This now includes the outer ``lst`` variable as a local, and eliminates the synthetic ``.0``.",
+      "source_hash": 9745075850743147429,
+      "context_hash": 7370626841067754849,
+      "translation": "이제 외부의 ``lst``\\ 변수가 지역 변수로 포함되고, 합성된 ``.0``\\ 이 제거됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196803Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "No comprehension frame in tracebacks",
+      "source_hash": 18346994376933650911,
+      "context_hash": 13422282345134401665,
+      "translation": "트레이스백에 컴프리헨션 프레임이 포함되지 않습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196804Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Under this PEP, a comprehension will no longer have its own dedicated frame in a stack trace.",
+      "source_hash": 9424779640516385777,
+      "context_hash": 16630116248378123864,
+      "translation": "이 PEP에 따라 스택 추적에서 컴프리헨션이 더 이상 자체 전용 프레임을 갖지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196804Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "For example, given this function",
+      "source_hash": 2646911376248666319,
+      "context_hash": 15227015081779460905,
+      "translation": "예를 들어, 다음 함수를 예로 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196804Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Currently, calling ``f()`` results in the following traceback:",
+      "source_hash": 11161568710542521782,
+      "context_hash": 15529564949324710690,
+      "translation": "현재 ``f()``\\ 를 호출하면 다음 트레이스백이 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196804Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "Note the dedicated frame for ``<listcomp>``.",
+      "source_hash": 561679514864109292,
+      "context_hash": 14812612553848520513,
+      "translation": "``<listcomp>``\\ 전용 프레임에 주목하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196805Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "Under this PEP, the traceback looks like this instead:",
+      "source_hash": 17224526635274845627,
+      "context_hash": 3914899256855591050,
+      "translation": "이 PEP에서는 트레이스백이 대신 다음과 같이 표시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196805Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "There is no longer an extra frame for the list comprehension.",
+      "source_hash": 4419664210890740110,
+      "context_hash": 17613970629789842655,
+      "translation": "이제 리스트 컴프리헨션을 위한 추가 프레임이 존재하지 않습니다.",
+      "glossary_snapshot": {
+        "list comprehension": "리스트 컴프리헨션"
+      },
+      "translated_at": "2026-08-28T18:40:53.196805Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:1",
+      "source": "The frame for the ``f`` function has the correct line number for the comprehension, however, so this simply makes the traceback more compact without losing any useful information.",
+      "source_hash": 451608919467937510,
+      "context_hash": 3228132228943989709,
+      "translation": "그러나 ``f``\\ 함수의 프레임에는 컴프리헨션에 해당하는 올바른 줄 번호가 있으므로, 이 변경은 유용한 정보를 잃지 않으면서 트레이스백을 더 간결하게 만들 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196806Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:0",
+      "source": "It is theoretically possible that code using warnings with the ``stacklevel`` argument could observe a behavior change due to the frame stack change.",
+      "source_hash": 8198206160602006291,
+      "context_hash": 2887241904366686702,
+      "translation": "이론적으로는 ``stacklevel``\\ 인자를 사용하는 코드가 프레임 스택 변경으로 인해 동작 변화를 감지할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196806Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:1",
+      "source": "In practice, however, this seems unlikely.",
+      "source_hash": 16519975680016837293,
+      "context_hash": 16491993983659704412,
+      "translation": "그러나 실제로는 그럴 가능성이 낮아 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196806Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:2",
+      "source": "It would require a warning raised in library code that is always called through a comprehension in that same library, where the warning is using a ``stacklevel`` of 3+ to bypass the comprehension and its containing function and point to a calling frame outside the library.",
+      "source_hash": 13926633232876232917,
+      "context_hash": 13259991529142615515,
+      "translation": "이를 위해서는 동일한 라이브러리에서 항상 컴프리헨션을 통해 호출되는 라이브러리 코드에서 경고가 발생해야 하며, 해당 경고가 ``stacklevel``\\ 을 3 이상으로 사용하여 컴프리헨션과 이를 포함하는 함수를 건너뛰고 라이브러리 외부의 호출 프레임을 가리켜야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196807Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:3",
+      "source": "In such a scenario it would usually be simpler and more reliable to raise the warning closer to the calling code and bypass fewer frames.",
+      "source_hash": 6780995231014223525,
+      "context_hash": 8753883846890223978,
+      "translation": "이러한 상황에서는 일반적으로 호출 코드에 더 가까운 곳에서 경고를 발생시키고 더 적은 프레임을 건너뛰는 편이 더 간단하고 안정적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196807Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Tracing/profiling will no longer show a call/return for the comprehension",
+      "source_hash": 4100970976357932232,
+      "context_hash": 14287136387143313597,
+      "translation": "추적/프로파일링에서 더 이상 컴프리헨션의 호출/반환이 표시되지 않습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196807Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Naturally, since list/dict/set comprehensions will no longer be implemented as a call to a nested function, tracing/profiling using ``sys.settrace`` or ``sys.setprofile`` will also no longer reflect that a call and return have occurred.",
+      "source_hash": 18015249259053694717,
+      "context_hash": 14911350437156155892,
+      "translation": "당연히 리스트/딕셔너리/집합 컴프리헨션이 더 이상 중첩 함수 호출로 구현되지 않으므로, ``sys.settrace``\\ 또는 ``sys.setprofile``\\ 을 사용하는 추적/프로파일링에서도 호출과 반환이 발생했다는 사실이 더 이상 반영되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196807Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Impact on other Python implementations",
+      "source_hash": 2619405317713725526,
+      "context_hash": 17226260167286124035,
+      "translation": "다른 Python 구현에 미치는 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:40:53.196808Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Per comments from representatives of `GraalPython <https://discuss.python.org/t/pep-709-inlined-comprehensions/24240/20>`_ and `PyPy <https://discuss.python.org/t/pep-709-inlined-comprehensions/24240/22>`_, they would likely feel the need to adapt to the observable behavior changes here, given the likelihood that someone, at some point, will depend on them.",
+      "source_hash": 4389160794008829241,
+      "context_hash": 3832194666585577591,
+      "translation": "`GraalPython <https://discuss.python.org/t/pep-709-inlined-comprehensions/24240/20>`_ 및 `PyPy <https://discuss.python.org/t/pep-709-inlined-comprehensions/24240/22>`_ 대표들의 의견에 따르면, 언젠가 누군가가 그것들에 의존할 가능성이 높으므로, 그들은 여기서 발생하는 관찰 가능한 동작 변경 사항에 적응해야 할 필요를 느낄 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999043Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "Thus, all else equal, fewer observable changes would be less work.",
+      "source_hash": 4684079255316863933,
+      "context_hash": 8295943809802019491,
+      "translation": "따라서 다른 조건이 같다면 관찰 가능한 변경 사항이 적을수록 작업량도 줄어듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999047Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "But these changes (at least in the case of GraalPython) should be manageable \"without much headache\".",
+      "source_hash": 253248076257788311,
+      "context_hash": 4028348492121425867,
+      "translation": "그러나 이러한 변경 사항은 (적어도 GraalPython의 경우) \"큰 골칫거리 없이\" 관리할 수 있을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999047Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 3672028151775527942,
+      "translation": "이를 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999048Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "It is not intuitively obvious that comprehension syntax will or should result in creation and call of a nested function.",
+      "source_hash": 738227166006042933,
+      "context_hash": 412878241427131038,
+      "translation": "컴프리헨션 구문이 중첩 함수의 생성 및 호출로 이어진다는 것이 직관적으로 명확하지는 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999048Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "For new users not already accustomed to the prior behavior, I suspect the new behavior in this PEP will be more intuitive and require less explanation. (\"Why is there a ``<listcomp>`` line in my traceback when I didn't define any such function?",
+      "source_hash": 16847187766351830731,
+      "context_hash": 454471537974407275,
+      "translation": "이전 동작에 이미 익숙하지 않은 신규 사용자에게는 이 PEP의 새로운 동작이 더 직관적이고 설명도 덜 필요할 것으로 생각합니다. (\"그런 함수를 정의하지도 않았는데 트레이스백에 왜 ``<listcomp>`` 줄이 있습니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999048Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "What is this ``.0`` variable I see in ``locals()``?\")",
+      "source_hash": 6719762948092535908,
+      "context_hash": 8349912705773042939,
+      "translation": "``locals()``\\ 에서 보이는 이 ``.0`` 변수는 무엇입니까?\")",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999049Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 7991419370397581983,
+      "translation": "보안 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999049Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "None known.",
+      "source_hash": 10069857354078701219,
+      "context_hash": 7385202774748802370,
+      "translation": "알려진 사항은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999050Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 14237319641184686632,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:12:08.999050Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "This PEP has a reference implementation in the form of `a PR against the CPython main branch <https://github.com/python/cpython/pull/101441>`_ which passes all tests.",
+      "source_hash": 7859316392748536569,
+      "context_hash": 120879597093646272,
+      "translation": "이 PEP에는 모든 테스트를 통과하는 `CPython main 브랜치에 대한 PR <https://github.com/python/cpython/pull/101441>`_ 형태의 참조 구현이 있습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:12:08.999051Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "The reference implementation performs the micro-benchmark ``./python -m pyperf timeit -s 'l = [1]' '[x for x in l]'`` 1.96x faster than the ``main`` branch (in a build compiled with ``--enable-optimizations``.)",
+      "source_hash": 12625290077539317174,
+      "context_hash": 7457196379391833973,
+      "translation": "참조 구현은 ``--enable-optimizations``\\ 로 컴파일된 빌드에서 마이크로 벤치마크 ``./python -m pyperf timeit -s 'l = [1]' '[x for x in l]'`` 를 ``main`` 브랜치보다 1.96배 빠르게 수행합니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:12:08.999052Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "The reference implementation performs the ``comprehensions`` benchmark in the `pyperformance <https://github.com/python/pyperformance>`_ benchmark suite (which is not a micro-benchmark of comprehensions alone, but tests real-world-derived code doing realistic work using comprehensions) 11% faster than ``main`` branch (again in optimized builds).",
+      "source_hash": 12777358231387629059,
+      "context_hash": 148524460592770675,
+      "translation": "참조 구현은 `pyperformance <https://github.com/python/pyperformance>`_ 벤치마크 제품군의 ``comprehensions`` 벤치마크(컴프리헨션만을 대상으로 하는 마이크로 벤치마크가 아니라, 실제 세계에서 파생된 코드가 컴프리헨션을 사용해 현실적인 작업을 수행하는지를 테스트함)를 ``main`` 브랜치보다 11% 빠르게 수행합니다(다시 말해 최적화된 빌드에서 그렇습니다).",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:12:08.999053Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:1",
+      "source": "Other benchmarks in pyperformance (none of which use comprehensions heavily) don't show any impact outside the noise.",
+      "source_hash": 13668635865466031191,
+      "context_hash": 3468231997302347460,
+      "translation": "pyperformance의 다른 벤치마크(컴프리헨션을 많이 사용하지 않는 벤치마크)는 노이즈 범위를 벗어나는 영향을 보이지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999054Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "The implementation has no impact on non-comprehension code.",
+      "source_hash": 8108633262809827818,
+      "context_hash": 11254098194077184780,
+      "translation": "이 구현은 컴프리헨션이 아닌 코드에 영향을 주지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999054Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 13362338157692001045,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999054Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "More efficient comprehension calling, without inlining",
+      "source_hash": 90710689744071496,
+      "context_hash": 2546753005514294492,
+      "translation": "인라이닝 없는 더 효율적인 컴프리헨션 호출",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999055Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "An `alternate approach <https://github.com/python/cpython/pull/101310>`_ introduces a new opcode for \"calling\" a comprehension in streamlined fashion without the need to create a throwaway function object, but still creating a new Python frame.",
+      "source_hash": 11937868876111183455,
+      "context_hash": 12417935583802949413,
+      "translation": "`대체 접근법 <https://github.com/python/cpython/pull/101310>`_\\ 은 버릴 함수 객체를 생성할 필요 없이 간소화된 방식으로 컴프리헨션을 \"호출\"하기 위한 새로운 오피코드를 도입하지만, 여전히 새로운 Python 프레임을 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999055Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "This avoids all of the visible effects listed under `Backwards Compatibility`_, and provides roughly half of the performance benefit (1.5x improvement on the microbenchmark, 4% improvement on ``comprehensions`` benchmark in pyperformance.) It also requires adding a new pointer to the ``_PyInterpreterFrame`` struct and a new ``Py_INCREF`` on each frame construction, meaning (unlike this PEP) it has a (very small) performance cost for all code.",
+      "source_hash": 9397302057605620330,
+      "context_hash": 11182389913914533949,
+      "translation": "이는 `Backwards Compatibility`_ 아래에 나열된 모든 가시적 영향을 피하고, 성능 향상의 대략 절반(마이크로 벤치마크에서 1.5배 향상, pyperformance의 ``comprehensions`` 벤치마크에서 4% 향상)을 제공합니다. 또한 ``_PyInterpreterFrame`` 구조체에 새 포인터를 추가하고 각 프레임 생성 시 새로운 ``Py_INCREF``\\ 를 수행해야 하므로, 이 PEP와 달리 모든 코드에 대해 아주 작은 성능 비용이 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999055Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:2",
+      "source": "It also provides less scope for future optimizations.",
+      "source_hash": 5104821250368913579,
+      "context_hash": 11040555881871683776,
+      "translation": "또한 향후 최적화를 위한 여지도 더 적습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999056Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "This PEP takes the position that full inlining offers sufficient additional performance to more than justify the behavior changes.",
+      "source_hash": 4361987976364738607,
+      "context_hash": 18059543456131755493,
+      "translation": "이 PEP는 완전한 인라이닝이 동작 변경을 정당화하고도 남을 만큼 충분한 추가 성능을 제공한다고 봅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:08.999056Z",
+      "issues": []
+    }
+  ]
+}

@@ -221,7 +221,8 @@ pub fn collect_files(
         files.insert(path.to_path_buf());
     } else if path.is_dir() {
         let filter = normalize(path);
-        let mut push_matches = |pattern: &str| -> Result<(), OrchestratorError> {
+        let push_matches =
+            |pattern: &str, files: &mut BTreeSet<PathBuf>| -> Result<(), OrchestratorError> {
             let entries =
                 glob::glob(pattern).map_err(|e| OrchestratorError::Glob(e.to_string()))?;
             for entry in entries {
@@ -234,11 +235,28 @@ pub fn collect_files(
         };
 
         if config.sources.is_empty() {
-            push_matches(&format!("{}/**/*.md", path.display()))?;
+            push_matches(&format!("{}/**/*.md", path.display()), &mut files)?;
         } else {
             for source in &config.sources {
                 let pattern = format!("{}/{}", source.path.trim_end_matches('/'), source.pattern);
-                push_matches(&pattern)?;
+                let source_root = normalize(Path::new(&source.path));
+                let before = files.clone();
+                push_matches(&pattern, &mut files)?;
+                if !source.exclude.is_empty() {
+                    files.retain(|entry| {
+                        if before.contains(entry) {
+                            return true;
+                        }
+                        let Ok(relative) = normalize(entry).strip_prefix(source_root) else {
+                            return true;
+                        };
+                        !source.exclude.iter().any(|excluded| {
+                            glob::Pattern::new(excluded)
+                                .map(|pattern| pattern.matches_path(relative))
+                                .unwrap_or(false)
+                        })
+                    });
+                }
             }
         }
     }
@@ -1313,6 +1331,38 @@ model = "test"
         // Only files under `book` should be collected when book is requested.
         let files = collect_files(&book, &config).unwrap();
         assert_eq!(files, vec![book.join("ch1.md")]);
+    }
+
+    #[test]
+    fn collect_files_respects_source_exclusions() {
+        let dir = tempfile::tempdir().unwrap();
+        let peps = dir.path().join("peps");
+        std::fs::create_dir_all(&peps).unwrap();
+        std::fs::write(peps.join("pep-0001.rst"), "Licensed.").unwrap();
+        std::fs::write(peps.join("pep-0401.rst"), "Restricted.").unwrap();
+
+        let config = test_config(&format!(
+            r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[[sources]]
+path = "{}"
+pattern = "pep-*.rst"
+exclude = ["pep-0401.rst"]
+parser = "pep"
+output = "ko/{{path}}"
+
+[provider]
+type = "openai_compatible"
+model = "test"
+"#,
+            peps.display()
+        ));
+
+        let files = collect_files(&peps, &config).unwrap();
+        assert_eq!(files, vec![peps.join("pep-0001.rst")]);
     }
 
     #[test]

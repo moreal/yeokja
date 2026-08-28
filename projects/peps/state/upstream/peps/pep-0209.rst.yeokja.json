@@ -1,0 +1,2797 @@
+{
+  "version": 1,
+  "source_hash": 1479719613076213311,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Multi-dimensional Arrays",
+      "source_hash": 7810650696255375174,
+      "context_hash": 16530898886277989957,
+      "translation": "다차원 배열",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230847Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 13746513311912817370,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230849Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes a redesign and re-implementation of the multi-dimensional array module, Numeric, to make it easier to add new features and functionality to the module.",
+      "source_hash": 2882233634517802511,
+      "context_hash": 9427348028348127314,
+      "translation": "이 PEP는 새로운 기능과 특성을 모듈에 더 쉽게 추가할 수 있도록, 다차원 배열 모듈인 Numeric의 재설계와 재구현을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230850Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "Aspects of Numeric 2 that will receive special attention are efficient access to arrays exceeding a gigabyte in size and composed of inhomogeneous data structures or records.",
+      "source_hash": 5306388361978495738,
+      "context_hash": 8193448971495666185,
+      "translation": "Numeric 2에서 특별히 주목할 측면은 기가바이트를 초과하는 크기의, 이질적인 데이터 구조나 레코드로 구성된 배열에 대한 효율적인 접근입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230850Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "The proposed design uses four Python classes: ArrayType, UFunc, Array, and ArrayView; and a low-level C-extension module, _ufunc, to handle the array operations efficiently.",
+      "source_hash": 13951135466195725623,
+      "context_hash": 8062494576976486882,
+      "translation": "제안된 설계는 ArrayType, UFunc, Array, ArrayView라는 네 가지 Python 클래스와, 배열 연산을 효율적으로 처리하기 위한 저수준 C 확장 모듈 _ufunc를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230850Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:3",
+      "source": "In addition, each array type has its own C-extension module which defines the coercion rules, operations, and methods for that type.",
+      "source_hash": 11133495249817818307,
+      "context_hash": 16810914925919470334,
+      "translation": "또한, 각 배열 타입은 해당 타입에 대한 강제 변환 규칙, 연산, 메서드를 정의하는 자체 C-확장 모듈을 가집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230851Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:4",
+      "source": "This design enables new types, features, and functionality to be added in a modular fashion.",
+      "source_hash": 15288250509091062520,
+      "context_hash": 7283378434814493067,
+      "translation": "이 설계는 새로운 타입, 기능, 특성을 모듈 방식으로 추가할 수 있게 해줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230851Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:5",
+      "source": "The new version will introduce some incompatibilities with the current Numeric.",
+      "source_hash": 6602795361158181025,
+      "context_hash": 14091635488573493241,
+      "translation": "새 버전은 현재의 Numeric과 몇 가지 비호환성을 도입할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230851Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 2985118206084011958,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230851Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Multi-dimensional arrays are commonly used to store and manipulate data in science, engineering, and computing.",
+      "source_hash": 6382300383740427141,
+      "context_hash": 14071110038316779290,
+      "translation": "다차원 배열은 과학, 공학, 컴퓨팅 분야에서 데이터를 저장하고 조작하는 데 흔히 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230852Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Python currently has an extension module, named Numeric (henceforth called Numeric 1), which provides a satisfactory set of functionality for users manipulating homogeneous arrays of data of moderate size (of order 10 MB).",
+      "source_hash": 3929276731693542332,
+      "context_hash": 12248758907620822815,
+      "translation": "파이썬에는 현재 Numeric(이하 Numeric 1이라 함)이라는 확장 모듈이 있으며, 이는 적당한 크기(10MB 규모)의 동질적인 데이터 배열을 다루는 사용자에게 만족스러운 기능들을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230852Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "For access to larger arrays (of order 100 MB or more) of possibly inhomogeneous data, the implementation of Numeric 1 is inefficient and cumbersome.",
+      "source_hash": 2103682755173264215,
+      "context_hash": 15674281989816319661,
+      "translation": "더 큰 배열(100MB 이상 규모), 그리고 이질적일 수 있는 데이터에 대한 접근에 있어서는, Numeric 1의 구현이 비효율적이고 번거롭습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230852Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:3",
+      "source": "In the future, requests by the Numerical Python community for additional functionality is also likely as PEPs 211: Adding New Linear Operators to Python, and 225: Elementwise/Objectwise Operators illustrate.",
+      "source_hash": 1509201684850807685,
+      "context_hash": 10743125484077922064,
+      "translation": "앞으로 Numerical Python 커뮤니티가 추가 기능을 요청할 가능성도 높은데, 이는 PEP 211: Adding New Linear Operators to Python과 PEP 225: Elementwise/Objectwise Operators에서 잘 드러납니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230852Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Proposal",
+      "source_hash": 17139217736364358932,
+      "context_hash": 5452408405874993818,
+      "translation": "제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.230853Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "This proposal recommends a re-design and re-implementation of Numeric 1, henceforth called Numeric 2, which will enable new types, features, and functionality to be added in an easy and modular manner.",
+      "source_hash": 14630219627069298325,
+      "context_hash": 2370550619398745153,
+      "translation": "이 제안은 Numeric 1을 재설계하고 재구현할 것을 권고하며, 이후 Numeric 2로 불릴 이 버전은 새로운 타입, 기능, 그리고 함수 기능을 쉽고 모듈화된 방식으로 추가할 수 있게 해줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:29.733339Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "The initial design of Numeric 2 should focus on providing a generic framework for manipulating arrays of various types and should enable a straightforward mechanism for adding new array types and UFuncs.",
+      "source_hash": 643260216930096860,
+      "context_hash": 9372123680338280049,
+      "translation": "Numeric 2의 초기 설계는 다양한 타입의 배열을 조작하기 위한 범용 프레임워크를 제공하는 데 초점을 맞추어야 하며, 새로운 배열 타입과 UFunc를 추가할 수 있는 간단한 메커니즘을 제공해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:29.733342Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "Functional methods that are more specific to various disciplines can then be layered on top of this core.",
+      "source_hash": 3866147558146172189,
+      "context_hash": 3325070058496484380,
+      "translation": "다양한 분야에 더 특화된 함수형 메서드는 이후 이 핵심 위에 계층으로 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:29.733342Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:3",
+      "source": "This new module will still be called Numeric and most of the behavior found in Numeric 1 will be preserved.",
+      "source_hash": 11884726625018344866,
+      "context_hash": 18100359372124299461,
+      "translation": "이 새 모듈은 여전히 Numeric으로 불릴 것이며, Numeric 1에서 볼 수 있는 동작 대부분이 그대로 유지될 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:29.733342Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "The proposed design uses four Python classes: ArrayType, UFunc, Array, and ArrayView; and a low-level C-extension module to handle the array operations efficiently.",
+      "source_hash": 11089654567277435661,
+      "context_hash": 11169796519046974481,
+      "translation": "제안된 설계는 네 가지 파이썬 클래스인 ArrayType, UFunc, Array, ArrayView와, 배열 연산을 효율적으로 처리하기 위한 저수준 C 확장 모듈을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:29.733343Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "In addition, each array type has its own C-extension module which defines the coercion rules, operations, and methods for that type.",
+      "source_hash": 11133495249817818307,
+      "context_hash": 12388015472516096137,
+      "translation": "또한 각 배열 타입은 해당 타입에 대한 강제 변환 규칙, 연산, 메서드를 정의하는 자체 C 확장 모듈을 가집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:29.733343Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "At a later date, when core functionality is stable, some Python classes can be converted to C-extension types.",
+      "source_hash": 15878472944004633657,
+      "context_hash": 15484913708005063264,
+      "translation": "이후 핵심 기능이 안정화되면 일부 파이썬 클래스는 C 확장 타입으로 전환될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:29.733343Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Some planned features are:",
+      "source_hash": 5102774134540003560,
+      "context_hash": 17155444400656914754,
+      "translation": "계획된 기능은 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:29.733343Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "Improved memory usage",
+      "source_hash": 99812871225754819,
+      "context_hash": 18428777542808146564,
+      "translation": "개선된 메모리 사용량",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:29.733344Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "This feature is particularly important when handling large arrays and can produce significant improvements in performance as well as memory usage.",
+      "source_hash": 9205928203902754271,
+      "context_hash": 4037332384635416354,
+      "translation": "이 기능은 대규모 배열을 다룰 때 특히 중요하며, 성능뿐만 아니라 메모리 사용량에서도 상당한 개선을 가져올 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:29.733344Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "We have identified several areas where memory usage can be improved:",
+      "source_hash": 5968846198617418201,
+      "context_hash": 17694545182538723200,
+      "translation": "저희는 메모리 사용량을 개선할 수 있는 몇 가지 영역을 파악했습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:29.733344Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "a.",
+      "source_hash": 4608006078812701593,
+      "context_hash": 18113295090256043383,
+      "translation": "a.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:29.733345Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:1",
+      "source": "Use a local coercion model",
+      "source_hash": 9742853946198851984,
+      "context_hash": 35829483973420606,
+      "translation": "로컬 강제 변환 모델을 사용합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:29.733345Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "Instead of using Python's global coercion model which creates temporary arrays, Numeric 2, like Numeric 1, will implement a local coercion model as described in :pep:`208` which defers the responsibility of coercion to the operator.",
+      "source_hash": 4632596508062952760,
+      "context_hash": 6234128488110837569,
+      "translation": "임시 배열을 생성하는 파이썬의 전역 강제 변환 모델을 사용하는 대신, Numeric 2는 Numeric 1과 마찬가지로 :pep:`208`\\ 에서 설명된 대로 강제 변환의 책임을 연산자에게 위임하는 지역 강제 변환 모델을 구현할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409585Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:1",
+      "source": "By using internal buffers, a coercion operation can be done for each array (including output arrays), if necessary, at the time of the operation.",
+      "source_hash": 4176525921028668042,
+      "context_hash": 1814182175387105820,
+      "translation": "내부 버퍼를 사용함으로써, 필요한 경우 연산 시점에 각 배열(출력 배열을 포함)에 대해 강제 변환 연산을 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409590Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:2",
+      "source": "Benchmarks [1]_ have shown that performance is at most degraded only slightly and is improved in cases where the internal buffers are less than the L2 cache size and the processor is under load.",
+      "source_hash": 11494055795997793284,
+      "context_hash": 13603837423188445656,
+      "translation": "벤치마크 [1]_ 결과에 따르면 성능은 기껏해야 소폭 저하될 뿐이며, 내부 버퍼가 L2 캐시 크기보다 작고 프로세서에 부하가 걸린 경우에는 오히려 향상되는 것으로 나타났습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409590Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:3",
+      "source": "To avoid array coercion altogether, C functions having arguments of mixed type are allowed in Numeric 2.",
+      "source_hash": 10059876321072724030,
+      "context_hash": 7965423500435866482,
+      "translation": "배열 강제 변환을 완전히 피하기 위해, Numeric 2에서는 혼합 타입 인자를 갖는 C 함수가 허용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409591Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "b.",
+      "source_hash": 16257302897736294596,
+      "context_hash": 2360611893496959902,
+      "translation": "b.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409592Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:1",
+      "source": "Avoid creation of temporary arrays",
+      "source_hash": 13563393461876731029,
+      "context_hash": 17333018987546300488,
+      "translation": "임시 배열 생성 회피",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409592Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "In complex array expressions (i.e. having more than one operation), each operation will create a temporary array which will be used and then deleted by the succeeding operation.",
+      "source_hash": 16095987055777021820,
+      "context_hash": 828655998370284924,
+      "translation": "복잡한 배열 표현식(즉, 둘 이상의 연산을 갖는 경우)에서는 각 연산이 임시 배열을 생성하며, 이 배열은 다음 연산에서 사용된 후 삭제됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409593Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:1",
+      "source": "A better approach would be to identify these temporary arrays and reuse their data buffers when possible, namely when the array shape and type are the same as the temporary array being created.",
+      "source_hash": 3792588100749962361,
+      "context_hash": 15319209148459755204,
+      "translation": "더 나은 접근 방식은 이러한 임시 배열을 식별하여, 가능한 경우—즉 생성 중인 임시 배열과 배열 형태 및 타입이 같은 경우—그 데이터 버퍼를 재사용하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409593Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:2",
+      "source": "This can be done by checking the temporary array's reference count.",
+      "source_hash": 6301062254219976077,
+      "context_hash": 2348252234348766094,
+      "translation": "이는 임시 배열의 참조 카운트를 확인함으로써 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409594Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:3",
+      "source": "If it is 1, then it will be deleted once the operation is done and is a candidate for reuse.",
+      "source_hash": 11215640341198147636,
+      "context_hash": 15032360825466108597,
+      "translation": "참조 카운트가 1이면, 연산이 끝나는 즉시 삭제되므로 재사용 후보가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409594Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:0",
+      "source": "c.",
+      "source_hash": 16830074409964709407,
+      "context_hash": 18259235467026825002,
+      "translation": "c.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409595Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:1",
+      "source": "Optional use of memory-mapped files",
+      "source_hash": 11374291018358135528,
+      "context_hash": 6641686629696494354,
+      "translation": "메모리 매핑 파일의 선택적 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409595Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:11/seg:0",
+      "source": "Numeric users sometimes need to access data from very large files or to handle data that is greater than the available memory.",
+      "source_hash": 7448454293285018051,
+      "context_hash": 3779302506743011994,
+      "translation": "Numeric 사용자는 때때로 매우 큰 파일의 데이터에 접근하거나, 가용 메모리보다 큰 데이터를 처리해야 할 필요가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409596Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:11/seg:1",
+      "source": "Memory-mapped arrays provide a mechanism to do this by storing the data on disk while making it appear to be in memory.",
+      "source_hash": 13512723901678285570,
+      "context_hash": 3054203143871255943,
+      "translation": "메모리 매핑 배열은 데이터를 디스크에 저장하면서도 메모리에 있는 것처럼 보이게 함으로써 이를 가능하게 하는 메커니즘을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409596Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:11/seg:2",
+      "source": "Memory- mapped arrays should improve access to all files by eliminating one of two copy steps during a file access.",
+      "source_hash": 17570477280770591578,
+      "context_hash": 9806721822857867543,
+      "translation": "메모리 매핑 배열은 파일 접근 시 두 단계의 복사 과정 중 하나를 제거함으로써 모든 파일에 대한 접근을 향상시킬 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409596Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:11/seg:3",
+      "source": "Numeric should be able to access in-memory and memory-mapped arrays transparently.",
+      "source_hash": 703215861064687317,
+      "context_hash": 6382481488048624282,
+      "translation": "Numeric은 메모리 내 배열과 메모리 매핑 배열에 투명하게 접근할 수 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.409597Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:12/seg:0",
+      "source": "d.",
+      "source_hash": 18440246564577704913,
+      "context_hash": 5532861038228073928,
+      "translation": "d.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632858Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:12/seg:1",
+      "source": "Record access",
+      "source_hash": 15040937137183481237,
+      "context_hash": 4804757694839357679,
+      "translation": "레코드 접근",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632862Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:0",
+      "source": "In some fields of science, data is stored in files as binary records.",
+      "source_hash": 2788728174246921217,
+      "context_hash": 16431941333070096767,
+      "translation": "일부 과학 분야에서는 데이터가 파일에 이진 레코드로 저장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632863Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:1",
+      "source": "For example, in astronomy, photon data is stored as a 1 dimensional list of photons in order of arrival time.",
+      "source_hash": 10565526744093809670,
+      "context_hash": 12899704429169466549,
+      "translation": "예를 들어, 천문학에서는 광자 데이터가 도착 시간 순서로 1차원 광자 목록으로 저장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632864Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:2",
+      "source": "These records or C-like structures contain information about the detected photon, such as its arrival time, its position on the detector, and its energy.",
+      "source_hash": 1763107381977305953,
+      "context_hash": 3936233650879875606,
+      "translation": "이러한 레코드 또는 C와 유사한 구조체에는 도착 시간, 검출기 상의 위치, 에너지 등 검출된 광자에 대한 정보가 담겨 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632865Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:3",
+      "source": "Each field may be of a different type, such as char, int, or float.",
+      "source_hash": 13588068166794908149,
+      "context_hash": 3294914015953964424,
+      "translation": "각 필드는 char, int, float와 같이 서로 다른 타입일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632865Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:4",
+      "source": "Such arrays introduce new issues that must be dealt with, in particular byte alignment or byte swapping may need to be performed for the numeric values to be properly accessed (though byte swapping is also an issue for memory mapped data).",
+      "source_hash": 6627712196880267847,
+      "context_hash": 14274969649571350996,
+      "translation": "이러한 배열은 새로운 문제를 야기하는데, 특히 숫자 값에 올바르게 접근하려면 바이트 정렬이나 바이트 교환을 수행해야 할 수도 있습니다(다만 바이트 교환은 메모리 매핑된 데이터에서도 문제가 됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632865Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:5",
+      "source": "Numeric 2 is designed to automatically handle alignment and representational issues when data is accessed or operated on.",
+      "source_hash": 1733382685828283836,
+      "context_hash": 12523910997648559208,
+      "translation": "Numeric 2는 데이터에 접근하거나 데이터를 조작할 때 정렬 및 표현 방식 문제를 자동으로 처리하도록 설계되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632866Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:6",
+      "source": "There are two approaches to implementing records; as either a derived array class or a special array type, depending on your point-of-view.",
+      "source_hash": 5075348089949271397,
+      "context_hash": 997082149618310800,
+      "translation": "레코드를 구현하는 데는 두 가지 접근 방식이 있는데, 관점에 따라 파생 배열 클래스로 구현하거나 특수 배열 타입으로 구현하는 방식입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632866Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:7",
+      "source": "We defer this discussion to the Open Issues section.",
+      "source_hash": 5679590663821465772,
+      "context_hash": 5610905290782722737,
+      "translation": "이 논의는 미해결 문제(Open Issues) 절로 미루겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632867Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:14/seg:0",
+      "source": "Additional array types",
+      "source_hash": 5819412804078939894,
+      "context_hash": 12516586049745609208,
+      "translation": "추가 배열 타입",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632867Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:0",
+      "source": "Numeric 1 has 11 defined types: char, ubyte, sbyte, short, int, long, float, double, cfloat, cdouble, and object.",
+      "source_hash": 14458335937114387767,
+      "context_hash": 11701098500857385854,
+      "translation": "Numeric 1에는 char, ubyte, sbyte, short, int, long, float, double, cfloat, cdouble, object의 11가지 정의된 타입이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632868Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:1",
+      "source": "There are no ushort, uint, or ulong types, nor are there more complex types such as a bit type which is of use to some fields of science and possibly for implementing masked-arrays.",
+      "source_hash": 10659327191063995741,
+      "context_hash": 331105217851280613,
+      "translation": "ushort, uint, ulong 타입은 없으며, 일부 과학 분야에서 유용하고 마스크 배열(masked-array) 구현에도 사용될 수 있는 비트 타입 같은 더 복잡한 타입도 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632868Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:2",
+      "source": "The design of Numeric 1 makes the addition of these and other types a difficult and error-prone process.",
+      "source_hash": 4138371870286561843,
+      "context_hash": 8581791604610663618,
+      "translation": "Numeric 1의 설계로 인해 이러한 타입이나 다른 타입을 추가하는 작업은 어렵고 오류가 발생하기 쉬운 과정이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632869Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:3",
+      "source": "To enable the easy addition (and deletion) of new array types such as a bit type described below, a re-design of Numeric is necessary.",
+      "source_hash": 6605760085043808765,
+      "context_hash": 1416301085964364447,
+      "translation": "아래에서 설명하는 비트 타입과 같은 새로운 배열 타입을 쉽게 추가(및 삭제)할 수 있게 하려면 Numeric의 재설계가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.632869Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:16/seg:0",
+      "source": "a.",
+      "source_hash": 4608006078812701593,
+      "context_hash": 6963702634848898021,
+      "translation": "a.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456002Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:16/seg:1",
+      "source": "Bit type",
+      "source_hash": 16453476468350459332,
+      "context_hash": 12957071642969826029,
+      "translation": "비트 타입",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456007Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:0",
+      "source": "The result of a rich comparison between arrays is an array of boolean values.",
+      "source_hash": 2503998331324768038,
+      "context_hash": 2606101735271250500,
+      "translation": "배열 간의 리치 비교(rich comparison) 결과는 불리언 값의 배열입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456008Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:1",
+      "source": "The result can be stored in an array of type char, but this is an unnecessary waste of memory.",
+      "source_hash": 18402221178260826930,
+      "context_hash": 2747918786599928966,
+      "translation": "이 결과는 char 타입의 배열에 저장할 수 있지만, 이는 불필요한 메모리 낭비입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456009Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:2",
+      "source": "A better implementation would use a bit or boolean type, compressing the array size by a factor of eight.",
+      "source_hash": 14528486585389115578,
+      "context_hash": 1696363921170436794,
+      "translation": "더 나은 구현이라면 비트나 불리언 타입을 사용하여 배열 크기를 8분의 1로 압축할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456009Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:3",
+      "source": "This is currently being implemented for Numeric 1 (by Travis Oliphant) and should be included in Numeric 2.",
+      "source_hash": 11028782338540081463,
+      "context_hash": 13041759656350617913,
+      "translation": "이는 현재 Numeric 1을 대상으로 (Travis Oliphant가) 구현 중이며, Numeric 2에도 포함되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456010Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:18/seg:0",
+      "source": "Enhanced array indexing syntax",
+      "source_hash": 128996671156214239,
+      "context_hash": 12412621168166815608,
+      "translation": "향상된 배열 인덱싱 구문",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456010Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:19/seg:0",
+      "source": "The extended slicing syntax was added to Python to provide greater flexibility when manipulating Numeric arrays by allowing step-sizes greater than 1.",
+      "source_hash": 2396758665436376638,
+      "context_hash": 16976036288610527368,
+      "translation": "확장 슬라이싱 구문은 Numeric 배열을 다룰 때 1보다 큰 스텝 크기(step-size)를 허용함으로써 더 큰 유연성을 제공하기 위해 파이썬에 추가되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456011Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:19/seg:1",
+      "source": "This syntax works well as a shorthand for a list of regularly spaced indices.",
+      "source_hash": 15864475146440625868,
+      "context_hash": 10678128604737909531,
+      "translation": "이 구문은 일정한 간격으로 떨어진 인덱스 목록에 대한 축약형으로 잘 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456011Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:19/seg:2",
+      "source": "For those situations where a list of irregularly spaced indices are needed, an enhanced array indexing syntax would allow 1-D arrays to be arguments.",
+      "source_hash": 774712618412508225,
+      "context_hash": 16891435988089661356,
+      "translation": "불규칙한 간격으로 떨어진 인덱스 목록이 필요한 상황에서는, 향상된 배열 인덱싱 구문이 1차원 배열을 인자로 사용할 수 있게 해줄 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456012Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:20/seg:0",
+      "source": "Rich comparisons",
+      "source_hash": 15837856187804696639,
+      "context_hash": 12461444154791101411,
+      "translation": "리치 비교(rich comparison)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456012Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:21/seg:0",
+      "source": "The implementation of :pep:`207`: Rich Comparisons in Python 2.1 provides additional flexibility when manipulating arrays.",
+      "source_hash": 5791019610825882513,
+      "context_hash": 2398078490462359942,
+      "translation": "파이썬 2.1의 :pep:`207`: 리치 비교(Rich Comparisons) 구현은 배열을 다룰 때 추가적인 유연성을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456013Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:21/seg:1",
+      "source": "We intend to implement this feature in Numeric 2.",
+      "source_hash": 7618892900156663421,
+      "context_hash": 12232919494886457887,
+      "translation": "저희는 이 기능을 Numeric 2에 구현할 계획입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456014Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:22/seg:0",
+      "source": "Array broadcasting rules",
+      "source_hash": 6761037426744765132,
+      "context_hash": 117026865803001643,
+      "translation": "배열 브로드캐스팅(broadcasting) 규칙",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:31.456014Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:23/seg:0",
+      "source": "When an operation between a scalar and an array is done, the implied behavior is to create a new array having the same shape as the array operand containing the scalar value.",
+      "source_hash": 16511215278503087846,
+      "context_hash": 13008981842412816063,
+      "translation": "스칼라와 배열 간의 연산이 수행될 때, 암묵적인 동작은 스칼라 값을 포함하는 배열 피연산자와 동일한 형태를 가지는 새 배열을 생성하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371280Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:23/seg:1",
+      "source": "This is called array broadcasting.",
+      "source_hash": 4879269592397971586,
+      "context_hash": 3845125042795409,
+      "translation": "이를 배열 브로드캐스팅이라고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371283Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:23/seg:2",
+      "source": "It also works with arrays of lesser rank, such as vectors.",
+      "source_hash": 15987202791506529656,
+      "context_hash": 232755286222515862,
+      "translation": "이는 벡터와 같이 랭크가 더 낮은 배열에서도 동작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371284Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:23/seg:3",
+      "source": "This implicit behavior is implemented in Numeric 1 and will also be implemented in Numeric 2.",
+      "source_hash": 6312585432301551108,
+      "context_hash": 17782481589210072746,
+      "translation": "이 암묵적인 동작은 Numeric 1에서 구현되어 있으며 Numeric 2에서도 구현될 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371284Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Design and Implementation",
+      "source_hash": 12348285461104372886,
+      "context_hash": 6747678343061916704,
+      "translation": "설계 및 구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371285Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "The design of Numeric 2 has four primary classes:",
+      "source_hash": 11066210180279897323,
+      "context_hash": 8409216601967869032,
+      "translation": "Numeric 2의 설계는 네 가지 주요 클래스를 가지고 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371285Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "ArrayType:",
+      "source_hash": 12232463073867818667,
+      "context_hash": 4563212658732047830,
+      "translation": "ArrayType:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371285Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "This is a simple class that describes the fundamental properties of an array-type, e.g. its name, its size in bytes, its coercion relations with respect to other types, etc., e.g.",
+      "source_hash": 7801416789769071653,
+      "context_hash": 15716766075648114198,
+      "translation": "이는 배열 타입의 근본적인 속성들, 예를 들어 이름, 바이트 단위 크기, 다른 타입에 대한 강제 변환 관계 등을 기술하는 단순한 클래스입니다. 예:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371286Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "Its relation to the other types is defined when the C-extension module for that type is imported.",
+      "source_hash": 17694894652944746832,
+      "context_hash": 5491372387102505883,
+      "translation": "다른 타입들과의 관계는 해당 타입의 C 확장 모듈이 임포트될 때 정의됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371286Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:1",
+      "source": "The corresponding Python code is",
+      "source_hash": 11283436784339777702,
+      "context_hash": 7607506202338867286,
+      "translation": "이에 대응하는 Python 코드는 다음과 같습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371286Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "This says that the Real64 array-type has higher priority than the Int32 array-type.",
+      "source_hash": 7727560874161134694,
+      "context_hash": 9644636520611907563,
+      "translation": "이는 Real64 배열 타입이 Int32 배열 타입보다 더 높은 우선순위를 가짐을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371289Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "The following attributes and methods are proposed for the core implementation.",
+      "source_hash": 2218729821644442409,
+      "context_hash": 17194615199438579709,
+      "translation": "다음의 속성과 메서드가 핵심 구현을 위해 제안됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371290Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:1",
+      "source": "Additional attributes can be added on an individual basis, e.g. .bitsize or .bitstrides for the bit type.",
+      "source_hash": 12638954581851209052,
+      "context_hash": 11580294334916137222,
+      "translation": "추가 속성은 개별적으로 추가할 수 있습니다. 예를 들어 bit 타입의 경우 .bitsize나 .bitstrides와 같은 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371290Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "Attributes",
+      "source_hash": 7451065999087312502,
+      "context_hash": 16891512039417557359,
+      "translation": "속성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371291Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "Methods",
+      "source_hash": 15620111708112306285,
+      "context_hash": 16947203649233960067,
+      "translation": "메서드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371291Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:0",
+      "source": "C-API: This still needs to be fleshed-out.",
+      "source_hash": 6966300505151503568,
+      "context_hash": 5975141441998844820,
+      "translation": "C-API: 아직 구체화가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.371291Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:0",
+      "source": "UFunc:",
+      "source_hash": 16694378266039826338,
+      "context_hash": 12198520277961614625,
+      "translation": "UFunc:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.729438Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:15/seg:0",
+      "source": "This class is the heart of Numeric 2.",
+      "source_hash": 7807614270173691809,
+      "context_hash": 9702019929707194079,
+      "translation": "이 클래스는 Numeric 2의 핵심입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.729441Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:15/seg:1",
+      "source": "Its design is similar to that of ArrayType in that the UFunc creates a singleton callable object whose attributes are name, total and input number of arguments, a document string, and an empty CFunc dictionary; e.g.",
+      "source_hash": 8959060316463044700,
+      "context_hash": 13707616245256615264,
+      "translation": "그 설계는 UFunc가 이름, 인자의 총 개수 및 입력 개수, 문서 문자열, 빈 CFunc 딕셔너리를 속성으로 갖는 싱글턴 호출 가능 객체를 생성한다는 점에서 ArrayType의 설계와 유사합니다. 예를 들면:",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체",
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T17:14:39.729441Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:17/seg:0",
+      "source": "When defined the add instance has no C functions associated with it and therefore can do no work.",
+      "source_hash": 16475487257463242234,
+      "context_hash": 13591551572884657620,
+      "translation": "정의된 시점에서 add 인스턴스는 연관된 C 함수가 없으므로 아무런 작업도 수행할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.729441Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:17/seg:1",
+      "source": "The CFunc dictionary is populated or registered later when the C-extension module for an array-type is imported.",
+      "source_hash": 11592161115035863972,
+      "context_hash": 3557853315450138546,
+      "translation": "CFunc 딕셔너리는 배열 타입용 C 확장 모듈이 임포트될 때 나중에 채워지거나 등록됩니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T17:14:39.729442Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:17/seg:2",
+      "source": "The arguments of the register method are: function name, function descriptor, and the CUFunc object.",
+      "source_hash": 6378855219468654230,
+      "context_hash": 8621594771955699357,
+      "translation": "register 메서드의 인자는 함수 이름, 함수 디스크립터, CUFunc 객체입니다.",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T17:14:39.729442Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:17/seg:3",
+      "source": "The corresponding Python code is",
+      "source_hash": 11283436784339777702,
+      "context_hash": 12052390594648092347,
+      "translation": "이에 대응하는 Python 코드는 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.729442Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:19/seg:0",
+      "source": "In the initialization function of an array type module, e.g. Int32, there are two C API functions: one to initialize the coercion rules and the other to register the CFunc objects.",
+      "source_hash": 14834533070586259081,
+      "context_hash": 9893821382503351219,
+      "translation": "Int32와 같은 배열 타입 모듈의 초기화 함수에는 두 개의 C API 함수가 있는데, 하나는 강제 변환 규칙을 초기화하는 함수이고 다른 하나는 CFunc 객체를 등록하는 함수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.729443Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:20/seg:0",
+      "source": "When an operation is applied to some arrays, the ``__call__`` method is invoked.",
+      "source_hash": 6632103322497102508,
+      "context_hash": 7808192272559743478,
+      "translation": "몇몇 배열에 연산이 적용되면 ``__call__`` 메서드가 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.729443Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:20/seg:1",
+      "source": "It gets the type of each array (if the output array is not given, it is created from the coercion rules) and checks the CFunc dictionary for a key that matches the argument types.",
+      "source_hash": 4818058602037714151,
+      "context_hash": 4958843164007663788,
+      "translation": "이 메서드는 각 배열의 타입을 가져오고(출력 배열이 주어지지 않은 경우, 강제 변환 규칙으로부터 생성됩니다) 인자 타입과 일치하는 키가 있는지 CFunc 딕셔너리를 확인합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T17:14:39.729443Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:20/seg:2",
+      "source": "If it exists the operation is performed immediately, otherwise the coercion rules are used to search for a related operation and set of conversion functions.",
+      "source_hash": 5398342584902934316,
+      "context_hash": 13015933314093275499,
+      "translation": "해당 키가 존재하면 연산이 즉시 수행되고, 그렇지 않으면 강제 변환 규칙을 사용하여 관련 연산과 변환 함수 집합을 검색합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.729443Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:20/seg:3",
+      "source": "The ``__call__`` method then invokes a compute method written in C to iterate over slices of each array, namely",
+      "source_hash": 12670991385991684814,
+      "context_hash": 17419374422960538168,
+      "translation": "그런 다음 ``__call__`` 메서드는 각 배열의 슬라이스를 순회하기 위해 C로 작성된 compute 메서드를 호출하는데, 그 이름은 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.729444Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:22/seg:0",
+      "source": "The 'func' argument is a CFuncObject, while the 'swap' and 'conv' arguments are lists of CFuncObjects for those arrays needing pre- or post-processing, otherwise None is used.",
+      "source_hash": 17489061718285097279,
+      "context_hash": 11743598381543786951,
+      "translation": "'func' 인자는 CFuncObject이고, 'swap'과 'conv' 인자는 전처리 또는 후처리가 필요한 배열들을 위한 CFuncObject의 리스트이며, 그렇지 않은 경우에는 None이 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.729444Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:22/seg:1",
+      "source": "The data argument is a list of buffer objects, and the slice argument gives the number of iterations for each dimension along with the buffer offset and step size for each array and each dimension.",
+      "source_hash": 9267624399813035901,
+      "context_hash": 6295348153264888387,
+      "translation": "data 인자는 버퍼 객체의 리스트이고, slice 인자는 각 배열과 각 차원에 대한 버퍼 오프셋 및 스텝 크기와 함께 각 차원의 반복 횟수를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.729444Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:23/seg:0",
+      "source": "We have predefined several UFuncs for use by the ``__call__`` method: cast, swap, getobj, and setobj.",
+      "source_hash": 9735594432795423088,
+      "context_hash": 17340852762946733457,
+      "translation": "저희는 ``__call__`` 메서드에서 사용할 몇 가지 UFunc를 미리 정의해 두었습니다: cast, swap, getobj, setobj\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.729444Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:23/seg:1",
+      "source": "The cast and swap functions do coercion and byte-swapping, respectively and the getobj and setobj functions do coercion between Numeric arrays and Python sequences.",
+      "source_hash": 6278406512128174117,
+      "context_hash": 7516836972136330552,
+      "translation": "cast와 swap 함수는 각각 강제 변환과 바이트 스왑을 수행하며, getobj와 setobj 함수는 Numeric 배열과 Python 시퀀스 간의 강제 변환을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.729445Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:24/seg:0",
+      "source": "The following attributes and methods are proposed for the core implementation.",
+      "source_hash": 2218729821644442409,
+      "context_hash": 2249837169136872836,
+      "translation": "다음 속성과 메서드가 핵심 구현을 위해 제안됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800803Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:25/seg:0",
+      "source": "Attributes",
+      "source_hash": 7451065999087312502,
+      "context_hash": 14176535604493994578,
+      "translation": "속성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800806Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:27/seg:0",
+      "source": "Methods",
+      "source_hash": 15620111708112306285,
+      "context_hash": 16947203649233960067,
+      "translation": "메서드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800806Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:29/seg:0",
+      "source": "C-API: This still needs to be fleshed-out.",
+      "source_hash": 6966300505151503568,
+      "context_hash": 9409832752447499371,
+      "translation": "C-API: 이 부분은 아직 구체화가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800807Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:30/seg:0",
+      "source": "Array:",
+      "source_hash": 13669784087446744335,
+      "context_hash": 2465312652777791258,
+      "translation": "Array:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800807Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:31/seg:0",
+      "source": "This class contains information about the array, such as shape, type, endian-ness of the data, etc..",
+      "source_hash": 10495690427378294916,
+      "context_hash": 571404049213620972,
+      "translation": "이 클래스는 배열의 모양, 타입, 데이터의 엔디언 등에 관한 정보를 담고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800807Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:31/seg:1",
+      "source": "Its operators, '+', '-', etc. just invoke the corresponding UFunc function, e.g.",
+      "source_hash": 13223210548093449147,
+      "context_hash": 10989811304890207568,
+      "translation": "'+', '-' 등의 연산자는 예를 들어 해당하는 UFunc 함수를 호출할 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800808Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:33/seg:0",
+      "source": "The following attributes, methods, and functions are proposed for the core implementation.",
+      "source_hash": 10447977047869278852,
+      "context_hash": 2194782846452019108,
+      "translation": "다음 속성, 메서드, 함수가 핵심 구현을 위해 제안됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800808Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:34/seg:0",
+      "source": "Attributes",
+      "source_hash": 7451065999087312502,
+      "context_hash": 11929537194642878382,
+      "translation": "속성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800808Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:36/seg:0",
+      "source": "Methods",
+      "source_hash": 15620111708112306285,
+      "context_hash": 14540633154753698620,
+      "translation": "메서드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800809Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:38/seg:0",
+      "source": "Functions",
+      "source_hash": 8409902782067925136,
+      "context_hash": 5776993485114858758,
+      "translation": "함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800809Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:40/seg:0",
+      "source": "C-API: This still needs to be fleshed-out.",
+      "source_hash": 6966300505151503568,
+      "context_hash": 11220976216537250406,
+      "translation": "C-API: 이 부분은 아직 구체화가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800809Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:41/seg:0",
+      "source": "ArrayView",
+      "source_hash": 2702747072764907308,
+      "context_hash": 1167130537417585917,
+      "translation": "ArrayView",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800809Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:42/seg:0",
+      "source": "This class is similar to the Array class except that the reshape and flat methods will raise exceptions, since non-contiguous arrays cannot be reshaped or flattened using just pointer and step-size information.",
+      "source_hash": 18288402349050544997,
+      "context_hash": 6160915683468312224,
+      "translation": "이 클래스는 Array 클래스와 유사하지만, reshape\\ 와 flat 메서드는 예외를 발생시킨다는 점이 다릅니다. 비연속(non-contiguous) 배열은 포인터와 스텝 크기 정보만으로는 reshape\\ 하거나 flatten\\ 할 수 없기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800810Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:43/seg:0",
+      "source": "C-API: This still needs to be fleshed-out.",
+      "source_hash": 6966300505151503568,
+      "context_hash": 5004795476337820737,
+      "translation": "C-API: 이 부분은 아직 구체화가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800810Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:44/seg:0",
+      "source": "C-extension modules:",
+      "source_hash": 789460837278881448,
+      "context_hash": 12893406901973615104,
+      "translation": "C-확장 모듈:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:33.800810Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:45/seg:0",
+      "source": "Numeric2 will have several C-extension modules.",
+      "source_hash": 805257078724097236,
+      "context_hash": 10548623649417180935,
+      "translation": "Numeric2는 여러 C-확장 모듈을 갖게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578247Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:46/seg:0",
+      "source": "a.  _ufunc:",
+      "source_hash": 17122026220356680055,
+      "context_hash": 15473183294166086310,
+      "translation": "a.  _ufunc:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578250Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:47/seg:0",
+      "source": "The primary module of this set is the _ufuncmodule.c.",
+      "source_hash": 11326845582207348539,
+      "context_hash": 3378673429036904268,
+      "translation": "이 집합의 주요 모듈은 _ufuncmodule.c입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578250Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:47/seg:1",
+      "source": "The intention of this module is to do the bare minimum, i.e. iterate over arrays using a specified C function.",
+      "source_hash": 14731083148183389476,
+      "context_hash": 15567708610555926430,
+      "translation": "이 모듈의 의도는 최소한의 작업, 즉 지정된 C 함수를 사용하여 배열을 순회하는 것만 수행하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578251Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:47/seg:2",
+      "source": "The interface of these functions is the same as Numeric 1, i.e.",
+      "source_hash": 954784153843142082,
+      "context_hash": 14551457187160670051,
+      "translation": "이 함수들의 인터페이스는 Numeric 1과 동일하며, 즉",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578251Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:49/seg:0",
+      "source": "and their functionality is expected to be the same, i.e. they iterate over the inner-most dimension.",
+      "source_hash": 434332757489104274,
+      "context_hash": 17814045504446253999,
+      "translation": "그리고 그 기능도 동일할 것으로 예상되는데, 즉 가장 안쪽 차원에 대해 순회합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578251Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:50/seg:0",
+      "source": "The following attributes and methods are proposed for the core implementation.",
+      "source_hash": 2218729821644442409,
+      "context_hash": 16772734310339314137,
+      "translation": "핵심 구현을 위해 다음 속성과 메서드가 제안됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578252Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:51/seg:0",
+      "source": "Attributes:",
+      "source_hash": 3147768732806811863,
+      "context_hash": 14176535604493994578,
+      "translation": "속성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578252Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:52/seg:0",
+      "source": "Methods",
+      "source_hash": 15620111708112306285,
+      "context_hash": 8310115288754596459,
+      "translation": "메서드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578252Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:54/seg:0",
+      "source": "C-API: This still needs to be fleshed-out.",
+      "source_hash": 6966300505151503568,
+      "context_hash": 16693528226631914272,
+      "translation": "C-API: 아직 구체화가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578252Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:55/seg:0",
+      "source": "b.  _int32, _real64, etc.:",
+      "source_hash": 5518381686655763745,
+      "context_hash": 16571953421470015340,
+      "translation": "b.  _int32, _real64 등:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578252Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:56/seg:0",
+      "source": "There will also be C-extension modules for each array type, e.g. _int32module.c, _real64module.c, etc.  As mentioned previously, when these modules are imported by the UFunc module, they will automatically register their functions and coercion rules.",
+      "source_hash": 15334617081946928011,
+      "context_hash": 17274582719469778808,
+      "translation": "각 배열 타입에 대해서도 C-확장 모듈이 있게 되는데, 예를 들어 _int32module.c, _real64module.c 등입니다. 앞서 언급했듯이, 이 모듈들이 UFunc 모듈에 의해 임포트될 때 자신들의 함수와 강제 변환 규칙을 자동으로 등록하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578253Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:56/seg:1",
+      "source": "New or improved versions of these modules can be easily implemented and used without affecting the rest of Numeric 2.",
+      "source_hash": 6381125409704301397,
+      "context_hash": 17283476702143349599,
+      "translation": "이 모듈들의 새 버전이나 개선된 버전은 Numeric 2의 나머지 부분에 영향을 주지 않고 쉽게 구현하여 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578253Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Open Issues",
+      "source_hash": 15188361361114285070,
+      "context_hash": 4426074698741712729,
+      "translation": "미해결 사안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578253Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Does slicing syntax default to copy or view behavior?",
+      "source_hash": 17743809388245700043,
+      "context_hash": 1991577039716676806,
+      "translation": "슬라이싱 구문은 기본적으로 복사 동작을 하는 것입니까, 뷰 동작을 하는 것입니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:35.578253Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "The default behavior of Python is to return a copy of a sub-list or tuple when slicing syntax is used, whereas Numeric 1 returns a view into the array.",
+      "source_hash": 2242173380113664929,
+      "context_hash": 7311622199538603880,
+      "translation": "Python의 기본 동작은 슬라이싱 구문을 사용할 때 하위 리스트나 튜플의 복사본을 반환하는 것인 반면, Numeric 1은 배열에 대한 뷰를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404448Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "The choice made for Numeric 1 is apparently for reasons of performance: the developers wish to avoid the penalty of allocating and copying the data buffer during each array operation and feel that the need for a deep copy of an array to be rare.",
+      "source_hash": 13143369503878535099,
+      "context_hash": 3651755018724263781,
+      "translation": "Numeric 1에서 이루어진 선택은 명백히 성능상의 이유 때문인데, 개발자들은 각 배열 연산마다 데이터 버퍼를 할당하고 복사하는 비용을 피하고자 했으며 배열의 깊은 복사가 필요한 경우는 드물다고 여겼습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404451Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:2",
+      "source": "Yet, some have argued that Numeric's slice notation should also have copy behavior to be consistent with Python lists.",
+      "source_hash": 7298628020933134362,
+      "context_hash": 5862713068904275413,
+      "translation": "그러나 일부는 Numeric의 슬라이스 표기법도 Python 리스트와 일관성을 유지하기 위해 복사 동작을 가져야 한다고 주장해 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404451Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:3",
+      "source": "In this case the performance penalty associated with copy behavior can be minimized by implementing copy-on-write.",
+      "source_hash": 11099730385036042946,
+      "context_hash": 2297329721536738438,
+      "translation": "이 경우 복사 동작과 관련된 성능 저하는 쓰기 시 복사(copy-on-write)를 구현함으로써 최소화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404451Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:4",
+      "source": "This scheme has both arrays sharing one data buffer (as in view behavior) until either array is assigned new data at which point a copy of the data buffer is made.",
+      "source_hash": 3756316704547838955,
+      "context_hash": 13828634536680097832,
+      "translation": "이 방식에서는 두 배열이 하나의 데이터 버퍼를 공유하다가(뷰 동작에서처럼) 둘 중 하나의 배열에 새 데이터가 할당되는 시점에 데이터 버퍼의 복사본이 만들어집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404451Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:5",
+      "source": "View behavior would then be implemented by an ArrayView class, whose behavior be similar to Numeric 1 arrays, i.e. .shape is not settable for non-contiguous arrays.",
+      "source_hash": 3519756577752646329,
+      "context_hash": 10845532536972848675,
+      "translation": "그러면 뷰 동작은 ArrayView 클래스에 의해 구현될 것이며, 그 동작은 Numeric 1 배열과 유사할 것입니다. 즉, .shape은 비연속(non-contiguous) 배열에 대해서는 설정할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404452Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:6",
+      "source": "The use of an ArrayView class also makes explicit what type of data the array contains.",
+      "source_hash": 8699975400869177439,
+      "context_hash": 17572662641641093239,
+      "translation": "ArrayView 클래스를 사용하면 배열이 어떤 유형의 데이터를 담고 있는지도 명시적으로 드러납니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404452Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "Does item syntax default to copy or view behavior?",
+      "source_hash": 16960706367415291645,
+      "context_hash": 15424890037236111830,
+      "translation": "항목 구문은 기본적으로 복사 동작과 뷰 동작 중 어느 쪽을 따릅니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404452Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "A similar question arises with the item syntax.",
+      "source_hash": 14157339167762626781,
+      "context_hash": 7070188765413305223,
+      "translation": "항목 구문에서도 이와 비슷한 의문이 생깁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404452Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:1",
+      "source": "For example, if ``a = [[0,1,2], [3,4,5]]`` and ``b = a[0]``, then changing ``b[0]`` also changes ``a[0][0]``, because ``a[0]`` is a reference or view of the first row of a.",
+      "source_hash": 8386431621968127416,
+      "context_hash": 6554848669983577857,
+      "translation": "예를 들어 ``a = [[0,1,2], [3,4,5]]``\\ 이고 ``b = a[0]``\\ 일 때, ``b[0]``\\ 을 변경하면 ``a[0][0]``\\ 도 변경되는데, 이는 ``a[0]``\\ 이 a의 첫 번째 행에 대한 참조 또는 뷰이기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404453Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:2",
+      "source": "Therefore, if c is a 2-d array, it would appear that ``c[i]`` should return a 1-d array which is a view into, instead of a copy of, c for consistency.",
+      "source_hash": 12965474867096098588,
+      "context_hash": 14378383423979466957,
+      "translation": "따라서 c가 2차원 배열이라면, 일관성을 위해 ``c[i]``\\ 는 c의 복사본이 아니라 c에 대한 뷰인 1차원 배열을 반환해야 할 것으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404453Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:3",
+      "source": "Yet, ``c[i]`` can be considered just a shorthand for ``c[i,:]`` which would imply copy behavior assuming slicing syntax returns a copy.",
+      "source_hash": 1922125815236689416,
+      "context_hash": 6967072423231068764,
+      "translation": "그러나 ``c[i]``\\ 는 그저 ``c[i,:]``\\ 의 축약형으로 볼 수 있는데, 이는 슬라이싱 구문이 복사본을 반환한다고 가정할 경우 복사 동작을 암시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404453Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:4",
+      "source": "Should Numeric 2 behave the same way as lists and return a view or should it return a copy.",
+      "source_hash": 16401710401380744379,
+      "context_hash": 2950025893141229458,
+      "translation": "Numeric 2도 리스트와 마찬가지로 동작하여 뷰를 반환해야 합니까, 아니면 복사본을 반환해야 합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404453Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "How is scalar coercion implemented?",
+      "source_hash": 5207639014098390828,
+      "context_hash": 9153689038068656746,
+      "translation": "스칼라 강제 변환(coercion)은 어떻게 구현됩니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:59.404453Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "Python has fewer numeric types than Numeric which can cause coercion problems.",
+      "source_hash": 15842052055960880866,
+      "context_hash": 11279488562805422755,
+      "translation": "Python은 Numeric보다 숫자 타입이 적어서 강제 변환(coercion) 문제를 일으킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.963416Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:1",
+      "source": "For example, when multiplying a Python scalar of type float and a Numeric array of type float, the Numeric array is converted to a double, since the Python float type is actually a double.",
+      "source_hash": 1094333633021795284,
+      "context_hash": 5888335914895784314,
+      "translation": "예를 들어, float 타입의 Python 스칼라와 float 타입의 Numeric 배열을 곱할 때, Python의 float 타입이 실제로는 double이기 때문에 Numeric 배열이 double로 변환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.963421Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:2",
+      "source": "This is often not the desired behavior, since the Numeric array will be doubled in size which is likely to be annoying, particularly for very large arrays.",
+      "source_hash": 6656562939979359156,
+      "context_hash": 17445731478273632482,
+      "translation": "이는 대개 원하는 동작이 아닌데, 특히 매우 큰 배열의 경우 Numeric 배열의 크기가 두 배가 되는 것이 성가실 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.963421Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:3",
+      "source": "We prefer that the array type trumps the python type for the same type class, namely integer, float, and complex.",
+      "source_hash": 11943659481441434369,
+      "context_hash": 7038980847231810591,
+      "translation": "우리는 동일한 타입 클래스, 즉 정수(integer), 부동소수점(float), 복소수(complex)에 대해서는 배열 타입이 Python 타입보다 우선하는 것을 선호합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.963422Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:4",
+      "source": "Therefore, an operation between a Python integer and an Int16 (short) array will return an Int16 array.",
+      "source_hash": 9413841991731356220,
+      "context_hash": 16057119667373471770,
+      "translation": "따라서 Python 정수와 Int16(short) 배열 간의 연산은 Int16 배열을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.963422Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:5",
+      "source": "Whereas an operation between a Python float and an Int16 array would return a Float64 (double) array.",
+      "source_hash": 564712395323475849,
+      "context_hash": 11459797269751042947,
+      "translation": "반면, Python float와 Int16 배열 간의 연산은 Float64(double) 배열을 반환하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.963423Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:6",
+      "source": "Operations between two arrays use normal coercion rules.",
+      "source_hash": 13438473347186721541,
+      "context_hash": 8590129691383593709,
+      "translation": "두 배열 간의 연산은 일반적인 강제 변환 규칙을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.963423Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "How is integer division handled?",
+      "source_hash": 10822508670848424705,
+      "context_hash": 8568135960725780839,
+      "translation": "정수 나눗셈은 어떻게 처리됩니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.963423Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "In a future version of Python, the behavior of integer division will change.",
+      "source_hash": 13686233195560612246,
+      "context_hash": 13053372344126871830,
+      "translation": "Python의 미래 버전에서는 정수 나눗셈의 동작이 변경될 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.963424Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:1",
+      "source": "The operands will be converted to floats, so the result will be a float.",
+      "source_hash": 13999834809552203096,
+      "context_hash": 7570806672070908554,
+      "translation": "피연산자가 float로 변환되므로 결과는 float가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.963424Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:2",
+      "source": "If we implement the proposed scalar coercion rules where arrays have precedence over Python scalars, then dividing an array by an integer will return an integer array and will not be consistent with a future version of Python which would return an array of type double.",
+      "source_hash": 12642170580564184603,
+      "context_hash": 16048600383772707125,
+      "translation": "배열이 Python 스칼라보다 우선하는 제안된 스칼라 강제 변환 규칙을 구현한다면, 배열을 정수로 나누는 연산은 정수 배열을 반환하게 되어, double 타입의 배열을 반환하는 미래 버전의 Python과 일치하지 않게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.963425Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:3",
+      "source": "Scientific programmers are familiar with the distinction between integer and float-point division, so should Numeric 2 continue with this behavior?",
+      "source_hash": 7662758712252873916,
+      "context_hash": 10285450148633981499,
+      "translation": "과학 프로그래머들은 정수 나눗셈과 부동소수점 나눗셈의 차이에 익숙하므로, Numeric 2는 이 동작을 계속 유지해야 합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.963425Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "How should records be implemented?",
+      "source_hash": 16698779903304134812,
+      "context_hash": 16027224891082900930,
+      "translation": "레코드는 어떻게 구현해야 합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.963425Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "There are two approaches to implementing records depending on your point-of-view.",
+      "source_hash": 13140818828215108145,
+      "context_hash": 2824796587977298827,
+      "translation": "레코드를 구현하는 접근 방식에는 관점에 따라 두 가지가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:45.284156Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:1",
+      "source": "The first is two divide arrays into separate classes depending on the behavior of their types.",
+      "source_hash": 8905862647828868398,
+      "context_hash": 7687385233331662609,
+      "translation": "첫 번째는 배열을 그 타입의 동작에 따라 별도의 클래스로 나누는 방식입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:45.284160Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:2",
+      "source": "For example, numeric arrays are one class, strings a second, and records a third, because the range and type of operations of each class differ.",
+      "source_hash": 3763823405245272292,
+      "context_hash": 7400520987521409286,
+      "translation": "예를 들어, 각 클래스의 연산 범위와 종류가 서로 다르기 때문에 숫자 배열이 하나의 클래스이고, 문자열이 두 번째, 레코드가 세 번째가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:45.284161Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:3",
+      "source": "As such, a record array is not a new type, but a mechanism for a more flexible form of array.",
+      "source_hash": 13964682863295321371,
+      "context_hash": 14624876895480798896,
+      "translation": "이와 같이 레코드 배열은 새로운 타입이 아니라, 더 유연한 형태의 배열을 위한 메커니즘입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:45.284162Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:4",
+      "source": "To easily access and manipulate such complex data, the class is comprised of numeric arrays having different byte offsets into the data buffer.",
+      "source_hash": 982818550852699535,
+      "context_hash": 4584790046298967231,
+      "translation": "이러한 복잡한 데이터를 쉽게 접근하고 조작할 수 있도록, 이 클래스는 데이터 버퍼 내에서 서로 다른 바이트 오프셋을 갖는 숫자 배열들로 구성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:45.284162Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:5",
+      "source": "For example, one might have a table consisting of an array of Int16, Real32 values.",
+      "source_hash": 11929278844006879889,
+      "context_hash": 4570839146454627054,
+      "translation": "예를 들어, Int16, Real32 값의 배열로 구성된 테이블을 가질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:45.284162Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:6",
+      "source": "Two numeric arrays, one with an offset of 0 bytes and a stride of 6 bytes to be interpreted as Int16, and one with an offset of 2 bytes and a stride of 6 bytes to be interpreted as Real32 would represent the record array.",
+      "source_hash": 11976007042227972322,
+      "context_hash": 532917806284897453,
+      "translation": "오프셋이 0바이트이고 보폭(stride)이 6바이트로 Int16으로 해석되는 숫자 배열 하나와, 오프셋이 2바이트이고 보폭이 6바이트로 Real32로 해석되는 숫자 배열 하나, 이렇게 두 개의 숫자 배열이 해당 레코드 배열을 나타내게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:45.284163Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:7",
+      "source": "Both numeric arrays would refer to the same data buffer, but have different offset and stride attributes, and a different numeric type.",
+      "source_hash": 15474898505066608453,
+      "context_hash": 8007001172155916442,
+      "translation": "두 숫자 배열 모두 동일한 데이터 버퍼를 참조하지만, 서로 다른 오프셋과 보폭 속성, 그리고 서로 다른 숫자 타입을 가집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:45.284163Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "The second approach is to consider a record as one of many array types, albeit with fewer, and possibly different, array operations than for numeric arrays.",
+      "source_hash": 8153476528643041032,
+      "context_hash": 1792255581000598708,
+      "translation": "두 번째 접근 방식은 레코드를 여러 배열 타입 중 하나로 간주하는 것으로, 다만 숫자 배열에 비해 더 적고 어쩌면 다른 배열 연산을 갖게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:45.284163Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:1",
+      "source": "This approach considers an array type to be a mapping of a fixed-length string.",
+      "source_hash": 15706379346880389215,
+      "context_hash": 9736670578698448799,
+      "translation": "이 접근 방식은 배열 타입을 고정 길이 문자열의 매핑으로 간주합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T17:14:45.284163Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:2",
+      "source": "The mapping can either be simple, like integer and floating-point numbers, or complex, like a complex number, a byte string, and a C-structure.",
+      "source_hash": 15089331473917631656,
+      "context_hash": 764774487339535572,
+      "translation": "이 매핑은 정수나 부동소수점 숫자처럼 단순할 수도 있고, 복소수, 바이트 문자열, C 구조체처럼 복잡할 수도 있습니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T17:14:45.284166Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:3",
+      "source": "The record type effectively merges the struct and Numeric modules into a multi-dimensional struct array.",
+      "source_hash": 1641482219424226448,
+      "context_hash": 134961149746181057,
+      "translation": "레코드 타입은 사실상 struct 모듈과 Numeric 모듈을 다차원 struct 배열로 병합합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:45.284166Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:4",
+      "source": "This approach implies certain changes to the array interface.",
+      "source_hash": 2332888732031862209,
+      "context_hash": 522880255138073658,
+      "translation": "이 접근 방식은 배열 인터페이스에 특정한 변경을 수반합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:45.284167Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:5",
+      "source": "For example, the 'typecode' keyword argument should probably be changed to the more descriptive 'format' keyword.",
+      "source_hash": 14781830876547381362,
+      "context_hash": 5243275601082032683,
+      "translation": "예를 들어, 'typecode' 키워드 인자는 아마도 더 설명적인 'format' 키워드로 변경되어야 할 것입니다.",
+      "glossary_snapshot": {
+        "keyword argument": "키워드 인자"
+      },
+      "translated_at": "2026-08-28T17:14:45.284167Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "a.",
+      "source_hash": 4608006078812701593,
+      "context_hash": 1122462736984463879,
+      "translation": "a.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:45.284168Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:1",
+      "source": "How are record semantics defined and implemented?",
+      "source_hash": 2578313333052942217,
+      "context_hash": 10685891942017904748,
+      "translation": "레코드 시맨틱스는 어떻게 정의되고 구현됩니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:45.284168Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "Which ever implementation approach is taken for records, the syntax and semantics of how they are to be accessed and manipulated must be decided, if one wishes to have access to sub-fields of records.",
+      "source_hash": 9819111142393644508,
+      "context_hash": 8938873565145127465,
+      "translation": "레코드에 어떤 구현 방식을 취하든, 레코드의 하위 필드에 접근하고자 한다면 그것들에 접근하고 조작하는 방법의 구문과 의미를 결정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879002Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:1",
+      "source": "In this case, the record type can essentially be considered an inhomogeneous list, like a tuple returned by the unpack method of the struct module; and a 1-d array of records may be interpreted as a 2-d array with the second dimension being the index into the list of fields.",
+      "source_hash": 13841227879033904886,
+      "context_hash": 3837180617545199473,
+      "translation": "이 경우, 레코드 타입은 본질적으로 struct 모듈의 unpack 메서드가 반환하는 튜플과 같이 비균질 리스트로 간주될 수 있으며, 1차원 레코드 배열은 두 번째 차원이 필드 리스트에 대한 인덱스인 2차원 배열로 해석될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879005Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:2",
+      "source": "This enhanced array semantics makes access to an array of one or more of the fields easy and straightforward.",
+      "source_hash": 11135716483522748830,
+      "context_hash": 1891558208289904684,
+      "translation": "이러한 향상된 배열 의미론은 하나 이상의 필드로 이루어진 배열에 대한 접근을 쉽고 간단하게 만들어 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879005Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:3",
+      "source": "It also allows a user to do array operations on a field in a natural and intuitive way.",
+      "source_hash": 14104050001403830757,
+      "context_hash": 7851438834543007615,
+      "translation": "또한 사용자가 필드에 대해 자연스럽고 직관적인 방식으로 배열 연산을 수행할 수 있게 해줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879005Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:4",
+      "source": "If we assume that records are implemented as an array type, then last dimension defaults to 0 and can therefore be neglected for arrays comprised of simple types, like numeric.",
+      "source_hash": 7149018812649407394,
+      "context_hash": 8327611562384322739,
+      "translation": "레코드가 배열 타입으로 구현된다고 가정하면, 마지막 차원은 기본값이 0이 되므로 numeric과 같은 단순 타입으로 구성된 배열에서는 무시할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879006Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "How are masked-arrays implemented?",
+      "source_hash": 809610670247485439,
+      "context_hash": 11493195320475304657,
+      "translation": "마스크 배열은 어떻게 구현됩니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879006Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "Masked-arrays in Numeric 1 are implemented as a separate array class.",
+      "source_hash": 3074367258045040174,
+      "context_hash": 4199244479381899682,
+      "translation": "Numeric 1에서 마스크 배열은 별도의 배열 클래스로 구현됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879006Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:1",
+      "source": "With the ability to add new array types to Numeric 2, it is possible that masked-arrays in Numeric 2 could be implemented as a new array type instead of an array class.",
+      "source_hash": 6462338306406472607,
+      "context_hash": 3590218198834247588,
+      "translation": "Numeric 2에 새로운 배열 타입을 추가할 수 있는 기능이 생김에 따라, Numeric 2의 마스크 배열은 배열 클래스 대신 새로운 배열 타입으로 구현될 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879007Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:0",
+      "source": "How are numerical errors handled (IEEE floating-point errors in particular)?",
+      "source_hash": 5286669785556431609,
+      "context_hash": 11939451982849254715,
+      "translation": "수치 오류(특히 IEEE 부동 소수점 오류)는 어떻게 처리됩니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879007Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:0",
+      "source": "It is not clear to the proposers (Paul Barrett and Travis Oliphant) what is the best or preferred way of handling errors.",
+      "source_hash": 1795118179070866015,
+      "context_hash": 10847511927213744188,
+      "translation": "제안자(Paul Barrett와 Travis Oliphant)들에게도 오류를 처리하는 최선 또는 선호되는 방법이 무엇인지는 명확하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879008Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:1",
+      "source": "Since most of the C functions that do the operation, iterate over the inner-most (last) dimension of the array.",
+      "source_hash": 8591933372724337306,
+      "context_hash": 3000714082590376406,
+      "translation": "연산을 수행하는 대부분의 C 함수는 배열의 가장 안쪽(마지막) 차원에 대해 반복하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879008Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:2",
+      "source": "This dimension could contain a thousand or more items having one or more errors of differing type, such as divide-by-zero, underflow, and overflow.",
+      "source_hash": 9562243572672618161,
+      "context_hash": 4852341711860297265,
+      "translation": "이 차원에는 0으로 나누기, 언더플로, 오버플로와 같이 서로 다른 유형의 오류를 하나 이상 가진 항목이 천 개 이상 포함될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879008Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:3",
+      "source": "Additionally, keeping track of these errors may come at the expense of performance.",
+      "source_hash": 804407179704941455,
+      "context_hash": 16113722922059757163,
+      "translation": "또한 이러한 오류를 추적하는 것은 성능을 희생시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879008Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:4",
+      "source": "Therefore, we suggest several options:",
+      "source_hash": 11845072977780145238,
+      "context_hash": 18087089712785773993,
+      "translation": "따라서 몇 가지 선택지를 제안합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879009Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:18/seg:0",
+      "source": "a.",
+      "source_hash": 4608006078812701593,
+      "context_hash": 12376384465502997350,
+      "translation": "a.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879009Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:18/seg:1",
+      "source": "Print a message of the most severe error, leaving it to",
+      "source_hash": 16573350306645634139,
+      "context_hash": 7477990170455854517,
+      "translation": "가장 심각한 오류의 메시지를 출력하고, 나머지는",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:54.879009Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:19/seg:0",
+      "source": "the user to locate the errors.",
+      "source_hash": 1216385925974686993,
+      "context_hash": 15777856447729696518,
+      "translation": "사용자가 오류를 찾도록 하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895152Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:20/seg:0",
+      "source": "b.",
+      "source_hash": 16257302897736294596,
+      "context_hash": 6440121898552435637,
+      "translation": "b.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895159Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:20/seg:1",
+      "source": "Print a message of all errors that occurred and the number",
+      "source_hash": 9261661025779928784,
+      "context_hash": 3628586831742653275,
+      "translation": "발생한 모든 오류에 대한 메시지와 그 발생 횟수를 출력하여",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895160Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:21/seg:0",
+      "source": "of occurrences, leaving it to the user to locate the errors.",
+      "source_hash": 15268020804662758808,
+      "context_hash": 7904301561518621251,
+      "translation": "사용자가 오류를 찾도록 하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895161Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:22/seg:0",
+      "source": "c.",
+      "source_hash": 16830074409964709407,
+      "context_hash": 5243220362907835683,
+      "translation": "c.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895162Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:22/seg:1",
+      "source": "Print a message of all errors that occurred and a list of",
+      "source_hash": 6748800024879396961,
+      "context_hash": 8375853526566305994,
+      "translation": "발생한 모든 오류에 대한 메시지와 그 발생 위치의",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895162Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:23/seg:0",
+      "source": "where they occurred.",
+      "source_hash": 8173272965744841058,
+      "context_hash": 8799359070985926801,
+      "translation": "목록을 출력하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895163Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:24/seg:0",
+      "source": "d.",
+      "source_hash": 18440246564577704913,
+      "context_hash": 13737608805531803998,
+      "translation": "d.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895164Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:24/seg:1",
+      "source": "Or use a hybrid approach, printing only the most severe",
+      "source_hash": 3424102830958934587,
+      "context_hash": 18086838975219295605,
+      "translation": "또는 혼합 방식을 사용하여 가장 심각한 오류만 출력하되,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895165Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:25/seg:0",
+      "source": "error, yet keeping track of what and where the errors occurred.",
+      "source_hash": 5714358026322970643,
+      "context_hash": 10770737466688327519,
+      "translation": "어떤 오류가 어디에서 발생했는지는 계속 추적하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895166Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:25/seg:1",
+      "source": "This would allow the user to locate the errors while keeping the error message brief.",
+      "source_hash": 10187890315770331786,
+      "context_hash": 7890298939363330398,
+      "translation": "이렇게 하면 오류 메시지를 간결하게 유지하면서도 사용자가 오류를 찾을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895167Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:26/seg:0",
+      "source": "What features are needed to ease the integration of FORTRAN libraries and code?",
+      "source_hash": 3803559919510617615,
+      "context_hash": 2515186513578054265,
+      "translation": "FORTRAN 라이브러리 및 코드의 통합을 쉽게 하려면 어떤 기능이 필요합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895168Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:27/seg:0",
+      "source": "It would be a good idea at this stage to consider how to ease the integration of FORTRAN libraries and user code in Numeric 2.",
+      "source_hash": 1726695981417367967,
+      "context_hash": 4963356265830181735,
+      "translation": "이 단계에서 Numeric 2에서 FORTRAN 라이브러리와 사용자 코드의 통합을 쉽게 할 방법을 고려하는 것이 좋습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895169Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Implementation Steps",
+      "source_hash": 15214770830744418531,
+      "context_hash": 8952073634228355480,
+      "translation": "구현 단계",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895170Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Implement basic UFunc capability",
+      "source_hash": 16790756366122626100,
+      "context_hash": 7036927561255598487,
+      "translation": "기본 UFunc 기능 구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.895171Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "a.",
+      "source_hash": 4608006078812701593,
+      "context_hash": 11696521995475328161,
+      "translation": "a.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.745970Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "Minimal Array class:",
+      "source_hash": 3059945420311875949,
+      "context_hash": 1859865950438346370,
+      "translation": "최소한의 Array 클래스:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.745974Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "Necessary class attributes and methods, e.g. .shape, .data, .type, etc.",
+      "source_hash": 3906453669463026790,
+      "context_hash": 3857783950046085218,
+      "translation": "필요한 클래스 속성 및 메서드, 예: .shape, .data, .type 등.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.745975Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "b.",
+      "source_hash": 16257302897736294596,
+      "context_hash": 14497665923809867940,
+      "translation": "b.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.745975Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:1",
+      "source": "Minimal ArrayType class:",
+      "source_hash": 5945384786670526877,
+      "context_hash": 17064013828017875188,
+      "translation": "최소한의 ArrayType 클래스:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.745976Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "Int32, Real64, Complex64, Char, Object",
+      "source_hash": 35004538851730254,
+      "context_hash": 17902164864836331331,
+      "translation": "Int32, Real64, Complex64, Char, Object",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.745976Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "c.",
+      "source_hash": 16830074409964709407,
+      "context_hash": 16980482079927551798,
+      "translation": "c.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.745977Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:1",
+      "source": "Minimal UFunc class:",
+      "source_hash": 17305379144829916970,
+      "context_hash": 11087288430839577625,
+      "translation": "최소한의 UFunc 클래스:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.745977Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "UFunc instantiation, CFunction registration, UFunc call for 1-D arrays including the rules for doing alignment, byte-swapping, and coercion.",
+      "source_hash": 7408494513270011092,
+      "context_hash": 13924494561896264629,
+      "translation": "UFunc 인스턴스화, CFunction 등록, 정렬(alignment)·바이트 스와핑·강제 변환(coercion) 규칙을 포함한 1차원 배열용 UFunc 호출.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.745978Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "d.",
+      "source_hash": 18440246564577704913,
+      "context_hash": 5290412704468489415,
+      "translation": "d.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.745978Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:1",
+      "source": "Minimal C-extension module:",
+      "source_hash": 17094106926618189579,
+      "context_hash": 7985239092363445970,
+      "translation": "최소한의 C 확장 모듈:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.745978Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "_UFunc, which does the innermost array loop in C.",
+      "source_hash": 17133305770332319366,
+      "context_hash": 4741095783244312974,
+      "translation": "C로 최내부 배열 루프를 수행하는 _UFunc.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.745979Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:0",
+      "source": "This step implements whatever is needed to do: 'c = add(a, b)' where a, b, and c are 1-D arrays.",
+      "source_hash": 1183348092217531195,
+      "context_hash": 15270164653415213715,
+      "translation": "이 단계는 a, b, c가 1차원 배열일 때 'c = add(a, b)'\\ 를 수행하는 데 필요한 것을 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:39.745979Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:1",
+      "source": "It teaches us how to add new UFuncs, to coerce the arrays, to pass the necessary information to a C iterator method and to do the actually computation.",
+      "source_hash": 11101570548270391566,
+      "context_hash": 11028955528049882846,
+      "translation": "이를 통해 새로운 UFunc를 추가하는 방법, 배열을 강제 변환하는 방법, 필요한 정보를 C 이터레이터 메서드에 전달하는 방법, 그리고 실제 계산을 수행하는 방법을 배우게 됩니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T17:14:39.745980Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:11/seg:0",
+      "source": "Continue enhancing the UFunc iterator and Array class",
+      "source_hash": 11868030020799559941,
+      "context_hash": 16292248814513747578,
+      "translation": "UFunc 이터레이터와 Array 클래스\\ 를 계속 개선합니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T17:14:39.745983Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:12/seg:0",
+      "source": "a.",
+      "source_hash": 4608006078812701593,
+      "context_hash": 4975433436654475669,
+      "translation": "a.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220595Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:12/seg:1",
+      "source": "Implement some access methods for the Array class:",
+      "source_hash": 16270545731110908445,
+      "context_hash": 7480952091633188662,
+      "translation": "Array 클래스를 위한 몇 가지 접근 메서드를 구현합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220597Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:13/seg:0",
+      "source": "print, repr, getitem, setitem, etc.",
+      "source_hash": 6262848354972726601,
+      "context_hash": 16180411275183442734,
+      "translation": "print, repr, getitem, setitem 등입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220597Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:14/seg:0",
+      "source": "b.",
+      "source_hash": 16257302897736294596,
+      "context_hash": 11240544965038073008,
+      "translation": "b.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220598Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:14/seg:1",
+      "source": "Implement multidimensional arrays",
+      "source_hash": 1629963317455384763,
+      "context_hash": 14130951455931629559,
+      "translation": "다차원 배열을 구현합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220598Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:15/seg:0",
+      "source": "c.",
+      "source_hash": 16830074409964709407,
+      "context_hash": 10523902979327591485,
+      "translation": "c.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220598Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:15/seg:1",
+      "source": "Implement some of basic Array methods using UFuncs:",
+      "source_hash": 6572094544357932362,
+      "context_hash": 6792992805425960521,
+      "translation": "UFunc를 사용하여 기본 Array 메서드 일부를 구현합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220598Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:16/seg:0",
+      "source": "+, -, \\*, /, etc.",
+      "source_hash": 10007070984345942677,
+      "context_hash": 17430943344142682123,
+      "translation": "+, -, \\*, / 등입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220599Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:17/seg:0",
+      "source": "d.",
+      "source_hash": 18440246564577704913,
+      "context_hash": 14118144696546604652,
+      "translation": "d.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220599Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:17/seg:1",
+      "source": "Enable UFuncs to use Python sequences.",
+      "source_hash": 14581249355231950642,
+      "context_hash": 11201854744447311890,
+      "translation": "UFunc가 Python 시퀀스를 사용할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220599Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:18/seg:0",
+      "source": "Complete the standard UFunc and Array class behavior",
+      "source_hash": 13540564562203387246,
+      "context_hash": 9939015590717739608,
+      "translation": "표준 UFunc와 Array 클래스 동작을 완성합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220599Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:19/seg:0",
+      "source": "a.",
+      "source_hash": 4608006078812701593,
+      "context_hash": 10280940869337599377,
+      "translation": "a.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220600Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:19/seg:1",
+      "source": "Implement getslice and setslice behavior",
+      "source_hash": 8908679613738225171,
+      "context_hash": 5361372648254645706,
+      "translation": "getslice와 setslice 동작을 구현합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220600Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:20/seg:0",
+      "source": "b.",
+      "source_hash": 16257302897736294596,
+      "context_hash": 950270120219723253,
+      "translation": "b.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220600Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:20/seg:1",
+      "source": "Work on Array broadcasting rules",
+      "source_hash": 6096515432407477882,
+      "context_hash": 14130951455931629559,
+      "translation": "Array 브로드캐스팅 규칙 작업을 진행합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:38.220600Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:21/seg:0",
+      "source": "c.",
+      "source_hash": 16830074409964709407,
+      "context_hash": 712822955054886782,
+      "translation": "c.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456303Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:21/seg:1",
+      "source": "Implement Record type",
+      "source_hash": 11266304808899664284,
+      "context_hash": 16286769592466980902,
+      "translation": "Record 타입을 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456308Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:22/seg:0",
+      "source": "Add additional functionality",
+      "source_hash": 10891156924394662516,
+      "context_hash": 2312849912251455583,
+      "translation": "추가 기능을 더합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456308Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:23/seg:0",
+      "source": "a.",
+      "source_hash": 4608006078812701593,
+      "context_hash": 17832596192377263743,
+      "translation": "a.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456308Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:23/seg:1",
+      "source": "Add more UFuncs",
+      "source_hash": 15737607419677551551,
+      "context_hash": 5361372648254645706,
+      "translation": "UFunc를 더 추가합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456309Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:24/seg:0",
+      "source": "b.",
+      "source_hash": 16257302897736294596,
+      "context_hash": 11485174404597083814,
+      "translation": "b.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456309Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:24/seg:1",
+      "source": "Implement buffer or mmap access",
+      "source_hash": 4804884879721379719,
+      "context_hash": 13624661429259902910,
+      "translation": "버퍼 또는 mmap 접근을 구현합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456309Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Incompatibilities",
+      "source_hash": 17128536002577967098,
+      "context_hash": 2967609518975001504,
+      "translation": "비호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456309Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The following is a list of incompatibilities in behavior between Numeric 1 and Numeric 2.",
+      "source_hash": 15741437398195313360,
+      "context_hash": 6786829956330967533,
+      "translation": "다음은 Numeric 1과 Numeric 2 사이의 동작상 비호환성 목록입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456310Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "Scalar coercion rules",
+      "source_hash": 9728481185228679375,
+      "context_hash": 2657645157796186223,
+      "translation": "스칼라 강제 변환 규칙",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456310Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Numeric 1 has single set of coercion rules for array and Python numeric types.",
+      "source_hash": 107049701346240149,
+      "context_hash": 16928903563383862910,
+      "translation": "Numeric 1은 배열과 파이썬 숫자 타입에 대해 단일한 강제 변환 규칙 집합을 가지고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456311Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "This can cause unexpected and annoying problems during the calculation of an array expression.",
+      "source_hash": 7624591514602606281,
+      "context_hash": 17596236752841023419,
+      "translation": "이는 배열 표현식을 계산하는 동안 예상치 못한 성가신 문제를 일으킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456311Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:2",
+      "source": "Numeric 2 intends to overcome these problems by having two sets of coercion rules: one for arrays and Python numeric types, and another just for arrays.",
+      "source_hash": 6947782543129059129,
+      "context_hash": 2448196226224866255,
+      "translation": "Numeric 2는 배열과 파이썬 숫자 타입을 위한 규칙, 그리고 배열만을 위한 규칙, 이렇게 두 가지 강제 변환 규칙 집합을 둠으로써 이러한 문제를 극복하고자 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456312Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "No savespace attribute",
+      "source_hash": 12678632185934089522,
+      "context_hash": 15314797114999953062,
+      "translation": "savespace 속성 없음",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456313Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "The savespace attribute in Numeric 1 makes arrays with this attribute set take precedence over those that do not have it set.",
+      "source_hash": 4267960500066238744,
+      "context_hash": 8830886712467507464,
+      "translation": "Numeric 1의 savespace 속성은 이 속성이 설정된 배열이 설정되지 않은 배열보다 우선순위를 갖도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456313Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:1",
+      "source": "Numeric 2 will not have such an attribute and therefore normal array coercion rules will be in effect.",
+      "source_hash": 109881812676527280,
+      "context_hash": 15327158909832806173,
+      "translation": "Numeric 2에는 이러한 속성이 없으므로 일반적인 배열 강제 변환 규칙이 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:41.456313Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "Slicing syntax returns a copy",
+      "source_hash": 1549610013356908944,
+      "context_hash": 10850223046459362090,
+      "translation": "슬라이싱 구문은 사본을 반환합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:48.752141Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "The slicing syntax in Numeric 1 returns a view into the original array.",
+      "source_hash": 10261509073544429180,
+      "context_hash": 12642704629547998495,
+      "translation": "Numeric 1의 슬라이싱 구문은 원본 배열에 대한 뷰를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:48.752143Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:1",
+      "source": "The slicing behavior for Numeric 2 will be a copy.",
+      "source_hash": 7267881808391847555,
+      "context_hash": 6565138659169554374,
+      "translation": "Numeric 2의 슬라이싱 동작은 사본이 될 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:48.752143Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:2",
+      "source": "You should use the ArrayView class to get a view into an array.",
+      "source_hash": 13140354211090969555,
+      "context_hash": 10188061385020504121,
+      "translation": "배열에 대한 뷰를 얻으려면 ArrayView 클래스를 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:48.752144Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "Boolean comparisons return a boolean array",
+      "source_hash": 15601707273458865475,
+      "context_hash": 10233109504603453229,
+      "translation": "불리언 비교는 불리언 배열을 반환합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:48.752144Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:0",
+      "source": "A comparison between arrays in Numeric 1 results in a Boolean scalar, because of current limitations in Python.",
+      "source_hash": 16256194581727239357,
+      "context_hash": 4362341495383976344,
+      "translation": "Python의 현재 제약으로 인해 Numeric 1에서 배열 간의 비교는 불리언 스칼라\\ 를 결과로 산출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:48.752144Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:1",
+      "source": "The advent of Rich Comparisons in Python 2.1 will allow an array of Booleans to be returned.",
+      "source_hash": 6190529704697376815,
+      "context_hash": 8468286385717720361,
+      "translation": "Python 2.1에서 리치 비교(Rich Comparisons)가 등장하면 불리언의 배열을 반환할 수 있게 될 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:48.752144Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:0",
+      "source": "Type characters are deprecated",
+      "source_hash": 13012284659811201524,
+      "context_hash": 13456161336564058785,
+      "translation": "타입 문자는 폐지 예정입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:48.752145Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:11/seg:0",
+      "source": "Numeric 2 will have an ArrayType class composed of Type instances, for example Int8, Int16, Int32, and Int for signed integers.",
+      "source_hash": 18078360832705251907,
+      "context_hash": 10253271329922809200,
+      "translation": "Numeric 2에는 Type 인스턴스로 구성된 ArrayType 클래스가 있을 것이며, 예를 들어 부호 있는 정수를 위한 Int8, Int16, Int32, Int 등이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:48.752145Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:11/seg:1",
+      "source": "The typecode scheme in Numeric 1 will be available for backward compatibility, but will be deprecated.",
+      "source_hash": 8114287134823117706,
+      "context_hash": 11563276066277640092,
+      "translation": "Numeric 1의 타입코드 방식은 하위 호환성\\ 을 위해 계속 사용할 수 있지만, 폐지 예정입니다.",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T17:14:48.752145Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Appendices",
+      "source_hash": 3401597086249460783,
+      "context_hash": 3278582122862428751,
+      "translation": "부록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:48.752146Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "A.",
+      "source_hash": 18371424727247495714,
+      "context_hash": 13090288000153211454,
+      "translation": "A.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:48.752147Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "Implicit sub-arrays iteration",
+      "source_hash": 5789977793189625362,
+      "context_hash": 14359765254741148771,
+      "translation": "암시적 하위 배열 순회",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:48.752147Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "A computer animation is composed of a number of 2-D images or frames of identical shape.",
+      "source_hash": 18068282569801399437,
+      "context_hash": 12257466600023602247,
+      "translation": "컴퓨터 애니메이션은 동일한 형태를 가진 다수의 2차원 이미지, 즉 프레임으로 구성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:35.980101Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "By stacking these images into a single block of memory, a 3-D array is created.",
+      "source_hash": 5820012884509981125,
+      "context_hash": 14669036976629825112,
+      "translation": "이러한 이미지들을 하나의 메모리 블록에 쌓음으로써 3차원 배열이 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:35.980106Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:2",
+      "source": "Yet the operations to be performed are not meant for the entire 3-D array, but on the set of 2-D sub-arrays.",
+      "source_hash": 6508880472810729803,
+      "context_hash": 5307134309744095116,
+      "translation": "그러나 수행되어야 할 연산은 전체 3차원 배열을 대상으로 하는 것이 아니라, 2차원 하위 배열의 집합을 대상으로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:35.980106Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:3",
+      "source": "In most array languages, each frame has to be extracted, operated on, and then reinserted into the output array using a for-like loop.",
+      "source_hash": 6247499269286938825,
+      "context_hash": 10785547898448384241,
+      "translation": "대부분의 배열 언어에서는 각 프레임을 추출하여 연산을 수행한 다음, for와 유사한 반복문을 사용하여 출력 배열에 다시 삽입해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:35.980107Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:4",
+      "source": "The J language allows the programmer to perform such operations implicitly by having a rank for the frame and array.",
+      "source_hash": 4553173652167755003,
+      "context_hash": 6995631906331442992,
+      "translation": "J 언어는 프레임과 배열에 대한 랭크(rank)를 지정함으로써 프로그래머가 이러한 연산을 암묵적으로 수행할 수 있게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:35.980107Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:5",
+      "source": "By default these ranks will be the same during the creation of the array.",
+      "source_hash": 6409883853679374414,
+      "context_hash": 1435483237989294310,
+      "translation": "기본적으로 이 랭크들은 배열 생성 시 서로 동일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:35.980108Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:6",
+      "source": "It was the intention of the Numeric 1 developers to implement this feature, since it is based on the language J.",
+      "source_hash": 99732988387382447,
+      "context_hash": 11529393289169170628,
+      "translation": "Numeric 1은 J 언어를 기반으로 하기 때문에, Numeric 1 개발자들의 의도는 이 기능을 구현하는 것이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:35.980108Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:7",
+      "source": "The Numeric 1 code has the required variables for implementing this behavior, but was never implemented.",
+      "source_hash": 15440921829517820173,
+      "context_hash": 2124842098030944948,
+      "translation": "Numeric 1 코드는 이 동작을 구현하는 데 필요한 변수를 가지고 있지만, 실제로 구현된 적은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:35.980108Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:8",
+      "source": "We intend to implement implicit sub-array iteration in Numeric 2, if the array broadcasting rules found in Numeric 1 do not fully support this behavior.",
+      "source_hash": 12241311122584768249,
+      "context_hash": 12860612873259112840,
+      "translation": "Numeric 1에서 발견되는 배열 브로드캐스팅 규칙이 이 동작을 완전히 지원하지 못한다면, 저희는 Numeric 2에서 암묵적인 하위 배열 반복을 구현할 계획입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:35.980109Z",
+      "issues": []
+    }
+  ]
+}

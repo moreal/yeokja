@@ -1,0 +1,1341 @@
+{
+  "version": 1,
+  "source_hash": 16016062839253191580,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Simpler customisation of class creation",
+      "source_hash": 11599689483089455012,
+      "context_hash": 16530898886277989957,
+      "translation": "클래스 생성의 더 간단한 사용자 지정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482462Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 2453338522745741806,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482464Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Currently, customising class creation requires the use of a custom metaclass.",
+      "source_hash": 14418851009572090511,
+      "context_hash": 16909499358409109381,
+      "translation": "현재 클래스 생성을 사용자 지정하려면 사용자 지정 메타클래스를 사용해야 합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:47:33.482464Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This custom metaclass then persists for the entire lifecycle of the class, creating the potential for spurious metaclass conflicts.",
+      "source_hash": 7306501694480970813,
+      "context_hash": 8664176113974252479,
+      "translation": "그러면 이 사용자 지정 메타클래스가 클래스의 전체 수명 주기 동안 유지되므로, 불필요한 메타클래스 충돌이 발생할 가능성이 생깁니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:47:33.482465Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "This PEP proposes to instead support a wide range of customisation scenarios through a new ``__init_subclass__`` hook in the class body, and a hook to initialize attributes.",
+      "source_hash": 6720666173807799318,
+      "context_hash": 12105772442447689980,
+      "translation": "이 PEP에서는 대신 클래스 본문에 있는 새로운 ``__init_subclass__`` 후크와 특성을 초기화하는 후크를 통해 광범위한 사용자 지정 시나리오를 지원할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482466Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "The new mechanism should be easier to understand and use than implementing a custom metaclass, and thus should provide a gentler introduction to the full power of Python's metaclass machinery.",
+      "source_hash": 13480739434861367418,
+      "context_hash": 8306708284469022710,
+      "translation": "새로운 메커니즘은 사용자 지정 메타클래스를 구현하는 것보다 이해하고 사용하기 쉬워야 하며, 따라서 Python 메타클래스 기능의 모든 강력한 기능을 보다 쉽게 익힐 수 있도록 해야 합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:47:33.482466Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Background",
+      "source_hash": 14089390735911585672,
+      "context_hash": 12672189332735314254,
+      "translation": "배경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482466Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Metaclasses are a powerful tool to customize class creation.",
+      "source_hash": 3780660302053367551,
+      "context_hash": 3620062836169391967,
+      "translation": "메타클래스는 클래스 생성을 사용자 지정하는 강력한 도구입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482467Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "They have, however, the problem that there is no automatic way to combine metaclasses.",
+      "source_hash": 17755584142005054732,
+      "context_hash": 2579728163491704780,
+      "translation": "그러나 메타클래스를 자동으로 결합할 방법이 없다는 문제가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482467Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "If one wants to use two metaclasses for a class, a new metaclass combining those two needs to be created, typically manually.",
+      "source_hash": 2626213872715179992,
+      "context_hash": 1089006141572416866,
+      "translation": "클래스에 두 메타클래스를 사용하려면 일반적으로 수동으로 두 메타클래스를 결합하는 새로운 메타클래스를 만들어야 합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:47:33.482467Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "This need often occurs as a surprise to a user: inheriting from two base classes coming from two different libraries suddenly raises the necessity to manually create a combined metaclass, where typically one is not interested in those details about the libraries at all.",
+      "source_hash": 16531692297305425407,
+      "context_hash": 7795085054134738232,
+      "translation": "이러한 필요성은 사용자에게 뜻밖에 발생하는 경우가 많습니다. 서로 다른 두 라이브러리에서 제공하는 두 기반 클래스를 상속하면, 대개 라이브러리의 그러한 세부 사항에는 전혀 관심이 없는 상황에서 갑자기 결합된 메타클래스를 수동으로 만들어야 합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:47:33.482468Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "This becomes even worse if one library starts to make use of a metaclass which it has not done before.",
+      "source_hash": 13386902072446596180,
+      "context_hash": 15902944430453381695,
+      "translation": "한 라이브러리가 이전에는 사용하지 않던 메타클래스를 사용하기 시작하면 상황은 더욱 악화됩니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:47:33.482468Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "While the library itself continues to work perfectly, suddenly every code combining those classes with classes from another library fails.",
+      "source_hash": 8764001266845354114,
+      "context_hash": 9703792813414376185,
+      "translation": "라이브러리 자체는 완벽하게 계속 작동하지만, 갑자기 해당 클래스들을 다른 라이브러리의 클래스와 결합하는 모든 코드가 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482468Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Proposal",
+      "source_hash": 17139217736364358932,
+      "context_hash": 2425573153076947589,
+      "translation": "제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482469Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "While there are many possible ways to use a metaclass, the vast majority of use cases falls into just three categories: some initialization code running after class creation, the initialization of descriptors and keeping the order in which class attributes were defined.",
+      "source_hash": 7247784770698986829,
+      "context_hash": 15147080562690482683,
+      "translation": "메타클래스를 사용하는 방법은 다양하지만, 대부분의 사용 사례는 클래스 생성 후 실행되는 일부 초기화 코드, 디스크립터의 초기화, 클래스 특성이 정의된 순서 유지라는 단 세 가지 범주에 속합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:47:33.482469Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "The first two categories can easily be achieved by having simple hooks into the class creation:",
+      "source_hash": 5336663497608329922,
+      "context_hash": 10842725466502132336,
+      "translation": "처음 두 범주는 클래스 생성 과정에 간단한 후크를 두면 쉽게 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482469Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "An ``__init_subclass__`` hook that initializes all subclasses of a given class.",
+      "source_hash": 6084909889305712243,
+      "context_hash": 8184061224755023659,
+      "translation": "주어진 클래스의 모든 서브클래스를 초기화하는 ``__init_subclass__`` 후크입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482470Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "upon class creation, a ``__set_name__`` hook is called on all the attribute (descriptors) defined in the class, and",
+      "source_hash": 13056339888284002166,
+      "context_hash": 9040841302242821435,
+      "translation": "클래스를 생성할 때 클래스에 정의된 모든 특성(디스크립터)에서 ``__set_name__`` 후크가 호출되며,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482470Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "The third category is the topic of another PEP, :pep:`520`.",
+      "source_hash": 6273105220534453042,
+      "context_hash": 1300900687279097810,
+      "translation": "세 번째 범주는 다른 PEP인 :pep:`520`\\ 의 주제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482470Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "As an example, the first use case looks as follows",
+      "source_hash": 15039732935574726960,
+      "context_hash": 17695012496597399871,
+      "translation": "첫 번째 사용 사례를 예로 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482470Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "The base class ``object`` contains an empty ``__init_subclass__`` method which serves as an endpoint for cooperative multiple inheritance.",
+      "source_hash": 943815393252529348,
+      "context_hash": 17597693093951348054,
+      "translation": "기본 클래스 ``object``\\ 는 협력적 다중 상속의 종단점 역할을 하는 빈 ``__init_subclass__`` 메서드를 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482470Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:1",
+      "source": "Note that this method has no keyword arguments, meaning that all methods which are more specialized have to process all keyword arguments.",
+      "source_hash": 2888463830902493652,
+      "context_hash": 2819690340897036178,
+      "translation": "이 메서드에는 키워드 인자가 없으므로, 더 특수화된 모든 메서드는 모든 키워드 인자를 처리해야 한다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482471Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "This general proposal is not a new idea (it was first suggested for inclusion in the language definition `more than 10 years ago`_, and a similar mechanism has long been supported by `Zope's ExtensionClass`_), but the situation has changed sufficiently in recent years that the idea is worth reconsidering for inclusion.",
+      "source_hash": 969410981538759220,
+      "context_hash": 6208473626592541760,
+      "translation": "이 일반적인 제안은 새로운 아이디어가 아닙니다(언어 정의에 포함하자는 제안이 `more than 10 years ago`_ 처음 제시되었고, 유사한 메커니즘이 `Zope의 ExtensionClass <Zope's ExtensionClass_>`_\\ 에서 오랫동안 지원되어 왔습니다). 그러나 최근 몇 년 사이 상황이 충분히 변했으므로, 포함을 위해 이 아이디어를 재검토할 가치가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:48:11.131532Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:0",
+      "source": "The second part of the proposal adds an ``__set_name__`` initializer for class attributes, especially if they are descriptors.",
+      "source_hash": 14738299283848015728,
+      "context_hash": 10396337316219967948,
+      "translation": "이 제안의 두 번째 부분에서는 클래스 특성, 특히 디스크립터를 위한 ``__set_name__`` 초기화자를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482471Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:1",
+      "source": "Descriptors are defined in the body of a class, but they do not know anything about that class, they do not even know the name they are accessed with.",
+      "source_hash": 6932354626425499750,
+      "context_hash": 1710675023049553629,
+      "translation": "디스크립터는 클래스 본문에 정의되지만 해당 클래스에 관한 어떤 것도 알지 못하며, 접근될 때 사용하는 이름조차 알지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482472Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:2",
+      "source": "They do get to know their owner once ``__get__`` is called, but still they do not know their name.",
+      "source_hash": 13380251382824906607,
+      "context_hash": 16099421750006091941,
+      "translation": "``__get__``\\ 이 호출되면 소유자를 알게 되지만, 여전히 자신의 이름은 알지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482472Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:3",
+      "source": "This is unfortunate, for example they cannot put their associated value into their object's ``__dict__`` under their name, since they do not know that name.",
+      "source_hash": 12219973732826579628,
+      "context_hash": 824313827479229320,
+      "translation": "이는 안타까운 일입니다. 예를 들어 디스크립터는 자신의 이름을 모르기 때문에 연관된 값을 해당 이름으로 객체의 ``__dict__``\\ 에 넣을 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482472Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:4",
+      "source": "This problem has been solved many times, and is one of the most important reasons to have a metaclass in a library.",
+      "source_hash": 5233917470528963682,
+      "context_hash": 7362940254860523008,
+      "translation": "이 문제는 여러 번 해결되었으며, 라이브러리에 메타클래스를 두는 가장 중요한 이유 중 하나입니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:47:33.482472Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:5",
+      "source": "While it would be easy to implement such a mechanism using the first part of the proposal, it makes sense to have one solution for this problem for everyone.",
+      "source_hash": 13154269632997158547,
+      "context_hash": 11214275418412852308,
+      "translation": "제안의 첫 번째 부분을 사용하여 이러한 메커니즘을 구현하는 것은 쉽겠지만, 모든 사람이 이 문제에 사용할 하나의 해결책을 마련하는 것이 합리적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482473Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:11/seg:0",
+      "source": "To give an example of its usage, imagine a descriptor representing weak referenced values",
+      "source_hash": 18337920852344426937,
+      "context_hash": 6707912293620179623,
+      "translation": "그 사용 예를 들면, 약한 참조 값을 나타내는 디스크립터를 생각해 보십시오.",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T18:47:33.482473Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:0",
+      "source": "Such a ``WeakAttribute`` may, for example, be used in a tree structure where one wants to avoid cyclic references via the parent",
+      "source_hash": 1199455436343474093,
+      "context_hash": 4758452851658646687,
+      "translation": "이러한 ``WeakAttribute``\\ 는 예를 들어 부모를 통한 순환 참조를 피하려는 트리 구조에서 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:47:33.482473Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:0",
+      "source": "Note that the ``parent`` attribute is used like a normal attribute, yet the tree contains no cyclic references and can thus be easily garbage collected when out of use.",
+      "source_hash": 2120885552711590994,
+      "context_hash": 13580031810358461795,
+      "translation": "``parent`` 속성은 일반적인 속성처럼 사용되지만, 트리에는 순환 참조가 없으므로 사용되지 않을 때 쉽게 가비지 컬렉션될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626225Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:1",
+      "source": "The ``parent`` attribute magically becomes ``None`` once the parent ceases existing.",
+      "source_hash": 13609184732814284425,
+      "context_hash": 17456840459643992397,
+      "translation": "``parent`` 속성은 부모가 더 이상 존재하지 않으면 마법처럼 ``None``\\ 이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626229Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:16/seg:0",
+      "source": "While this example looks very trivial, it should be noted that until now such an attribute cannot be defined without the use of a metaclass.",
+      "source_hash": 2277155998398075252,
+      "context_hash": 7036024974994636846,
+      "translation": "이 예제는 매우 간단해 보이지만, 지금까지 이러한 속성은 메타클래스를 사용하지 않고는 정의할 수 없었다는 점에 유의해야 합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:10:59.626229Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:16/seg:1",
+      "source": "And given that such a metaclass can make life very hard, this kind of attribute does not exist yet.",
+      "source_hash": 18196122046038392052,
+      "context_hash": 16055127403753932300,
+      "translation": "또한 이러한 메타클래스는 작업을 매우 어렵게 만들 수 있으므로, 이런 종류의 속성은 아직 존재하지 않습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:10:59.626231Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:0",
+      "source": "Initializing descriptors could simply be done in the ``__init_subclass__`` hook.",
+      "source_hash": 4898719930522919045,
+      "context_hash": 5751281007881968428,
+      "translation": "디스크립터를 초기화하는 작업은 ``__init_subclass__`` 훅에서 간단히 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626231Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:1",
+      "source": "But this would mean that descriptors can only be used in classes that have the proper hook, the generic version like in the example would not work generally.",
+      "source_hash": 6040531274709144058,
+      "context_hash": 9573211114601682821,
+      "translation": "그러나 이는 적절한 훅을 가진 클래스에서만 디스크립터를 사용할 수 있다는 뜻이며, 예제와 같은 일반 버전은 일반적으로 작동하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626232Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:2",
+      "source": "One could also call ``__set_name__`` from within the base implementation of ``object.__init_subclass__``.",
+      "source_hash": 14851863863639228065,
+      "context_hash": 2073582462912538953,
+      "translation": "또한 ``object.__init_subclass__``\\ 의 기본 구현 내부에서 ``__set_name__``\\ 을 호출할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626232Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:3",
+      "source": "But given that it is a common mistake to forget to call ``super()``, it would happen too often that suddenly descriptors are not initialized.",
+      "source_hash": 17673385478424764510,
+      "context_hash": 12324944980242407556,
+      "translation": "그러나 ``super()``\\ 를 호출하는 것을 잊는 것은 흔한 실수이므로, 디스크립터가 갑자기 초기화되지 않는 일이 너무 자주 발생할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626232Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Key Benefits",
+      "source_hash": 18228680242121929786,
+      "context_hash": 10837845226930473247,
+      "translation": "주요 이점",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626232Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Easier inheritance of definition time behaviour",
+      "source_hash": 67198493766236346,
+      "context_hash": 4216250146423462546,
+      "translation": "정의 시점 동작의 더 쉬운 상속",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626233Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Understanding Python's metaclasses requires a deep understanding of the type system and the class construction process.",
+      "source_hash": 5335644258014395265,
+      "context_hash": 12682838561950505580,
+      "translation": "파이썬의 메타클래스를 이해하려면 타입 시스템과 클래스 생성 프로세스를 깊이 이해해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626233Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "This is legitimately seen as challenging, due to the need to keep multiple moving parts (the code, the metaclass hint, the actual metaclass, the class object, instances of the class object) clearly distinct in your mind.",
+      "source_hash": 11275680715727355941,
+      "context_hash": 17316000574988855767,
+      "translation": "여러 구성 요소(코드, 메타클래스 힌트, 실제 메타클래스, 클래스 객체, 클래스 객체의 인스턴스)를 머릿속에서 명확히 구분해야 하므로, 이는 당연히 어려운 일로 여겨집니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:10:59.626234Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "Even when you know the rules, it's still easy to make a mistake if you're not being extremely careful.",
+      "source_hash": 271398535670245235,
+      "context_hash": 9575064416584684890,
+      "translation": "규칙을 알고 있더라도 극도로 주의하지 않으면 여전히 실수하기 쉽습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626234Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Understanding the proposed implicit class initialization hook only requires ordinary method inheritance, which isn't quite as daunting a task.",
+      "source_hash": 10316448274333442947,
+      "context_hash": 2486387801438552640,
+      "translation": "제안된 암시적 클래스 초기화 훅을 이해하는 데는 일반적인 메서드 상속만 필요하므로, 그다지 어려운 작업은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626235Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "The new hook provides a more gradual path towards understanding all of the phases involved in the class definition process.",
+      "source_hash": 11330193821111393356,
+      "context_hash": 12308112817061168450,
+      "translation": "새로운 훅은 클래스 정의 프로세스에 포함된 모든 단계를 더 점진적으로 이해할 수 있는 경로를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626235Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Reduced chance of metaclass conflicts",
+      "source_hash": 14245947641186175921,
+      "context_hash": 5694563159467588769,
+      "translation": "메타클래스 충돌 가능성 감소",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:10:59.626235Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "One of the big issues that makes library authors reluctant to use metaclasses (even when they would be appropriate) is the risk of metaclass conflicts.",
+      "source_hash": 1018534601019317712,
+      "context_hash": 3007872089567149750,
+      "translation": "라이브러리 작성자가 메타클래스를 사용하기를 꺼리게 만드는 큰 문제 중 하나는 메타클래스 충돌 위험입니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:10:59.626237Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "These occur whenever two unrelated metaclasses are used by the desired parents of a class definition.",
+      "source_hash": 1172611723328994210,
+      "context_hash": 6348037932177462741,
+      "translation": "이러한 충돌은 클래스 정의에서 원하는 부모들이 서로 관련 없는 두 메타클래스를 사용할 때마다 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626237Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:2",
+      "source": "This risk also makes it very difficult to *add* a metaclass to a class that has previously been published without one.",
+      "source_hash": 6735070780884122967,
+      "context_hash": 1957566795877340163,
+      "translation": "이러한 위험 때문에 이전에 메타클래스 없이 공개된 클래스에 메타클래스를 *추가*\\ 하는 것도 매우 어려워집니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:10:59.626237Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "By contrast, adding an ``__init_subclass__`` method to an existing type poses a similar level of risk to adding an ``__init__`` method: technically, there is a risk of breaking poorly implemented subclasses, but when that occurs, it is recognised as a bug in the subclass rather than the library author breaching backwards compatibility guarantees.",
+      "source_hash": 16272895162679591005,
+      "context_hash": 2148906283762250514,
+      "translation": "이와 대조적으로 기존 타입에 ``__init_subclass__`` 메서드를 추가하는 것은 ``__init__`` 메서드를 추가하는 것과 비슷한 수준의 위험을 초래합니다. 기술적으로는 잘못 구현된 서브클래스를 손상시킬 위험이 있지만, 그런 일이 발생하면 라이브러리 작성자가 하위 호환성 보장을 위반한 것이 아니라 서브클래스의 버그로 인식됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626238Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "New Ways of Using Classes",
+      "source_hash": 1236606689615225666,
+      "context_hash": 5232265510637803765,
+      "translation": "클래스를 사용하는 새로운 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626238Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Subclass registration",
+      "source_hash": 1594917429928612406,
+      "context_hash": 7293031548871678715,
+      "translation": "서브클래스 등록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626239Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Especially when writing a plugin system, one likes to register new subclasses of a plugin baseclass.",
+      "source_hash": 5680420045881901393,
+      "context_hash": 17264494471292183076,
+      "translation": "특히 플러그인 시스템을 작성할 때는 플러그인 베이스 클래스의 새로운 서브클래스를 등록하고 싶을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626239Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "This can be done as follows",
+      "source_hash": 2201906130051687145,
+      "context_hash": 6900839443915269720,
+      "translation": "다음과 같이 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626239Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "In this example, ``PluginBase.subclasses`` will contain a plain list of all subclasses in the entire inheritance tree.",
+      "source_hash": 12227000275213417784,
+      "context_hash": 8623027698207604231,
+      "translation": "이 예제에서 ``PluginBase.subclasses``\\ 에는 전체 상속 트리에 있는 모든 서브클래스의 일반 리스트가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626240Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "One should note that this also works nicely as a mixin class.",
+      "source_hash": 10998984328081240245,
+      "context_hash": 15499082494286220351,
+      "translation": "이는 믹스인 클래스로도 잘 작동한다는 점에 유의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626240Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Trait descriptors",
+      "source_hash": 4868554390600364280,
+      "context_hash": 6226743780464267086,
+      "translation": "트레이트 디스크립터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626240Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "There are many designs of Python descriptors in the wild which, for example, check boundaries of values.",
+      "source_hash": 3139125320458149695,
+      "context_hash": 17361070544358132772,
+      "translation": "예를 들어 값의 경계를 검사하는 다양한 설계의 파이썬 디스크립터가 사용되고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626240Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "Often those \"traits\" need some support of a metaclass to work.",
+      "source_hash": 11308318768228124835,
+      "context_hash": 5382928307625012827,
+      "translation": "이러한 \"트레이트\"가 작동하려면 메타클래스의 지원이 필요한 경우가 많습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:10:59.626241Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "This is how this would look like with this PEP",
+      "source_hash": 5769357947238887621,
+      "context_hash": 7609104796145403648,
+      "translation": "이 PEP를 사용하면 다음과 같은 형태가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626241Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Implementation Details",
+      "source_hash": 12150976116756015802,
+      "context_hash": 14894664395281119299,
+      "translation": "구현 세부 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:59.626241Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The hooks are called in the following order: ``type.__new__`` calls the ``__set_name__`` hooks on the descriptor after the new class has been initialized.",
+      "source_hash": 3218714457589357055,
+      "context_hash": 5686263116590840528,
+      "translation": "훅은 다음 순서로 호출됩니다. 새 클래스가 초기화된 후 ``type.__new__``\\ 가 디스크립터의 ``__set_name__`` 훅을 호출합니다.",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T17:59:47.999065Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "Then it calls ``__init_subclass__`` on the base class, on ``super()``, to be precise.",
+      "source_hash": 15022256841443418164,
+      "context_hash": 15039038592686585666,
+      "translation": "그런 다음 기반 클래스에서, 정확히 말하면 ``super()``\\ 에서 ``__init_subclass__``\\ 를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999069Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "This means that subclass initializers already see the fully initialized descriptors.",
+      "source_hash": 9454173610580931824,
+      "context_hash": 13280882320261129227,
+      "translation": "이는 서브클래스 초기화 코드가 이미 완전히 초기화된 디스크립터를 볼 수 있음을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999070Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:3",
+      "source": "This way, ``__init_subclass__`` users can fix all descriptors again if this is needed.",
+      "source_hash": 11111752627682635267,
+      "context_hash": 11828863955646103102,
+      "translation": "이렇게 하면 필요한 경우 ``__init_subclass__`` 사용자가 모든 디스크립터를 다시 수정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999070Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Another option would have been to call ``__set_name__`` in the base implementation of ``object.__init_subclass__``.",
+      "source_hash": 469028596336715324,
+      "context_hash": 8945180750128887829,
+      "translation": "또 다른 방법은 ``object.__init_subclass__``\\ 의 기본 구현에서 ``__set_name__``\\ 을 호출하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999070Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:1",
+      "source": "This way it would be possible even to prevent ``__set_name__`` from being called.",
+      "source_hash": 2156647868018762615,
+      "context_hash": 16638440878180828657,
+      "translation": "이렇게 하면 ``__set_name__``\\ 이 호출되는 것조차 방지할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999071Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:2",
+      "source": "Most of the times, however, such a prevention would be accidental, as it often happens that a call to ``super()`` is forgotten.",
+      "source_hash": 17914480216570299601,
+      "context_hash": 2040834140439246615,
+      "translation": "그러나 대부분의 경우 그러한 방지는 우발적으로 발생할 것입니다. ``super()`` 호출을 잊는 일이 자주 발생하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999071Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "As a third option, all the work could have been done in ``type.__init__``.",
+      "source_hash": 13864886268250085492,
+      "context_hash": 17233594167674670621,
+      "translation": "세 번째 방법으로는 모든 작업을 ``type.__init__``\\ 에서 수행할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999071Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:1",
+      "source": "Most metaclasses do their work in ``__new__``, as this is recommended by the documentation.",
+      "source_hash": 1848261365818060655,
+      "context_hash": 3133923137545448407,
+      "translation": "문서에서 권장하듯이 대부분의 메타클래스는 ``__new__``\\ 에서 작업을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999072Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:2",
+      "source": "Many metaclasses modify their arguments before they pass them over to ``super().__new__``.",
+      "source_hash": 14170215838888420003,
+      "context_hash": 12590361484700979410,
+      "translation": "많은 메타클래스는 인자를 ``super().__new__``\\ 에 전달하기 전에 수정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999072Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:3",
+      "source": "For compatibility with those kind of classes, the hooks should be called from ``__new__``.",
+      "source_hash": 15822317604072512630,
+      "context_hash": 16252559180565158073,
+      "translation": "이러한 종류의 클래스와 하위 호환성을 유지하려면 훅을 ``__new__``\\ 에서 호출해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999072Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "Another small change should be done: in the current implementation of CPython, ``type.__init__`` explicitly forbids the use of keyword arguments, while ``type.__new__`` allows for its attributes to be shipped as keyword arguments.",
+      "source_hash": 6986858683036632854,
+      "context_hash": 12444175426874386557,
+      "translation": "또 하나의 작은 변경도 이루어져야 합니다. 현재 CPython 구현에서는 ``type.__init__``\\ 이 키워드 인자의 사용을 명시적으로 금지하는 반면, ``type.__new__``\\ 는 해당 속성을 키워드 인자로 전달할 수 있도록 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999073Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:1",
+      "source": "This is weirdly incoherent, and thus it should be forbidden.",
+      "source_hash": 14005847229465630690,
+      "context_hash": 14349366834247028221,
+      "translation": "이는 이상할 정도로 일관성이 없으므로 금지되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999073Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:2",
+      "source": "While it would be possible to retain the current behavior, it would be better if this was fixed, as it is probably not used at all: the only use case would be that at metaclass calls its ``super().__new__`` with *name*, *bases* and *dict* (yes, *dict*, not *namespace* or *ns* as mostly used with modern metaclasses) as keyword arguments.",
+      "source_hash": 9328828857965730622,
+      "context_hash": 7084808916629253171,
+      "translation": "현재 동작을 유지할 수도 있지만, 이는 전혀 사용되지 않을 가능성이 크므로 수정하는 편이 더 낫습니다. 유일한 사용 사례는 메타클래스가 *name*, *bases*, *dict* (그렇습니다. 현대 메타클래스에서 주로 사용하는 *네임스페이스* 또는 *ns*\\ 가 아니라 *dict*\\ 입니다)를 키워드 인자로 전달하여 ``super().__new__``\\ 를 호출하는 경우일 것입니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스",
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T20:09:07.345069Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:3",
+      "source": "This should not be done.",
+      "source_hash": 658868900889404427,
+      "context_hash": 8364031052255733466,
+      "translation": "이렇게 해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999075Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:4",
+      "source": "This little change simplifies the implementation of this PEP significantly, while improving the coherence of Python overall.",
+      "source_hash": 10103675647395268002,
+      "context_hash": 17048900979477719022,
+      "translation": "이 작은 변경은 Python 전반의 일관성을 향상시키면서 이 PEP의 구현을 크게 단순화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999075Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "As a second change, the new ``type.__init__`` just ignores keyword arguments.",
+      "source_hash": 3098421410261426615,
+      "context_hash": 1799971088686308447,
+      "translation": "두 번째 변경으로, 새로운 ``type.__init__``\\ 는 키워드 인자를 단순히 무시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999076Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:1",
+      "source": "Currently, it insists that no keyword arguments are given.",
+      "source_hash": 15616217194098309458,
+      "context_hash": 7111734337336153674,
+      "translation": "현재는 키워드 인자가 제공되지 않았는지 확인합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999076Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:2",
+      "source": "This leads to a (wanted) error if one gives keyword arguments to a class declaration if the metaclass does not process them.",
+      "source_hash": 6776617074691182160,
+      "context_hash": 18089370485432395886,
+      "translation": "메타클래스가 키워드 인자를 처리하지 않는데 클래스 선언에 키워드 인자를 제공하면, 이로 인해 (의도한) 오류가 발생합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T17:59:47.999077Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:3",
+      "source": "Metaclass authors that do want to accept keyword arguments must filter them out by overriding ``__init__``.",
+      "source_hash": 13201296885997560284,
+      "context_hash": 5647586680899800672,
+      "translation": "키워드 인자를 받아들이려는 메타클래스 작성자는 ``__init__``\\ 을 재정의하여 해당 인자를 제거해야 합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T17:59:47.999077Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "In the new code, it is not ``__init__`` that complains about keyword arguments, but ``__init_subclass__``, whose default implementation takes no arguments.",
+      "source_hash": 14869533963646216597,
+      "context_hash": 5852193441859879614,
+      "translation": "새 코드에서는 키워드 인자에 대해 불평하는 것이 ``__init__``\\ 이 아니라, 기본 구현이 어떠한 인자도 받지 않는 ``__init_subclass__``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999078Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:1",
+      "source": "In a classical inheritance scheme using the method resolution order, each ``__init_subclass__`` may take out it's keyword arguments until none are left, which is checked by the default implementation of ``__init_subclass__``.",
+      "source_hash": 11297082253488496048,
+      "context_hash": 5835557074079956184,
+      "translation": "메서드 결정 순서를 사용하는 고전적인 상속 체계에서는 각 ``__init_subclass__``\\ 가 남은 키워드 인자가 없을 때까지 자신의 키워드 인자를 제거할 수 있으며, 이는 ``__init_subclass__``\\ 의 기본 구현에서 확인됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999079Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "For readers who prefer reading Python over English, this PEP proposes to replace the current ``type`` and ``object`` with the following",
+      "source_hash": 17137619093969363383,
+      "context_hash": 7469243980875551788,
+      "translation": "영어보다 Python을 읽는 것을 선호하는 독자를 위해, 이 PEP에서는 현재의 ``type``\\ 과 ``object``\\ 를 다음과 같이 대체할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999079Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 1239796130607328408,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:59:47.999079Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "The reference implementation for this PEP is attached to `issue 27366 <http://bugs.python.org/issue27366>`__.",
+      "source_hash": 9661811740780646749,
+      "context_hash": 1033674097105181213,
+      "translation": "이 PEP의 참조 구현은 `issue 27366 <http://bugs.python.org/issue27366>`__\\ 에 첨부되어 있습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:59:47.999080Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Backward compatibility issues",
+      "source_hash": 16493558700224055505,
+      "context_hash": 1967385170631566304,
+      "translation": "하위 호환성 문제",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T17:59:47.999081Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "The exact calling sequence in ``type.__new__`` is slightly changed, raising fears of backwards compatibility.",
+      "source_hash": 7047024553055717741,
+      "context_hash": 6428075656092715700,
+      "translation": "``type.__new__``\\ 의 정확한 호출 순서가 약간 변경되므로 하위 호환성에 대한 우려가 제기됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999082Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "It should be assured by tests that common use cases behave as desired.",
+      "source_hash": 7259351487088582242,
+      "context_hash": 4874895210587368359,
+      "translation": "일반적인 사용 사례가 원하는 대로 동작하는지는 테스트를 통해 확인해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999082Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "The following class definitions (except the one defining the metaclass) continue to fail with a ``TypeError`` as superfluous class arguments are passed",
+      "source_hash": 13404030232700309782,
+      "context_hash": 13487808254431475149,
+      "translation": "다음 클래스 정의는 (메타클래스를 정의하는 클래스 정의를 제외하고) 불필요한 클래스 인자가 전달되므로 ``TypeError``\\ 로 계속 실패합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T17:59:47.999083Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "A metaclass defining only a ``__new__`` method which is interested in keyword arguments now does not need to define an ``__init__`` method anymore, as the default ``type.__init__`` ignores keyword arguments.",
+      "source_hash": 157165686710345518,
+      "context_hash": 17618291123911308074,
+      "translation": "키워드 인자에 관심이 있는 ``__new__`` 메서드만 정의한 메타클래스는 이제 ``__init__`` 메서드를 더 이상 정의할 필요가 없습니다. 기본 ``type.__init__``\\ 가 키워드 인자를 무시하기 때문입니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T17:59:47.999084Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:1",
+      "source": "This is nicely in line with the recommendation to override ``__new__`` in metaclasses instead of ``__init__``.",
+      "source_hash": 5467502439507603461,
+      "context_hash": 10412723498783044934,
+      "translation": "이는 메타클래스에서 ``__init__`` 대신 ``__new__``\\ 를 재정의하라는 권고와 잘 부합합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999084Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:2",
+      "source": "The following code does not fail anymore",
+      "source_hash": 15583781145913709085,
+      "context_hash": 10902815098790949355,
+      "translation": "다음 코드는 더 이상 실패하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:59:47.999086Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:0",
+      "source": "Only defining an ``__init__`` method in a metaclass continues to fail with ``TypeError`` if keyword arguments are given",
+      "source_hash": 14720465627544507026,
+      "context_hash": 14737742250218476058,
+      "translation": "메타클래스에 ``__init__`` 메서드만 정의하는 경우, 키워드 인자가 주어지면 여전히 ``TypeError``\\ 로 실패합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T17:35:46.907660Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:8/seg:0",
+      "source": "Defining both ``__init__`` and ``__new__`` continues to work fine.",
+      "source_hash": 1405201922715691308,
+      "context_hash": 15689463027922648711,
+      "translation": "``__init__``\\ 과 ``__new__``\\ 를 모두 정의하는 것은 여전히 잘 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:35:46.907668Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:9/seg:0",
+      "source": "About the only thing that stops working is passing the arguments of ``type.__new__`` as keyword arguments",
+      "source_hash": 10724022156782353065,
+      "context_hash": 15162884591679359480,
+      "translation": "작동하지 않게 되는 유일한 것은 ``type.__new__``\\ 의 인자를 키워드 인자로 전달하는 것뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:35:46.907669Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:11/seg:0",
+      "source": "This will now raise ``TypeError``, but this is weird code, and easy to fix even if someone used this feature.",
+      "source_hash": 11630676390399469902,
+      "context_hash": 3387952215284688649,
+      "translation": "이제 이는 ``TypeError``\\ 를 발생시키지만, 이는 이상한 코드이며 누군가 이 기능을 사용했더라도 고치기 쉽습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:35:46.907669Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Rejected Design Options",
+      "source_hash": 16087004957302481765,
+      "context_hash": 900095916011272326,
+      "translation": "거부된 설계 옵션",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:35:46.907670Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Calling the hook on the class itself",
+      "source_hash": 11912320287558225320,
+      "context_hash": 12567633608196247837,
+      "translation": "클래스 자신에 대해 훅을 호출하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:35:46.907670Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Adding an ``__autodecorate__`` hook that would be called on the class itself was the proposed idea of :pep:`422`.",
+      "source_hash": 13215505288619998994,
+      "context_hash": 16824573359914244249,
+      "translation": "클래스 자신에 대해 호출되는 ``__autodecorate__`` 훅을 추가하는 것이 :pep:`422`\\ 에서 제안된 아이디어였습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:35:46.907671Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "Most examples work the same way or even better if the hook is called only on strict subclasses.",
+      "source_hash": 17497279566004902577,
+      "context_hash": 2947055199489069373,
+      "translation": "대부분의 예제는 훅이 진(strict) 서브클래스에 대해서만 호출되어도 동일하게, 혹은 더 낫게 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:35:46.907671Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:2",
+      "source": "In general, it is much easier to arrange to explicitly call the hook on the class in which it is defined (to opt-in to such a behavior) than to opt-out (by remember to check for ``cls is __class`` in the hook body), meaning that one does not want the hook to be called on the class it is defined in.",
+      "source_hash": 18077040388094480804,
+      "context_hash": 12846611225435868948,
+      "translation": "일반적으로, (그런 동작을 원하지 않을 때) 훅 본문에서 ``cls is __class``\\ 를 확인하는 것을 기억함으로써 옵트아웃하는 것보다, 훅이 정의된 클래스에서 명시적으로 호출하도록 마련하여 (그런 동작을 옵트인하는 것) 훨씬 쉬우며, 이는 훅이 정의된 클래스 자체에 대해서는 호출되기를 원하지 않는다는 것을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:35:46.907672Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "This becomes most evident if the class in question is designed as a mixin: it is very unlikely that the code of the mixin is to be executed for the mixin class itself, as it is not supposed to be a complete class on its own.",
+      "source_hash": 11757346596451472694,
+      "context_hash": 11799887867418639947,
+      "translation": "이는 해당 클래스가 믹스인으로 설계된 경우 가장 명확해집니다. 믹스인은 그 자체로 완전한 클래스가 되어서는 안 되므로, 믹스인의 코드가 믹스인 클래스 자체에 대해 실행될 가능성은 매우 낮습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:35:46.907673Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "The original proposal also made major changes in the class initialization process, rendering it impossible to back-port the proposal to older Python versions.",
+      "source_hash": 15722404231566428923,
+      "context_hash": 16299294654931088750,
+      "translation": "원래 제안은 또한 클래스 초기화 과정에 큰 변경을 가했으며, 이로 인해 해당 제안을 이전 Python 버전으로 백포트하는 것이 불가능해졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:35:46.907673Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "When it's desired to also call the hook on the base class, two mechanisms are available:",
+      "source_hash": 17405183765331482594,
+      "context_hash": 13052747964119258857,
+      "translation": "베이스 클래스에 대해서도 훅을 호출하고자 할 때는 두 가지 메커니즘을 사용할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:35:46.907674Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:0",
+      "source": "Introduce an additional mixin class just to hold the ``__init_subclass__`` implementation.",
+      "source_hash": 376636117662203346,
+      "context_hash": 11582614003583026656,
+      "translation": "``__init_subclass__`` 구현을 담기 위한 추가 믹스인 클래스를 도입합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:35:46.907674Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:1",
+      "source": "The original \"base\" class can then list the new mixin as its first parent class.",
+      "source_hash": 15406058011784748704,
+      "context_hash": 17564083734912473956,
+      "translation": "그러면 원래의 \"베이스\" 클래스는 새 믹스인을 첫 번째 부모 클래스로 나열할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:35:46.907674Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:0",
+      "source": "Implement the desired behaviour as an independent class decorator, and apply that decorator explicitly to the base class, and then implicitly to subclasses via ``__init_subclass__``.",
+      "source_hash": 1528127258317698860,
+      "context_hash": 15073165997712862250,
+      "translation": "원하는 동작을 독립적인 클래스 데코레이터로 구현하고, 해당 데코레이터를 베이스 클래스에는 명시적으로 적용한 뒤, ``__init_subclass__``\\ 를 통해 서브클래스에는 암묵적으로 적용합니다.",
+      "glossary_snapshot": {
+        "class decorator": "클래스 데코레이터",
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T17:35:46.907675Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:0",
+      "source": "Calling ``__init_subclass__`` explicitly from a class decorator will generally be undesirable, as this will also typically call ``__init_subclass__`` a second time on the parent class, which is unlikely to be desired behaviour.",
+      "source_hash": 3280003681119078946,
+      "context_hash": 14381576188750298900,
+      "translation": "클래스 데코레이터에서 ``__init_subclass__``\\ 를 명시적으로 호출하는 것은 일반적으로 바람직하지 않습니다. 이는 보통 부모 클래스에 대해 ``__init_subclass__``\\ 가 두 번째로 호출되는 결과를 낳기 때문이며, 이는 원하는 동작이 아닐 가능성이 큽니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터",
+        "class decorator": "클래스 데코레이터"
+      },
+      "translated_at": "2026-08-28T17:35:46.907676Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Other variants of calling the hooks",
+      "source_hash": 7501408614959152998,
+      "context_hash": 15572628391475171777,
+      "translation": "훅 호출의 다른 변형들",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:46.815815Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Other names for the hook were presented, namely ``__decorate__`` or ``__autodecorate__``.",
+      "source_hash": 5065261869444488545,
+      "context_hash": 8606266257066782282,
+      "translation": "훅에 대해 ``__decorate__`` 또는 ``__autodecorate__``\\ 라는 다른 이름들도 제안되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:46.815818Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "This proposal opts for ``__init_subclass__`` as it is very close to the ``__init__`` method, just for the subclass, while it is not very close to decorators, as it does not return the class.",
+      "source_hash": 6256986785297555934,
+      "context_hash": 18010745322753472046,
+      "translation": "이 제안서는 ``__init_subclass__``\\ 를 채택했는데, 이는 클래스를 반환하지 않으므로 데코레이터와는 그다지 가깝지 않은 반면, 서브클래스를 위한 것일 뿐 ``__init__`` 메서드와는 매우 가깝기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:46.815818Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "For the ``__set_name__`` hook other names have been proposed as well, ``__set_owner__``, ``__set_ownership__`` and ``__init_descriptor__``.",
+      "source_hash": 1242788007471522031,
+      "context_hash": 12529290335812205143,
+      "translation": "``__set_name__`` 훅에 대해서도 ``__set_owner__``, ``__set_ownership__``, ``__init_descriptor__``\\ 와 같은 다른 이름들이 제안된 바 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:46.815818Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Requiring an explicit decorator on ``__init_subclass__``",
+      "source_hash": 16992381460179765630,
+      "context_hash": 7982992362999429938,
+      "translation": "``__init_subclass__``\\ 에 명시적 데코레이터를 요구하기",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T17:26:46.815819Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "One could require the explicit use of ``@classmethod`` on the ``__init_subclass__`` decorator.",
+      "source_hash": 7217796965122850890,
+      "context_hash": 10436964507303251932,
+      "translation": "``__init_subclass__`` 데코레이터에 ``@classmethod``\\ 의 명시적 사용을 요구할 수도 있었습니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T17:26:46.815820Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "It was made implicit since there's no sensible interpretation for leaving it out, and that case would need to be detected anyway in order to give a useful error message.",
+      "source_hash": 18396610567558866106,
+      "context_hash": 205094828327796610,
+      "translation": "이를 생략하는 것에 대해 합리적인 해석이 존재하지 않으며, 유용한 오류 메시지를 제공하려면 어차피 그러한 경우를 감지해야 하기 때문에 암묵적으로 처리되도록 만들었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:46.815821Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "This decision was reinforced after noticing that the user experience of defining ``__prepare__`` and forgetting the ``@classmethod`` method decorator is singularly incomprehensible (particularly since :pep:`3115` documents it as an ordinary method, and the current documentation doesn't explicitly say anything one way or the other).",
+      "source_hash": 4750192239801989290,
+      "context_hash": 135296712098068287,
+      "translation": "이 결정은 ``__prepare__``\\ 를 정의하면서 ``@classmethod`` 메서드 데코레이터를 빠뜨렸을 때의 사용자 경험이 유난히 이해하기 어렵다는 점을 발견한 후 더욱 힘을 얻었습니다(특히 :pep:`3115`\\ 는 이를 일반 메서드로 문서화하고 있고, 현재 문서에서도 이에 대해 명시적으로 언급하지 않기 때문입니다).",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T17:26:46.815822Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "A more ``__new__``-like hook",
+      "source_hash": 1751235014773281522,
+      "context_hash": 11939667307623530892,
+      "translation": "``__new__``\\ 에 더 가까운 훅",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:46.815823Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "In :pep:`422` the hook worked more like the ``__new__`` method than the ``__init__`` method, meaning that it returned a class instead of modifying one.",
+      "source_hash": 2769543014195498240,
+      "context_hash": 9749831530298663875,
+      "translation": "관련 :pep:`422`\\ 에서 훅은 ``__init__`` 메서드보다 ``__new__`` 메서드에 더 가깝게 작동했으며, 이는 클래스를 수정하는 대신 반환했다는 뜻입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:09:07.345072Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "This allows a bit more flexibility, but at the cost of much harder implementation and undesired side effects.",
+      "source_hash": 9099223978754312037,
+      "context_hash": 16920812858753836664,
+      "translation": "이는 약간의 유연성을 더 제공하지만, 그 대가로 구현이 훨씬 어려워지고 원치 않는 부작용이 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:46.815824Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Adding a class attribute with the attribute order",
+      "source_hash": 17620829306977129146,
+      "context_hash": 15327063416305731199,
+      "translation": "속성 순서를 담은 클래스 속성 추가하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:46.815824Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "This got its own :pep:`520`.",
+      "source_hash": 2983178184134172026,
+      "context_hash": 7074816199951712768,
+      "translation": "이는 별도의 :pep:`520`\\ 으로 만들어졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:46.815824Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "History",
+      "source_hash": 8648362223470591576,
+      "context_hash": 3648997116243578910,
+      "translation": "이력",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:46.815825Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "This used to be a competing proposal to :pep:`422` by Alyssa Coghlan and Daniel Urban. :pep:`422` intended to achieve the same goals as this PEP, but with a different way of implementation.",
+      "source_hash": 819683844054194544,
+      "context_hash": 8924933579367618638,
+      "translation": "이 문서는 한때 Alyssa Coghlan과 Daniel Urban이 작성한 :pep:`422`\\ 와 경쟁하는 제안서였습니다. :pep:`422`\\ 는 이 PEP와 동일한 목표를 달성하고자 했지만, 구현 방식이 달랐습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:46.815825Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "In the meantime, :pep:`422` has been withdrawn favouring this approach.",
+      "source_hash": 12063731110504504562,
+      "context_hash": 1726057290265791202,
+      "translation": "그 사이 :pep:`422`\\ 는 이 방식을 지지하며 철회되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:46.815825Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 12088757391075330021,
+      "translation": "참고 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:53.915962Z",
+      "issues": []
+    }
+  ]
+}

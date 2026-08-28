@@ -1,0 +1,551 @@
+{
+  "version": 1,
+  "source_hash": 3425702510549464846,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Reducing CPython's Feature Delivery Latency",
+      "source_hash": 8752046707339905880,
+      "context_hash": 16530898886277989957,
+      "translation": "CPython 기능 제공 지연 시간 줄이기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.057991Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 3915370038091693494,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.057996Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": ":pep:`602` and :pep:`605` describe two alternative approaches to delivering smaller collections of features to Python's users more frequently (as compared to the current approach of offering new feature releases every 18-24 months, with the first binary alpha release taking place 6-8 months before the final release).",
+      "source_hash": 11026690351675793904,
+      "context_hash": 6791508857866815290,
+      "translation": ":pep:`602`\\ 와 :pep:`605`\\ 는 Python 사용자에게 더 작은 기능 모음을 더 자주 제공하는 두 가지 대안적 접근법을 설명합니다(18~24개월마다 새로운 기능 릴리스를 제공하고, 최종 릴리스 6~8개월 전에 첫 바이너리 알파 릴리스가 이루어지는 현재의 접근법과 비교했을 때).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.057997Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "Both PEPs also propose moving to a release cadence that results in full releases occurring at a consistent time of year (every year for :pep:`602`, every other year for :pep:`605`).",
+      "source_hash": 5547800101838081446,
+      "context_hash": 3228946333296330698,
+      "translation": "두 PEP 모두 일 년 중 일정한 시기에 정식 릴리스가 이루어지는 릴리스 주기로 전환할 것을 제안합니다(:pep:`602`\\ 는 매년, :pep:`605`\\ 는 격년).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.057998Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "This PEP (from the authors of both competing proposals) provides common background on *why* a change in the release cadence is considered desirable, as well as the perceived risks that both PEPs attempt to mitigate.",
+      "source_hash": 11423780600509551588,
+      "context_hash": 13281934180238530097,
+      "translation": "경쟁하는 두 제안 모두의 저자가 작성한 이 PEP는, 릴리스 주기 변경이 바람직하다고 여겨지는 *이유*\\ 와 더불어 두 PEP가 완화하고자 하는 위험 요소에 대한 공통 배경을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.057999Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale for change",
+      "source_hash": 4127111002773755675,
+      "context_hash": 5702700721142254059,
+      "translation": "변경 근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.057999Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Reducing the size of feature delivery batches",
+      "source_hash": 16464593626278390292,
+      "context_hash": 9305061314993088452,
+      "translation": "기능 제공 배치 크기 줄이기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.057999Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "When multiple large changes are delivered together, a complex investigation may be required to determine the root cause of any new issues that arise.",
+      "source_hash": 13283464194522158991,
+      "context_hash": 8949354495721951451,
+      "translation": "여러 개의 큰 변경 사항이 함께 제공되면, 새로 발생하는 문제의 근본 원인을 파악하기 위해 복잡한 조사가 필요할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "Large batch sizes also make it more likely that problems *will* be encountered, given that they include larger pieces of relatively untested code.",
+      "source_hash": 7768704670403659519,
+      "context_hash": 17124176181064392708,
+      "translation": "배치 크기가 크면 상대적으로 검증되지 않은 코드가 더 많이 포함되므로, 문제가 *실제로* 발생할 가능성도 더 높아집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "The easiest way to simplify those investigations and reduce the likelihood of users encountering problems is to reduce the size of the batches being shipped.",
+      "source_hash": 7330489449472548667,
+      "context_hash": 17445856679770106880,
+      "translation": "이러한 조사를 단순화하고 사용자가 문제를 겪을 가능성을 줄이는 가장 쉬운 방법은 제공되는 배치의 크기를 줄이는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": ":pep:`602` proposes to address this problem via the straightforward approach of reducing CPython's typical batch size by 50%, shipping 12 months of changes each time, rather than accumulating 18+ months of changes.",
+      "source_hash": 655201210519913737,
+      "context_hash": 5415363628638719989,
+      "translation": ":pep:`602`\\ 는 CPython의 일반적인 배치 크기를 50% 줄여, 18개월 이상의 변경 사항을 누적하는 대신 매번 12개월분의 변경 사항을 제공하는 직접적인 접근법으로 이 문제를 해결하고자 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058001Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": ":pep:`605` proposes to address it by regularly delivering 2 months worth of changes to a subset of Python's user base that opts in to running a rolling stream of beta releases (similar to running Windows Insider builds instead of the Windows retail release, or running Debian testing instead of Debian stable).",
+      "source_hash": 15152349519378315405,
+      "context_hash": 8158929564147334351,
+      "translation": ":pep:`605`\\ 는 롤링 베타 릴리스 스트림 실행에 옵트인한 Python 사용자 기반의 일부에게 2개월분의 변경 사항을 정기적으로 제공함으로써 이를 해결하고자 제안합니다(Windows 정식 릴리스 대신 Windows Insider 빌드를 실행하거나, Debian 안정판 대신 Debian 테스트판을 실행하는 것과 유사합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058002Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Reducing the latency of feature delivery",
+      "source_hash": 5483117007524122690,
+      "context_hash": 10797506990219273211,
+      "translation": "기능 제공 지연 시간 줄이기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058002Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "When only stable releases are seeing significant user adoption, and there's a long period of time between stable releases, it creates an incredibly strong temptation for developers to push changes into stable releases before they're really ready for general use.",
+      "source_hash": 6095329981207642128,
+      "context_hash": 1794934542056502462,
+      "translation": "안정 릴리스만이 상당한 사용자 채택을 얻고 있고 안정 릴리스 사이의 기간이 길 경우, 개발자가 일반 사용에 정말로 준비되기 전에 변경 사항을 안정 릴리스에 밀어 넣고 싶은 매우 강한 유혹이 생깁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058002Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": ":pep:`602` proposes to address this problem by reducing the period of time between stable releases to 12 months rather than 18 months.",
+      "source_hash": 2712128746826834369,
+      "context_hash": 4812460177869574051,
+      "translation": ":pep:`602`\\ 는 안정 릴리스 사이의 기간을 18개월이 아닌 12개월로 줄여 이 문제를 해결하고자 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058003Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": ":pep:`605` proposes to address it by actively creating a community of Python users that regularly install and use CPython beta releases, providing an incentive for core developers to start shipping changes earlier in the pre-release cycle, in order to obtain feedback before the feature gets locked down in a stable release.",
+      "source_hash": 13252400842092106816,
+      "context_hash": 3752240148488943952,
+      "translation": ":pep:`605`\\ 는 CPython 베타 릴리스를 정기적으로 설치하고 사용하는 Python 사용자 커뮤니티를 적극적으로 조성함으로써, 기능이 안정 릴리스에 고정되기 전에 피드백을 얻을 수 있도록 핵심 개발자가 사전 릴리스 주기 초반에 변경 사항을 제공하기 시작하도록 유인을 제공하여 이를 해결하고자 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058004Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Aligning the release cadence with the calendar year",
+      "source_hash": 1738730617948893093,
+      "context_hash": 1981007661588380338,
+      "translation": "릴리스 주기를 달력 연도에 맞추기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058004Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "While the current release cadence is nominally 18-24 months, in practice it has consistently been towards the 18 month end of that range.",
+      "source_hash": 7837986271291504736,
+      "context_hash": 9226807376266494975,
+      "translation": "현재 릴리스 주기는 명목상 18~24개월이지만, 실제로는 꾸준히 그 범위의 18개월 쪽에 가까웠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058004Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "This means that the target dates for pre-releases and final releases move around from release to release, and the only way to remember them is to either look at the release PEP, or else to add those dates to your calendar.",
+      "source_hash": 16452867526123665532,
+      "context_hash": 17302891614628705684,
+      "translation": "이는 사전 릴리스와 최종 릴리스의 목표 날짜가 릴리스마다 달라진다는 것을 의미하며, 이를 기억하는 유일한 방법은 릴리스 PEP를 확인하거나 해당 날짜를 개인 달력에 추가하는 것뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058004Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "This is annoying for both individual volunteers and for corporate contributors, and also complicates alignment with events like PyCon US (typically April/May) and the now-annual core development sprints (typically in September).",
+      "source_hash": 1343673337484198175,
+      "context_hash": 16418487307100599224,
+      "translation": "이는 개인 자원봉사자와 기업 기여자 모두에게 성가신 일이며, PyCon US(보통 4월/5월)나 이제는 연례 행사가 된 핵심 개발 스프린트(보통 9월)와 같은 행사와의 일정 조율도 복잡하게 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058005Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": ":pep:`602` proposes to address this problem by publishing a new release in October every year, and basing the pre-release calendar for each year off that.",
+      "source_hash": 11816576509248371155,
+      "context_hash": 5271161250219641599,
+      "translation": ":pep:`602`\\ 는 매년 10월에 새로운 릴리스를 발행하고, 이를 기준으로 매년의 사전 릴리스 일정을 정하여 이 문제를 해결하고자 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058005Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": ":pep:`605` proposes to address this problem by alternating between release years (where a new stable release is published in August), and non-release years (where only maintenance releases and new rolling beta releases are published).",
+      "source_hash": 5615837249934340457,
+      "context_hash": 1873423191388772536,
+      "translation": ":pep:`605`\\ 는 릴리스 연도(8월에 새로운 안정 릴리스가 발행되는 해)와 비릴리스 연도(유지 보수 릴리스와 새로운 롤링 베타 릴리스만 발행되는 해)를 번갈아 두어 이 문제를 해결하고자 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058005Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Improving the pre-release design feedback cycle",
+      "source_hash": 17490020233674816522,
+      "context_hash": 9463339408991023883,
+      "translation": "사전 릴리스 설계 피드백 주기 개선하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058006Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "One of the challenges of designing changes to the core interpreter and standard library APIs is that the user base in a position to provide feedback on nightly builds and the current pre-releases is relatively limited.",
+      "source_hash": 9458709029622585149,
+      "context_hash": 12911217978505051804,
+      "translation": "핵심 인터프리터와 표준 라이브러리 API 변경 사항을 설계할 때의 어려움 중 하나는, 나이틀리 빌드와 현재 사전 릴리스에 대한 피드백을 제공할 수 있는 위치에 있는 사용자 기반이 상대적으로 제한적이라는 점입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T17:37:05.058006Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "This means that much user feedback isn't received until after an API design has already shipped in a full X.Y.0 release.",
+      "source_hash": 10468398250466229392,
+      "context_hash": 10328346262520504976,
+      "translation": "이는 API 설계가 이미 정식 X.Y.0 릴리스로 제공된 이후에야 많은 사용자 피드백을 받게 된다는 것을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058009Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "If the API is a regular API, then deprecation cycles mean that it may take literally years to correct any design mistakes identified at that point.",
+      "source_hash": 8966498334922067035,
+      "context_hash": 9402031576221058001,
+      "translation": "API가 일반 API라면, 지원 중단 주기로 인해 그 시점에 발견된 설계 실수를 수정하는 데 말 그대로 몇 년이 걸릴 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058010Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "Marking APIs as provisional nominally offers a way to avoid that constraint, but actually taking advantage of that freedom causes other problems.",
+      "source_hash": 14270063769256689988,
+      "context_hash": 11444432588326997188,
+      "translation": "API를 잠정적(provisional)이라고 표시하면 명목상 이러한 제약을 피할 방법이 되지만, 실제로 그 자유를 활용하면 다른 문제가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058010Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": ":pep:`602` proposes to address this problem by starting the alpha period immediately after the previous stable release.",
+      "source_hash": 1785474045141182017,
+      "context_hash": 8423053907955815833,
+      "translation": ":pep:`602`\\ 는 이전 안정 릴리스 직후에 알파 기간을 시작하여 이 문제를 해결하고자 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058010Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": ":pep:`605` proposes to address this problem by actively promoting adoption of CPython pre-releases for running production workloads (not just for library and application compatibility testing), and adjusting the pre-release management process as necessary to make that a reasonable thing to do.",
+      "source_hash": 11183176954002976138,
+      "context_hash": 5584670474608800564,
+      "translation": ":pep:`605`\\ 는 (라이브러리 및 애플리케이션 호환성 테스트뿐 아니라) 프로덕션 워크로드 실행을 위한 CPython 사전 릴리스 채택을 적극적으로 홍보하고, 이를 합리적인 일로 만들기 위해 필요에 따라 사전 릴리스 관리 프로세스를 조정하여 이 문제를 해결하고자 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058011Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "(Note: some standard library APIs are amenable to initially being shipped as part of separately versioned packages via PyPI, and only later incorporated into the standard library.",
+      "source_hash": 8581670626646835393,
+      "context_hash": 6854763597841504664,
+      "translation": "(참고: 일부 표준 라이브러리 API는 처음에 PyPI를 통해 별도로 버전이 관리되는 패키지의 일부로 제공된 후, 나중에야 표준 라이브러리에 통합되는 방식에 적합합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T17:37:05.058011Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:1",
+      "source": "This section is more about the lower level APIs and non-library features where that approach to obtaining early design feedback doesn't apply)",
+      "source_hash": 15307018966268902552,
+      "context_hash": 17780369630346195930,
+      "translation": "이 절은 조기 설계 피드백을 얻는 이러한 접근법이 적용되지 않는, 더 낮은 수준의 API와 라이브러리가 아닌 기능에 관한 내용에 더 가깝습니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058012Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Risks to be mitigated",
+      "source_hash": 2609460770722738997,
+      "context_hash": 17790985343394725929,
+      "translation": "완화해야 할 위험",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:05.058012Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "While the status quo could stand to be improved in some respects, Python's popularity indicates that a lot of users and other participants in the wider Python ecosystem are happy enough with the current release management process.",
+      "source_hash": 3400014162684886288,
+      "context_hash": 8160889714042599202,
+      "translation": "현재 상황이 몇 가지 측면에서 개선될 여지가 있지만, Python의 인기는 더 넓은 Python 생태계의 많은 사용자와 다른 참여자들이 현재의 릴리스 관리 프로세스에 충분히 만족하고 있음을 보여줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310071Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "Python's user base is too large and `too varied <https://www.curiousefficiency.org/posts/2017/10/considering-pythons-target-audience.html>`__ to cover all the potential downsides of changing our release cadence here, so instead this section just covers some of the points that have been specifically taken into account in the design of the PEPs.",
+      "source_hash": 2265523793860104797,
+      "context_hash": 8736937186483195288,
+      "translation": "Python의 사용자 기반은 너무 크고 `너무 다양 <https://www.curiousefficiency.org/posts/2017/10/considering-pythons-target-audience.html>`__\\ 하여 이곳에서 릴리스 주기를 변경했을 때 생길 수 있는 모든 잠재적 단점을 다루기는 어려우므로, 이 절에서는 대신 PEP 설계에서 구체적으로 고려된 몇 가지 사항만 다룹니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310077Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Impact on users and redistributors that already skip some releases",
+      "source_hash": 7799758294489703672,
+      "context_hash": 6652202238765052846,
+      "translation": "이미 일부 릴리스를 건너뛰는 사용자 및 재배포자에게 미치는 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310078Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "It is already the case that not all users and redistributors update to every published CPython release series (for example, Debian stable and Ubuntu LTS sometimes skip releases due to the mismatch between their 24-month release cycles and CPython's typically 18-month cycle).",
+      "source_hash": 2487775454438435636,
+      "context_hash": 14462371999397238244,
+      "translation": "모든 사용자와 재배포자가 발표되는 모든 CPython 릴리스 시리즈로 업데이트하는 것은 아니라는 점은 이미 사실입니다(예를 들어, Debian stable과 Ubuntu LTS는 자신들의 24개월 릴리스 주기와 CPython의 일반적인 18개월 주기 사이의 불일치로 인해 때때로 릴리스를 건너뜁니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310078Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "The faster 12-month full release cadence in :pep:`602` means that users in this category may end up skipping two releases where they would previously have only skipped one.",
+      "source_hash": 8823778323693409675,
+      "context_hash": 12937383575089329325,
+      "translation": "더 빠른 12개월 전체 릴리스 주기를 갖는 :pep:`602`\\ 는 이 범주의 사용자가 이전에는 하나만 건너뛰었을 릴리스를 두 개 건너뛰게 될 수 있음을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310079Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "However, the extended notice period for deprecations means that skipping a single release should no longer result in missed deprecation warnings.",
+      "source_hash": 15551189277235139899,
+      "context_hash": 14300804787723164504,
+      "translation": "하지만 폐지 예고 기간이 연장되었으므로, 단 하나의 릴리스를 건너뛰는 것으로는 더 이상 폐지 경고를 놓치는 결과로 이어지지 않을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310079Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "The slower 24-month full release cadence in :pep:`605` may move some of the users that have historically been in this category into the \"update to every stable release\" category.",
+      "source_hash": 1401747295332024024,
+      "context_hash": 246608839938889547,
+      "translation": "더 느린 24개월 전체 릴리스 주기를 갖는 :pep:`605`\\ 는 역사적으로 이 범주에 속했던 일부 사용자를 \"모든 안정 릴리스로 업데이트\" 범주로 옮길 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310080Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Impact on users and redistributors that update to every release",
+      "source_hash": 4625097003408089441,
+      "context_hash": 12339724636686308116,
+      "translation": "모든 릴리스로 업데이트하는 사용자 및 재배포자에게 미치는 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310080Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Many of Python's users never install a pre-release, but do update to every stable release series at some point after it is published.",
+      "source_hash": 17821653149632378271,
+      "context_hash": 892952758641165672,
+      "translation": "Python 사용자 다수는 사전 릴리스를 절대 설치하지 않지만, 발표된 후 어느 시점에는 모든 안정 릴리스 시리즈로 업데이트합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310081Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": ":pep:`602` aims to mitigate the potential negative impact on members of this group by keeping the minimum gap between releases to 12 months, and retaining the 18 month full support period for each release.",
+      "source_hash": 6966494628177514525,
+      "context_hash": 7191813269331336254,
+      "translation": ":pep:`602`\\ 는 릴리스 간 최소 간격을 12개월로 유지하고 각 릴리스의 18개월 정식 지원 기간을 유지함으로써 이 그룹의 구성원에게 미칠 수 있는 잠재적인 부정적 영향을 완화하는 것을 목표로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310081Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "Keeping the 18-month full support period for each release branch means that the branches will spend roughly the same amount of time in full support and security-fix-only mode as they do now (~18 months and ~42 months, respectively).",
+      "source_hash": 6922603808468499473,
+      "context_hash": 15737409618354004194,
+      "translation": "각 릴리스 브랜치의 18개월 정식 지원 기간을 유지한다는 것은 브랜치가 현재와 거의 동일한 시간을 정식 지원 모드와 보안 수정 전용 모드에서 보내게 됨을 의미합니다(각각 약 18개월과 약 42개월).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310081Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": ":pep:`605` aims to mitigate the potential negative impact on members of this group by increasing use during the pre-release period to achieve more stable final releases with wider ecosystem support at launch.",
+      "source_hash": 18039323802069232902,
+      "context_hash": 12406923914639785544,
+      "translation": ":pep:`605`\\ 는 사전 릴리스 기간 동안의 사용을 늘려 출시 시점에 더 넓은 생태계 지원을 받는 더 안정적인 최종 릴리스를 달성함으로써 이 그룹의 구성원에게 미칠 수 있는 잠재적인 부정적 영향을 완화하는 것을 목표로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310082Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "With a 24-month release cadence each release branch will spend proportionally more time in full support mode and less time in security-fix-only mode (~24 months and ~36 months, respectively).",
+      "source_hash": 15607333892203383532,
+      "context_hash": 12953302081497869742,
+      "translation": "24개월 릴리스 주기에서는 각 릴리스 브랜치가 정식 지원 모드에서는 비례적으로 더 많은 시간을, 보안 수정 전용 모드에서는 더 적은 시간을 보내게 됩니다(각각 약 24개월과 약 36개월).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310082Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "Full discussion of the impact on this group is left to the individual PEPs.",
+      "source_hash": 18370593085651713695,
+      "context_hash": 14221624552729935312,
+      "translation": "이 그룹에 미치는 영향에 대한 전체 논의는 개별 PEP에 맡깁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310083Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Impact on users and redistributors of CPython nightly builds",
+      "source_hash": 10238101156027240307,
+      "context_hash": 2255842887507040087,
+      "translation": "CPython 나이틀리 빌드의 사용자 및 재배포자에게 미치는 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310083Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Despite the difficulties of doing so, there are already some users and redistributors that take on the challenge of using or publishing the CPython master branch directly.",
+      "source_hash": 4328752541122163786,
+      "context_hash": 17046655166150451270,
+      "translation": "그렇게 하는 것이 어려움에도 불구하고, CPython master 브랜치를 직접 사용하거나 게시하는 도전을 이미 감행하고 있는 일부 사용자와 재배포자가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:27.310084Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Neither :pep:`602` nor :pep:`605` should directly affect this group, but the rolling release stream proposal in :pep:`605` aims to lower the barriers to more users adopting this style of usage, by allowing them to adopt the tested rolling beta stream, rather than needing to use the master branch directly.",
+      "source_hash": 9077159335717614482,
+      "context_hash": 5720386075692917662,
+      "translation": "이 그룹에는 :pep:`602`\\ 도 :pep:`605`\\ 도 직접적인 영향을 미치지 않아야 하지만, :pep:`605`\\ 의 롤링 릴리스 스트림 제안은 사용자들이 마스터 브랜치를 직접 사용할 필요 없이 테스트된 롤링 베타 스트림을 채택할 수 있도록 함으로써, 더 많은 사용자가 이러한 사용 방식을 채택하는 데 있어서의 장벽을 낮추는 것을 목표로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:39.850479Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Impact on maintainers of third party libraries",
+      "source_hash": 980504320030087836,
+      "context_hash": 697161441938776889,
+      "translation": "서드파티 라이브러리 관리자에게 미치는 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:39.850486Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "For maintainers of third party libraries, the key source of support complexity is the *number* of different Python versions in widespread use.",
+      "source_hash": 11025691456026381001,
+      "context_hash": 11686734865726067167,
+      "translation": "서드파티 라이브러리 관리자에게 있어, 지원 복잡성의 핵심 원인은 널리 사용되는 서로 다른 파이썬 버전의 *수*\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:39.850488Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": ":pep:`602` aims to mitigate the potential negative impact on members of this group by keeping the minimum gap between full releases to 12 months.",
+      "source_hash": 1904897577136957674,
+      "context_hash": 1494781699653742561,
+      "translation": ":pep:`602`\\ 는 정식 릴리스 사이의 최소 간격을 12개월로 유지함으로써 이 그룹 구성원에게 미칠 수 있는 잠재적 부정적 영향을 완화하는 것을 목표로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:39.850489Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": ":pep:`605` aims to mitigate the potential negative impact on members of this group by increasing the gap between full releases to 24 months, retaining the current policy of moving each release branch to security-fix-only mode not long after its successor is released, and retaining the \"beta\" naming scheme for the new rolling release stream (at least for the Python 3.9 release cycle).",
+      "source_hash": 16102477876156989842,
+      "context_hash": 5398946950220874605,
+      "translation": ":pep:`605`\\ 는 정식 릴리스 사이의 간격을 24개월로 늘리고, 각 릴리스 브랜치를 후속 버전이 릴리스된 직후 보안 수정 전용 모드로 전환하는 현재 정책을 유지하며, 새로운 롤링 릴리스 스트림에 대해 \"베타\" 명명 체계를 유지함으로써(적어도 파이썬 3.9 릴리스 주기 동안), 이 그룹 구성원에게 미칠 수 있는 잠재적 부정적 영향을 완화하는 것을 목표로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:39.850491Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "Full discussion of the impact on this group is left to the individual PEPs.",
+      "source_hash": 18370593085651713695,
+      "context_hash": 6810349617395596882,
+      "translation": "이 그룹에 미치는 영향에 대한 전체 논의는 각 PEP에 맡깁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:39.850492Z",
+      "issues": []
+    }
+  ]
+}

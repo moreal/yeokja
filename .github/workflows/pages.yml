@@ -86,9 +86,14 @@ jobs:
             artifact_path: projects/tpil/dist
           - project: mil
             target: html
-            toolchain: python3
+            toolchain: python3-mil
             artifact: dist-mil
             artifact_path: projects/mil/dist
+          - project: peps
+            target: html
+            toolchain: python3-peps
+            artifact: dist-peps
+            artifact_path: projects/peps/dist
           - project: napkin
             target: html
             toolchain: nix
@@ -140,15 +145,19 @@ jobs:
         if: matrix.toolchain == 'python2'
         run: pip install 'sphinx<2' 'docutils==0.11' 'sphinx-issues==1.2.0' 'sphinx_rtd_theme<1' py sphinx-affiliates
 
-      - name: Install Python for Mathematics in Lean
-        if: matrix.toolchain == 'python3'
+      - name: Install Python 3
+        if: matrix.toolchain == 'python3-mil' || matrix.toolchain == 'python3-peps'
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Install the Mathematics in Lean Sphinx toolchain
-        if: matrix.toolchain == 'python3'
+        if: matrix.toolchain == 'python3-mil'
         run: pip install -r projects/${{ matrix.project }}/upstream/scripts/requirements.txt
+
+      - name: Install the PEPs Sphinx toolchain
+        if: matrix.toolchain == 'python3-peps'
+        run: pip install -r projects/${{ matrix.project }}/upstream/requirements.txt
 
       - name: Install Ruby
         if: matrix.toolchain == 'ruby'
@@ -203,6 +212,7 @@ jobs:
           (cd projects/${{ matrix.project }}/upstream/book && lean --version)
 
       - name: Rebuild translated sources from committed state
+        if: matrix.project != 'peps'
         run: |
           cd projects/${{ matrix.project }}
           for s in $(find state -name '*.yeokja.json'); do
@@ -210,6 +220,15 @@ jobs:
             ../../target/release/yeokja translate "$src"
             ../../target/release/yeokja status --check "$src"
           done
+
+      # PEP는 루트 문서와 appendices를 여러 source 규칙으로 다룹니다. 프로젝트
+      # 전체를 한 번에 확인해야 새 PEP가 state 없이 빠지는 경우도 배포를 막습니다.
+      - name: Rebuild and verify all translated PEP sources
+        if: matrix.project == 'peps'
+        run: |
+          cd projects/${{ matrix.project }}
+          ../../target/release/yeokja translate upstream/peps
+          ../../target/release/yeokja status --check upstream/peps
 
       - name: Build ${{ matrix.target }}
         run: |
@@ -245,6 +264,7 @@ jobs:
           cp -r artifacts/dist-fp-lean/site _site/fp-lean
           cp -r artifacts/dist-tpil/site _site/tpil
           cp -r artifacts/dist-mil/site _site/mil
+          cp -r artifacts/dist-peps/site _site/peps
           cp -r artifacts/dist-napkin-html/site _site/napkin
           cp artifacts/dist-napkin-pdf/Napkin-ko.pdf _site/napkin/
           cp artifacts/dist-napkin-epub/Napkin-ko.epub _site/napkin/

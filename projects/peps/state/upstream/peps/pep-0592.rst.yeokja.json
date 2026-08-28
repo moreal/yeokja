@@ -1,0 +1,606 @@
+{
+  "version": 1,
+  "source_hash": 4520396948662909304,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Adding \"Yank\" Support to the Simple API",
+      "source_hash": 10877918652515158790,
+      "context_hash": 16530898886277989957,
+      "translation": "단순 API에 \"Yank\" 지원 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668969Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 16693722884154883313,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668972Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes adding the ability to mark a particular file download on a simple repository as \"yanked\".",
+      "source_hash": 14220199511754814835,
+      "context_hash": 3403740429669344252,
+      "translation": "이 PEP는 단순 저장소의 특정 파일 다운로드를 \"yanked\"로 표시할 수 있는 기능의 추가를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668972Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "Yanking a file allows authors to effectively delete a file, without breaking things for people who have pinned to exactly a specific version.",
+      "source_hash": 15563242182660458008,
+      "context_hash": 1331669514601341276,
+      "translation": "파일을 Yank 처리하면 작성자가 해당 파일을 사실상 삭제할 수 있으면서도, 특정 버전에 정확히 고정한 사용자의 작업을 중단시키지 않을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668973Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "It also changes to the canonical source for the simple repository API to the `Simple Repository API`_ reference document.",
+      "source_hash": 6894824293547389590,
+      "context_hash": 13643989003978202385,
+      "translation": "또한 단순 저장소 API의 표준 출처를 `Simple Repository API`_ 참조 문서로 변경합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668973Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 17210640859134811321,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668973Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Whenever a project detects that a particular release on PyPI might be broken, they oftentimes will want to prevent further users from inadvertently using that version.",
+      "source_hash": 13677364348009376306,
+      "context_hash": 2094253242091416790,
+      "translation": "프로젝트에서 PyPI의 특정 릴리스가 손상되었을 수 있음을 감지하면, 이후 사용자가 실수로 해당 버전을 사용하지 못하도록 하려는 경우가 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668973Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "However, the obvious solution of deleting the existing file from a repository will break users who have followed best practices and pinned to a specific version of the project.",
+      "source_hash": 3594586667641792086,
+      "context_hash": 3654689780381656971,
+      "translation": "그러나 저장소에서 기존 파일을 삭제하는 명백한 해결책은 프로젝트의 특정 버전에 고정하는 모범 사례를 따른 사용자의 작업을 중단시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668974Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "This leaves projects in a catch-22 situation where new projects may be pulling down this known broken version, but if they do anything to prevent that they'll break projects that are already using it.",
+      "source_hash": 14182904449457187156,
+      "context_hash": 17268436895691534869,
+      "translation": "이로 인해 프로젝트는 새로운 프로젝트가 이미 문제가 알려진 손상된 버전을 내려받을 수 있지만, 이를 막기 위한 조치를 취하면 해당 버전을 이미 사용 중인 프로젝트를 중단시키게 되는 진퇴양난에 빠집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668974Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "By allowing the ability to \"yank\" a file, but still make it available for users who are explicitly asking for it, this allows projects to mitigate the worst of the breakage while still keeping things working for projects who have otherwise worked around or didn't hit the underlying issues.",
+      "source_hash": 7822813928991900523,
+      "context_hash": 2569153986419519431,
+      "translation": "파일을 \"yank\" 처리하되 명시적으로 요청하는 사용자가 계속 사용할 수 있도록 하면, 프로젝트가 손상의 최악의 영향을 완화하면서도 다른 방식으로 문제를 우회했거나 근본적인 문제를 겪지 않은 프로젝트의 작업은 계속 유지할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668974Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "One of the main scenarios where this may happen, is when dropping support for a particular version of Python.",
+      "source_hash": 6516243204632861620,
+      "context_hash": 5478421529976097288,
+      "translation": "이러한 상황이 발생할 수 있는 주요 사례 중 하나는 특정 Python 버전에 대한 지원을 중단하는 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668975Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "The ``python-requires`` metadata allows for dropping support for a version of Python in a way that is not disruptive to users who are still using that Python.",
+      "source_hash": 16390000018227992266,
+      "context_hash": 2013148192813451693,
+      "translation": "``python-requires`` 메타데이터를 사용하면 해당 Python을 계속 사용하는 사용자에게 방해가 되지 않는 방식으로 특정 Python 버전에 대한 지원을 중단할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668975Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "However, a common mistake is to either omit or forget to update that bit of metadata.",
+      "source_hash": 2093523119025629863,
+      "context_hash": 14687544055622560611,
+      "translation": "그러나 해당 메타데이터를 누락하거나 업데이트하는 것을 잊는 것은 흔한 실수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668975Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:3",
+      "source": "When that mistake has been made, a project really only has three options:",
+      "source_hash": 17663581414434065706,
+      "context_hash": 15107553703678543404,
+      "translation": "이러한 실수가 발생하면 프로젝트에는 실제로 세 가지 선택지만 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668975Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "Prevent that version from being installed through some mechanism (currently, the only mechanism is by deleting the release entirely).",
+      "source_hash": 2944780129762071670,
+      "context_hash": 7987227694230299263,
+      "translation": "어떤 메커니즘을 통해 해당 버전이 설치되지 않도록 합니다(현재 유일한 메커니즘은 릴리스를 완전히 삭제하는 것입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668976Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Re-release the version that worked as a higher version number, and then re-release the version that dropped support as an even higher version number with the correct metadata.",
+      "source_hash": 14638625030546864536,
+      "context_hash": 5179000906439860925,
+      "translation": "정상적으로 작동한 버전을 더 높은 버전 번호로 다시 릴리스한 다음, 지원을 중단한 버전을 올바른 메타데이터와 함께 그보다 더 높은 버전 번호로 다시 릴리스합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668976Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "Do nothing, and document that people using that older Python have to manually exclude that release.",
+      "source_hash": 174234825987571612,
+      "context_hash": 13399466262090442788,
+      "translation": "아무것도 하지 않고, 이전 버전의 Python을 사용하는 사람은 해당 릴리스를 수동으로 제외해야 한다고 문서화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668976Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "With this PEP, projects can choose the first option, but with a mechanism that is less likely to break the world for people who are *currently* successfully using said project.",
+      "source_hash": 2232889000217575358,
+      "context_hash": 6902749714256635122,
+      "translation": "이 PEP를 사용하면 프로젝트는 첫 번째 선택지를 택할 수 있지만, 해당 프로젝트를 *현재* 성공적으로 사용 중인 사람들의 작업을 중단시킬 가능성이 더 낮은 메커니즘을 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668976Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 17365786577915550219,
+      "translation": "명세",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668977Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Links in the simple repository **MAY** have a ``data-yanked`` attribute which may have no value, or may have an arbitrary string as a value.",
+      "source_hash": 14706710435651966938,
+      "context_hash": 14206612191344181953,
+      "translation": "단순 저장소의 링크에는 값이 없거나 임의의 문자열을 값으로 가질 수 있는 ``data-yanked`` 속성이 **MAY**\\ 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668977Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "The presence of a ``data-yanked`` attribute **SHOULD** be interpreted as indicating that the file pointed to by this particular link has been \"Yanked\", and should not generally be selected by an installer, except under specific scenarios.",
+      "source_hash": 3311219094011906354,
+      "context_hash": 14812127063904631078,
+      "translation": "``data-yanked`` 속성이 존재하면, 해당 특정 링크가 가리키는 파일이 \"Yanked\"되었음을 나타내는 것으로 **SHOULD**\\ 해석해야 하며, 특정 상황을 제외하면 설치 프로그램이 일반적으로 이를 선택하지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668977Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "The value of the ``data-yanked`` attribute, if present, is an arbitrary string that represents the reason for why the file has been yanked.",
+      "source_hash": 16831432723189782830,
+      "context_hash": 18078310924959635850,
+      "translation": "``data-yanked`` 속성의 값이 존재하는 경우, 이는 파일이 Yank 처리된 이유를 나타내는 임의의 문자열입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668977Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "Tools that process the simple repository API **MAY** surface this string to end users.",
+      "source_hash": 1353900330742594926,
+      "context_hash": 1586121289331081172,
+      "translation": "단순 저장소 API를 처리하는 도구는 이 문자열을 최종 사용자에게 **표시할 수 있습니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:54:28.944887Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "The yanked attribute is not immutable once set, and may be rescinded in the future (and once rescinded, may be reset as well).",
+      "source_hash": 17741137420173444074,
+      "context_hash": 11017948016955053826,
+      "translation": "Yank 속성은 한 번 설정된 후에도 변경 불가능하지 않으며, 이후 철회될 수 있고(철회된 후 다시 설정될 수도 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668978Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "Thus API users **MUST** be able to cope with a yanked file being \"unyanked\" (and even yanked again).",
+      "source_hash": 414285432332485502,
+      "context_hash": 9704703510573437332,
+      "translation": "따라서 API 사용자는 Yank 처리된 파일이 \"unyanked\"되거나(심지어 다시 Yank 처리되더라도) 이에 대응할 수 **MUST**\\ 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668978Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Installers",
+      "source_hash": 4921295815846660860,
+      "context_hash": 14699523766238735647,
+      "translation": "설치 프로그램",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668978Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "The desirable experience for users is that once a file is yanked, when a human being is currently trying to directly install a yanked file, that it fails as if that file had been deleted.",
+      "source_hash": 14645121883804933074,
+      "context_hash": 12294465216389913823,
+      "translation": "사용자에게 바람직한 경험은 파일이 Yank 처리된 후 사람이 Yank 처리된 파일을 직접 설치하려고 하면 해당 파일이 삭제된 것처럼 실패하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668979Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "However, when a human did that a while ago, and now a computer is just continuing to mechanically follow the original order to install the now yanked file, then it acts as if it had not been yanked.",
+      "source_hash": 6007407697615173952,
+      "context_hash": 8888045419519040736,
+      "translation": "그러나 사람이 한동안 전에 그렇게 했고, 이제 컴퓨터가 당시의 설치 순서를 기계적으로 계속 따라 현재 Yank 처리된 파일을 설치하려는 경우에는 해당 파일이 Yank 처리되지 않은 것처럼 동작해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668979Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "An installer **MUST** ignore yanked releases, if the selection constraints can be satisfied with a non-yanked version, and **MAY** refuse to use a yanked release even if it means that the request cannot be satisfied at all.",
+      "source_hash": 10368380456422606980,
+      "context_hash": 13016626752593602039,
+      "translation": "설치 프로그램은 선택 제약 조건을 Yank 처리되지 않은 버전으로 충족할 수 있다면 Yank 처리된 릴리스를 **MUST**\\ 무시해야 하며, 요청을 전혀 충족할 수 없게 되더라도 Yank 처리된 릴리스의 사용을 거부할 수 **MAY**\\ 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668979Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "An implementation **SHOULD** choose a policy that follows the spirit of the intention above, and that prevents \"new\" dependencies on yanked releases/files.",
+      "source_hash": 10280142835515252933,
+      "context_hash": 2671224501385301522,
+      "translation": "구현은 위 의도의 취지를 따르고 Yank 처리된 릴리스/파일에 대한 \"새로운\" 의존성을 방지하는 정책을 선택 **SHOULD**\\ 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668979Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "What this means is left up to the specific installer, to decide how to best fit into the overall usage of their installer.",
+      "source_hash": 2427656454541512553,
+      "context_hash": 6015053840008512719,
+      "translation": "이 의미를 구체적인 설치 프로그램의 사용 전반에 가장 잘 맞추는 방법을 결정하는 것은 해당 설치 프로그램에 맡깁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668980Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "However, there are two suggested approaches to take:",
+      "source_hash": 4465685534904788582,
+      "context_hash": 12717048885134527765,
+      "translation": "그러나 취할 수 있는 접근 방식으로 두 가지를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:28:24.668980Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "Yanked files are always ignored, unless they are the only file that matches a version specifier that \"pins\" to an exact version using either ``==`` (without any modifiers that make it a range, such as ``.*``) or ``===``.",
+      "source_hash": 301686967782853767,
+      "context_hash": 11983303715454765351,
+      "translation": "철회된 파일은 항상 무시합니다. 단, ``==``\\ (``.*``\\ 와 같이 범위로 만드는 수정자가 없는 경우) 또는 ``===``\\ 를 사용하여 정확한 버전에 고정하는 버전 지정자와 일치하는 유일한 파일인 경우는 예외입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713695Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:1",
+      "source": "Matching this version specifier should otherwise be done as per :pep:`440` for things like local versions, zero padding, etc.",
+      "source_hash": 10293204866792963857,
+      "context_hash": 18144177595397763452,
+      "translation": "이 버전 지정자와의 일치는 로컬 버전, 0 채우기 등의 경우에 :pep:`440`\\ 에 따른 방식으로 수행해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713699Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "Yanked files are always ignored, unless they are the only file that matches what a lock file (such as ``Pipfile.lock`` or ``poetry.lock``) specifies to be installed.",
+      "source_hash": 4562012735815063938,
+      "context_hash": 3089399157776678519,
+      "translation": "철회된 파일은 항상 무시합니다. 단, ``Pipfile.lock``\\ 또는 ``poetry.lock``\\ 과 같은 잠금 파일이 설치 대상으로 지정한 내용과 일치하는 유일한 파일인 경우는 예외입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713700Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:1",
+      "source": "In this case, a yanked file **SHOULD** not be used when creating or updating a lock file from some input file or command.",
+      "source_hash": 4591200619455769091,
+      "context_hash": 1740577343322105929,
+      "translation": "이 경우 일부 입력 파일이나 명령에서 잠금 파일을 생성하거나 업데이트할 때 철회된 파일을 **SHOULD** 사용하지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713700Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "Regardless of the specific strategy that an installer chooses for deciding when to install yanked files, an installer **SHOULD** emit a warning when it does decide to install a yanked file.",
+      "source_hash": 3065577394143576248,
+      "context_hash": 7632981373336956415,
+      "translation": "설치 도구가 철회된 파일을 언제 설치할지 결정하기 위해 선택하는 구체적인 전략과 관계없이, 철회된 파일을 설치하기로 결정한 경우 설치 도구는 **SHOULD** 경고를 출력해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713700Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:1",
+      "source": "That warning **MAY** utilize the value of the ``data-yanked`` attribute (if it has a value) to provide more specific feedback to the user about why that file had been yanked.",
+      "source_hash": 6306769908980610886,
+      "context_hash": 15646286827863411420,
+      "translation": "해당 경고는 ``data-yanked``\\ 속성의 값(값이 있는 경우)을 활용하여 해당 파일이 철회된 이유에 관해 사용자에게 더 구체적인 피드백을 제공할 수 **MAY** 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713700Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Mirrors",
+      "source_hash": 1369105555012883103,
+      "context_hash": 14337227083451845680,
+      "translation": "미러",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713701Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Mirrors can generally treat yanked files one of two ways:",
+      "source_hash": 9437879543636655666,
+      "context_hash": 8863961903423805905,
+      "translation": "미러는 일반적으로 철회된 파일을 두 가지 방식 중 하나로 처리할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713701Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "They may choose to omit them from their simple repository API completely, providing a view over the repository that shows only \"active\", unyanked files.",
+      "source_hash": 6476635647794040571,
+      "context_hash": 4967253639363940775,
+      "translation": "미러는 철회된 파일을 단순 저장소 API에서 완전히 제외하고, “활성” 상태인 철회되지 않은 파일만 표시하는 저장소 보기를 제공하도록 선택할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713701Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "They may choose to include yanked files, and additionally mirror the ``data-yanked`` attribute as well.",
+      "source_hash": 12162756670286827930,
+      "context_hash": 4604647939933974519,
+      "translation": "미러는 철회된 파일을 포함하고 ``data-yanked``\\ 속성도 함께 미러링하도록 선택할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713702Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "Mirrors **MUST NOT** mirror a yanked file without also mirroring the ``data-yanked`` attribute for it.",
+      "source_hash": 605255503914900279,
+      "context_hash": 2301542887408450238,
+      "translation": "미러는 해당 파일의 ``data-yanked``\\ 속성도 함께 미러링하지 않고 철회된 파일을 미러링해서는 **MUST NOT** 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713702Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 335603661483404833,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713703Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "A previous, undocumented, version of the simple repository API had version specific pages, like ``/simple/<project>/<version>/``.",
+      "source_hash": 12283819456782502037,
+      "context_hash": 5843678342237691070,
+      "translation": "이전의 문서화되지 않은 단순 저장소 API 버전에는 ``/simple/<project>/<version>/``\\ 와 같은 버전별 페이지가 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713703Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "If we were to add those back, the yanked files could only appear on those pages and not on the version-less page at all.",
+      "source_hash": 15679492351439975255,
+      "context_hash": 11863473217506395387,
+      "translation": "이러한 페이지를 다시 추가한다면 철회된 파일은 해당 페이지에만 표시할 수 있고, 버전이 없는 페이지에는 전혀 표시할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713703Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:2",
+      "source": "However this would drastically reduce the cache-ability of the simple API and would directly impact our ability to scale it out to handle all of the incoming traffic.",
+      "source_hash": 16997711530033874991,
+      "context_hash": 12042217760729870949,
+      "translation": "그러나 이렇게 하면 단순 API의 캐시 가능성이 크게 줄어들고, 유입되는 모든 트래픽을 처리하도록 확장하는 능력에도 직접적인 영향을 미치게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:27:33.713703Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "A previous iteration of this PEP had the ``data-yanked`` attribute act as a boolean value.",
+      "source_hash": 11617939595238570570,
+      "context_hash": 12276177590538697869,
+      "translation": "이 PEP의 이전 버전에서는 ``data-yanked`` 속성이 불리언 값으로 동작했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:56.509424Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "However it was decided that allowing a string both simplified the implementation, and provided additional generalized functionality to allow projects to provide a mechanism to indicate *why* they were yanking a release.",
+      "source_hash": 4021205812870389781,
+      "context_hash": 12689778653545420357,
+      "translation": "그러나 문자열을 허용하는 것이 구현을 단순화하는 동시에, 프로젝트가 릴리스를 회수하는 *이유*\\ 를 나타낼 수 있는 메커니즘을 제공하는 추가적인 일반화된 기능을 제공한다는 점에서, 그렇게 하기로 결정되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:56.509429Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "Another suggestion was to reserve some syntax in the arbitrary string to allow us to evolve the standard in the future if we ever need to.",
+      "source_hash": 17377770344293325070,
+      "context_hash": 10351759774244878927,
+      "translation": "또 다른 제안은 향후 필요할 경우 표준을 발전시킬 수 있도록 임의의 문자열 내에 일부 구문을 예약해두자는 것이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:56.509430Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "However, given we can add additional attributes in the future, this idea has been rejected, favoring instead to use additional attributes if the need ever arose.",
+      "source_hash": 18195995020748868078,
+      "context_hash": 11116970369703614583,
+      "translation": "하지만 향후 추가 속성을 추가할 수 있다는 점을 고려하여, 이 아이디어는 거부되었으며, 필요가 생길 경우 대신 추가 속성을 사용하는 방식을 택하기로 했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:56.509431Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Warehouse/PyPI Implementation Notes",
+      "source_hash": 13341408807886468311,
+      "context_hash": 858417278826986537,
+      "translation": "Warehouse/PyPI 구현 참고 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:56.509432Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "While this PEP implements yanking at the file level, that is largely due to the shape the simple repository API takes, not a specific decision made by this PEP.",
+      "source_hash": 16463726823441514639,
+      "context_hash": 7380719023272635473,
+      "translation": "이 PEP는 파일 수준에서 철회를 구현하지만, 이는 이 PEP에서 내린 특정 결정 때문이 아니라 대체로 단순 저장소 API가 취하는 형태 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:56.509432Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "In Warehouse, the user experience will be implemented in terms of yanking or unyanking an entire release, rather than as an operation on individual files, which will then be exposed via the API as individual files being yanked.",
+      "source_hash": 4180646736912523538,
+      "context_hash": 17017554410078663629,
+      "translation": "Warehouse에서는 사용자 경험이 개별 파일에 대한 작업이 아니라 릴리스 전체를 철회하거나 철회를 취소하는 방식으로 구현되며, 이는 API를 통해 개별 파일이 철회되는 형태로 노출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:56.509432Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Other repository implementations may choose to expose this capability in a different way, or not expose it at all.",
+      "source_hash": 3839727978330600826,
+      "context_hash": 640642798046762079,
+      "translation": "다른 저장소 구현체는 이 기능을 다른 방식으로 노출하거나, 아예 노출하지 않기로 선택할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:56.509433Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Journal Handling",
+      "source_hash": 10945372057251145418,
+      "context_hash": 13133266182496546474,
+      "translation": "저널 처리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:56.509434Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Whenever a release has been yanked, an entry will be recorded in the journal using one of the following string patterns:",
+      "source_hash": 9610057419392592380,
+      "context_hash": 16235583822141240939,
+      "translation": "릴리스가 철회될 때마다, 다음 문자열 패턴 중 하나를 사용하여 저널에 항목이 기록됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:56.509434Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "``yank release``",
+      "source_hash": 9373083653843536289,
+      "context_hash": 14757297591373452497,
+      "translation": "``yank release``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:56.509435Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "``unyank release``",
+      "source_hash": 11383442651626375864,
+      "context_hash": 9146839964681284273,
+      "translation": "``unyank release``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:56.509435Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "In both cases, the standard journal structure will indicate which release of which project has been yanked or unyanked.",
+      "source_hash": 5334417410055797407,
+      "context_hash": 4024239923705889744,
+      "translation": "두 경우 모두, 표준 저널 구조는 어떤 프로젝트의 어떤 릴리스가 철회되었거나 철회 취소되었는지를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:22:56.509435Z",
+      "issues": []
+    }
+  ]
+}

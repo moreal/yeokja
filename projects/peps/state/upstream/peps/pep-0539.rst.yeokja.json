@@ -1,0 +1,910 @@
+{
+  "version": 1,
+  "source_hash": 7232605618571004360,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "A New C-API for Thread-Local Storage in CPython",
+      "source_hash": 10594861371454221638,
+      "context_hash": 16530898886277989957,
+      "translation": "새 CPython 스레드 로컬 저장소 C API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789681Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 3827983559193168736,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789684Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "The proposal is to add a new Thread Local Storage (TLS) API to CPython which would supersede use of the existing TLS API within the CPython interpreter, while deprecating the existing API.",
+      "source_hash": 15849438542038125881,
+      "context_hash": 13209039106471665624,
+      "translation": "CPython에 새로운 스레드 로컬 저장소(Thread Local Storage, TLS) API를 추가하여 CPython 인터프리터 내부에서 기존 TLS API의 사용을 대체하는 동시에 기존 API를 더 이상 사용하지 않도록 하는 것이 제안의 내용입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:08:59.789684Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "The new API is named the \"Thread Specific Storage (TSS) API\" (see `Rationale for Proposed Solution`_ for the origin of the name).",
+      "source_hash": 15593169111660077032,
+      "context_hash": 3276430667527553568,
+      "translation": "새로운 API의 이름은 \"스레드 특정 저장소(Thread Specific Storage, TSS) API\"입니다(이 이름의 유래는 `Rationale for Proposed Solution`_\\ 의 설명을 참조하십시오).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789685Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "Because the existing TLS API is only used internally (it is not mentioned in the documentation, and the header that defines it, ``pythread.h``, is not included in ``Python.h`` either directly or indirectly), this proposal probably only affects CPython, but might also affect other interpreter implementations (PyPy?) that implement parts of the CPython API.",
+      "source_hash": 1372829028741836159,
+      "context_hash": 11581586721466293513,
+      "translation": "기존 TLS API는 내부적으로만 사용되므로(문서에 언급되어 있지 않고, 이를 정의하는 헤더인 ``pythread.h``\\ 도 ``Python.h``\\ 에 직접 또는 간접적으로 포함되어 있지 않으므로), 이 제안은 아마도 CPython에만 영향을 주겠지만 CPython API의 일부를 구현하는 다른 인터프리터 구현(PyPy?)에도 영향을 줄 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:08:59.789685Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "This is motivated primarily by the fact that the old API uses ``int`` to represent TLS keys across all platforms, which is neither POSIX-compliant, nor portable in any practical sense [1]_.",
+      "source_hash": 12769758527781655531,
+      "context_hash": 5445597076459057776,
+      "translation": "이는 주로 기존 API가 모든 플랫폼에서 TLS 키를 나타내는 데 ``int``\\ 를 사용한다는 사실에 기인하며, 이는 POSIX를 준수하지도 않고 실제적인 의미에서 이식성이 있지도 않기 때문입니다 [1]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789686Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:0",
+      "source": "Throughout this document the acronym \"TLS\" refers to Thread Local Storage and should not be confused with \"Transportation Layer Security\" protocols.",
+      "source_hash": 10148651952226076229,
+      "context_hash": 15660967590769072648,
+      "translation": "이 문서 전체에서 \"TLS\"라는 약어는 스레드 로컬 저장소를 가리키며 \"Transportation Layer Security\" 프로토콜과 혼동해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789686Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 660000823045320306,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789687Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The current API for TLS used inside the CPython interpreter consists of 6 functions",
+      "source_hash": 112370295387092800,
+      "context_hash": 7768687205293169228,
+      "translation": "CPython 인터프리터 내부에서 사용되는 현재 TLS API는 6개의 함수로 구성됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:08:59.789687Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "These would be superseded by a new set of analogous functions",
+      "source_hash": 12489163348020060700,
+      "context_hash": 17060476799830934888,
+      "translation": "이는 유사한 새로운 함수 집합으로 대체됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789687Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "The specification also adds a few new features:",
+      "source_hash": 8042655400576812553,
+      "context_hash": 3530302182755957361,
+      "translation": "이 사양은 몇 가지 새로운 기능도 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789687Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "A new type ``Py_tss_t``--an opaque type the definition of which may depend on the underlying TLS implementation.",
+      "source_hash": 16389576752594937381,
+      "context_hash": 5786503060730103936,
+      "translation": "새로운 ``Py_tss_t`` 타입—기반 TLS 구현에 따라 정의가 달라질 수 있는 불투명 타입입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789688Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "It is defined",
+      "source_hash": 1803079345516550859,
+      "context_hash": 9799543576640740622,
+      "translation": "다음과 같이 정의됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789688Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "where ``NATIVE_TSS_KEY_T`` is a macro whose value depends on the underlying native TLS implementation (e.g. ``pthread_key_t``).",
+      "source_hash": 6998138616267153614,
+      "context_hash": 1990553427519112124,
+      "translation": "여기서 ``NATIVE_TSS_KEY_T``\\ 는 기반 네이티브 TLS 구현에 따라 값이 달라지는 매크로입니다(예: ``pthread_key_t``).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789688Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "An initializer for ``Py_tss_t`` variables, ``Py_tss_NEEDS_INIT``.",
+      "source_hash": 16040128577619882718,
+      "context_hash": 3239314067539874739,
+      "translation": "``Py_tss_t`` 변수의 초기화자인 ``Py_tss_NEEDS_INIT``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789688Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "Three new functions",
+      "source_hash": 11526179896824731292,
+      "context_hash": 13041666880367474897,
+      "translation": "새로운 세 개의 함수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789689Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:0",
+      "source": "The first two are needed for dynamic (de-)allocation of a ``Py_tss_t``, particularly in extension modules built with ``Py_LIMITED_API``, where static allocation of this type is not possible due to its implementation being opaque at build time.",
+      "source_hash": 5645990962031873583,
+      "context_hash": 7826297964490631296,
+      "translation": "처음 두 함수는 ``Py_tss_t``\\ 의 동적 할당 및 할당 해제에 필요하며, 특히 ``Py_LIMITED_API``\\ 로 빌드된 확장 모듈에서 필요합니다. 이러한 모듈에서는 빌드 시점에 해당 타입의 구현이 불투명하므로 정적으로 할당할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789689Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:1",
+      "source": "A value returned by ``PyThread_tss_alloc`` is in the same state as a value initialized with ``Py_tss_NEEDS_INIT``, or ``NULL`` in the case of dynamic allocation failure.",
+      "source_hash": 1027785718070515710,
+      "context_hash": 7303319415127531937,
+      "translation": "``PyThread_tss_alloc``\\ 이 반환하는 값은 ``Py_tss_NEEDS_INIT``\\ 으로 초기화된 값과 동일한 상태이거나, 동적 할당에 실패한 경우 ``NULL``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789689Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:2",
+      "source": "The behavior of ``PyThread_tss_free`` involves calling ``PyThread_tss_delete`` preventively, or is a no-op if the value pointed to by the ``key`` argument is ``NULL``.  ``PyThread_tss_is_created`` returns non-zero if the given ``Py_tss_t`` has been initialized (i.e. by ``PyThread_tss_create``).",
+      "source_hash": 14927877074598747175,
+      "context_hash": 2520683359044347327,
+      "translation": "``PyThread_tss_free``\\ 의 동작에는 예방적으로 ``PyThread_tss_delete``\\ 를 호출하는 것이 포함되며, ``key`` 인자가 가리키는 값이 ``NULL``\\ 이면 아무 작업도 수행하지 않습니다. ``PyThread_tss_is_created``\\ 는 주어진 ``Py_tss_t``\\ 가 초기화되어 있으면(즉, ``PyThread_tss_create``\\ 에 의해 초기화되어 있으면) 0이 아닌 값을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789689Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:0",
+      "source": "The new TSS API does not provide functions which correspond to ``PyThread_delete_key_value`` and ``PyThread_ReInitTLS``, because these functions were needed only for CPython's now defunct built-in TLS implementation; that is the existing behavior of these functions is treated as follows: ``PyThread_delete_key_value(key)`` is equivalent to ``PyThread_set_key_value(key, NULL)``, and ``PyThread_ReInitTLS()`` is a no-op [8]_.",
+      "source_hash": 4853096333921055631,
+      "context_hash": 10878228982438738766,
+      "translation": "새로운 TSS API는 ``PyThread_delete_key_value`` 및 ``PyThread_ReInitTLS``\\ 에 대응하는 함수를 제공하지 않습니다. 이러한 함수는 현재는 폐기된 CPython의 내장 TLS 구현에만 필요했기 때문입니다. 즉, 이러한 함수의 기존 동작은 다음과 같이 처리됩니다. ``PyThread_delete_key_value(key)``\\ 는 ``PyThread_set_key_value(key, NULL)``\\ 과 동등하며, ``PyThread_ReInitTLS()``\\ 는 아무 작업도 수행하지 않습니다 [8]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789690Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:14/seg:0",
+      "source": "The new ``PyThread_tss_`` functions are almost exactly analogous to their original counterparts with a few minor differences:  Whereas ``PyThread_create_key`` takes no arguments and returns a TLS key as an ``int``, ``PyThread_tss_create`` takes a ``Py_tss_t*`` as an argument and returns an ``int`` status code.",
+      "source_hash": 3302816466563266875,
+      "context_hash": 5746478285527755081,
+      "translation": "새로운 ``PyThread_tss_`` 함수는 몇 가지 사소한 차이를 제외하면 기존 대응 함수와 거의 정확히 유사합니다. 반면 ``PyThread_create_key``\\ 는 인자를 받지 않고 TLS 키를 ``int``\\ 로 반환하지만, ``PyThread_tss_create``\\ 는 ``Py_tss_t*``\\ 를 인자로 받고 ``int`` 상태 코드를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789690Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:14/seg:1",
+      "source": "The behavior of ``PyThread_tss_create`` is undefined if the value pointed to by the ``key`` argument is not initialized by ``Py_tss_NEEDS_INIT``.",
+      "source_hash": 11334388478984629971,
+      "context_hash": 4842881011060107352,
+      "translation": "``key`` 인자가 가리키는 값이 ``Py_tss_NEEDS_INIT``\\ 으로 초기화되지 않은 경우 ``PyThread_tss_create``\\ 의 동작은 정의되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789690Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:14/seg:2",
+      "source": "The returned status code is zero on success and non-zero on failure.",
+      "source_hash": 15504148230178205118,
+      "context_hash": 12958545394953996823,
+      "translation": "반환되는 상태 코드는 성공 시 0이고 실패 시 0이 아닌 값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789690Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:14/seg:3",
+      "source": "The meanings of non-zero status codes are not otherwise defined by this specification.",
+      "source_hash": 17231878378214286365,
+      "context_hash": 11470379618380673089,
+      "translation": "0이 아닌 상태 코드의 의미는 이 사양에서 달리 정의하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789690Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:15/seg:0",
+      "source": "Similarly the other ``PyThread_tss_`` functions are passed a ``Py_tss_t*`` whereas previously the key was passed by value.",
+      "source_hash": 9139406137391631831,
+      "context_hash": 12060562040608183665,
+      "translation": "마찬가지로 다른 ``PyThread_tss_`` 함수에도 ``Py_tss_t*``\\ 가 전달되지만, 이전에는 키가 값으로 전달되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789691Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:15/seg:1",
+      "source": "This change is necessary, as being an opaque type, the ``Py_tss_t`` type could hypothetically be almost any size.",
+      "source_hash": 17024136127597469279,
+      "context_hash": 16889928658771150929,
+      "translation": "``Py_tss_t`` 타입은 불투명 타입이므로 이론적으로 거의 어떤 크기든 될 수 있기 때문에 이러한 변경이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789691Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:15/seg:2",
+      "source": "This is especially necessary for extension modules built with ``Py_LIMITED_API``, where the size of the type is not known.",
+      "source_hash": 6477744264011962830,
+      "context_hash": 13444552757236715570,
+      "translation": "타입의 크기를 알 수 없는 ``Py_LIMITED_API``\\ 로 빌드된 확장 모듈에서는 이러한 변경이 특히 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789691Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:15/seg:3",
+      "source": "Except for ``PyThread_tss_free``, the behaviors of ``PyThread_tss_`` are undefined if the value pointed to by the ``key`` argument is ``NULL``.",
+      "source_hash": 3770751384020465994,
+      "context_hash": 18318767422181024351,
+      "translation": "``PyThread_tss_free``\\ 를 제외하면, ``key`` 인자가 가리키는 값이 ``NULL``\\ 인 경우 ``PyThread_tss_``\\ 의 동작은 정의되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789691Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:16/seg:0",
+      "source": "Moreover, because of the use of ``Py_tss_t`` instead of ``int``, there are behaviors in the new API which differ from the existing API with regard to key creation and deletion.  ``PyThread_tss_create`` can be called repeatedly on the same key--calling it on an already initialized key is a no-op and immediately returns success.",
+      "source_hash": 12231250669616344877,
+      "context_hash": 6354443613740670443,
+      "translation": "또한 ``int`` 대신 ``Py_tss_t``\\ 를 사용하기 때문에 새 API에는 키 생성 및 삭제와 관련하여 기존 API와 다른 동작이 있습니다. ``PyThread_tss_create``\\ 는 동일한 키에 대해 반복해서 호출할 수 있으며, 이미 초기화된 키에 대해 호출하면 아무 작업도 하지 않고 즉시 성공을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789691Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:16/seg:1",
+      "source": "Similarly for calling ``PyThread_tss_delete`` with an uninitialized key.",
+      "source_hash": 7680341811963272245,
+      "context_hash": 13330061090544663722,
+      "translation": "초기화되지 않은 키에 ``PyThread_tss_delete``\\ 를 호출하는 경우도 마찬가지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789692Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:17/seg:0",
+      "source": "The behavior of ``PyThread_tss_delete`` is defined to change the key's initialization state to \"uninitialized\"--this allows, for example, statically allocated keys to be reset to a sensible state when restarting the CPython interpreter without terminating the process (e.g. embedding Python in an application) [12]_.",
+      "source_hash": 3162685111611452639,
+      "context_hash": 10142617371341984219,
+      "translation": "``PyThread_tss_delete``\\ 의 동작은 키의 초기화 상태를 \"초기화되지 않음\"으로 변경하는 것으로 정의됩니다. 이를 통해 예를 들어 프로세스를 종료하지 않고 CPython 인터프리터를 다시 시작할 때 정적으로 할당된 키를 타당한 상태로 재설정할 수 있습니다(예: 애플리케이션에 Python을 임베드하는 경우) [12]_.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:08:59.789692Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:18/seg:0",
+      "source": "The old ``PyThread_*_key*`` functions will be marked as deprecated in the documentation, but will not generate runtime deprecation warnings.",
+      "source_hash": 12379426512576283654,
+      "context_hash": 7404536055581122733,
+      "translation": "기존 ``PyThread_*_key*``\\ 함수는 문서에서 더 이상 사용하지 않는 것으로 표시되지만, 런타임 사용 중단 경고를 생성하지는 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:59.789693Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:19/seg:0",
+      "source": "Additionally, on platforms where ``sizeof(pthread_key_t) != sizeof(int)``, ``PyThread_create_key`` will return immediately with a failure status, and the other TLS functions will all be no-ops on such platforms.",
+      "source_hash": 3392383399160198969,
+      "context_hash": 17538633195958294917,
+      "translation": "또한 ``sizeof(pthread_key_t) != sizeof(int)``\\ 인 플랫폼에서는 ``PyThread_create_key``\\ 가 실패 상태를 반환하고 즉시 종료하며, 해당 플랫폼에서는 다른 TLS 함수가 모두 아무 작업도 수행하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084193Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Comparison of API Specification",
+      "source_hash": 4142840511786554327,
+      "context_hash": 3964406026846711353,
+      "translation": "API 사양 비교",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084197Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Example",
+      "source_hash": 1513857641461741027,
+      "context_hash": 3734181086178119141,
+      "translation": "예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084197Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "With the proposed changes, a TSS key is initialized like",
+      "source_hash": 12174153725670493724,
+      "context_hash": 17164230396651867310,
+      "translation": "제안된 변경 사항을 적용하면 TSS 키는 다음과 같이 초기화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084197Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "The initialization state of the key can then be checked like",
+      "source_hash": 11335447274944540263,
+      "context_hash": 5041670728636615681,
+      "translation": "그런 다음 키의 초기화 상태를 다음과 같이 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084198Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "The rest of the API is used analogously to the old API",
+      "source_hash": 17810024221653583642,
+      "context_hash": 6793935469075776835,
+      "translation": "나머지 API는 기존 API와 유사한 방식으로 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084198Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "When ``Py_LIMITED_API`` is defined, a TSS key must be dynamically allocated",
+      "source_hash": 3825942171916762164,
+      "context_hash": 9421752709747436540,
+      "translation": "``Py_LIMITED_API``\\ 가 정의된 경우 TSS 키를 동적으로 할당해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084198Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Platform Support Changes",
+      "source_hash": 15070137578488046353,
+      "context_hash": 14543566974993600993,
+      "translation": "플랫폼 지원 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084198Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "A new \"Native Thread Implementation\" section will be added to :pep:`11` that states:",
+      "source_hash": 5027354686231495219,
+      "context_hash": 802774164472607299,
+      "translation": "새로운 \"Native Thread Implementation\" 절이 :pep:`11`\\ 에 추가되어 다음을 명시합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:49:41.220791Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "As of CPython 3.7, all platforms are required to provide a native thread implementation (such as pthreads or Windows) to implement the TSS API.",
+      "source_hash": 13096013511760892429,
+      "context_hash": 1591066668776386727,
+      "translation": "CPython 3.7부터 모든 플랫폼은 TSS API를 구현하기 위해 pthreads 또는 Windows와 같은 네이티브 스레드 구현을 제공해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084200Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "Any TSS API problems that occur in an implementation without native threads will be closed as \"won't fix\".",
+      "source_hash": 11056048498059276166,
+      "context_hash": 391186360623605772,
+      "translation": "네이티브 스레드가 없는 구현에서 발생하는 모든 TSS API 문제는 \"수정하지 않음\"으로 종료됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084200Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 17627992350520039178,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084200Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The primary problem at issue here is the type of the keys (``int``) used for TLS values, as defined by the original PyThread TLS API.",
+      "source_hash": 4221846767674964796,
+      "context_hash": 12259483716347516550,
+      "translation": "여기서 문제가 되는 주요 사항은 원래 PyThread TLS API에서 정의한 TLS 값에 사용되는 키(``int``)의 형식입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084201Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "The original TLS API was added to Python by GvR back in 1997, and at the time the key used to represent a TLS value was an ``int``, and so it has been to the time of writing.",
+      "source_hash": 11687299614669762923,
+      "context_hash": 10847219717611821352,
+      "translation": "원래 TLS API는 1997년에 GvR이 Python에 추가했으며, 당시 TLS 값을 나타내는 키는 ``int``\\ 였고 현재까지도 그러합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084201Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "This used CPython's own TLS implementation which long remained unused, largely unchanged, in Python/thread.c.",
+      "source_hash": 13393626733944169955,
+      "context_hash": 3037287156269147653,
+      "translation": "이 API는 CPython 자체의 TLS 구현을 사용했으며, 해당 구현은 오랫동안 사용되지 않은 채 Python/thread.c에 대체로 변경 없이 남아 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084201Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:2",
+      "source": "Support for implementation of the API on top of native thread implementations (pthreads and Windows) was added much later, and the built-in implementation has been deemed no longer necessary and has since been removed [9]_.",
+      "source_hash": 3739204403820828264,
+      "context_hash": 4800251933808525533,
+      "translation": "네이티브 스레드 구현(pthreads 및 Windows) 위에서 API를 구현하는 기능은 훨씬 나중에 추가되었으며, 내장 구현은 더 이상 필요하지 않은 것으로 판단되어 이후 제거되었습니다 [9]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084201Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "The problem with the choice of ``int`` to represent a TLS key, is that while it was fine for CPython's own TLS implementation, and happens to be compatible with Windows (which uses ``DWORD`` for the analogous data), it is not compatible with the POSIX standard for the pthreads API, which defines ``pthread_key_t`` as an opaque type not further defined by the standard (as with ``Py_tss_t`` described above) [14]_.",
+      "source_hash": 10526171684425940331,
+      "context_hash": 15477637350707951911,
+      "translation": "TLS 키를 나타내는 데 ``int``\\ 를 선택한 데 따른 문제는 CPython 자체의 TLS 구현에서는 문제가 없었고 유사한 데이터에 ``DWORD``\\ 를 사용하는 Windows와도 우연히 호환되지만, pthreads API에 대한 POSIX 표준과는 호환되지 않는다는 점입니다. POSIX 표준은 ``pthread_key_t``\\ 를 표준에서 더 이상 정의하지 않는 불투명한 형식으로 규정합니다(앞에서 설명한 ``Py_tss_t``\\ 와 같습니다) [14]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084202Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "This leaves it up to the underlying implementation how a ``pthread_key_t`` value is used to look up thread-specific data.",
+      "source_hash": 14233861165236698728,
+      "context_hash": 7394848915028404874,
+      "translation": "따라서 ``pthread_key_t`` 값이 스레드별 데이터를 조회하는 데 어떻게 사용되는지는 기반 구현에 맡겨집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084202Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "This has not generally been a problem for Python's API, as it just happens that on Linux ``pthread_key_t`` is defined as an ``unsigned int``, and so is fully compatible with Python's TLS API--``pthread_key_t``'s created by ``pthread_create_key`` can be freely cast to ``int`` and back (well, not exactly, even this has some limitations as pointed out by issue #22206).",
+      "source_hash": 9167053948359814368,
+      "context_hash": 9966674870442547353,
+      "translation": "이는 일반적으로 Python API의 문제가 되지 않았습니다. Linux에서는 ``pthread_key_t``\\ 가 ``unsigned int``\\ 로 정의되어 Python의 TLS API와 완전히 호환되기 때문입니다. 즉, ``pthread_create_key``\\ 로 생성된 ``pthread_key_t``\\ 를 ``int``\\ 로 자유롭게 변환했다가 다시 되돌릴 수 있습니다(물론 정확히 그러한 것은 아니며, issue #22206에서 지적한 것처럼 이 방식에도 일부 제한이 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084202Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "However, as issue #25658 points out, there are at least some platforms (namely Cygwin, CloudABI, but likely others as well) which have otherwise modern and POSIX-compliant pthreads implementations, but are not compatible with Python's API because their ``pthread_key_t`` is defined in a way that cannot be safely cast to ``int``.",
+      "source_hash": 11689176171657749964,
+      "context_hash": 1485325522189278577,
+      "translation": "그러나 issue #25658에서 지적하듯이, Cygwin과 CloudABI를 비롯해(다른 플랫폼도 그럴 가능성이 높습니다) 현대적이고 POSIX를 준수하는 pthreads 구현을 갖추었지만 ``pthread_key_t``\\ 가 ``int``\\ 로 안전하게 변환될 수 없는 방식으로 정의되어 있어 Python API와 호환되지 않는 플랫폼이 적어도 일부 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084203Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:1",
+      "source": "In fact, the possibility of running into this problem was raised by MvL at the time pthreads TLS was added [2]_.",
+      "source_hash": 8964045537664044370,
+      "context_hash": 12573607329957104087,
+      "translation": "실제로 pthreads TLS가 추가될 당시 MvL은 이 문제에 직면할 가능성을 제기했습니다 [2]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084203Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "It could be argued that :pep:`11` makes specific requirements for supporting a new, not otherwise officially-support platform (such as CloudABI), and that the status of Cygwin support is currently dubious.",
+      "source_hash": 14233727946767037948,
+      "context_hash": 14562283898258261606,
+      "translation": "새로운, 그 밖에는 공식적으로 지원되지 않는 플랫폼(예: CloudABI)을 지원하기 위한 구체적인 요구사항을 :pep:`11`\\ 이 규정하고 있으며, Cygwin 지원 상태가 현재 불확실하다고 주장할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:49:41.220799Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:1",
+      "source": "However, this creates a very high barrier to supporting platforms that are otherwise Linux- and/or POSIX-compatible and where CPython might otherwise \"just work\" except for this one hurdle.",
+      "source_hash": 5297914047525833033,
+      "context_hash": 17149288628335041215,
+      "translation": "그러나 이로 인해 그 밖에는 Linux 및/또는 POSIX와 호환되고 이 한 가지 장애물만 없다면 CPython이 정상적으로 작동할 수 있는 플랫폼을 지원하는 데 매우 높은 장벽이 생깁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084204Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:2",
+      "source": "CPython itself imposes this implementation barrier by way of an API that is not compatible with POSIX (and in fact makes invalid assumptions about pthreads).",
+      "source_hash": 6933437873190385613,
+      "context_hash": 3035818692314492279,
+      "translation": "CPython 자체가 POSIX와 호환되지 않는 API를 통해 이러한 구현 장벽을 만들고 있으며(실제로 pthreads에 대해 잘못된 가정을 하기도 합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084204Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Rationale for Proposed Solution",
+      "source_hash": 16393869153922089713,
+      "context_hash": 16529138688255384841,
+      "translation": "제안된 해결책의 근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084204Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The use of an opaque type (``Py_tss_t``) to key TLS values allows the API to be compatible with all present (POSIX and Windows) and future (C11?) native TLS implementations supported by CPython, as it allows the definition of ``Py_tss_t`` to depend on the underlying implementation.",
+      "source_hash": 5423139847702374930,
+      "context_hash": 17898534296750384326,
+      "translation": "TLS 값을 키로 지정하는 데 불투명한 형식(``Py_tss_t``)을 사용하면 CPython이 지원하는 현재의 모든 네이티브 TLS 구현(POSIX 및 Windows)과 향후의 네이티브 TLS 구현(C11?)에서 API를 호환되게 사용할 수 있습니다. ``Py_tss_t``\\ 의 정의가 기반 구현에 따라 달라질 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084204Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "Since the existing TLS API has been available in *the limited API* [13]_ for some platforms (e.g. Linux), CPython makes an effort to provide the new TSS API at that level likewise.",
+      "source_hash": 14921352176605653335,
+      "context_hash": 5414226446792880767,
+      "translation": "기존 TLS API가 일부 플랫폼(예: Linux)에서 *the limited API* [13]_\\ 로 제공되어 왔으므로, CPython은 새로운 TSS API도 동일한 수준에서 제공하기 위해 노력합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084205Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "Note, however, that the ``Py_tss_t`` definition becomes to be an opaque struct when ``Py_LIMITED_API`` is defined, because exposing ``NATIVE_TSS_KEY_T`` as part of the limited API would prevent us from switching native thread implementation without rebuilding extension modules.",
+      "source_hash": 4692027967968839031,
+      "context_hash": 4608882848481761708,
+      "translation": "그러나 ``Py_LIMITED_API``\\ 가 정의되면 ``Py_tss_t`` 정의가 불투명한 구조체가 된다는 점에 유의하십시오. ``NATIVE_TSS_KEY_T``\\ 를 제한된 API의 일부로 노출하면 확장 모듈을 다시 빌드하지 않고는 네이티브 스레드 구현을 전환할 수 없기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084205Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "A new API must be introduced, rather than changing the function signatures of the current API, in order to maintain backwards compatibility.",
+      "source_hash": 1654043080928990081,
+      "context_hash": 18339498940180904955,
+      "translation": "하위 호환성을 유지하려면 현재 API의 함수 시그니처를 변경하는 대신 새로운 API를 도입해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084205Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "The new API also more clearly groups together these related functions under a single name prefix, ``PyThread_tss_``.",
+      "source_hash": 1993606559539660232,
+      "context_hash": 7048186764744973506,
+      "translation": "또한 새로운 API는 이러한 관련 함수들을 하나의 이름 접두사인 ``PyThread_tss_`` 아래에 더 명확하게 그룹화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084205Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:2",
+      "source": "The \"tss\" in the name stands for \"thread-specific storage\", and was influenced by the naming and design of the \"tss\" API that is part of the C11 threads API [15]_.",
+      "source_hash": 4065770603346314354,
+      "context_hash": 2445092774253051654,
+      "translation": "이름의 \"tss\"는 \"thread-specific storage\"를 의미하며, C11 스레드 API [15]_\\ 의 일부인 \"tss\" API의 명명 및 설계에서 영향을 받았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084206Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:3",
+      "source": "However, this is in no way meant to imply compatibility with or support for the C11 threads API, or signal any future intention of supporting C11--it's just the influence for the naming and design.",
+      "source_hash": 7876447230443148972,
+      "context_hash": 6887861545221842914,
+      "translation": "그러나 이는 C11 스레드 API와의 호환성이나 지원을 암시하거나 C11을 지원할 향후 의도를 나타내려는 것이 전혀 아닙니다. 단지 명명과 설계에 영향을 준 것일 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:52.084206Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "The inclusion of the special initializer ``Py_tss_NEEDS_INIT`` is required by the fact that not all native TLS implementations define a sentinel value for uninitialized TLS keys.",
+      "source_hash": 299122188865039947,
+      "context_hash": 6128135323733118621,
+      "translation": "특수 초기화 프로그램 ``Py_tss_NEEDS_INIT``\\ 을 포함해야 하는 이유는 모든 네이티브 TLS 구현이 초기화되지 않은 TLS 키에 대한 센티널 값을 정의하는 것은 아니기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:13.524704Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "For example, on Windows a TLS key is represented by a ``DWORD`` (``unsigned int``) and its value must be treated as opaque [3]_.",
+      "source_hash": 2095851868482838948,
+      "context_hash": 12033216853499340187,
+      "translation": "예를 들어 Windows에서는 TLS 키가 ``DWORD`` (``unsigned int``)로 표현되며, 그 값은 불투명한 것으로 취급해야 합니다 [3]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:13.524708Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:2",
+      "source": "So there is no unsigned integer value that can be safely used to represent an uninitialized TLS key on Windows.",
+      "source_hash": 14865174759855033478,
+      "context_hash": 11949500965346493262,
+      "translation": "따라서 Windows에서는 초기화되지 않은 TLS 키를 안전하게 나타내는 데 사용할 수 있는 부호 없는 정수 값이 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:13.524708Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:3",
+      "source": "Likewise, POSIX does not specify a sentinel for an uninitialized ``pthread_key_t``, instead relying on the ``pthread_once`` interface to ensure that a given TLS key is initialized only once per-process.",
+      "source_hash": 12984345629545615591,
+      "context_hash": 12012199699375179014,
+      "translation": "마찬가지로 POSIX는 초기화되지 않은 ``pthread_key_t``\\ 에 대한 센티널을 지정하지 않고, 대신 ``pthread_once`` 인터페이스에 의존하여 주어진 TLS 키가 프로세스당 한 번만 초기화되도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:13.524709Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:4",
+      "source": "Therefore, the ``Py_tss_t`` type contains an explicit ``._is_initialized`` that can indicate the key's initialization state independent of the underlying implementation.",
+      "source_hash": 11361902469073890115,
+      "context_hash": 11323891053954423200,
+      "translation": "따라서 ``Py_tss_t`` 형식에는 기반 구현과 무관하게 키의 초기화 상태를 나타낼 수 있는 명시적인 ``._is_initialized``\\ 가 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:13.524709Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "Changing ``PyThread_create_key`` to immediately return a failure status on systems using pthreads where ``sizeof(int) != sizeof(pthread_key_t)`` is intended as a sanity check:  Currently, ``PyThread_create_key`` may report initial success on such systems, but attempts to use the returned key are likely to fail.",
+      "source_hash": 18104565739391884208,
+      "context_hash": 15256439176805993783,
+      "translation": "``sizeof(int) != sizeof(pthread_key_t)``\\ 인 pthread 사용 시스템에서 ``PyThread_create_key``\\ 가 즉시 실패 상태를 반환하도록 변경하는 것은 정상성 검사로 의도된 것입니다: 현재 이러한 시스템에서는 ``PyThread_create_key``\\ 가 처음에는 성공했다고 보고할 수 있지만, 반환된 키를 사용하려는 시도는 실패할 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:13.524710Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:1",
+      "source": "Although in practice this failure occurs earlier in the interpreter initialization, it's better to fail immediately at the source of problem (``PyThread_create_key``) rather than sometime later when use of an invalid key is attempted.",
+      "source_hash": 17352708787709242576,
+      "context_hash": 1178452609767465996,
+      "translation": "실제로는 이 실패가 인터프리터 초기화 과정에서 더 일찍 발생하지만, 유효하지 않은 키를 사용하려고 할 때 나중에 실패하는 것보다 문제의 근원인 ``PyThread_create_key``\\ 에서 즉시 실패하도록 하는 것이 더 낫습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:17:13.524710Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:2",
+      "source": "In other words, this indicates clearly that the old API is not supported on platforms where it cannot be used reliably, and that no effort will be made to add such support.",
+      "source_hash": 7928213990678609693,
+      "context_hash": 4541931405371588560,
+      "translation": "다시 말해, 이는 기존 API를 안정적으로 사용할 수 없는 플랫폼에서는 지원하지 않으며, 그러한 지원을 추가하려는 노력도 하지 않을 것임을 명확히 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:13.524712Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 12094894022835953417,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:13.524712Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Do nothing: The status quo is fine because it works on Linux, and platforms wishing to be supported by CPython should follow the requirements of :pep:`11`.",
+      "source_hash": 1166936569810389668,
+      "context_hash": 4706247147116938631,
+      "translation": "아무것도 하지 않기: Linux에서 작동하므로 현 상태로도 괜찮으며, CPython에서 지원되기를 원하는 플랫폼은 :pep:`11`\\ 의 요구 사항을 따라야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:13.524712Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "As explained above, while this would be a fair argument if CPython were being to asked to make changes to support particular quirks or features of a specific platform, in this case it is a quirk of CPython that prevents it from being used to its full potential on otherwise POSIX-compliant platforms.",
+      "source_hash": 7745112757232055020,
+      "context_hash": 4754242953547143676,
+      "translation": "위에서 설명한 것처럼, 특정 플랫폼의 특수한 동작이나 기능을 지원하도록 CPython을 변경해 달라는 요청을 받는 경우라면 이는 타당한 주장일 수 있지만, 이 경우에는 그 밖의 POSIX 호환 플랫폼에서 CPython이 잠재력을 최대한 발휘하여 사용되는 것을 막는 CPython 자체의 특이한 동작입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:13.524713Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "The fact that the current implementation happens to work on Linux is a happy accident, and there's no guarantee that this will never change.",
+      "source_hash": 9214835898734614086,
+      "context_hash": 14856945095960097207,
+      "translation": "현재 구현이 우연히 Linux에서 작동한다는 사실은 단순한 행운일 뿐이며, 이것이 앞으로도 절대 바뀌지 않으리라는 보장은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:13.524713Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Affected platforms should just configure Python ``--without-threads``: this is no longer an option as the ``--without-threads`` option has been removed for Python 3.7 [16]_.",
+      "source_hash": 1415229001711432684,
+      "context_hash": 13112460176830100603,
+      "translation": "영향을 받는 플랫폼은 Python을 ``--without-threads``\\ 로 구성해야 합니다: 이제 ``--without-threads`` 옵션이 Python 3.7에서 제거되었으므로 더 이상 선택지가 아닙니다 [16]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:13.524713Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "Affected platforms should use CPython's built-in TLS implementation instead of a native TLS implementation: This is a more acceptable alternative to the previous idea, and in fact there had been a patch to do just that [4]_.",
+      "source_hash": 1713377327008264131,
+      "context_hash": 9686826536484993415,
+      "translation": "영향을 받는 플랫폼은 네이티브 TLS 구현 대신 CPython에 내장된 TLS 구현을 사용해야 합니다: 이는 앞서의 방안보다 더 받아들일 만한 대안이며, 실제로 바로 그런 작업을 수행하는 패치도 있었습니다 [4]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:18:23.235020Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "However, the built-in implementation being \"slower and clunkier\" in general than native implementations still needlessly hobbles performance on affected platforms.",
+      "source_hash": 12667204026114803765,
+      "context_hash": 15530366750448469348,
+      "translation": "하지만 내장 구현이 네이티브 구현보다 일반적으로 \"더 느리고 투박\"하다는 점은 영향을 받는 플랫폼에서 여전히 불필요하게 성능을 저해합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:18:23.235026Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:2",
+      "source": "At least one other module (``tracemalloc``) is also broken if Python is built without a native TLS implementation.",
+      "source_hash": 14942254337440173654,
+      "context_hash": 3178564074995261293,
+      "translation": "Python이 네이티브 TLS 구현 없이 빌드될 경우 최소 하나의 다른 모듈(``tracemalloc``)도 마찬가지로 오동작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:18:23.235026Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:3",
+      "source": "This idea also cannot be adopted because the built-in implementation has since been removed.",
+      "source_hash": 5104579734099225998,
+      "context_hash": 11302068359152968484,
+      "translation": "또한 내장 구현이 그 이후로 제거되었기 때문에 이 방안 역시 채택할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:18:23.235027Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "Keep the existing API, but work around the issue by providing a mapping from ``pthread_key_t`` values to ``int`` values.",
+      "source_hash": 16168240583727094743,
+      "context_hash": 18347461474273304282,
+      "translation": "기존 API는 유지하되, ``pthread_key_t`` 값을 ``int`` 값으로 매핑\\ 함으로써 이 문제를 우회합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T17:18:23.235027Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:1",
+      "source": "A couple attempts were made at this ([5]_, [6]_), but this injects needless complexity and overhead into performance-critical code on platforms that are not currently affected by this issue (such as Linux).",
+      "source_hash": 10750033624851171633,
+      "context_hash": 15988995913791939401,
+      "translation": "이를 시도한 사례가 몇 차례 있었지만([5]_, [6]_), 이는 현재 이 문제의 영향을 받지 않는 플랫폼(예: Linux)의 성능에 민감한 코드에 불필요한 복잡성과 오버헤드를 주입합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:18:23.235030Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:2",
+      "source": "Even if use of this workaround were made conditional on platform compatibility, it introduces platform-specific code to maintain, and still has the problem of the previous rejected ideas of needlessly hobbling performance on affected platforms.",
+      "source_hash": 2043431158402045021,
+      "context_hash": 5332324703823602514,
+      "translation": "이 우회 방법의 사용을 플랫폼 호환성에 따라 조건부로 적용하더라도, 유지해야 할 플랫폼별 코드가 추가로 생기며, 영향을 받는 플랫폼에서 불필요하게 성능을 저해한다는 앞서 기각된 방안들의 문제가 여전히 남아 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:18:23.235031Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 14103336280799570292,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:18:23.235031Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "An initial version of a patch [7]_ is available on the bug tracker for this issue.",
+      "source_hash": 16626620864646447824,
+      "context_hash": 17430913143820257654,
+      "translation": "이 문제에 대한 패치의 초기 버전 [7]_\\ 은 버그 트래커에서 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:18:23.235031Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "Since the migration to GitHub, its development has continued in the ``pep539-tss-api`` feature branch [10]_ in Masayuki Yamamoto's fork of the CPython repository on GitHub.",
+      "source_hash": 8688091443132969411,
+      "context_hash": 14315766020500507103,
+      "translation": "GitHub로 이전한 이후로, 개발은 GitHub 상의 CPython 저장소를 포크한 Masayuki Yamamoto의 저장소에 있는 ``pep539-tss-api`` 기능 브랜치 [10]_\\ 에서 계속되고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:18:23.235032Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "A work-in-progress PR is available at [11]_.",
+      "source_hash": 987773578356957262,
+      "context_hash": 6709903385931696275,
+      "translation": "개발 진행 중인 PR은 [11]_\\ 에서 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:18:23.235032Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "This reference implementation covers not only the new API implementation features, but also the client code updates needed to replace the existing TLS API with the new TSS API.",
+      "source_hash": 8389650372514392502,
+      "context_hash": 18195727683769454942,
+      "translation": "이 참조 구현\\ 은 새로운 API 구현 기능뿐만 아니라, 기존 TLS API를 새로운 TSS API로 대체하는 데 필요한 클라이언트 코드 업데이트도 포함합니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:18:23.235033Z",
+      "issues": []
+    }
+  ]
+}

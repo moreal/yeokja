@@ -1,0 +1,1695 @@
+{
+  "version": 1,
+  "source_hash": 4319542182177895832,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Preventing task-cancellation bugs by limiting yield in async generators",
+      "source_hash": 1643925244488809430,
+      "context_hash": 16530898886277989957,
+      "translation": "비동기 제너레이터에서 yield를 제한하여 작업 취소 버그를 방지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146081Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 17122421467751991894,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146084Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "`Structured concurrency`_ is increasingly popular in Python.",
+      "source_hash": 9062233543300022872,
+      "context_hash": 18327379478876697204,
+      "translation": "`Structured concurrency`_\\ 는 Python에서 점점 더 인기를 얻고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146084Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "Interfaces such as the ``asyncio.TaskGroup`` and ``asyncio.timeout`` context managers support compositional reasoning, and allow developers to clearly scope the lifetimes of concurrent tasks.",
+      "source_hash": 9372004152631232031,
+      "context_hash": 1562113814236891197,
+      "translation": "``asyncio.TaskGroup`` 및 ``asyncio.timeout``\\ 과 같은 컨텍스트 관리자는 구성적 추론을 지원하며, 개발자가 동시 작업의 수명을 명확하게 범위 지정할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146084Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "However, using ``yield`` to suspend a frame inside such a context leads to situations where the wrong task is canceled, timeouts are ignored, and exceptions are mishandled.",
+      "source_hash": 6225290679174576598,
+      "context_hash": 15116942857668504706,
+      "translation": "그러나 이러한 컨텍스트 내부에서 프레임을 중단하기 위해 ``yield``\\ 를 사용하면 잘못된 작업이 취소되거나, 시간 초과가 무시되거나, 예외가 잘못 처리되는 상황이 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146085Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:3",
+      "source": "More fundamentally, suspending a frame inside a ``TaskGroup`` violates the structured concurrency design principle that child tasks are encapsulated within their parent frame.",
+      "source_hash": 8087429297878472379,
+      "context_hash": 7130763669801001491,
+      "translation": "더 근본적으로는 ``TaskGroup``\\ 내부에서 프레임을 중단하는 것이 자식 작업은 부모 프레임 내부에 캡슐화된다는 구조적 동시성 설계 원칙을 위반합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146085Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "To address these issues, this PEP proposes a new ``sys.prevent_yields()`` context manager.",
+      "source_hash": 9822271097757471076,
+      "context_hash": 17679422325304274109,
+      "translation": "이러한 문제를 해결하기 위해 이 PEP는 새로운 ``sys.prevent_yields()`` 컨텍스트 관리자를 제안합니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:18:25.146085Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "When syntactically inside this context, attempting to ``yield`` will raise a RuntimeError, preventing the task from yielding.",
+      "source_hash": 16474294167166721684,
+      "context_hash": 12893255588546276520,
+      "translation": "구문상 이 컨텍스트 내부에서 ``yield``\\ 를 시도하면 RuntimeError가 발생하여 작업이 yield하지 못하도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146086Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:2",
+      "source": "Additionally, a mechanism will be provided for decorators such as ``@contextmanager`` to allow yields inside the decorated function.  ``sys.prevent_yields()`` will be used by asyncio and downstream libraries to implement task groups, timeouts, and cancellation; and a related mechanism by ``contextlib`` etc. to convert generators into context managers which allow safe yields.",
+      "source_hash": 5411506649818193044,
+      "context_hash": 16347650915736125900,
+      "translation": "또한 ``@contextmanager``\\ 와 같은 데코레이터가 데코레이터가 적용된 함수 내부에서 yield를 허용할 수 있도록 하는 메커니즘을 제공합니다.  ``sys.prevent_yields()``\\ 는 asyncio 및 하위 라이브러리에서 작업 그룹, 시간 초과, 취소를 구현하는 데 사용되며, ``contextlib`` 등에서는 관련 메커니즘을 사용하여 제너레이터를 안전한 yield를 허용하는 컨텍스트 관리자로 변환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146086Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Background",
+      "source_hash": 14089390735911585672,
+      "context_hash": 1064692270390258644,
+      "translation": "배경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146086Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Structured concurrency is increasingly popular in Python, in the form of newer :py:mod:`asyncio` interfaces and third-party libraries such as Trio and anyio.",
+      "source_hash": 16455101639713621151,
+      "context_hash": 10341974071732284442,
+      "translation": "구조적 동시성은 최신 :py:mod:`asyncio` 인터페이스와 Trio 및 anyio와 같은 서드파티 라이브러리의 형태로 Python에서 점점 더 인기를 얻고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146086Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "These interfaces support compositional reasoning, *so long as* users never write a ``yield`` which suspends a frame while inside a cancel scope.",
+      "source_hash": 13668317958267790024,
+      "context_hash": 14882091126628297915,
+      "translation": "이러한 인터페이스는 *사용자가 취소 범위 내부에서 프레임을 일시 중단하는 ``yield``\\ 를 절대 작성하지 않는 한* 조합적 추론을 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:59:33.553715Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "A cancel scope is a context manager which can... cancel... whatever work occurs within that context (...scope).",
+      "source_hash": 6866988277776958943,
+      "context_hash": 12536609100975107901,
+      "translation": "취소 범위는 해당 컨텍스트 내에서 발생하는 모든 작업을 ... 취소할 수 있는 컨텍스트 관리자입니다(...범위).",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:18:25.146087Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "In asyncio, this is implicit in the design of ``with asyncio.timeout():`` or ``async with asyncio.TaskGroup() as tg:``, which respectively cancel the contained work after the specified duration, or cancel sibling tasks when one of them raises an exception.",
+      "source_hash": 13020582205842657684,
+      "context_hash": 655495404273465551,
+      "translation": "asyncio에서는 지정된 시간이 지나면 포함된 작업을 각각 취소하거나, 작업 중 하나가 예외를 발생시키면 형제 작업을 취소하는 ``with asyncio.timeout():`` 또는 ``async with asyncio.TaskGroup() as tg:``\\ 의 설계에 이러한 동작이 암묵적으로 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146087Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "The core functionality of a cancel scope is synchronous, but the user-facing context managers may be either sync or async. [#trio-cancel-scope]_ [#tg-cs]_",
+      "source_hash": 6878257184151625051,
+      "context_hash": 15802097661437820107,
+      "translation": "취소 범위의 핵심 기능은 동기식이지만, 사용자에게 노출되는 컨텍스트 관리자는 동기식이거나 비동기식일 수 있습니다. [#trio-cancel-scope]_ [#tg-cs]_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146088Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "This structured approach works beautifully, unless you hit one specific sharp edge: breaking the nesting structure by ``yield``\\ ing inside a cancel scope.",
+      "source_hash": 17142705377072317202,
+      "context_hash": 4244519711779365338,
+      "translation": "이 구조적 접근 방식은 한 가지 특정한 난관에 부딪히지 않는 한 훌륭하게 작동합니다. 즉, 취소 범위 내부에서 ``yield``\\ 하여 중첩 구조를 깨뜨리는 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146088Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "This has much the same effect on structured control flow as adding just a few cross-function ``goto``\\ s, and the effects are truly dire:",
+      "source_hash": 7479613560747032190,
+      "context_hash": 6638882006971495542,
+      "translation": "이는 함수 간 ``goto``\\ 를 몇 개 추가하는 것과 구조적 제어 흐름에 거의 같은 영향을 미치며, 그 결과는 정말 심각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146088Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "The wrong task can be canceled, whether due to a timeout, an error in a sibling task, or an explicit request to cancel some other task",
+      "source_hash": 10494107689273941650,
+      "context_hash": 10019144335627501076,
+      "translation": "시간 초과, 형제 작업의 오류 또는 다른 작업을 취소하라는 명시적 요청으로 인해 잘못된 작업이 취소될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146088Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "Exceptions, including ``CancelledError``, can be delivered to the wrong task",
+      "source_hash": 5646572313735058819,
+      "context_hash": 3763425039100589519,
+      "translation": "``CancelledError``\\ 를 비롯한 예외가 잘못된 작업에 전달될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146089Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Exceptions can go missing entirely, being dropped instead of added to an ``ExceptionGroup``",
+      "source_hash": 15973267784539557609,
+      "context_hash": 5613854110154674029,
+      "translation": "예외가 ``ExceptionGroup``\\ 에 추가되지 않고 삭제되어 완전히 사라질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146089Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Problem statement",
+      "source_hash": 11800844642715695686,
+      "context_hash": 4303343101007669875,
+      "translation": "문제 서술",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146089Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Here's the fundamental issue: yield suspends a call frame.",
+      "source_hash": 4280719944103857236,
+      "context_hash": 8952163785059368029,
+      "translation": "근본적인 문제는 다음과 같습니다. yield는 호출 프레임을 중단합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146090Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "It only makes sense to yield in a leaf frame -- i.e., if your call stack goes like A -> B -> C, then you can suspend C, but you can't suspend B while leaving C running.",
+      "source_hash": 445385090058369382,
+      "context_hash": 12723027286863902160,
+      "translation": "yield는 리프 프레임에서만 의미가 있습니다. 즉, 호출 스택이 A -> B -> C와 같다면 C는 중단할 수 있지만, C를 계속 실행한 채 B를 중단할 수는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146090Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "But, TaskGroup is a kind of \"concurrent call\" primitive, where a single frame can have multiple child frames that run concurrently.",
+      "source_hash": 7968154828356383795,
+      "context_hash": 6302550901205548307,
+      "translation": "그러나 TaskGroup은 일종의 \"동시 호출\" 기본 요소이며, 하나의 프레임이 동시에 실행되는 여러 자식 프레임을 가질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146090Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "This means that if we allow people to mix yield and TaskGroup, then we can end up in exactly this situation, where B gets suspended but C is actively running.",
+      "source_hash": 208841188653007945,
+      "context_hash": 14635491108405098170,
+      "translation": "따라서 yield와 TaskGroup을 함께 사용할 수 있도록 허용하면 B는 중단되지만 C는 활발히 실행되는 바로 이러한 상황에 이를 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146090Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "This is nonsensical, and causes serious practical problems (e.g., if C raises an exception and A has returned, we have no way to propagate it).",
+      "source_hash": 9881097788971375622,
+      "context_hash": 16921924318860380544,
+      "translation": "이는 이치에 맞지 않으며 심각한 실질적 문제를 일으킵니다. (예를 들어 C가 예외를 발생시키고 A가 반환된 경우 이를 전파할 방법이 없습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146090Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "This is a fundamental incompatibility between generator control flow and structured concurrency control flow, not something we can fix by tweaking our APIs.",
+      "source_hash": 13683552379819812204,
+      "context_hash": 18076736515590332045,
+      "translation": "이는 제너레이터 제어 흐름과 구조적 동시성 제어 흐름 사이의 근본적인 비호환성으로, API를 조정하여 해결할 수 있는 문제가 아닙니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:18:25.146091Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "The only solution seems to be to forbid yield inside a TaskGroup.",
+      "source_hash": 15550317093204460406,
+      "context_hash": 18372708147476394488,
+      "translation": "유일한 해결책은 TaskGroup 내부에서 yield를 금지하는 것처럼 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146091Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "Although timeouts don't leave a child task running, the close analogy and related problems lead us to conclude that yield should be forbidden inside all cancel scopes, not only TaskGroups.",
+      "source_hash": 14883024777069671429,
+      "context_hash": 1289522756485182757,
+      "translation": "시간 초과가 자식 작업을 실행 중인 상태로 남겨 두지는 않지만, 이러한 밀접한 유사성과 관련 문제를 고려하면 TaskGroup뿐만 아니라 모든 취소 범위 내부에서 yield를 금지해야 한다고 결론 내리게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146091Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:1",
+      "source": "See :ref:`just-deliver` for discussion.",
+      "source_hash": 12444350095970784800,
+      "context_hash": 7894545103924451362,
+      "translation": "논의는 :ref:`just-deliver`\\ 에서 확인하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146092Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Motivating examples",
+      "source_hash": 8466590763757722405,
+      "context_hash": 3160969648587365067,
+      "translation": "동기를 부여하는 예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146092Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Let's consider three examples, to see what this might look like in practice.",
+      "source_hash": 4640793345190602413,
+      "context_hash": 6962591004411361770,
+      "translation": "실제로 어떤 모습일 수 있는지 살펴보기 위해 세 가지 예를 검토하겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.146092Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Leaking a timeout to the outer scope",
+      "source_hash": 17463749551307111488,
+      "context_hash": 11903481045193478223,
+      "translation": "외부 스코프로 타임아웃 누출",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705101Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Suppose that we want to iterate over an async iterator, but wait for at most ``max_time`` seconds for each element.",
+      "source_hash": 5024646134596658505,
+      "context_hash": 5758373541554725015,
+      "translation": "비동기 이터레이터를 순회하되 각 요소마다 최대 ``max_time``\\ 초 동안 기다리려고 한다고 가정하십시오.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:18:18.705104Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "We might naturally encapsulate the logic for doing so in an async generator, so that the call site can continue to use a straightforward ``async for`` loop:",
+      "source_hash": 8435096765922265694,
+      "context_hash": 1989007690646220968,
+      "translation": "이를 수행하는 로직을 비동기 제너레이터에 자연스럽게 캡슐화하여, 호출 위치에서는 간단한 ``async for`` 루프를 계속 사용할 수 있습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:18:18.705105Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "Unfortunately, there's a bug in this version: the timeout might expire after the generator yields but before it is resumed!",
+      "source_hash": 4057263026901312124,
+      "context_hash": 5161985255718288381,
+      "translation": "안타깝게도 이 버전에는 버그가 있습니다. 제너레이터가 값을 생성한 후 재개되기 전에 타임아웃이 만료될 수 있습니다!",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:18:18.705106Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "In this case, we'll see a ``CancelledError`` raised in the outer task, where it cannot be caught by the ``with timeout(max_time):`` statement.",
+      "source_hash": 12789466355728160055,
+      "context_hash": 1446001677588835024,
+      "translation": "이 경우 외부 태스크에서 ``CancelledError``\\ 가 발생하는 것을 보게 되며, 여기서는 ``with timeout(max_time):``\\ 문으로 이를 잡을 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705106Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "The fix is fairly simple: get the next element inside the timeout context, and then yield *outside* that context.",
+      "source_hash": 5513768441913976593,
+      "context_hash": 6584685271972445499,
+      "translation": "해결 방법은 상당히 간단합니다. 시간 초과 컨텍스트 안에서 다음 요소를 가져온 다음, 해당 컨텍스트 *밖에서* yield합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:59:33.553720Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Leaking background tasks (breaks cancellation and exception handling)",
+      "source_hash": 17136688347653893402,
+      "context_hash": 5172201233881937149,
+      "translation": "백그라운드 태스크 누출(취소 및 예외 처리를 중단함)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705107Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Timeouts are not the only interface which wrap a cancel scope - and if you need some background worker tasks, you can't simply close the ``TaskGroup`` before yielding.",
+      "source_hash": 16304366822164400492,
+      "context_hash": 16144117594116549871,
+      "translation": "타임아웃만 취소 스코프를 감싸는 인터페이스인 것은 아닙니다. 백그라운드 작업자 태스크가 필요하다면 값을 생성하기 전에 ``TaskGroup``\\ 을 간단히 닫을 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705107Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "As an example, let's look at a fan-in generator, which we'll use to merge the feeds from several \"sensors\".",
+      "source_hash": 9070414923388132130,
+      "context_hash": 11838025501241237761,
+      "translation": "예로 팬인 제너레이터를 살펴보겠습니다. 이 제너레이터를 사용하여 여러 \"센서\"의 피드를 병합할 것입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:18:18.705108Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "We'll also set up our mock sensors with a small buffer, so that we'll raise an error in the background task while control flow is outside the ``combined_iterators`` generator.",
+      "source_hash": 15056031425985994459,
+      "context_hash": 13283842917966075366,
+      "translation": "또한 모의 센서에 작은 버퍼를 설정하여, 제어 흐름이 ``combined_iterators``\\ 제너레이터 밖에 있는 동안 백그라운드 태스크에서 오류를 발생시키도록 하겠습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:18:18.705108Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "When we run this code, we see the expected sequence of observations, then a 'detection', and then while the main task is sleeping we trigger that ``RuntimeError`` in the background.",
+      "source_hash": 5905750671700201294,
+      "context_hash": 572040823708439209,
+      "translation": "이 코드를 실행하면 예상한 관찰 시퀀스가 표시된 다음 '감지'가 표시되고, 주 태스크가 절전 중일 때 백그라운드에서 ``RuntimeError``\\ 를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705109Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:1",
+      "source": "But... we don't actually observe the ``RuntimeError``, not even as the ``__context__`` of another exception!",
+      "source_hash": 13502976391046727549,
+      "context_hash": 2700729578992140441,
+      "translation": "하지만... 실제로는 ``RuntimeError``\\ 를 관찰하지 못하며, 다른 예외의 ``__context__``\\ 로도 관찰하지 못합니다!",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705109Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "Here, again, the problem is that we've ``yield``\\ ed inside a cancel scope; this time the scope which a ``TaskGroup`` uses to cancel sibling tasks when one of the child tasks raises an exception.",
+      "source_hash": 7055604790311859709,
+      "context_hash": 8670748709781277045,
+      "translation": "여기서도 문제는 취소 스코프 안에서 ``yield``\\ 한 것입니다. 이번에는 자식 태스크 중 하나가 예외를 발생시킬 때 ``TaskGroup``\\ 이 형제 태스크를 취소하는 데 사용하는 스코프입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705110Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:1",
+      "source": "However, the ``CancelledError`` which was intended for the sibling task was instead injected into the *outer* task, and so we never got a chance to create and raise an ``ExceptionGroup(..., [RuntimeError()])``.",
+      "source_hash": 12094423644318792836,
+      "context_hash": 10469612563976402602,
+      "translation": "그러나 형제 태스크를 대상으로 했던 ``CancelledError``\\ 가 대신 *외부* 태스크에 주입되었으므로, ``ExceptionGroup(..., [RuntimeError()])``\\ 을 생성하고 발생시킬 기회를 얻지 못했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705110Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "To fix this, we need to turn our async generator into an async context manager, which yields an async iterable - in this case a generator wrapping the queue; in future `perhaps the queue itself <https://github.com/python/cpython/issues/119154>`__:",
+      "source_hash": 11736642695795218409,
+      "context_hash": 14157791233199353053,
+      "translation": "이를 수정하려면 비동기 제너레이터를 비동기 컨텍스트 관리자로 변환해야 합니다. 이 관리자는 비동기 이터러블을 생성하며, 여기서는 큐를 감싸는 제너레이터입니다. 향후에는 `perhaps the queue itself <https://github.com/python/cpython/issues/119154>`__\\ 자체일 수도 있습니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자",
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:18:18.705110Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "In a user-defined context manager",
+      "source_hash": 5709020585189341326,
+      "context_hash": 12920663251483409955,
+      "translation": "사용자 정의 컨텍스트 관리자에서",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:18:18.705111Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Yielding inside a cancel scope can be safe, if and only if you're using the generator to implement a context manager [#redirected]_ - in this case any propagating exceptions will be redirected to the expected task.",
+      "source_hash": 17735294703574718491,
+      "context_hash": 7654791819508475206,
+      "translation": "취소 스코프 안에서 값을 생성하는 것은 안전할 수 있지만, 제너레이터를 사용하여 컨텍스트 관리자를 구현하는 경우에만 그렇습니다 [#redirected]_. 이 경우 전파되는 예외는 예상된 태스크로 리디렉션됩니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자",
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:18:18.705112Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "We've also implemented the ``ASYNC101`` linter rule in `flake8-async <https://pypi.org/project/flake8-async/>`__, which warns against yielding in known cancel scopes.",
+      "source_hash": 2233744559760311464,
+      "context_hash": 9831825026262325198,
+      "translation": "또한 `flake8-async <https://pypi.org/project/flake8-async/>`__\\ 에 ``ASYNC101`` 린터 규칙을 구현했으며, 알려진 취소 스코프에서 값을 생성하지 않도록 경고합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705113Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "Could user education be sufficient to avoid these problems?",
+      "source_hash": 13789569582387824127,
+      "context_hash": 844878079666865154,
+      "translation": "사용자 교육만으로 이러한 문제를 방지하기에 충분할 수 있을까요?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705113Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:2",
+      "source": "Unfortunately not: user-defined context managers can also wrap a cancel scope, and it's infeasible to recognize or lint for all such cases.",
+      "source_hash": 3278659221427665045,
+      "context_hash": 13505189010809747308,
+      "translation": "안타깝게도 그렇지 않습니다. 사용자 정의 컨텍스트 관리자도 취소 스코프를 감쌀 수 있으며, 이러한 모든 경우를 인식하거나 린트하는 것은 현실적으로 불가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705113Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "This regularly arises in practice, because 'run some background tasks for the duration of this context' is a very common pattern in structured concurrency.",
+      "source_hash": 10741277204530507988,
+      "context_hash": 4201790983007760044,
+      "translation": "이는 실제로 정기적으로 발생합니다. '이 컨텍스트가 유지되는 동안 일부 백그라운드 태스크 실행'은 구조적 동시성에서 매우 흔한 패턴이기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705113Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "We saw that in ``combined_iterators()`` above; and have seen this bug in multiple implementations of the websocket protocol:",
+      "source_hash": 8096113939184349813,
+      "context_hash": 4137004671585358495,
+      "translation": "위의 ``combined_iterators()``\\ 에서 이를 확인했으며, 웹소켓 프로토콜의 여러 구현에서 이 버그를 보았습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:18:18.705113Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 5924668557429728757,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705114Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "To prevent these problems, we propose:",
+      "source_hash": 1013990915181227729,
+      "context_hash": 5976350529269694163,
+      "translation": "이러한 문제를 방지하기 위해 다음을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705114Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "a new context manager, ``with sys.prevent_yields(reason): ...`` which will raise a RuntimeError if you attempt to yield while inside it. [#also-sync]_ Cancel-scope-like context managers in asyncio and downstream code can then wrap this to prevent yielding inside *their* with-block.",
+      "source_hash": 7897785079200403141,
+      "context_hash": 12625536466612757140,
+      "translation": "새로운 컨텍스트 관리자 ``with sys.prevent_yields(reason): ...``\\ 는 그 내부에서 yield를 시도하면 RuntimeError를 발생시킵니다. [#also-sync]_ asyncio 및 다운스트림 코드의 취소 범위와 유사한 컨텍스트 관리자는 그런 다음 이를 감싸서 *자신의* with 블록 내부에서 yield하는 것을 방지할 수 있습니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:59:33.553727Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "a mechanism by which generator-to-context-manager decorators can allow yields across one call.",
+      "source_hash": 12177545554084549208,
+      "context_hash": 5448811262517637277,
+      "translation": "제너레이터-컨텍스트-관리자 데코레이터가 한 번의 호출을 가로질러 값을 생성할 수 있도록 하는 메커니즘을 도입합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:18:18.705115Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "We're not yet sure what this should look like; the leading candidates are:",
+      "source_hash": 13870219256709327878,
+      "context_hash": 5721667358566003326,
+      "translation": "이것이 어떤 형태여야 하는지는 아직 확실하지 않으며, 유력한 후보는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705116Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "a. a code-object attribute, ``fn.__code__.co_allow_yields = True``, or",
+      "source_hash": 12095099746159884896,
+      "context_hash": 8550642100191662572,
+      "translation": "a. 코드 객체 속성 ``fn.__code__.co_allow_yields = True`` 또는",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705116Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "b. some sort of invocation flag, e.g. ``fn.__invoke_with_yields__``, to avoid",
+      "source_hash": 2069271745775015973,
+      "context_hash": 14004277014063434723,
+      "translation": "b. 예를 들어 ``fn.__invoke_with_yields__``\\ 와 같은 호출 플래그를 사용하여",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705117Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "mutating a code object that might be shared between decorated and undecorated functions",
+      "source_hash": 15352705745615340474,
+      "context_hash": 7340533725029695230,
+      "translation": "데코레이터가 적용된 함수와 적용되지 않은 함수 사이에서 공유될 수 있는 코드 객체를 변경하지 않는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705117Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Implementation - tracking frames",
+      "source_hash": 11721403438935398730,
+      "context_hash": 13090607412015592228,
+      "translation": "구현 - 프레임 추적",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:18.705117Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "The new ``sys.prevent_yields`` context manager will require interpreter support.",
+      "source_hash": 13226658247873013605,
+      "context_hash": 3110181456172745568,
+      "translation": "새로운 ``sys.prevent_yields`` 컨텍스트 관리자를 지원하려면 인터프리터 지원이 필요합니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:18:34.702716Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "For each frame, we track the entries and exits of this context manager.",
+      "source_hash": 8554025171122233883,
+      "context_hash": 1787061171882029781,
+      "translation": "각 프레임에 대해 이 컨텍스트 관리자의 진입과 종료를 추적합니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:18:34.702721Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "We're not particularly attached to the exact representation; we'll discuss it as a stack (which would support clear error messages), but more compact representations such as pair-of-integers would also work.",
+      "source_hash": 13064738701324454927,
+      "context_hash": 1515134682316981318,
+      "translation": "정확한 표현 방식에 특별히 집착하지는 않습니다. 명확한 오류 메시지를 지원할 수 있는 스택으로 이를 논의하겠지만, 정수 쌍과 같은 더 압축적인 표현 방식도 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702722Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "When entering a newly-created or resumed frame, initialize empty stacks of entries and exits.",
+      "source_hash": 6844255159096528641,
+      "context_hash": 1149555593245767227,
+      "translation": "새로 생성되거나 재개된 프레임에 진입할 때 진입 및 종료를 위한 빈 스택을 초기화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702722Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "When returning from a frame, merge these stacks into that of the parent frame.",
+      "source_hash": 14209511023922628704,
+      "context_hash": 10247133593756034830,
+      "translation": "프레임에서 반환할 때 이 스택을 부모 프레임의 스택에 병합합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702722Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "When yielding:",
+      "source_hash": 12184483907322653550,
+      "context_hash": 14944466685221896509,
+      "translation": "yield할 때:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702723Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "if ``entries != [] and not frame.allow_yield_flag``, raise a ``RuntimeError`` instead of yielding (the new behavior this PEP proposes)",
+      "source_hash": 4516033958798532191,
+      "context_hash": 4201003386134557144,
+      "translation": "`entries != [] and not frame.allow_yield_flag`\\ 이면 yield하는 대신 ``RuntimeError``\\ 를 발생시킵니다(이 PEP가 제안하는 새로운 동작).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702723Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "otherwise, merge stacks into the parent frame as for a return.",
+      "source_hash": 11114106032842133052,
+      "context_hash": 5167993631258597075,
+      "translation": "그렇지 않으면 반환할 때와 마찬가지로 스택을 부모 프레임에 병합합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702723Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:0",
+      "source": "Because this is about yielding frames *within* a task, not switching between tasks, syntactic ``yield`` and ``yield from`` should be affected, but ``await`` expressions should not.",
+      "source_hash": 17723730605993935150,
+      "context_hash": 9742903328669464337,
+      "translation": "이는 태스크 간 전환이 아니라 태스크 *내부*\\ 에서 프레임을 yield하는 것에 관한 것이므로, ``yield`` 및 ``yield from`` 구문은 영향을 받아야 하지만 ``await`` 표현식은 영향을 받지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702723Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:0",
+      "source": "We can reduce the overhead by storing this metadata in a single stack per thread for all stack frames which are not generators.",
+      "source_hash": 12053774685255056222,
+      "context_hash": 6240866128817449943,
+      "translation": "제너레이터가 아닌 모든 스택 프레임에 대해 스레드당 단일 스택에 이 메타데이터를 저장하여 오버헤드를 줄일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702724Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Worked examples",
+      "source_hash": 2916633409323714490,
+      "context_hash": 10162832991588266319,
+      "translation": "작성 예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702724Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "No-yield example",
+      "source_hash": 13135503101393063292,
+      "context_hash": 14252920762804490976,
+      "translation": "yield하지 않는 예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702724Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "In this example, we see multiple rounds of the stack merging as we unwind from ``sys.prevent_yields``, through the user-defined ContextManager, back to the original Frame.",
+      "source_hash": 7787651534548464733,
+      "context_hash": 12448506623270775078,
+      "translation": "이 예제에서는 ``sys.prevent_yields``\\ 에서 빠져나와 사용자 정의 ContextManager를 거쳐 원래 프레임으로 돌아가는 동안 스택이 여러 차례 병합되는 것을 볼 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702724Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:1",
+      "source": "For brevity, the reason for preventing yields is not shown; it is part of the \"1 enter\" state.",
+      "source_hash": 4535052001475987772,
+      "context_hash": 11887810667641504332,
+      "translation": "간결성을 위해 yield를 방지하는 이유는 표시하지 않았으며, 이는 \"1 enter\" 상태의 일부입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702725Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "With no ``yield`` we don't raise any errors, and because the number of enters and exits balance the frame returns as usual with no further tracking.",
+      "source_hash": 9789591700476187123,
+      "context_hash": 3753096041505124057,
+      "translation": "``yield``\\ 가 없으면 오류가 발생하지 않으며, 진입 횟수와 종료 횟수의 균형이 맞으므로 추가 추적 없이 평소처럼 프레임이 반환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702725Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "Attempts-to-yield example",
+      "source_hash": 10361329046499986286,
+      "context_hash": 1384513856264231786,
+      "translation": "yield 시도 예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702725Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "In this example, the Frame attempts to ``yield`` while inside the ``sys.prevent_yields`` context.",
+      "source_hash": 15677085308384907605,
+      "context_hash": 16209927212386156374,
+      "translation": "이 예제에서 프레임은 ``sys.prevent_yields`` 컨텍스트 안에서 ``yield``\\ 를 시도합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702725Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:1",
+      "source": "This is detected by the interpreter, which raises a ``RuntimeError`` instead of suspending the frame.",
+      "source_hash": 409592044459464376,
+      "context_hash": 16524401742663744671,
+      "translation": "인터프리터가 이를 감지하고 프레임을 일시 중단하는 대신 ``RuntimeError``\\ 를 발생시킵니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:18:34.702726Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "Allowed-to-yield example",
+      "source_hash": 14168615092337467196,
+      "context_hash": 1941340371813659485,
+      "translation": "yield가 허용되는 예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702726Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "In this example, a decorator has marked the Frame as allowing yields.",
+      "source_hash": 4668759386857214972,
+      "context_hash": 1863340984436297858,
+      "translation": "이 예제에서는 데코레이터가 프레임을 yield 허용으로 표시했습니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T19:18:34.702726Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:1",
+      "source": "This could be ``@contextlib.contextmanager`` or a related decorator.",
+      "source_hash": 9197322773131358672,
+      "context_hash": 9981820127762256403,
+      "translation": "이는 ``@contextlib.contextmanager`` 또는 관련 데코레이터일 수 있습니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T19:18:34.702727Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:0",
+      "source": "When the Frame is allowed to yield, the entry/exit stack is merged into the parent frame's stack before suspending.",
+      "source_hash": 3387296034760012162,
+      "context_hash": 2718510060229827665,
+      "translation": "프레임에서 yield가 허용되면 일시 중단하기 전에 진입/종료 스택을 부모 프레임의 스택에 병합합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702727Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:1",
+      "source": "When the Frame resumes, its stack is empty.",
+      "source_hash": 1443035742401173344,
+      "context_hash": 14641641134622066654,
+      "translation": "프레임이 재개될 때 해당 프레임의 스택은 비어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702728Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:2",
+      "source": "Finally, when the Frame exits, the exit is merged into the parent frame's stack, rebalancing it.",
+      "source_hash": 15163590814403899477,
+      "context_hash": 14541272479196542615,
+      "translation": "마지막으로 프레임이 종료되면 종료 항목을 부모 프레임의 스택에 병합하여 균형을 다시 맞춥니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702728Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:12/seg:0",
+      "source": "This ensures that the parent frame correctly inherits any remaining ``sys.prevent_yields`` state, while allowing the Frame to safely suspend and resume.",
+      "source_hash": 2192755716454976663,
+      "context_hash": 4010894263422227606,
+      "translation": "이를 통해 프레임이 안전하게 일시 중단되었다가 재개되는 동시에 부모 프레임이 남아 있는 ``sys.prevent_yields`` 상태를 올바르게 상속합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702728Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:13/seg:0",
+      "source": "Allowing yield for context managers",
+      "source_hash": 5312657377220798174,
+      "context_hash": 13997882466561627503,
+      "translation": "컨텍스트 관리자의 yield 허용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702729Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:14/seg:0",
+      "source": "*TODO: this section is a placeholder, pending a decision on the mechanism for ``@contextmanager`` to re-enable yields in the wrapped function.*",
+      "source_hash": 6605991265688226931,
+      "context_hash": 3995989569309066403,
+      "translation": "*TODO: 이 섹션은 ``@contextmanager``\\ 가 래핑된 함수에서 yield를 다시 활성화하는 메커니즘에 대한 결정이 내려질 때까지의 자리 표시자입니다.*",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702729Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:15/seg:0",
+      "source": "Explain and show a code sample of how ``@asynccontextmanager`` sets the flag",
+      "source_hash": 14422120014872817814,
+      "context_hash": 12990372571030741980,
+      "translation": "``@asynccontextmanager``\\ 가 플래그를 설정하는 방법을 설명하고 코드 샘플을 보여 주십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702729Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:16/seg:0",
+      "source": "Note that third-party decorators such as ``@pytest.fixture`` demonstrate that we can't just have the interpreter special-case contextlib.",
+      "source_hash": 14795344230054165172,
+      "context_hash": 13994256241444849248,
+      "translation": "``@pytest.fixture``\\ 와 같은 서드파티 데코레이터는 인터프리터가 contextlib를 특별히 처리하도록 할 수만은 없다는 점을 보여 줍니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:18:34.702729Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Behavior if ``sys.prevent_yields`` is misused",
+      "source_hash": 14669284776302615337,
+      "context_hash": 6927662682155437596,
+      "translation": "``sys.prevent_yields``\\ 를 잘못 사용할 경우의 동작",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702730Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "While unwise, it's possible to call ``sys.prevent_yields.__enter__`` and ``.__exit__`` in an order that does not correspond to any valid nesting, or get an invalid frame state in some other way.",
+      "source_hash": 11228986992335073584,
+      "context_hash": 10492614101751586037,
+      "translation": "바람직하지는 않지만, ``sys.prevent_yields.__enter__`` 및 ``.__exit__``\\ 를 유효한 중첩에 해당하지 않는 순서로 호출하거나 다른 방식으로 잘못된 프레임 상태를 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.702730Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "There are two ways ``sys.prevent_yields.__exit__`` could detect an invalid state.",
+      "source_hash": 9696279814682169126,
+      "context_hash": 15490761971607204358,
+      "translation": "``sys.prevent_yields.__exit__``\\ 가 잘못된 상태를 감지하는 방법은 두 가지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517317Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "First, if yields are not prevented, we can simply raise an exception without changing the state.",
+      "source_hash": 9318285646744185332,
+      "context_hash": 12948117580944873267,
+      "translation": "첫째, yield가 방지되지 않는 경우 상태를 변경하지 않고 단순히 예외를 발생시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517321Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:2",
+      "source": "Second, if an unexpected entry is at the top of the stack, we suggest popping that entry and raising an exception -- this ensures that out-of-order calls will still clear the stack, while still making it clear that something is wrong.",
+      "source_hash": 12073565149736624176,
+      "context_hash": 16425052554995052928,
+      "translation": "둘째, 스택의 맨 위에 예상하지 못한 항목이 있으면 해당 항목을 꺼내고 예외를 발생시키는 방법을 제안합니다. 이렇게 하면 순서가 뒤바뀐 호출도 스택을 계속 비우면서, 동시에 무언가 잘못되었다는 점을 분명히 알릴 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517321Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "(and if we choose e.g. an integer- rather than stack-based representation, such states may not be distinguishable from correct nesting at all, in which case the question will not arise)",
+      "source_hash": 9454011407966697067,
+      "context_hash": 1847922821950062620,
+      "translation": "(또한 스택 기반 표현 대신 예를 들어 정수 표현을 선택하면, 이러한 상태가 올바른 중첩과 전혀 구별되지 않을 수 있으며, 이 경우에는 해당 문제가 발생하지 않습니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517321Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Anticipated uses",
+      "source_hash": 3458687195625373746,
+      "context_hash": 10371689281100672336,
+      "translation": "예상되는 사용 사례",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517322Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "In the standard library, ``sys.prevent_yields`` could be used by ``asyncio.TaskGroup``, ``asyncio.timeout``, and ``asyncio.timeout_at``.",
+      "source_hash": 10278868838357983919,
+      "context_hash": 3716235788988364628,
+      "translation": "표준 라이브러리에서 ``sys.prevent_yields``\\ 는 ``asyncio.TaskGroup``, ``asyncio.timeout``, ``asyncio.timeout_at``\\ 에서 사용할 수 있습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:18:24.517322Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "Downstream, we expect to use it in ``trio.CancelScope``, async fixtures (in pytest-trio, anyio, etc.), and perhaps other places.",
+      "source_hash": 10811715062804797005,
+      "context_hash": 2907029841393760368,
+      "translation": "하위 수준에서는 ``trio.CancelScope``, 비동기 픽스처(pytest-trio, anyio 등에서), 그리고 아마도 다른 곳에서도 이를 사용할 것으로 예상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517324Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "We consider use-cases unrelated to async correctness, such as preventing ``decimal.localcontext`` from leaking out of a generator, out of scope for this PEP.",
+      "source_hash": 12353656273107399054,
+      "context_hash": 10541171539281848964,
+      "translation": "제너레이터 밖으로 ``decimal.localcontext``\\ 가 유출되는 것을 방지하는 것처럼 비동기 정확성과 관련 없는 사용 사례는 이 PEP의 범위 밖으로 간주합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:18:24.517324Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "The generator-to-context-manager support would be used by ``@contextlib.(async)contextmanager``, and if necessary in ``(Async)ExitStack``.",
+      "source_hash": 6535891060988636139,
+      "context_hash": 8511373520181934231,
+      "translation": "제너레이터를 컨텍스트 관리자로 변환하는 지원은 ``@contextlib.(async)contextmanager``\\ 에서 사용되며, 필요하다면 ``(Async)ExitStack``\\ 에서도 사용됩니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:18:24.517325Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 18295365392338066389,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517326Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "The addition of the ``sys.prevent_yields`` context manager, changes to ``@contextlib.(async)contextmanager``, and corresponding interpreter support are all fully backwards-compatible.",
+      "source_hash": 11738956681498162229,
+      "context_hash": 14839136235890753585,
+      "translation": "``sys.prevent_yields`` 컨텍스트 관리자의 추가, ``@contextlib.(async)contextmanager``\\ 의 변경, 그리고 이에 상응하는 인터프리터 지원은 모두 완전한 하위 호환성을 유지합니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:18:24.517326Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "Preventing yields inside ``asyncio.TaskGroup``, ``asycio.timeout``, and ``asyncio.timeout_at`` would be a breaking change to at least some code in the wild, which (however unsafe and prone to the motivating problems above) may work often enough to make it into production.",
+      "source_hash": 1792222584850765517,
+      "context_hash": 4527795382617873970,
+      "translation": "``asyncio.TaskGroup``, ``asycio.timeout``, ``asyncio.timeout_at``\\ 내부에서 yield를 방지하는 것은 실제 환경의 일부 코드에 호환성을 깨뜨리는 변경이 될 수 있으며, 해당 코드는 (위에서 설명한 동기를 제공한 문제를 일으키기 쉽고 안전하지 않음에도) 충분히 자주 작동하여 실제 운영 환경에 배포되었을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517327Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "We will seek community feedback on appropriate deprecation pathways for standard-library code, including the suggested length of any deprecation period.",
+      "source_hash": 11309326087301179131,
+      "context_hash": 17144911978877382129,
+      "translation": "제안된 유예 기간의 길이를 포함하여 표준 라이브러리 코드에 적절한 지원 중단 경로에 관한 커뮤니티의 의견을 구할 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517327Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:1",
+      "source": "As an initial suggestion, we could make suspending stdlib contexts emit a DeprecationWarning only under asyncio debug mode in 3.14; then transition to warn-by-default and error under debug mode in 3.15; and finally a hard error in 3.16.",
+      "source_hash": 946377358711888524,
+      "context_hash": 290285643849026207,
+      "translation": "초기 제안으로, 3.14에서는 asyncio 디버그 모드에서만 표준 라이브러리 컨텍스트를 일시 중단할 때 DeprecationWarning을 발생시키고, 3.15에서는 기본적으로 경고를 발생시키며 디버그 모드에서는 오류를 발생시키도록 전환하고, 마지막으로 3.16에서는 즉시 오류를 발생시키도록 할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517327Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:0",
+      "source": "Irrespective of stdlib usage, downstream frameworks would adopt this functionality immediately.",
+      "source_hash": 14690089639467480040,
+      "context_hash": 12832126518743144734,
+      "translation": "표준 라이브러리의 사용 여부와 관계없이 하위 프레임워크는 이 기능을 즉시 도입할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517327Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "How widespread is this bug?",
+      "source_hash": 8293719044427781718,
+      "context_hash": 9406249107720713011,
+      "translation": "이 버그는 얼마나 널리 퍼져 있습니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517328Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "We don't have solid numbers here, but believe that many projects are affected in the wild.",
+      "source_hash": 16463864505952422058,
+      "context_hash": 1565841883167375472,
+      "translation": "확실한 수치는 없지만, 실제 환경에서 많은 프로젝트가 영향을 받고 있다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517328Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "Since hitting a moderate and a critical bug attributed to suspending a cancel scope in the same week at work, we've `used static analysis <https://flake8-async.readthedocs.io/en/latest/>`__ with some success.",
+      "source_hash": 15391881107073910273,
+      "context_hash": 2036737786154348407,
+      "translation": "직장에서 같은 주에 취소 범위를 일시 중단한 것과 관련된 중간 수준의 버그와 치명적인 버그를 겪은 이후, 어느 정도 성과를 거두며 `used static analysis <https://flake8-async.readthedocs.io/en/latest/>`__\\ 를 사용해 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517328Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:2",
+      "source": "Three people Zac spoke to at PyCon recognized the symptoms and concluded that they had likely been affected.",
+      "source_hash": 16802623668117666033,
+      "context_hash": 7460407872176160138,
+      "translation": "PyCon에서 Zac이 이야기를 나눈 세 사람은 증상을 알아차렸고 자신들도 영향을 받았을 가능성이 높다고 결론 내렸습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517328Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "*TODO: run the ASYNC101 lint rule across ecosystem projects, e.g. the aio-libs packages, and get some sense of frequency in widely-used PyPI packages?",
+      "source_hash": 12523573700490374673,
+      "context_hash": 1681004966088949609,
+      "translation": "*TODO: 생태계 프로젝트, 예를 들어 aio-libs 패키지 전반에서 ASYNC101 린트 규칙을 실행하여 널리 사용되는 PyPI 패키지에서의 발생 빈도를 파악할 것인가?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517329Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:1",
+      "source": "This would help inform the break/deprecation pathways for stdlib code.*",
+      "source_hash": 8645708555534976707,
+      "context_hash": 15119836951375960018,
+      "translation": "이는 표준 라이브러리 코드의 호환성 중단 및 지원 중단 경로를 결정하는 데 도움이 될 것입니다.*",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517329Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 17535828874493089313,
+      "translation": "이 내용을 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517329Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Async generators are very rarely taught to novice programmers.",
+      "source_hash": 4151289874919146269,
+      "context_hash": 12571975963231530343,
+      "translation": "비동기 제너레이터는 초보 프로그래머에게 가르치는 경우가 매우 드뭅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517329Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "Most intermediate and advanced Python programmers will only interact with this PEP as users of ``TaskGroup``, ``timeout``, and ``@contextmanager``.",
+      "source_hash": 13678498822284677806,
+      "context_hash": 10199483126675783208,
+      "translation": "대부분의 중급 및 고급 Python 프로그래머는 ``TaskGroup``, ``timeout``, ``@contextmanager``\\ 의 사용자로서만 이 PEP와 상호작용하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517329Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:1",
+      "source": "For this group, we expect a clear exception message and documentation to be sufficient.",
+      "source_hash": 961414286286081619,
+      "context_hash": 2175228503384302443,
+      "translation": "이러한 사용자에게는 명확한 예외 메시지와 문서만으로 충분할 것으로 예상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517330Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "A new section will be added to the `developing with asyncio <https://docs.python.org/3/library/asyncio-dev.html>`__ page, which briefly states that async generators are not permitted to ``yield`` when inside a \"cancel scope\" context, i.e. ``TaskGroup`` or ``timeout`` context manager.",
+      "source_hash": 16277360519087863640,
+      "context_hash": 5479757895358792297,
+      "translation": "`developing with asyncio <https://docs.python.org/3/library/asyncio-dev.html>`__ 페이지에 새로운 섹션을 추가하여, 비동기 제너레이터는 \"취소 범위\" 컨텍스트, 즉 ``TaskGroup`` 또는 ``timeout`` 컨텍스트 관리자 내부에서 ``yield``\\ 할 수 없다는 점을 간략히 설명합니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:18:24.517330Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:1",
+      "source": "We anticipate that the problem-restatement and some parts of the motivation section will provide a basis for these docs.",
+      "source_hash": 8937961066857595359,
+      "context_hash": 15878784444452344692,
+      "translation": "문제 재진술과 동기 부여 섹션의 일부가 이러한 문서의 토대가 될 것으로 예상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517331Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "When working in codebases which avoid async generators entirely [#exp-report]_, we've found that an async context manager yielding an async iterable is a safe and ergonomic replacement for async generators -- and avoids the delayed-cleanup problems described in :pep:`533`, which this proposal does not address.",
+      "source_hash": 9804473346001407090,
+      "context_hash": 1330996602998461689,
+      "translation": "비동기 제너레이터를 완전히 사용하지 않는 코드베이스 [#exp-report]_\\ 에서 작업할 때, 비동기 이터러블을 yield하는 비동기 컨텍스트 관리자가 비동기 제너레이터를 안전하고 편리하게 대체하며, 이 제안에서 다루지 않는 :pep:`533`\\ 에 설명된 지연된 정리 문제도 방지한다는 점을 확인했습니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:18:24.517331Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:0",
+      "source": "In the docs for each context manager which wraps a cancel scope, and thus now ``sys.prevent_yields``, include a standard sentence such as \"If used within an async generator, [it is an error to ``yield`` inside this context manager].\" with a hyperlink to the explanation above.",
+      "source_hash": 10756871983303258370,
+      "context_hash": 6689194779750355076,
+      "translation": "취소 범위를 감싸며 따라서 이제 ``sys.prevent_yields``\\ 를 사용하는 각 컨텍스트 관리자의 문서에 \"비동기 제너레이터 안에서 사용하면 [이 컨텍스트 관리자 내부에서 ``yield``\\ 하는 것은 오류입니다].\"와 같은 표준 문장을 위의 설명에 대한 하이퍼링크와 함께 포함합니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자",
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:18:24.517331Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:6/seg:0",
+      "source": "For asyncio, Trio, curio, or other-framework maintainers who implement cancel scope semantics, we will ensure that the documentation of ``sys.prevent_yields`` gives a full explanation distilled from the solution and implementation sections of this PEP.",
+      "source_hash": 15331498682328595426,
+      "context_hash": 14133662335398007629,
+      "translation": "asyncio, Trio, curio 또는 기타 프레임워크에서 취소 범위 의미 체계를 구현하는 유지 관리자들을 위해, ``sys.prevent_yields``\\ 의 문서에 이 PEP의 해결책 및 구현 섹션에서 정리한 전체 설명을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517332Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:6/seg:1",
+      "source": "We anticipate consulting most such maintainers for their feedback on the draft PEP.",
+      "source_hash": 2740335701099144699,
+      "context_hash": 14195258025220511945,
+      "translation": "대부분의 이러한 유지 관리자에게 초안 PEP에 대한 의견을 구할 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517332Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Rejected alternatives",
+      "source_hash": 2258235634473535666,
+      "context_hash": 12352012478881251960,
+      "translation": "기각된 대안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:24.517332Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "PEP 533, deterministic cleanup for iterators",
+      "source_hash": 15126388951503454567,
+      "context_hash": 10082535508619765080,
+      "translation": "PEP 533, 이터레이터의 결정론적 정리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383161Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": ":pep:`533` proposes adding ``__[a]iterclose__`` to the iterator protocol, essentially wrapping a ``with [a]closing(ait)`` around each (async) for loop.",
+      "source_hash": 3256078448915104832,
+      "context_hash": 4970128877413224105,
+      "translation": ":pep:`533`\\ 은 이터레이터 프로토콜에 ``__[a]iterclose__``\\ 를 추가하여 각 (비동기) for 루프를 사실상 ``with [a]closing(ait)``\\ 로 감싸는 방식을 제안합니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터",
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:18:25.383165Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "While this would be useful for ensuring timely and deterministic cleanup of resources held by iterators, the problem it aims to solve, it does not fully address the issues that motivate this PEP.",
+      "source_hash": 15115966663420552257,
+      "context_hash": 1850452521282939414,
+      "translation": "이는 이터레이터가 보유한 리소스를 시의적절하고 결정론적으로 정리하는 데 유용하지만, 이 PEP가 해결하려는 문제를 완전히 해결하지는 못하며 이 PEP를 추진하게 된 문제들도 충분히 다루지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383166Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "Even with PEP 533, misfired cancellations would still be delivered to the wrong task and could wreak havoc before the iterator is closed.",
+      "source_hash": 2955433448654950796,
+      "context_hash": 10300073671273298933,
+      "translation": "PEP 533을 적용하더라도 잘못 전달된 취소가 여전히 잘못된 태스크에 전달될 수 있으며, 이터레이터가 닫히기 전에 큰 혼란을 일으킬 수 있습니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:18:25.383167Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:1",
+      "source": "Moreover, it does not address the fundamental structured concurrency problem with ``TaskGroup``, where suspending a frame that owns a TaskGroup is incompatible with the model of child tasks being fully encapsulated within their parent frame.",
+      "source_hash": 13306073125724862681,
+      "context_hash": 3199411340377707636,
+      "translation": "더욱이 ``TaskGroup``\\ 과 관련된 근본적인 구조적 동시성 문제도 해결하지 못합니다. TaskGroup을 소유한 프레임을 일시 중단하는 것은 자식 태스크가 부모 프레임 안에 완전히 캡슐화된다는 모델과 양립할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383167Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Deprecate async generators entirely",
+      "source_hash": 2089518669994236579,
+      "context_hash": 13541432736210809847,
+      "translation": "비동기 제너레이터의 전면 폐기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383167Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "At the 2024 language summit, several attendees suggested instead deprecating async generators *in toto.*  Unfortunately, while the common-in-practice cases all use async generators, Trio code can trigger the same problem with standard generators:",
+      "source_hash": 10897536271911310613,
+      "context_hash": 8127750390654624464,
+      "translation": "2024년 언어 정상회의에서 여러 참석자는 대신 비동기 제너레이터를 *in toto* 폐기하자고 제안했습니다. 안타깝게도 실제로 흔한 사례는 모두 비동기 제너레이터를 사용하지만, Trio 코드에서는 표준 제너레이터로도 동일한 문제가 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383168Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "If it wasn't for the bug in question, this code would look pretty idiomatic - but after about a second, instead of moving on to the next iteration it raises:",
+      "source_hash": 11410188968778566637,
+      "context_hash": 18133761098955690514,
+      "translation": "해당 버그가 없었다면 이 코드는 꽤 관용적인 코드로 보였겠지만, 약 1초가 지나면 다음 반복으로 넘어가는 대신 예외를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383168Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "Furthermore, there are some non-cancel-scope synchronous context managers which exhibit related problems, such as the abovementioned ``decimal.localcontext``.",
+      "source_hash": 3469964216214449476,
+      "context_hash": 16684050240385731624,
+      "translation": "더욱이 앞서 언급한 ``decimal.localcontext``\\ 와 같이 이와 관련된 문제를 보이는, 취소 범위가 아닌 일부 동기 컨텍스트 관리자도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383168Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:1",
+      "source": "While fixing the example below is not a goal of this PEP, it demonstrates that yield-within-with problems are not exclusive to async generators:",
+      "source_hash": 18143754209850938633,
+      "context_hash": 11122769655327610124,
+      "translation": "아래 예제를 수정하는 것은 이 PEP의 목표가 아니지만, 이 예제는 with 내부의 yield 문제가 비동기 제너레이터에만 국한되지 않음을 보여줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383169Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:0",
+      "source": "While I've had good experiences in async Python without async generators [#exp-report]_, I'd prefer to fix the problem than remove them from the language.",
+      "source_hash": 1702453052365155101,
+      "context_hash": 13147693568429630092,
+      "translation": "비동기 제너레이터 없이 비동기 Python을 사용하면서도 좋은 경험을 해 왔지만 [#exp-report]_, 저는 비동기 제너레이터를 언어에서 제거하기보다는 문제를 해결하는 편을 선호합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383169Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Can't we just deliver exceptions to the right place?",
+      "source_hash": 22066903337081130,
+      "context_hash": 3190460020357420417,
+      "translation": "예외를 올바른 곳에 전달하면 안 됩니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383169Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "If we implemented :pep:`568` (Generator-sensitivity for Context Variables; see also :pep:`550`), it would be possible to handle exceptions from timeouts: the event loop could avoid firing a ``CancelledError`` until the generator frame which contains the context manager is on the stack - either when the generator is resumed, or when it is finalized.",
+      "source_hash": 9055988120274243116,
+      "context_hash": 13911203513835299103,
+      "translation": "만약 :pep:`568`\\ (컨텍스트 변수에 대한 제너레이터 감도; :pep:`550`\\ 도 참조)를 구현한다면, 시간 초과에서 발생하는 예외를 처리할 수 있습니다. 이벤트 루프는 컨텍스트 관리자를 포함하는 제너레이터 프레임이 스택에 올라올 때까지 ``CancelledError``\\ 를 발생시키지 않을 수 있으며, 이는 제너레이터가 재개될 때나 종료될 때입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터",
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:59:33.553734Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "This can take arbitrarily long; even if we implemented :pep:`533` to ensure timely cleanup on exiting (async) for-loops it's still possible to drive a generator manually with next/send.",
+      "source_hash": 14506592737809218170,
+      "context_hash": 3666767282184130355,
+      "translation": "이 시간은 임의로 길어질 수 있습니다. 종료 시 (비동기) for 루프를 시의적절하게 정리하도록 :pep:`533`\\ 을 구현하더라도, 여전히 next/send를 사용하여 제너레이터를 수동으로 구동할 수 있습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:18:25.383171Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "However, this doesn't address the other problem with ``TaskGroup``.",
+      "source_hash": 6821886233541946254,
+      "context_hash": 9069016928690327419,
+      "translation": "그러나 이는 ``TaskGroup``\\ 과 관련된 다른 문제를 해결하지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383172Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:1",
+      "source": "The model for generators is that you put a stack frame in suspended animation and can then treat it as an inert value which can be stored, moved around, and maybe discarded or revived in some arbitrary place.",
+      "source_hash": 558344528463396564,
+      "context_hash": 16761345090291443159,
+      "translation": "제너레이터의 모델에서는 스택 프레임을 일시 중단된 상태로 두고, 이를 저장하거나 이동하거나 임의의 위치에서 폐기하거나 되살릴 수 있는 비활성 값으로 취급할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383172Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:2",
+      "source": "The model for structured concurrency is that your stack becomes a tree, with child tasks encapsulated within some parent frame.",
+      "source_hash": 5962371183852079389,
+      "context_hash": 207717023441780127,
+      "translation": "구조적 동시성의 모델에서는 스택이 트리가 되며, 자식 태스크가 어떤 부모 프레임 내부에 캡슐화됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383172Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:3",
+      "source": "They're extending the basic structured programming model in different, and unfortunately incompatible, directions.",
+      "source_hash": 3344570463375641581,
+      "context_hash": 17560032525929100181,
+      "translation": "이 둘은 기본 구조적 프로그래밍 모델을 서로 다른, 안타깝게도 양립할 수 없는 방향으로 확장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383173Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "Suppose for example that suspending a frame containing an open ``TaskGroup`` also suspended all child tasks.",
+      "source_hash": 16261131909457247538,
+      "context_hash": 5940379377514004455,
+      "translation": "예를 들어 열려 있는 ``TaskGroup``\\ 을 포함하는 프레임을 일시 중단할 때 모든 자식 태스크도 일시 중단한다고 가정해 보겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383173Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:1",
+      "source": "This would preserve the 'downward' structured concurrency, in that children remain encapsulated - albeit at the cost of deadlocking both of our motivating examples, and much real-world code.",
+      "source_hash": 17222079526678445907,
+      "context_hash": 3093111355773166090,
+      "translation": "그러면 자식이 캡슐화된 상태로 남으므로 ‘하향식’ 구조적 동시성을 유지할 수 있습니다. 다만 그 대가로 이 문제를 촉발한 두 예제와 실제 코드 상당수가 교착 상태에 빠집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383173Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:2",
+      "source": "However, it would still be possible to resume the generator in a different task, violating the 'upwards' invariant of structured concurrency.",
+      "source_hash": 15107952724015220198,
+      "context_hash": 3901159785613574426,
+      "translation": "그러나 여전히 다른 태스크에서 제너레이터를 재개할 수 있으므로 구조적 동시성의 ‘상향식’ 불변 조건을 위반하게 됩니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:18:25.383173Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:0",
+      "source": "We don't think it's worth adding this much machinery to handle cancel scopes, while still leaving task groups broken.",
+      "source_hash": 16205390108073130727,
+      "context_hash": 11131425722951977776,
+      "translation": "태스크 그룹을 여전히 망가진 상태로 둔 채 취소 범위를 처리하기 위해 이 정도로 많은 장치를 추가할 가치는 없다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383174Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Alternative implementation - inspecting bytecode",
+      "source_hash": 2692500570944993970,
+      "context_hash": 16285834052795341967,
+      "translation": "대안 구현 - 바이트코드 검사",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:18:25.383174Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "Jelle Zijlstra has `sketched an alternative`_, where ``sys.prevent_yields`` inspects the bytecode of callers until satisfied that there is no yield between the calling instruction pointer and the next context exit.",
+      "source_hash": 3887314669109154634,
+      "context_hash": 6780171435748951804,
+      "translation": "Jelle Zijlstra는 `sketched an alternative`_ 방식을 제시했습니다. 이 방식에서 ``sys.prevent_yields``\\ 는 호출 명령 포인터와 다음 컨텍스트 종료 사이에 yield가 없는지 확인할 때까지 호출자들의 바이트코드를 검사합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:18:25.383175Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:1",
+      "source": "We expect that support for syntatically-nested context managers could be added fairly easily.",
+      "source_hash": 10805277999355015608,
+      "context_hash": 2141604505707173245,
+      "translation": "구문적으로 중첩된 컨텍스트 관리자를 지원하는 기능은 상당히 쉽게 추가할 수 있을 것으로 예상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383175Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:0",
+      "source": "However, it's not yet clear how this would work when user-defined context managers wrap ``sys.prevent_yields``.",
+      "source_hash": 7474831578143140245,
+      "context_hash": 3490092686252145545,
+      "translation": "그러나 사용자 정의 컨텍스트 관리자가 ``sys.prevent_yields``\\ 를 감쌀 때 이것이 어떻게 작동할지는 아직 분명하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383176Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:1",
+      "source": "Worse, this approach ignores explicit calls to ``__enter__()`` and ``__exit__()``, meaning that the context management protocol would vary depending on whether the ``with`` statement was used.",
+      "source_hash": 10527543075467120744,
+      "context_hash": 14667965778227278534,
+      "translation": "더 나쁘게도, 이 접근 방식은 ``__enter__()`` 및 ``__exit__()``\\ 에 대한 명시적 호출을 무시하므로, ``with`` 문을 사용했는지에 따라 컨텍스트 관리 프로토콜이 달라집니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:59:33.553747Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:0",
+      "source": "The 'only pay if you use it' performance cost is very attractive.",
+      "source_hash": 11063391762682315018,
+      "context_hash": 3465676544084906981,
+      "translation": "‘사용할 때만 비용을 지불한다’는 성능 비용은 매우 매력적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383177Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:1",
+      "source": "However, inspecting frame objects is prohibitively expensive for core control-flow constructs, and causes whole-program slowdowns via de-optimization.",
+      "source_hash": 12225504340339813553,
+      "context_hash": 17023184716263057177,
+      "translation": "그러나 프레임 객체를 검사하는 것은 핵심 제어 흐름 구성 요소에 사용하기에는 엄청나게 비싸며, 디최적화를 통해 프로그램 전체의 속도 저하를 일으킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383177Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:2",
+      "source": "On the other hand, adding interpreter support for better performance leads back to the same pay-regardless semantics as our preferred solution above.",
+      "source_hash": 1806756854000838504,
+      "context_hash": 6741325894712397652,
+      "translation": "반면 더 나은 성능을 위해 인터프리터 지원을 추가하면 위에서 선호하는 해결책과 동일하게 사용 여부와 관계없이 비용을 지불하는 의미론으로 되돌아갑니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:18:25.383177Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Footnotes",
+      "source_hash": 9125377107251733533,
+      "context_hash": 10073518014057912637,
+      "translation": "각주",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383178Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "via e.g. ``contextlib.[async]contextmanager``, or moral",
+      "source_hash": 3365681940205227397,
+      "context_hash": 7836473321861871210,
+      "translation": "예를 들어 ``contextlib.[async]contextmanager``\\ 를 통해, 또는 moral",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:25.383178Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "equivalents such as ``@pytest.fixture``",
+      "source_hash": 13803037619995699927,
+      "context_hash": 16486040259820625204,
+      "translation": "``@pytest.fixture``\\ 와 같은 동등한 항목",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:26.265597Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "see `Zac's experience report here",
+      "source_hash": 8160338675699855382,
+      "context_hash": 5783236811001930945,
+      "translation": "여기에서 `Zac's experience report를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:26.265600Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:4/seg:0",
+      "source": "<https://discuss.python.org/t/using-exceptiongroup-at-anthropic-experience-report/20888>`__",
+      "source_hash": 4561048646684730025,
+      "context_hash": 17942332508108474900,
+      "translation": "<https://discuss.python.org/t/using-exceptiongroup-at-anthropic-experience-report/20888>`__\\ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:26.265600Z",
+      "issues": []
+    }
+  ]
+}

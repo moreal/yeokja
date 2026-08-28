@@ -1,0 +1,1238 @@
+{
+  "version": 1,
+  "source_hash": 10818841850620661134,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Reworking the Coercion Model",
+      "source_hash": 4920620277427409107,
+      "context_hash": 16530898886277989957,
+      "translation": "강제 변환 모델 재설계",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139017Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 1335010713596829676,
+      "translation": "개요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139020Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Many Python types implement numeric operations.",
+      "source_hash": 6248810507007887032,
+      "context_hash": 8348883105212629810,
+      "translation": "많은 파이썬 타입이 수치 연산을 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139020Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "When the arguments of a numeric operation are of different types, the interpreter tries to coerce the arguments into a common type.",
+      "source_hash": 748253811583204830,
+      "context_hash": 2950223773597011594,
+      "translation": "수치 연산의 인자들이 서로 다른 타입일 때, 인터프리터는 그 인자들을 공통 타입으로 강제 변환하려고 시도합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T17:14:16.139020Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "The numeric operation is then performed using this common type.",
+      "source_hash": 4278758501264725724,
+      "context_hash": 5359265638694420109,
+      "translation": "그런 다음 이 공통 타입을 사용하여 수치 연산이 수행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139022Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:3",
+      "source": "This PEP proposes a new type flag to indicate that arguments to a type's numeric operations should not be coerced.",
+      "source_hash": 17835841852786559311,
+      "context_hash": 6871103383207705740,
+      "translation": "이 PEP는 타입의 수치 연산에 대한 인자들이 강제 변환되지 않아야 함을 나타내는 새로운 타입 플래그를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139022Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:4",
+      "source": "Operations that do not support the supplied types indicate it by returning a new singleton object.",
+      "source_hash": 4250735822753553942,
+      "context_hash": 9608009273977061139,
+      "translation": "제공된 타입들을 지원하지 않는 연산은 새로운 싱글턴 객체를 반환함으로써 이를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139022Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:5",
+      "source": "Types which do not set the type flag are handled in a backwards compatible manner.",
+      "source_hash": 3066755123060768052,
+      "context_hash": 16608101577809859030,
+      "translation": "타입 플래그를 설정하지 않는 타입들은 하위 호환 방식으로 처리됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139022Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:6",
+      "source": "Allowing operations handle different types is often simpler, more flexible, and faster than having the interpreter do coercion.",
+      "source_hash": 15035403023051937155,
+      "context_hash": 11423115880939810263,
+      "translation": "연산이 서로 다른 타입을 직접 처리하도록 허용하는 것은 인터프리터가 강제 변환을 수행하는 것보다 흔히 더 단순하고, 더 유연하며, 더 빠릅니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T17:14:16.139023Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 8252065668784384447,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139023Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "When implementing numeric or other related operations, it is often desirable to provide not only operations between operands of one type only, e.g. integer + integer, but to generalize the idea behind the operation to other type combinations as well, e.g. integer + float.",
+      "source_hash": 628680005040564744,
+      "context_hash": 11253722255308587641,
+      "translation": "수치 연산이나 그와 관련된 다른 연산을 구현할 때는, 예컨대 정수 + 정수처럼 한 타입의 피연산자 사이의 연산만을 제공하는 것이 아니라, 예컨대 정수 + 부동소수점처럼 그 연산 이면의 개념을 다른 타입 조합으로도 일반화하여 제공하는 것이 흔히 바람직합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139023Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "A common approach to this mixed type situation is to provide a method of \"lifting\" the operands to a common type (coercion) and then use that type's operand method as execution mechanism.",
+      "source_hash": 14366366762392765144,
+      "context_hash": 17934605100281802683,
+      "translation": "이러한 혼합 타입 상황에 대한 일반적인 접근법은 피연산자들을 공통 타입으로 \"끌어올리는\"(강제 변환) 방법을 제공한 다음, 그 타입의 피연산자 메서드를 실행 메커니즘으로 사용하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139024Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "Yet, this strategy has a few drawbacks:",
+      "source_hash": 9181543299686424838,
+      "context_hash": 17227300890032869098,
+      "translation": "그러나 이 전략에는 몇 가지 단점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139024Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "the \"lifting\" process creates at least one new (temporary) operand object,",
+      "source_hash": 17745178968720843944,
+      "context_hash": 7204511287388250258,
+      "translation": "\"끌어올림\" 과정이 적어도 하나의 새로운(임시) 피연산자 객체를 생성한다는 점,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139024Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "since the coercion method is not being told about the operation that is to follow, it is not possible to implement operation specific coercion of types,",
+      "source_hash": 12394226217017448275,
+      "context_hash": 5362281278812307793,
+      "translation": "강제 변환 메서드가 뒤따를 연산에 대해 전달받지 못하기 때문에, 연산별로 특화된 타입의 강제 변환을 구현하는 것이 불가능하다는 점,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139024Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "there is no elegant way to solve situations were a common type is not at hand, and",
+      "source_hash": 13906316298977910117,
+      "context_hash": 4283119025916230378,
+      "translation": "공통 타입을 마련할 수 없는 상황을 우아하게 해결할 방법이 없다는 점, 그리고",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:16.139024Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "the coercion method will always have to be called prior to the operation's method itself.",
+      "source_hash": 17423226918958445225,
+      "context_hash": 16762302959656378530,
+      "translation": "강제 변환 메서드는 항상 연산 자체의 메서드보다 먼저 호출되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.314431Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "A fix for this situation is obviously needed, since these drawbacks make implementations of types needing these features very cumbersome, if not impossible.",
+      "source_hash": 17938653104433426443,
+      "context_hash": 10701561576055946026,
+      "translation": "이러한 단점들은 이런 기능이 필요한 타입의 구현을 매우 번거롭게, 심지어 불가능하게 만들기 때문에, 이 상황에 대한 수정이 명백히 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.314434Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:1",
+      "source": "As an example, have a look at the ``DateTime`` and ``DateTimeDelta`` [1]_ types, the first being absolute, the second relative.",
+      "source_hash": 13579069663585163605,
+      "context_hash": 14186484037752107343,
+      "translation": "예를 들어, ``DateTime``\\ 과 ``DateTimeDelta`` [1]_ 타입을 살펴보십시오. 전자는 절대값이고 후자는 상대값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.314434Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:2",
+      "source": "You can always add a relative value to an absolute one, giving a new absolute value.",
+      "source_hash": 11986805317436856359,
+      "context_hash": 3987911134457078811,
+      "translation": "상대값을 절대값에 항상 더할 수 있으며, 이는 새로운 절대값을 만들어냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.314434Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:3",
+      "source": "Yet, there is no common type which the existing coercion mechanism could use to implement that operation.",
+      "source_hash": 8691349205990044906,
+      "context_hash": 7627372363555614074,
+      "translation": "하지만 기존의 강제 변환 메커니즘이 그 연산을 구현하는 데 사용할 수 있는 공통 타입은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.314435Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "Currently, ``PyInstance`` types are treated specially by the interpreter in that their numeric methods are passed arguments of different types.",
+      "source_hash": 312576671467105423,
+      "context_hash": 8270135176865079318,
+      "translation": "현재 ``PyInstance`` 타입은 인터프리터에 의해 특별하게 취급되는데, 이는 그 수치 메서드들이 서로 다른 타입의 인자를 전달받기 때문입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T17:14:32.314435Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:1",
+      "source": "Removing this special case simplifies the interpreter and allows other types to implement numeric methods that behave like instance types.",
+      "source_hash": 15189834110906872554,
+      "context_hash": 16737568185319115877,
+      "translation": "이 특별한 경우를 제거하면 인터프리터가 단순해지고, 다른 타입들이 인스턴스 타입처럼 동작하는 수치 메서드를 구현할 수 있게 됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T17:14:32.314436Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:2",
+      "source": "This is especially useful for extension types like ExtensionClass.",
+      "source_hash": 2323396833691616749,
+      "context_hash": 13258574724704747206,
+      "translation": "이는 ExtensionClass과 같은 확장 타입에 특히 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.314436Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 17577099890042948467,
+      "translation": "명세",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.314436Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Instead of using a central coercion method, the process of handling different operand types is simply left to the operation.",
+      "source_hash": 13613961772496072956,
+      "context_hash": 14892193600800114740,
+      "translation": "중앙 집중식 강제 변환 메서드를 사용하는 대신, 서로 다른 피연산자 타입을 처리하는 과정은 단순히 연산 자체에 맡겨집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.314437Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "If the operation finds that it cannot handle the given operand type combination, it may return a special singleton as indicator.",
+      "source_hash": 13217258246761339926,
+      "context_hash": 3327690159319194509,
+      "translation": "연산이 주어진 피연산자 타입 조합을 처리할 수 없다고 판단하면, 지시자로서 특별한 싱글턴을 반환할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:32.314437Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Note that \"numbers\" (anything that implements the number protocol, or part of it) written in Python already use the first part of this strategy - it is the C level API that we focus on here.",
+      "source_hash": 3523079892356071830,
+      "context_hash": 7365911905182511669,
+      "translation": "파이썬으로 작성된 \"숫자\"(수치 프로토콜의 전체 또는 일부를 구현하는 모든 것)는 이미 이 전략의 첫 번째 부분을 사용하고 있다는 점에 유의하십시오. 여기서 우리가 초점을 맞추는 것은 C 수준 API입니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T17:14:32.314437Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "To maintain nearly 100% backward compatibility we have to be very careful to make numbers that don't know anything about the new strategy (old style numbers) work just as well as those that expect the new scheme (new style numbers).",
+      "source_hash": 2823655163135871355,
+      "context_hash": 17973176514500908883,
+      "translation": "거의 100%의 하위 호환성을 유지하기 위해, 새로운 전략에 대해 전혀 알지 못하는 숫자(구식 숫자)가 새로운 체계를 기대하는 숫자(신식 숫자)와 마찬가지로 잘 동작하도록 매우 주의해야 합니다.",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T17:14:32.314438Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "Furthermore, binary compatibility is a must, meaning that the interpreter may only access and use new style operations if the number indicates the availability of these.",
+      "source_hash": 13854969010412118123,
+      "context_hash": 15432604390020972624,
+      "translation": "또한, 바이너리 호환성은 필수인데, 이는 숫자가 신식 연산의 사용 가능 여부를 표시하는 경우에만 인터프리터가 그 연산에 접근하여 사용할 수 있다는 것을 의미합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T17:14:32.314438Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "A new style number is considered by the interpreter as such if and only if it sets the type flag ``Py_TPFLAGS_CHECKTYPES``.",
+      "source_hash": 10755873235394212347,
+      "context_hash": 6103485561271108134,
+      "translation": "새 스타일 숫자는 타입 플래그 ``Py_TPFLAGS_CHECKTYPES``\\ 를 설정한 경우에만, 그리고 그 경우에 한해서만 인터프리터에 의해 새 스타일로 간주됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T17:14:19.603544Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:1",
+      "source": "The main difference between an old style number and a new style one is that the numeric slot functions can no longer assume to be passed arguments of identical type.",
+      "source_hash": 16389353382630613133,
+      "context_hash": 2002250004281771252,
+      "translation": "구식 숫자와 새 스타일 숫자의 주요 차이점은 숫자 슬롯 함수가 더 이상 전달되는 인자가 동일한 타입일 것이라고 가정할 수 없다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603551Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:2",
+      "source": "New style slots must check all arguments for proper type and implement the necessary conversions themselves.",
+      "source_hash": 5268649701392017451,
+      "context_hash": 6459870076727618451,
+      "translation": "새 스타일 슬롯은 모든 인자에 대해 올바른 타입을 검사하고 필요한 변환을 직접 구현해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603551Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:3",
+      "source": "This may seem to cause more work on the behalf of the type implementor, but is in fact no more difficult than writing the same kind of routines for an old style coercion slot.",
+      "source_hash": 5720798761913822429,
+      "context_hash": 16534186145017094342,
+      "translation": "이는 타입 구현자 입장에서 더 많은 작업을 야기하는 것처럼 보일 수 있지만, 실제로는 구식 강제 변환 슬롯에 대해 같은 종류의 루틴을 작성하는 것보다 더 어렵지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603552Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "If a new style slot finds that it cannot handle the passed argument type combination, it may return a new reference of the special singleton ``Py_NotImplemented`` to the caller.",
+      "source_hash": 11258017603762230747,
+      "context_hash": 14509582360230745822,
+      "translation": "새 스타일 슬롯이 전달된 인자 타입 조합을 처리할 수 없다는 것을 발견하면, 호출자에게 특별한 싱글턴 ``Py_NotImplemented``\\ 의 새로운 참조를 반환할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603552Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "This will cause the caller to try the other operands operation slots until it finds a slot that does implement the operation for the specific type combination.",
+      "source_hash": 11929450856664625542,
+      "context_hash": 15409342468726792864,
+      "translation": "이렇게 하면 호출자는 특정 타입 조합에 대한 연산을 실제로 구현하는 슬롯을 찾을 때까지 다른 피연산자의 연산 슬롯을 시도하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603553Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:2",
+      "source": "If none of the possible slots succeed, it raises a ``TypeError``.",
+      "source_hash": 4219590870778653856,
+      "context_hash": 15561139929051939859,
+      "translation": "가능한 슬롯 중 어느 것도 성공하지 못하면 ``TypeError``\\ 를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603554Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "To make the implementation easy to understand (the whole topic is esoteric enough), a new layer in the handling of numeric operations is introduced.",
+      "source_hash": 12793176573900911066,
+      "context_hash": 11578818437363232369,
+      "translation": "구현을 이해하기 쉽게 만들기 위해(전체 주제가 이미 충분히 난해하므로), 숫자 연산 처리에 새로운 계층이 도입되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603554Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:1",
+      "source": "This layer takes care of all the different cases that need to be taken into account when dealing with all the possible combinations of old and new style numbers.",
+      "source_hash": 7912294834220008882,
+      "context_hash": 5986806308385711150,
+      "translation": "이 계층은 구식 숫자와 새 스타일 숫자의 가능한 모든 조합을 다룰 때 고려해야 하는 모든 다양한 경우를 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603555Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:2",
+      "source": "It is implemented by the two static functions ``binary_op()`` and ``ternary_op()``, which are both internal functions that only the functions in Objects/abstract.c have access to.",
+      "source_hash": 4249338015469322838,
+      "context_hash": 17054795450543806717,
+      "translation": "이는 두 개의 정적 함수 ``binary_op()``\\ 와 ``ternary_op()``\\ 에 의해 구현되며, 둘 다 Objects/abstract.c의 함수들만 접근할 수 있는 내부 함수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603555Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:3",
+      "source": "The numeric API (``PyNumber_*``) is easy to adapt to this new layer.",
+      "source_hash": 2985734184241722891,
+      "context_hash": 10440763593511042284,
+      "translation": "숫자 API(``PyNumber_*``)는 이 새로운 계층에 쉽게 맞출 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603555Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "As a side-effect all numeric slots can be NULL-checked (this has to be done anyway, so the added feature comes at no extra cost).",
+      "source_hash": 4388631558009081845,
+      "context_hash": 4387209022063865909,
+      "translation": "부수 효과로 모든 숫자 슬롯을 NULL 검사할 수 있게 됩니다(어차피 해야 하는 작업이므로, 추가된 기능은 별도의 비용 없이 얻어집니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603555Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "The scheme used by the layer to execute a binary operation is as follows:",
+      "source_hash": 14878746368477251569,
+      "context_hash": 3425683418539612517,
+      "translation": "이 계층이 이항 연산을 실행하는 데 사용하는 방식은 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603556Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:0",
+      "source": "v",
+      "source_hash": 11714940385220460225,
+      "context_hash": 17023092982028696686,
+      "translation": "v",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603556Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:11/seg:0",
+      "source": "w",
+      "source_hash": 3146246727465687523,
+      "context_hash": 10550293969882448368,
+      "translation": "w",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603556Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:12/seg:0",
+      "source": "Action taken",
+      "source_hash": 9764148620692208400,
+      "context_hash": 3574156840854529109,
+      "translation": "취해지는 동작",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:19.603556Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 599222981524438146,
+      "translation": "신형",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781480Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:14/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 17638864593608588213,
+      "translation": "신형",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781483Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:0",
+      "source": "v.op(v,w), w.op(v,w)",
+      "source_hash": 18267037553131538569,
+      "context_hash": 8490420120563179704,
+      "translation": "v.op(v,w), w.op(v,w)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781483Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:16/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 14418150713682807416,
+      "translation": "신형",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781484Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:17/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 7126679013729987148,
+      "translation": "구형",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781484Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:18/seg:0",
+      "source": "v.op(v,w), coerce(v,w), v.op(v,w)",
+      "source_hash": 7775058917862092200,
+      "context_hash": 15165341592724856402,
+      "translation": "v.op(v,w), coerce(v,w), v.op(v,w)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781485Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:19/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 16647554775499275604,
+      "translation": "구형",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781485Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:20/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 1468814619651776589,
+      "translation": "신형",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781485Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:21/seg:0",
+      "source": "w.op(v,w), coerce(v,w), v.op(v,w)",
+      "source_hash": 266491008229781860,
+      "context_hash": 17767350107613737045,
+      "translation": "w.op(v,w), coerce(v,w), v.op(v,w)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781485Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:22/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 13167651472572638558,
+      "translation": "구형",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781485Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:23/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 8022899917267064247,
+      "translation": "구형",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781486Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:24/seg:0",
+      "source": "coerce(v,w), v.op(v,w)",
+      "source_hash": 6378403226263720388,
+      "context_hash": 11685676400878150229,
+      "translation": "coerce(v,w), v.op(v,w)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781486Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:25/seg:0",
+      "source": "The indicated action sequence is executed from left to right until either the operation succeeds and a valid result (!= ``Py_NotImplemented``) is returned or an exception is raised.",
+      "source_hash": 4667501392623203799,
+      "context_hash": 2164778996120366351,
+      "translation": "지정된 동작 시퀀스는 연산이 성공하여 유효한 결과(``Py_NotImplemented``\\ 가 아닌 값)가 반환되거나 예외가 발생할 때까지 왼쪽에서 오른쪽으로 실행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781486Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:25/seg:1",
+      "source": "Exceptions are returned to the calling function as-is.",
+      "source_hash": 9035068075771949014,
+      "context_hash": 11923304928695855216,
+      "translation": "예외는 있는 그대로 호출한 함수로 반환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781487Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:25/seg:2",
+      "source": "If a slot returns ``Py_NotImplemented``, the next item in the sequence is executed.",
+      "source_hash": 15966109004447165918,
+      "context_hash": 9019184702214544992,
+      "translation": "슬롯이 ``Py_NotImplemented``\\ 를 반환하면, 시퀀스의 다음 항목이 실행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781487Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:26/seg:0",
+      "source": "Note that coerce(v,w) will use the old style ``nb_coerce`` slot methods via a call to ``PyNumber_Coerce()``.",
+      "source_hash": 4336503534322831514,
+      "context_hash": 7623235136095648826,
+      "translation": "coerce(v,w)는 ``PyNumber_Coerce()``\\ 호출을 통해 구식 ``nb_coerce`` 슬롯 메서드를 사용한다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:15.781487Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:27/seg:0",
+      "source": "Ternary operations have a few more cases to handle:",
+      "source_hash": 10716363263030738547,
+      "context_hash": 13541527903611624199,
+      "translation": "삼항 연산은 처리해야 할 경우가 몇 가지 더 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023585Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:29/seg:0",
+      "source": "v",
+      "source_hash": 11714940385220460225,
+      "context_hash": 6578070744521171839,
+      "translation": "v",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023589Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:30/seg:0",
+      "source": "w",
+      "source_hash": 3146246727465687523,
+      "context_hash": 4521253891928995008,
+      "translation": "w",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023589Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:31/seg:0",
+      "source": "z",
+      "source_hash": 327173387797980296,
+      "context_hash": 8385409081206560294,
+      "translation": "z",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023590Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:32/seg:0",
+      "source": "Action taken",
+      "source_hash": 9764148620692208400,
+      "context_hash": 10554970374866703435,
+      "translation": "수행된 동작",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023590Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:33/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 599222981524438146,
+      "translation": "새",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023590Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:34/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 8490420120563179704,
+      "translation": "새",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023590Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:35/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 17998766422046602080,
+      "translation": "새",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023591Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:36/seg:0",
+      "source": "v.op(v,w,z), w.op(v,w,z), z.op(v,w,z)",
+      "source_hash": 3620049793655167796,
+      "context_hash": 8490420120563179704,
+      "translation": "v.op(v,w,z), w.op(v,w,z), z.op(v,w,z)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023591Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:37/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 5190685686530751744,
+      "translation": "새",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023591Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:38/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 8490420120563179704,
+      "translation": "예전",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023591Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:39/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 18278894318180195557,
+      "translation": "새",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023592Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:40/seg:0",
+      "source": "v.op(v,w,z), z.op(v,w,z), coerce(v,w,z), v.op(v,w,z)",
+      "source_hash": 17140981991037520129,
+      "context_hash": 17767350107613737045,
+      "translation": "v.op(v,w,z), z.op(v,w,z), coerce(v,w,z), v.op(v,w,z)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023592Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:41/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 12590860605798715041,
+      "translation": "예전",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023592Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:42/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 17338227566386454050,
+      "translation": "새",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023592Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:43/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 11674597189264804925,
+      "translation": "새",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.023593Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:44/seg:0",
+      "source": "w.op(v,w,z), z.op(v,w,z), coerce(v,w,z), v.op(v,w,z)",
+      "source_hash": 1259072737131246994,
+      "context_hash": 17767350107613737045,
+      "translation": "w.op(v,w,z), z.op(v,w,z), coerce(v,w,z), v.op(v,w,z)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305880Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:45/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 12078632986222227758,
+      "translation": "이전",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305883Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:46/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 17338227566386454050,
+      "translation": "이전",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305883Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:47/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 1133820065919885544,
+      "translation": "신규",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305884Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:48/seg:0",
+      "source": "z.op(v,w,z), coerce(v,w,z), v.op(v,w,z)",
+      "source_hash": 13941382599875033972,
+      "context_hash": 8490420120563179704,
+      "translation": "z.op(v,w,z), coerce(v,w,z), v.op(v,w,z)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305884Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:49/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 9192564758848333328,
+      "translation": "신규",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305884Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:50/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 17767350107613737045,
+      "translation": "신규",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305884Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:51/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 1703795125798713825,
+      "translation": "이전",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305885Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:52/seg:0",
+      "source": "v.op(v,w,z), w.op(v,w,z), coerce(v,w,z), v.op(v,w,z)",
+      "source_hash": 3199030711855991656,
+      "context_hash": 17338227566386454050,
+      "translation": "v.op(v,w,z), w.op(v,w,z), coerce(v,w,z), v.op(v,w,z)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305885Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:53/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 18310574763459590431,
+      "translation": "신규",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305885Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:54/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 17767350107613737045,
+      "translation": "이전",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305885Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:55/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 9135088251322049864,
+      "translation": "이전",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305886Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:56/seg:0",
+      "source": "v.op(v,w,z), coerce(v,w,z), v.op(v,w,z)",
+      "source_hash": 11332469406359904817,
+      "context_hash": 15165341592724856402,
+      "translation": "v.op(v,w,z), coerce(v,w,z), v.op(v,w,z)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305886Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:57/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 7337809436964539010,
+      "translation": "이전",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305886Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:58/seg:0",
+      "source": "new",
+      "source_hash": 13683435266619020583,
+      "context_hash": 15165341592724856402,
+      "translation": "신규",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305886Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:59/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 12173835343269414484,
+      "translation": "이전",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:22.305887Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:60/seg:0",
+      "source": "w.op(v,w,z), coerce(v,w,z), v.op(v,w,z)",
+      "source_hash": 5081656799770527116,
+      "context_hash": 15165341592724856402,
+      "translation": "w.op(v,w,z), coerce(v,w,z), v.op(v,w,z)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836190Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:61/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 975700348963331461,
+      "translation": "old",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836195Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:62/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 15165341592724856402,
+      "translation": "old",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836195Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:63/seg:0",
+      "source": "old",
+      "source_hash": 811909912103108628,
+      "context_hash": 12985297393522054846,
+      "translation": "old",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836195Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:64/seg:0",
+      "source": "coerce(v,w,z), v.op(v,w,z)",
+      "source_hash": 2900220766895507439,
+      "context_hash": 12850488811154907559,
+      "translation": "coerce(v,w,z), v.op(v,w,z)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836196Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:65/seg:0",
+      "source": "The same notes as above, except that coerce(v,w,z) actually does",
+      "source_hash": 5919636911883876332,
+      "context_hash": 17913754207042517123,
+      "translation": "위와 동일한 사항이지만, coerce(v,w,z)가 실제로 하는 일은 다음과 같습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836196Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:67/seg:0",
+      "source": "The current implementation uses this scheme already (there's only one ternary slot: ``nb_pow(a,b,c))``.",
+      "source_hash": 2251757168541246420,
+      "context_hash": 15925901349872765169,
+      "translation": "현재 구현은 이미 이 방식을 사용하고 있습니다(삼항 슬롯은 ``nb_pow(a,b,c))`` 하나뿐입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836197Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:68/seg:0",
+      "source": "Note that the numeric protocol is also used for some other related tasks, e.g. sequence concatenation.",
+      "source_hash": 8024302789821568260,
+      "context_hash": 16332204363592019554,
+      "translation": "수치 프로토콜은 시퀀스 연결(concatenation) 같은 다른 관련 작업에도 사용된다는 점에 유의하십시오.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T17:14:26.836198Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:68/seg:1",
+      "source": "These can also benefit from the new mechanism by implementing right-hand operations for type combinations that would otherwise fail to work.",
+      "source_hash": 7109572275346763536,
+      "context_hash": 15868192248833719800,
+      "translation": "이런 작업들도 새로운 메커니즘의 혜택을 받을 수 있는데, 그렇지 않으면 동작하지 않을 타입 조합에 대해 오른쪽 연산을 구현함으로써 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836200Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:68/seg:2",
+      "source": "As an example, take string concatenation: currently you can only do string + string.",
+      "source_hash": 129728136468939104,
+      "context_hash": 4574821771661218418,
+      "translation": "예를 들어 문자열 연결(concatenation)을 생각해 보십시오: 현재는 문자열 + 문자열만 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836200Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:68/seg:3",
+      "source": "With the new mechanism, a new string-like type could implement new_type + string and string + new_type, even though strings don't know anything about new_type.",
+      "source_hash": 12707996171536318995,
+      "context_hash": 10546874533883769310,
+      "translation": "새로운 메커니즘을 사용하면, 문자열과 유사한 새로운 타입이 new_type + string 및 string + new_type을 구현할 수 있게 되는데, 이는 문자열이 new_type에 대해 전혀 알지 못하는 경우에도 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836200Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:69/seg:0",
+      "source": "Since comparisons also rely on coercion (every time you compare an integer to a float, the integer is first converted to float and then compared...), a new slot to handle numeric comparisons is needed",
+      "source_hash": 2751425288986601770,
+      "context_hash": 6746797517883217115,
+      "translation": "비교 연산 또한 강제 변환(coercion)에 의존하기 때문에(정수와 실수를 비교할 때마다 정수가 먼저 실수로 변환된 다음 비교됩니다...), 수치 비교를 처리할 새로운 슬롯이 필요합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836201Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:71/seg:0",
+      "source": "This slot should compare the two objects and return an integer object stating the result.",
+      "source_hash": 1580264144383095964,
+      "context_hash": 11135275413908221375,
+      "translation": "이 슬롯은 두 객체를 비교하고 그 결과를 나타내는 정수 객체를 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836201Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:71/seg:1",
+      "source": "Currently, this result integer may only be -1, 0, 1.",
+      "source_hash": 18361768535730855715,
+      "context_hash": 11747527561833910077,
+      "translation": "현재 이 결과 정수는 -1, 0, 1만 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836201Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:71/seg:2",
+      "source": "If the slot cannot handle the type combination, it may return a reference to ``Py_NotImplemented``.  [XXX Note that this slot is still in flux since it should take into account rich comparisons (i.e. :pep:`207`).]",
+      "source_hash": 3717930734485606063,
+      "context_hash": 823104414182180125,
+      "translation": "슬롯이 해당 타입 조합을 처리할 수 없는 경우, ``Py_NotImplemented``\\ 에 대한 참조를 반환할 수 있습니다. [XXX 이 슬롯은 리치 비교(rich comparison)(즉 :pep:`207`)를 고려해야 하므로 아직 유동적이라는 점에 유의하십시오.]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:14:26.836202Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:72/seg:0",
+      "source": "Numeric comparisons are handled by a new numeric protocol API",
+      "source_hash": 3755396553062773167,
+      "context_hash": 15215433106069907411,
+      "translation": "수치 비교는 새로운 수치 프로토콜 API로 처리됩니다",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T17:14:26.836202Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:74/seg:0",
+      "source": "This function compare the two objects as \"numbers\" and return an integer object stating the result.",
+      "source_hash": 9823871235385672374,
+      "context_hash": 8730364734519951774,
+      "translation": "이 함수는 두 객체를 \"숫자\"로 비교하여 그 결과를 나타내는 정수 객체를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:22.814180Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:74/seg:1",
+      "source": "Currently, this result integer may only be -1, 0, 1.",
+      "source_hash": 18361768535730855715,
+      "context_hash": 4267869772383297264,
+      "translation": "현재 이 결과 정수는 -1, 0, 1 중 하나만 될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:22.814182Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:74/seg:2",
+      "source": "In case the operation cannot be handled by the given objects, a ``TypeError`` is raised.",
+      "source_hash": 6210816242086619733,
+      "context_hash": 12464191638526699845,
+      "translation": "주어진 객체들이 해당 연산을 처리할 수 없는 경우, ``TypeError``\\ 가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:22.814183Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:75/seg:0",
+      "source": "The ``PyObject_Compare()`` API needs to adjusted accordingly to make use of this new API.",
+      "source_hash": 8454066724750888940,
+      "context_hash": 13940517579606760845,
+      "translation": "``PyObject_Compare()`` API는 이 새로운 API를 활용할 수 있도록 그에 맞게 조정되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:22.814183Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:76/seg:0",
+      "source": "Other changes include adapting some of the built-in functions (e.g. ``cmp()``) to use this API as well.",
+      "source_hash": 1598991825252020895,
+      "context_hash": 1232296053655188500,
+      "translation": "다른 변경 사항으로는 일부 내장 함수(예: ``cmp()``)를 이 API를 사용하도록 적응시키는 것도 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:22.814183Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:76/seg:1",
+      "source": "Also, ``PyNumber_CoerceEx()`` will need to check for new style numbers before calling the ``nb_coerce`` slot.",
+      "source_hash": 5620243010967905257,
+      "context_hash": 9632858193380580985,
+      "translation": "또한, ``PyNumber_CoerceEx()``\\ 는 ``nb_coerce`` 슬롯을 호출하기 전에 새로운 스타일의 숫자인지 확인해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:22.814183Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:76/seg:2",
+      "source": "New style numbers don't provide a coercion slot and thus cannot be explicitly coerced.",
+      "source_hash": 3312786388470423111,
+      "context_hash": 10277844095713670219,
+      "translation": "새로운 스타일의 숫자는 강제 변환 슬롯을 제공하지 않으므로 명시적으로 강제 변환될 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:22.814184Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 3401685423801911895,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:13:22.814184Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "A preliminary patch for the CVS version of Python is available through the Source Forge patch manager [2]_.",
+      "source_hash": 3521187639123794580,
+      "context_hash": 15197357878547756930,
+      "translation": "CVS 버전의 Python에 대한 예비 패치는 Source Forge 패치 관리자 [2]_\\ 를 통해 이용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:22.814185Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Credits",
+      "source_hash": 11545878606773035190,
+      "context_hash": 18403961301778356220,
+      "translation": "크레딧",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:22.814185Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "This PEP and the patch are heavily based on work done by Marc-André Lemburg [3]_.",
+      "source_hash": 16187509483694255319,
+      "context_hash": 1389480377967531178,
+      "translation": "이 PEP와 패치는 Marc-André Lemburg [3]_\\ 가 수행한 작업을 크게 기반으로 하고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:22.814185Z",
+      "issues": []
+    }
+  ]
+}

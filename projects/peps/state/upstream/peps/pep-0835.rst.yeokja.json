@@ -1,0 +1,2255 @@
+{
+  "version": 1,
+  "source_hash": 6490002140810148388,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Shorthand syntax for Annotated type metadata",
+      "source_hash": 3445149893601068695,
+      "context_hash": 16530898886277989957,
+      "translation": "Annotated 타입 메타데이터를 위한 단축 구문",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536041Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 15797659010734408958,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536045Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes overloading the ``@`` operator on types to allow writing ``Annotated[T, M]`` as ``T @ M``.",
+      "source_hash": 12125743329847695844,
+      "context_hash": 214227753139738897,
+      "translation": "이 PEP는 ``Annotated[T, M]``\\ 를 ``T @ M``\\ 으로 작성할 수 있도록 타입에 ``@`` 연산자를 오버로드할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536045Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 4414305224065002283,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536045Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": ":pep:`593` (``Annotated``) has seen widespread adoption.",
+      "source_hash": 1751979094728654086,
+      "context_hash": 5360765878776691197,
+      "translation": ":pep:`593` (``Annotated``)는 널리 채택되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536045Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Major frameworks (FastAPI, Pydantic, SQLAlchemy, msgspec, Typer, beartype) now rely on it as the standard type metadata mechanism [1]_.",
+      "source_hash": 2746057975122186568,
+      "context_hash": 6354965118496818023,
+      "translation": "주요 프레임워크(FastAPI, Pydantic, SQLAlchemy, msgspec, Typer, beartype)는 이제 이를 표준 타입 메타데이터 메커니즘으로 사용합니다 [1]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536046Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "However, its verbosity remains a barrier to adoption:",
+      "source_hash": 9437320794243111328,
+      "context_hash": 12046509705597597590,
+      "translation": "그러나 구문이 장황하다는 점은 여전히 채택을 가로막는 장벽입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536046Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "**Libraries invent aliases to hide it.** Frameworks routinely create DSLs or type aliases (e.g., ``PositiveInt``) to shield users from ``Annotated[..., ...]`` boilerplate [2]_.",
+      "source_hash": 5050840624403569368,
+      "context_hash": 13008844529533124721,
+      "translation": "**라이브러리는 이를 숨기기 위해 별칭을 만듭니다.** 프레임워크는 사용자가 ``Annotated[..., ...]`` 보일러플레이트에 노출되지 않도록 DSL이나 타입 별칭(예: ``PositiveInt``)을 일상적으로 만듭니다 [2]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536046Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "**Major projects defer adoption.** PyTorch [3]_, TorchTyping, and Beartype [4]_ deferred adopting ``Annotated`` for tensor shapes, explicitly citing its verbose syntax and waiting for a native language solution.",
+      "source_hash": 7680172921250082131,
+      "context_hash": 17105621182053979781,
+      "translation": "**주요 프로젝트는 채택을 미룹니다.** PyTorch [3]_, TorchTyping, Beartype [4]_\\ 는 텐서 형상에 ``Annotated``\\ 를 채택하는 것을 미루었으며, 그 이유로 장황한 구문을 명시적으로 들고 네이티브 언어 차원의 해결책을 기다렸습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536046Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "**It impacts readability.** During the :pep:`727` discussions, participants warned that relying on ``Annotated`` for everyday documentation would make code unreadable, contributing to the PEP's withdrawal [5]_.",
+      "source_hash": 8919465468070240507,
+      "context_hash": 8210510741370384393,
+      "translation": "**가독성에 영향을 줍니다.** :pep:`727` 논의에서 참가자들은 일상적인 문서화에 ``Annotated``\\ 를 의존하면 코드를 읽을 수 없게 되어 PEP가 철회되는 데 기여할 것이라고 경고했습니다 [5]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536047Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Of the 10,000 most downloaded PyPI projects, **43.4%** transitively depend on ``Annotated``.",
+      "source_hash": 10767498114523713049,
+      "context_hash": 3978388645268041317,
+      "translation": "가장 많이 다운로드된 PyPI 프로젝트 10,000개 중 **43.4%**\\ 가 전이적으로 ``Annotated``\\ 에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536047Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "Migrating the FastAPI codebase to the new shorthand removed 2,524 LOCs.",
+      "source_hash": 15078684357012789345,
+      "context_hash": 16718388407830306683,
+      "translation": "FastAPI 코드베이스를 새로운 단축 구문으로 마이그레이션하자 2,524 LOC가 제거되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536047Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "A container-like syntax opposes Python's evolution.",
+      "source_hash": 4584482584043407283,
+      "context_hash": 11227218654402316123,
+      "translation": "컨테이너와 유사한 구문은 Python의 발전 방향에 맞지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536047Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:1",
+      "source": "Python is actively replacing generic wrappers like ``typing.Union`` with operators like ``|`` (and the proposed ``&`` for intersections), evolving type annotations into an arithmetic of types.",
+      "source_hash": 16488223696998674528,
+      "context_hash": 7765078304106357920,
+      "translation": "Python은 ``typing.Union``\\ 과 같은 제네릭 래퍼를 ``|``\\ 와 같은 연산자(그리고 교집합을 위한 ``&``\\ 를 제안하는 방식)로 적극적으로 대체하면서 타입 어노테이션을 타입의 산술로 발전시키고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536048Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "The ``@`` shorthand aligns syntax with semantics.",
+      "source_hash": 9039376419922889991,
+      "context_hash": 8032544484497215242,
+      "translation": "``@`` 단축 구문은 구문과 의미를 일치시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536048Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:1",
+      "source": "By applying type metadata as a postfix operator, it:",
+      "source_hash": 3035776967442229526,
+      "context_hash": 2537742650155695348,
+      "translation": "타입 메타데이터를 후위 연산자로 적용하면 다음과 같은 효과가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536048Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "**Reduces nesting** (no brackets required).",
+      "source_hash": 12001674054696836590,
+      "context_hash": 8717133461476231990,
+      "translation": "**중첩을 줄입니다**\\ (괄호가 필요하지 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536048Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "**Reduces tokens** (no ``typing.Annotated`` import).",
+      "source_hash": 8455691735189258896,
+      "context_hash": 2959921989875323371,
+      "translation": "**토큰 수를 줄입니다**\\ (``typing.Annotated`` 가져오기가 필요하지 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536049Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:0",
+      "source": "**Improves locality** (the base type remains front-and-center).",
+      "source_hash": 15561027187465622505,
+      "context_hash": 8307197441999672203,
+      "translation": "**지역성을 개선합니다**\\ (기본 타입이 전면에 그대로 유지됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536049Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:0",
+      "source": "**Extends the arithmetic of types** (type metadata acts as an operation on an existing type expression rather than a generic container).",
+      "source_hash": 14371646763317806809,
+      "context_hash": 14609633102824274866,
+      "translation": "**타입의 산술을 확장합니다**\\ (타입 메타데이터가 제네릭 컨테이너가 아니라 기존 타입 표현식에 대한 연산으로 작동합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536049Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:0",
+      "source": "This resolves the conflict between concise syntax and strict typing",
+      "source_hash": 11200997196062633157,
+      "context_hash": 15458185991747780983,
+      "translation": "이를 통해 간결한 구문과 엄격한 타이핑 간의 충돌을 해결합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536049Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:15/seg:0",
+      "source": "As an operator, ``@`` composes natively",
+      "source_hash": 336449404808172984,
+      "context_hash": 835731825584853502,
+      "translation": "연산자로서 ``@``\\ 는 네이티브하게 조합됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536050Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Historical Context and Prior Art",
+      "source_hash": 11506937979477317589,
+      "context_hash": 10390932322093826631,
+      "translation": "역사적 맥락 및 선행 사례",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536050Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "When the community debated alternatives in late 2023 [6]_ and 2025 [7]_, discussion trended toward the ``@`` operator because it visually aligns with existing Python `decorators <https://docs.python.org/3/glossary.html#term-decorator>`__.",
+      "source_hash": 789359640752132187,
+      "context_hash": 4164343746615886163,
+      "translation": "커뮤니티가 2023년 말 [6]_\\ 과 2025년 [7]_\\ 에 대안을 논의했을 때, 논의는 기존 Python `decorators <https://docs.python.org/3/glossary.html#term-decorator>`__\\ 와 시각적으로 부합한다는 이유로 ``@`` 연산자 쪽으로 기울었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536050Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Adopting ``@`` for type metadata also follows the precedent of repurposing runtime operators for static typing, as seen with ``[]`` for generics (:pep:`585`) and ``|`` for unions (:pep:`604`) [8]_.",
+      "source_hash": 16810916358508678975,
+      "context_hash": 7295198130349014883,
+      "translation": "타입 메타데이터에 ``@``\\ 를 채택하는 것은 정적 타이핑을 위해 런타임 연산자를 용도 변경하는 선례도 따릅니다. 이는 제네릭에 ``[]``\\ 를 사용하는 것(:pep:`585`)과 유니언에 ``|``\\ 를 사용하는 것(:pep:`604`)에서 볼 수 있습니다 [8]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536050Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "The postfix syntax mirrors features in other statically typed languages:",
+      "source_hash": 62358081975086863,
+      "context_hash": 3765159810457556610,
+      "translation": "후위 구문은 다른 정적 타입 언어의 기능을 반영합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536050Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "**C++:** Uses ``[[attribute]]`` for types (e.g., ``[[nodiscard]] int f();``).",
+      "source_hash": 10425601672583991395,
+      "context_hash": 5078709558993615366,
+      "translation": "**C++:** 타입에 ``[[attribute]]``\\ 를 사용합니다(예: ``[[nodiscard]] int f();``).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536051Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "**Java / Kotlin:** Uses ``@Annotation`` (e.g., ``List<@NonNull String>`` or ``val x: @NotNull String``).",
+      "source_hash": 11549445118977552445,
+      "context_hash": 13714561862162552715,
+      "translation": "**Java / Kotlin:** ``@Annotation``\\ 을 사용합니다(예: ``List<@NonNull String>`` 또는 ``val x: @NotNull String``).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536051Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "**OCaml:** Uses ``[@attribute]`` postfix syntax (e.g., ``type t = int [@default 0]``).",
+      "source_hash": 15563609961100270422,
+      "context_hash": 7573347696057336236,
+      "translation": "**OCaml:** ``[@attribute]`` 후위 구문을 사용합니다(예: ``type t = int [@default 0]``).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536051Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Terminology",
+      "source_hash": 3039974644254127226,
+      "context_hash": 18462825167284081,
+      "translation": "용어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536052Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "To clarify discussion around annotations and metadata, the following terms apply:",
+      "source_hash": 3745503443025530154,
+      "context_hash": 17953125473065877692,
+      "translation": "어노테이션과 메타데이터에 관한 논의를 명확히 하기 위해 다음 용어를 사용합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:20.536052Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "**Type expression**: e.g., ``x: <this>``.",
+      "source_hash": 15669803996571457787,
+      "context_hash": 12426818644278375807,
+      "translation": "**타입 표현식**: 예를 들어, ``x: <this>``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547089Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "An expression within a type hint that evaluates to a valid type, as specified in the `Typing Specification <https://typing.python.org/en/latest/spec/annotations.html#type-and-annotation-expressions>`__ (:pep:`484`).",
+      "source_hash": 3016763088012386395,
+      "context_hash": 5035258639140155653,
+      "translation": "타입 힌트 내에서 유효한 타입으로 평가되는 표현식으로, `Typing Specification <https://typing.python.org/en/latest/spec/annotations.html#type-and-annotation-expressions>`__ (:pep:`484`)에 명시되어 있습니다.",
+      "glossary_snapshot": {
+        "type hint": "타입 힌트"
+      },
+      "translated_at": "2026-08-28T19:32:32.547093Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "**Type metadata**: e.g., ``int @ <this>``.",
+      "source_hash": 11913768069723329371,
+      "context_hash": 14655420058277203380,
+      "translation": "**타입 메타데이터**: 예를 들어, ``int @ <this>``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547095Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "Data attached to a type expression via ``Annotated`` (:pep:`593`, :pep:`746`).",
+      "source_hash": 12429138933677476810,
+      "context_hash": 10731948338672423026,
+      "translation": "``Annotated``\\ 를 통해 타입 표현식에 첨부되는 데이터입니다 (:pep:`593`, :pep:`746`).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547095Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "**Non-typing annotation**: e.g., `@no_type_check <https://docs.python.org/3/library/typing.html#typing.no_type_check>`__ wrapping ``x: <this>``.",
+      "source_hash": 5231787026657000407,
+      "context_hash": 240076376492022692,
+      "translation": "**비-타이핑 어노테이션**: 예를 들어, `@no_type_check <https://docs.python.org/3/library/typing.html#typing.no_type_check>`__\\ 로 ``x: <this>``\\ 를 감싸는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547095Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:1",
+      "source": "Annotations that are not intended to be evaluated as type expressions (e.g.: ignored by type checkers).",
+      "source_hash": 15766322248998977027,
+      "context_hash": 4676565796940493220,
+      "translation": "타입 표현식으로 평가되도록 의도되지 않은 어노테이션입니다(예: 타입 검사기가 무시하는 어노테이션).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547096Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "**Symbol decorator**: Applying metadata directly to a variable or field declaration, rather than to its underlying type.",
+      "source_hash": 1352715917775989292,
+      "context_hash": 6822053916992705403,
+      "translation": "**심벌 데코레이터**: 기반 타입이 아니라 변수 또는 필드 선언에 메타데이터를 직접 적용하는 것입니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T19:32:32.547096Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:1",
+      "source": "This distinction is well-established in languages like Java:",
+      "source_hash": 18369812209178739736,
+      "context_hash": 17647765808520271101,
+      "translation": "이러한 구분은 Java와 같은 언어에서 잘 확립되어 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547096Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "**Symbol metadata** (or **field metadata**): Metadata attached to a symbol.",
+      "source_hash": 14580117229086877811,
+      "context_hash": 2159957858078186192,
+      "translation": "**심벌 메타데이터**\\ (또는 **필드 메타데이터**): 심벌에 첨부되는 메타데이터입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547097Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:1",
+      "source": "It is distinct from type metadata, as it applies to the specific instance of the variable rather than the type itself.",
+      "source_hash": 5168505131382516171,
+      "context_hash": 14306693356471981208,
+      "translation": "타입 메타데이터와 구별됩니다. 타입 자체가 아니라 변수의 특정 인스턴스에 적용되기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547097Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 4748092793013600703,
+      "translation": "명세",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547097Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "The proposed syntax uses the ``__matmul__`` operator to attach metadata to a type",
+      "source_hash": 4582218255284378643,
+      "context_hash": 15428772291913991592,
+      "translation": "제안된 구문은 ``__matmul__`` 연산자를 사용하여 타입에 메타데이터를 첨부합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547097Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Operator Precedence",
+      "source_hash": 2274703583868518913,
+      "context_hash": 8819375263580608318,
+      "translation": "연산자 우선순위",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547098Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Because ``@`` binds tighter than the ``|`` union operator (:pep:`604`), distinct constraints can be attached directly to specific types within a union without parentheses.",
+      "source_hash": 3624859976903813921,
+      "context_hash": 3506096237654901276,
+      "translation": "``@``\\ 가 ``|`` 합집합 연산자(:pep:`604`)보다 강하게 결합하므로, 괄호 없이 합집합 내 특정 타입에 서로 다른 제약 조건을 직접 첨부할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547098Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "For example, a US zip code might be a 5-digit integer *or* a 5-character string",
+      "source_hash": 15398597922276691451,
+      "context_hash": 7453337763382157200,
+      "translation": "예를 들어, 미국 우편번호는 5자리 정수 *또는* 5자 문자열일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547098Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "To attach metadata to the entire union, use parentheses",
+      "source_hash": 3870245852660800138,
+      "context_hash": 895252981888874201,
+      "translation": "전체 합집합에 메타데이터를 첨부하려면 괄호를 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547099Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Flattening Multiple Metadata",
+      "source_hash": 8124468154792276687,
+      "context_hash": 13398602913191535861,
+      "translation": "여러 메타데이터 평탄화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547099Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Chained metadata flattens the resulting ``Annotated`` object.  ``T @ m1 @ m2`` evaluates to ``Annotated[T, m1, m2]``, never ``Annotated[Annotated[T, m1], m2]``.",
+      "source_hash": 498481010414496356,
+      "context_hash": 10348369584824055845,
+      "translation": "연결된 메타데이터는 결과 ``Annotated`` 객체를 평탄화합니다. ``T @ m1 @ m2``\\ 는 ``Annotated[T, m1, m2]``\\ 로 평가되며, 결코 ``Annotated[Annotated[T, m1], m2]``\\ 로 평가되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547099Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "This mirrors ``typing.Annotated``'s existing runtime behavior.",
+      "source_hash": 16264619174629022148,
+      "context_hash": 11028292009757602327,
+      "translation": "이는 ``typing.Annotated``\\ 의 기존 런타임 동작을 반영합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547099Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "This same logic applies when the left-hand operand is an existing ``Annotated`` type",
+      "source_hash": 9145903164820091407,
+      "context_hash": 9370010607384924340,
+      "translation": "좌측 피연산자가 기존 ``Annotated`` 타입인 경우에도 동일한 논리가 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547099Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Runtime Behavior",
+      "source_hash": 13104927478738332004,
+      "context_hash": 6950602960482245309,
+      "translation": "런타임 동작",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547100Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "``@`` produces a ``types.AnnotatedType`` (a new built-in C type).",
+      "source_hash": 8697243877404360347,
+      "context_hash": 5712561846461114716,
+      "translation": "``@``\\ 는 ``types.AnnotatedType``\\ 을 생성합니다(새로운 내장 C 타입입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547100Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "The existing ``typing.Annotated`` unifies with this type. ``typing.Annotated[X, Y]`` and ``X @ Y`` return the exact same object:",
+      "source_hash": 1722354011901108598,
+      "context_hash": 12566045892934932701,
+      "translation": "기존 ``typing.Annotated``\\ 는 이 타입과 통합됩니다. ``typing.Annotated[X, Y]``\\ 와 ``X @ Y``\\ 는 완전히 동일한 객체를 반환합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547100Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "An ``AnnotatedType`` object exposes the following attributes:",
+      "source_hash": 18162350926682481083,
+      "context_hash": 4358783306168103624,
+      "translation": "``AnnotatedType`` 객체는 다음 속성을 제공합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547100Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "``__origin__``: The base type (e.g., ``int``).",
+      "source_hash": 1357261656067736371,
+      "context_hash": 14749896168488545741,
+      "translation": "``__origin__``: 기본 타입입니다(예: ``int``).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547100Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "``__metadata__``: A tuple of metadata items.",
+      "source_hash": 5690968606206559086,
+      "context_hash": 8932585584088658671,
+      "translation": "``__metadata__``: 메타데이터 항목의 튜플입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547101Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "``__args__``: The tuple ``(origin, *metadata)``, for compatibility with ``typing.get_args()``.",
+      "source_hash": 8367975899419915201,
+      "context_hash": 3266520188099008550,
+      "translation": "``__args__``: ``(origin, *metadata)`` 튜플이며, ``typing.get_args()``\\ 와의 호환성을 위한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547101Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "``__parameters__``: A tuple of unique free type parameters of the type.",
+      "source_hash": 9810607846038605477,
+      "context_hash": 3487142895829374531,
+      "translation": "``__parameters__``: 해당 타입의 고유한 자유 타입 매개변수의 튜플입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547101Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:0",
+      "source": "The ``repr()`` of an ``AnnotatedType`` uses the shorthand syntax:",
+      "source_hash": 13722230022946431138,
+      "context_hash": 10903627178722562738,
+      "translation": "``AnnotatedType``\\ 의 ``repr()``\\ 는 약식 구문을 사용합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547101Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Handling of ``None``",
+      "source_hash": 841836356585427511,
+      "context_hash": 3450919010440519605,
+      "translation": "``None`` 처리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547101Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "``NoneType`` explicitly avoids implementing ``__matmul__`` to prevent masking runtime bugs.",
+      "source_hash": 12663218629719096618,
+      "context_hash": 1929967888275029314,
+      "translation": "런타임 버그가 가려지는 것을 방지하기 위해 ``NoneType``\\ 는 명시적으로 ``__matmul__``\\ 을 구현하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547102Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "For example, a developer might forget to check for ``None`` before matrix multiplication:",
+      "source_hash": 16525862756131820025,
+      "context_hash": 15423213789670478310,
+      "translation": "예를 들어, 개발자가 행렬 곱셈 전에 ``None``\\ 을 확인하는 것을 잊을 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:32.547102Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "If ``NoneType.__matmul__`` existed, this would silently return an ``AnnotatedType`` instead of raising a ``TypeError``.",
+      "source_hash": 968066958898432492,
+      "context_hash": 1074918264935914831,
+      "translation": "``NoneType.__matmul__``\\ 이 존재한다면, 이는 ``AnnotatedType``\\ 를 조용히 반환하고 ``TypeError``\\ 를 발생시키지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520403Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "Because ``NoneType`` lacks ``__matmul__``, expressions like ``None @ Metadata`` will raise a ``TypeError`` at runtime.",
+      "source_hash": 12062283010655182131,
+      "context_hash": 13151591521840530519,
+      "translation": "``NoneType``\\ 에 ``__matmul__``\\ 이 없으므로, ``None @ Metadata``\\ 와 같은 표현식은 런타임에 ``TypeError``\\ 를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520408Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "To support this safely at runtime, library authors are encouraged to implement ``__rmatmul__`` on their metadata objects.",
+      "source_hash": 18049356992556187925,
+      "context_hash": 4048430717018448803,
+      "translation": "런타임에 이를 안전하게 지원하려면 라이브러리 작성자는 메타데이터 객체에 ``__rmatmul__``\\ 를 구현하는 것이 좋습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520409Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:1",
+      "source": "This provides a robust fallback for types that do not invoke ``__matmul__`` on the left operand (such as ``NoneType`` or ``ForwardRef``).",
+      "source_hash": 598333738390455477,
+      "context_hash": 4668984296709560094,
+      "translation": "이는 왼쪽 피연산자에서 ``__matmul__``\\ 을 호출하지 않는 타입(예: ``NoneType``\\ 또는 ``ForwardRef``)에 강력한 대체 경로를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520409Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Supported Left-Hand Operands",
+      "source_hash": 5371969981161710673,
+      "context_hash": 17985303101454873856,
+      "translation": "지원되는 왼쪽 피연산자",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520410Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The ``@`` operator adds ``nb_matrix_multiply`` to ``type`` and to all typing constructs that support the ``|`` union operator (``types.GenericAlias``, ``types.UnionType``, ``types.AnnotatedType``, ``typing.TypeVar``, ``typing.ParamSpec``, ``typing.TypeVarTuple``, ``typing.TypeAliasType``, ``typing.ForwardRef``, and ``sentinel`` objects).",
+      "source_hash": 1967844177261113878,
+      "context_hash": 14721644035321487896,
+      "translation": "``@`` 연산자는 ``type``\\ 에 ``nb_matrix_multiply``\\ 를 추가하고, ``|`` 합집합 연산자를 지원하는 모든 타이핑 구성 요소(``types.GenericAlias``, ``types.UnionType``, ``types.AnnotatedType``, ``typing.TypeVar``, ``typing.ParamSpec``, ``typing.TypeVarTuple``, ``typing.TypeAliasType``, ``typing.ForwardRef`` 및 ``sentinel`` 객체)에 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520410Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Applying ``@`` to a class evaluates as type metadata; applying it to an instance performs arithmetic.",
+      "source_hash": 8217337255577040115,
+      "context_hash": 17314830071010994116,
+      "translation": "클래스에 ``@``\\ 를 적용하면 타입 메타데이터로 평가되고, 인스턴스에 적용하면 산술 연산을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520410Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "For example, ``int @ Field()`` produces an ``AnnotatedType``, while ``42 @ something`` raises a ``TypeError`` (or delegates to ``__rmatmul__``).",
+      "source_hash": 11535429637585165274,
+      "context_hash": 5375704707570398589,
+      "translation": "예를 들어 ``int @ Field()``\\ 는 ``AnnotatedType``\\ 을 생성하는 반면, ``42 @ something``\\ 은 ``TypeError``\\ 를 발생시키거나 ``__rmatmul__``\\ 에 위임합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520411Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "Likewise, ``ndarray @ Field()`` produces an ``AnnotatedType``, even though ``ndarray`` instances define ``__matmul__`` for matrix multiplication.",
+      "source_hash": 6572543317823764374,
+      "context_hash": 7381938887698567757,
+      "translation": "마찬가지로 ``ndarray @ Field()``\\ 는 ``AnnotatedType``\\ 을 생성하며, ``ndarray`` 인스턴스가 행렬 곱셈을 위한 ``__matmul__``\\ 을 정의하더라도 그러합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520411Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "Custom metaclasses can overload ``__matmul__`` provided ``@`` is avoided in type expressions.",
+      "source_hash": 14048549797992410523,
+      "context_hash": 3708828217729448973,
+      "translation": "사용자 정의 메타클래스는 타입 표현식에서 ``@``\\ 를 피하는 한 ``__matmul__``\\ 을 오버로드할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520411Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 7351239786170328582,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520412Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "``Annotated`` forces type metadata to resemble a parameterized class.",
+      "source_hash": 2466610503237266549,
+      "context_hash": 15176434691830162598,
+      "translation": "``Annotated``\\ 는 타입 메타데이터가 매개변수화된 클래스와 유사해지도록 강제합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520412Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "A postfix operator provides identical semantics without nesting.",
+      "source_hash": 11202518218109263257,
+      "context_hash": 1486802130956467834,
+      "translation": "후위 연산자는 중첩 없이 동일한 의미를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520412Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "Reusing the existing ``@`` operator leaves the Python parser unchanged.",
+      "source_hash": 8120171454559689028,
+      "context_hash": 16734918146980153593,
+      "translation": "기존 ``@`` 연산자를 재사용하면 Python 파서를 변경하지 않아도 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520413Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "The operator's new meaning is isolated to type evaluation, where ``T @ M`` lowers to ``Annotated[T, M]``.",
+      "source_hash": 12446374474188930481,
+      "context_hash": 9515453792335310290,
+      "translation": "연산자의 새로운 의미는 타입 평가로 한정되며, 여기서 ``T @ M``\\ 은 ``Annotated[T, M]``\\ 으로 변환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520413Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:2",
+      "source": "Type checkers (Mypy, Pyright) also require no parser changes, handling the syntax directly during semantic analysis.",
+      "source_hash": 6035984234742497010,
+      "context_hash": 11802064291969518919,
+      "translation": "타입 검사기(Mypy, Pyright)도 파서 변경이 필요하지 않으며, 의미 분석 중에 해당 구문을 직접 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520413Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:3",
+      "source": "We prototyped a Ruff conversion rule for automated migrations, and CPython prototype testing confirms that libraries like ``typer`` and ``pydantic`` continue to work without modification.",
+      "source_hash": 4937135979108017480,
+      "context_hash": 8996879174699819171,
+      "translation": "자동 마이그레이션을 위한 Ruff 변환 규칙을 프로토타이핑했으며, CPython 프로토타입 테스트를 통해 ``typer``\\ 와 ``pydantic``\\ 같은 라이브러리가 수정 없이 계속 작동함을 확인했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520413Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Parentheses and Verbosity",
+      "source_hash": 4246353141235527352,
+      "context_hash": 1944852217294782112,
+      "translation": "괄호와 장황함",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520414Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "Writing ``address: (str | None) @Field(...)`` adds verbosity due to the lack of native symbol decorators.",
+      "source_hash": 12612891133443155844,
+      "context_hash": 15212925231817177812,
+      "translation": "``address: (str | None) @Field(...)``\\ 를 작성하면 네이티브 기호 데코레이터가 없기 때문에 장황해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520414Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "Frameworks co-opt ``Annotated`` to configure fields, even though the developer's intent is to configure the ``address`` field, not the ``str | None`` type.",
+      "source_hash": 895494366185768583,
+      "context_hash": 16181881891597116412,
+      "translation": "프레임워크는 필드를 구성하기 위해 ``Annotated``\\ 를 전용 방식으로 활용하지만, 개발자가 의도한 것은 ``str | None`` 타입이 아니라 ``address`` 필드를 구성하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520414Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:2",
+      "source": "While the ``@`` shorthand cannot fully eliminate this structural limitation, it significantly reduces the syntactic weight of the workaround compared to ``Annotated[str | None, Field(...)]``.",
+      "source_hash": 6466834787485523166,
+      "context_hash": 7505562143943465613,
+      "translation": "``@`` 축약형이 이러한 구조적 한계를 완전히 제거할 수는 없지만, ``Annotated[str | None, Field(...)]``\\ 와 비교하면 이 우회 방법의 구문적 부담을 크게 줄입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520414Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Why the @ Operator?",
+      "source_hash": 6086295066485721366,
+      "context_hash": 12740608506347644194,
+      "translation": "왜 @ 연산자인가?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520415Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "Selecting the correct operator for metadata involves balancing three considerations:",
+      "source_hash": 1817123208801952289,
+      "context_hash": 3997517105232891384,
+      "translation": "메타데이터에 적합한 연산자를 선택하려면 세 가지 고려 사항의 균형을 맞춰야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520415Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "**Precedence:** Binding tighter than ``|`` (Union) and ``&`` (proposed Intersection) ensures expressions like ``int @ Field() | str`` parse correctly unparenthesized.",
+      "source_hash": 6976512266149568117,
+      "context_hash": 18055421544156268365,
+      "translation": "**Precedence:** ``|``\\ (Union) 및 ``&``\\ (제안된 Intersection)보다 더 강하게 결합되도록 하면 ``int @ Field() | str``\\ 과 같은 표현식을 괄호 없이도 올바르게 구문 분석할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520415Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:1",
+      "source": "This excludes operators like ``|``, ``^``, and ``&``.",
+      "source_hash": 6434066493887196562,
+      "context_hash": 14960090054117309849,
+      "translation": "따라서 ``|``, ``^`` 및 ``&``\\ 와 같은 연산자는 제외됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520416Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "**Ecosystem Compatibility:** New keywords require ecosystem-wide parser migrations.",
+      "source_hash": 15136081684831384280,
+      "context_hash": 4307153074094195546,
+      "translation": "**Ecosystem Compatibility:** 새로운 키워드는 생태계 전반의 파서 마이그레이션을 필요로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520416Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:1",
+      "source": "Because Python's type system is evolving into an arithmetic of types (e.g., replacing ``Union`` with ``|``), reusing an operator extends this pattern without unnecessary churn.",
+      "source_hash": 12835167047718368344,
+      "context_hash": 10680991186660683108,
+      "translation": "Python의 타입 시스템은 타입의 산술 체계로 발전하고 있으므로(예: ``Union``\\ 을 ``|``\\ 로 대체), 연산자를 재사용하면 불필요한 변경 없이 이 패턴을 확장할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520416Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:0",
+      "source": "**Semantic Clarity:** The chosen syntax should avoid colliding with established intuitions for primitive types.",
+      "source_hash": 9321012006282289812,
+      "context_hash": 11383387854834267968,
+      "translation": "**Semantic Clarity:** 선택한 구문은 기본 타입에 대해 정립된 직관과 충돌하지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520417Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:5/seg:0",
+      "source": "This leaves the set of overridable binary operators that bind tighter than ``&``: ``**``, ``*``, ``@``, ``/``, ``//``, ``%``, ``+``, ``-``, ``>>``, and ``<<``.",
+      "source_hash": 10831370124379301738,
+      "context_hash": 18181203927322353646,
+      "translation": "따라서 ``&``\\ 보다 더 강하게 결합하는 오버로드 가능한 이항 연산자는 ``**``, ``*``, ``@``, ``/``, ``//``, ``%``, ``+``, ``-``, ``>>`` 및 ``<<``\\ 로 한정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520417Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:6/seg:0",
+      "source": "Standard arithmetic operators like ``+``, ``-``, ``/``, ``//``, ``*``, ``**``, and ``%`` are misleading.",
+      "source_hash": 9400705931639548960,
+      "context_hash": 5654933897057510110,
+      "translation": "``+``, ``-``, ``/``, ``//``, ``*``, ``**`` 및 ``%``\\ 와 같은 표준 산술 연산자는 오해를 불러일으킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520417Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:6/seg:1",
+      "source": "Reading ``int + x`` or ``float / Field()`` strongly implies mathematical evaluation, not metadata decoration.",
+      "source_hash": 4058657782999962884,
+      "context_hash": 17044842938264670311,
+      "translation": "``int + x``\\ 또는 ``float / Field()``\\ 를 읽으면 메타데이터 데코레이션이 아니라 수학적 평가를 강하게 암시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:18.520417Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:7/seg:0",
+      "source": "The remaining candidates are ``<<``, ``>>``, and ``@``.",
+      "source_hash": 18057897131996029104,
+      "context_hash": 14312811541943613344,
+      "translation": "남은 후보는 ``<<``, ``>>``, ``@``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475489Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:7/seg:1",
+      "source": "We chose ``@`` because it already associates with metadata in Python via decorators.",
+      "source_hash": 1788894430103575208,
+      "context_hash": 4975142865429250404,
+      "translation": "``@``\\ 를 선택한 이유는 Python에서 데코레이터를 통해 이미 메타데이터와 연관되어 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475494Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:7/seg:2",
+      "source": "While libraries like NumPy use it for matrix multiplication, it isn't as tied to arithmetic as operators like ``+`` or ``/``.",
+      "source_hash": 3981909431810638038,
+      "context_hash": 3017487099905384860,
+      "translation": "NumPy와 같은 라이브러리에서는 이를 행렬 곱셈에 사용하지만, ``+``\\ 나 ``/``\\ 와 같은 연산자만큼 산술 연산에 밀접하게 연결되어 있지는 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475494Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 14170109857301833322,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475494Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Analyzing the top 10,000 PyPI projects revealed 0 metaclass overloads for ``__matmul__`` or ``__rmatmul__``. (For comparison, the analysis caught rare ``__or__`` and ``__and__`` overloads in libraries like ``pgpy`` (#1,690), ``dataclass-wizard`` (#2,205), and ``multimethod`` (#2,377)).",
+      "source_hash": 10491492881583476118,
+      "context_hash": 4494162518153926283,
+      "translation": "상위 10,000개의 PyPI 프로젝트를 분석한 결과 ``__matmul__``\\ 또는 ``__rmatmul__``\\ 에 대한 메타클래스 오버로드는 0개였습니다. (비교를 위해 설명하면, 이 분석에서는 ``pgpy`` (#1,690), ``dataclass-wizard`` (#2,205), ``multimethod`` (#2,377)와 같은 라이브러리에서 드물게 ``__or__``\\ 및 ``__and__``\\ 오버로드를 발견했습니다.)",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:32:22.475495Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "The pure-Python ``typing._AnnotatedAlias`` class is replaced with a native C implementation (``types.AnnotatedType``). ``typing.Annotated`` becomes a reference to this C type rather than a special form with a custom metaclass.",
+      "source_hash": 2675018388378756638,
+      "context_hash": 15354446101036395206,
+      "translation": "순수 Python으로 구현된 ``typing._AnnotatedAlias`` 클래스는 네이티브 C 구현인 ``types.AnnotatedType``\\ 로 대체됩니다. ``typing.Annotated``\\ 는 사용자 지정 메타클래스를 사용하는 특수 형식이 아니라 이 C 타입을 참조하게 됩니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:32:22.475496Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "To ensure a smooth transition, this legacy class is retained as a deprecated compatibility shim.",
+      "source_hash": 9918916044542011330,
+      "context_hash": 17150998229103579389,
+      "translation": "원활한 전환을 보장하기 위해 이 레거시 클래스는 더 이상 사용되지 않는 호환성 shim으로 유지됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475497Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:1",
+      "source": "Code using ``isinstance(x, typing._AnnotatedAlias)`` will continue to work but emit a ``DeprecationWarning``.",
+      "source_hash": 11895163228182854791,
+      "context_hash": 5328624414198585816,
+      "translation": "``isinstance(x, typing._AnnotatedAlias)``\\ 를 사용하는 코드는 계속 작동하지만 ``DeprecationWarning``\\ 을 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475497Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:2",
+      "source": "The shim is scheduled for removal in Python 3.21 (see `Open Issues`_).",
+      "source_hash": 17419009308753443462,
+      "context_hash": 7649305826456612358,
+      "translation": "이 shim은 Python 3.21에서 제거될 예정입니다 (`Open Issues`_ 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475498Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "Code that should be updated:",
+      "source_hash": 13113662001436969684,
+      "context_hash": 12680724130523531015,
+      "translation": "업데이트해야 하는 코드:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475498Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:0",
+      "source": "``type(ann).__name__ == '_AnnotatedAlias'`` → use ``isinstance(ann, types.AnnotatedType)`` or ``typing.get_origin(ann) is Annotated``",
+      "source_hash": 9972211212076384298,
+      "context_hash": 2482253822823195248,
+      "translation": "``type(ann).__name__ == '_AnnotatedAlias'`` → ``isinstance(ann, types.AnnotatedType)``\\ 또는 ``typing.get_origin(ann) is Annotated``\\ 를 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475498Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:0",
+      "source": "``typing._AnnotatedAlias(origin, metadata)`` → use ``Annotated[origin, *metadata]`` or ``origin @m1 @m2``",
+      "source_hash": 17055272173439412279,
+      "context_hash": 1682442830573090848,
+      "translation": "``typing._AnnotatedAlias(origin, metadata)`` → ``Annotated[origin, *metadata]``\\ 또는 ``origin @m1 @m2``\\ 를 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475499Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:0",
+      "source": "**Backporting via typing_extensions:** Like ``X | Y``, the ``@`` shorthand requires changes to the metatype (``type.__matmul__``), which cannot be patched from pure Python.",
+      "source_hash": 5465074316053582335,
+      "context_hash": 17123367622937664931,
+      "translation": "**typing_extensions를 통한 백포팅:** ``X | Y``\\ 와 마찬가지로 ``@`` 약식 표기는 메타타입인 ``type.__matmul__``\\ 의 변경이 필요하며, 이는 순수 Python에서 패치할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475499Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:1",
+      "source": "The shorthand is only available on Python 3.16+.",
+      "source_hash": 12593592691033583838,
+      "context_hash": 4058344871371396295,
+      "translation": "이 약식 표기는 Python 3.16 이상에서만 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475499Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:2",
+      "source": "The existing ``Annotated[X, Y]`` syntax continues to work on all supported versions and should be used when backwards compatibility is required.",
+      "source_hash": 12674094295301907048,
+      "context_hash": 1437092414462090612,
+      "translation": "기존 ``Annotated[X, Y]`` 구문은 지원되는 모든 버전에서 계속 작동하며, 하위 호환성이 필요한 경우 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475499Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 9492929311783350171,
+      "translation": "보안 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475500Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "There are no direct security implications.",
+      "source_hash": 16712175414969259804,
+      "context_hash": 4685212823500510940,
+      "translation": "직접적인 보안 영향은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475500Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 13149776017157555137,
+      "translation": "가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475501Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "In Python, the ``@`` symbol already has an established association with metadata through decorators.",
+      "source_hash": 3539709681611079975,
+      "context_hash": 12845173125474673982,
+      "translation": "Python에서 ``@`` 기호는 데코레이터를 통해 이미 메타데이터와 확립된 연관성을 갖고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475501Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "The annotation shorthand extends this intuition to the type system: ``int @ Field(gt=0)`` reads as \"``int``, decorated with ``Field(gt=0)``.\"",
+      "source_hash": 13199278955807746571,
+      "context_hash": 3443464479382429899,
+      "translation": "어노테이션 약식 표기는 이러한 직관을 타입 시스템으로 확장합니다. ``int @ Field(gt=0)``\\ 은 \"``int``, ``Field(gt=0)``\\ 로 데코레이터가 적용된\" 것으로 읽힙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475501Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "For beginners, the key rule is: **in a type annotation, ``@`` means \"with this metadata.\"** For experienced developers, the mental model maps directly to standard Python operator precedence (``@`` binds tighter than ``|``).",
+      "source_hash": 20697917814144401,
+      "context_hash": 7362213578335929457,
+      "translation": "초보자에게 핵심 규칙은 다음과 같습니다. **타입 어노테이션에서 ``@``\\ 는 \"이 메타데이터와 함께\"를 의미합니다.** 숙련된 개발자에게 이 개념 모델은 표준 Python 연산자 우선순위에 직접 대응합니다(``@``\\ 는 ``|``\\ 보다 우선순위가 높습니다).",
+      "glossary_snapshot": {
+        "type annotation": "타입 어노테이션"
+      },
+      "translated_at": "2026-08-28T19:32:22.475502Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "Documentation and teaching materials should introduce the shorthand as the primary syntax for applying metadata.",
+      "source_hash": 2119252769669514575,
+      "context_hash": 12949135285218206286,
+      "translation": "문서와 교육 자료에서는 메타데이터를 적용하는 기본 구문으로 이 약식 표기를 소개해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475502Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:1",
+      "source": "The verbose ``typing.Annotated`` form should be treated as an advanced detail, primarily relevant to library authors or when dynamically generating types.",
+      "source_hash": 18004660403871489285,
+      "context_hash": 11805964333548468531,
+      "translation": "장황한 ``typing.Annotated`` 형식은 주로 라이브러리 작성자나 타입을 동적으로 생성할 때 관련되는 고급 세부 사항으로 다루어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475502Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Usage Examples",
+      "source_hash": 6391900945175967444,
+      "context_hash": 7384994109073253883,
+      "translation": "사용 예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475503Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "**Pydantic Validation:** The shorthand can be used in data validation scenarios",
+      "source_hash": 14392994058308949144,
+      "context_hash": 7247013003372492750,
+      "translation": "**Pydantic 유효성 검사:** 이 약식 표기는 데이터 유효성 검사 상황에서 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475503Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "**FastAPI Dependency Injection:** In FastAPI, the shorthand simplifies complex parameter definitions",
+      "source_hash": 9513502274225777393,
+      "context_hash": 232643626427563022,
+      "translation": "**FastAPI 의존성 주입:** FastAPI에서는 이 약식 표기를 사용하여 복잡한 매개변수 정의를 간소화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475503Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:0",
+      "source": "**SQLModel and Database Definitions:** SQLModel relies on ``Annotated`` to define column properties.",
+      "source_hash": 5136050783550116611,
+      "context_hash": 585605757699283954,
+      "translation": "**SQLModel 및 데이터베이스 정의:** SQLModel은 열 속성을 정의하기 위해 ``Annotated``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475503Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:1",
+      "source": "The shorthand syntax cleans up these definitions",
+      "source_hash": 10097006814847131287,
+      "context_hash": 6757653665977706956,
+      "translation": "약식 구문을 사용하면 이러한 정의가 간결해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475504Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:7/seg:0",
+      "source": "**Testing and Formal Verification:** Libraries like Hypothesis and CrossHair use ``annotated-types`` to constrain test generation.",
+      "source_hash": 18026042996689058506,
+      "context_hash": 4443409222312014082,
+      "translation": "**테스트 및 형식 검증:** Hypothesis와 CrossHair 같은 라이브러리는 ``annotated-types``\\ 를 사용하여 테스트 생성을 제한합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475504Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:7/seg:1",
+      "source": "The shorthand provides a clean syntax for specifying test boundaries",
+      "source_hash": 864271398974828312,
+      "context_hash": 3733061419350876197,
+      "translation": "이 약식 표기는 테스트 경계를 지정하는 깔끔한 구문을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475504Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Ecosystem Migration",
+      "source_hash": 14521716776184785363,
+      "context_hash": 11053613715770750048,
+      "translation": "생태계 마이그레이션",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:22.475504Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "We validated this shorthand by migrating several major type-directed frameworks.",
+      "source_hash": 8404719367767763143,
+      "context_hash": 16353777946702166477,
+      "translation": "이 축약형을 여러 주요 타입 지향 프레임워크로 마이그레이션하여 검증했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173265Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:1",
+      "source": "To ensure tests continued to pass, we used a two-phase approach:",
+      "source_hash": 5149259419476761275,
+      "context_hash": 10306146009406982518,
+      "translation": "테스트가 계속 통과하도록 보장하기 위해 다음의 2단계 접근 방식을 사용했습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173269Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "**Add Support**: We first updated the internal machinery of the libraries to accept the ``@`` syntax.",
+      "source_hash": 1126946219872781142,
+      "context_hash": 3734454255837457959,
+      "translation": "**지원 추가**: 먼저 라이브러리의 내부 메커니즘을 업데이트하여 ``@`` 구문을 허용했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173269Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "**Move the Project**: We then migrated every internal usage of ``Annotated`` to the ``@`` operator.",
+      "source_hash": 17184457692439133560,
+      "context_hash": 14599699093558409935,
+      "translation": "**프로젝트 이동**: 그런 다음 ``Annotated``\\ 의 모든 내부 사용을 ``@`` 연산자로 마이그레이션했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173269Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "The required modifications to add support were:",
+      "source_hash": 4133105164091921991,
+      "context_hash": 15106901155571919680,
+      "translation": "지원을 추가하는 데 필요한 수정 사항은 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173270Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "**FastAPI:** 0 LOCs (inherited from Pydantic)",
+      "source_hash": 15661462128235093371,
+      "context_hash": 2195865836227202725,
+      "translation": "**FastAPI:** LOC 0개(Pydantic에서 상속)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173270Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:0",
+      "source": "**Pydantic:** 50 LOCs",
+      "source_hash": 7183731761423258460,
+      "context_hash": 17843938710647142640,
+      "translation": "**Pydantic:** LOC 50개",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173271Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:0",
+      "source": "**SQLAlchemy:** 282 LOCs",
+      "source_hash": 15654595586264054654,
+      "context_hash": 3654895449875109791,
+      "translation": "**SQLAlchemy:** LOC 282개",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173271Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:8/seg:0",
+      "source": "**cattrs:** 155 LOCs",
+      "source_hash": 6101934392687695404,
+      "context_hash": 17474756579829683076,
+      "translation": "**cattrs:** LOC 155개",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173271Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:9/seg:0",
+      "source": "**Hypothesis:** 15 LOCs",
+      "source_hash": 5755291935839197080,
+      "context_hash": 8329781916516840761,
+      "translation": "**Hypothesis:** LOC 15개",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173271Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:10/seg:0",
+      "source": "**Beartype:** 12 LOCs",
+      "source_hash": 2993625942725444298,
+      "context_hash": 8784419727615065618,
+      "translation": "**Beartype:** LOC 12개",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173272Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:11/seg:0",
+      "source": "Most of these changes were isolated to test suites and string representation logic (like ``__repr__``) to maintain backward compatibility.",
+      "source_hash": 15691896303065558978,
+      "context_hash": 18088754374940741918,
+      "translation": "하위 호환성을 유지하기 위해 이러한 변경 사항 대부분은 테스트 스위트와 문자열 표현 로직(예: ``__repr__``)에 국한되었습니다.",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T19:32:10.173272Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:11/seg:1",
+      "source": "The totals also include adding a two-line ``__rmatmul__`` method to the libraries' base metadata classes, which acts as a fallback to support unresolvable forward references and ``None @ Metadata``.",
+      "source_hash": 15409431108653598105,
+      "context_hash": 8236596115001546808,
+      "translation": "총계에는 라이브러리의 기본 메타데이터 클래스에 2줄짜리 ``__rmatmul__``\\ 메서드를 추가한 작업도 포함됩니다. 이 메서드는 해석할 수 없는 전방 참조와 ``None @ Metadata``\\ 를 지원하기 위한 대체 수단으로 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173273Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 5081855198993979327,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T19:32:10.173273Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "Prototype implementations are available for the following tools:",
+      "source_hash": 11960029661519193287,
+      "context_hash": 2088053056564467899,
+      "translation": "다음 도구에 대한 프로토타입 구현을 사용할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173274Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "**CPython:** `CPython at-type-annot <https://github.com/till-varoquaux/cpython/compare/main...feature/at-type-annot>`_",
+      "source_hash": 4372748793523947204,
+      "context_hash": 5819031102486957943,
+      "translation": "**CPython:** `CPython at-type-annot <https://github.com/till-varoquaux/cpython/compare/main...feature/at-type-annot>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173274Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "**Mypy:** `Mypy at-type-annot <https://github.com/till-varoquaux/mypy/compare/master...feature/at-type-annot>`_",
+      "source_hash": 2981897383908992700,
+      "context_hash": 5652413506425162697,
+      "translation": "**Mypy:** `Mypy at-type-annot <https://github.com/till-varoquaux/mypy/compare/master...feature/at-type-annot>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173274Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "**Mypyc/ast_serialize:** `ast_serialize at-type-annot <https://github.com/till-varoquaux/ast_serialize/compare/main...feature/at-type-annot>`_",
+      "source_hash": 12773594408999064443,
+      "context_hash": 17289571937494843746,
+      "translation": "**Mypyc/ast_serialize:** `ast_serialize at-type-annot <https://github.com/till-varoquaux/ast_serialize/compare/main...feature/at-type-annot>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173275Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:0",
+      "source": "**Pyright:** `Pyright at-type-annot <https://github.com/till-varoquaux/pyright/compare/main...feature/at-type-annot>`_",
+      "source_hash": 13920767094690574725,
+      "context_hash": 17829376127452526229,
+      "translation": "**Pyright:** `Pyright at-type-annot <https://github.com/till-varoquaux/pyright/compare/main...feature/at-type-annot>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173275Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:6/seg:0",
+      "source": "**Ruff:** `Ruff at-type-annot <https://github.com/till-varoquaux/ruff/compare/main...till-varoquaux:ruff:feature/at-type-annot>`_",
+      "source_hash": 14743755498536279448,
+      "context_hash": 16735385709395254277,
+      "translation": "**Ruff:** `Ruff at-type-annot <https://github.com/till-varoquaux/ruff/compare/main...till-varoquaux:ruff:feature/at-type-annot>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173275Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:7/seg:0",
+      "source": "``builtins.type`` in Typeshed will be updated to include ``def __matmul__(self, other: Any) -> types.AnnotatedType: ...`` to support type checkers.",
+      "source_hash": 2400406479906334441,
+      "context_hash": 1197806653879063197,
+      "translation": "Typeshed의 ``builtins.type``\\ 에는 타입 검사기를 지원하기 위해 ``def __matmul__(self, other: Any) -> types.AnnotatedType: ...``\\ 가 포함되도록 업데이트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173275Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 11893572753965622258,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173276Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Alternative Syntaxes",
+      "source_hash": 9794742359831928487,
+      "context_hash": 10176740061371612766,
+      "translation": "대안 구문",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173276Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "Debates around reusing ``@`` yielded several alternatives:",
+      "source_hash": 13437893009877730832,
+      "context_hash": 16602407997227646895,
+      "translation": "``@``\\ 를 재사용하는 것에 관한 논의에서 몇 가지 대안이 제시되었습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173276Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "A new infix operator: ``int <@ Field(...)``",
+      "source_hash": 5009382193520316359,
+      "context_hash": 5123525994401348783,
+      "translation": "새로운 중위 연산자: ``int <@ Field(...)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173276Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "A new soft keyword: ``int annotated Interval(1, 10)``",
+      "source_hash": 12156675806977385828,
+      "context_hash": 9955416407524407126,
+      "translation": "새로운 소프트 키워드: ``int annotated Interval(1, 10)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173277Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:4/seg:0",
+      "source": "Bracket syntax: ``x: int {Gt(10), Lt(20)}``",
+      "source_hash": 10267597521440324446,
+      "context_hash": 9186825086968724618,
+      "translation": "대괄호 구문: ``x: int {Gt(10), Lt(20)}``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173277Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:0",
+      "source": "These lacked consensus.",
+      "source_hash": 16758667424241367058,
+      "context_hash": 14311814615778773051,
+      "translation": "이러한 대안에는 합의가 이루어지지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173277Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:1",
+      "source": "The ``@`` symbol also extends cleanly to symbol decorators if the language pursues that route later.",
+      "source_hash": 16459169397390666382,
+      "context_hash": 3509400625981707610,
+      "translation": "또한 언어가 나중에 해당 방식을 채택한다면 ``@`` 기호를 기호 데코레이터로도 자연스럽게 확장할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173277Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Sole Reliance on ``__rmatmul__``",
+      "source_hash": 5305759564671592148,
+      "context_hash": 12481784187717336756,
+      "translation": "``__rmatmul__``\\ 에만 의존",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173278Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "We explicitly reject relying *solely* on metadata objects implementing ``__rmatmul__`` (e.g., via a base class) to return an ``Annotated`` type",
+      "source_hash": 1469293046008362902,
+      "context_hash": 17321208200194350197,
+      "translation": "메타데이터 객체가 ``__rmatmul__``\\ 을 구현하여(예: 베이스 클래스를 통해) ``Annotated`` 타입을 반환하도록 하는 방식에 *전적으로* 의존하는 것을 명시적으로 거부합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:10.173278Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:0",
+      "source": "This approach is rejected for two reasons.",
+      "source_hash": 5277892478252810525,
+      "context_hash": 16936783427107605444,
+      "translation": "이 접근 방식은 두 가지 이유로 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288709Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:1",
+      "source": "First, relying on arbitrary right-hand objects to implement ``__rmatmul__`` breaks the type expression model, complicating the assignment of fixed static meanings to operators.",
+      "source_hash": 1756870182966351861,
+      "context_hash": 3419791529508754193,
+      "translation": "첫째, 임의의 우변 객체가 ``__rmatmul__``\\ 을 구현하도록 의존하면 타입 표현식 모델이 깨지고, 연산자에 고정된 정적 의미를 할당하기가 복잡해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288712Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:2",
+      "source": "This is inconsistent with how ``|`` works and contradicts the type expression grammar defined in the specification.",
+      "source_hash": 13051564266190373931,
+      "context_hash": 2545540357042291224,
+      "translation": "이는 ``|``\\ 이 작동하는 방식과 일치하지 않으며, 명세에서 정의한 타입 표현식 문법과도 모순됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288712Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:3",
+      "source": "Second, :pep:`593` explicitly permits any valid Python object as metadata (e.g., strings, dicts).",
+      "source_hash": 6279734003587121529,
+      "context_hash": 13583104160087498609,
+      "translation": "둘째, :pep:`593`\\ 은 문자열과 딕셔너리 등 유효한 모든 Python 객체를 메타데이터로 명시적으로 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288713Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:4",
+      "source": "Implementing ``__matmul__`` directly on the ``type`` metaclass avoids opt-in base classes and provides consistent behavior.",
+      "source_hash": 4805719845281239389,
+      "context_hash": 1268906669798918346,
+      "translation": "``type`` 메타클래스에 ``__matmul__``\\ 을 직접 구현하면 옵트인 베이스 클래스를 사용하지 않아도 되며 일관된 동작을 제공합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:32:23.288713Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "Parameter/Field Decorators",
+      "source_hash": 3953829370469587630,
+      "context_hash": 5541447647695721434,
+      "translation": "매개변수/필드 데코레이터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288714Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "True parameter/field decorators were rejected for now.",
+      "source_hash": 16679735185651672038,
+      "context_hash": 15664552706113577990,
+      "translation": "진정한 매개변수/필드 데코레이터는 일단 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288714Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:1",
+      "source": "Modifying the core parser for symbol-level decorators opens a complex design space; this PEP scopes the ``@`` operator to type expressions.",
+      "source_hash": 18272690119124975876,
+      "context_hash": 4293041864661066602,
+      "translation": "기호 수준 데코레이터를 위해 핵심 파서를 수정하면 복잡한 설계 공간이 열리지만, 이 PEP에서는 ``@``\\ 연산자의 범위를 타입 표현식으로 한정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288714Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "Avoiding @ Due to Matrix Multiplication",
+      "source_hash": 14573143316511836799,
+      "context_hash": 5771303725499838599,
+      "translation": "행렬 곱셈으로 인해 @ 피하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288714Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "We rejected the argument that ``@`` should be avoided because of its association with matrix multiplication.",
+      "source_hash": 4050625036170279287,
+      "context_hash": 11457175759138989401,
+      "translation": "``@``\\ 를 행렬 곱셈과 연관된다는 이유로 피해야 한다는 주장을 받아들이지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288715Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:1",
+      "source": "Within a type expression, Python already reuses standard operators (like ``|`` for unions and ``[]`` for generics) with typing-specific semantics (see `Why the @ Operator?`_).",
+      "source_hash": 9240678457872951457,
+      "context_hash": 1336551004142301233,
+      "translation": "타입 표현식 내에서 Python은 이미 표준 연산자(예: 합집합에 ``|``\\ 을, 제네릭에 ``[]``\\ 를 사용함)를 타이핑에 특화된 의미로 재사용합니다(`Why the @ Operator?`_ 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288715Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Structural Evaluation Format (``Format.TYPE``)",
+      "source_hash": 10810886767963305138,
+      "context_hash": 4628485207635113769,
+      "translation": "구조적 평가 형식 (``Format.TYPE``)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288715Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "Early drafts proposed a new ``Format.TYPE`` in ``annotationlib`` (:pep:`749`) to structurally evaluate the ``@`` operator and preserve metadata on unresolvable ``ForwardRef`` instances.",
+      "source_hash": 5693986624470779174,
+      "context_hash": 12479861029899313491,
+      "translation": "초기 초안에서는 ``@``\\ 연산자를 구조적으로 평가하고 확인할 수 없는 ``ForwardRef`` 인스턴스에 메타데이터를 보존하기 위해 ``annotationlib``\\ 에 새로운 ``Format.TYPE``\\ 을 추가할 것을 제안했습니다(:pep:`749`).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288716Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:2/seg:0",
+      "source": "This was rejected.",
+      "source_hash": 511540478323218478,
+      "context_hash": 6326433967491305639,
+      "translation": "이 제안은 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288716Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:2/seg:1",
+      "source": "Prototype integrations (``beartype``, ``pydantic``, ``fastapi``, ``sqlalchemy``, and ``hypothesis``) showed the existing ecosystem handles the ``@`` operator using ``annotationlib``'s current tools.",
+      "source_hash": 1638316790386982070,
+      "context_hash": 14130807022258007209,
+      "translation": "프로토타입 통합(``beartype``, ``pydantic``, ``fastapi``, ``sqlalchemy``, ``hypothesis``)을 통해 기존 생태계가 ``annotationlib``\\ 의 현재 도구를 사용하여 ``@``\\ 연산자를 처리한다는 사실이 확인되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288716Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:0/seg:0",
+      "source": "No-Space Formatting (``@annot``)",
+      "source_hash": 8297884258117743041,
+      "context_hash": 17956047867652069074,
+      "translation": "공백 없는 형식 (``@annot``)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288716Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:0",
+      "source": "We initially considered formatting the shorthand without a space (e.g., ``int @Field``) to visually mirror function decorators.",
+      "source_hash": 2372958498760099234,
+      "context_hash": 11054630136739762722,
+      "translation": "처음에는 함수 데코레이터를 시각적으로 모방하기 위해 공백 없는 축약 형식(예: ``int @Field``)을 고려했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288717Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:1",
+      "source": "This was rejected because it forces formatters (like Black and Ruff) to maintain complex, context-dependent rules for the ``@`` operator.",
+      "source_hash": 2552043314865813086,
+      "context_hash": 7285129184964085805,
+      "translation": "이는 Black과 Ruff 같은 포매터가 ``@``\\ 연산자에 대해 복잡하고 문맥에 의존하는 규칙을 유지하도록 강제하므로 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288717Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:0/seg:0",
+      "source": "Future Work",
+      "source_hash": 11156428965744718422,
+      "context_hash": 17366694359810999259,
+      "translation": "향후 작업",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288717Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:0",
+      "source": "Although this proposal stands on its own, establishing ``@`` for type metadata enables several future extensions.",
+      "source_hash": 6222248355019295144,
+      "context_hash": 9321379166240213575,
+      "translation": "이 제안은 독립적으로 성립하지만, 타입 메타데이터에 ``@``\\ 를 도입하면 여러 가지 향후 확장이 가능해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288717Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:0/seg:0",
+      "source": "Native Symbol Decorators",
+      "source_hash": 10353415762084980777,
+      "context_hash": 9101148453440324643,
+      "translation": "네이티브 기호 데코레이터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288718Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:1/seg:0",
+      "source": "Developers request framework-agnostic field decorators",
+      "source_hash": 2989923602359285792,
+      "context_hash": 13454931021077929104,
+      "translation": "개발자들은 프레임워크에 구애받지 않는 필드 데코레이터를 요청합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288718Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:3/seg:0",
+      "source": "Future proposals will likely need to navigate between two architectural models:",
+      "source_hash": 16954916318397060161,
+      "context_hash": 12233378499011708734,
+      "translation": "향후 제안에서는 다음 두 가지 아키텍처 모델 사이를 조정해야 할 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288719Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:4/seg:0",
+      "source": "**The descriptor model:** The decorator acts as a runtime function returning a `descriptor <https://docs.python.org/3/howto/descriptor.html>`__, actively intercepting attribute access (similar to standard Python function decorators).",
+      "source_hash": 8938852612245945065,
+      "context_hash": 7010683681044774221,
+      "translation": "**디스크립터 모델:** 데코레이터가 런타임 함수로 작동하여 `descriptor <https://docs.python.org/3/howto/descriptor.html>`__\\ 를 반환하고, 표준 Python 함수 데코레이터와 유사하게 속성 접근을 적극적으로 가로챕니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터",
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T19:32:23.288719Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:5/seg:0",
+      "source": "**The metadata model:** The field configuration is treated as passive symbol metadata, leaving the enclosing class to process it during creation.",
+      "source_hash": 618865589211978647,
+      "context_hash": 1152352924966230314,
+      "translation": "**메타데이터 모델:** 필드 구성을 수동적인 기호 메타데이터로 취급하고, 이를 포함하는 클래스가 생성 중에 처리하도록 둡니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288719Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:6/seg:0",
+      "source": "This proposal aligns with the metadata model.",
+      "source_hash": 17843126658892290872,
+      "context_hash": 8083403835300650377,
+      "translation": "이 제안은 메타데이터 모델에 부합합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288720Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:6/seg:1",
+      "source": "Type-directed libraries typically inspect static definitions during class creation rather than relying on standalone descriptors.",
+      "source_hash": 6287821459708849745,
+      "context_hash": 11577639042633147311,
+      "translation": "타입 지향 라이브러리는 일반적으로 독립형 디스크립터에 의존하기보다는 클래스 생성 중에 정적 정의를 검사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288720Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:7/seg:0",
+      "source": "``@Field(...) id: int`` would evaluate identically to ``id: int @Field(...)``.",
+      "source_hash": 5941741290706698647,
+      "context_hash": 1824967900892349856,
+      "translation": "``@Field(...) id: int``\\ 는 ``id: int @Field(...)``\\ 와 동일하게 평가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288720Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:7/seg:1",
+      "source": "This allows existing frameworks to inspect field configurations and continue working unmodified.",
+      "source_hash": 17178801750808359416,
+      "context_hash": 2852533902691707922,
+      "translation": "이를 통해 기존 프레임워크가 필드 구성을 검사하면서 수정 없이 계속 작동할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288720Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:7/seg:2",
+      "source": "Under this model, value-space decorators modify objects at runtime, while type-space decorators attach metadata to a type.",
+      "source_hash": 4970645836151655076,
+      "context_hash": 1241315674320008206,
+      "translation": "이 모델에서는 값 공간 데코레이터가 런타임에 객체를 수정하는 반면, 타입 공간 데코레이터는 타입에 메타데이터를 연결합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288721Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:0/seg:0",
+      "source": "Targeted Metadata",
+      "source_hash": 4311335663702932480,
+      "context_hash": 9323935655081451216,
+      "translation": "대상 메타데이터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:23.288721Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:0",
+      "source": "Future extensions to :pep:`746` could support annotation targets.",
+      "source_hash": 3516890743098413597,
+      "context_hash": 11661042831161151478,
+      "translation": "향후 :pep:`746`\\ 에 대한 확장에서는 어노테이션 대상을 지원할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:41.113177Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:1",
+      "source": "By intersecting a base type with an explicit target constraint, type checkers will validate *where* metadata is allowed to exist.",
+      "source_hash": 12412661908225935145,
+      "context_hash": 5144109376209495303,
+      "translation": "베이스 타입과 명시적인 대상 제약 조건을 교집합하면, 타입 검사기는 메타데이터가 *어디에* 존재하도록 허용되는지를 검증합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088092Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:2",
+      "source": "This mitigates misuse (e.g., placing a ``@Column`` on a function parameter rather than a class field):",
+      "source_hash": 17534634849995792540,
+      "context_hash": 14977668797809692238,
+      "translation": "이를 통해 클래스 필드가 아닌 함수 매개변수에 ``@Column``\\ 을 배치하는 등의 오용을 완화할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088093Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:2/seg:0",
+      "source": "*(Note: The following example assumes the ``&`` operator for intersection types has been added.)*",
+      "source_hash": 5583130296236145786,
+      "context_hash": 9410704182538957185,
+      "translation": "*참고: 다음 예제에서는 교집합 타입을 위한 ``&`` 연산자가 추가되었다고 가정합니다.*",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088093Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:4/seg:0",
+      "source": "Establishing a native syntax for metadata provides a structural foundation for future extensions like annotation targets.",
+      "source_hash": 4755008981183494890,
+      "context_hash": 11321933356493526993,
+      "translation": "메타데이터를 위한 네이티브 구문을 확립하면 어노테이션 대상과 같은 향후 확장을 위한 구조적 기반이 마련됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088093Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:0/seg:0",
+      "source": "Open Issues",
+      "source_hash": 15188361361114285070,
+      "context_hash": 711613167783607857,
+      "translation": "미해결 문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088094Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:0",
+      "source": "**Deprecation Timeline:** As a private class, ``typing._AnnotatedAlias`` could bypass the standard 5-year deprecation policy (:pep:`387`).",
+      "source_hash": 14408092876740789336,
+      "context_hash": 9166114244746703562,
+      "translation": "**지원 중단 일정:** 비공개 클래스인 ``typing._AnnotatedAlias``\\ 는 표준 5년 지원 중단 정책(:pep:`387`)을 우회할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088094Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:1",
+      "source": "Should we fast-track its removal?",
+      "source_hash": 3481058323231151110,
+      "context_hash": 13076157605835760307,
+      "translation": "해당 제거를 신속하게 진행해야 합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088094Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:0/seg:0",
+      "source": "Acknowledgements",
+      "source_hash": 16326275492144793040,
+      "context_hash": 14683727127325906266,
+      "translation": "감사의 말",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088095Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:0",
+      "source": "Thanks to Hugo van Kemenade, Jelle Zijlstra, and Eric Traut for their feedback, guidance, and assistance in refining this proposal.",
+      "source_hash": 9121470619116848580,
+      "context_hash": 3644596358399608568,
+      "translation": "이 제안을 개선하는 과정에서 피드백과 조언, 도움을 주신 Hugo van Kemenade, Jelle Zijlstra, Eric Traut께 감사드립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088095Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 6987715357548548250,
+      "translation": "참고 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088095Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:1/seg:0",
+      "source": "`Discussion on Python Discourse <https://discuss.python.org/t/106888>`_",
+      "source_hash": 16940711033239124364,
+      "context_hash": 15990073045978203332,
+      "translation": "`Python Discourse에서의 논의 <https://discuss.python.org/t/106888>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088095Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:2/seg:0",
+      "source": "Major frameworks supporting ``Annotated`` include:",
+      "source_hash": 7071404570787341596,
+      "context_hash": 11302025842320806570,
+      "translation": "``Annotated``\\ 를 지원하는 주요 프레임워크는 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088096Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:3/seg:0",
+      "source": "FastAPI support for ``Annotated``: https://fastapi.tiangolo.com/tutorial/query-params-str-validations/",
+      "source_hash": 14685217172707851999,
+      "context_hash": 1307787358064857915,
+      "translation": "FastAPI의 ``Annotated`` 지원: https://fastapi.tiangolo.com/tutorial/query-params-str-validations/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088096Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:4/seg:0",
+      "source": "Pydantic support for ``Annotated``: https://docs.pydantic.dev/latest/concepts/types/#annotated-types",
+      "source_hash": 10286253220682020582,
+      "context_hash": 7904190581386339642,
+      "translation": "Pydantic의 ``Annotated`` 지원: https://docs.pydantic.dev/latest/concepts/types/#annotated-types",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088096Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:5/seg:0",
+      "source": "cattrs support for ``Annotated``: https://cattrs.readthedocs.io/en/latest/validation.html#annotated",
+      "source_hash": 10573507238673240569,
+      "context_hash": 4796089329250208312,
+      "translation": "cattrs의 ``Annotated`` 지원: https://cattrs.readthedocs.io/en/latest/validation.html#annotated",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088097Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:6/seg:0",
+      "source": "msgspec support for ``Annotated``: https://jcristharif.com/msgspec/supported-types.html#annotated",
+      "source_hash": 11310369299584592185,
+      "context_hash": 7958493022023464375,
+      "translation": "msgspec의 ``Annotated`` 지원: https://jcristharif.com/msgspec/supported-types.html#annotated",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088097Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:7/seg:0",
+      "source": "SQLAlchemy 2.0 support for ``Annotated``: https://docs.sqlalchemy.org/en/20/orm/declarative_tables.html#using-annotated-declarative-table-type-annotated-forms-for-mapped-column",
+      "source_hash": 12402726393437758756,
+      "context_hash": 16381472999228328030,
+      "translation": "SQLAlchemy 2.0의 ``Annotated`` 지원: https://docs.sqlalchemy.org/en/20/orm/declarative_tables.html#using-annotated-declarative-table-type-annotated-forms-for-mapped-column",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088097Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:8/seg:0",
+      "source": "Typer support for ``Annotated``: https://typer.tiangolo.com/tutorial/parameter-types/annotated/",
+      "source_hash": 2908566759065178442,
+      "context_hash": 7628681177620967957,
+      "translation": "Typer의 ``Annotated`` 지원: https://typer.tiangolo.com/tutorial/parameter-types/annotated/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088097Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:9/seg:0",
+      "source": "Beartype support for ``Annotated`` (Validators): https://beartype.readthedocs.io/en/latest/api_vale/",
+      "source_hash": 10801256988366898476,
+      "context_hash": 5510708588687980904,
+      "translation": "Beartype의 ``Annotated`` 지원(검증기): https://beartype.readthedocs.io/en/latest/api_vale/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088098Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:10/seg:0",
+      "source": "Examples of users and framework authors citing ``Annotated`` verbosity:",
+      "source_hash": 8533424415784005900,
+      "context_hash": 12897593877476035236,
+      "translation": "``Annotated``\\ 의 장황함을 언급한 사용자 및 프레임워크 작성자의 사례:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088098Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:11/seg:0",
+      "source": "*\"Annotated syntax is too long: Introduction of Annotated params made function params more logical, but on the other hand longer/more verbose\"* — Vitaliy Kucheryaviy, author of Django Ninja: https://github.com/tiangolo/fastapi/discussions/10055#discussion-5507018",
+      "source_hash": 13911905413508181907,
+      "context_hash": 14291619562085387057,
+      "translation": "*\"Annotated 구문은 너무 깁니다. Annotated 매개변수를 도입하면 함수 매개변수가 더 논리적으로 만들어지지만, 반면 더 길고 장황해집니다\"* — Django Ninja 작성자 Vitaliy Kucheryaviy: https://github.com/tiangolo/fastapi/discussions/10055#discussion-5507018",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088098Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:12/seg:0",
+      "source": "*\"I personally find this solution [using Annotated] a bit tedious when you start having a lot of models/fields\"* — g0di, Pydantic user: https://github.com/pydantic/pydantic/discussions/2419#discussioncomment-7228409",
+      "source_hash": 11678435070558715233,
+      "context_hash": 6388787392447124997,
+      "translation": "*\"모델이나 필드가 많아지기 시작하면 저는 개인적으로 이 해결책[Annotated 사용]이 조금 번거롭다고 생각합니다\"* — Pydantic 사용자 g0di: https://github.com/pydantic/pydantic/discussions/2419#discussioncomment-7228409",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088099Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:13/seg:0",
+      "source": "SQLAlchemy 2.0 Migration Guide (advocating Annotated aliases to mitigate verbosity): https://docs.sqlalchemy.org/en/20/changelog/migration_20.html#step-five-make-use-of-pep-593-annotated-to-package-common-directives-into-types",
+      "source_hash": 14527448006895955749,
+      "context_hash": 5425776550520623919,
+      "translation": "SQLAlchemy 2.0 마이그레이션 가이드(장황함을 완화하기 위해 Annotated 별칭 사용을 권장): https://docs.sqlalchemy.org/en/20/changelog/migration_20.html#step-five-make-use-of-pep-593-annotated-to-package-common-directives-into-types",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088099Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:14/seg:0",
+      "source": "*\"My main concern here is that Annotated[torch.Tensor, dtype] is quite",
+      "source_hash": 16243808115375782332,
+      "context_hash": 13933358969214972340,
+      "translation": "*\"여기서 가장 우려되는 점은 Annotated[torch.Tensor, dtype]가 상당히",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088099Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:15/seg:0",
+      "source": "verbose, and seems to go in the opposite direction to where we'd like to end up\"* — Ralf Gommers, NumPy maintainer: https://github.com/pytorch/pytorch/issues/98702#issuecomment-1504794519",
+      "source_hash": 12419850944177252936,
+      "context_hash": 6368564217443697201,
+      "translation": "장황하며, 우리가 최종적으로 도달하고자 하는 방향과 정반대로 가는 것처럼 보인다는 점입니다\"* — NumPy 관리자 Ralf Gommers: https://github.com/pytorch/pytorch/issues/98702#issuecomment-1504794519",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088099Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:16/seg:0",
+      "source": "*\"I'm not writing something stupidly verbose like: TensorBatchXChannels",
+      "source_hash": 17348280095263207124,
+      "context_hash": 1437230077615569626,
+      "translation": "*\"저는 다음과 같이 터무니없이 장황한 것을 작성하지는 않을 것입니다: TensorBatchXChannels",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088099Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:17/seg:0",
+      "source": "= Annotated[...]\"* — Patrick Kidger, author of TorchTyping: https://github.com/beartype/beartype/discussions/96#discussioncomment-2245014",
+      "source_hash": 18187467003955849036,
+      "context_hash": 11147825136139555654,
+      "translation": "= Annotated[...]\"* — TorchTyping 작성자 Patrick Kidger: https://github.com/beartype/beartype/discussions/96#discussioncomment-2245014",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088100Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:18/seg:0",
+      "source": "*\"Functions where the arguments have type annotations can already be",
+      "source_hash": 2723085758954475282,
+      "context_hash": 11597563670193813314,
+      "translation": "*\"인자에 타입 어노테이션이 있는 함수는 이미",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088100Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:19/seg:0",
+      "source": "rather long, and Annotated on its own is rather verbose, so I’m generally glad it’s rare\"* — Paul Moore on PEP 727: https://discuss.python.org/t/32566/17",
+      "source_hash": 17465114240914758599,
+      "context_hash": 5418366485092802878,
+      "translation": "상당히 길 수 있고, Annotated 자체도 상당히 장황하므로 드문 것이 일반적으로 다행이라고 생각합니다\"* — PEP 727에 대한 Paul Moore의 발언: https://discuss.python.org/t/32566/17",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088100Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:20/seg:0",
+      "source": "2023 Python Discourse discussion proposing ``@`` as an alternative to",
+      "source_hash": 9103266122052895656,
+      "context_hash": 6116949554760056108,
+      "translation": "2023년 Python Discourse에서 ``@``\\ 를 Annotated의 대안으로",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088100Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:21/seg:0",
+      "source": "Annotated: https://discuss.python.org/t/40751",
+      "source_hash": 17364841824566216640,
+      "context_hash": 5858152199337710831,
+      "translation": "제안한 논의: https://discuss.python.org/t/40751",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:13.088101Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:22/seg:0",
+      "source": "2025 Python Discourse discussion converging on dedicated ``@`` syntax:",
+      "source_hash": 8471401191170370811,
+      "context_hash": 15253236343915643841,
+      "translation": "전용 ``@`` 구문으로 수렴하는 2025년 Python Discourse 논의:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:23:09.541197Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:23/seg:0",
+      "source": "https://discuss.python.org/t/103699",
+      "source_hash": 1344672290408714281,
+      "context_hash": 16964809637728062280,
+      "translation": "https://discuss.python.org/t/103699",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:23:09.541205Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:24/seg:0",
+      "source": "*\"That by itself doesn’t seem a big objection – type annotations reuse",
+      "source_hash": 14940433841406425141,
+      "context_hash": 10498317871479659920,
+      "translation": "*\"그 자체로는 큰 반론처럼 보이지 않습니다. 타입 어노테이션은",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:23:09.541206Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:25/seg:0",
+      "source": "all kinds of operations, including x[y] and x | y.\"* — Guido van Rossum, on repurposing the @ operator for typing: https://discuss.python.org/t/40751/3",
+      "source_hash": 608290299998988036,
+      "context_hash": 11879558978899246485,
+      "translation": "x[y]와 x | y를 포함한 모든 종류의 연산을 재사용합니다.\"* — Guido van Rossum, 타입 지정을 위해 @ 연산자를 용도 변경하는 것에 관하여: https://discuss.python.org/t/40751/3",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:23:09.541208Z",
+      "issues": []
+    }
+  ]
+}

@@ -1,0 +1,959 @@
+{
+  "version": 1,
+  "source_hash": 14551128759037229710,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Metaclasses in Python 3000",
+      "source_hash": 6559688095719703117,
+      "context_hash": 16530898886277989957,
+      "translation": "Python 3000의 메타클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252638Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 11242048240523439182,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252642Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes changing the syntax for declaring metaclasses, and alters the semantics for how classes with metaclasses are constructed.",
+      "source_hash": 15784637928114025916,
+      "context_hash": 10356062162691928027,
+      "translation": "이 PEP는 메타클래스를 선언하는 구문을 변경하고, 메타클래스를 가진 클래스를 구성하는 방식의 의미 체계를 변경할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252642Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 12070263317968428951,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252642Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "There are two rationales for this PEP, both of which are somewhat subtle.",
+      "source_hash": 4937808786773983663,
+      "context_hash": 16112024498873121865,
+      "translation": "이 PEP에는 두 가지 근거가 있으며, 둘 다 다소 미묘합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252642Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "The primary reason for changing the way metaclasses work, is that there are a number of interesting use cases that require the metaclass to get involved earlier in the class construction process than is currently possible.",
+      "source_hash": 2626514448627068112,
+      "context_hash": 10471468633311490268,
+      "translation": "메타클래스의 작동 방식을 변경하는 주된 이유는 현재 가능한 것보다 클래스 구성 과정에 더 일찍 메타클래스가 관여해야 하는 흥미로운 사용 사례가 여러 가지 있기 때문입니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:46.252643Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "Currently, the metaclass mechanism is essentially a post-processing step.",
+      "source_hash": 14347877152027281189,
+      "context_hash": 13107159562145243669,
+      "translation": "현재 메타클래스 메커니즘은 본질적으로 후처리 단계입니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:46.252644Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "With the advent of class decorators, much of these post-processing chores can be taken over by the decorator mechanism.",
+      "source_hash": 2999223875029030274,
+      "context_hash": 12751543936382480646,
+      "translation": "클래스 데코레이터가 등장하면서 이러한 후처리 작업의 상당 부분을 데코레이터 메커니즘이 맡을 수 있습니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T19:01:46.252645Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "In particular, there is an important body of use cases where it would be useful to preserve the order in which a class members are declared.",
+      "source_hash": 1821086511135372780,
+      "context_hash": 424615046287099817,
+      "translation": "특히 클래스 멤버가 선언되는 순서를 보존하는 것이 유용한 중요한 사용 사례들이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252646Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "Ordinary Python objects store their members in a dictionary, in which ordering is unimportant, and members are accessed strictly by name.",
+      "source_hash": 15378683865489297871,
+      "context_hash": 17158544475852490510,
+      "translation": "일반적인 Python 객체는 멤버를 딕셔너리에 저장하며, 이때 순서는 중요하지 않고 멤버는 오직 이름으로만 접근합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:01:46.252646Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:2",
+      "source": "However, Python is often used to interface with external systems in which the members are organized according to an implicit ordering.",
+      "source_hash": 7753607234328833303,
+      "context_hash": 3976661671949681191,
+      "translation": "그러나 Python은 멤버가 암묵적인 순서에 따라 구성되는 외부 시스템과 인터페이스하는 데 자주 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252647Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:3",
+      "source": "Examples include declaration of C structs; COM objects; Automatic translation of Python classes into IDL or database schemas, such as used in an ORM; and so on.",
+      "source_hash": 7847714036198705187,
+      "context_hash": 8407134771685267331,
+      "translation": "예로는 C 구조체 선언, COM 객체, ORM에서 사용하는 것과 같은 Python 클래스의 IDL 또는 데이터베이스 스키마로의 자동 변환 등이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252647Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "In such cases, it would be useful for a Python programmer to specify such ordering directly using the declaration order of class members.",
+      "source_hash": 16360703144786217977,
+      "context_hash": 2951922195398525315,
+      "translation": "이러한 경우 Python 프로그래머가 클래스 멤버의 선언 순서를 사용하여 그러한 순서를 직접 지정할 수 있다면 유용할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252647Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "Currently, such orderings must be specified explicitly, using some other mechanism (see the ctypes module for an example.)",
+      "source_hash": 6223820876257449523,
+      "context_hash": 3748670747128127412,
+      "translation": "현재 이러한 순서는 다른 메커니즘을 사용하여 명시적으로 지정해야 합니다(예를 들어 ctypes 모듈을 참조하십시오).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252647Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "Unfortunately, the current method for declaring a metaclass does not allow for this, since the ordering information has already been lost by the time the metaclass comes into play.",
+      "source_hash": 1603557790629540720,
+      "context_hash": 1038897783209894736,
+      "translation": "안타깝게도 현재 메타클래스를 선언하는 방식으로는 이를 허용할 수 없습니다. 메타클래스가 관여할 때가 되면 순서 정보가 이미 사라져 있기 때문입니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:46.252648Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "By allowing the metaclass to get involved in the class construction process earlier, the new system allows the ordering or other early artifacts of construction to be preserved and examined.",
+      "source_hash": 13163552631660733811,
+      "context_hash": 893771316482447232,
+      "translation": "새로운 시스템은 메타클래스가 클래스 구성 과정에 더 일찍 관여하도록 함으로써 순서 또는 구성 과정에서 더 일찍 생성된 다른 산출물을 보존하고 검사할 수 있도록 합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:46.252648Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "There proposed metaclass mechanism also supports a number of other interesting use cases beyond preserving the ordering of declarations.",
+      "source_hash": 4467608960566003686,
+      "context_hash": 6863986739542579751,
+      "translation": "제안된 메타클래스 메커니즘은 선언 순서 보존 외에도 여러 가지 흥미로운 사용 사례를 지원합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:46.252649Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "One use case is to insert symbols into the namespace of the class body which are only valid during class construction.",
+      "source_hash": 17522954589496294142,
+      "context_hash": 12641753806088723859,
+      "translation": "한 가지 사용 사례는 클래스 구성 중에만 유효한 기호를 클래스 본문의 네임스페이스에 삽입하는 것입니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:01:46.252649Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:2",
+      "source": "An example of this might be \"field constructors\", small functions that are used in the creation of class members.",
+      "source_hash": 7687669553517103436,
+      "context_hash": 42991151631494529,
+      "translation": "예를 들어 클래스 멤버를 생성할 때 사용하는 작은 함수인 “필드 생성자”가 이에 해당할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252650Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:3",
+      "source": "Another interesting possibility is supporting forward references, i.e. references to Python symbols that are declared further down in the class body.",
+      "source_hash": 13198412556817254491,
+      "context_hash": 18162947059946525373,
+      "translation": "또 다른 흥미로운 가능성은 전방 참조, 즉 클래스 본문 아래쪽에서 선언되는 Python 기호에 대한 참조를 지원하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252650Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "The other, weaker, rationale is purely cosmetic: The current method for specifying a metaclass is by assignment to the special variable ``__metaclass__``, which is considered by some to be aesthetically less than ideal.",
+      "source_hash": 3389941161435668533,
+      "context_hash": 3989647533378482773,
+      "translation": "더 약한 또 다른 근거는 순전히 외관상의 것입니다. 현재 메타클래스를 지정하는 방식은 특수 변수 ``__metaclass__``\\ 에 대입하는 것이며, 일부 사람들은 이것이 미적으로 그다지 이상적이지 않다고 생각합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:46.252650Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:1",
+      "source": "Others disagree strongly with that opinion.",
+      "source_hash": 6054973095922511911,
+      "context_hash": 1183114615831878463,
+      "translation": "다른 사람들은 그 의견에 강하게 동의하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252651Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:2",
+      "source": "This PEP will not address this issue, other than to note it, since aesthetic debates cannot be resolved via logical proofs.",
+      "source_hash": 5796601898123946103,
+      "context_hash": 5868203343368544276,
+      "translation": "이 PEP는 이 문제를 언급하는 것 외에는 다루지 않습니다. 미적 논쟁은 논리적 증명으로 해결할 수 없기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252651Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 2432681523807650160,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252651Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "In the new model, the syntax for specifying a metaclass is via a keyword argument in the list of base classes",
+      "source_hash": 8942439262204754063,
+      "context_hash": 8566122222030410707,
+      "translation": "새로운 모델에서는 기본 클래스 목록에서 키워드 인자를 통해 메타클래스를 지정하는 구문을 사용합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스",
+        "keyword argument": "키워드 인자"
+      },
+      "translated_at": "2026-08-28T19:01:46.252651Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Additional keywords will also be allowed here, and will be passed to the metaclass, as in the following example",
+      "source_hash": 18022782532402077910,
+      "context_hash": 6619001486987837353,
+      "translation": "여기에서는 추가 키워드도 허용되며, 다음 예와 같이 메타클래스에 전달됩니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:46.252652Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "Note that this PEP makes no attempt to define what these other keywords might be - that is up to metaclass implementors to determine.",
+      "source_hash": 15767874615637312040,
+      "context_hash": 4415087360985892826,
+      "translation": "이 PEP는 이러한 다른 키워드가 무엇일 수 있는지 정의하려고 하지 않는다는 점에 유의하십시오. 이는 메타클래스 구현자가 결정할 사항입니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:46.252653Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "More generally, the parameter list passed to a class definition will now support all of the features of a function call, meaning that you can now use ``*args`` and ``**kwargs``-style arguments in the class base list",
+      "source_hash": 11509323469887456916,
+      "context_hash": 622246712755868877,
+      "translation": "더 일반적으로 클래스 정의에 전달되는 매개변수 목록은 이제 함수 호출의 모든 기능을 지원합니다. 즉, 이제 클래스 기본 클래스 목록에서 ``*args`` 및 ``**kwargs`` 스타일의 인자를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:46.252653Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Invoking the Metaclass",
+      "source_hash": 14977930485191181165,
+      "context_hash": 16107824535906984436,
+      "translation": "메타클래스 호출",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:46.252654Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "In the current metaclass system, the metaclass object can be any callable type.",
+      "source_hash": 15990791828106323683,
+      "context_hash": 2587771093161108712,
+      "translation": "현재 메타클래스 시스템에서 메타클래스 객체는 어떤 호출 가능 객체 타입이든 될 수 있습니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체",
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:46.252654Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "This does not change, however in order to fully exploit all of the new features the metaclass will need to have an extra attribute which is used during class pre-construction.",
+      "source_hash": 17953538265812466069,
+      "context_hash": 2974243905519289087,
+      "translation": "이 점은 변경되지 않지만, 새로운 기능을 모두 충분히 활용하려면 메타클래스에 클래스 사전 구성 중 사용되는 추가 속성이 있어야 합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:46.252656Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "This attribute is named ``__prepare__``, which is invoked as a function before the evaluation of the class body.",
+      "source_hash": 4840176509952265104,
+      "context_hash": 9163149737810584432,
+      "translation": "이 속성의 이름은 ``__prepare__``\\ 이며, 클래스 본문을 평가하기 전에 함수로 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.598941Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "The ``__prepare__`` function takes two positional arguments, and an arbitrary number of keyword arguments.",
+      "source_hash": 14984694247282735255,
+      "context_hash": 10855545893638070382,
+      "translation": "``__prepare__``\\ 함수는 두 개의 위치 인자와 임의 개수의 키워드 인자를 받습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.598946Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "The two positional arguments are:",
+      "source_hash": 12253297942223724961,
+      "context_hash": 5019503835303935421,
+      "translation": "두 개의 위치 인자는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.598947Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "*name*",
+      "source_hash": 8599993925646756936,
+      "context_hash": 16611632329016683772,
+      "translation": "*name*",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.598947Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "the name of the class being created.",
+      "source_hash": 16420717206546349533,
+      "context_hash": 4544981659034766547,
+      "translation": "생성되는 클래스의 이름입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.598948Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "*bases*",
+      "source_hash": 10649861753692142287,
+      "context_hash": 18173832673250513638,
+      "translation": "*bases*",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.598949Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "the list of base classes.",
+      "source_hash": 17474799068187864753,
+      "context_hash": 12754162422864282825,
+      "translation": "베이스 클래스의 목록입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.598949Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "The interpreter always tests for the existence of ``__prepare__`` before calling it; If it is not present, then a regular dictionary is used, as illustrated in the following Python snippet.",
+      "source_hash": 14405641391477774080,
+      "context_hash": 15990721886445259515,
+      "translation": "인터프리터는 호출하기 전에 항상 ``__prepare__``\\ 의 존재 여부를 검사합니다. 존재하지 않으면 다음 Python 코드 조각에 나와 있듯이 일반 딕셔너리를 사용합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:01:50.598950Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "The example above illustrates how the arguments to 'class' are interpreted.",
+      "source_hash": 8418411175401711988,
+      "context_hash": 2969364586451605417,
+      "translation": "위의 예제는 'class'에 전달되는 인자가 어떻게 해석되는지 보여 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.598952Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:1",
+      "source": "The class name is the first argument, followed by an arbitrary length list of base classes.",
+      "source_hash": 10070340674559662091,
+      "context_hash": 634887444986128466,
+      "translation": "클래스 이름이 첫 번째 인자이고, 그 뒤에 임의 길이의 베이스 클래스 목록이 이어집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.598952Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:2",
+      "source": "After the base classes, there may be one or more keyword arguments, one of which can be *metaclass*.",
+      "source_hash": 8180687650615072694,
+      "context_hash": 7314050471571900246,
+      "translation": "베이스 클래스 뒤에는 하나 이상의 키워드 인자가 올 수 있으며, 그중 하나가 *메타클래스*\\ 일 수 있습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T20:02:13.815583Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:3",
+      "source": "Note that the *metaclass* argument is not included in *kwargs*, since it is filtered out by the normal parameter assignment algorithm. (Note also that *metaclass* is a keyword-only argument as per :pep:`3102`.)",
+      "source_hash": 765238423598072720,
+      "context_hash": 5752743766722156264,
+      "translation": "*메타클래스* 인자는 일반 매개변수 할당 알고리즘에 의해 필터링되므로 *kwargs*\\ 에 포함되지 않는다는 점에 유의하십시오. (또한 :pep:`3102`\\ 에 따라 *메타클래스*\\ 는 키워드 전용 인자라는 점에도 유의하십시오.)",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T20:02:13.815587Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "Even though ``__prepare__`` is not required, the default metaclass ('type') implements it, for the convenience of subclasses calling it via super().",
+      "source_hash": 5127769199651529497,
+      "context_hash": 10837671525428409449,
+      "translation": "``__prepare__``\\ 는 필수가 아니지만, 기본 메타클래스('type')는 서브클래스가 super()를 통해 이를 호출할 수 있도록 편의를 위해 구현합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:50.598956Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:0",
+      "source": "``__prepare__`` returns a dictionary-like object which is used to store the class member definitions during evaluation of the class body.",
+      "source_hash": 17677972490968298534,
+      "context_hash": 4226790926460003925,
+      "translation": "``__prepare__``\\ 는 클래스 본문을 평가하는 동안 클래스 멤버 정의를 저장하는 데 사용되는 딕셔너리와 유사한 객체를 반환합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:01:50.598957Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:1",
+      "source": "In other words, the class body is evaluated as a function block (just like it is now), except that the local variables dictionary is replaced by the dictionary returned from ``__prepare__``.",
+      "source_hash": 12111195842813186394,
+      "context_hash": 17381165538744601093,
+      "translation": "즉, 클래스 본문은 함수 블록으로 평가되지만(현재와 동일함), 지역 변수 딕셔너리가 ``__prepare__``\\ 가 반환한 딕셔너리로 대체된다는 점이 다릅니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:01:50.598958Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:2",
+      "source": "This dictionary object can be a regular dictionary or a custom mapping type.",
+      "source_hash": 16025857296545129830,
+      "context_hash": 13975296315039011379,
+      "translation": "이 딕셔너리 객체는 일반 딕셔너리일 수도 있고 사용자 지정 매핑 타입일 수도 있습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리",
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T19:01:50.598959Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:0",
+      "source": "This dictionary-like object is not required to support the full dictionary interface.",
+      "source_hash": 2305606557322521780,
+      "context_hash": 16707233500823613187,
+      "translation": "이 딕셔너리와 유사한 객체는 딕셔너리 인터페이스 전체를 지원할 필요가 없습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:01:50.598959Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:1",
+      "source": "A dictionary which supports a limited set of dictionary operations will restrict what kinds of actions can occur during evaluation of the class body.",
+      "source_hash": 13467384067354681377,
+      "context_hash": 13500616249677339213,
+      "translation": "제한된 딕셔너리 연산 집합을 지원하는 딕셔너리는 클래스 본문을 평가하는 동안 수행할 수 있는 동작의 종류를 제한합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:01:50.598960Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:2",
+      "source": "A minimal implementation might only support adding and retrieving values from the dictionary - most class bodies will do no more than that during evaluation.",
+      "source_hash": 2590959519459419659,
+      "context_hash": 12241977031502994560,
+      "translation": "최소한의 구현은 딕셔너리에 값을 추가하고 딕셔너리에서 값을 가져오는 기능만 지원할 수 있으며, 대부분의 클래스 본문은 평가 중에 그 이상을 수행하지 않습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:01:50.598961Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:3",
+      "source": "For some classes, it may be desirable to support deletion as well.",
+      "source_hash": 524798868969024264,
+      "context_hash": 7815434807053700140,
+      "translation": "일부 클래스에서는 삭제도 지원하는 것이 바람직할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.598961Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:4",
+      "source": "Many metaclasses will need to make a copy of this dictionary afterwards, so iteration or other means for reading out the dictionary contents may also be useful.",
+      "source_hash": 3829795359069448278,
+      "context_hash": 8577942753625487555,
+      "translation": "많은 메타클래스는 이후에 이 딕셔너리의 복사본을 만들어야 하므로, 반복이나 딕셔너리 내용을 읽어 내는 다른 방법도 유용할 수 있습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:01:50.598962Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:0",
+      "source": "The ``__prepare__`` method will most often be implemented as a class method rather than an instance method because it is called before the metaclass instance (i.e. the class itself) is created.",
+      "source_hash": 16670264651856200133,
+      "context_hash": 13621762148324867093,
+      "translation": "``__prepare__``\\ 메서드는 메타클래스 인스턴스(즉, 클래스 자체)가 생성되기 전에 호출되므로 인스턴스 메서드보다는 클래스 메서드로 구현되는 경우가 가장 많습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:50.598962Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:15/seg:0",
+      "source": "Once the class body has finished evaluating, the metaclass will be called (as a callable) with the class dictionary, which is no different from the current metaclass mechanism.",
+      "source_hash": 8439822711800111949,
+      "context_hash": 9821292976786842009,
+      "translation": "클래스 본문의 평가가 끝나면 메타클래스는 현재의 메타클래스 메커니즘과 다르지 않게, 클래스 딕셔너리를 인자로 받아 호출 가능 객체로 호출됩니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리",
+        "metaclass": "메타클래스",
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:01:50.598963Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:16/seg:0",
+      "source": "Typically, a metaclass will create a custom dictionary - either a subclass of dict, or a wrapper around it - that will contain additional properties that are set either before or during the evaluation of the class body.",
+      "source_hash": 770826488664779271,
+      "context_hash": 6970857517922510415,
+      "translation": "일반적으로 메타클래스는 dict의 서브클래스이거나 dict를 감싼 래퍼인 사용자 지정 딕셔너리를 생성하며, 이 딕셔너리에는 클래스 본문을 평가하기 전이나 평가하는 동안 설정되는 추가 속성이 포함됩니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리",
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:50.598964Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:16/seg:1",
+      "source": "Then in the second phase, the metaclass can use these additional properties to further customize the class.",
+      "source_hash": 17104770505053855918,
+      "context_hash": 16941855699184051301,
+      "translation": "그런 다음 두 번째 단계에서 메타클래스는 이러한 추가 속성을 사용하여 클래스를 더욱 사용자 지정할 수 있습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:50.598965Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:17/seg:0",
+      "source": "An example would be a metaclass that uses information about the ordering of member declarations to create a C struct.",
+      "source_hash": 14344831330345894154,
+      "context_hash": 16289065702481938326,
+      "translation": "한 가지 예로 멤버 선언 순서에 관한 정보를 사용하여 C 구조체를 생성하는 메타클래스를 들 수 있습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:50.598965Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:17/seg:1",
+      "source": "The metaclass would provide a custom dictionary that simply keeps a record of the order of insertions.",
+      "source_hash": 3584589995291143146,
+      "context_hash": 1861268361114253380,
+      "translation": "메타클래스는 삽입 순서의 기록을 단순히 유지하는 사용자 지정 딕셔너리를 제공합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스",
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:01:50.598966Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:17/seg:2",
+      "source": "This does not need to be a full 'ordered dict' implementation, but rather just a Python list of (key,value) pairs that is appended to for each insertion.",
+      "source_hash": 17092029147985905195,
+      "context_hash": 12085494456778990657,
+      "translation": "이는 완전한 'ordered dict' 구현일 필요는 없으며, 각 삽입 시 추가되는 (key,value) 쌍의 Python 리스트이면 충분합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.598966Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:0",
+      "source": "Note that in such a case, the metaclass would be required to deal with the possibility of duplicate keys, but in most cases that is trivial.",
+      "source_hash": 17073281607207074002,
+      "context_hash": 16787062968286367172,
+      "translation": "이러한 경우 메타클래스는 중복 키가 발생할 가능성을 처리해야 하지만, 대부분의 경우 이는 간단합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:50.598966Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:1",
+      "source": "The metaclass can use the first declaration, the last, combine them in some fashion, or simply throw an exception.",
+      "source_hash": 13317230893725088642,
+      "context_hash": 13896457648268587139,
+      "translation": "메타클래스는 첫 번째 선언이나 마지막 선언을 사용할 수도 있고, 어떤 방식으로든 이들을 결합할 수도 있으며, 단순히 예외를 발생시킬 수도 있습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:50.598967Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:2",
+      "source": "It's up to the metaclass to decide how it wants to handle that case.",
+      "source_hash": 9141960237347265128,
+      "context_hash": 1383708511844759885,
+      "translation": "해당 경우를 어떻게 처리할지는 메타클래스가 결정합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T19:01:50.598968Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Example",
+      "source_hash": 1513857641461741027,
+      "context_hash": 12026184999629113104,
+      "translation": "예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:01:50.598969Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Here's a simple example of a metaclass which creates a list of the names of all class members, in the order that they were declared",
+      "source_hash": 17462489253696915686,
+      "context_hash": 12726331148978865813,
+      "translation": "다음은 선언된 순서대로 모든 클래스 멤버의 이름 목록을 생성하는 메타클래스의 간단한 예입니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:26:57.828150Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Sample Implementation",
+      "source_hash": 17549150252861382694,
+      "context_hash": 11715335299702429900,
+      "translation": "샘플 구현입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828154Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Guido van Rossum has created a patch which implements the new functionality: https://bugs.python.org/issue1681101",
+      "source_hash": 7117658145502344174,
+      "context_hash": 4916977080780725407,
+      "translation": "Guido van Rossum이 새 기능을 구현하는 패치를 작성했습니다: https://bugs.python.org/issue1681101",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828155Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Alternate Proposals",
+      "source_hash": 3036462553974602989,
+      "context_hash": 6728805794014716015,
+      "translation": "대안 제안입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828155Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Josiah Carlson proposed using the name 'type' instead of 'metaclass', on the theory that what is really being specified is the type of the type.",
+      "source_hash": 9082378107936063486,
+      "context_hash": 7315189222753513514,
+      "translation": "Josiah Carlson은 실제로 지정되는 것은 타입의 타입이라는 이론에 근거하여 '메타클래스' 대신 'type'이라는 이름을 사용할 것을 제안했습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T20:02:13.815588Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "While this is technically correct, it is also confusing from the point of view of a programmer creating a new class.",
+      "source_hash": 9189764469550967780,
+      "context_hash": 17443760216058816954,
+      "translation": "이는 기술적으로는 정확하지만, 새 클래스를 생성하는 프로그래머의 관점에서는 혼란을 일으키기도 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828157Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:2",
+      "source": "From the application programmer's point of view, the 'type' that they are interested in is the class that they are writing; the type of that type is the metaclass.",
+      "source_hash": 4405026180052993507,
+      "context_hash": 7242172631232274595,
+      "translation": "애플리케이션 프로그래머의 관점에서 관심을 두는 'type'은 자신이 작성하는 클래스이며, 그 타입의 타입이 메타클래스입니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:26:57.828157Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "There were some objections in the discussion to the 'two-phase' creation process, where the metaclass is invoked twice, once to create the class dictionary and once to 'finish' the class.",
+      "source_hash": 9092870539459086151,
+      "context_hash": 8663425169808093964,
+      "translation": "메타클래스를 한 번은 클래스 딕셔너리를 생성하기 위해 호출하고, 또 한 번은 클래스를 'finish'하기 위해 호출하는 'two-phase' 생성 프로세스에 대해 논의 중 일부 이의가 있었습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리",
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:26:57.828158Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "Some people felt that these two phases should be completely separate, in that there ought to be separate syntax for specifying the custom dict as for specifying the metaclass.",
+      "source_hash": 240745035996341942,
+      "context_hash": 8282381791465607373,
+      "translation": "일부 사람들은 이 두 단계가 완전히 분리되어야 하며, 사용자 지정 딕셔너리를 지정하는 구문과 메타클래스를 지정하는 구문이 별도로 있어야 한다고 생각했습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:26:57.828159Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:2",
+      "source": "However, in most cases, the two will be intimately tied together, and the metaclass will most likely have an intimate knowledge of the internal details of the class dict.",
+      "source_hash": 16714624248300062603,
+      "context_hash": 16852370630354647429,
+      "translation": "그러나 대부분의 경우 이 둘은 밀접하게 연결되며, 메타클래스는 클래스 딕셔너리의 내부 세부 사항을 매우 잘 알고 있을 가능성이 높습니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:26:57.828160Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:3",
+      "source": "Requiring the programmer to insure that the correct dict type and the correct metaclass type are used together creates an additional and unneeded burden on the programmer.",
+      "source_hash": 8193702866686791064,
+      "context_hash": 1924397785800683371,
+      "translation": "프로그래머에게 올바른 딕셔너리 타입과 올바른 메타클래스 타입을 함께 사용하도록 요구하면, 프로그래머에게 추가적이고 불필요한 부담이 발생합니다.",
+      "glossary_snapshot": {
+        "metaclass": "메타클래스"
+      },
+      "translated_at": "2026-08-28T18:26:57.828161Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Another good suggestion was to simply use an ordered dict for all classes, and skip the whole 'custom dict' mechanism.",
+      "source_hash": 11912161579783857543,
+      "context_hash": 14738137117382057808,
+      "translation": "또 다른 좋은 제안은 모든 클래스에 단순히 순서가 있는 딕셔너리를 사용하고, 전체 'custom dict' 메커니즘을 생략하자는 것이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828162Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "This was based on the observation that most use cases for a custom dict were for the purposes of preserving order information.",
+      "source_hash": 859479785343472272,
+      "context_hash": 5951496032307696603,
+      "translation": "이는 사용자 지정 딕셔너리의 대부분의 용례가 순서 정보를 보존하기 위한 것이라는 관찰에 근거했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828162Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:2",
+      "source": "However, this idea has several drawbacks, first because it means that an ordered dict implementation would have to be added to the set of built-in types in Python, and second because it would impose a slight speed (and complexity) penalty on all class declarations.",
+      "source_hash": 409452671985041026,
+      "context_hash": 12056372963189365199,
+      "translation": "그러나 이 아이디어에는 몇 가지 단점이 있습니다. 첫째, Python의 내장 타입 집합에 순서가 있는 딕셔너리 구현을 추가해야 하며, 둘째, 모든 클래스 선언에 약간의 속도 및 복잡성 비용이 발생하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828162Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:3",
+      "source": "Later, several people came up with ideas for use cases for custom dictionaries other than preserving field orderings, so this idea was dropped.",
+      "source_hash": 10290998558492858350,
+      "context_hash": 16803244955443312879,
+      "translation": "이후 여러 사람이 필드 순서 보존 이외에 사용자 지정 딕셔너리를 사용할 수 있는 용례를 제시했으므로, 이 아이디어는 폐기되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828163Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 14734043688215390849,
+      "translation": "하위 호환성입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828163Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "It would be possible to leave the existing ``__metaclass__`` syntax in place.",
+      "source_hash": 4609991545773613121,
+      "context_hash": 17750929884992783072,
+      "translation": "기존 ``__metaclass__`` 구문을 그대로 유지할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828163Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "Alternatively, it would not be too difficult to modify the syntax rules of the Py3K translation tool to convert from the old to the new syntax.",
+      "source_hash": 6020858429999848098,
+      "context_hash": 1042221008895124758,
+      "translation": "또는 Py3K 변환 도구의 구문 규칙을 수정하여 이전 구문을 새 구문으로 변환하는 것도 그다지 어렵지 않을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828164Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 3333771133282691109,
+      "translation": "참고 문헌입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828164Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "[1] [Python-3000] Metaclasses in Py3K (original proposal) \\   https://mail.python.org/pipermail/python-3000/2006-December/005030.html",
+      "source_hash": 7060997811202722479,
+      "context_hash": 15453113831664162219,
+      "translation": "[1] [Python-3000] Py3K의 메타클래스(원래 제안) \\   https://mail.python.org/pipermail/python-3000/2006-December/005030.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828164Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "[2] [Python-3000] Metaclasses in Py3K (Guido's suggested syntax) \\   https://mail.python.org/pipermail/python-3000/2006-December/005033.html",
+      "source_hash": 8889423007128190863,
+      "context_hash": 15533065409896670348,
+      "translation": "[2] [Python-3000] Py3K의 메타클래스(Guido가 제안한 구문) \\   https://mail.python.org/pipermail/python-3000/2006-December/005033.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828165Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "[3] [Python-3000] Metaclasses in Py3K (Objections to two-phase init) \\   https://mail.python.org/pipermail/python-3000/2006-December/005108.html",
+      "source_hash": 265458839472566956,
+      "context_hash": 8842100516533648751,
+      "translation": "[3] [Python-3000] Py3K의 메타클래스(2단계 초기화에 대한 이의) \\   https://mail.python.org/pipermail/python-3000/2006-December/005108.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828165Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "[4] [Python-3000] Metaclasses in Py3K (Always use an ordered dict) \\   https://mail.python.org/pipermail/python-3000/2006-December/005118.html",
+      "source_hash": 301749705909050886,
+      "context_hash": 4004491796671278345,
+      "translation": "[4] [Python-3000] Py3K의 메타클래스(항상 순서가 있는 딕셔너리 사용) \\   https://mail.python.org/pipermail/python-3000/2006-December/005118.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:26:57.828166Z",
+      "issues": []
+    }
+  ]
+}

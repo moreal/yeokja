@@ -1,0 +1,1964 @@
+{
+  "version": 1,
+  "source_hash": 10038089352739583079,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "tomllib: Support for Parsing TOML in the Standard Library",
+      "source_hash": 2240378199565879714,
+      "context_hash": 16530898886277989957,
+      "translation": "표준 라이브러리에서 TOML 구문 분석을 지원하는 tomllib",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:41.356558Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 17302749015331604159,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356561Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes adding the ``tomllib`` module to the standard library for parsing TOML (Tom's Obvious Minimal Language, `https://toml.io <https://toml.io/en/>`_).",
+      "source_hash": 4057089012384511189,
+      "context_hash": 214227753139738897,
+      "translation": "이 PEP에서는 TOML(Tom's Obvious Minimal Language, `https://toml.io <https://toml.io/en/>`_)을 구문 분석하기 위해 표준 라이브러리에 ``tomllib`` 모듈을 추가할 것을 제안합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:41.356562Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 8538048815349494912,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356562Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "TOML is the format of choice for Python packaging, as evidenced by :pep:`517`, :pep:`518` and :pep:`621`.",
+      "source_hash": 4974346560592244329,
+      "context_hash": 15007410049162886044,
+      "translation": "TOML은 Python 패키징에서 선택되는 형식이며, :pep:`517`, :pep:`518` 및 :pep:`621`\\ 에서 입증됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:53:13.471774Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "This creates a bootstrapping problem for Python build tools, forcing them to vendor a TOML parsing package or employ other undesirable workarounds, and causes serious issues for repackagers and other downstream consumers.",
+      "source_hash": 9300550792050618553,
+      "context_hash": 14378786401712821000,
+      "translation": "이로 인해 Python 빌드 도구에는 부트스트래핑 문제가 발생하여 TOML 구문 분석 패키지를 벤더링하거나 바람직하지 않은 다른 우회 방법을 사용해야 하며, 패키지를 다시 만드는 사람과 기타 다운스트림 사용자에게 심각한 문제가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356563Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "Including TOML support in the standard library would neatly solve all of these issues.",
+      "source_hash": 10541883139919501235,
+      "context_hash": 4324402799704665040,
+      "translation": "표준 라이브러리에 TOML 지원을 포함하면 이러한 모든 문제가 깔끔하게 해결됩니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:41.356563Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Further, many Python tools are now configurable via TOML, such as ``black``, ``mypy``, ``pytest``, ``tox``, ``pylint`` and ``isort``.",
+      "source_hash": 10941154547759923977,
+      "context_hash": 1079079421288996936,
+      "translation": "또한 현재 많은 Python 도구를 TOML을 통해 구성할 수 있으며, ``black``, ``mypy``, ``pytest``, ``tox``, ``pylint`` 및 ``isort`` 등이 그 예입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356564Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "Many that are not, such as ``flake8``, cite the lack of standard library support as a `main reason why <https://github.com/PyCQA/flake8/issues/234#issuecomment-812800722>`__.",
+      "source_hash": 8111182859202661222,
+      "context_hash": 975891106562791244,
+      "translation": "``flake8``\\ 과 같이 그렇지 않은 많은 도구는 표준 라이브러리 지원의 부재를 `주된 이유 <https://github.com/PyCQA/flake8/issues/234#issuecomment-812800722>`__\\ 로 언급합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:41.356564Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "Given the special place TOML already has in the Python ecosystem, it makes sense for it to be an included battery.",
+      "source_hash": 4324706341772486659,
+      "context_hash": 14640963676505180125,
+      "translation": "Python 생태계에서 TOML이 이미 특별한 위치를 차지하고 있다는 점을 고려하면, 이를 기본 포함 구성 요소로 제공하는 것이 타당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356565Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Finally, TOML as a format is increasingly popular (for the reasons outlined in :pep:`518`), with various Python TOML libraries having about 2000 reverse dependencies on PyPI (for comparison, ``requests`` has about 28000 reverse dependencies).",
+      "source_hash": 8115633469262342945,
+      "context_hash": 11629597338189690297,
+      "translation": "마지막으로 TOML은 형식으로서 점점 더 인기를 얻고 있으며(:pep:`518`\\ 에 설명된 이유 때문입니다), PyPI에서 다양한 Python TOML 라이브러리가 약 2,000개의 역방향 의존성을 보유하고 있습니다(비교를 위해 ``requests``\\ 는 약 28,000개의 역방향 의존성을 보유합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356565Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "Hence, this is likely to be a generally useful addition, even looking beyond the needs of Python packaging and related tools.",
+      "source_hash": 6117887895341327265,
+      "context_hash": 5736485690179896910,
+      "translation": "따라서 Python 패키징과 관련 도구의 필요성을 넘어 보더라도 이는 일반적으로 유용한 추가 기능이 될 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356565Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 12849053589118935646,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356565Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "This PEP proposes basing the standard library support for reading TOML on the third-party library ``tomli`` (`github.com/hukkin/tomli <https://github.com/hukkin/tomli>`_).",
+      "source_hash": 3317622710965217152,
+      "context_hash": 13812907311796256454,
+      "translation": "이 PEP에서는 TOML 읽기를 위한 표준 라이브러리 지원을 서드파티 라이브러리 ``tomli``\\ (`github.com/hukkin/tomli <https://github.com/hukkin/tomli>`_)를 기반으로 구현할 것을 제안합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:41.356566Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Many projects have recently switched to using ``tomli``, such as ``pip``, ``build``, ``pytest``, ``mypy``, ``black``, ``flit``, ``coverage``, ``setuptools-scm`` and ``cibuildwheel``.",
+      "source_hash": 5926544259054252422,
+      "context_hash": 7102068815490284568,
+      "translation": "최근 ``pip``, ``build``, ``pytest``, ``mypy``, ``black``, ``flit``, ``coverage``, ``setuptools-scm`` 및 ``cibuildwheel`` 등 많은 프로젝트가 ``tomli`` 사용으로 전환했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356566Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "``tomli`` is actively maintained and well-tested.",
+      "source_hash": 7958360219856904411,
+      "context_hash": 2635210234664062912,
+      "translation": "``tomli``\\ 는 활발하게 유지 관리되고 있으며 충분히 테스트되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356566Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "It is about 800 lines of code with 100% test coverage, and passes all tests in the `proposed official TOML compliance test suite <https://github.com/toml-lang/compliance/pull/8>`_, as well as `the more established BurntSushi/toml-test suite <https://github.com/BurntSushi/toml-test>`_.",
+      "source_hash": 2124474932879965819,
+      "context_hash": 10678851606487425152,
+      "translation": "약 800줄의 코드로 구성되고 테스트 커버리지가 100%이며, `proposed official TOML compliance test suite <https://github.com/toml-lang/compliance/pull/8>`_\\ 와 더 확립된 `the more established BurntSushi/toml-test suite <https://github.com/BurntSushi/toml-test>`_\\ 의 모든 테스트를 통과합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:53:13.471778Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 17312833526217671224,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356567Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "A new module ``tomllib`` will be added to the Python standard library, exposing the following public functions:",
+      "source_hash": 568663748205916623,
+      "context_hash": 4232176065486127748,
+      "translation": "Python 표준 라이브러리에 새 ``tomllib`` 모듈이 추가되며, 다음과 같은 공개 함수를 제공합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:41.356567Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "``tomllib.load`` deserializes a binary file-like object containing a TOML document to a Python ``dict``.",
+      "source_hash": 10761051116727441840,
+      "context_hash": 3716444646963037991,
+      "translation": "``tomllib.load``\\ 는 TOML 문서를 포함하는 바이너리 파일과 유사한 객체를 Python ``dict``\\ 로 역직렬화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356568Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "The ``fp`` argument must have a ``read()`` method with the same API as ``io.RawIOBase.read()``.",
+      "source_hash": 12540936702143701052,
+      "context_hash": 13414050190012913152,
+      "translation": "``fp`` 인자는 ``io.RawIOBase.read()``\\ 와 동일한 API를 갖는 ``read()`` 메서드를 가져야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356568Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "``tomllib.loads`` deserializes a ``str`` instance containing a TOML document to a Python ``dict``.",
+      "source_hash": 181147056978241901,
+      "context_hash": 4690787623083544501,
+      "translation": "``tomllib.loads``\\ 는 TOML 문서를 포함하는 ``str`` 인스턴스를 Python ``dict``\\ 로 역직렬화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356568Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "The ``parse_float`` argument is a callable object that takes as input the original string representation of a TOML float, and returns a corresponding Python object (similar to ``parse_float`` in ``json.load``).",
+      "source_hash": 12036122861330488679,
+      "context_hash": 1626739448970132710,
+      "translation": "``parse_float`` 인자는 TOML 부동 소수점의 원래 문자열 표현을 입력으로 받아 그에 대응하는 Python 객체를 반환하는 호출 가능 객체입니다(``json.load``\\ 의 ``parse_float``\\ 와 유사합니다).",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T18:13:41.356568Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:1",
+      "source": "For example, the user may pass a function returning a ``decimal.Decimal``, for use cases where exact precision is important.",
+      "source_hash": 4898324238093440844,
+      "context_hash": 14603988362933082192,
+      "translation": "예를 들어 정확한 정밀도가 중요한 사용 사례에서는 사용자가 ``decimal.Decimal``\\ 을 반환하는 함수를 전달할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356569Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:2",
+      "source": "By default, TOML floats are parsed as instances of the Python ``float`` type.",
+      "source_hash": 13826850300919291273,
+      "context_hash": 8601597493876557094,
+      "translation": "기본적으로 TOML 부동 소수점은 Python ``float`` 유형의 인스턴스로 구문 분석됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356569Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "The returned object contains only basic Python objects (``str``, ``int``, ``bool``, ``float``, ``datetime.{datetime,date,time}``, ``list``, ``dict`` with string keys), and the results of ``parse_float``.",
+      "source_hash": 18040863263983633046,
+      "context_hash": 11344381847242139316,
+      "translation": "반환되는 객체에는 기본 Python 객체(``str``, ``int``, ``bool``, ``float``, ``datetime.{datetime,date,time}``, ``list``, 문자열 키를 사용하는 ``dict``)와 ``parse_float``\\ 의 결과만 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356569Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "``tomllib.TOMLDecodeError`` is raised in the case of invalid TOML.",
+      "source_hash": 14880255686188763330,
+      "context_hash": 6776893421873167456,
+      "translation": "TOML이 유효하지 않은 경우 ``tomllib.TOMLDecodeError``\\ 가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356569Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "Note that this PEP does not propose ``tomllib.dump`` or ``tomllib.dumps`` functions; see `Including an API for writing TOML`_ for details.",
+      "source_hash": 2141001592805241465,
+      "context_hash": 15608297414178894054,
+      "translation": "이 PEP는 ``tomllib.dump``\\ 나 ``tomllib.dumps``\\ 함수를 제안하지 않는다는 점에 유의하십시오. 자세한 내용은 `Including an API for writing TOML`_\\ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:53:13.471779Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Maintenance Implications",
+      "source_hash": 8163209345826370981,
+      "context_hash": 18136374285420026662,
+      "translation": "유지 관리 관련 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356570Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Stability of TOML",
+      "source_hash": 14916260015408351354,
+      "context_hash": 3838460880977308427,
+      "translation": "TOML의 안정성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.356570Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The release of TOML 1.0.0 in January 2021 indicates the TOML format should now be officially considered stable.",
+      "source_hash": 17742894675540452366,
+      "context_hash": 7184013222097436402,
+      "translation": "2021년 1월 TOML 1.0.0이 출시되었다는 사실은 이제 TOML 형식을 공식적으로 안정된 형식으로 간주해야 함을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558601Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "Empirically, TOML has proven to be a stable format even prior to the release of TOML 1.0.0.",
+      "source_hash": 4323100400174321977,
+      "context_hash": 4933308776398162945,
+      "translation": "경험적으로 TOML은 TOML 1.0.0이 출시되기 전부터 안정된 형식임이 입증되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558605Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:2",
+      "source": "From the `changelog <https://github.com/toml-lang/toml/blob/master/CHANGELOG.md>`__, we can see that TOML has had no major changes since April 2020, and has had two releases in the past five years (2017-2021).",
+      "source_hash": 1042955216668720457,
+      "context_hash": 4883613721611601674,
+      "translation": "`changelog <https://github.com/toml-lang/toml/blob/master/CHANGELOG.md>`__\\ 에서 TOML에 2020년 4월 이후 주요 변경 사항이 없었으며, 지난 5년(2017~2021년) 동안 두 차례 출시되었음을 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558605Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "In the event of changes to the TOML specification, we can treat minor revisions as bug fixes and update the implementation in place.",
+      "source_hash": 8165043535105445501,
+      "context_hash": 4507166444287776205,
+      "translation": "TOML 사양이 변경되는 경우, 사소한 개정은 버그 수정으로 간주하고 구현을 해당 위치에서 업데이트할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558605Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "In the event of major breaking changes, we should preserve support for TOML 1.x.",
+      "source_hash": 5999877222545119167,
+      "context_hash": 6610217948884707257,
+      "translation": "호환성을 깨뜨리는 중대한 변경이 발생하는 경우에는 TOML 1.x에 대한 지원을 유지해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558606Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Maintainability of proposed implementation",
+      "source_hash": 7984792769910857138,
+      "context_hash": 1631522652947295781,
+      "translation": "제안된 구현의 유지 관리성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558606Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The proposed implementation (``tomli``) is pure Python, well tested and weighs in at under 1000 lines of code.",
+      "source_hash": 17931353530877256094,
+      "context_hash": 18153708815929929247,
+      "translation": "제안된 구현(``tomli``)은 순수 Python으로 작성되었고 충분히 테스트되었으며, 코드가 1000줄 미만입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558607Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "It is minimalist, offering a smaller API surface area than other TOML implementations.",
+      "source_hash": 5613464245293638285,
+      "context_hash": 2804247264487207953,
+      "translation": "또한 미니멀리즘을 지향하여 다른 TOML 구현보다 작은 API 표면적을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558607Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "The author of ``tomli`` is willing to help integrate ``tomli`` into the standard library and help maintain it, `as per this post <https://github.com/hukkin/tomli/issues/141#issuecomment-998018972>`__.",
+      "source_hash": 15664882125874554697,
+      "context_hash": 12646952837759503637,
+      "translation": "``tomli``\\ 의 작성자는 표준 라이브러리에 ``tomli``\\ 를 통합하고 유지 관리하는 데 기꺼이 협력할 의사가 있으며, `이 게시물 <https://github.com/hukkin/tomli/issues/141#issuecomment-998018972>`__\\ 에서 밝힌 바와 같습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:41.558607Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "Furthermore, Python core developer Petr Viktorin has indicated a willingness to maintain a read API, `as per this post <https://discuss.python.org/t/adopting-recommending-a-toml-parser/4068/88>`__.",
+      "source_hash": 8568970485308015328,
+      "context_hash": 17427381267794254166,
+      "translation": "또한 Python 핵심 개발자인 Petr Viktorin은 읽기 API를 유지 관리할 의향이 있음을 `이 게시물 <https://discuss.python.org/t/adopting-recommending-a-toml-parser/4068/88>`__\\ 에서 밝혔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558608Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Rewriting the parser in C is not deemed necessary at this time.",
+      "source_hash": 12718615983220904295,
+      "context_hash": 6446648213475121855,
+      "translation": "현재로서는 파서를 C로 다시 작성할 필요가 없다고 판단됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558608Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "It is rare for TOML parsing to be a bottleneck in applications, and users with higher performance needs can use a third-party library (as is already often the case with JSON, despite Python offering a standard library C-extension module).",
+      "source_hash": 14835861386216310554,
+      "context_hash": 7198981919449113661,
+      "translation": "애플리케이션에서 TOML 파싱이 병목이 되는 경우는 드물며, 더 높은 성능이 필요한 사용자는 서드파티 라이브러리를 사용할 수 있습니다(JSON에서도 Python이 표준 라이브러리 C 확장 모듈을 제공함에도 이미 흔히 그러한 방식이 사용됩니다).",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:41.558609Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "TOML support a slippery slope for other things",
+      "source_hash": 12382218192839916219,
+      "context_hash": 6749323835099596076,
+      "translation": "TOML 지원은 다른 항목으로 이어지는 미끄러운 경사입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558609Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "As discussed in the `Motivation`_ section, TOML holds a special place in the Python ecosystem, for reading :pep:`518` ``pyproject.toml`` packaging and tool configuration files.",
+      "source_hash": 14344475888567766730,
+      "context_hash": 14736790429532874828,
+      "translation": "`Motivation`_ 섹션에서 논의한 것처럼 TOML은 :pep:`518` ``pyproject.toml`` 패키징 및 도구 구성 파일을 읽기 위해 Python 생태계에서 특별한 위치를 차지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558610Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "This chief reason to include TOML in the standard library does not apply to other formats, such as YAML or MessagePack.",
+      "source_hash": 6113966469598333846,
+      "context_hash": 4649350654628471245,
+      "translation": "TOML을 표준 라이브러리에 포함해야 하는 이 핵심 이유는 YAML이나 MessagePack과 같은 다른 형식에는 적용되지 않습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:41.558610Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "In addition, the simplicity of TOML distinguishes it from other formats like YAML, which are highly complicated to construct and parse.",
+      "source_hash": 3575553733796402713,
+      "context_hash": 5338398477282681931,
+      "translation": "또한 TOML의 단순성은 TOML을 구성하고 파싱하기가 매우 복잡한 YAML과 같은 다른 형식과 구별합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558611Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "An API for writing TOML may, however, be added in a future PEP.",
+      "source_hash": 8948801427769099247,
+      "context_hash": 15138956385413740200,
+      "translation": "그러나 향후 PEP에서 TOML을 작성하기 위한 API가 추가될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558611Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 17840064740409242449,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558611Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "This proposal has no backwards compatibility issues within the standard library, as it describes a new module.",
+      "source_hash": 5708298807437206707,
+      "context_hash": 13383848409343724429,
+      "translation": "이 제안은 새로운 모듈을 설명하므로 표준 라이브러리 내에서 하위 호환성 문제가 없습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:41.558611Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "Any existing third-party module named ``tomllib`` will break, as ``import tomllib`` will import the standard library module.",
+      "source_hash": 5064670217591670817,
+      "context_hash": 8025335651278341891,
+      "translation": "``tomllib``\\ 라는 이름의 기존 서드파티 모듈은 ``import tomllib``\\ 가 표준 라이브러리 모듈을 가져오게 되므로 작동하지 않게 됩니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:41.558612Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "However, ``tomllib`` is not registered on PyPI, so it is unlikely that any module with this name is widely used.",
+      "source_hash": 3734330431037514390,
+      "context_hash": 15551393728610835731,
+      "translation": "그러나 ``tomllib``\\ 은 PyPI에 등록되어 있지 않으므로 이 이름의 모듈이 널리 사용되고 있을 가능성은 낮습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558612Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "Note that we avoid using the more straightforward name ``toml`` to avoid backwards compatibility implications for users who have pinned versions of the current ``toml`` PyPI package.",
+      "source_hash": 6512414448035652316,
+      "context_hash": 11991941012804308973,
+      "translation": "현재 ``toml`` PyPI 패키지의 버전을 고정한 사용자에게 하위 호환성 문제가 발생하는 것을 피하기 위해, 더 직관적인 이름인 ``toml``\\ 을 사용하지 않는다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558613Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "For more details, see the `Alternative names for the module`_ section.",
+      "source_hash": 10925376040693574780,
+      "context_hash": 1266033472687431269,
+      "translation": "자세한 내용은 `Alternative names for the module`_ 섹션을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:53:13.471780Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 6828516428322446337,
+      "translation": "보안 관련 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558614Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Errors in the implementation could cause potential security issues.",
+      "source_hash": 14303507181639106100,
+      "context_hash": 14169886995309584435,
+      "translation": "구현의 오류로 인해 잠재적인 보안 문제가 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558614Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "However, the parser's output is limited to simple data types; inability to load arbitrary classes avoids security issues common in more \"powerful\" formats like pickle and YAML.",
+      "source_hash": 9400072035246605509,
+      "context_hash": 1681484808651104943,
+      "translation": "그러나 파서의 출력은 단순한 데이터 형식으로 제한되며, 임의의 클래스를 로드할 수 없으므로 pickle 및 YAML과 같이 더욱 “강력한” 형식에서 흔히 발생하는 보안 문제를 방지할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558614Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "Also, the implementation will be in pure Python, which reduces security issues endemic to C, such as buffer overflows.",
+      "source_hash": 13658783323129430815,
+      "context_hash": 673009515279260894,
+      "translation": "또한 구현은 순수 Python으로 작성되므로 버퍼 오버플로와 같이 C에 고유한 보안 문제를 줄일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558615Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 11173595750124665876,
+      "translation": "이 내용을 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558615Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "The API of ``tomllib`` mimics that of other well-established file format libraries, such as ``json`` and ``pickle``.",
+      "source_hash": 5311358355224896308,
+      "context_hash": 5228640926610616872,
+      "translation": "``tomllib``\\ 의 API는 ``json`` 및 ``pickle``\\ 과 같은, 확립된 다른 파일 형식 라이브러리의 API를 모방합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558615Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "The lack of a ``dump`` function will be explained in the documentation, with a link to relevant third-party libraries (e.g. ``tomlkit``, ``tomli-w``, ``pytomlpp``).",
+      "source_hash": 1336114206350289913,
+      "context_hash": 1993402321058281980,
+      "translation": "``dump`` 함수가 없는 이유는 관련 서드파티 라이브러리(예: ``tomlkit``, ``tomli-w``, ``pytomlpp``)로 연결되는 링크와 함께 문서에서 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558616Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 11012398530206956824,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:13:41.558616Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "The proposed implementation can be found at https://github.com/hukkin/tomli",
+      "source_hash": 16168209259610982030,
+      "context_hash": 683053942396023572,
+      "translation": "제안된 구현은 https://github.com/hukkin/tomli 에서 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:41.558617Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 4862739069696367413,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926071Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Basing on another TOML implementation",
+      "source_hash": 11831632181815290486,
+      "context_hash": 14833529479182919697,
+      "translation": "다른 TOML 구현을 기반으로 하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926074Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Several potential alternative implementations exist:",
+      "source_hash": 4413395199354936399,
+      "context_hash": 8203882762757075713,
+      "translation": "몇 가지 잠재적인 대체 구현이 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926074Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "``tomlkit`` is well established, actively maintained and supports TOML 1.0.0.",
+      "source_hash": 8249410025766711961,
+      "context_hash": 4408207152196680839,
+      "translation": "``tomlkit``\\ 은 잘 정립되어 활발하게 유지 관리되고 있으며 TOML 1.0.0을 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926075Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:1",
+      "source": "An important difference is that ``tomlkit`` supports style roundtripping.",
+      "source_hash": 3667828603633283270,
+      "context_hash": 11020519887470896260,
+      "translation": "중요한 차이점은 ``tomlkit``\\ 이 스타일 왕복을 지원한다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926075Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:2",
+      "source": "As a result, it has a more complex API and implementation (about 5x as much code as ``tomli``).",
+      "source_hash": 551999330967845395,
+      "context_hash": 16194245077415508187,
+      "translation": "그 결과 API와 구현이 더 복잡하며 (``tomli``\\ 보다 코드가 약 5배 많습니다)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926075Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:3",
+      "source": "Its author does not believe that ``tomlkit`` is a good choice for the standard library.",
+      "source_hash": 5401873870500407590,
+      "context_hash": 13497376014197415657,
+      "translation": "``tomlkit``\\ 의 작성자는 이것이 표준 라이브러리에 적합한 선택이라고 생각하지 않습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:47.926076Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "``toml`` is a very widely used library.",
+      "source_hash": 3306404095140057534,
+      "context_hash": 1346541277019671768,
+      "translation": "``toml``\\ 은 매우 널리 사용되는 라이브러리입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926077Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:1",
+      "source": "However, it is not actively maintained, does not support TOML 1.0.0 and has a number of known bugs.",
+      "source_hash": 1106462500098635448,
+      "context_hash": 15322842976179803643,
+      "translation": "그러나 활발하게 유지 관리되지 않고 TOML 1.0.0을 지원하지 않으며 알려진 버그도 여러 개 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926077Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:2",
+      "source": "Its API is more complex than that of ``tomli``.",
+      "source_hash": 17812483198629182030,
+      "context_hash": 6611756044930687645,
+      "translation": "해당 API는 ``tomli``\\ 의 API보다 더 복잡합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926078Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:3",
+      "source": "It allows customising output style through a complicated encoder API, and some very limited and mostly unused functionality to preserve input style through an undocumented decoder API.",
+      "source_hash": 10670411812009311662,
+      "context_hash": 4617784415181962009,
+      "translation": "복잡한 인코더 API를 통해 출력 스타일을 사용자 지정할 수 있으며, 문서화되지 않은 디코더 API를 통해 입력 스타일을 보존하는 매우 제한적이고 대부분 사용되지 않는 기능도 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926078Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:4",
+      "source": "For more details on its API differences from this PEP, refer to `Appendix A <PEP 680 Appendix A_>`_.",
+      "source_hash": 8112438655064394716,
+      "context_hash": 6253420491964038551,
+      "translation": "이 PEP와의 API 차이에 대한 자세한 내용은 `Appendix A <PEP 680 Appendix A_>`_ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926078Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "``pytomlpp`` is a Python wrapper for the C++ project ``toml++``.",
+      "source_hash": 10698638368727667288,
+      "context_hash": 15468185262861645330,
+      "translation": "``pytomlpp``\\ 는 C++ 프로젝트 ``toml++``\\ 를 위한 Python 래퍼입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926078Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:1",
+      "source": "Pure Python libraries are easier to maintain than extension modules.",
+      "source_hash": 9307836553941287650,
+      "context_hash": 15443499524539031892,
+      "translation": "순수 Python 라이브러리는 확장 모듈보다 유지 관리하기 쉽습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926079Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:0",
+      "source": "``rtoml`` is a Python wrapper for the Rust project ``toml-rs`` and hence has similar shortcomings to ``pytomlpp``.",
+      "source_hash": 18313028356548816428,
+      "context_hash": 14763485687137021125,
+      "translation": "``rtoml``\\ 은 Rust 프로젝트 ``toml-rs``\\ 를 위한 Python 래퍼이므로 ``pytomlpp``\\ 와 유사한 단점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926079Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:1",
+      "source": "In addition, it does not support TOML 1.0.0.",
+      "source_hash": 13379697323419412439,
+      "context_hash": 13114974858526791414,
+      "translation": "또한 TOML 1.0.0을 지원하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926079Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:0",
+      "source": "Writing an implementation from scratch.",
+      "source_hash": 17432307756663539834,
+      "context_hash": 12703936389957658220,
+      "translation": "처음부터 구현 작성하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926079Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:1",
+      "source": "It's unclear what we would get from this; ``tomli`` meets our needs and the author is willing to help with its inclusion in the standard library.",
+      "source_hash": 1465029826253655555,
+      "context_hash": 7828431656936449401,
+      "translation": "이를 통해 무엇을 얻게 될지는 불분명합니다. ``tomli``\\ 는 우리의 요구를 충족하며 작성자는 이를 표준 라이브러리에 포함하는 일을 기꺼이 돕고자 합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:47.926080Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Including an API for writing TOML",
+      "source_hash": 16915653091901240807,
+      "context_hash": 12754589070327320948,
+      "translation": "TOML 작성을 위한 API 포함하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926080Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "There are several reasons to not include an API for writing TOML.",
+      "source_hash": 6093300392378864346,
+      "context_hash": 7977577451051558526,
+      "translation": "TOML 작성을 위한 API를 포함하지 않을 이유가 몇 가지 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926081Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "The ability to write TOML is not needed for the use cases that motivate this PEP: core Python packaging tools, and projects that need to read TOML configuration files.",
+      "source_hash": 1937466243519009923,
+      "context_hash": 13448028351665488521,
+      "translation": "TOML을 작성하는 기능은 이 PEP의 동기가 된 사용 사례, 즉 핵심 Python 패키징 도구와 TOML 구성 파일을 읽어야 하는 프로젝트에 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926081Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "Use cases that involve editing an existing TOML file (as opposed to writing a brand new one) are better served by a style preserving library.",
+      "source_hash": 8330985340091694274,
+      "context_hash": 3737134466868045487,
+      "translation": "기존 TOML 파일을 편집하는 사용 사례는 (새 파일을 처음부터 작성하는 것과 달리) 스타일을 보존하는 라이브러리를 사용하는 편이 더 적합합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926081Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:1",
+      "source": "TOML is intended as a human-readable and -editable configuration format, so it's important to preserve comments, formatting and other markup.",
+      "source_hash": 16585805730714422624,
+      "context_hash": 13532051345993316601,
+      "translation": "TOML은 사람이 읽고 편집할 수 있는 구성 형식이므로 주석, 서식 및 기타 마크업을 보존하는 것이 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926082Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:2",
+      "source": "This requires a parser whose output includes style-related metadata, making it impractical to output plain Python types like ``str`` and ``dict``.",
+      "source_hash": 18051744917467130696,
+      "context_hash": 8930880988966490504,
+      "translation": "이를 위해서는 출력에 스타일 관련 메타데이터가 포함되는 파서가 필요하므로 ``str``\\ 및 ``dict``\\ 같은 일반 Python 타입을 출력하기가 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926082Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:3",
+      "source": "Furthermore, it substantially complicates the design of the API.",
+      "source_hash": 11607756628460755219,
+      "context_hash": 8021429029205177601,
+      "translation": "또한 API 설계가 상당히 복잡해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926082Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "Even without considering style preservation, there are too many degrees of freedom in how to design a write API.",
+      "source_hash": 7165338520267372012,
+      "context_hash": 15043031122270767728,
+      "translation": "스타일 보존을 고려하지 않더라도 쓰기 API를 설계하는 방법에는 선택의 여지가 너무 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926082Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:1",
+      "source": "For example, what default style (indentation, vertical and horizontal spacing, quotes, etc) should the library use for the output, and how much control should users be given over it?",
+      "source_hash": 13554167210893091268,
+      "context_hash": 10100398498187858234,
+      "translation": "예를 들어 라이브러리는 출력에 어떤 기본 스타일(들여쓰기, 세로 및 가로 간격, 따옴표 등)을 사용해야 하며, 사용자에게 이에 대해 어느 정도의 제어 권한을 부여해야 합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926083Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:2",
+      "source": "How should the library handle input and output validation?",
+      "source_hash": 14749894954720528662,
+      "context_hash": 17899615392072288301,
+      "translation": "라이브러리는 입력 및 출력 검증을 어떻게 처리해야 합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926083Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:3",
+      "source": "Should it support serialization of custom types, and if so, how?",
+      "source_hash": 14000111992660850026,
+      "context_hash": 3159599732776905414,
+      "translation": "사용자 지정 타입의 직렬화를 지원해야 한다면, 어떻게 지원해야 합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926083Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:4",
+      "source": "While there are reasonable options for resolving these issues, the nature of the standard library is such that we only get \"one chance to get it right\".",
+      "source_hash": 11702699867560987639,
+      "context_hash": 4149303319411657422,
+      "translation": "이러한 문제를 해결할 합리적인 선택지는 있지만, 표준 라이브러리의 특성상 “제대로 해낼 기회는 단 한 번”뿐입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:47.926083Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:0",
+      "source": "Currently, no CPython core developers have expressed willingness to maintain a write API, or sponsor a PEP that includes one.",
+      "source_hash": 15608585728819952795,
+      "context_hash": 3028723434006641629,
+      "translation": "현재 어떤 CPython 핵심 개발자도 쓰기 API를 유지 관리하거나 이를 포함하는 PEP를 후원하겠다는 의사를 표명하지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.926084Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:1",
+      "source": "Since it is hard to change or remove something in the standard library, it is safer to err on the side of exclusion for now, and potentially revisit this later.",
+      "source_hash": 8149659475061553569,
+      "context_hash": 16897783878501600701,
+      "translation": "표준 라이브러리의 무언가를 변경하거나 제거하기는 어려우므로, 지금은 일단 제외하는 쪽으로 신중하게 판단하고 나중에 이를 다시 검토하는 편이 더 안전합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:47.926084Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:6/seg:0",
+      "source": "Therefore, writing TOML is left to third-party libraries.",
+      "source_hash": 2424425184825058818,
+      "context_hash": 7125713350238536753,
+      "translation": "따라서 TOML 작성은 서드파티 라이브러리에 맡깁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448110Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:6/seg:1",
+      "source": "If a good API and relevant use cases for it are found later, write support can be added in a future PEP.",
+      "source_hash": 6261766866976470975,
+      "context_hash": 14945651515814799517,
+      "translation": "나중에 적절한 API와 관련 사용 사례가 발견되면 향후 PEP에서 작성 지원을 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448112Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Assorted API details",
+      "source_hash": 11782318930956061391,
+      "context_hash": 2064904531758437523,
+      "translation": "여러 API 세부 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448113Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "Types accepted as the first argument of ``tomllib.load``",
+      "source_hash": 15098132485937802352,
+      "context_hash": 17342963863015320145,
+      "translation": "``tomllib.load``\\ 의 첫 번째 인자로 허용되는 타입",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448113Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "The ``toml`` library on PyPI allows passing paths (and lists of path-like objects, ignoring missing files and merging the documents into a single object) to its ``load`` function.",
+      "source_hash": 15052010525769683191,
+      "context_hash": 6397582110649402031,
+      "translation": "PyPI의 ``toml`` 라이브러리는 경로(및 경로와 유사한 객체의 목록을 전달할 수 있으며, 존재하지 않는 파일은 무시하고 문서를 하나의 객체로 병합함)를 ``load`` 함수에 전달할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448113Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:1",
+      "source": "However, allowing this here would be inconsistent with the behavior of ``json.load``, ``pickle.load`` and other standard library functions.",
+      "source_hash": 11651698106775179883,
+      "context_hash": 10112419347758384709,
+      "translation": "그러나 여기에서 이를 허용하면 ``json.load``, ``pickle.load`` 및 기타 표준 라이브러리 함수의 동작과 일관되지 않습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:14:04.448113Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:2",
+      "source": "If we agree that consistency here is desirable, allowing paths is out of scope for this PEP.",
+      "source_hash": 7882639611259745015,
+      "context_hash": 18064480567758000332,
+      "translation": "이 점에서 일관성이 바람직하다는 데 동의한다면, 경로 허용은 이 PEP의 범위를 벗어납니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448114Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:3",
+      "source": "This can easily and explicitly be worked around in user code, or by using a third-party library.",
+      "source_hash": 14376266164004347723,
+      "context_hash": 13718204768269338351,
+      "translation": "사용자 코드에서 또는 서드파티 라이브러리를 사용하여 이를 쉽고 명시적으로 우회할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448114Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "The proposed API takes a binary file, while ``toml.load`` takes a text file and ``json.load`` takes either.",
+      "source_hash": 15957424189631832673,
+      "context_hash": 6694143388906516885,
+      "translation": "제안된 API는 바이너리 파일을 받는 반면, ``toml.load``\\ 는 텍스트 파일을 받고 ``json.load``\\ 는 둘 중 하나를 받습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448114Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:1",
+      "source": "Using a binary file allows us to ensure UTF-8 is the encoding used (ensuring correct parsing on platforms with other default encodings, such as Windows), and avoid incorrectly parsing files containing single carriage returns as valid TOML due to universal newlines in text mode.",
+      "source_hash": 9035392658890625121,
+      "context_hash": 15281454144074647998,
+      "translation": "바이너리 파일을 사용하면 UTF-8이 사용되는 인코딩임을 보장하고(Windows와 같이 기본 인코딩이 다른 플랫폼에서 올바르게 구문 분석되도록 보장함), 텍스트 모드의 범용 줄바꿈으로 인해 단일 캐리지 리턴을 포함하는 파일을 유효한 TOML로 잘못 구문 분석하는 일을 방지할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448115Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:4/seg:0",
+      "source": "Type accepted as the first argument of ``tomllib.loads``",
+      "source_hash": 4299826485827141731,
+      "context_hash": 14215469123815657767,
+      "translation": "``tomllib.loads``\\ 의 첫 번째 인자로 허용되는 타입",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448115Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:0",
+      "source": "While ``tomllib.load`` takes a binary file, ``tomllib.loads`` takes a text string.",
+      "source_hash": 3975360015037218282,
+      "context_hash": 8554470757068182395,
+      "translation": "``tomllib.load``\\ 는 바이너리 파일을 받는 반면, ``tomllib.loads``\\ 는 텍스트 문자열을 받습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448115Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:1",
+      "source": "This may seem inconsistent at first.",
+      "source_hash": 6927768433893740006,
+      "context_hash": 17162884754558569093,
+      "translation": "처음에는 이것이 일관되지 않아 보일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448115Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:6/seg:0",
+      "source": "Quoting the `TOML v1.0.0 specification <https://toml.io/en/v1.0.0#spec>`_:",
+      "source_hash": 5978680666721171075,
+      "context_hash": 11592366209470658449,
+      "translation": "`TOML v1.0.0 specification <https://toml.io/en/v1.0.0#spec>`_\\ 에서 인용하면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448116Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:7/seg:0",
+      "source": "A TOML file must be a valid UTF-8 encoded Unicode document.",
+      "source_hash": 9051281357248085252,
+      "context_hash": 16391138245543614252,
+      "translation": "TOML 파일은 유효한 UTF-8로 인코딩된 유니코드 문서여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448116Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:8/seg:0",
+      "source": "``tomllib.loads`` does not intend to load a TOML file, but rather the document that the file stores.",
+      "source_hash": 5351800480366570176,
+      "context_hash": 10566651960615825121,
+      "translation": "``tomllib.loads``\\ 는 TOML 파일을 로드하려는 것이 아니라 파일에 저장된 문서를 로드하려는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448116Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:8/seg:1",
+      "source": "The most natural representation of a Unicode document in Python is ``str``, not ``bytes``.",
+      "source_hash": 16289652191070112713,
+      "context_hash": 16945079730874052288,
+      "translation": "Python에서 유니코드 문서의 가장 자연스러운 표현은 ``str``\\ 이며 ``bytes``\\ 가 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448116Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:9/seg:0",
+      "source": "It is possible to add ``bytes`` support in the future if needed, but we are not aware of any use cases for it.",
+      "source_hash": 14562366679548296618,
+      "context_hash": 727820817890227247,
+      "translation": "필요하다면 향후 ``bytes`` 지원을 추가할 수 있지만, 이에 대한 사용 사례는 알지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448117Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Controlling the type of mappings returned by ``tomllib.load[s]``",
+      "source_hash": 2523950588810079557,
+      "context_hash": 14770108509113042390,
+      "translation": "``tomllib.load[s]``\\ 가 반환하는 매핑 타입 제어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448117Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "The ``toml`` library on PyPI accepts a ``_dict`` argument in its ``load[s]`` functions, which works similarly to the ``object_hook`` argument in ``json.load[s]``.",
+      "source_hash": 8736812344562422611,
+      "context_hash": 11548503449899039638,
+      "translation": "PyPI의 ``toml`` 라이브러리는 ``load[s]`` 함수에서 ``_dict`` 인자를 허용하며, 이는 ``json.load[s]``\\ 의 ``object_hook`` 인자와 유사하게 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448117Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "There are several uses of ``_dict`` found on https://grep.app; however, almost all of them are passing ``_dict=OrderedDict``, which should be unnecessary as of Python 3.7.",
+      "source_hash": 6138095473415689067,
+      "context_hash": 14920677845985876807,
+      "translation": "https://grep.app\\ 에서 ``_dict`` 사용 사례가 여러 개 발견되지만, 거의 모두 ``_dict=OrderedDict``\\ 를 전달하고 있으며 이는 Python 3.7부터는 불필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:13:17.804305Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:2",
+      "source": "We found two instances of relevant use: in one case, a custom class was passed for friendlier KeyErrors; in the other, the custom class had several additional lookup and mutation methods (e.g. to help resolve dotted keys).",
+      "source_hash": 8524675510635169512,
+      "context_hash": 3907264221296628646,
+      "translation": "관련 사용 사례는 두 가지를 찾았습니다. 한 경우에는 더 친숙한 KeyError를 위해 사용자 정의 클래스가 전달되었고, 다른 경우에는 사용자 정의 클래스에 추가적인 조회 및 변경 메서드가 여러 개 있었습니다(예: 점으로 구분된 키를 확인하는 데 도움을 주기 위한 메서드).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448118Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "Such a parameter is not necessary for the core use cases outlined in the `Motivation`_ section.",
+      "source_hash": 16999226171258106389,
+      "context_hash": 8185188344534526988,
+      "translation": "이러한 매개변수는 `Motivation`_\\ 절에 기술된 핵심 사용 사례에 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448118Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:1",
+      "source": "The absence of this can be pretty easily worked around using a wrapper class, transformer function, or a third-party library.",
+      "source_hash": 11713781296990426631,
+      "context_hash": 4232789841818501431,
+      "translation": "이러한 매개변수가 없는 문제는 래퍼 클래스, 변환 함수 또는 서드파티 라이브러리를 사용하여 상당히 쉽게 우회할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448118Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:2",
+      "source": "Finally, support could be added later in a backward-compatible way.",
+      "source_hash": 6152319811740053222,
+      "context_hash": 12453197725191069360,
+      "translation": "마지막으로, 하위 호환성을 유지하는 방식으로 나중에 지원을 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448119Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Removing support for ``parse_float`` in ``tomllib.load[s]``",
+      "source_hash": 15148039522674911356,
+      "context_hash": 13882442045524876659,
+      "translation": "``tomllib.load[s]``\\ 에서 ``parse_float`` 지원 제거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448119Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "This option is not strictly necessary, since TOML floats should be implemented as \"IEEE 754 binary64 values\", which is equivalent to a Python ``float`` on most architectures.",
+      "source_hash": 8413956448528640689,
+      "context_hash": 13676053234747294065,
+      "translation": "이 옵션은 엄밀히 말해 필요하지 않습니다. TOML 부동 소수점 수는 \"IEEE 754 binary64 values\"로 구현되어야 하며, 이는 대부분의 아키텍처에서 Python ``float``\\ 와 동등하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448119Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "The TOML specification uses the word \"SHOULD\", however, implying a recommendation that can be ignored for valid reasons.",
+      "source_hash": 14319945276560103122,
+      "context_hash": 1187765552472487013,
+      "translation": "그러나 TOML 사양은 \"SHOULD\"라는 단어를 사용하므로, 정당한 이유가 있으면 무시할 수 있는 권고임을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448120Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:1",
+      "source": "Parsing floats differently, such as to ``decimal.Decimal``, allows users extra precision beyond that promised by the TOML format.",
+      "source_hash": 8980991520348741921,
+      "context_hash": 13177835220647027478,
+      "translation": "부동 소수점 수를 다르게, 예를 들어 ``decimal.Decimal``\\ 로 구문 분석하면 사용자가 TOML 형식이 보장하는 것보다 더 높은 정밀도를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448120Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:2",
+      "source": "In the author of ``tomli``'s experience, this is particularly useful in scientific and financial applications.",
+      "source_hash": 4475603508233492280,
+      "context_hash": 14458837340832664214,
+      "translation": "``tomli``\\ 의 작성자 경험상 이는 과학 및 금융 애플리케이션에서 특히 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448120Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:3",
+      "source": "This is also useful for other cases that need greater precision, or where end-users include non-developers who may not be aware of the limits of binary64 floats.",
+      "source_hash": 9407828201019208621,
+      "context_hash": 8546840240870747535,
+      "translation": "더 높은 정밀도가 필요한 다른 경우나 최종 사용자 중 이진64 부동 소수점 수의 한계를 인지하지 못할 수 있는 비개발자가 포함된 경우에도 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:14:04.448120Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "There are also niche architectures where the Python ``float`` is not a IEEE 754 binary64 value.",
+      "source_hash": 4562185739937968489,
+      "context_hash": 2748739130722885274,
+      "translation": "Python ``float``\\ 가 IEEE 754 binary64 값이 아닌 틈새 아키텍처도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783038Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:1",
+      "source": "The ``parse_float`` argument allows users to achieve correct TOML semantics even on such architectures.",
+      "source_hash": 2919492548426102974,
+      "context_hash": 4711503937024035313,
+      "translation": "``parse_float`` 인자를 사용하면 이러한 아키텍처에서도 사용자가 올바른 TOML 의미 체계를 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783041Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Alternative names for the module",
+      "source_hash": 10033992996160173608,
+      "context_hash": 12055904022732883567,
+      "translation": "모듈의 대체 이름",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783041Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "Ideally, we would be able to use the ``toml`` module name.",
+      "source_hash": 6011907763681017739,
+      "context_hash": 8073330064809392407,
+      "translation": "이상적으로는 ``toml`` 모듈 이름을 사용할 수 있으면 좋습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783042Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "However, the ``toml`` package on PyPI is widely used, so there are backward compatibility concerns.",
+      "source_hash": 17429190045993836420,
+      "context_hash": 8712279906525532061,
+      "translation": "그러나 PyPI의 ``toml`` 패키지는 널리 사용되고 있으므로 하위 호환성 문제가 있습니다.",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T18:13:44.783042Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:1",
+      "source": "Since the standard library takes precedence over third party packages, libraries and applications who current depend on the ``toml`` package would likely break when upgrading Python versions due to the many API incompatibilities listed in `Appendix A <PEP 680 Appendix A_>`_, even if they pin their dependency versions.",
+      "source_hash": 17215052605457565053,
+      "context_hash": 12131220298899968097,
+      "translation": "표준 라이브러리가 서드파티 패키지보다 우선하므로, 현재 ``toml`` 패키지에 의존하는 라이브러리와 애플리케이션은 종속성 버전을 고정하더라도 `Appendix A <PEP 680 Appendix A_>`_\\ 에 나열된 많은 API 비호환성으로 인해 Python 버전을 업그레이드할 때 중단될 가능성이 높습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:44.783043Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "To further clarify, applications with pinned dependencies are of greatest concern here.",
+      "source_hash": 16989358759539459363,
+      "context_hash": 17495466360975676880,
+      "translation": "더 명확히 말하면, 종속성을 고정한 애플리케이션이 여기서 가장 큰 우려 대상입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783044Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:1",
+      "source": "Even if we were able to obtain control of the ``toml`` PyPI package name and repurpose it for a backport of the proposed new module, we would still break users on new Python versions that included it in the standard library, regardless of whether they have pinned an older version of the existing ``toml`` package.",
+      "source_hash": 10972541879684828289,
+      "context_hash": 11809655639028517250,
+      "translation": "``toml`` PyPI 패키지 이름을 통제하여 제안된 새 모듈의 백포트로 용도를 변경할 수 있더라도, 기존 ``toml`` 패키지의 이전 버전을 고정했는지와 관계없이 표준 라이브러리에 해당 모듈이 포함된 새 Python 버전의 사용자에게는 여전히 문제가 발생합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:44.783044Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:2",
+      "source": "This is unfortunate, since pinning would likely be a common response to breaking changes introduced by repurposing the ``toml`` package as a backport (that is incompatible with today's ``toml``).",
+      "source_hash": 6942005586348273296,
+      "context_hash": 4393960000543889265,
+      "translation": "이는 유감스러운 일입니다. ``toml`` 패키지를 백포트로 용도를 변경하면서 발생하는 호환성 손상 변경 사항(즉, 현재의 ``toml``\\ 과 호환되지 않음)에 대한 일반적인 대응으로 버전 고정이 사용될 가능성이 높기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783045Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "Finally, the ``toml`` package on PyPI is not actively maintained, but as of yet, efforts to request that the author add other maintainers `have been unsuccessful <https://github.com/uiri/toml/issues/361>`__, so action here would likely have to be taken without the author's consent.",
+      "source_hash": 9109438615188666842,
+      "context_hash": 23977774596339737,
+      "translation": "마지막으로 PyPI의 ``toml`` 패키지는 적극적으로 유지 관리되지 않고 있으며, 아직 작성자에게 다른 유지 관리자를 추가해 달라고 요청하려는 시도도 `성공하지 못했으므로 <https://github.com/uiri/toml/issues/361>`__, 여기서의 조치는 작성자의 동의 없이 이루어져야 할 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783045Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:0",
+      "source": "Instead, this PEP proposes the name ``tomllib``.",
+      "source_hash": 5585093716890822555,
+      "context_hash": 6830355757839934042,
+      "translation": "대신 이 PEP에서는 ``tomllib``\\ 라는 이름을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783046Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:1",
+      "source": "This mirrors ``plistlib`` and ``xdrlib``, two other file format modules in the standard library, as well as other modules, such as ``pathlib``, ``contextlib`` and ``graphlib``.",
+      "source_hash": 16859178291687332333,
+      "context_hash": 5678320495048580648,
+      "translation": "이는 표준 라이브러리의 다른 두 파일 형식 모듈인 ``plistlib`` 및 ``xdrlib``\\ 과, ``pathlib``, ``contextlib`` 및 ``graphlib``\\ 와 같은 다른 모듈을 본뜬 것입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:44.783046Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:6/seg:0",
+      "source": "Other names considered but rejected include:",
+      "source_hash": 3047955128048627250,
+      "context_hash": 5637665642399168609,
+      "translation": "고려했지만 거부한 다른 이름은 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783046Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:7/seg:0",
+      "source": "``tomlparser``.",
+      "source_hash": 17299493214437809937,
+      "context_hash": 10306041993657467642,
+      "translation": "``tomlparser``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783047Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:7/seg:1",
+      "source": "This mirrors ``configparser``, but is perhaps somewhat less appropriate if we include a write API in the future.",
+      "source_hash": 13014522232769788675,
+      "context_hash": 11096489758596561551,
+      "translation": "이는 ``configparser``\\ 를 본뜬 것이지만, 향후 쓰기 API를 포함한다면 다소 덜 적절할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783047Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:8/seg:0",
+      "source": "``tomli``.",
+      "source_hash": 16033453707507580937,
+      "context_hash": 16745786548021410718,
+      "translation": "``tomli``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783047Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:8/seg:1",
+      "source": "This assumes we use ``tomli`` as the basis for implementation.",
+      "source_hash": 10093370108243602797,
+      "context_hash": 3844059474919250504,
+      "translation": "이는 구현의 기반으로 ``tomli``\\ 를 사용한다고 가정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783047Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:9/seg:0",
+      "source": "``toml`` under some namespace, such as ``parser.toml``.",
+      "source_hash": 4805051275068695133,
+      "context_hash": 2749544667278313115,
+      "translation": "``parser.toml``\\ 과 같은 일부 네임스페이스 아래의 ``toml``.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:13:44.783048Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:9/seg:1",
+      "source": "However, this is awkward, especially so since existing parsing libraries like ``json``, ``pickle``, ``xml``, ``html`` etc. would not be included in the namespace.",
+      "source_hash": 2303803144906736851,
+      "context_hash": 6844046470604126588,
+      "translation": "그러나 이는 어색합니다. 특히 ``json``, ``pickle``, ``xml``, ``html`` 등과 같은 기존 파싱 라이브러리가 네임스페이스에 포함되지 않기 때문입니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:13:44.783048Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Previous Discussion",
+      "source_hash": 11182818849860193501,
+      "context_hash": 12458488103346037262,
+      "translation": "이전 논의",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783049Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "`bpo-40059: Provide a toml module in the standard library <https://bugs.python.org/issue40059>`_",
+      "source_hash": 11500011791070563850,
+      "context_hash": 13371600924041200194,
+      "translation": "`bpo-40059: 표준 라이브러리에 toml 모듈 제공 <https://bugs.python.org/issue40059>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783049Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:0",
+      "source": "`[Python-Dev] Adding a toml module to the standard lib? <https://mail.python.org/pipermail/python-dev/2019-May/157405.html>`_",
+      "source_hash": 15827179834122499755,
+      "context_hash": 6771922743526937719,
+      "translation": "`[Python-Dev] 표준 라이브러리에 toml 모듈 추가? <https://mail.python.org/pipermail/python-dev/2019-May/157405.html>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783049Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:0",
+      "source": "`[Python-Ideas] Python standard library TOML module <https://mail.python.org/archives/list/python-ideas@python.org/thread/IWJ3I32A4TY6CIVQ6ONPEBPWP4TOV2V7/>`_",
+      "source_hash": 18280983084432818074,
+      "context_hash": 9519714668757638692,
+      "translation": "`[Python-Ideas] Python 표준 라이브러리 TOML 모듈 <https://mail.python.org/archives/list/python-ideas@python.org/thread/IWJ3I32A4TY6CIVQ6ONPEBPWP4TOV2V7/>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783049Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:4/seg:0",
+      "source": "`[Packaging] Adopting/recommending a toml parser? <https://discuss.python.org/t/adopting-recommending-a-toml-parser/4068>`_",
+      "source_hash": 12699841069969456620,
+      "context_hash": 11342848549945345017,
+      "translation": "`[Packaging] toml 파서 채택/권장? <https://discuss.python.org/t/adopting-recommending-a-toml-parser/4068>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783050Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:5/seg:0",
+      "source": "`hukkin/tomli#141: Please consider pushing tomli into the stdlib <https://github.com/hukkin/tomli/issues/141>`_",
+      "source_hash": 4468825209091741425,
+      "context_hash": 1791550644772480797,
+      "translation": "`hukkin/tomli#141: tomli를 표준 라이브러리에 포함하는 것을 고려하십시오 <https://github.com/hukkin/tomli/issues/141>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783050Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Appendix A: Differences between proposed API and ``toml``",
+      "source_hash": 16225426170047211719,
+      "context_hash": 10609790268037163845,
+      "translation": "부록 A: 제안된 API와 ``toml``\\ 의 차이점",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783050Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "This appendix covers the differences between the API proposed in this PEP and that of the third-party package ``toml``.",
+      "source_hash": 15906733050604439170,
+      "context_hash": 5099466586807068614,
+      "translation": "이 부록에서는 이 PEP에서 제안된 API와 서드파티 패키지 ``toml``\\ 의 API 간 차이점을 다룹니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783050Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:1",
+      "source": "These differences are relevant to understanding the amount of breakage we could expect if we used the ``toml`` name for the standard library module, as well as to better understand the design space.",
+      "source_hash": 1293326883928641777,
+      "context_hash": 13857598806031061801,
+      "translation": "이러한 차이점은 표준 라이브러리 모듈에 ``toml``\\ 이라는 이름을 사용할 경우 예상되는 손상 규모를 이해하고, 설계 공간을 더 잘 이해하는 데 관련이 있습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:44.783051Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:2",
+      "source": "Note that this list might not be exhaustive.",
+      "source_hash": 18024122036379748288,
+      "context_hash": 3649636151339897182,
+      "translation": "이 목록이 모든 항목을 포함하지 않을 수 있다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783051Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "No proposed inclusion of a write API (no ``toml.dump[s]``)",
+      "source_hash": 12477616017482835799,
+      "context_hash": 1710103600569020798,
+      "translation": "쓰기 API를 포함하자는 제안 없음(``toml.dump[s]`` 없음)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783052Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "This PEP currently proposes not including a write API; that is, there will be no equivalent of ``toml.dump`` or ``toml.dumps``, as discussed at `Including an API for writing TOML`_.",
+      "source_hash": 10243429929741463755,
+      "context_hash": 9775404650979872582,
+      "translation": "이 PEP에서는 현재 쓰기 API를 포함하지 않을 것을 제안합니다. 즉, `Including an API for writing TOML`_\\ 에서 논의된 것처럼 ``toml.dump`` 또는 ``toml.dumps``\\ 에 해당하는 기능은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:44.783052Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:4/seg:0",
+      "source": "If we included a write API, it would be relatively straightforward to convert most code that uses ``toml`` to the new standard library module (acknowledging that this is very different from a compatible API, as it would still require code changes).",
+      "source_hash": 903928290390323040,
+      "context_hash": 9443113004446808899,
+      "translation": "쓰기 API를 포함한다면 ``toml``\\ 을 사용하는 대부분의 코드를 새 표준 라이브러리 모듈로 비교적 간단하게 변환할 수 있습니다(이는 호환 가능한 API와는 매우 다르며, 여전히 코드 변경이 필요하다는 점을 인정해야 합니다).",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:44.783052Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:0",
+      "source": "A significant fraction of ``toml`` users rely on this, based on comparing `occurrences of \"toml.load\" <https://grep.app/search?q=toml.load&filter[lang][0]=Python>`__ to `occurrences of \"toml.dump\" <https://grep.app/search?q=toml.dump&filter[lang][0]=Python>`__.",
+      "source_hash": 17256988372880218938,
+      "context_hash": 15870664724987576626,
+      "translation": "``toml`` 사용자 중 상당수가 `occurrences of \"toml.load\" <https://grep.app/search?q=toml.load&filter[lang][0]=Python>`__\\ 와 `occurrences of \"toml.dump\" <https://grep.app/search?q=toml.dump&filter[lang][0]=Python>`__\\ 의 발생 횟수를 비교한 결과에 근거하여 이 기능에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681913Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:0",
+      "source": "Different first argument of ``toml.load``",
+      "source_hash": 4414736108392535980,
+      "context_hash": 12327620406088316421,
+      "translation": "``toml.load``\\ 의 다른 첫 번째 인자",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681916Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:7/seg:0",
+      "source": "``toml.load`` has the following signature:",
+      "source_hash": 7726494831110042710,
+      "context_hash": 2503324977325575294,
+      "translation": "``toml.load``\\ 의 시그니처는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681916Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:9/seg:0",
+      "source": "This is quite different from the first argument proposed in this PEP: ``SupportsRead[bytes]``.",
+      "source_hash": 8105305205510332537,
+      "context_hash": 13252143446923976889,
+      "translation": "이는 이 PEP에서 제안하는 첫 번째 인자인 ``SupportsRead[bytes]``\\ 와 상당히 다릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681917Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:10/seg:0",
+      "source": "Recapping the reasons for this, previously mentioned at `Types accepted as the first argument of tomllib.load`_:",
+      "source_hash": 11304845342945640756,
+      "context_hash": 17002578471678503962,
+      "translation": "그 이유를 다시 정리하면, 앞서 `Types accepted as the first argument of tomllib.load`_\\ 에서 언급했듯이 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681917Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:11/seg:0",
+      "source": "Allowing paths (and even lists of paths) as arguments is inconsistent with other similar functions in the standard library.",
+      "source_hash": 15208439476505059320,
+      "context_hash": 6412891624959786440,
+      "translation": "경로(심지어 경로 목록까지)를 인자로 허용하는 것은 표준 라이브러리의 다른 유사한 함수와 일관되지 않습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:47.681918Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:12/seg:0",
+      "source": "Using ``SupportsRead[bytes]`` allows us to ensure UTF-8 is the encoding used, and avoid incorrectly parsing single carriage returns as valid TOML.",
+      "source_hash": 4720407522361709196,
+      "context_hash": 338038392158291012,
+      "translation": "``SupportsRead[bytes]``\\ 를 사용하면 UTF-8이 인코딩으로 사용되도록 보장하고, 단일 캐리지 리턴을 유효한 TOML로 잘못 구문 분석하는 일을 피할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681919Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:13/seg:0",
+      "source": "A significant fraction of ``toml`` users rely on this, based on manual inspection of `occurrences of \"toml.load\" <https://grep.app/search?q=toml.load&filter[lang][0]=Python>`__.",
+      "source_hash": 6111138243678125709,
+      "context_hash": 2129648900905994993,
+      "translation": "``toml`` 사용자 중 상당수가 `occurrences of \"toml.load\" <https://grep.app/search?q=toml.load&filter[lang][0]=Python>`__\\ 를 수동으로 검사한 결과에 근거하여 이 기능에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681920Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:14/seg:0",
+      "source": "Errors",
+      "source_hash": 12712344592097034220,
+      "context_hash": 5160566155962456455,
+      "translation": "오류",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681920Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:15/seg:0",
+      "source": "``toml`` raises ``TomlDecodeError``, vs. the proposed :pep:`8`-compliant ``TOMLDecodeError``.",
+      "source_hash": 15988264926553760112,
+      "context_hash": 12689079703119064004,
+      "translation": "``toml``\\ 은 제안된 :pep:`8`-compliant ``TOMLDecodeError``\\ 와 달리 ``TomlDecodeError``\\ 를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681920Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:16/seg:0",
+      "source": "A significant fraction of ``toml`` users rely on this, based on `occurrences of \"TomlDecodeError\" <https://grep.app/search?q=TomlDecodeError&case=true&filter[lang][0]=Python>`__.",
+      "source_hash": 15946783331326062280,
+      "context_hash": 7437308434589122781,
+      "translation": "``toml`` 사용자 중 상당수가 `occurrences of \"TomlDecodeError\" <https://grep.app/search?q=TomlDecodeError&case=true&filter[lang][0]=Python>`__\\ 에 근거하여 이 기능에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681921Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:17/seg:0",
+      "source": "``toml.load[s]`` accepts a ``_dict`` argument",
+      "source_hash": 475344233656483782,
+      "context_hash": 4486428776388333170,
+      "translation": "``toml.load[s]``\\ 는 ``_dict`` 인자를 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681921Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:18/seg:0",
+      "source": "Discussed at `Controlling the type of mappings returned by tomllib.load[s]`_.",
+      "source_hash": 172537734548583256,
+      "context_hash": 11370382265304462287,
+      "translation": "`Controlling the type of mappings returned by tomllib.load[s]`_\\ 에서 논의했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681921Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:19/seg:0",
+      "source": "As mentioned there, almost all usage consists of ``_dict=OrderedDict``, which is not necessary in Python 3.7 and later.",
+      "source_hash": 8699538792375573590,
+      "context_hash": 15414566846809738226,
+      "translation": "그곳에서 언급했듯이, 거의 모든 사용 사례는 ``_dict=OrderedDict``\\ 로 구성되지만, Python 3.7 이상에서는 이것이 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681922Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:20/seg:0",
+      "source": "``toml.load[s]`` support an undocumented ``decoder`` argument",
+      "source_hash": 10196870904384167791,
+      "context_hash": 9639202477371915059,
+      "translation": "``toml.load[s]``\\ 는 문서화되지 않은 ``decoder`` 인자를 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681922Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:21/seg:0",
+      "source": "It seems the intended use case is for an implementation of comment preservation.",
+      "source_hash": 15304838177256099634,
+      "context_hash": 636761475333859361,
+      "translation": "의도된 사용 사례는 주석 보존 구현인 것으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681923Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:21/seg:1",
+      "source": "The information recorded is not sufficient to roundtrip the TOML document preserving style, the implementation has known bugs, the feature is undocumented and we could only find one instance of its use on https://grep.app.",
+      "source_hash": 15539124772783451938,
+      "context_hash": 13990412345266989724,
+      "translation": "기록된 정보는 스타일을 보존하면서 TOML 문서를 왕복 변환하기에 충분하지 않고, 구현에는 알려진 버그가 있으며, 이 기능은 문서화되어 있지 않고, https://grep.app\\ 에서 해당 기능의 사용 사례를 단 하나만 찾을 수 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:13:17.804308Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:22/seg:0",
+      "source": "The `toml.TomlDecoder interface <https://github.com/uiri/toml/blob/3f637dba5f68db63d4b30967fedda51c82459471/toml/decoder.pyi#L36>`__ exposed is far from simple, containing nine methods.",
+      "source_hash": 17734756713525173375,
+      "context_hash": 9564445426497703566,
+      "translation": "노출된 `toml.TomlDecoder interface <https://github.com/uiri/toml/blob/3f637dba5f68db63d4b30967fedda51c82459471/toml/decoder.pyi#L36>`__\\ 은 메서드가 9개나 포함되어 있어 결코 단순하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681924Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:23/seg:0",
+      "source": "Users are likely better served by a more complete implementation of style-preserving parsing and writing.",
+      "source_hash": 9674640357902072071,
+      "context_hash": 8705148532754434377,
+      "translation": "사용자는 스타일을 보존하는 구문 분석 및 쓰기를 보다 완전하게 구현한 방식으로 더 나은 지원을 받을 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681924Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:24/seg:0",
+      "source": "``toml.dump[s]`` support an ``encoder`` argument",
+      "source_hash": 18379269512256097058,
+      "context_hash": 12783522933622620293,
+      "translation": "``toml.dump[s]``\\ 는 ``encoder`` 인자를 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681924Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:25/seg:0",
+      "source": "Note that we currently propose to not include a write API; however, if that were to change, these differences would likely become relevant.",
+      "source_hash": 6120388613495017287,
+      "context_hash": 10963821332113761621,
+      "translation": "현재는 쓰기 API를 포함하지 않을 것을 제안하고 있다는 점에 유의하십시오. 그러나 이것이 변경된다면 이러한 차이가 관련성을 갖게 될 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681924Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:26/seg:0",
+      "source": "The ``encoder`` argument enables two use cases:",
+      "source_hash": 11606518971987540982,
+      "context_hash": 2535232638075779412,
+      "translation": "``encoder`` 인자는 두 가지 사용 사례를 가능하게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681925Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:27/seg:0",
+      "source": "control over how custom types should be serialized, and",
+      "source_hash": 6940748942636112789,
+      "context_hash": 531818147081693206,
+      "translation": "사용자 정의 형식을 직렬화하는 방법을 제어하는 것과",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681925Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:28/seg:0",
+      "source": "control over how output should be formatted.",
+      "source_hash": 5159877420211321772,
+      "context_hash": 15098140764567225967,
+      "translation": "출력 형식을 지정하는 방법을 제어하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681925Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:29/seg:0",
+      "source": "The first is reasonable; however, we could only find two instances of this on https://grep.app.",
+      "source_hash": 16534117161751542053,
+      "context_hash": 1602248478330356953,
+      "translation": "첫 번째 방식은 합리적이지만, https://grep.app\\ 에서 이에 해당하는 사례를 두 개만 찾을 수 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:13:17.804308Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:29/seg:1",
+      "source": "One of these two used this ability to add support for dumping ``decimal.Decimal``, which a potential standard library implementation would support out of the box.",
+      "source_hash": 7666935265315300561,
+      "context_hash": 17831759531050498469,
+      "translation": "이 두 사례 중 하나는 이 기능을 사용하여 ``decimal.Decimal`` 덤핑 지원을 추가했지만, 잠재적인 표준 라이브러리 구현에서는 이를 기본적으로 지원할 것입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:13:47.681926Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:29/seg:2",
+      "source": "If needed for other types, this use case could be well served by the equivalent of the ``default`` argument in ``json.dump``.",
+      "source_hash": 7773183035719141197,
+      "context_hash": 6754004400158065954,
+      "translation": "다른 형식에 필요한 경우에는 ``json.dump``\\ 의 ``default`` 인자에 해당하는 기능으로 이 사용 사례를 충분히 지원할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681927Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:30/seg:0",
+      "source": "The second use case is enabled by allowing users to specify subclasses of `toml.TomlEncoder <https://github.com/uiri/toml/blob/3f637dba5f68db63d4b30967fedda51c82459471/toml/encoder.pyi#L9>`__ and overriding methods to specify parts of the TOML writing process.",
+      "source_hash": 9694194078132198768,
+      "context_hash": 388979121701943107,
+      "translation": "두 번째 사용 사례는 사용자가 `toml.TomlEncoder <https://github.com/uiri/toml/blob/3f637dba5f68db63d4b30967fedda51c82459471/toml/encoder.pyi#L9>`__\\ 의 서브클래스를 지정하고 메서드를 재정의하여 TOML 쓰기 과정의 일부를 지정하도록 허용함으로써 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681927Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:30/seg:1",
+      "source": "The API consists of five methods and exposes substantial implementation detail.",
+      "source_hash": 15181592009352430538,
+      "context_hash": 4476592936385917251,
+      "translation": "API는 5개의 메서드로 구성되며 구현 세부 사항을 상당 부분 노출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681928Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:31/seg:0",
+      "source": "There is some usage of the ``encoder`` API on https://grep.app; however, it appears to account for a tiny fraction of the overall usage of ``toml``.",
+      "source_hash": 5748386830932819332,
+      "context_hash": 17137882138294494583,
+      "translation": "https://grep.app\\ 에서 ``encoder`` API가 일부 사용되고 있지만, ``toml``\\ 의 전체 사용량 중 극히 일부만 차지하는 것으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:13:17.804309Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:32/seg:0",
+      "source": "Timezones",
+      "source_hash": 10239136687712650689,
+      "context_hash": 4346031804503650241,
+      "translation": "시간대",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:47.681928Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:33/seg:0",
+      "source": "``toml`` uses and exposes custom ``toml.tz.TomlTz`` timezone objects.",
+      "source_hash": 5648900605237130104,
+      "context_hash": 3276360792131327894,
+      "translation": "``toml``\\ 은 사용자 정의 ``toml.tz.TomlTz`` 시간대 객체를 사용하고 공개합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.799258Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:33/seg:1",
+      "source": "The proposed implementation uses ``datetime.timezone`` objects from the standard library.",
+      "source_hash": 12563014389205661903,
+      "context_hash": 17359950761135695229,
+      "translation": "제안된 구현은 표준 라이브러리의 ``datetime.timezone`` 객체를 사용합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:10:18.799261Z",
+      "issues": []
+    }
+  ]
+}

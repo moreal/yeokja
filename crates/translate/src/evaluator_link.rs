@@ -29,7 +29,7 @@ impl TranslationEvaluator for LinkEvaluator {
         // the backticks printing as themselves.
         if context.markup == Markup::Rst {
             for named in rst_named_references(&context.source) {
-                if !context.translation.contains(&named.check) {
+                if !rst_preserves_named_reference(&context.translation, &named) {
                     issues.push(EvaluationIssue {
                         severity: IssueSeverity::Error,
                         kind: IssueKind::LinkBroken,
@@ -78,6 +78,15 @@ impl TranslationEvaluator for LinkEvaluator {
 
     fn name(&self) -> &'static str {
         "Link"
+    }
+}
+
+fn rst_preserves_named_reference(translation: &str, named: &NamedReference) -> bool {
+    if named.shown.starts_with('`') {
+        translation.contains(&format!("`{}`_", named.check))
+            || translation.contains(&format!("<{}_>", named.check))
+    } else {
+        translation.contains(&named.check)
     }
 }
 
@@ -136,7 +145,9 @@ fn rst_named_references(text: &str) -> Vec<NamedReference> {
                 }
             }
             i = close + run;
-        } else if c.is_ascii_alphanumeric() {
+        } else if c.is_ascii_alphanumeric()
+            && (i == 0 || (!chars[i - 1].is_ascii_alphanumeric() && chars[i - 1] != '_'))
+        {
             // A bare word ending in a single underscore is a reference too:
             // Python_ in prose links to `.. _Python:`.
             let end = chars[i..]
@@ -193,10 +204,18 @@ fn rst_anonymous_references(text: &str) -> usize {
                 && chars.get(close + 2) == Some(&'_')
                 && chars.get(close + 3) != Some(&'_')
             {
-                count += 1;
+                let content: String = chars[i + 1..close].iter().collect();
+                if !content.contains('<') {
+                    count += 1;
+                }
             }
             i = close + run;
-        } else if c.is_alphanumeric() {
+        } else if c.is_alphanumeric()
+            // Do not enter in the middle of a dunder identifier such as
+            // ``__path__``. Its final two underscores are part of the name,
+            // not an anonymous-reference suffix.
+            && (i == 0 || (!chars[i - 1].is_alphanumeric() && chars[i - 1] != '_'))
+        {
             let end = chars[i..]
                 .iter()
                 .take_while(|c| c.is_alphanumeric() || matches!(c, '.' | '+' | '-' | '_'))
@@ -206,6 +225,7 @@ fn rst_anonymous_references(text: &str) -> usize {
             if let Some(name) = word.strip_suffix("__")
                 && !name.is_empty()
                 && !name.ends_with('_')
+                && !name.contains("__")
             {
                 count += 1;
             }
@@ -242,7 +262,7 @@ fn extract_urls(text: &str) -> Vec<String> {
                     end = offset;
                     break;
                 }
-                '<' | '>' | '"' | '}' | ']' => {
+                '<' | '>' | '"' | '`' | '}' | ']' => {
                     end = offset;
                     break;
                 }
@@ -255,7 +275,10 @@ fn extract_urls(text: &str) -> Vec<String> {
                 _ => {}
             }
         }
-        let url = candidate[..end].trim_end_matches(['.', ',', ';']);
+        // RST translations put a backslash-escaped space between a bare URL
+        // and a Korean particle: ``https://example.com/path\\ 를``. The
+        // backslash belongs to the invisible boundary, not to the URL.
+        let url = candidate[..end].trim_end_matches(['.', ',', ';', ':', '\\']);
         if !url.is_empty() {
             urls.push(url.to_string());
         }
@@ -295,6 +318,36 @@ mod tests {
         let ctx = make_context(
             "See [Lean FRO](https://lean-fro.org).",
             "[Lean FRO](https://lean-fro.org)에서 확인하십시오.",
+        );
+        let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn terminal_colon_is_punctuation_not_part_of_a_bare_url() {
+        let ctx = make_context(
+            "Update labels at https://github.com/python/cpython/issues:",
+            "https://github.com/python/cpython/issues 의 레이블을 업데이트하십시오:",
+        );
+        let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn rst_literal_closer_is_not_part_of_a_url() {
+        let ctx = make_context(
+            "Clone ``https://git.python.org/python.git``.",
+            "``https://git.python.org/python.git``\\ 을 클론합니다.",
+        );
+        let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn rst_escaped_space_after_a_bare_url_is_not_part_of_the_url() {
+        let ctx = rst_context(
+            "Greg suggested http://www.wush.net/subversion.php.",
+            "Greg은 http://www.wush.net/subversion.php\\ 를 제안했습니다.",
         );
         let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
         assert!(result.passed, "{:?}", result.issues);
@@ -383,6 +436,16 @@ mod tests {
         }
     }
 
+    #[tokio::test]
+    async fn rst_rejects_a_named_reference_kept_only_as_parenthetical_prose() {
+        let ctx = rst_context(
+            "See `Security Implications`_.",
+            "`보안 관련 영향(Security Implications)`_\\ 을 참조하십시오.",
+        );
+        let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed, "{:?}", result.issues);
+    }
+
     /// A bare word reference keeps its underscore; the word alone appears in
     /// any translation of the sentence and proves nothing.
     #[tokio::test]
@@ -411,6 +474,7 @@ mod tests {
         .map(|r| r.shown)
         .collect();
         assert_eq!(names, vec!["`the docs`_", "Python_"]);
+        assert!(rst_named_references("This is _deliberately_ plain RST text.").is_empty());
     }
 
     /// Interpreted-text roles end without an underscore and are not references.
@@ -449,6 +513,16 @@ mod tests {
         assert!(result.passed, "{:?}", result.issues);
     }
 
+    #[tokio::test]
+    async fn rst_rejects_replacing_an_anonymous_reference_with_an_embedded_url() {
+        let ctx = rst_context(
+            "See `this related discussion`__.",
+            "`이 관련 논의 <https://example.com>`__\\ 를 참조하십시오.",
+        );
+        let result = LinkEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed, "{:?}", result.issues);
+    }
+
     #[test]
     fn anonymous_references_are_counted_precisely() {
         assert_eq!(rst_anonymous_references("see `the docs`__ and here__"), 2);
@@ -461,5 +535,14 @@ mod tests {
             0
         );
         assert_eq!(rst_anonymous_references("`여기`__\\ 에서"), 1);
+        assert_eq!(rst_anonymous_references("`여기 <https://example.com>`__"), 0);
+    }
+
+    #[test]
+    fn dunder_identifiers_are_not_anonymous_references() {
+        assert_eq!(rst_anonymous_references("add portions to __path__."), 0);
+        assert_eq!(rst_anonymous_references("Adding a __dir__() method"), 0);
+        assert_eq!(rst_anonymous_references("check obj.__json__ first"), 0);
+        assert_eq!(rst_anonymous_references("follow here__ for details"), 1);
     }
 }

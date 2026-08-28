@@ -1,0 +1,1454 @@
+{
+  "version": 1,
+  "source_hash": 15946927837262280908,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Index support for Trusted Publishing",
+      "source_hash": 5577615885083832420,
+      "context_hash": 16530898886277989957,
+      "translation": "Trusted Publishing을 지원하는 패키지 색인",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028648Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 4323542933242174297,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028651Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes a standard mechanism through which arbitrary Python package indices can support \"Trusted Publishing,\" a misuse-resistant credential exchange scheme already implemented by the Python Package Index (PyPI).",
+      "source_hash": 10637610050501012765,
+      "context_hash": 617754567987693427,
+      "translation": "이 PEP는 임의의 Python 패키지 색인이 이미 Python 패키지 색인(PyPI)에 구현된 \"Trusted Publishing\"이라는 오용 방지형 자격 증명 교환 체계를 지원할 수 있도록 하는 표준 메커니즘을 제안합니다.",
+      "glossary_snapshot": {
+        "package index": "패키지 색인"
+      },
+      "translated_at": "2026-08-28T19:16:51.028651Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "The mechanism proposed in this PEP is designed to encapsulate PyPI's `existing implementation <https://docs.pypi.org/trusted-publishers/>`_ of Trusted Publishing, while allowing other indices to implement the same scheme in a manner that is discoverable by and interoperable with existing Python package uploading clients.",
+      "source_hash": 4199330956085167582,
+      "context_hash": 3596984876208442910,
+      "translation": "이 PEP에서 제안하는 메커니즘은 Trusted Publishing의 PyPI `기존 구현 <https://docs.pypi.org/trusted-publishers/>`_\\ 을 캡슐화하면서, 다른 색인도 기존 Python 패키지 업로드 클라이언트가 검색하고 상호 운용할 수 있는 방식으로 동일한 체계를 구현할 수 있도록 설계되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028652Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 14595793958162253201,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028653Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "\"Trusted Publishing\" is PyPI's term of art for using the `OpenID Connect (OIDC) standard <https://openid.net/connect/>`_ to exchange a short-lived *identity credential* from a trusted third-party service (like a CI/CD or cloud provider) for a short-lived, minimally-scoped *upload credential* that can be used to publish to the index.",
+      "source_hash": 12997993100960206287,
+      "context_hash": 1799103676627003146,
+      "translation": "\"Trusted Publishing\"은 신뢰할 수 있는 제3자 서비스(예: CI/CD 또는 클라우드 제공자)의 단기간 유효한 *identity credential*\\ 을 색인에 게시하는 데 사용할 수 있는 단기간 유효하고 최소한의 범위로 제한된 *upload credential*\\ 로 교환하기 위해 `OpenID Connect (OIDC) 표준 <https://openid.net/connect/>`_\\ 을 사용하는 것을 가리키는 PyPI의 전문 용어입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028653Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Trusted Publishing was originally designed and enabled on PyPI in 2023 as a non-standard (PyPI-specific) feature, much like the existing `upload API <https://docs.pypi.org/api/upload/>`__.",
+      "source_hash": 5756313877954593013,
+      "context_hash": 6838488533340335152,
+      "translation": "Trusted Publishing은 기존 `upload API <https://docs.pypi.org/api/upload/>`__\\ 와 마찬가지로 2023년에 비표준(PyPI 전용) 기능으로 PyPI에서 처음 설계되고 활성화되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028653Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "It has seen widespread adoption in that capacity: over one million files have been published to PyPI using a Trusted Publisher (as of September 2025), representing approximately one in every eight files uploaded to PyPI since becoming available.",
+      "source_hash": 18035890864772638558,
+      "context_hash": 13919323359958536063,
+      "translation": "이 기능은 그 형태로 널리 채택되었습니다. 2025년 9월 기준으로 Trusted Publisher를 사용하여 100만 개가 넘는 파일이 PyPI에 게시되었으며, 이는 이 기능을 사용할 수 있게 된 이후 PyPI에 업로드된 파일 약 8개 중 1개에 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028653Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "Additionally, PyPI's design has inspired similar designs in the `Rust (crates.io) <https://crates.io/docs/trusted-publishing>`_, `Ruby (RubyGems) <https://guides.rubygems.org/trusted-publishing/>`_, and `JavaScript (npm) <https://docs.npmjs.com/trusted-publishers>`_ ecosystems.",
+      "source_hash": 18404943786575650371,
+      "context_hash": 12917788395631505111,
+      "translation": "또한 PyPI의 설계는 `Rust (crates.io) <https://crates.io/docs/trusted-publishing>`_, `Ruby (RubyGems) <https://guides.rubygems.org/trusted-publishing/>`_, `JavaScript (npm) <https://docs.npmjs.com/trusted-publishers>`_ 생태계의 유사한 설계에도 영감을 주었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028654Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "The absence of a standard for Trusted Publishing presents a long-term impediment for adoption: third-party indices (i.e. those other than PyPI and TestPyPI) cannot easily implement Trusted Publishing without referencing PyPI's unstandardized design.",
+      "source_hash": 17909029716084317754,
+      "context_hash": 14836928303427123197,
+      "translation": "Trusted Publishing 표준이 없으면 채택에 장기적인 장애가 발생합니다. 제3자 색인(PyPI와 TestPyPI 이외의 색인)은 PyPI의 비표준화된 설계를 참조하지 않고는 Trusted Publishing을 쉽게 구현할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028654Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "This in turn poses a long-term maturity risk similar to that of the unstandardized upload API: package upload clients (like `Twine <https://twine.readthedocs.io/en/stable/>`_ and `uv <https://docs.astral.sh/uv/>`_) must either accept behavioral differences between indices (leading to an accretion of hacks) or continue to reject non-PyPI implementations of Trusted Publishing.",
+      "source_hash": 16441649430836575589,
+      "context_hash": 1714257777484312984,
+      "translation": "이는 비표준화된 업로드 API와 유사한 장기적인 성숙도 위험을 초래합니다. 패키지 업로드 클라이언트(예: `Twine <https://twine.readthedocs.io/en/stable/>`_ 및 `uv <https://docs.astral.sh/uv/>`_)는 색인 간 동작 차이를 받아들여야 하거나(해킹이 누적됨), PyPI가 아닌 Trusted Publishing 구현을 계속 거부해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028654Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 15209091368235726968,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028655Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "The lack of an existing standard for Trusted Publishing is the primary rationale for this PEP.",
+      "source_hash": 7130700119449252978,
+      "context_hash": 8723766201438213138,
+      "translation": "Trusted Publishing에 대한 기존 표준이 없다는 점이 이 PEP의 주된 근거입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028655Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "The design proposed in this PEP closely follows PyPI's existing implementation, with an added layer of `discovery <Trusted Publishing Discovery_>`__ that enables uploading clients to determine whether an arbitrary index supports Trusted Publishing without making PyPI-specific assumptions.",
+      "source_hash": 8238362290370039638,
+      "context_hash": 2330073411389112791,
+      "translation": "이 PEP에서 제안하는 설계는 PyPI의 기존 구현을 밀접하게 따르며, 업로드 클라이언트가 PyPI에 특화된 가정 없이 임의의 색인이 Trusted Publishing을 지원하는지 판단할 수 있도록 하는 `검색 <Trusted Publishing Discovery_>`__ 계층을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028655Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "The rationale for this design is as follows:",
+      "source_hash": 8369865268682563727,
+      "context_hash": 14967471507214943210,
+      "translation": "이 설계의 근거는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028656Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "The existing (unstandardized) implementation of Trusted Publishign on PyPI has a proven track record, and is already widely adopted in uploading tools.",
+      "source_hash": 3571117881187635506,
+      "context_hash": 6849831971908765579,
+      "translation": "PyPI의 기존(비표준화된) Trusted Publishing 구현은 검증된 실적을 보유하고 있으며, 이미 업로드 도구에서 널리 채택되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028656Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:1",
+      "source": "A significant deviation from the existing design would introduce unnecessary compatibility risks.",
+      "source_hash": 5432770859067034982,
+      "context_hash": 12165570579004382162,
+      "translation": "기존 설계에서 크게 벗어나면 불필요한 호환성 위험이 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028656Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "The discovery mechanism proposed in this PEP is designed to be consistent with existing standards for machine-to-machine protocols, namely :rfc:`8615` (Well-Known URIs).",
+      "source_hash": 14260357390648931038,
+      "context_hash": 172035987308719742,
+      "translation": "이 PEP에서 제안하는 검색 메커니즘은 머신 간 프로토콜에 대한 기존 표준, 즉 :rfc:`8615`\\ (Well-Known URI)와 일관되도록 설계되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028656Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "Additionally, this discovery mechanism is designed to allow multiple indices to be hosted under a single domain, which is a common topology for third-party index hosts.",
+      "source_hash": 8961811959923203495,
+      "context_hash": 1262558129573509146,
+      "translation": "또한 이 검색 메커니즘은 여러 색인을 하나의 도메인 아래 호스팅할 수 있도록 설계되었으며, 이는 제3자 색인 호스트에서 흔히 사용되는 토폴로지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028657Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "In sum, the rationale for this PEP is to standardize PyPI's existing interfaces *and* make them discoverable while allowing index hosts that don't match PyPI's topology to implement Trusted Publishing.",
+      "source_hash": 15732247114638538430,
+      "context_hash": 13178747889474803784,
+      "translation": "요약하면, 이 PEP의 근거는 PyPI의 기존 인터페이스를 표준화하고 *and*\\ 이를 검색 가능하게 만드는 동시에 PyPI의 토폴로지와 일치하지 않는 색인 호스트도 Trusted Publishing을 구현할 수 있도록 하는 데 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028657Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 13159468045063092372,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028657Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "This PEP's specification contains two parts:",
+      "source_hash": 17373111476136487830,
+      "context_hash": 1176803994924806860,
+      "translation": "이 PEP의 사양은 두 부분으로 구성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028657Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "A *discovery* mechanism that package upload clients can use to determine whether an arbitrary Python package index host supports Trusted Publishing.",
+      "source_hash": 6616754306212260135,
+      "context_hash": 17238431608118353524,
+      "translation": "패키지 업로드 클라이언트가 임의의 Python 패키지 색인 호스트가 Trusted Publishing을 지원하는지 판단하는 데 사용할 수 있는 *검색* 메커니즘입니다.",
+      "glossary_snapshot": {
+        "package index": "패키지 색인"
+      },
+      "translated_at": "2026-08-28T19:16:51.028658Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "A *token exchange* mechanism that package upload clients can use to exchange an identity credential for an upload credential.",
+      "source_hash": 9882477466609812948,
+      "context_hash": 17080945494566684694,
+      "translation": "패키지 업로드 클라이언트가 자격 증명을 업로드 자격 증명으로 교환하는 데 사용할 수 있는 *토큰 교환* 메커니즘입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028658Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Constraints",
+      "source_hash": 11930884711566436492,
+      "context_hash": 4689342058314082801,
+      "translation": "제약 조건",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028658Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Unless explicitly stated otherwise, the following constraints apply to all parts of this PEP's specification:",
+      "source_hash": 13841507038698473919,
+      "context_hash": 10301137611665098921,
+      "translation": "명시적으로 달리 규정하지 않는 한 다음 제약 조건은 이 PEP 사양의 모든 부분에 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028659Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "All URLs **MUST** have `potentially trustworthy origins <https://www.w3.org/TR/secure-contexts/#potentially-trustworthy-origin>`__.",
+      "source_hash": 298442390644107089,
+      "context_hash": 10085626389870061032,
+      "translation": "모든 URL은 `잠재적으로 신뢰할 수 있는 출처 <https://www.w3.org/TR/secure-contexts/#potentially-trustworthy-origin>`__\\ 를 **반드시** 가져야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028659Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "In practice, this means that all URLs **MUST** use the ``https`` scheme, be some variant of a local loopback (``localhost``, ``127.0.0.1``, etc.), or otherwise be considered *a priori* trustworthy in the context of the interaction (e.g. an internal network).",
+      "source_hash": 8697578198646314757,
+      "context_hash": 16471431614365149052,
+      "translation": "실제로 이는 모든 URL이 **반드시** ``https`` 스킴을 사용하거나, 로컬 루프백의 일부 변형(``localhost``, ``127.0.0.1`` 등)이거나, 상호작용의 맥락에서 그 밖에 *a priori* 신뢰할 수 있는 것으로 간주되어야 함을 의미합니다(예: 내부 네트워크).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591506Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "Uploading clients **MUST** reject any URLs that do not meet this constraint.",
+      "source_hash": 12439364949992015539,
+      "context_hash": 13238648207090747671,
+      "translation": "업로드 클라이언트는 이 제약 조건을 충족하지 않는 URL을 **반드시** 거부해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028660Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "All server-supplied URLs (i.e. those in discovery responses) **MUST** have the same host subcomponent as the user-provided upload URL.",
+      "source_hash": 5413292314535717423,
+      "context_hash": 8993154467116108735,
+      "translation": "서버가 제공하는 모든 URL(즉, 검색 응답에 포함된 URL)은 사용자가 제공한 업로드 URL과 동일한 호스트 하위 구성 요소를 **반드시** 가져야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028660Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:1",
+      "source": "Uploading clients **MUST** reject any URLs that do not meet this constraint.",
+      "source_hash": 12439364949992015539,
+      "context_hash": 2023368410771640928,
+      "translation": "업로드 클라이언트는 이 제약 조건을 충족하지 않는 URL을 **반드시** 거부해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028660Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "In practice, this means that a discovery request to ``https://upload.example.com/.well-known/pytp?discover={key}`` can only return URLs with the ``upload.example.com`` host.",
+      "source_hash": 10629839928058325799,
+      "context_hash": 11297127613269557436,
+      "translation": "실제로 이는 ``https://upload.example.com/.well-known/pytp?discover={key}``\\ 에 대한 검색 요청이 ``upload.example.com`` 호스트를 가진 URL만 반환할 수 있음을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:51.028660Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "All client requests **SHOULD** have an ``Accept: application/vnd.pypi.pytp.v1+json`` header.",
+      "source_hash": 6251660750358820121,
+      "context_hash": 7832646987962116806,
+      "translation": "모든 클라이언트 요청에는 ``Accept: application/vnd.pypi.pytp.v1+json`` 헤더가 **있어야 합니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591509Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:1",
+      "source": "In the absence of an ``Accept`` header, the receiving server **MUST** behave as if this header were present.",
+      "source_hash": 17963349281432148174,
+      "context_hash": 3070804919737721750,
+      "translation": "``Accept`` 헤더가 없는 경우, 수신 서버는 이 헤더가 있는 것처럼 **동작해야 합니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591509Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "Receiving servers **SHOULD** respond with a ``406 Not Acceptable`` status code if any other ``Accept`` header is present.",
+      "source_hash": 13356872853108829930,
+      "context_hash": 8610860519535932488,
+      "translation": "다른 ``Accept`` 헤더가 있는 경우, 수신 서버는 ``406 Not Acceptable`` 상태 코드로 **응답해야 합니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591509Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "Unless otherwise specified, all error (4xx and 5xx) responses from the server **MUST** use the :rfc:`9457` (Problem Details for HTTP APIs) format.",
+      "source_hash": 12365119220844689710,
+      "context_hash": 16470249908744259901,
+      "translation": "달리 지정되지 않는 한, 서버의 모든 오류(4xx 및 5xx) 응답은 :rfc:`9457` (HTTP API용 문제 세부 정보) 형식을 **사용해야 합니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591510Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:1",
+      "source": "In particular, the server **MUST** use the \"Problem Details JSON Object\" defined in :rfc:`Section 3 <9457#section-3>` and **SHOULD** use the ``application/problem+json`` media type in its responses.",
+      "source_hash": 12482110436317718219,
+      "context_hash": 2417623710418898750,
+      "translation": "특히 서버는 :rfc:`Section 3 <9457#section-3>`\\ 에 정의된 \"Problem Details JSON Object\"를 **사용해야 하며**, 응답에서 ``application/problem+json`` 미디어 유형을 **사용해야 합니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591510Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Trusted Publishing Discovery",
+      "source_hash": 5689844773381239552,
+      "context_hash": 14718740555392138075,
+      "translation": "Trusted Publishing 디스커버리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683525Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "All Python package uploading is currently \"endpoint driven,\" in the sense uploading clients (like *twine* and *uv*) are given an upload URL (and **not** merely a domain name).",
+      "source_hash": 3252532774686494556,
+      "context_hash": 13376889356369928034,
+      "translation": "모든 Python 패키지 업로드는 현재 \"엔드포인트 주도\" 방식입니다. 즉, 업로드 클라이언트(예: *twine* 및 *uv*)에는 업로드 URL이 제공되며(그리고 **단순히** 도메인 이름만 제공되는 것이 아니며), 이를 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591511Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "For example, to upload to PyPI, uploading clients are expected to connect to ``https://upload.pypi.org/legacy/``.",
+      "source_hash": 905112193053664388,
+      "context_hash": 18416117830779401628,
+      "translation": "예를 들어 PyPI에 업로드하려면 업로드 클라이언트는 ``https://upload.pypi.org/legacy/``\\ 에 연결해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683525Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "The discovery mechanism proposed below takes advantage of this fact to allow single domains to advertise support for multiple indices (and their corresponding upload endpoints).",
+      "source_hash": 1402758583482859534,
+      "context_hash": 10964057723041121961,
+      "translation": "아래에서 제안하는 디스커버리 메커니즘은 이 사실을 활용하여 단일 도메인이 여러 색인과 해당 업로드 엔드포인트에 대한 지원을 알릴 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683526Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "The discovery mechanism is as follows:",
+      "source_hash": 17488914547705445378,
+      "context_hash": 964678966060104345,
+      "translation": "디스커버리 메커니즘은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683526Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "The uploading client is given an upload URL, e.g. ``https://upload.example.com/legacy/``.",
+      "source_hash": 16900374908805181296,
+      "context_hash": 2101003331769497464,
+      "translation": "업로드 클라이언트에는 업로드 URL(예: ``https://upload.example.com/legacy/``)이 제공됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683526Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "The uploading client extracts the *path component* of the URL, as defined in :rfc:`3986`.",
+      "source_hash": 17819660321717697054,
+      "context_hash": 10430832145053470732,
+      "translation": "업로드 클라이언트는 :rfc:`3986`\\ 에 정의된 대로 URL의 *path component*\\ 를 추출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683527Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:1",
+      "source": "If the path component is empty, the empty string should be used.",
+      "source_hash": 7847915167974215873,
+      "context_hash": 10732051125363194349,
+      "translation": "path component가 비어 있으면 빈 문자열을 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683527Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "For the above example, the path component is ``/legacy/``.",
+      "source_hash": 4807380521300937062,
+      "context_hash": 15410601170247524616,
+      "translation": "위의 예에서 path component는 ``/legacy/``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683527Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "The uploading client performs a query-safe URL encoding of the path component (i.e. percent-encoding as defined in :rfc:`3986`, including encoding of forward slashes and spaces), producing the *discovery key*.",
+      "source_hash": 5285155400761512173,
+      "context_hash": 7093469925990522416,
+      "translation": "업로드 클라이언트는 path component에 대해 쿼리 안전 URL 인코딩을 수행하고(즉, 정방향 슬래시와 공백의 인코딩을 포함하여 :rfc:`3986`\\ 에 정의된 퍼센트 인코딩을 수행하여) *discovery key*\\ 를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683528Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "For the above example, the discovery key is ``%2Flegacy%2F``. [#fn-discovery-key]_",
+      "source_hash": 10749259480594348174,
+      "context_hash": 9286829632333749585,
+      "translation": "위의 예에서 discovery key는 ``%2Flegacy%2F``\\ 입니다. [#fn-discovery-key]_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683528Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:0",
+      "source": "The uploading client constructs a *discovery URL* by taking the scheme and authority components (as defined in :rfc:`3986`) of the upload URL and appending ``/.well-known/pytp`` as the path.",
+      "source_hash": 4574268977472291336,
+      "context_hash": 16543121180521282863,
+      "translation": "업로드 클라이언트는 업로드 URL의 스킴 및 권한 구성 요소(:rfc:`3986`\\ 에 정의됨)를 가져와 경로로 ``/.well-known/pytp``\\ 를 추가하는 방식으로 *discovery URL*\\ 을 구성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683528Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:1",
+      "source": "Then, the uploading client appends the discovery key as the value of the ``discover`` query parameter.",
+      "source_hash": 8837177413841752907,
+      "context_hash": 12308265065218430090,
+      "translation": "그런 다음 업로드 클라이언트는 ``discover`` 쿼리 매개변수의 값으로 discovery key를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683528Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:11/seg:0",
+      "source": "For the above example, the discovery URL is ``https://upload.example.com/.well-known/pytp?discover=%2Flegacy%2F``.",
+      "source_hash": 3505076276662426662,
+      "context_hash": 6999227671798168966,
+      "translation": "위의 예에서 discovery URL은 ``https://upload.example.com/.well-known/pytp?discover=%2Flegacy%2F``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683529Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:12/seg:0",
+      "source": "The uploading client performs an HTTP GET request to the discovery URL.",
+      "source_hash": 7923361968539862744,
+      "context_hash": 2701517730145566295,
+      "translation": "업로드 클라이언트는 discovery URL에 HTTP GET 요청을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683529Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:13/seg:0",
+      "source": "The server responds with a ``200 OK`` status code and a body containing a JSON object if the index supports Trusted Publishing for the given upload URL.",
+      "source_hash": 15089842600530845336,
+      "context_hash": 9535627009415709673,
+      "translation": "해당 색인이 주어진 업로드 URL에 대해 Trusted Publishing을 지원하는 경우 서버는 ``200 OK`` 상태 코드와 JSON 객체를 포함하는 본문으로 응답합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683529Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:14/seg:0",
+      "source": "The JSON object **MUST** contain the following fields:",
+      "source_hash": 12354445839180423285,
+      "context_hash": 11324158296093078348,
+      "translation": "JSON 객체는 다음 필드를 **포함해야 합니다**:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591511Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:15/seg:0",
+      "source": "``audience-endpoint``: a string containing the URL of the OIDC audience endpoint to be used during token exchange.",
+      "source_hash": 15866546511881204514,
+      "context_hash": 7577744195022285186,
+      "translation": "``audience-endpoint``: 토큰 교환 중 사용할 OIDC audience endpoint의 URL을 포함하는 문자열입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683530Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:16/seg:0",
+      "source": "``token-mint-endpoint``: a string containing the URL of the token minting endpoint to be used during token exchange.",
+      "source_hash": 11844565851940916108,
+      "context_hash": 17467017388894613518,
+      "translation": "``token-mint-endpoint``: 토큰 교환 중 사용할 토큰 발급 엔드포인트의 URL을 포함하는 문자열입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683530Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:17/seg:0",
+      "source": "Additionally, the JSON object **MAY** contain the following fields:",
+      "source_hash": 4991569250331389968,
+      "context_hash": 10950224258285627469,
+      "translation": "또한 JSON 객체는 다음 필드를 **포함할 수 있습니다**:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591511Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:18/seg:0",
+      "source": "``features``: an array of strings indicating optional features supported by the index's Trusted Publishing implementation.",
+      "source_hash": 11875786075484428023,
+      "context_hash": 18437404988439790320,
+      "translation": "``features``: 색인의 Trusted Publishing 구현에서 지원하는 선택적 기능을 나타내는 문자열 배열입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683531Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:18/seg:1",
+      "source": "The set of possible features is defined under `<Feature Negotiation_>`__.",
+      "source_hash": 13561949014072672186,
+      "context_hash": 2285226226658128336,
+      "translation": "가능한 기능 집합은 `<Feature Negotiation_>`__\\ 아래에 정의되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683531Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:19/seg:0",
+      "source": "``default-features``: an array of strings indicating the default features used by the index's Trusted Publishing implementation if a request does not explicitly specify any features.",
+      "source_hash": 11618658431791734499,
+      "context_hash": 15331765626611810342,
+      "translation": "``default-features``: 요청에서 기능을 명시적으로 지정하지 않은 경우 색인의 Trusted Publishing 구현에서 사용하는 기본 기능을 나타내는 문자열 배열입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683531Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:19/seg:1",
+      "source": "If the ``default-features`` field is not present, the uploading client **MUST** assume a default of ``[\"multi-use-token\"]``.",
+      "source_hash": 293102009161173866,
+      "context_hash": 2376316704283230484,
+      "translation": "``default-features`` 필드가 없는 경우, 업로드 클라이언트는 ``[\"multi-use-token\"]``\\ 을 기본값으로 **가정해야 합니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591512Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:20/seg:0",
+      "source": "For the above example, a valid response body would be:",
+      "source_hash": 1580031203119926773,
+      "context_hash": 12446738988001004715,
+      "translation": "위의 예에서 유효한 응답 본문은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:39.683532Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:22/seg:0",
+      "source": "If the server does not support Trusted Publishing for the given upload URL, it **MUST** respond with a ``404 Not Found`` status code.",
+      "source_hash": 1506968572407030317,
+      "context_hash": 9157364914358378934,
+      "translation": "서버가 지정된 업로드 URL에 대한 Trusted Publishing을 지원하지 않는 경우, ``404 Not Found`` 상태 코드로 **응답해야 합니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591512Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:23/seg:0",
+      "source": "Servers **MAY** additionally respond with any other standard HTTP error code in the 400 or 500 range to indicate an appropriate error condition.",
+      "source_hash": 2187542309508169115,
+      "context_hash": 6056273864529619847,
+      "translation": "서버는 적절한 오류 조건을 나타내기 위해 400 또는 500 범위의 다른 표준 HTTP 오류 코드로 **추가로 응답할 수도 있습니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591513Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Trusted Publishing Token Exchange",
+      "source_hash": 12849494645843289298,
+      "context_hash": 10278896635741764390,
+      "translation": "Trusted Publishing 토큰 교환",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424989Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Once an uploading client has performed a successful `discovery <Trusted Publishing Discovery_>`__ flow, it can proceed to perform the actual Trusted Publishing token exchange.",
+      "source_hash": 1102984965276280148,
+      "context_hash": 10381517819938231407,
+      "translation": "업로드 클라이언트가 성공적으로 `discovery <Trusted Publishing Discovery_>`__ 절차를 완료하면 실제 Trusted Publishing 토큰 교환을 진행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424993Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "Token exchange occurs in three steps:",
+      "source_hash": 1740667455151969824,
+      "context_hash": 1475872964225609169,
+      "translation": "토큰 교환은 세 단계로 이루어집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424994Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "The uploading client uses the *audience endpoint* obtained during discovery to ask the index for its expected OIDC audience.",
+      "source_hash": 1153443443320239609,
+      "context_hash": 8434851018473088873,
+      "translation": "업로드 클라이언트는 검색 과정에서 얻은 *audience endpoint*\\ 를 사용하여 색인에 예상 OIDC audience를 요청합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424994Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "The uploading client uses the expected audience to obtain an appropriately bound *identity credential* from the Trusted Publishing provider being used (i.e. the CI/CD or cloud provider that the upload is being performed from).",
+      "source_hash": 11047160352032703728,
+      "context_hash": 2734520652568727523,
+      "translation": "업로드 클라이언트는 예상 audience를 사용하여 사용 중인 Trusted Publishing 제공자(즉, 업로드가 수행되는 CI/CD 또는 클라우드 제공자)로부터 적절하게 바인딩된 *identity credential*\\ 을 얻습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424995Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "The details of this step are provider-specific, and are out of scope for this PEP. [#fn-oidc]_",
+      "source_hash": 5284345275140037255,
+      "context_hash": 5886765213100704840,
+      "translation": "이 단계의 세부 사항은 제공자별로 다르며 이 PEP의 범위에 포함되지 않습니다. [#fn-oidc]_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424996Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "The uploading client uses the *token minting endpoint* obtained during discovery to exchange the obtained identity credential for a short-lived *upload credential* that can be used to upload to the index.",
+      "source_hash": 17070803352524493423,
+      "context_hash": 9504964226481714262,
+      "translation": "업로드 클라이언트는 검색 과정에서 얻은 *token minting endpoint*\\ 를 사용하여 획득한 identity credential을 색인에 업로드하는 데 사용할 수 있는 단기 *upload credential*\\ 로 교환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424996Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "Audience Retrieval",
+      "source_hash": 6965924648688083205,
+      "context_hash": 7462310691400078833,
+      "translation": "Audience 검색",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424996Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "To retrieve the expected OIDC audience, the uploading client performs an HTTP GET request to the *audience endpoint* obtained during `discovery <Trusted Publishing Discovery_>`__.",
+      "source_hash": 7057334161210577070,
+      "context_hash": 18250617060701683393,
+      "translation": "예상 OIDC audience를 검색하기 위해 업로드 클라이언트는 `discovery <Trusted Publishing Discovery_>`__\\ 에서 얻은 *audience endpoint*\\ 로 HTTP GET 요청을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424997Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "On success, the server responds with a ``200 OK`` status code and a body containing a JSON object with the following field:",
+      "source_hash": 16348822767987635146,
+      "context_hash": 6732166552474494591,
+      "translation": "성공하면 서버는 ``200 OK``\\ 상태 코드와 다음 필드를 포함하는 JSON 객체가 본문에 담긴 응답을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424997Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:0",
+      "source": "``audience``: a string containing the expected OIDC audience.",
+      "source_hash": 4652922877509765508,
+      "context_hash": 6899102538620107487,
+      "translation": "``audience``: 예상 OIDC audience를 포함하는 문자열입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424998Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:0",
+      "source": "On failure, the server **MUST** respond with a standard HTTP error code in the 400 or 500 range to indicate the appropriate error condition.",
+      "source_hash": 3611884461976415427,
+      "context_hash": 12019606207711974303,
+      "translation": "실패하면 서버는 적절한 오류 상태를 나타내기 위해 400 또는 500 범위의 표준 HTTP 오류 코드를 사용하여 **MUST** 응답해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424999Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:11/seg:0",
+      "source": "Token Minting",
+      "source_hash": 1140895792278767542,
+      "context_hash": 5238223331391394447,
+      "translation": "토큰 발급",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424999Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:12/seg:0",
+      "source": "After the uploading client has performed `audience retrieval`_ and obtained an identity credential from the Trusted Publishing provider, it can proceed to mint an upload credential.",
+      "source_hash": 3586991413040089982,
+      "context_hash": 14857675566801376250,
+      "translation": "업로드 클라이언트가 `audience retrieval`_\\ 을 수행하고 Trusted Publishing 제공자로부터 identity credential을 얻은 후에는 upload credential을 발급할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424999Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:13/seg:0",
+      "source": "To mint an upload credential, the uploading client performs an HTTP POST request to the *token minting endpoint* obtained during `discovery <Trusted Publishing Discovery_>`__.",
+      "source_hash": 3052081847327605477,
+      "context_hash": 13985614338898907530,
+      "translation": "upload credential을 발급하기 위해 업로드 클라이언트는 `discovery <Trusted Publishing Discovery_>`__\\ 중에 얻은 *token minting endpoint*\\ 로 HTTP POST 요청을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.424999Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:13/seg:1",
+      "source": "The payload of the POST request **MUST** be a JSON object containing the following:",
+      "source_hash": 14733388429067297625,
+      "context_hash": 5959840154113718839,
+      "translation": "POST 요청의 페이로드는 다음을 포함하는 JSON 객체여야 **MUST** 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:14/seg:0",
+      "source": "``token``: a string containing the identity credential obtained from the Trusted Publishing provider.",
+      "source_hash": 6636328209278240908,
+      "context_hash": 5174723996515905648,
+      "translation": "``token``: Trusted Publishing 제공자로부터 얻은 identity credential을 포함하는 문자열입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:15/seg:0",
+      "source": "``features``: an **optional** array of strings indicating the desired features for the minted upload credential.",
+      "source_hash": 6777471385559109039,
+      "context_hash": 14076444295122124857,
+      "translation": "``features``: 발급되는 upload credential에 원하는 기능을 나타내는 **optional** 문자열 배열입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425001Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:15/seg:1",
+      "source": "If this field is not provided by the client, the server **MUST** use its own default features as specified in the ``default-features`` field during discovery.",
+      "source_hash": 1303303163470132515,
+      "context_hash": 9179413715318217441,
+      "translation": "클라이언트가 이 필드를 제공하지 않으면 서버는 검색 과정에서 ``default-features``\\ 필드에 지정된 자체 기본 기능을 사용해야 **MUST** 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425001Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:16/seg:0",
+      "source": "For example, a valid request body would be:",
+      "source_hash": 18406969446224850200,
+      "context_hash": 15899190540144737318,
+      "translation": "예를 들어 유효한 요청 본문은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425001Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:18/seg:0",
+      "source": "On success, the server responds with a ``200 OK`` status code and a body containing a JSON object with the following fields:",
+      "source_hash": 18061515404314444221,
+      "context_hash": 4812168938890666624,
+      "translation": "성공하면 서버는 ``200 OK``\\ 상태 코드와 다음 필드를 포함하는 JSON 객체가 본문에 담긴 응답을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425001Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:19/seg:0",
+      "source": "``token``: a string containing the upload credential.",
+      "source_hash": 59228630423988044,
+      "context_hash": 16604450927745455080,
+      "translation": "``token``: upload credential을 포함하는 문자열입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425002Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:19/seg:1",
+      "source": "The format of the upload credential is implementation-defined and index-specific.",
+      "source_hash": 5003417337130493060,
+      "context_hash": 12607211205929660725,
+      "translation": "upload credential의 형식은 구현 및 색인에 따라 정의됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425002Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:20/seg:0",
+      "source": "``expires``: an **optional** integer containing a Unix timestamp indicating when the upload credential expires.",
+      "source_hash": 2232136049336090305,
+      "context_hash": 9170828011041255932,
+      "translation": "``expires``: upload credential이 만료되는 시점을 나타내는 Unix 타임스탬프를 포함하는 **optional** 정수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425002Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:20/seg:1",
+      "source": "If this field is not present, the uploading client **MAY** assume an expiration point of not more than 15 minutes (900 seconds) after the time of their request.",
+      "source_hash": 16809960160942132096,
+      "context_hash": 2680691116022719923,
+      "translation": "이 필드가 없으면 업로드 클라이언트는 만료 시점이 요청 시각으로부터 15분(900초)을 초과하지 않는다고 간주해도 **MAY** 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425003Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:21/seg:0",
+      "source": "The server **MUST NOT** issue temporary upload credentials that expire in less than 15 minutes (900 seconds) or more than 6 hours (21,600 seconds) from the time of the request.",
+      "source_hash": 6101362907229875583,
+      "context_hash": 3320630028699427680,
+      "translation": "서버는 요청 시각으로부터 15분(900초)보다 짧거나 6시간(21,600초)보다 긴 시간 후에 만료되는 임시 upload credential을 발급해서는 **MUST NOT** 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425003Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:22/seg:0",
+      "source": "The maximum expiry time of 6 hours is chosen to match common runtime limits on popular CI/CD providers like GitHub Actions.",
+      "source_hash": 1961307482034144430,
+      "context_hash": 4887954466814807166,
+      "translation": "최대 만료 시간으로 6시간을 선택한 것은 GitHub Actions와 같은 인기 CI/CD 제공자의 일반적인 런타임 제한에 맞추기 위한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425003Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:23/seg:0",
+      "source": "The uploading client **MAY** use this time (or the minimum specified above) to determine when to refresh the upload credential, if needed.",
+      "source_hash": 15241816569426978319,
+      "context_hash": 2560807548507740182,
+      "translation": "업로드 클라이언트는 필요한 경우 이 시간(또는 위에서 지정한 최소 시간)을 사용하여 upload credential을 언제 갱신할지 결정해도 **MAY** 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425003Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:24/seg:0",
+      "source": "On failure, the server **MUST** respond with any standard HTTP error code in the 400 or 500 range to indicate the appropriate error condition.",
+      "source_hash": 15268765720657866050,
+      "context_hash": 18402133803866078052,
+      "translation": "실패하면 서버는 적절한 오류 상태를 나타내기 위해 400 또는 500 범위의 표준 HTTP 오류 코드를 사용하여 **MUST** 응답해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425003Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:25/seg:0",
+      "source": "Feature Negotiation",
+      "source_hash": 6445832080598346945,
+      "context_hash": 1926788588837236292,
+      "translation": "기능 협상",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425004Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:26/seg:0",
+      "source": "The protocol defined in this PEP supports an *optional* mechanism for negotiating non-default features between the uploading client and the receiving index server.",
+      "source_hash": 15510838171008262426,
+      "context_hash": 11263178620873444159,
+      "translation": "이 PEP에서 정의하는 프로토콜은 업로드 클라이언트와 수신 색인 서버 간에 기본값이 아닌 기능을 협상하기 위한 **optional** 메커니즘을 지원합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:16:35.425004Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:26/seg:1",
+      "source": "These features are advertised as an array of strings in the ``features`` field of the discovery response; the client can then request one or more features by including them in the ``features`` field of the token minting request.",
+      "source_hash": 15124711990376589894,
+      "context_hash": 10790483283581796880,
+      "translation": "이러한 기능은 검색 응답의 ``features`` 필드에서 문자열 배열로 광고되며, 클라이언트는 토큰 발급 요청의 ``features`` 필드에 하나 이상의 기능을 포함하여 해당 기능을 요청할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:35.425006Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:27/seg:0",
+      "source": "The following features are defined:",
+      "source_hash": 4619485582935117293,
+      "context_hash": 1620085353114773941,
+      "translation": "다음 기능이 정의됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410649Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:28/seg:0",
+      "source": "``single-use-token``: the tokens minted by the index server **MUST** be single-use tokens.",
+      "source_hash": 4129376234418433771,
+      "context_hash": 15098726837548612066,
+      "translation": "``single-use-token``: 인덱스 서버가 발행하는 토큰은 **일회용 토큰**\\ 이어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410653Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:28/seg:1",
+      "source": "In other words, the token returned by the token minting endpoint **MUST** only be usable for a single upload operation.",
+      "source_hash": 10330211543429956943,
+      "context_hash": 7940343302401347769,
+      "translation": "즉, 토큰 발급 엔드포인트가 반환한 토큰은 단일 업로드 작업에만 **사용할 수 있어야 합니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591528Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:28/seg:2",
+      "source": "Any subsequent upload attempts using the same token **MUST** be rejected by the index server.",
+      "source_hash": 10209876858258734880,
+      "context_hash": 348793400255307635,
+      "translation": "동일한 토큰을 사용한 이후의 업로드 시도는 인덱스 서버가 **반드시** 거부해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410654Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:28/seg:3",
+      "source": "Clients that request the ``single-use-token`` feature **MUST** be prepared to perform multiple token minting operations if multiple upload operations are needed.",
+      "source_hash": 13906500558541022907,
+      "context_hash": 10372748805737266076,
+      "translation": "``single-use-token``\\ 기능을 요청하는 클라이언트는 여러 업로드 작업이 필요한 경우 여러 토큰 발급 작업을 **수행할 준비가 되어 있어야 합니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591529Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:29/seg:0",
+      "source": "``multi-use-token``: the tokens minted by the index server **MUST** be multi-use tokens.",
+      "source_hash": 9519147192510416124,
+      "context_hash": 17680733814329711336,
+      "translation": "``multi-use-token``: 인덱스 서버가 발행하는 토큰은 **다중 사용 토큰**\\ 이어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410655Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:29/seg:1",
+      "source": "In other words, the token returned by the token minting endpoint **MAY** be usable for multiple upload operations until it expires.",
+      "source_hash": 11045562568576985776,
+      "context_hash": 9589074568585167340,
+      "translation": "즉, 토큰 발급 엔드포인트가 반환한 토큰은 만료될 때까지 여러 업로드 작업에 **사용할 수도 있습니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:33.591529Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 12752418485000031626,
+      "translation": "보안 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410655Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "This PEP seeks to improve the security and transparency of the Python packaging ecosystem by formally standardizing the Trusted Publishing flow already used by PyPI.",
+      "source_hash": 18412559472923936045,
+      "context_hash": 10687511146002395413,
+      "translation": "이 PEP는 PyPI에서 이미 사용 중인 Trusted Publishing 흐름을 공식적으로 표준화하여 Python 패키징 생태계의 보안성과 투명성을 향상하고자 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410656Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "This PEP does not identify any positive or negative security implications associated with the Trusted Publishing discovery or exchange flows themselves.",
+      "source_hash": 3436345620542341503,
+      "context_hash": 7802594025740348860,
+      "translation": "이 PEP는 Trusted Publishing 검색 또는 교환 흐름 자체와 관련된 긍정적이거나 부정적인 보안 영향을 식별하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410656Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "Separately from the flows, Trusted Publishing *itself* has a `security model on PyPI <https://docs.pypi.org/trusted-publishers/security-model/>`_ and is considered to be a more secure alternative to long-lived API tokens or passwords.",
+      "source_hash": 13277889670317237396,
+      "context_hash": 13878702580488774795,
+      "translation": "이러한 흐름과는 별개로 Trusted Publishing *자체*\\ 는 `PyPI의 보안 모델 <https://docs.pypi.org/trusted-publishers/security-model/>`_\\ 을 갖추고 있으며, 장기간 유효한 API 토큰이나 비밀번호보다 더 안전한 대안으로 간주됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410656Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "The primary positive security implications of Trusted Publishing are:",
+      "source_hash": 5781705986357116594,
+      "context_hash": 14359256278798770559,
+      "translation": "Trusted Publishing의 주요 긍정적 보안 영향은 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410657Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "All issued upload credentials are short-lived and can be minimally scoped, limiting the \"blast radius\" of a compromised credential.",
+      "source_hash": 18306649777073525235,
+      "context_hash": 17145113870075553206,
+      "translation": "발급되는 모든 업로드 자격 증명은 수명이 짧고 범위를 최소한으로 지정할 수 있으므로, 손상된 자격 증명의 \"피해 범위\"를 제한합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410657Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:1",
+      "source": "In particular, automatic expiry means that attackers cannot mount \"harvest now, use later\" campaigns against packages that use Trusted Publishing.",
+      "source_hash": 18232173326835862790,
+      "context_hash": 5280624302318545363,
+      "translation": "특히 자동 만료 기능으로 인해 공격자는 Trusted Publishing을 사용하는 패키지를 대상으로 \"지금 수집하고 나중에 사용하기\" 공격을 수행할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410657Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "Trusted Publishing conceptually links an uploaded package to the identity of the CI/CD or cloud provider that's authorized to upload it.",
+      "source_hash": 12716264944264875083,
+      "context_hash": 9590322914026459287,
+      "translation": "Trusted Publishing은 업로드된 패키지를 해당 패키지의 업로드 권한이 있는 CI/CD 또는 클라우드 제공자의 신원과 개념적으로 연결합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410657Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:1",
+      "source": "This linkage is implicit from the perspective of downstream consumers, but can be made explicit through :pep:`740` attestations or (less formally) `URL verification <https://docs.pypi.org/project_metadata/#via-trusted-publishing>`_.",
+      "source_hash": 8731514920889980282,
+      "context_hash": 15015592663479633755,
+      "translation": "이 연결은 다운스트림 소비자의 관점에서는 암시적이지만, :pep:`740` 증명 또는 (덜 공식적으로는) `URL 검증 <https://docs.pypi.org/project_metadata/#via-trusted-publishing>`_\\ 을 통해 명시적으로 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410657Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 14473853167096360272,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410658Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "This PEP does not change any existing behavior and is fully backwards compatible with existing upload clients and indices.",
+      "source_hash": 14108143479332117134,
+      "context_hash": 15002152553905718502,
+      "translation": "이 PEP는 기존 동작을 변경하지 않으며 기존 업로드 클라이언트 및 인덱스와 완전한 하위 호환성을 유지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410658Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "Existing clients that perform PyPI's non-standard Trusted Publishing upload flow will continue to work as before, as will existing uploads to all indices that do not implement Trusted Publishing.",
+      "source_hash": 3857247479696223547,
+      "context_hash": 257024262731479201,
+      "translation": "PyPI의 비표준 Trusted Publishing 업로드 흐름을 수행하는 기존 클라이언트는 이전과 같이 계속 작동하며, Trusted Publishing을 구현하지 않는 모든 인덱스에 대한 기존 업로드도 마찬가지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410658Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "How To Teach This",
+      "source_hash": 16886078681077653199,
+      "context_hash": 9668047342071731780,
+      "translation": "이를 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410659Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "This PEP is a *formalization* of Trusted Publishing, which has already seen widespread adoption in the Python packaging ecosystem.",
+      "source_hash": 1880224106352741480,
+      "context_hash": 2152657071168635443,
+      "translation": "이 PEP는 Python 패키징 생태계에서 이미 널리 도입된 Trusted Publishing의 *정식화*\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410659Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "That adoption has been accompanied by a variety of educational resources on adopting Trusted Publishing as an end user, including:",
+      "source_hash": 6046611062937935586,
+      "context_hash": 12170585409132359588,
+      "translation": "이러한 도입과 함께 최종 사용자가 Trusted Publishing을 도입하는 방법을 다루는 다양한 교육 자료도 제공되었으며, 그 예는 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410659Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Python Packaging User Guide: :ref:`packaging:trusted-publishing`",
+      "source_hash": 15431618855290763809,
+      "context_hash": 4604199770067138514,
+      "translation": "Python 패키징 사용자 가이드: :ref:`packaging:trusted-publishing`",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410659Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "PyPI: `Publishing to PyPI with a Trusted Publisher <https://docs.pypi.org/trusted-publishers/>`__",
+      "source_hash": 9049915689699600589,
+      "context_hash": 2361036757700730008,
+      "translation": "PyPI: `신뢰할 수 있는 게시자를 사용하여 PyPI에 게시하기 <https://docs.pypi.org/trusted-publishers/>`__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410659Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "pyOpenSci: `Setup Trusted Publishing for secure and automated publishing via GitHub Actions <https://www.pyopensci.org/python-package-guide/tutorials/trusted-publishing.html>`__",
+      "source_hash": 11859140881490225656,
+      "context_hash": 16055663007009834738,
+      "translation": "pyOpenSci: `GitHub Actions를 통한 안전하고 자동화된 게시를 위한 Trusted Publishing 설정 <https://www.pyopensci.org/python-package-guide/tutorials/trusted-publishing.html>`__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410660Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 12385157430160833010,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410660Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "\"Lateral\" Discovery",
+      "source_hash": 10067308789093887328,
+      "context_hash": 10117018698091635174,
+      "translation": "\"측면\" 검색",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410660Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "This PEP's discovery mechanism uses the ``.well-known`` location scheme defined in :rfc:`8615`.",
+      "source_hash": 17208242990366251108,
+      "context_hash": 15034968833074852658,
+      "translation": "이 PEP의 검색 메커니즘은 :rfc:`8615`\\ 에 정의된 ``.well-known`` 위치 체계를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410660Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "This scheme is widely adopted by machine-to-machine protocols, including OpenID Connect itself (for `OpenID Connect Discovery <https://openid.net/specs/openid-connect-discovery-1_0.html>`__).",
+      "source_hash": 9995042726175790867,
+      "context_hash": 10172656900392845956,
+      "translation": "이 체계는 OpenID Connect 자체를 비롯하여(`OpenID Connect Discovery <https://openid.net/specs/openid-connect-discovery-1_0.html>`__) 시스템 간 프로토콜에서 널리 채택되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410661Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "An alternative idea considered was to use a \"lateral\" discovery mechanism, in which the uploading client would attempt discovery by constructing a adjacent path relative to the upload URL.",
+      "source_hash": 11534380180023349800,
+      "context_hash": 18076535592715995854,
+      "translation": "고려된 대안은 \"측면\" 검색 메커니즘을 사용하는 것이었으며, 이 메커니즘에서는 업로드 클라이언트가 업로드 URL에 상대적인 인접 경로를 구성하여 검색을 시도합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410661Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:1",
+      "source": "For example, for ``https://upload.example.com/legacy/``, the uploading client would attempt to discover Trusted Publishing support at ``https://upload.example.com/legacy/pytp`` (or some equivalent).",
+      "source_hash": 6179818675445014095,
+      "context_hash": 16537353628132691342,
+      "translation": "예를 들어 ``https://upload.example.com/legacy/``\\ 의 경우, 업로드 클라이언트는 ``https://upload.example.com/legacy/pytp``\\ (또는 이에 준하는 경로)에서 Trusted Publishing 지원을 검색합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410661Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "The advantage of this approach is that it doesn't require index operators to have control over their (sub-)domain, which the ``.well-known`` scheme expects (as well-known URIs can only be served from the root of a domain).",
+      "source_hash": 12974736228110087746,
+      "context_hash": 6171890919295006756,
+      "translation": "이 접근 방식의 장점은 ``.well-known`` 체계가 인덱스 운영자에게 (하위) 도메인을 제어할 것을 요구하는 반면, 이 방식에서는 그러한 요구가 없다는 점입니다(잘 알려진 URI는 도메인의 루트에서만 제공할 수 있기 때문입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:57.410661Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "However, this approach also has downsides:",
+      "source_hash": 12370842522870357651,
+      "context_hash": 1086891650623930252,
+      "translation": "그러나 이 접근 방식에도 단점이 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970576Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "It assumes that arbitrary indices can provide an adjacent path without interfering with existing functionality, which isn't necessarily true.",
+      "source_hash": 14858588433970254752,
+      "context_hash": 6674509629910287250,
+      "translation": "임의의 색인이 기존 기능을 방해하지 않고 인접 경로를 제공할 수 있다고 가정하지만, 반드시 그런 것은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970580Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:1",
+      "source": "For example, a given third-party implementation may already use all routes under ``/legacy/{*}`` for other purposes.",
+      "source_hash": 11596566481255729494,
+      "context_hash": 18320894887951728558,
+      "translation": "예를 들어, 특정 서드파티 구현은 이미 ``/legacy/{*}`` 아래의 모든 경로를 다른 용도로 사용하고 있을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970581Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:0",
+      "source": "It's less consistent with existing machine-to-machine protocol conventions, which overwhelmingly use the ``.well-known`` scheme.",
+      "source_hash": 16007660753732744913,
+      "context_hash": 9815539815516433791,
+      "translation": "이는 기존 기계 간 프로토콜 관례와의 일관성이 떨어지며, 기존 관례에서는 압도적으로 ``.well-known`` 방식을 사용합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:20:38.970581Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:1",
+      "source": "Developing a custom location scheme here would require additional informational materials for server administrators and operators who are accustomed to the ``.well-known`` scheme.",
+      "source_hash": 9210744206086049603,
+      "context_hash": 7009288054248172114,
+      "translation": "여기에서 사용자 지정 위치 지정 방식을 개발하려면 ``.well-known`` 방식에 익숙한 서버 관리자와 운영자를 위한 추가 정보 자료가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970583Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "\"Implicit\" Discovery",
+      "source_hash": 7398651143385315618,
+      "context_hash": 12014278860114353084,
+      "translation": "\"암시적\" 검색",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970584Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "Another alternative idea considered was the perform \"implicit\" discovery, similar to what PyPI currently does for Trusted Publishing: instead of an explicit `discovery <Trusted Publishing Discovery_>`__ step, the uploading client could jump straight to attempting the audience and token minting steps, and handle any errors that arise.",
+      "source_hash": 13858791713547226914,
+      "context_hash": 13872247714879560382,
+      "translation": "고려된 또 다른 대안은 Trusted Publishing과 관련하여 현재 PyPI가 수행하는 방식과 유사하게 \"암시적\" 검색을 수행하는 것이었습니다. 명시적인 `discovery <Trusted Publishing Discovery_>`__ 단계 대신, 업로드 클라이언트가 audience 및 토큰 발급 단계를 바로 시도하고 발생하는 오류를 처리할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970585Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "The advantage of this approach is simplicity: it eliminates the network round-trip needed for the discovery step, and eliminates the indirection of obtaining the audience and token minting endpoints from the discovery response.",
+      "source_hash": 7095877392250476137,
+      "context_hash": 4534792691812026362,
+      "translation": "이 접근 방식의 장점은 단순성입니다. 검색 단계에 필요한 네트워크 왕복을 제거하고, 검색 응답에서 audience 및 토큰 발급 엔드포인트를 얻는 간접 과정도 제거합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970585Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "This approach too has downsides:",
+      "source_hash": 6475755425458143844,
+      "context_hash": 8718889611623225187,
+      "translation": "이 접근 방식에도 단점이 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970585Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:0",
+      "source": "It implicitly limits a given domain to a single index/upload implementation, since the implicit \"discovery\" step on PyPI is to construct the audience and token minting endpoints against the base domain of the upload URL.",
+      "source_hash": 4857195930308792709,
+      "context_hash": 9783014173207537460,
+      "translation": "PyPI에서 암시적 \"검색\" 단계는 업로드 URL의 기본 도메인을 기준으로 audience 및 토큰 발급 엔드포인트를 구성하는 것이므로, 이 방식은 특정 도메인을 암시적으로 단일 색인/업로드 구현으로 제한합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970586Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:1",
+      "source": "This limitation is acceptable in the context of a single index host like PyPI, but does not generalize to other index topologies (like index hosts that provide isolated private indices).",
+      "source_hash": 11813463006039780638,
+      "context_hash": 16868879500236720318,
+      "translation": "PyPI와 같은 단일 색인 호스트의 맥락에서는 이러한 제한을 허용할 수 있지만, 다른 색인 토폴로지(예: 격리된 비공개 색인을 제공하는 색인 호스트)에는 일반화할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970586Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:5/seg:0",
+      "source": "It relies on entirely static endpoint construction rules for the audience and token minting endpoints, which means significant disruption to existing clients if those endpoints ever need to change.",
+      "source_hash": 15596004793487504848,
+      "context_hash": 15037659833728747268,
+      "translation": "audience 및 토큰 발급 엔드포인트에 대해 전적으로 정적인 엔드포인트 구성 규칙에 의존하므로, 해당 엔드포인트를 변경해야 하는 경우 기존 클라이언트에 상당한 혼란이 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970587Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Footnotes",
+      "source_hash": 9125377107251733533,
+      "context_hash": 16385246061311251235,
+      "translation": "각주",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970587Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Widely used CI/CD and cloud providers variously implement \"ambient\"",
+      "source_hash": 13025172835887446704,
+      "context_hash": 13636609875985189223,
+      "translation": "널리 사용되는 CI/CD 및 클라우드 제공자는 저마다 표준화되지 않은 \"ambient\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970587Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "OIDC token retrieval mechanisms that aren't standardized.",
+      "source_hash": 9354899199776802296,
+      "context_hash": 4502816722754954739,
+      "translation": "OIDC 토큰 검색 메커니즘을 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970588Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:1",
+      "source": "These various mechanisms are currently abstracted over by existing components of the Python packaging ecosystem, such as the :pypi:`id` package.",
+      "source_hash": 14228113451762047018,
+      "context_hash": 834434793353832161,
+      "translation": "이러한 다양한 메커니즘은 현재 :pypi:`id` 패키지와 같은 Python 패키징 생태계의 기존 구성 요소를 통해 추상화되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:38.970588Z",
+      "issues": []
+    }
+  ]
+}

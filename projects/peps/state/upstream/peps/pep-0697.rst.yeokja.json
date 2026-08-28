@@ -1,0 +1,1722 @@
+{
+  "version": 1,
+  "source_hash": 5667600242239058980,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Limited C API for Extending Opaque Types",
+      "source_hash": 12810067068069585387,
+      "context_hash": 11556448845897565035,
+      "translation": "불투명 타입 확장을 위한 제한된 C API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377576Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:1/seg:0",
+      "source": ":external+py3.12:c:member:`PyType_Spec.basicsize`, :external+py3.12:c:func:`PyObject_GetTypeData`, :external+py3.12:c:macro:`Py_TPFLAGS_ITEMS_AT_END`, :external+py3.12:c:macro:`Py_RELATIVE_OFFSET`, :external+py3.12:c:func:`PyObject_GetItemData`",
+      "source_hash": 6632127289894810385,
+      "context_hash": 13230838142076309052,
+      "translation": ":external+py3.12:c:member:`PyType_Spec.basicsize`, :external+py3.12:c:func:`PyObject_GetTypeData`, :external+py3.12:c:macro:`Py_TPFLAGS_ITEMS_AT_END`, :external+py3.12:c:macro:`Py_RELATIVE_OFFSET`, :external+py3.12:c:func:`PyObject_GetItemData`",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377578Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 1474120110240428083,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377578Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Add `Limited C API <https://docs.python.org/3.11/c-api/stable.html#stable-application-binary-interface>`__ support for extending some types with opaque data by allowing code to only deal with data specific to a particular (sub)class.",
+      "source_hash": 2649477829948135225,
+      "context_hash": 12124894690345412915,
+      "translation": "특정 (서브)클래스에 특화된 데이터만 코드가 다루도록 허용하여 일부 타입을 불투명 데이터로 확장할 수 있도록 `제한된 C API <https://docs.python.org/3.11/c-api/stable.html#stable-application-binary-interface>`__ 지원을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377578Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "This mechanism is required to be usable with ``PyHeapTypeObject``.",
+      "source_hash": 895058573454000572,
+      "context_hash": 11216325643989782550,
+      "translation": "이 메커니즘은 ``PyHeapTypeObject``\\ 와 함께 사용할 수 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377578Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "This PEP does not propose allowing to extend non-dynamically sized variable sized objects such as ``tuple`` or ``int`` due to their different memory layout and perceived lack of demand for doing so.",
+      "source_hash": 7015405732372715155,
+      "context_hash": 13284682965667990200,
+      "translation": "이 PEP에서는 메모리 레이아웃이 서로 다르고 이러한 기능에 대한 수요가 부족하다고 여겨지므로 ``tuple`` 또는 ``int``\\ 와 같은 동적으로 크기가 조정되지 않는 가변 크기 객체의 확장을 허용하는 방안을 제안하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377579Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:1",
+      "source": "This PEP leaves room to do so in the future via the same mechanism if ever desired.",
+      "source_hash": 3155160508038125040,
+      "context_hash": 2146950959779607482,
+      "translation": "이 PEP에서는 향후 필요할 경우 동일한 메커니즘을 통해 이를 수행할 여지를 남겨 둡니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377579Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 18058592222334386362,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377579Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The motivating problem this PEP solves is attaching C-level state to custom types --- i.e. metaclasses (subclasses of :py:class:`python:type`).",
+      "source_hash": 3927591313836697686,
+      "context_hash": 5113842979424805164,
+      "translation": "이 PEP가 해결하려는 핵심 문제는 사용자 정의 타입, 즉 :py:class:`python:type`\\ 의 서브클래스인 메타클래스에 C 수준 상태를 연결하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377580Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "This is often needed in “wrappers” that expose another type system (e.g. C++, Java, Rust) as Python classes.",
+      "source_hash": 12317256770337041634,
+      "context_hash": 9813365804940782982,
+      "translation": "이는 다른 타입 시스템(예: C++, Java, Rust)을 Python 클래스로 노출하는 “래퍼”에서 흔히 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377580Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "These typically need to attach information about the “wrapped” non-Python class to the Python type object.",
+      "source_hash": 10648100958955183304,
+      "context_hash": 6126159719611518785,
+      "translation": "이러한 래퍼는 일반적으로 “래핑된” 비-Python 클래스에 대한 정보를 Python 타입 객체에 연결해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377580Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "This should be possible to do in the Limited API, so that the language wrappers or code generators can be used to create Stable ABI extensions. (See :pep:`652` for the benefits of providing a stable ABI.)",
+      "source_hash": 2881857850171464612,
+      "context_hash": 15635180617948475836,
+      "translation": "언어 래퍼 또는 코드 생성기를 사용하여 안정 ABI 확장을 생성할 수 있도록, 제한된 API에서도 이를 수행할 수 있어야 합니다. (안정 ABI를 제공하는 이점은 :pep:`652`\\ 를 참조하십시오.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377580Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "Extending ``type`` is an instance of a more general problem: extending a class while maintaining loose coupling – that is, not depending on the memory layout used by the superclass. (That's a lot of jargon; see Rationale for a concrete example of extending ``list``.)",
+      "source_hash": 18179913825623568676,
+      "context_hash": 1409063677344955032,
+      "translation": "``type``\\ 을 확장하는 것은 더 일반적인 문제의 한 사례입니다. 즉, 느슨한 결합을 유지하면서 클래스를 확장하는 것, 다시 말해 슈퍼클래스가 사용하는 메모리 레이아웃에 의존하지 않는 것입니다. (전문 용어가 많습니다. ``list``\\ 를 확장하는 구체적인 예는 Rationale을 참조하십시오.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377580Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 1976541178581981111,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377581Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Extending opaque types",
+      "source_hash": 8974670717022182059,
+      "context_hash": 1261182000422256007,
+      "translation": "불투명 타입 확장",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377581Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "In the Limited API, most ``struct``\\ s are opaque: their size and memory layout are not exposed, so they can be changed in new versions of CPython (or alternate implementations of the C API).",
+      "source_hash": 11371912058185687807,
+      "context_hash": 12988963299995733671,
+      "translation": "제한된 API에서는 대부분의 ``struct``\\ s가 불투명합니다. 크기와 메모리 레이아웃이 노출되지 않으므로 CPython의 새 버전(또는 C API의 대체 구현)에서 변경할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377581Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "This means that the usual subclassing pattern -- making the ``struct`` used for instances of the *base* type be the first element of the ``struct`` used for instances of the *derived* type -- does not work.",
+      "source_hash": 10432711978902182289,
+      "context_hash": 7618069689109950102,
+      "translation": "이는 일반적인 서브클래싱 패턴, 즉 인스턴스에 사용되는 *기저* 타입의 ``struct``\\ 를 인스턴스에 사용되는 *파생* 타입의 ``struct``\\ 의 첫 번째 요소로 만드는 방식이 작동하지 않음을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:52:51.756641Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "To illustrate with code, the `example from the tutorial <https://docs.python.org/3.11/extending/newtypes_tutorial.html#subclassing-other-types>`_ extends :external+python:c:type:`PyListObject` (:py:class:`python:list`) using the following ``struct``:",
+      "source_hash": 14880695438265322775,
+      "context_hash": 10783001111223184763,
+      "translation": "코드를 사용하여 설명하면, `튜토리얼의 예제 <https://docs.python.org/3.11/extending/newtypes_tutorial.html#subclassing-other-types>`_\\ 는 다음 ``struct``\\ 를 사용하여 :external+python:c:type:`PyListObject` (:py:class:`python:list`)를 확장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377582Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "This won't compile in the Limited API, since ``PyListObject`` is opaque (to allow changes as features and optimizations are implemented).",
+      "source_hash": 18268432291725701099,
+      "context_hash": 10992168104191857006,
+      "translation": "``PyListObject``\\ 가 불투명하므로(기능과 최적화가 구현될 때 변경할 수 있도록 하기 위해) 이는 제한된 API에서 컴파일되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377582Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "Instead, this PEP proposes using a ``struct`` with only the state needed in the subclass, that is:",
+      "source_hash": 7162451036609027961,
+      "context_hash": 5643723686186296990,
+      "translation": "대신 이 PEP에서는 서브클래스에 필요한 상태만 포함하는 ``struct``\\ 를 사용할 것을 제안합니다. 즉 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377582Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "The subclass can now be completely decoupled from the memory layout (and size) of the superclass.",
+      "source_hash": 10026059530187881054,
+      "context_hash": 11651417195872397570,
+      "translation": "이제 서브클래스는 슈퍼클래스의 메모리 레이아웃(및 크기)에서 완전히 분리될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377582Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "This is possible today.",
+      "source_hash": 17521887441908703332,
+      "context_hash": 15513712457337948855,
+      "translation": "이는 현재도 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377582Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:1",
+      "source": "To use such a struct:",
+      "source_hash": 2447427995152712318,
+      "context_hash": 13133638649357335318,
+      "translation": "이러한 struct를 사용하려면:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:52:51.756645Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "when creating the class, use ``PyListObject->tp_basicsize + sizeof(SubListState)`` as ``PyType_Spec.basicsize``;",
+      "source_hash": 17026649255568969703,
+      "context_hash": 15648825319297397961,
+      "translation": "클래스를 생성할 때 ``PyListObject->tp_basicsize + sizeof(SubListState)``\\ 를 ``PyType_Spec.basicsize``\\ 로 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377583Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "when accessing the data, use ``PyListObject->tp_basicsize`` as the offset into the instance (``PyObject*``).",
+      "source_hash": 13143389238302124913,
+      "context_hash": 11245176734307534957,
+      "translation": "데이터에 액세스할 때는 ``PyListObject->tp_basicsize``\\ 를 인스턴스(``PyObject*``) 내 오프셋으로 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377583Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "However, this has disadvantages:",
+      "source_hash": 3510205135122448290,
+      "context_hash": 11022171691463695640,
+      "translation": "그러나 여기에는 단점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377583Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:0",
+      "source": "The base's ``basicsize`` may not be properly aligned, causing issues on some architectures if not mitigated. (These issues can be particularly nasty if alignment changes in a new release.)",
+      "source_hash": 5565153693072035851,
+      "context_hash": 11161821170500939233,
+      "translation": "기반 타입의 ``basicsize``\\ 가 적절하게 정렬되지 않을 수 있으므로, 이를 완화하지 않으면 일부 아키텍처에서 문제가 발생합니다. (새 릴리스에서 정렬이 변경될 경우 이러한 문제는 특히 까다로울 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377584Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:0",
+      "source": "``PyTypeObject.tp_basicsize`` is not exposed in the Limited API, so extensions that support Limited API need to use ``PyObject_GetAttrString(obj, \"__basicsize__\")``.",
+      "source_hash": 15131938585493504452,
+      "context_hash": 18185028195972982080,
+      "translation": "``PyTypeObject.tp_basicsize``\\ 는 제한된 API에 노출되지 않으므로, 제한된 API를 지원하는 확장에서는 ``PyObject_GetAttrString(obj, \"__basicsize__\")``\\ 를 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377584Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:1",
+      "source": "This is cumbersome, and unsafe in edge cases (the Python attribute can be overridden).",
+      "source_hash": 11400579007129671823,
+      "context_hash": 1080059159272328380,
+      "translation": "이는 번거롭고, 예외적인 경우에는 안전하지 않습니다(Python 속성을 재정의할 수 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377584Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:0",
+      "source": "Variable-size objects are not handled (see `Extending variable-size objects`_ below).",
+      "source_hash": 4002988774186859436,
+      "context_hash": 14294435015939690684,
+      "translation": "가변 크기 객체는 처리되지 않습니다(`Extending variable-size objects`_ 아래 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:52:51.756645Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:15/seg:0",
+      "source": "To make this easy (and even *best practice* for projects that choose loose coupling over maximum performance), this PEP proposes an API to:",
+      "source_hash": 5378745162557271008,
+      "context_hash": 12844402148792432956,
+      "translation": "이를 쉽게 만들고(또한 최대 성능보다 느슨한 결합을 선택하는 프로젝트의 *권장 방식*\\ 으로 만들기 위해) 이 PEP에서는 다음을 수행하는 API를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:40.377585Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:16/seg:0",
+      "source": "During class creation, specify that ``SubListState`` should be “appended” to ``PyListObject``, without passing any additional details about ``list``. (The interpreter itself gets all necessary info, like ``tp_basicsize``, from the base).",
+      "source_hash": 6883887307440947674,
+      "context_hash": 12862622883283222490,
+      "translation": "클래스 생성 중에 ``SubListState``\\ 를 ``PyListObject``\\ 에 “추가”해야 한다고 지정하되, ``list``\\ 에 대한 추가 세부 정보를 전달하지 않습니다. (인터프리터 자체가 기반 타입에서 ``tp_basicsize``\\ 와 같은 필요한 모든 정보를 가져옵니다.)",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:39:40.377585Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:17/seg:0",
+      "source": "This will be specified by a negative ``PyType_Spec.basicsize``: ``-sizeof(SubListState)``.",
+      "source_hash": 18362889559237659941,
+      "context_hash": 10408430871892884044,
+      "translation": "이는 음수 ``PyType_Spec.basicsize``\\ 로 지정합니다: ``-sizeof(SubListState)``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832520Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:0",
+      "source": "Given an instance, and the subclass ``PyTypeObject*``, get a pointer to the ``SubListState``.",
+      "source_hash": 9940510778538845018,
+      "context_hash": 15793970166167966879,
+      "translation": "인스턴스와 서브클래스 ``PyTypeObject*``\\ 가 주어지면, ``SubListState``\\ 에 대한 포인터를 가져옵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832523Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:1",
+      "source": "A new function, ``PyObject_GetTypeData``, will be added for this.",
+      "source_hash": 7244494294168876399,
+      "context_hash": 8694318294378511816,
+      "translation": "이를 위해 새 함수인 ``PyObject_GetTypeData``\\ 가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832523Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:19/seg:0",
+      "source": "The base class is not limited to ``PyListObject``, of course: it can be used to extend any base class whose instance ``struct`` is opaque, unstable across releases, or not exposed at all -- including :py:class:`python:type` (``PyHeapTypeObject``) or third-party extensions (for example, NumPy arrays [#f1]_).",
+      "source_hash": 2218698519362744306,
+      "context_hash": 8512125557560562330,
+      "translation": "물론 베이스 클래스는 ``PyListObject``\\ 로 제한되지 않습니다. 인스턴스 ``struct``\\ 가 불투명하거나 릴리스 간에 불안정하거나 전혀 노출되지 않은 모든 베이스 클래스를 확장하는 데 사용할 수 있으며, 여기에는 :py:class:`python:type` (``PyHeapTypeObject``)과 서드파티 확장(예를 들어 NumPy 배열 [#f1]_)도 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832524Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:20/seg:0",
+      "source": "For cases where no additional state is needed, a zero ``basicsize`` will be allowed: in that case, the base's ``tp_basicsize`` will be inherited. (This currently works, but lacks explicit documentation and tests.)",
+      "source_hash": 5540781387129556292,
+      "context_hash": 8157906648301495297,
+      "translation": "추가 상태가 필요하지 않은 경우에는 ``basicsize``\\ 를 0으로 지정할 수 있습니다. 이 경우 베이스의 ``tp_basicsize``\\ 가 상속됩니다. (현재도 작동하지만, 명시적인 문서와 테스트가 없습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832524Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:21/seg:0",
+      "source": "The ``tp_basicsize`` of the new class will be set to the computed total size, so code that inspects classes will continue working as before.",
+      "source_hash": 15548111613557511397,
+      "context_hash": 3514273457127464743,
+      "translation": "새 클래스의 ``tp_basicsize``\\ 는 계산된 전체 크기로 설정되므로, 클래스를 검사하는 코드는 이전과 동일하게 계속 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832524Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Extending variable-size objects",
+      "source_hash": 2455223577862297047,
+      "context_hash": 4752594066918786466,
+      "translation": "가변 크기 객체 확장",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832525Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Additional considerations are needed to subclass :external+python:c:type:`variable-sized objects <PyVarObject>` while maintaining loose coupling: the variable-sized data can collide with subclass data (``SubListState`` in the example above).",
+      "source_hash": 13435064033795641061,
+      "context_hash": 1467904676989766748,
+      "translation": "느슨한 결합을 유지하면서 :external+python:c:type:`variable-sized objects <PyVarObject>`\\ 를 서브클래스화하려면 추가로 고려해야 할 사항이 있습니다. 가변 크기 데이터가 서브클래스 데이터와 충돌할 수 있기 때문입니다(위 예의 ``SubListState``).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832525Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Currently, CPython doesn't provide a way to prevent such collisions.",
+      "source_hash": 14192784428916617732,
+      "context_hash": 15662613294661080175,
+      "translation": "현재 CPython은 이러한 충돌을 방지할 방법을 제공하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832525Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "So, the proposed mechanism of extending opaque classes (negative ``base->tp_itemsize``) will *fail* by default.",
+      "source_hash": 11624900227893009674,
+      "context_hash": 661716352942250831,
+      "translation": "따라서 불투명 클래스를 확장하는 제안된 메커니즘(음수 ``base->tp_itemsize``\\ )은 기본적으로 *실패*\\ 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832526Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "We could stop there, but since the motivating type --- ``PyHeapTypeObject`` --- is variable sized, we need a safe way to allow subclassing it.",
+      "source_hash": 7670562343370745764,
+      "context_hash": 17621792007140390186,
+      "translation": "여기서 멈출 수도 있지만, 이 메커니즘을 도입하게 된 타입인 --- ``PyHeapTypeObject`` --- 이 가변 크기이므로 이를 안전하게 서브클래스화할 방법이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832526Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "A bit of background first:",
+      "source_hash": 12311956292466326828,
+      "context_hash": 17523954732979790919,
+      "translation": "먼저 약간의 배경을 살펴보겠습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832526Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "Variable-size layouts",
+      "source_hash": 1274558366919342391,
+      "context_hash": 1663369012999085676,
+      "translation": "가변 크기 레이아웃",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832527Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "There are two main memory layouts for variable-sized objects.",
+      "source_hash": 2641349949132179959,
+      "context_hash": 17602089996589350475,
+      "translation": "가변 크기 객체에는 주요 메모리 레이아웃이 두 가지 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832527Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "In types such as ``int`` or ``tuple``, the variable data is stored at a fixed offset.",
+      "source_hash": 1921470497736012433,
+      "context_hash": 14744380715640082230,
+      "translation": "``int``\\ 이나 ``tuple``\\ 과 같은 타입에서는 가변 데이터가 고정된 오프셋에 저장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832527Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:1",
+      "source": "If subclasses need additional space, it must be added after any variable-sized data",
+      "source_hash": 11680825060158626523,
+      "context_hash": 16341845998863638497,
+      "translation": "서브클래스에 추가 공간이 필요하면, 가변 크기 데이터 뒤에 추가해야 합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832527Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "In other types, like ``PyHeapTypeObject``, variable-sized data always lives at the end of the instance's memory area",
+      "source_hash": 9364276462559950450,
+      "context_hash": 10078250917698622216,
+      "translation": "반면 ``PyHeapTypeObject``\\ 와 같은 다른 타입에서는 가변 크기 데이터가 항상 인스턴스의 메모리 영역 끝에 위치합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832528Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "The first layout enables fast access to the items array.",
+      "source_hash": 11957354874614714114,
+      "context_hash": 15456454380060829247,
+      "translation": "첫 번째 레이아웃에서는 항목 배열에 빠르게 액세스할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832528Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:1",
+      "source": "The second allows subclasses to ignore the variable-sized array (assuming they use offsets from the start of the object to access their data).",
+      "source_hash": 8315554761973704809,
+      "context_hash": 10474177259108474586,
+      "translation": "두 번째 레이아웃에서는 서브클래스가 가변 크기 배열을 무시할 수 있습니다(데이터에 액세스할 때 객체 시작 부분으로부터의 오프셋을 사용한다고 가정합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832528Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "Since this PEP focuses on ``PyHeapTypeObject``, it proposes an API to allow subclassing for the second variant.",
+      "source_hash": 12194015326478405916,
+      "context_hash": 15304476605438318206,
+      "translation": "이 PEP는 ``PyHeapTypeObject``\\ 에 초점을 맞추므로, 두 번째 변형에 대해 서브클래스화를 허용하는 API를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832529Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:1",
+      "source": "Support for the first can be added later *as an API-compatible change* (though your PEP author doubts it'd be worth the effort).",
+      "source_hash": 6654331171841234431,
+      "context_hash": 7793198147540406083,
+      "translation": "첫 번째 변형에 대한 지원은 나중에 *API 호환 변경으로* 추가할 수 있습니다(다만 이 PEP의 작성자는 그 노력이 들 만한 가치가 있을지 의문을 제기합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832529Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "Extending classes with the ``PyHeapTypeObject``-like layout",
+      "source_hash": 3183445881514041809,
+      "context_hash": 12597401417803413631,
+      "translation": "``PyHeapTypeObject``\\ 와 유사한 레이아웃을 사용하는 클래스 확장",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832529Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "This PEP proposes a type flag, ``Py_TPFLAGS_ITEMS_AT_END``, which will indicate the ``PyHeapTypeObject``-like layout.",
+      "source_hash": 4852619801340775184,
+      "context_hash": 2039996948058262844,
+      "translation": "이 PEP는 ``Py_TPFLAGS_ITEMS_AT_END``\\ 라는 타입 플래그를 제안하며, 이 플래그는 ``PyHeapTypeObject``\\ 와 유사한 레이아웃임을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832529Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:1",
+      "source": "This can be set in two ways:",
+      "source_hash": 4669254061884502812,
+      "context_hash": 1020829129743846845,
+      "translation": "이는 두 가지 방법으로 설정할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832529Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "the superclass can set the flag, allowing subclass authors to not care about the fact that ``itemsize`` is involved, or",
+      "source_hash": 15584839033635472145,
+      "context_hash": 3771110751440349203,
+      "translation": "슈퍼클래스가 플래그를 설정하여, 서브클래스 작성자가 ``itemsize``\\ 가 관련된다는 사실을 신경 쓰지 않도록 하거나,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832530Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "the new subclass sets the flag, asserting that the author knows the superclass is suitable (but perhaps hasn't been updated to use the flag yet).",
+      "source_hash": 16531545120747470710,
+      "context_hash": 1307336641075799049,
+      "translation": "새 서브클래스가 플래그를 설정하여, 작성자가 슈퍼클래스가 적합하다는 것을 알고 있음을 나타낼 수 있습니다(다만 아직 플래그를 사용하도록 업데이트되지 않았을 수도 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832530Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:0",
+      "source": "This flag will be necessary to extend a variable-sized type using negative ``basicsize``.",
+      "source_hash": 1943501575090287019,
+      "context_hash": 11416684996584057794,
+      "translation": "음수 ``basicsize``\\ 를 사용하여 가변 크기 타입을 확장하려면 이 플래그가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832530Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:0",
+      "source": "An alternative to a flag would be to require subclass authors to know that the base uses a compatible layout (e.g. from documentation).",
+      "source_hash": 15572345234996189833,
+      "context_hash": 15598528472470381510,
+      "translation": "플래그를 사용하는 대신, 서브클래스 작성자가 베이스가 호환 가능한 레이아웃을 사용한다는 것을 알고 있도록 요구할 수도 있습니다(예를 들어 문서를 통해).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832530Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:1",
+      "source": "A past version of this PEP proposed a new ``PyType_Slot`` for it.",
+      "source_hash": 10181374766235973142,
+      "context_hash": 15595505621326711182,
+      "translation": "이 PEP의 이전 버전에서는 이를 위한 새 ``PyType_Slot``\\ 을 제안했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832531Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:2",
+      "source": "This turned out to be hard to explain, and goes against the idea of decoupling the subclass from the base layout.",
+      "source_hash": 7380859847927202564,
+      "context_hash": 10618224780584742282,
+      "translation": "그러나 이는 설명하기 어려운 것으로 드러났으며, 서브클래스를 베이스 레이아웃과 분리한다는 개념에도 어긋납니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832531Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:18/seg:0",
+      "source": "The new flag will be used to allow safely extending variable-sized types: creating a type with ``spec->basicsize < 0`` and ``base->tp_itemsize > 0`` will require the flag.",
+      "source_hash": 2762972914694773580,
+      "context_hash": 2735702973828029978,
+      "translation": "새 플래그는 가변 크기 타입을 안전하게 확장하는 데 사용됩니다. ``spec->basicsize < 0``\\ 이고 ``base->tp_itemsize > 0``\\ 인 타입을 생성하려면 이 플래그가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:47.832531Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:19/seg:0",
+      "source": "Additionally, this PEP proposes a helper function to get the variable-sized data of a given instance, if it uses the new ``Py_TPFLAGS_ITEMS_AT_END`` flag.",
+      "source_hash": 6311732878857419904,
+      "context_hash": 10910008212907338942,
+      "translation": "또한 이 PEP는 새로운 ``Py_TPFLAGS_ITEMS_AT_END`` 플래그를 사용하는 경우, 주어진 인스턴스의 가변 크기 데이터를 가져오는 도우미 함수를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414893Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:19/seg:1",
+      "source": "This hides the necessary pointer arithmetic behind an API that can potentially be adapted to other layouts in the future (including, potentially, a VM-managed layout).",
+      "source_hash": 17066640619971946381,
+      "context_hash": 15561432931788483388,
+      "translation": "이를 통해 필요한 포인터 연산을 API 뒤에 숨기며, 이 API는 향후 다른 레이아웃(잠재적으로 VM이 관리하는 레이아웃 포함)에 맞게 조정될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414896Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:20/seg:0",
+      "source": "Big picture",
+      "source_hash": 4113505081292979414,
+      "context_hash": 1815237112041768587,
+      "translation": "전체적인 그림",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414897Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:21/seg:0",
+      "source": "To make it easier to verify that all cases are covered, here's a scary-looking big-picture decision tree.",
+      "source_hash": 9998276821550003632,
+      "context_hash": 7224973058607832326,
+      "translation": "모든 경우가 포함되었는지 확인하기 쉽도록, 여기 무섭게 보이는 전체적인 의사 결정 트리가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414898Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:22/seg:0",
+      "source": "The individual cases are easier to explain in isolation (see the `reference implementation <Reference Implementation_>`_ for draft docs).",
+      "source_hash": 14718030164916601009,
+      "context_hash": 10356350088535044670,
+      "translation": "개별 경우는 따로 설명하는 편이 더 쉽습니다(초안 문서는 `reference implementation <Reference Implementation_>`_\\ 을 참조하십시오).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414898Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:23/seg:0",
+      "source": "``spec->basicsize > 0``: No change to the status quo. (The base class layout is known.)",
+      "source_hash": 2716723273745074471,
+      "context_hash": 8130385445184456335,
+      "translation": "``spec->basicsize > 0``: 현 상태는 변경되지 않습니다. (베이스 클래스 레이아웃을 알고 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414898Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:24/seg:0",
+      "source": "``spec->basicsize == 0``: (Inheriting the basicsize)",
+      "source_hash": 15094269169639500248,
+      "context_hash": 9899150019064176955,
+      "translation": "``spec->basicsize == 0``: (basicsize를 상속합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414899Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:25/seg:0",
+      "source": "``base->tp_itemsize == 0``: The item size is set to ``spec->tp_itemsize``. (No change to status quo.)",
+      "source_hash": 10790570661831882298,
+      "context_hash": 10685323570641434640,
+      "translation": "``base->tp_itemsize == 0``: 항목 크기를 ``spec->tp_itemsize``\\ 로 설정합니다. (현 상태는 변경되지 않습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414899Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:26/seg:0",
+      "source": "``base->tp_itemsize > 0``: (Extending a variable-size class)",
+      "source_hash": 2354030836550043941,
+      "context_hash": 7534881710872672015,
+      "translation": "``base->tp_itemsize > 0``: (가변 크기 클래스를 확장합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414900Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:27/seg:0",
+      "source": "``spec->itemsize == 0``: The item size is inherited. (No change to status quo.)",
+      "source_hash": 9285350207279710588,
+      "context_hash": 4207070884760085648,
+      "translation": "``spec->itemsize == 0``: 항목 크기를 상속합니다. (현 상태는 변경되지 않습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414900Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:28/seg:0",
+      "source": "``spec->itemsize > 0``: The item size is set. (This is hard to use safely, but it's CPython's current behavior.)",
+      "source_hash": 441649768023656677,
+      "context_hash": 4714679311527652621,
+      "translation": "``spec->itemsize > 0``: 항목 크기를 설정합니다. (안전하게 사용하기 어렵지만, 이것이 CPython의 현재 동작입니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414900Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:29/seg:0",
+      "source": "``spec->basicsize < 0``: (Extending the basicsize)",
+      "source_hash": 7844409112469560490,
+      "context_hash": 4322568749168596391,
+      "translation": "``spec->basicsize < 0``: (basicsize를 확장합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414901Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:30/seg:0",
+      "source": "``base->tp_itemsize == 0``: (Extending a fixed-size class)",
+      "source_hash": 12936427701303608618,
+      "context_hash": 12045060185147176427,
+      "translation": "``base->tp_itemsize == 0``: (고정 크기 클래스를 확장합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414901Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:31/seg:0",
+      "source": "``spec->itemsize == 0``: The item size is set to 0.",
+      "source_hash": 12886146258639629648,
+      "context_hash": 6805894237274615828,
+      "translation": "``spec->itemsize == 0``: 항목 크기를 0으로 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414901Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:32/seg:0",
+      "source": "``spec->itemsize > 0``: Fail. (We'd need to add an ``ob_size``, which is only possible for trivial types -- and the trivial layout must be known.)",
+      "source_hash": 13154468934206150672,
+      "context_hash": 1639114690560596013,
+      "translation": "``spec->itemsize > 0``: 실패합니다. (``ob_size``\\ 를 추가해야 하는데, 이는 단순 타입에 대해서만 가능하며 해당 단순 레이아웃을 알고 있어야 합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414902Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:33/seg:0",
+      "source": "``base->tp_itemsize > 0``: (Extending a variable-size class)",
+      "source_hash": 2354030836550043941,
+      "context_hash": 10107003354768478551,
+      "translation": "``base->tp_itemsize > 0``: (가변 크기 클래스를 확장합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414902Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:34/seg:0",
+      "source": "``spec->itemsize == 0``: (Inheriting the itemsize)",
+      "source_hash": 11162825311951648526,
+      "context_hash": 1773978476733775709,
+      "translation": "``spec->itemsize == 0``: (itemsize를 상속합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414902Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:35/seg:0",
+      "source": "``Py_TPFLAGS_ITEMS_AT_END`` used: itemsize is inherited.",
+      "source_hash": 3322892792194626371,
+      "context_hash": 1893171184152367797,
+      "translation": "``Py_TPFLAGS_ITEMS_AT_END`` 사용됨: itemsize를 상속합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414902Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:36/seg:0",
+      "source": "``Py_TPFLAGS_ITEMS_AT_END`` not used: Fail. (Possible conflict.)",
+      "source_hash": 9053940788856589213,
+      "context_hash": 6868137306577107219,
+      "translation": "``Py_TPFLAGS_ITEMS_AT_END`` 사용되지 않음: 실패합니다. (충돌이 발생할 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414903Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:37/seg:0",
+      "source": "``spec->itemsize > 0``: Fail. (Changing/extending the item size can't be done safely.)",
+      "source_hash": 13935935932667947768,
+      "context_hash": 12645826222087333131,
+      "translation": "``spec->itemsize > 0``: 실패합니다. (항목 크기를 변경하거나 확장하는 작업은 안전하게 수행할 수 없습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414903Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:38/seg:0",
+      "source": "Setting ``spec->itemsize < 0`` is always an error.",
+      "source_hash": 3417501364022284048,
+      "context_hash": 8568397548750354110,
+      "translation": "``spec->itemsize < 0``\\ 로 설정하는 것은 항상 오류입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414903Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:38/seg:1",
+      "source": "This PEP does not propose any mechanism to *extend* ``tp->itemsize`` rather than just inherit it.",
+      "source_hash": 16631737402339285365,
+      "context_hash": 10860863397215969636,
+      "translation": "이 PEP는 ``tp->itemsize``\\ 를 단지 상속하는 대신 *확장*\\ 할 어떤 메커니즘도 제안하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:52:51.756646Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Relative member offsets",
+      "source_hash": 8161003179410019548,
+      "context_hash": 8152019024413203068,
+      "translation": "상대적 멤버 오프셋",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414905Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "One more piece of the puzzle is ``PyMemberDef.offset``.",
+      "source_hash": 47194553090816224,
+      "context_hash": 13359629166756086908,
+      "translation": "퍼즐의 또 다른 조각은 ``PyMemberDef.offset``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414905Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "Extensions that use a subclass-specific ``struct`` (``SubListState`` above) will get a way to specify “relative” offsets (offsets based from this ``struct``) rather than “absolute” ones (based off the ``PyObject`` struct).",
+      "source_hash": 17373969426900245283,
+      "context_hash": 5954535565183677740,
+      "translation": "서브클래스별 ``struct``\\ (``SubListState`` 위의 구조체)를 사용하는 확장 모듈은 “절대적” 오프셋(``PyObject`` 구조체를 기준으로 함)이 아니라 “상대적” 오프셋(이 ``struct``\\ 를 기준으로 함)을 지정할 방법을 얻게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414905Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "One way to do it would be to automatically assume “relative” offsets when creating a class using the new API.",
+      "source_hash": 16469097535732901207,
+      "context_hash": 11476408464918375879,
+      "translation": "한 가지 방법은 새 API를 사용하여 클래스를 생성할 때 “상대적” 오프셋을 자동으로 가정하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414906Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "However, this implicit assumption would be too surprising.",
+      "source_hash": 485903430134511429,
+      "context_hash": 3582022375034751201,
+      "translation": "그러나 이러한 암묵적 가정은 지나치게 의외일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414906Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "To be more explicit, this PEP proposes a new flag for “relative” offsets.",
+      "source_hash": 18301618198085304287,
+      "context_hash": 2230234652039820850,
+      "translation": "더 명확하게 하기 위해, 이 PEP는 “상대적” 오프셋을 위한 새로운 플래그를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414906Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "At least initially, this flag will serve only as a check against misuse (and a hint for reviewers).",
+      "source_hash": 5078684654008243456,
+      "context_hash": 2764376791378319618,
+      "translation": "적어도 처음에는 이 플래그가 오용을 확인하는 검사(및 검토자를 위한 힌트)로만 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414906Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:2",
+      "source": "It must be present if used with the new API, and must not be used otherwise.",
+      "source_hash": 8968740474075689211,
+      "context_hash": 17332441414730146751,
+      "translation": "새 API와 함께 사용되는 경우 이 플래그가 있어야 하며, 그 외의 경우에는 사용해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414907Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 14065873338303162139,
+      "translation": "명세",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:35.414910Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "In the code blocks below, only function headers are part of the specification.",
+      "source_hash": 16552540740214220742,
+      "context_hash": 17189467456223418386,
+      "translation": "아래 코드 블록에서는 함수 헤더만 사양의 일부입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164225Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "Other code (the size/offset calculations) are details of the initial CPython implementation, and subject to change.",
+      "source_hash": 9123896623468490249,
+      "context_hash": 6726360788606447150,
+      "translation": "그 밖의 코드(크기 및 오프셋 계산)는 초기 CPython 구현의 세부 사항이며 변경될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164229Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Relative ``basicsize``",
+      "source_hash": 3658010884189487860,
+      "context_hash": 10197526332065497278,
+      "translation": "상대적 ``basicsize``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164229Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The ``basicsize`` member of ``PyType_Spec`` will be allowed to be zero or negative.",
+      "source_hash": 6841795431356679540,
+      "context_hash": 6208088208212975334,
+      "translation": "``PyType_Spec``\\ 의 ``basicsize`` 멤버는 0 또는 음수가 될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164230Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "In that case, its absolute value will specify how much *extra* storage space instances of the new class require, in addition to the basicsize of the base class.",
+      "source_hash": 7709035939942337414,
+      "context_hash": 12879241402118067477,
+      "translation": "이 경우 그 절댓값은 새 클래스의 인스턴스가 기본 클래스의 basicsize에 더해 얼마나 많은 *추가* 저장 공간을 필요로 하는지를 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:52:51.756646Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "That is, the basicsize of the resulting class will be:",
+      "source_hash": 13996331268100991384,
+      "context_hash": 4840880309791520685,
+      "translation": "즉, 결과 클래스의 basicsize는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164231Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "where ``_align`` rounds up to a multiple of ``alignof(max_align_t)``.",
+      "source_hash": 12784039256476776477,
+      "context_hash": 6218619603196403952,
+      "translation": "여기서 ``_align``\\ 은 ``alignof(max_align_t)``\\ 의 배수가 되도록 올림합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164231Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "When ``spec->basicsize`` is zero, basicsize will be inherited directly instead, i.e. set to ``base->tp_basicsize`` without aligning. (This already works; explicit tests and documentation will be added.)",
+      "source_hash": 13292021703573687312,
+      "context_hash": 7302394802381631341,
+      "translation": "``spec->basicsize``\\ 가 0이면 대신 basicsize를 직접 상속합니다. 즉, 정렬하지 않고 ``base->tp_basicsize``\\ 로 설정합니다. (이 기능은 이미 작동하며, 명시적인 테스트와 문서를 추가할 예정입니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164232Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "On an instance, the memory area specific to a subclass -- that is, the “extra space” that subclass reserves in addition its base -- will be available through a new function, ``PyObject_GetTypeData``.",
+      "source_hash": 8014220272114258095,
+      "context_hash": 16500829068432842912,
+      "translation": "인스턴스에서 서브클래스에 고유한 메모리 영역, 즉 서브클래스가 기본 클래스에 더해 예약하는 “추가 공간”은 새 함수 ``PyObject_GetTypeData``\\ 를 통해 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164232Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:1",
+      "source": "In CPython, this function will be defined as:",
+      "source_hash": 11821156933057029439,
+      "context_hash": 17135000037975412049,
+      "translation": "CPython에서는 이 함수를 다음과 같이 정의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164233Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "Another function will be added to retrieve the size of this memory area:",
+      "source_hash": 7312171279959829384,
+      "context_hash": 4518504132450321583,
+      "translation": "이 메모리 영역의 크기를 가져오는 또 다른 함수가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164233Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:0",
+      "source": "The result may be higher than requested by ``-basicsize``.",
+      "source_hash": 14309934464312429650,
+      "context_hash": 7953356717274055268,
+      "translation": "결과는 ``-basicsize``\\ 로 요청한 값보다 클 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164233Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:1",
+      "source": "It is safe to use all of it (e.g. with ``memset``).",
+      "source_hash": 3362736331146022948,
+      "context_hash": 4014046942180262378,
+      "translation": "그 전체를 사용해도 안전합니다(예: ``memset``\\ 으로 사용).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164233Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:0",
+      "source": "The new ``*Get*`` functions come with an important caveat, which will be pointed out in documentation: They may only be used for classes created using negative ``PyType_Spec.basicsize``.",
+      "source_hash": 3188003666268642273,
+      "context_hash": 17883514732547148311,
+      "translation": "새로운 ``*Get*``\\ 함수에는 문서에서 지적할 중요한 주의 사항이 있습니다. 이 함수는 음수 ``PyType_Spec.basicsize``\\ 를 사용해 생성된 클래스에만 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164234Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:1",
+      "source": "For other classes, their behavior is undefined. (Note that this allows the above code to assume ``cls->tp_base`` is not ``NULL``.)",
+      "source_hash": 4147478855471114965,
+      "context_hash": 11021488672830992913,
+      "translation": "그 밖의 클래스에서는 동작이 정의되지 않습니다. (이 점으로 인해 위 코드는 ``cls->tp_base``\\ 가 ``NULL``\\ 이 아니라고 가정할 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164234Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Inheriting ``itemsize``",
+      "source_hash": 9934840120676712957,
+      "context_hash": 1846410265934444162,
+      "translation": "``itemsize`` 상속",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164235Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "When ``spec->itemsize`` is zero, ``tp_itemsize`` will be inherited from the base. (This already works; explicit tests and documentation will be added.)",
+      "source_hash": 9013148719766312998,
+      "context_hash": 92403268339872579,
+      "translation": "``spec->itemsize``\\ 가 0이면 ``tp_itemsize``\\ 를 기본 클래스에서 상속합니다. (이 기능은 이미 작동하며, 명시적인 테스트와 문서를 추가할 예정입니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164235Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "A new type flag, ``Py_TPFLAGS_ITEMS_AT_END``, will be added.",
+      "source_hash": 9238649102093244533,
+      "context_hash": 12139483036382014739,
+      "translation": "새로운 타입 플래그 ``Py_TPFLAGS_ITEMS_AT_END``\\ 가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164235Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "This flag can only be set on types with non-zero ``tp_itemsize``.",
+      "source_hash": 4431518768358960073,
+      "context_hash": 4932241743439849752,
+      "translation": "이 플래그는 ``tp_itemsize``\\ 가 0이 아닌 타입에만 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164235Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:2",
+      "source": "It indicates that the variable-sized portion of an instance is stored at the end of the instance's memory.",
+      "source_hash": 10384717979173035390,
+      "context_hash": 13979798906755544348,
+      "translation": "이 플래그는 인스턴스의 가변 크기 부분이 인스턴스 메모리의 끝에 저장된다는 것을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164236Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "The default metatype (``PyType_Type``) will set this flag.",
+      "source_hash": 7828213352649792372,
+      "context_hash": 1444665735215269785,
+      "translation": "기본 메타클래스(``PyType_Type``)가 이 플래그를 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164236Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "A new function, ``PyObject_GetItemData``, will be added to access the memory reserved for variable-sized content of types with the new flag.",
+      "source_hash": 17121904479530109663,
+      "context_hash": 18169645728313011472,
+      "translation": "새로운 함수 ``PyObject_GetItemData``\\ 가 추가되어, 새 플래그가 설정된 타입에서 가변 크기 콘텐츠를 위해 예약된 메모리에 액세스할 수 있게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164236Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:1",
+      "source": "In CPython it will be defined as:",
+      "source_hash": 14031281424731943192,
+      "context_hash": 14568348791499550954,
+      "translation": "CPython에서는 다음과 같이 정의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164237Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "This function will initially *not* be added to the Limited API.",
+      "source_hash": 9950688468914383229,
+      "context_hash": 4623595123215776758,
+      "translation": "이 함수는 처음에는 Limited API에 *추가되지* 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:52:51.756647Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "Extending a class with positive ``base->itemsize`` using negative ``spec->basicsize`` will fail unless ``Py_TPFLAGS_ITEMS_AT_END`` is set, either on the base or in ``spec->flags``. (See `Extending variable-size objects`_ for a full explanation.)",
+      "source_hash": 7785437064446296318,
+      "context_hash": 2685680995101659028,
+      "translation": "음수 ``spec->basicsize``\\ 를 사용하여 양수 ``base->itemsize``\\ 를 가진 클래스를 확장할 때는 기본 클래스 또는 ``spec->flags``\\ 에 ``Py_TPFLAGS_ITEMS_AT_END``\\ 가 설정되어 있지 않으면 실패합니다. (`Extending variable-size objects`_\\ 에 전체 설명이 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164238Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:0",
+      "source": "Extending a class with positive ``spec->itemsize`` using negative ``spec->basicsize`` will fail.",
+      "source_hash": 7872220824524052044,
+      "context_hash": 17439701350311185327,
+      "translation": "음수 ``spec->basicsize``\\ 를 사용하여 양수 ``spec->itemsize``\\ 를 가진 클래스를 확장하면 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164238Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Relative member offsets",
+      "source_hash": 8161003179410019548,
+      "context_hash": 12739300469334237186,
+      "translation": "상대적 멤버 오프셋",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164238Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "In types defined using negative ``PyType_Spec.basicsize``, the offsets of members defined via ``Py_tp_members`` must be relative to the extra subclass data, rather than the full ``PyObject`` struct.",
+      "source_hash": 5149215865610442257,
+      "context_hash": 18415916251998448652,
+      "translation": "음수 ``PyType_Spec.basicsize``\\ 를 사용하여 정의된 타입에서는 ``Py_tp_members``\\ 를 통해 정의된 멤버의 오프셋이 전체 ``PyObject`` 구조체가 아니라 추가 서브클래스 데이터에 상대적이어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164239Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "This will be indicated by a new flag in ``PyMemberDef.flags``: ``Py_RELATIVE_OFFSET``.",
+      "source_hash": 16335243838654242527,
+      "context_hash": 17062900770485345591,
+      "translation": "이는 ``PyMemberDef.flags``\\ 의 새로운 플래그 ``Py_RELATIVE_OFFSET``\\ 로 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164239Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "In the initial implementation, the new flag will be redundant.",
+      "source_hash": 14927591869498289859,
+      "context_hash": 18318616377627875092,
+      "translation": "초기 구현에서는 새로운 플래그가 중복됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164239Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:1",
+      "source": "It only serves to make the offset's changed meaning clear, and to help avoid mistakes.",
+      "source_hash": 1325598673926059700,
+      "context_hash": 5792037321344963967,
+      "translation": "이 플래그는 오프셋 의미의 변경을 명확히 하고 실수를 방지하는 데만 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:38.164240Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:2",
+      "source": "It will be an error to *not* use ``Py_RELATIVE_OFFSET`` with negative ``basicsize``, and it will be an error to use it in any other context (i.e. direct or indirect calls to ``PyDescr_NewMember``, ``PyMember_GetOne``, ``PyMember_SetOne``).",
+      "source_hash": 10071039990660341857,
+      "context_hash": 13181557549743786916,
+      "translation": "음수 ``basicsize``\\ 와 함께 ``Py_RELATIVE_OFFSET``\\ 를 *사용하지 않는* 것은 오류이며, 다른 어떤 컨텍스트에서 이를 사용하는 것도 오류입니다(즉, ``PyDescr_NewMember``, ``PyMember_GetOne``, ``PyMember_SetOne``\\ 에 대한 직접 또는 간접 호출입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:52:51.756647Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "CPython will adjust the offset and clear the ``Py_RELATIVE_OFFSET`` flag when initializing a type.",
+      "source_hash": 12265791985473404416,
+      "context_hash": 7047976779650549391,
+      "translation": "CPython은 형식을 초기화할 때 오프셋을 조정하고 ``Py_RELATIVE_OFFSET`` 플래그를 해제합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343750Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:1",
+      "source": "This means that:",
+      "source_hash": 18269911222196268976,
+      "context_hash": 2203551800959378731,
+      "translation": "이는 다음을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343754Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "the created type's ``tp_members`` will not match the input definition's ``Py_tp_members`` slot, and",
+      "source_hash": 17986892560537438399,
+      "context_hash": 5172453062903904901,
+      "translation": "생성된 형식의 ``tp_members``\\ 는 입력 정의의 ``Py_tp_members`` 슬롯과 일치하지 않으며,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343754Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "any code that reads ``tp_members`` will not need to handle the flag.",
+      "source_hash": 15202749612459294715,
+      "context_hash": 14742567882519279814,
+      "translation": "``tp_members``\\ 를 읽는 코드는 플래그를 처리할 필요가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343755Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "List of new API",
+      "source_hash": 351459786847240159,
+      "context_hash": 8694603087459933060,
+      "translation": "새로운 API 목록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343755Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "The following new functions/values are proposed.",
+      "source_hash": 12361003905931483289,
+      "context_hash": 14785232887361229457,
+      "translation": "다음과 같은 새로운 함수/값을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343756Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "These will be added to the Limited API/Stable ABI:",
+      "source_hash": 5151510042143582042,
+      "context_hash": 4238676150353830482,
+      "translation": "다음 항목은 Limited API/Stable ABI에 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343756Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "``void * PyObject_GetTypeData(PyObject *obj, PyTypeObject *cls)``",
+      "source_hash": 13601864981083794455,
+      "context_hash": 14838000027415199836,
+      "translation": "``void * PyObject_GetTypeData(PyObject *obj, PyTypeObject *cls)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343757Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "``Py_ssize_t PyType_GetTypeDataSize(PyTypeObject *cls)``",
+      "source_hash": 1633595975749590662,
+      "context_hash": 9747081625685585003,
+      "translation": "``Py_ssize_t PyType_GetTypeDataSize(PyTypeObject *cls)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343757Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "``Py_TPFLAGS_ITEMS_AT_END`` flag for ``PyTypeObject.tp_flags``",
+      "source_hash": 7372039265503900241,
+      "context_hash": 1873111966553758884,
+      "translation": "``PyTypeObject.tp_flags``\\ 용 ``Py_TPFLAGS_ITEMS_AT_END`` 플래그",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343757Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "``Py_RELATIVE_OFFSET`` flag for ``PyMemberDef.flags``",
+      "source_hash": 7639857981203614249,
+      "context_hash": 7197760283124137733,
+      "translation": "``PyMemberDef.flags``\\ 용 ``Py_RELATIVE_OFFSET`` 플래그",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343758Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "These will be added to the public C API only:",
+      "source_hash": 3231309213027689897,
+      "context_hash": 15294222318084483752,
+      "translation": "다음 항목은 공개 C API에만 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343758Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:0",
+      "source": "``void *PyObject_GetItemData(PyObject *obj)``",
+      "source_hash": 4951341439794865626,
+      "context_hash": 6779393695085466932,
+      "translation": "``void *PyObject_GetItemData(PyObject *obj)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343758Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 1938381052189907027,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343759Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "No backwards compatibility concerns are known.",
+      "source_hash": 6182874345094387344,
+      "context_hash": 7325900690848019893,
+      "translation": "알려진 하위 호환성 문제는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343759Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Assumptions",
+      "source_hash": 10437540572229816087,
+      "context_hash": 6860555615711914112,
+      "translation": "가정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343763Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "The implementation assumes that an instance's memory between ``type->tp_base->tp_basicsize`` and ``type->tp_basicsize`` offsets “belongs” to ``type`` (except variable-length types).",
+      "source_hash": 480760743288889114,
+      "context_hash": 6995341272161868244,
+      "translation": "이 구현은 ``type->tp_base->tp_basicsize`` 오프셋과 ``type->tp_basicsize`` 오프셋 사이에 있는 인스턴스의 메모리가(가변 길이 형식은 제외하고) ``type``\\ 에 “속한다”고 가정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343763Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "This is not documented explicitly, but CPython up to version 3.11 relied on it when adding ``__dict__`` to subclasses, so it should be safe.",
+      "source_hash": 7763903387278733736,
+      "context_hash": 18150177554082048312,
+      "translation": "이는 명시적으로 문서화되어 있지는 않지만, CPython은 버전 3.11까지 서브클래스에 ``__dict__``\\ 를 추가할 때 이에 의존했으므로 안전할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343763Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 10747288211682174951,
+      "translation": "보안 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343764Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "None known.",
+      "source_hash": 10069857354078701219,
+      "context_hash": 1496130047950273857,
+      "translation": "알려진 바가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343764Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Endorsements",
+      "source_hash": 1140560136017187590,
+      "context_hash": 7654649699474913204,
+      "translation": "지지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343764Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "The author of ``pybind11`` originally requested solving the issue (see point 2 in `this list <https://discuss.python.org/t/15993>`__), and `has been verifying the implementation <https://discuss.python.org/t/19743/14>`__.",
+      "source_hash": 3676664474297297531,
+      "context_hash": 10215663622051215260,
+      "translation": "``pybind11``\\ 의 작성자는 원래 이 문제의 해결을 요청했으며(`this list <https://discuss.python.org/t/15993>`__\\ 의 2번 항목 참조), 구현을 검증해 왔습니다(`has been verifying the implementation <https://discuss.python.org/t/19743/14>`__).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343765Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "Florian from the HPy project `said <https://discuss.python.org/t/19743/3>`__ that the API looks good in general. (See `below <Alignment & Performance_>`_ for a possible solution to performance concerns.)",
+      "source_hash": 4434065272072395311,
+      "context_hash": 7723959285783824579,
+      "translation": "HPy 프로젝트의 Florian은 일반적으로 API가 좋아 보인다고 `말했습니다 <https://discuss.python.org/t/19743/3>`__. (성능 우려에 대한 가능한 해결책은 `아래 <Alignment & Performance_>`_ 를 참조하십시오.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:52:51.756648Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 13307567865065082414,
+      "translation": "이 내용을 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343766Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "The initial implementation will include reference documentation and a What's New entry, which should be enough for the target audience -- authors of C extension libraries.",
+      "source_hash": 8896883432773019332,
+      "context_hash": 7247663913973580407,
+      "translation": "초기 구현에는 참조 문서와 What's New 항목이 포함되며, 이는 대상 독자인 C 확장 라이브러리 작성자에게 충분할 것입니다 --",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343766Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 2268720262207777592,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:39:46.343766Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "A reference implementation is in the `extend-opaque branch <https://github.com/python/cpython/compare/main...encukou:cpython:extend-opaque>`__ in the ``encukou/cpython`` GitHub repo.",
+      "source_hash": 5108248210064991023,
+      "context_hash": 16096506749100893764,
+      "translation": "참조 구현은 ``encukou/cpython`` GitHub 저장소의 `extend-opaque branch <https://github.com/python/cpython/compare/main...encukou:cpython:extend-opaque>`__\\ 에 있습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:39:46.343767Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Possible Future Enhancements",
+      "source_hash": 12979094917853878476,
+      "context_hash": 2454167521836435748,
+      "translation": "향후 개선 가능성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343768Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Alignment & Performance",
+      "source_hash": 6685571719530811917,
+      "context_hash": 12686143836343854639,
+      "translation": "정렬 및 성능",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343768Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "The proposed implementation may waste some space if instance structs need smaller alignment than ``alignof(max_align_t)``.",
+      "source_hash": 3992864992286504814,
+      "context_hash": 17274989960300712351,
+      "translation": "인스턴스 구조체에 ``alignof(max_align_t)``\\ 보다 작은 정렬이 필요한 경우, 제안된 구현은 일부 공간을 낭비할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343768Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "Also, dealing with alignment makes the calculation slower than it could be if we could rely on ``base->tp_basicsize`` being properly aligned for the subtype.",
+      "source_hash": 1591453029008772219,
+      "context_hash": 8808073070415600743,
+      "translation": "또한 정렬을 처리하면 서브타입에 대해 ``base->tp_basicsize``\\ 가 적절히 정렬되어 있다고 가정할 수 있을 때보다 계산이 느려집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:39:46.343768Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "In other words, the proposed implementation focuses on safety and ease of use, and trades space and time for it.",
+      "source_hash": 16616737835505817816,
+      "context_hash": 5970743864265441388,
+      "translation": "다시 말해, 제안된 구현은 안전성과 사용 편의성에 중점을 두며, 이를 위해 공간과 시간을 희생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783078Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:1",
+      "source": "If it turns out that this is a problem, the implementation can be adjusted without breaking the API:",
+      "source_hash": 13033350436452431515,
+      "context_hash": 13543425524153307359,
+      "translation": "이것이 문제가 되는 것으로 밝혀지면 API를 손상하지 않고 구현을 조정할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783081Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "The offset to the type-specific buffer can be stored, so ``PyObject_GetTypeData`` effectively becomes ``(char *)obj + cls->ht_typedataoffset``, possibly speeding things up at the cost of an extra pointer in the class.",
+      "source_hash": 12628191637198476156,
+      "context_hash": 10186936856070954848,
+      "translation": "타입별 버퍼에 대한 오프셋을 저장할 수 있으므로, ``PyObject_GetTypeData``\\ 는 사실상 ``(char *)obj + cls->ht_typedataoffset``\\ 로 변환되며, 클래스에 포인터를 하나 추가하는 대가로 속도가 향상될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783081Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "Then, a new ``PyType_Slot`` can specify the desired alignment, to reduce space requirements for instances.",
+      "source_hash": 4677308128666772124,
+      "context_hash": 3258036771318329752,
+      "translation": "그런 다음 새로운 ``PyType_Slot``\\ 에서 원하는 정렬을 지정하여 인스턴스에 필요한 공간을 줄일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783082Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Other layouts for variable-size types",
+      "source_hash": 6745925169127664199,
+      "context_hash": 1647517253153985809,
+      "translation": "가변 크기 타입을 위한 다른 레이아웃",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783082Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "A flag like ``Py_TPFLAGS_ITEMS_AT_END`` could be added to signal the “tuple-like” layout described in `Extending variable-size objects`_, and all mechanisms this PEP proposes could be adapted to support it.",
+      "source_hash": 8569679905458678125,
+      "context_hash": 9675013477099961958,
+      "translation": "``Py_TPFLAGS_ITEMS_AT_END``\\ 와 같은 플래그를 추가하여 `Extending variable-size objects`_\\ 에 설명된 “튜플과 같은” 레이아웃을 나타낼 수 있으며, 이 PEP에서 제안하는 모든 메커니즘도 이를 지원하도록 조정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783082Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:1",
+      "source": "Other layouts could be added as well.",
+      "source_hash": 5754664406327178052,
+      "context_hash": 1150422817094441172,
+      "translation": "다른 레이아웃도 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783083Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:2",
+      "source": "However, it seems there'd be very little practical benefit, so it's just a theoretical possibility.",
+      "source_hash": 12900204100866722998,
+      "context_hash": 9778115987151220409,
+      "translation": "그러나 실제로 얻는 이점은 매우 적을 것으로 보이므로, 이는 이론적인 가능성일 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783083Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 8116816405355597277,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783083Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "Instead of a negative ``spec->basicsize``, a new ``PyType_Spec`` flag could've been added.",
+      "source_hash": 15344870107841258552,
+      "context_hash": 14448656595164797479,
+      "translation": "음수인 ``spec->basicsize``\\ 대신 새로운 ``PyType_Spec``\\ 플래그를 추가할 수도 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783084Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:1",
+      "source": "The effect would be the same to any existing code accessing these internals without up to date knowledge of the change as the meaning of the field value is changing in this situation.",
+      "source_hash": 5056583239901827162,
+      "context_hash": 15601206600969781203,
+      "translation": "이 변경 사항을 최신 상태로 알지 못한 채 이러한 내부 요소에 접근하는 기존 코드에 대해서도 그 효과는 동일합니다. 이 상황에서는 필드 값의 의미가 변경되기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783084Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Footnotes",
+      "source_hash": 9125377107251733533,
+      "context_hash": 17456877637826949775,
+      "translation": "각주",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783085Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "This PEP does not make it “safe” to subclass NumPy arrays specifically.",
+      "source_hash": 141549090461822702,
+      "context_hash": 11285703504395110874,
+      "translation": "이 PEP가 특히 NumPy 배열을 서브클래싱하는 것을 “안전하게” 만드는 것은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783085Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:0",
+      "source": "NumPy publishes `an extensive list of caveats <https://numpy.org/doc/1.23/user/basics.subclassing.html>`__ for subclassing its arrays from Python, and extending in C might need a similar list.",
+      "source_hash": 17429220275007588608,
+      "context_hash": 3648591700428270328,
+      "translation": "NumPy는 Python에서 해당 배열을 서브클래싱할 때의 `an extensive list of caveats <https://numpy.org/doc/1.23/user/basics.subclassing.html>`__\\ 를 공개하며, C에서 확장할 때도 비슷한 목록이 필요할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:13:05.783085Z",
+      "issues": []
+    }
+  ]
+}

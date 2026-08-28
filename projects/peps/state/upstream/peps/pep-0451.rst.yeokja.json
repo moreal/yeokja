@@ -1,0 +1,4231 @@
+{
+  "version": 1,
+  "source_hash": 18388467569656788099,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "A ModuleSpec Type for the Import System",
+      "source_hash": 11034013710126632054,
+      "context_hash": 16530898886277989957,
+      "translation": "임포트 시스템을 위한 ModuleSpec 타입",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714894Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 4916164642025798444,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714897Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes to add a new class to importlib.machinery called \"ModuleSpec\".",
+      "source_hash": 7482323481048689279,
+      "context_hash": 602737798875163666,
+      "translation": "이 PEP에서는 importlib.machinery에 \"ModuleSpec\"이라는 새 클래스를 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714897Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "It will provide all the import-related information used to load a module and will be available without needing to load the module first.",
+      "source_hash": 18289139647294273219,
+      "context_hash": 14750931553949787750,
+      "translation": "이 클래스는 모듈을 로드하는 데 사용되는 모든 임포트 관련 정보를 제공하며, 모듈을 먼저 로드하지 않아도 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714898Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "Finders will directly provide a module's spec instead of a loader (which they will continue to provide indirectly).",
+      "source_hash": 16564469354414465063,
+      "context_hash": 17606704133456656192,
+      "translation": "파인더는 로더 대신 모듈의 스펙을 직접 제공하게 됩니다(로더는 계속 간접적으로 제공하게 됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714898Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:3",
+      "source": "The import machinery will be adjusted to take advantage of module specs, including using them to load modules.",
+      "source_hash": 13211571137358858421,
+      "context_hash": 7013231864975426751,
+      "translation": "임포트 메커니즘은 모듈 스펙을 활용하도록 조정되며, 여기에는 모듈 스펙을 사용하여 모듈을 로드하는 기능도 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714898Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Terms and Concepts",
+      "source_hash": 6080567919142808306,
+      "context_hash": 12199208881222396181,
+      "translation": "용어와 개념",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714898Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The changes in this proposal are an opportunity to make several existing terms and concepts more clear, whereas currently they are (unfortunately) ambiguous.",
+      "source_hash": 15171038747060512247,
+      "context_hash": 6027704607023337329,
+      "translation": "이 제안의 변경 사항은 현재 (안타깝게도) 모호한 기존 용어와 개념 몇 가지를 더 명확하게 만들 기회를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714899Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "New concepts are also introduced in this proposal.",
+      "source_hash": 11029684305942775612,
+      "context_hash": 11433238424979690689,
+      "translation": "이 제안에서는 새로운 개념도 소개합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714899Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "Finally, it's worth explaining a few other existing terms with which people may not be so familiar.",
+      "source_hash": 13435547416450978632,
+      "context_hash": 6586394927432411467,
+      "translation": "마지막으로, 사람들이 그다지 익숙하지 않을 수 있는 기존 용어 몇 가지도 설명할 가치가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714899Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:3",
+      "source": "For the sake of context, here is a brief summary of all three groups of terms and concepts.",
+      "source_hash": 2836607914145127176,
+      "context_hash": 4920144971202923508,
+      "translation": "맥락을 위해, 다음은 세 용어 및 개념 그룹 모두에 대한 간략한 요약입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714899Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:4",
+      "source": "A more detailed explanation of the import system is found at [#import_system_docs]_.",
+      "source_hash": 17905576132342676657,
+      "context_hash": 17849767138181563313,
+      "translation": "임포트 시스템에 대한 더 자세한 설명은 [#import_system_docs]_\\ 에서 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714900Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "name",
+      "source_hash": 7809095717631950189,
+      "context_hash": 9367998133663449043,
+      "translation": "이름",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714900Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "In this proposal, a module's \"name\" refers to its fully-qualified name, meaning the fully-qualified name of the module's parent (if any) joined to the simple name of the module by a period.",
+      "source_hash": 14999695488355005978,
+      "context_hash": 12733831970511028968,
+      "translation": "이 제안에서 모듈의 \"이름\"은 완전 수식 이름을 의미하며, 모듈의 부모(있는 경우)의 완전 수식 이름에 모듈의 단순 이름을 마침표로 결합한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714900Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "finder",
+      "source_hash": 4486419101270513484,
+      "context_hash": 15107013917885165291,
+      "translation": "파인더",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714900Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "A \"finder\" is an object that identifies the loader that the import system should use to load a module.",
+      "source_hash": 12573506299864260701,
+      "context_hash": 17758645240164153990,
+      "translation": "\"파인더\"는 임포트 시스템이 모듈을 로드하는 데 사용해야 하는 로더를 식별하는 객체입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714900Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "Currently this is accomplished by calling the finder's find_module() method, which returns the loader.",
+      "source_hash": 15087113417082966630,
+      "context_hash": 12070177157312447767,
+      "translation": "현재는 파인더의 find_module() 메서드를 호출하여 이를 수행하며, 이 메서드는 로더를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714901Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Finders are strictly responsible for providing the loader, which they do through their find_module() method.",
+      "source_hash": 1491647071023251788,
+      "context_hash": 11317068928840952443,
+      "translation": "파인더는 로더를 제공하는 일만 전적으로 담당하며, find_module() 메서드를 통해 로더를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714901Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "The import system then uses that loader to load the module.",
+      "source_hash": 1049931720802968458,
+      "context_hash": 16579049286409236516,
+      "translation": "그러면 임포트 시스템은 해당 로더를 사용하여 모듈을 로드합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714901Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "loader",
+      "source_hash": 6650956012900813647,
+      "context_hash": 2600162476054683989,
+      "translation": "로더",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714901Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "A \"loader\" is an object that is used to load a module during import.",
+      "source_hash": 1965555715003522353,
+      "context_hash": 12615802072006857081,
+      "translation": "\"로더\"는 임포트 중에 모듈을 로드하는 데 사용되는 객체입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714902Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "Currently this is done by calling the loader's load_module() method.",
+      "source_hash": 178049085466366465,
+      "context_hash": 13324016509081626681,
+      "translation": "현재는 로더의 load_module() 메서드를 호출하여 이를 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714902Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "A loader may also provide APIs for getting information about the modules it can load, as well as about data from sources associated with such a module.",
+      "source_hash": 12253343855533920163,
+      "context_hash": 15860962463761844776,
+      "translation": "로더는 로드할 수 있는 모듈에 대한 정보와 그러한 모듈과 연결된 소스의 데이터에 대한 정보를 가져오는 API도 제공할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714902Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Right now loaders (via load_module()) are responsible for certain boilerplate, import-related operations.",
+      "source_hash": 2897513789630539697,
+      "context_hash": 15521769126396517673,
+      "translation": "현재 로더는 load_module()을 통해 특정 상용구 임포트 관련 작업을 담당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714902Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "These are:",
+      "source_hash": 9133407097991190092,
+      "context_hash": 3704922295731482193,
+      "translation": "이러한 작업은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714902Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "Perform some (module-related) validation",
+      "source_hash": 4535763487128140693,
+      "context_hash": 2070279087270055272,
+      "translation": "일부(모듈 관련) 검증을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714903Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "Create the module object",
+      "source_hash": 15685193216357211593,
+      "context_hash": 14231395368888988751,
+      "translation": "모듈 객체를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714903Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "Set import-related attributes on the module",
+      "source_hash": 7600076447436649152,
+      "context_hash": 3088009649966009871,
+      "translation": "모듈에 임포트 관련 특성을 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714903Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "\"Register\" the module to sys.modules",
+      "source_hash": 17167587949306858550,
+      "context_hash": 4427209516928391278,
+      "translation": "모듈을 sys.modules에 \"등록\"합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714903Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "Exec the module",
+      "source_hash": 2825284691132427877,
+      "context_hash": 14088724220617833588,
+      "translation": "모듈을 실행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714904Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "Clean up in the event of failure while loading the module",
+      "source_hash": 10826687863672685311,
+      "context_hash": 734133827831135617,
+      "translation": "모듈을 로드하는 동안 오류가 발생한 경우 정리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714904Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "This all takes place during the import system's call to Loader.load_module().",
+      "source_hash": 9711502619806881181,
+      "context_hash": 15198037873108056205,
+      "translation": "이 모든 작업은 임포트 시스템이 Loader.load_module()을 호출하는 동안 수행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:24.714904Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "origin",
+      "source_hash": 7034821444952201446,
+      "context_hash": 4410384304011908960,
+      "translation": "출처",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460339Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "This is a new term and concept.",
+      "source_hash": 13283521557145171473,
+      "context_hash": 1525045630899794489,
+      "translation": "이는 새로운 용어이자 개념입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460342Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "The idea of it exists subtly in the import system already, but this proposal makes the concept explicit.",
+      "source_hash": 9266635235141458044,
+      "context_hash": 6037969588364210478,
+      "translation": "이 개념은 이미 임포트 시스템에 미묘하게 존재하지만, 이 제안에서는 그 개념을 명시적으로 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460342Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "\"origin\" in an import context means the system (or resource within a system) from which a module originates.",
+      "source_hash": 8372348446148831345,
+      "context_hash": 12757979644549146621,
+      "translation": "가져오기 컨텍스트에서 \"origin\"은 모듈이 비롯된 시스템(또는 시스템 내 리소스)을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:51:01.584396Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "For the purposes of this proposal, \"origin\" is also a string which identifies such a resource or system.  \"origin\" is applicable to all modules.",
+      "source_hash": 16761873498513170237,
+      "context_hash": 1195142317631582248,
+      "translation": "이 제안의 목적상 \"origin\"은 그러한 리소스나 시스템을 식별하는 문자열이기도 합니다. \"origin\"은 모든 모듈에 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:51:01.584399Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "For example, the origin for built-in and frozen modules is the interpreter itself.",
+      "source_hash": 13923502957353552147,
+      "context_hash": 3358902534220827334,
+      "translation": "예를 들어, 내장 모듈과 동결 모듈의 출처는 인터프리터 자체입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:23:26.460343Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "The import system already identifies this origin as \"built-in\" and \"frozen\", respectively.",
+      "source_hash": 8908147373376133154,
+      "context_hash": 9363190966387336508,
+      "translation": "가져오기 시스템은 이미 이 origin을 각각 \"built-in\"과 \"frozen\"으로 식별합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:51:01.584399Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:2",
+      "source": "This is demonstrated in the following module repr: \"<module 'sys' (built-in)>\".",
+      "source_hash": 5333221918907777426,
+      "context_hash": 3950051537408138197,
+      "translation": "이는 다음 모듈 repr에 나타나 있습니다: \"<module 'sys' (built-in)>\".",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460344Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "In fact, the module repr is already a relatively reliable, though implicit, indicator of a module's origin.",
+      "source_hash": 12285436255124111068,
+      "context_hash": 17965116570473180329,
+      "translation": "실제로 모듈 repr은 이미 모듈의 출처를 나타내는, 암묵적이기는 하지만 비교적 신뢰할 수 있는 지표입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460345Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:1",
+      "source": "Other modules also indicate their origin through other means, as described in the entry for \"location\".",
+      "source_hash": 6899561390211800429,
+      "context_hash": 5586407230394270349,
+      "translation": "다른 모듈도 \"location\" 항목에 설명된 대로 다른 수단을 통해 origin을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:51:01.584399Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "It is up to the loader to decide on how to interpret and use a module's origin, if at all.",
+      "source_hash": 4650669535454108784,
+      "context_hash": 9651717308766446899,
+      "translation": "모듈의 출처를 해석하고 사용할지 여부와 그 방법은 전적으로 로더가 결정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460345Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "location",
+      "source_hash": 14592406158319853782,
+      "context_hash": 15814227159348511342,
+      "translation": "위치",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460345Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "This is a new term.",
+      "source_hash": 1898972290465790584,
+      "context_hash": 12308208837839695522,
+      "translation": "이는 새로운 용어입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460346Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "However the concept already exists clearly in the import system, as associated with the ``__file__`` and ``__path__`` attributes of modules, as well as the name/term \"path\" elsewhere.",
+      "source_hash": 15452003025822820073,
+      "context_hash": 16093901462474913964,
+      "translation": "그러나 이 개념은 모듈의 ``__file__`` 및 ``__path__`` 특성과 연결된 형태로, 그리고 다른 곳에서 사용되는 \"path\"라는 이름/용어와 관련하여 이미 임포트 시스템에 명확히 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460346Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "A \"location\" is a resource or \"place\", rather than a system at large, from which a module is loaded.",
+      "source_hash": 751246814700267522,
+      "context_hash": 4162255519815913231,
+      "translation": "\"위치\"는 전체 시스템이라기보다는 모듈이 로드되는 리소스 또는 \"장소\"입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460346Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "It qualifies as an \"origin\".",
+      "source_hash": 6508575736860125224,
+      "context_hash": 11978548093129397980,
+      "translation": "이는 \"출처\"에 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460346Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:2",
+      "source": "Examples of locations include filesystem paths and URLs.",
+      "source_hash": 16278922221723867739,
+      "context_hash": 7019075863098832433,
+      "translation": "위치의 예로는 파일 시스템 경로와 URL이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460346Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:3",
+      "source": "A location is identified by the name of the resource, but may not necessarily identify the system to which the resource pertains.",
+      "source_hash": 9523691164538533233,
+      "context_hash": 17927759824436127956,
+      "translation": "위치는 리소스의 이름으로 식별되지만, 해당 리소스가 속한 시스템까지 반드시 식별하는 것은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460347Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:4",
+      "source": "In such cases the loader would have to identify the system itself.",
+      "source_hash": 4651799464150146242,
+      "context_hash": 16418455619350065956,
+      "translation": "그러한 경우에는 로더가 시스템 자체를 식별해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460347Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "In contrast to other kinds of module origin, a location cannot be inferred by the loader just by the module name.",
+      "source_hash": 17646478509331311962,
+      "context_hash": 14469915800195020806,
+      "translation": "다른 종류의 모듈 출처와 달리, 로더는 모듈 이름만으로 위치를 추론할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460347Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "Instead, the loader must be provided with a string to identify the location, usually by the finder that generates the loader.",
+      "source_hash": 16760892184767452316,
+      "context_hash": 10572163253915935532,
+      "translation": "대신 로더에는 위치를 식별하는 문자열이 제공되어야 하며, 일반적으로 이는 로더를 생성하는 파인더가 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460347Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:2",
+      "source": "The loader then uses this information to locate the resource from which it will load the module.",
+      "source_hash": 5210932027486488681,
+      "context_hash": 5871703299132625020,
+      "translation": "그러면 로더는 이 정보를 사용하여 모듈을 로드할 리소스의 위치를 찾습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460348Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:3",
+      "source": "In theory you could load the module at a given location under various names.",
+      "source_hash": 5634403707965528170,
+      "context_hash": 14018987714118892989,
+      "translation": "이론적으로는 주어진 위치의 모듈을 다양한 이름으로 로드할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460348Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "The most common example of locations in the import system are the files from which source and extension modules are loaded.",
+      "source_hash": 2712933153305168062,
+      "context_hash": 5784404183041343919,
+      "translation": "임포트 시스템에서 위치의 가장 일반적인 예는 소스 모듈과 확장 모듈을 로드하는 파일입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460348Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "For these modules the location is identified by the string in the ``__file__`` attribute.",
+      "source_hash": 17287061118953804144,
+      "context_hash": 12308923693451576962,
+      "translation": "이러한 모듈의 경우 위치는 ``__file__`` 특성의 문자열로 식별됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460348Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:2",
+      "source": "Although ``__file__`` isn't particularly accurate for some modules (e.g. zipped), it is currently the only way that the import system indicates that a module has a location.",
+      "source_hash": 10023046713629412851,
+      "context_hash": 14730203032634978421,
+      "translation": "일부 모듈(예: 압축된 모듈)에서는 ``__file__``\\ 이 특히 정확하지 않지만, 현재 임포트 시스템이 모듈에 위치가 있음을 나타내는 유일한 방법입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460349Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "A module that has a location may be called \"locatable\".",
+      "source_hash": 13218505414543235985,
+      "context_hash": 17488441606728675677,
+      "translation": "위치가 있는 모듈을 \"locatable\"이라고 부를 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460349Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "cache",
+      "source_hash": 16545769609768687557,
+      "context_hash": 11694186514033282280,
+      "translation": "캐시",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:26.460349Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The import system stores compiled modules in the __pycache__ directory as an optimization.",
+      "source_hash": 3005663182204144905,
+      "context_hash": 12250631355008839761,
+      "translation": "가져오기 시스템은 최적화를 위해 컴파일된 모듈을 __pycache__ 디렉터리에 저장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:51:01.584400Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "This module cache that we use today was provided by :pep:`3147`.",
+      "source_hash": 908364159058966396,
+      "context_hash": 3527924666305467845,
+      "translation": "오늘날 사용하는 이 모듈 캐시는 :pep:`3147`\\ 에 의해 제공되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554184Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "For this proposal, the relevant API for module caching is the ``__cache__`` attribute of modules and the cache_from_source() function in importlib.util.",
+      "source_hash": 5164023161359625146,
+      "context_hash": 16519890518075592942,
+      "translation": "이 제안에서 모듈 캐싱과 관련된 API는 모듈의 ``__cache__`` 속성과 importlib.util의 cache_from_source() 함수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554185Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:3",
+      "source": "Loaders are responsible for putting modules into the cache (and loading out of the cache).",
+      "source_hash": 7052711799030304040,
+      "context_hash": 5000945067788033327,
+      "translation": "로더는 모듈을 캐시에 저장하고 캐시에서 불러오는 역할을 담당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554185Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:4",
+      "source": "Currently the cache is only used for compiled source modules.",
+      "source_hash": 13784818334305275515,
+      "context_hash": 8470028232208209025,
+      "translation": "현재 캐시는 컴파일된 소스 모듈에만 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554185Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:5",
+      "source": "However, loaders may take advantage of the module cache for other kinds of modules.",
+      "source_hash": 14185251800748458612,
+      "context_hash": 2894833677578395947,
+      "translation": "그러나 로더는 다른 종류의 모듈에도 모듈 캐시를 활용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554186Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "package",
+      "source_hash": 2793112226272997544,
+      "context_hash": 3706076087299217209,
+      "translation": "패키지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554186Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "The concept does not change, nor does the term.",
+      "source_hash": 9285911072005569659,
+      "context_hash": 7091652937838578555,
+      "translation": "개념도 용어도 변경되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554187Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "However, the distinction between modules and packages is mostly superficial.",
+      "source_hash": 2555209218062840099,
+      "context_hash": 16192706040466517008,
+      "translation": "그러나 모듈과 패키지의 구분은 대부분 피상적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554187Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "Packages *are* modules.",
+      "source_hash": 16048019028630446711,
+      "context_hash": 15439048746215768239,
+      "translation": "패키지는 *모듈*\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554187Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:3",
+      "source": "They simply have a ``__path__`` attribute and import may add attributes bound to submodules.",
+      "source_hash": 12653288730758632236,
+      "context_hash": 15181373145663970304,
+      "translation": "패키지는 단순히 ``__path__`` 속성을 가지며, 가져오기는 서브모듈에 바인딩된 속성을 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554188Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:4",
+      "source": "The typically perceived difference is a source of confusion.",
+      "source_hash": 17293474968025544217,
+      "context_hash": 16357385140918556531,
+      "translation": "일반적으로 인식되는 차이가 혼란의 원인이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554188Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:5",
+      "source": "This proposal explicitly de-emphasizes the distinction between packages and modules where it makes sense to do so.",
+      "source_hash": 15027402774770611828,
+      "context_hash": 14711455691340295818,
+      "translation": "이 제안은 그렇게 하는 것이 타당한 경우 패키지와 모듈의 구분을 명시적으로 덜 강조합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554188Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 7323354555557467443,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554188Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The import system has evolved over the lifetime of Python.",
+      "source_hash": 4347108649007181043,
+      "context_hash": 8313264380304408140,
+      "translation": "가져오기 시스템은 Python의 역사와 함께 발전해 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554189Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "In late 2002 :pep:`302` introduced standardized import hooks via finders and loaders and sys.meta_path.",
+      "source_hash": 13864834787442506204,
+      "context_hash": 3112516461342907518,
+      "translation": "2002년 말에 :pep:`302`\\ 는 파인더와 로더 및 sys.meta_path를 통한 표준화된 가져오기 훅을 도입했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554189Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "The importlib module, introduced with Python 3.1, now exposes a pure Python implementation of the APIs described by :pep:`302`, as well as of the full import system.",
+      "source_hash": 14651481701888741168,
+      "context_hash": 16193831580414065518,
+      "translation": "Python 3.1과 함께 도입된 importlib 모듈은 이제 :pep:`302`\\ 에 설명된 API와 전체 가져오기 시스템의 순수 Python 구현을 공개합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554189Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:3",
+      "source": "It is now much easier to understand and extend the import system.",
+      "source_hash": 15890514865353385441,
+      "context_hash": 8813293836149519571,
+      "translation": "이제 가져오기 시스템을 이해하고 확장하기가 훨씬 쉬워졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554190Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:4",
+      "source": "While a benefit to the Python community, this greater accessibility also presents a challenge.",
+      "source_hash": 930987907092738671,
+      "context_hash": 3909826042405601375,
+      "translation": "이는 Python 커뮤니티에 이점이지만, 이러한 향상된 접근성은 과제도 제시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554190Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "As more developers come to understand and customize the import system, any weaknesses in the finder and loader APIs will be more impactful.",
+      "source_hash": 1142363766668289256,
+      "context_hash": 17107947489656047420,
+      "translation": "더 많은 개발자가 가져오기 시스템을 이해하고 사용자 지정하게 될수록 파인더 및 로더 API의 모든 약점이 더 큰 영향을 미치게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554190Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:1",
+      "source": "So the sooner we can address any such weaknesses the import system, the better...and there are a couple we hope to take care of with this proposal.",
+      "source_hash": 2568772893443707037,
+      "context_hash": 13356392550803867087,
+      "translation": "따라서 이러한 약점을 가져오기 시스템에서 해결할 수 있는 시점이 빠를수록 좋으며, 이 제안으로 해결하고자 하는 약점이 몇 가지 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554191Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "Firstly, any time the import system needs to save information about a module we end up with more attributes on module objects that are generally only meaningful to the import system.",
+      "source_hash": 13841129013679521871,
+      "context_hash": 6836784231717052840,
+      "translation": "첫째, 가져오기 시스템이 모듈에 관한 정보를 저장해야 할 때마다 일반적으로 가져오기 시스템에만 의미가 있는 속성이 모듈 객체에 더 많이 생깁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554191Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:1",
+      "source": "It would be nice to have a per-module namespace in which to put future import-related information and to pass around within the import system.",
+      "source_hash": 5352862701861424096,
+      "context_hash": 9500571444803714057,
+      "translation": "향후 가져오기 관련 정보를 저장하고 가져오기 시스템 내부에서 전달할 수 있는 모듈별 네임스페이스가 있으면 좋을 것입니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:23:39.554191Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:2",
+      "source": "Secondly, there's an API void between finders and loaders that causes undue complexity when encountered.",
+      "source_hash": 17067336411142791554,
+      "context_hash": 17071693661916587670,
+      "translation": "둘째, 파인더와 로더 사이에는 API 공백이 있어 이를 마주할 때 불필요한 복잡성이 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554193Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:3",
+      "source": "The :pep:`420` (namespace packages) implementation had to work around this.",
+      "source_hash": 13269473482601909643,
+      "context_hash": 14871149482972888160,
+      "translation": "관련 :pep:`420` (네임스페이스 패키지) 구현에서는 이를 우회해야 했습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T20:09:26.364366Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:4",
+      "source": "The complexity surfaced again during recent efforts on a separate proposal. [#ref_files_pep]_",
+      "source_hash": 16404045242510456086,
+      "context_hash": 17867634434945739793,
+      "translation": "별도의 제안에 관한 최근 작업 중에 이러한 복잡성이 다시 드러났습니다. [#ref_files_pep]_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554195Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "The `finder`_ and `loader`_ sections above detail current responsibility of both.",
+      "source_hash": 4144294578211747055,
+      "context_hash": 9020680345406419215,
+      "translation": "위의 `finder`_ 및 `loader`_ 섹션에서는 양자의 현재 책임을 자세히 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554195Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:1",
+      "source": "Notably, loaders are not required to provide any of the functionality of their load_module() method through other methods.",
+      "source_hash": 1773185535020601529,
+      "context_hash": 7798143161950516710,
+      "translation": "특히 로더는 다른 메서드를 통해 자신의 load_module() 메서드 기능을 제공할 필요가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554196Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:2",
+      "source": "Thus, though the import-related information about a module is likely available without loading the module, it is not otherwise exposed.",
+      "source_hash": 2790269989838186606,
+      "context_hash": 13450557742807326440,
+      "translation": "따라서 모듈을 로드하지 않아도 모듈에 관한 가져오기 관련 정보를 이용할 수 있을 가능성이 있지만, 그 외에는 해당 정보가 노출되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554196Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "Furthermore, the requirements associated with load_module() are common to all loaders and mostly are implemented in exactly the same way.",
+      "source_hash": 1688617688230573681,
+      "context_hash": 7010126327388677199,
+      "translation": "또한 load_module()과 관련된 요구 사항은 모든 로더에 공통이며 대부분 정확히 같은 방식으로 구현됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554197Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:1",
+      "source": "This means every loader has to duplicate the same boilerplate code.  importlib.util provides some tools that help with this, but it would be more helpful if the import system simply took charge of these responsibilities.",
+      "source_hash": 15095395216367815496,
+      "context_hash": 4472801325061510323,
+      "translation": "이는 모든 로더가 동일한 보일러플레이트 코드를 중복해야 한다는 의미입니다. importlib.util은 이를 지원하는 몇 가지 도구를 제공하지만, 가져오기 시스템이 이러한 책임을 단순히 맡는다면 더 유용할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554197Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:2",
+      "source": "The trouble is that this would limit the degree of customization that load_module() could easily continue to facilitate.",
+      "source_hash": 10592903148685326665,
+      "context_hash": 1177233334351174187,
+      "translation": "문제는 이렇게 하면 load_module()이 쉽게 계속 지원할 수 있는 사용자 지정의 범위가 제한된다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.554198Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "More importantly, While a finder *could* provide the information that the loader's load_module() would need, it currently has no consistent way to get it to the loader.",
+      "source_hash": 7363146803300314826,
+      "context_hash": 14162730490636850348,
+      "translation": "더 중요하게는, 파인더는 로더의 load_module()이 필요로 할 정보를 *제공할 수도* 있지만, 현재 이를 로더에 전달할 일관된 방법이 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526702Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:1",
+      "source": "This is a gap between finders and loaders which this proposal aims to fill.",
+      "source_hash": 7061983848429790364,
+      "context_hash": 5677885374683128747,
+      "translation": "이는 이 제안이 해결하려는 파인더와 로더 사이의 간극입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526706Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "Finally, when the import system calls a finder's find_module(), the finder makes use of a variety of information about the module that is useful outside the context of the method.",
+      "source_hash": 16794298676617312072,
+      "context_hash": 2770138287534604110,
+      "translation": "마지막으로, 임포트 시스템이 파인더의 find_module()을 호출하면 파인더는 메서드의 컨텍스트 밖에서도 유용한 모듈 관련 다양한 정보를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526706Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:1",
+      "source": "Currently the options are limited for persisting that per-module information past the method call, since it only returns the loader.",
+      "source_hash": 8491186153150361359,
+      "context_hash": 4222078162033290966,
+      "translation": "현재는 해당 메서드 호출 이후에도 모듈별 정보를 유지할 수 있는 선택지가 제한적입니다. find_module()은 로더만 반환하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526706Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:2",
+      "source": "Popular options for this limitation are to store the information in a module-to-info mapping somewhere on the finder itself, or store it on the loader.",
+      "source_hash": 14975604595321821028,
+      "context_hash": 17377348043337515589,
+      "translation": "이러한 제약에 대한 일반적인 선택지는 파인더 자체의 어딘가에 모듈-정보 매핑으로 정보를 저장하거나, 로더에 저장하는 것입니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T19:23:33.526707Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "Unfortunately, loaders are not required to be module-specific.",
+      "source_hash": 17332552356840752559,
+      "context_hash": 16536154647512256014,
+      "translation": "안타깝게도 로더는 모듈별일 필요가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526708Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:1",
+      "source": "On top of that, some of the useful information finders could provide is common to all finders, so ideally the import system could take care of those details.",
+      "source_hash": 12290538965297525677,
+      "context_hash": 4296639539353245733,
+      "translation": "게다가 파인더가 제공할 수 있는 유용한 정보 중 일부는 모든 파인더에 공통적이므로, 이상적으로는 임포트 시스템이 이러한 세부 사항을 처리할 수 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526708Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:2",
+      "source": "This is the same gap as before between finders and loaders.",
+      "source_hash": 9105605334015461456,
+      "context_hash": 16363974824768843846,
+      "translation": "이는 앞서 설명한 파인더와 로더 사이의 동일한 간극입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526708Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "As an example of complexity attributable to this flaw, the implementation of namespace packages in Python 3.3 (see :pep:`420`) added FileFinder.find_loader() because there was no good way for find_module() to provide the namespace search locations.",
+      "source_hash": 7919915915927324749,
+      "context_hash": 12583327518242921743,
+      "translation": "이 결함으로 인해 발생하는 복잡성의 한 예로, Python 3.3의 네임스페이스 패키지 구현은 find_module()이 네임스페이스 검색 위치를 제공할 좋은 방법이 없었기 때문에 FileFinder.find_loader()를 추가했습니다(:pep:`420` 참조).",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:23:33.526709Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:10/seg:0",
+      "source": "The answer to this gap is a ModuleSpec object that contains the per-module information and takes care of the boilerplate functionality involved with loading the module.",
+      "source_hash": 16850120874593602421,
+      "context_hash": 15155051923653278335,
+      "translation": "이 간극에 대한 해답은 모듈별 정보를 포함하고 모듈 로딩과 관련된 상용구 기능을 처리하는 ModuleSpec 객체입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526710Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 5297566649553088346,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526710Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "The goal is to address the gap between finders and loaders while changing as little of their semantics as possible.",
+      "source_hash": 5242859351528503695,
+      "context_hash": 16364837166962517827,
+      "translation": "목표는 파인더와 로더의 의미를 가능한 한 적게 변경하면서 둘 사이의 간극을 해결하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526710Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "Though some functionality and information is moved to the new ModuleSpec type, their behavior should remain the same.",
+      "source_hash": 6702229649937769571,
+      "context_hash": 12224673535521119213,
+      "translation": "일부 기능과 정보가 새로운 ModuleSpec 형식으로 이동하더라도 동작은 동일하게 유지되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526711Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:2",
+      "source": "However, for the sake of clarity the finder and loader semantics will be explicitly identified.",
+      "source_hash": 13479847387878860906,
+      "context_hash": 5003058436489681701,
+      "translation": "그러나 명확성을 위해 파인더와 로더의 의미를 명시적으로 식별합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526711Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "Here is a high-level summary of the changes described by this PEP.",
+      "source_hash": 15766984115717059850,
+      "context_hash": 12414809140905084346,
+      "translation": "다음은 이 PEP에서 설명하는 변경 사항에 대한 상위 수준의 요약입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526711Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "More detail is available in later sections.",
+      "source_hash": 10551317183294115304,
+      "context_hash": 10149825238933371935,
+      "translation": "자세한 내용은 뒤의 절에서 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526711Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "importlib.machinery.ModuleSpec (new)",
+      "source_hash": 8811514059533204286,
+      "context_hash": 7012086268361964374,
+      "translation": "importlib.machinery.ModuleSpec (새 항목)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526712Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "An encapsulation of a module's import-system-related state during import.",
+      "source_hash": 17724061214061196711,
+      "context_hash": 5089761808762077806,
+      "translation": "임포트 중 모듈의 임포트 시스템 관련 상태를 캡슐화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526712Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "See the `ModuleSpec`_ section below for a more detailed description.",
+      "source_hash": 12003529585607261513,
+      "context_hash": 1661566978194957891,
+      "translation": "자세한 설명은 아래의 `ModuleSpec`_ 절을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526712Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "ModuleSpec(name, loader, \\*, origin=None, loader_state=None, is_package=None)",
+      "source_hash": 14898952646218511158,
+      "context_hash": 9565303330409825987,
+      "translation": "ModuleSpec(name, loader, \\*, origin=None, loader_state=None, is_package=None)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526712Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "Attributes:",
+      "source_hash": 3147768732806811863,
+      "context_hash": 17188522297794678589,
+      "translation": "특성:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526713Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "name - a string for the fully-qualified name of the module.",
+      "source_hash": 13449328777311210307,
+      "context_hash": 14344722741488057549,
+      "translation": "name - 모듈의 정규화된 이름을 나타내는 문자열입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526713Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "loader - the loader to use for loading.",
+      "source_hash": 3799310237147744204,
+      "context_hash": 10169225301885829777,
+      "translation": "loader - 로딩에 사용할 로더입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526713Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:0",
+      "source": "origin - the name of the place from which the module is loaded, e.g. \"builtin\" for built-in modules and the filename for modules loaded from source.",
+      "source_hash": 10078111672645546730,
+      "context_hash": 7365311306001079213,
+      "translation": "origin - 모듈이 로드되는 위치의 이름입니다. 예를 들어 내장 모듈의 경우 \"builtin\"이고 소스에서 로드된 모듈의 경우 파일 이름입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526713Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:7/seg:0",
+      "source": "submodule_search_locations - list of strings for where to find submodules, if a package (None otherwise).",
+      "source_hash": 5812967869054411074,
+      "context_hash": 11058729240618613233,
+      "translation": "submodule_search_locations - 패키지인 경우 서브모듈을 찾을 위치를 나타내는 문자열의 목록입니다(그 외에는 None).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526714Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:8/seg:0",
+      "source": "loader_state - a container of extra module-specific data for use during loading.",
+      "source_hash": 9827117049469141336,
+      "context_hash": 14908157051540856733,
+      "translation": "loader_state - 로딩 중 사용할 추가 모듈별 데이터를 담는 컨테이너입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526714Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:9/seg:0",
+      "source": "cached (property) - a string for where the compiled module should be stored.",
+      "source_hash": 10665888943075445179,
+      "context_hash": 14489449915034913153,
+      "translation": "cached (property) - 컴파일된 모듈을 저장할 위치를 나타내는 문자열입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526714Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:10/seg:0",
+      "source": "parent (RO-property) - the fully-qualified name of the package to which the module belongs as a submodule (or None).",
+      "source_hash": 4351229759330418560,
+      "context_hash": 9808947525785000370,
+      "translation": "parent (RO-property) - 모듈이 서브모듈로 속한 패키지의 정규화된 이름입니다(또는 None).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526715Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:11/seg:0",
+      "source": "has_location (RO-property) - a flag indicating whether or not the module's \"origin\" attribute refers to a location.",
+      "source_hash": 11607224726933437716,
+      "context_hash": 17506250734086382264,
+      "translation": "has_location (RO-property) - 모듈의 \"origin\" 특성이 위치를 가리키는지 여부를 나타내는 플래그입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526715Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "importlib.util Additions",
+      "source_hash": 10331802315003209284,
+      "context_hash": 4194987765233160096,
+      "translation": "importlib.util 추가 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526715Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "These are ModuleSpec factory functions, meant as a convenience for finders.",
+      "source_hash": 10001995553883546603,
+      "context_hash": 14754424120804969763,
+      "translation": "이는 파인더의 편의를 위해 제공되는 ModuleSpec 팩토리 함수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526715Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "See the `Factory Functions`_ section below for more detail.",
+      "source_hash": 18377498428500260221,
+      "context_hash": 8317564623805845215,
+      "translation": "자세한 내용은 아래의 `Factory Functions`_ 절을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.526716Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "spec_from_file_location(name, location, \\*, loader=None, submodule_search_locations=None)",
+      "source_hash": 2160009067736204881,
+      "context_hash": 3519239532871548430,
+      "translation": "spec_from_file_location(name, location, \\*, loader=None, submodule_search_locations=None)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295587Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "build a spec from file-oriented information and loader APIs.",
+      "source_hash": 4959481623151782684,
+      "context_hash": 1323937406074397209,
+      "translation": "파일 중심 정보와 로더 API를 바탕으로 명세를 작성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295593Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:0",
+      "source": "spec_from_loader(name, loader, \\*, origin=None, is_package=None)",
+      "source_hash": 4283062912877353547,
+      "context_hash": 6152844661126337242,
+      "translation": "spec_from_loader(name, loader, \\*, origin=None, is_package=None)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295593Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:5/seg:0",
+      "source": "build a spec with missing information filled in by using loader",
+      "source_hash": 14702448449023112943,
+      "context_hash": 6320104947411888141,
+      "translation": "로더를 사용하여 누락된 정보를 채운 명세를 작성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295594Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:6/seg:0",
+      "source": "APIs.",
+      "source_hash": 13709644555431832806,
+      "context_hash": 9016742431586879401,
+      "translation": "API입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295594Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Other API Additions",
+      "source_hash": 1630417197570456297,
+      "context_hash": 4917628312178779002,
+      "translation": "기타 API 추가 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295595Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "importlib.find_spec(name, path=None, target=None) will work exactly the same as importlib.find_loader() (which it replaces), but return a spec instead of a loader.",
+      "source_hash": 8433743388927878385,
+      "context_hash": 1731454031924071646,
+      "translation": "importlib.find_spec(name, path=None, target=None)은 importlib.find_loader()를 대체하며 이와 정확히 동일하게 작동하지만, 로더 대신 명세를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295595Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "For finders:",
+      "source_hash": 7250593112699805194,
+      "context_hash": 3808244225160400467,
+      "translation": "파인더의 경우:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295596Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "importlib.abc.MetaPathFinder.find_spec(name, path, target) and importlib.abc.PathEntryFinder.find_spec(name, target) will return a module spec to use during import.",
+      "source_hash": 9977129155374678942,
+      "context_hash": 18296336328632676289,
+      "translation": "importlib.abc.MetaPathFinder.find_spec(name, path, target)와 importlib.abc.PathEntryFinder.find_spec(name, target)는 가져오기에 사용할 모듈 명세를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295596Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "For loaders:",
+      "source_hash": 14537319744279477769,
+      "context_hash": 9968156206830125974,
+      "translation": "로더의 경우:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295597Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:0",
+      "source": "importlib.abc.Loader.exec_module(module) will execute a module in its own namespace.",
+      "source_hash": 6686581913496134476,
+      "context_hash": 18290889500348017672,
+      "translation": "importlib.abc.Loader.exec_module(module)은 자체 네임스페이스에서 모듈을 실행합니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:23:25.295597Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:1",
+      "source": "It replaces importlib.abc.Loader.load_module(), taking over its module execution functionality.",
+      "source_hash": 4939762323685034411,
+      "context_hash": 4251590443012680107,
+      "translation": "이는 importlib.abc.Loader.load_module()을 대체하며, 모듈 실행 기능을 담당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295599Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:0",
+      "source": "importlib.abc.Loader.create_module(spec) (optional) will return the module to use for loading.",
+      "source_hash": 112552732025673545,
+      "context_hash": 12494582697208716589,
+      "translation": "importlib.abc.Loader.create_module(spec)(선택 사항)는 로딩에 사용할 모듈을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295599Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:0",
+      "source": "For modules:",
+      "source_hash": 17169563077304251076,
+      "context_hash": 12186623349076655053,
+      "translation": "모듈의 경우:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295600Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:8/seg:0",
+      "source": "Module objects will have a new attribute: ``__spec__``.",
+      "source_hash": 9862598555089542308,
+      "context_hash": 8127583304292182034,
+      "translation": "모듈 객체에는 ``__spec__``\\ 라는 새로운 속성이 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295600Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "API Changes",
+      "source_hash": 18398247937185275310,
+      "context_hash": 18218215499761070874,
+      "translation": "API 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295600Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "InspectLoader.is_package() will become optional.",
+      "source_hash": 13261763803130340867,
+      "context_hash": 16962322291507647847,
+      "translation": "InspectLoader.is_package()는 선택 사항이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295601Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Deprecations",
+      "source_hash": 11188525526809738994,
+      "context_hash": 11579912015676346309,
+      "translation": "사용 중단 예정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295601Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "importlib.abc.MetaPathFinder.find_module()",
+      "source_hash": 18116503056131258836,
+      "context_hash": 14934156858295798778,
+      "translation": "importlib.abc.MetaPathFinder.find_module()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295601Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "importlib.abc.PathEntryFinder.find_module()",
+      "source_hash": 7175844453610845109,
+      "context_hash": 2479874528940127225,
+      "translation": "importlib.abc.PathEntryFinder.find_module()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295602Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "importlib.abc.PathEntryFinder.find_loader()",
+      "source_hash": 8857846985871409961,
+      "context_hash": 9110694437736435340,
+      "translation": "importlib.abc.PathEntryFinder.find_loader()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295602Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:4/seg:0",
+      "source": "importlib.abc.Loader.load_module()",
+      "source_hash": 2502897491763630033,
+      "context_hash": 6293014387065334404,
+      "translation": "importlib.abc.Loader.load_module()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295602Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:0",
+      "source": "importlib.abc.Loader.module_repr()",
+      "source_hash": 1764385855847582825,
+      "context_hash": 7151626868568100620,
+      "translation": "importlib.abc.Loader.module_repr()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295602Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:6/seg:0",
+      "source": "importlib.util.set_package()",
+      "source_hash": 8645682546520969053,
+      "context_hash": 18161894036096112659,
+      "translation": "importlib.util.set_package()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295603Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:7/seg:0",
+      "source": "importlib.util.set_loader()",
+      "source_hash": 9542913539521671740,
+      "context_hash": 13404294874301545253,
+      "translation": "importlib.util.set_loader()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295603Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:8/seg:0",
+      "source": "importlib.find_loader()",
+      "source_hash": 9220135194961004804,
+      "context_hash": 4047729373281973230,
+      "translation": "importlib.find_loader()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295603Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Removals",
+      "source_hash": 16153386944527563129,
+      "context_hash": 8921254479075191528,
+      "translation": "제거 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295603Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "These were introduced prior to Python 3.4's release, so they can simply be removed.",
+      "source_hash": 4286966140889786278,
+      "context_hash": 17478155118393494595,
+      "translation": "이들은 Python 3.4가 릴리스되기 전에 도입되었으므로 간단히 제거할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295604Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "importlib.abc.Loader.init_module_attrs()",
+      "source_hash": 12899131864825848605,
+      "context_hash": 3583589582580194501,
+      "translation": "importlib.abc.Loader.init_module_attrs()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295604Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "importlib.util.module_to_load()",
+      "source_hash": 8070548859370905359,
+      "context_hash": 6272132687445188700,
+      "translation": "importlib.util.module_to_load()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295604Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Other Changes",
+      "source_hash": 7150102475041773264,
+      "context_hash": 9339714365474472379,
+      "translation": "기타 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295605Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "The import system implementation in importlib will be changed to make use of ModuleSpec.",
+      "source_hash": 2925544515554366741,
+      "context_hash": 2726096663687494575,
+      "translation": "importlib의 가져오기 시스템 구현은 ModuleSpec을 사용하도록 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:25.295605Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "importlib.reload() will make use of ModuleSpec.",
+      "source_hash": 17461266933579802264,
+      "context_hash": 6652324785420710746,
+      "translation": "importlib.reload()은 ModuleSpec을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432003Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "A module's import-related attributes (other than ``__spec__``) will no longer be used directly by the import system during that module's import.",
+      "source_hash": 7873955924373775617,
+      "context_hash": 10184421070160875975,
+      "translation": "모듈의 import 관련 속성(``__spec__``\\ 이외)은 해당 모듈을 import하는 동안 import 시스템에서 더 이상 직접 사용되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432007Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:1",
+      "source": "However, this does not impact use of those attributes (e.g. ``__path__``) when loading other modules (e.g. submodules).",
+      "source_hash": 7269683231331009572,
+      "context_hash": 9628692510566021026,
+      "translation": "그러나 다른 모듈(예: 서브모듈)을 로드할 때 이러한 속성(예: ``__path__``)을 사용하는 데에는 영향을 주지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432007Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "Import-related attributes should no longer be added to modules directly, except by the import system.",
+      "source_hash": 8300379759012374751,
+      "context_hash": 18234877570841886592,
+      "translation": "import 관련 속성은 import 시스템을 제외하고는 더 이상 모듈에 직접 추가해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432007Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "The module type's ``__repr__()`` will be a thin wrapper around a pure Python implementation which will leverage ModuleSpec.",
+      "source_hash": 12357874148407585749,
+      "context_hash": 6688029653500015448,
+      "translation": "모듈 타입의 ``__repr__()``\\ 은 ModuleSpec을 활용하는 순수 Python 구현을 감싸는 얇은 래퍼가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432007Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:0",
+      "source": "The spec for the ``__main__`` module will reflect the appropriate name and origin.",
+      "source_hash": 11394182730959609442,
+      "context_hash": 9636887420489329999,
+      "translation": "``__main__`` 모듈의 스펙에는 적절한 이름과 출처가 반영됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432008Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Backward-Compatibility",
+      "source_hash": 17702642692922188774,
+      "context_hash": 2982592976553861019,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432008Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "If a finder does not define find_spec(), a spec is derived from the loader returned by find_module().",
+      "source_hash": 632225252104631212,
+      "context_hash": 12776042685927590279,
+      "translation": "파인더가 find_spec()을 정의하지 않으면 find_module()이 반환한 로더에서 스펙을 파생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432008Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "PathEntryFinder.find_loader() still takes priority over find_module().",
+      "source_hash": 6370552551330450972,
+      "context_hash": 724941087921348512,
+      "translation": "PathEntryFinder.find_loader()가 여전히 find_module()보다 우선합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432009Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "Loader.load_module() is used if exec_module() is not defined.",
+      "source_hash": 15315741635958372936,
+      "context_hash": 222095006593751927,
+      "translation": "exec_module()이 정의되지 않은 경우 Loader.load_module()을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432009Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "What Will not Change?",
+      "source_hash": 3254861525201479829,
+      "context_hash": 4169526737965898232,
+      "translation": "변경되지 않는 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432009Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "The syntax and semantics of the import statement.",
+      "source_hash": 8529197345695425056,
+      "context_hash": 11565582016990604140,
+      "translation": "import 문의 구문과 의미 체계입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432010Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:0",
+      "source": "Existing finders and loaders will continue to work normally.",
+      "source_hash": 488721985478820177,
+      "context_hash": 3768476615549206682,
+      "translation": "기존 파인더와 로더는 계속 정상적으로 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432010Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:0",
+      "source": "The import-related module attributes will still be initialized with the same information.",
+      "source_hash": 4986785156881069977,
+      "context_hash": 2820835729787275464,
+      "translation": "import 관련 모듈 속성은 계속 동일한 정보로 초기화됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432011Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:4/seg:0",
+      "source": "Finders will still create loaders (now storing them in specs).",
+      "source_hash": 9040067097887501071,
+      "context_hash": 1762605618671450630,
+      "translation": "파인더는 계속 로더를 생성합니다(이제 스펙에 저장합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432011Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:5/seg:0",
+      "source": "Loader.load_module(), if a module defines it, will have all the same requirements and may still be called directly.",
+      "source_hash": 10803591454126996027,
+      "context_hash": 12565005362981115227,
+      "translation": "모듈이 Loader.load_module()을 정의하는 경우, 동일한 모든 요구 사항이 적용되며 여전히 직접 호출할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432011Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:6/seg:0",
+      "source": "Loaders will still be responsible for module data APIs.",
+      "source_hash": 5167064226966323414,
+      "context_hash": 14148154213494968507,
+      "translation": "로더는 계속 모듈 데이터 API를 담당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432011Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:7/seg:0",
+      "source": "importlib.reload() will still overwrite the import-related attributes.",
+      "source_hash": 10790933308594612417,
+      "context_hash": 11733386216642341070,
+      "translation": "importlib.reload()은 계속 import 관련 속성을 덮어씁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432012Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Responsibilities",
+      "source_hash": 6106496119136795046,
+      "context_hash": 1555104371655772673,
+      "translation": "책임",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432012Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "Here's a quick breakdown of where responsibilities lie after this PEP.",
+      "source_hash": 11178791284400187594,
+      "context_hash": 14541820305918811425,
+      "translation": "이 PEP 이후 책임이 어디에 있는지 간단히 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432012Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "finders:",
+      "source_hash": 8698216718817879073,
+      "context_hash": 8819438268009376056,
+      "translation": "파인더:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432012Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "create/identify a loader that can load the module.",
+      "source_hash": 483133672259997435,
+      "context_hash": 13574576291365993545,
+      "translation": "모듈을 로드할 수 있는 로더를 생성하거나 식별합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432013Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:4/seg:0",
+      "source": "create the spec for the module.",
+      "source_hash": 4011242536012769878,
+      "context_hash": 15402887931483752059,
+      "translation": "모듈의 스펙을 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432013Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:0",
+      "source": "loaders:",
+      "source_hash": 4526035219138346776,
+      "context_hash": 16829124282019742853,
+      "translation": "로더:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432013Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:0",
+      "source": "create the module (optional).",
+      "source_hash": 10403022829736788982,
+      "context_hash": 4391233134295797632,
+      "translation": "모듈을 생성합니다(선택 사항).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432013Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:7/seg:0",
+      "source": "execute the module.",
+      "source_hash": 9855371676001851849,
+      "context_hash": 4704704660684267230,
+      "translation": "모듈을 실행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432014Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:8/seg:0",
+      "source": "ModuleSpec:",
+      "source_hash": 14439977497867874280,
+      "context_hash": 8577305799064998386,
+      "translation": "ModuleSpec:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432014Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:9/seg:0",
+      "source": "orchestrate module loading",
+      "source_hash": 14039861235055654521,
+      "context_hash": 8946581282663714988,
+      "translation": "모듈 로딩을 조정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432014Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:10/seg:0",
+      "source": "boilerplate for module loading, including managing sys.modules and setting import-related attributes",
+      "source_hash": 9163139930709912020,
+      "context_hash": 1705257350005914445,
+      "translation": "sys.modules 관리 및 import 관련 속성 설정을 포함한 모듈 로딩용 보일러플레이트를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432014Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:11/seg:0",
+      "source": "create module if loader doesn't",
+      "source_hash": 3165474242999359915,
+      "context_hash": 8074279178697917959,
+      "translation": "로더가 모듈을 생성하지 않는 경우 모듈을 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432015Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:12/seg:0",
+      "source": "call loader.exec_module(), passing in the module in which to exec",
+      "source_hash": 18348753362072951092,
+      "context_hash": 17704809985419501982,
+      "translation": "실행할 모듈을 전달하여 loader.exec_module()을 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432015Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:13/seg:0",
+      "source": "contain all the information the loader needs to exec the module",
+      "source_hash": 3671971642592243161,
+      "context_hash": 14221230937786993209,
+      "translation": "로더가 모듈을 실행하는 데 필요한 모든 정보를 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:33.432015Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:14/seg:0",
+      "source": "provide the repr for modules",
+      "source_hash": 2337608027249439911,
+      "context_hash": 17498819873651403280,
+      "translation": "모듈의 repr을 제공하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482875Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "What Will Existing Finders and Loaders Have to Do Differently?",
+      "source_hash": 7773201405989233722,
+      "context_hash": 13277277016694573483,
+      "translation": "기존 파인더와 로더는 어떻게 다르게 해야 합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482878Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "Immediately?",
+      "source_hash": 10515867587685489489,
+      "context_hash": 15970161916060842760,
+      "translation": "즉시 말입니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482879Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:1",
+      "source": "Nothing.",
+      "source_hash": 7321524532223818375,
+      "context_hash": 6461402316170697819,
+      "translation": "아무것도 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482879Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:2",
+      "source": "The status quo will be deprecated, but will continue working.",
+      "source_hash": 2038464401720012559,
+      "context_hash": 11452229137349238889,
+      "translation": "현재 상태는 사용 중단될 예정이지만 계속 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482879Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:3",
+      "source": "However, here are the things that the authors of finders and loaders should change relative to this PEP:",
+      "source_hash": 12415075879109457853,
+      "context_hash": 15855689626499487696,
+      "translation": "그러나 이 PEP와 관련하여 파인더와 로더의 작성자가 변경해야 할 사항은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482879Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:0",
+      "source": "Implement find_spec() on finders.",
+      "source_hash": 16277124762059228127,
+      "context_hash": 1326315642307342266,
+      "translation": "파인더에 find_spec()을 구현하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482880Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:0",
+      "source": "Implement exec_module() on loaders, if possible.",
+      "source_hash": 1303483698762217650,
+      "context_hash": 3437405566716290346,
+      "translation": "가능하다면 로더에 exec_module()을 구현하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482880Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:4/seg:0",
+      "source": "The ModuleSpec factory functions in importlib.util are intended to be helpful for converting existing finders.  spec_from_loader() and spec_from_file_location() are both straightforward utilities in this regard.",
+      "source_hash": 2170233894479301886,
+      "context_hash": 14314502123331446440,
+      "translation": "importlib.util의 ModuleSpec 팩터리 함수는 기존 파인더를 변환하는 데 도움이 되도록 설계되었습니다. spec_from_loader()와 spec_from_file_location()은 이와 관련하여 모두 간단한 유틸리티입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482880Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:5/seg:0",
+      "source": "For existing loaders, exec_module() should be a relatively direct conversion from the non-boilerplate portion of load_module().",
+      "source_hash": 11050020053808487607,
+      "context_hash": 13925904085392517609,
+      "translation": "기존 로더에서 exec_module()은 load_module()의 보일러플레이트가 아닌 부분을 비교적 직접적으로 변환한 것이어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482881Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:5/seg:1",
+      "source": "In some uncommon cases the loader should also implement create_module().",
+      "source_hash": 1715017592206058491,
+      "context_hash": 15469490912793445054,
+      "translation": "드문 경우에는 로더가 create_module()도 구현해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482881Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "ModuleSpec Users",
+      "source_hash": 16984370232476559244,
+      "context_hash": 12055903928430707338,
+      "translation": "ModuleSpec 사용자",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482881Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "ModuleSpec objects have 3 distinct target audiences: Python itself, import hooks, and normal Python users.",
+      "source_hash": 15563080228598550136,
+      "context_hash": 3334044998884550464,
+      "translation": "ModuleSpec 객체에는 서로 다른 대상 독자가 3개 있습니다. Python 자체, 임포트 훅, 일반 Python 사용자입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482882Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:0",
+      "source": "Python will use specs in the import machinery, in interpreter startup, and in various standard library modules.",
+      "source_hash": 1400118684843168829,
+      "context_hash": 7454667937086992875,
+      "translation": "Python은 임포트 메커니즘, 인터프리터 시작 과정 및 다양한 표준 라이브러리 모듈에서 스펙을 사용합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:23:37.482882Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:1",
+      "source": "Some modules are import-oriented, like pkgutil, and others are not, like pickle and pydoc.",
+      "source_hash": 4266869739094628457,
+      "context_hash": 5154473398123533189,
+      "translation": "pkgutil처럼 임포트 지향적인 모듈도 있고, pickle 및 pydoc처럼 그렇지 않은 모듈도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482883Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:2",
+      "source": "In all cases, the full ModuleSpec API will get used.",
+      "source_hash": 17840062279870080458,
+      "context_hash": 12154019551323351486,
+      "translation": "모든 경우에 전체 ModuleSpec API가 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482884Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:0",
+      "source": "Import hooks (finders and loaders) will make use of the spec in specific ways.",
+      "source_hash": 6598509744550185345,
+      "context_hash": 827083396272300574,
+      "translation": "임포트 훅(파인더와 로더)은 특정한 방식으로 스펙을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482884Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:1",
+      "source": "First of all, finders may use the spec factory functions in importlib.util to create spec objects.",
+      "source_hash": 12426444033099026478,
+      "context_hash": 6116318976131366104,
+      "translation": "우선 파인더는 importlib.util의 스펙 팩터리 함수를 사용하여 스펙 객체를 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482884Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:2",
+      "source": "They may also directly adjust the spec attributes after the spec is created.",
+      "source_hash": 9785418210987458382,
+      "context_hash": 11599655306371175278,
+      "translation": "또한 스펙이 생성된 후 스펙 속성을 직접 조정할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482884Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:3",
+      "source": "Secondly, the finder may bind additional information to the spec (in finder_extras) for the loader to consume during module creation/execution.",
+      "source_hash": 205610743297358606,
+      "context_hash": 15568823650135142038,
+      "translation": "둘째로, 파인더는 로더가 모듈 생성 또는 실행 중에 사용할 추가 정보를 스펙에 바인딩할 수 있습니다(finder_extras에서).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482884Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:4",
+      "source": "Finally, loaders will make use of the attributes on a spec when creating and/or executing a module.",
+      "source_hash": 13428378477671093665,
+      "context_hash": 2278557598536911758,
+      "translation": "마지막으로 로더는 모듈을 생성하거나 실행할 때 스펙의 속성을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482885Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:4/seg:0",
+      "source": "Python users will be able to inspect a module's ``__spec__`` to get import-related information about the object.",
+      "source_hash": 1257914338797255913,
+      "context_hash": 723233909356111295,
+      "translation": "Python 사용자는 모듈의 ``__spec__``\\ 을 검사하여 해당 객체에 관한 임포트 관련 정보를 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482885Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:4/seg:1",
+      "source": "Generally, Python applications and interactive users will not be using the ``ModuleSpec`` factory functions nor any the instance methods.",
+      "source_hash": 2419022653764885542,
+      "context_hash": 14696083340223039858,
+      "translation": "일반적으로 Python 애플리케이션과 대화형 사용자는 ``ModuleSpec`` 팩터리 함수나 인스턴스 메서드를 사용하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482885Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "How Loading Will Work",
+      "source_hash": 15901618996563320151,
+      "context_hash": 14179699222151930114,
+      "translation": "로딩은 어떻게 작동합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482885Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "Here is an outline of what the import machinery does during loading, adjusted to take advantage of the module's spec and the new loader API",
+      "source_hash": 10045212907037591530,
+      "context_hash": 9376025606170508701,
+      "translation": "다음은 모듈의 스펙과 새로운 로더 API를 활용하도록 조정한, 로딩 중 임포트 메커니즘의 작업 개요입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482885Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:0",
+      "source": "These steps are exactly what Loader.load_module() is already expected to do.",
+      "source_hash": 89204506687680290,
+      "context_hash": 3982637121319693938,
+      "translation": "이러한 단계는 Loader.load_module()이 이미 수행할 것으로 예상되는 작업과 정확히 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482886Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:1",
+      "source": "Loaders will thus be simplified since they will only need to implement exec_module().",
+      "source_hash": 12430333507750017862,
+      "context_hash": 18391180798648498734,
+      "translation": "따라서 로더는 exec_module()만 구현하면 되므로 단순해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482886Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:0",
+      "source": "Note that we must return the module from sys.modules.",
+      "source_hash": 13998515136305139799,
+      "context_hash": 14077125765547003902,
+      "translation": "sys.modules에서 모듈을 반환해야 한다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482886Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:1",
+      "source": "During loading the module may have replaced itself in sys.modules.",
+      "source_hash": 33561880505578320,
+      "context_hash": 1724443389551132886,
+      "translation": "로딩 중에 모듈이 sys.modules에서 자신을 교체했을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482887Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:2",
+      "source": "Since we don't have a post-import hook API to accommodate the use case, we have to deal with it.",
+      "source_hash": 16275184367087699932,
+      "context_hash": 8689177838248522447,
+      "translation": "이 사용 사례를 수용할 사후 임포트 훅 API가 없으므로 이를 처리해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482887Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:3",
+      "source": "However, in the replacement case we do not worry about setting the import-related module attributes on the object.",
+      "source_hash": 5638431002750716612,
+      "context_hash": 9222802785488423779,
+      "translation": "그러나 교체가 발생한 경우에는 객체에 임포트 관련 모듈 속성을 설정하는 것에 대해 걱정하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482887Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:4",
+      "source": "The module writer is on their own if they are doing this.",
+      "source_hash": 2139810532658067456,
+      "context_hash": 12575093990475599790,
+      "translation": "이렇게 하는 경우 모듈 작성자가 직접 처리해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:37.482887Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "How Reloading Will Work",
+      "source_hash": 5736672712760178614,
+      "context_hash": 13742798365414971532,
+      "translation": "다시 로드하는 방식",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182734Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "Here is the corresponding outline for reload()",
+      "source_hash": 7341251266876474012,
+      "context_hash": 1662682765896825347,
+      "translation": "reload()에 해당하는 개요입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182738Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:3/seg:0",
+      "source": "A key point here is the switch to Loader.exec_module() means that loaders will no longer have an easy way to know at execution time if it is a reload or not.",
+      "source_hash": 10917088595370786280,
+      "context_hash": 14764728897954188435,
+      "translation": "여기서 핵심은 Loader.exec_module()로 전환하면 로더가 실행 시점에 이것이 다시 로드인지 아닌지 쉽게 알 수 없게 된다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182738Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:3/seg:1",
+      "source": "Before this proposal, they could simply check to see if the module was already in sys.modules.",
+      "source_hash": 1598855919812686827,
+      "context_hash": 11521421877077206350,
+      "translation": "이 제안 이전에는 모듈이 이미 sys.modules에 있는지 간단히 확인할 수 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182739Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:3/seg:2",
+      "source": "Now, by the time exec_module() is called during load (not reload) the import machinery would already have placed the module in sys.modules.",
+      "source_hash": 13569648282216241252,
+      "context_hash": 15944134581081693959,
+      "translation": "이제 로드 중(다시 로드 중이 아님)에 exec_module()이 호출될 때쯤이면 가져오기 메커니즘이 이미 모듈을 sys.modules에 배치했을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182739Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:3/seg:3",
+      "source": "This is part of the reason why find_spec() has `the \"target\" parameter <The \"target\" parameter of find_spec()>`_.",
+      "source_hash": 2953928085997141307,
+      "context_hash": 792516252605092465,
+      "translation": "이것이 find_spec()에 `the \"target\" parameter <The \"target\" parameter of find_spec()>`_\\ 가 있는 이유 중 하나입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182739Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:4/seg:0",
+      "source": "The semantics of reload will remain essentially the same as they exist already [#reload-semantics-fix]_.",
+      "source_hash": 6857977022174711000,
+      "context_hash": 15900802025676456486,
+      "translation": "reload의 의미 체계는 현재와 본질적으로 동일하게 유지됩니다 [#reload-semantics-fix]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182740Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:4/seg:1",
+      "source": "The impact of this PEP on some kinds of lazy loading modules was a point of discussion. [#lazy_import_concerns]_",
+      "source_hash": 13586304382738810807,
+      "context_hash": 16985456937115199930,
+      "translation": "이 PEP가 일부 종류의 지연 로딩 모듈에 미치는 영향은 논의의 대상이었습니다. [#lazy_import_concerns]_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182740Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:0/seg:0",
+      "source": "ModuleSpec",
+      "source_hash": 6975837980934445408,
+      "context_hash": 6950993774000214339,
+      "translation": "ModuleSpec",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182740Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:0/seg:0",
+      "source": "Attributes",
+      "source_hash": 7451065999087312502,
+      "context_hash": 1474545945857563320,
+      "translation": "특성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182740Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:0",
+      "source": "Each of the following names is an attribute on ModuleSpec objects.",
+      "source_hash": 7618518370823754571,
+      "context_hash": 11767701202016959353,
+      "translation": "다음 각 이름은 ModuleSpec 객체의 특성입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182741Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:1",
+      "source": "A value of None indicates \"not set\".",
+      "source_hash": 15562310209388387518,
+      "context_hash": 16954052711963040869,
+      "translation": "None 값은 \"설정되지 않음\"을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182741Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:2",
+      "source": "This contrasts with module objects where the attribute simply doesn't exist.",
+      "source_hash": 17568186979852216231,
+      "context_hash": 4784803966148134317,
+      "translation": "이는 특성이 단순히 존재하지 않는 모듈 객체의 경우와 대조됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182741Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:3",
+      "source": "Most of the attributes correspond to the import-related attributes of modules.",
+      "source_hash": 950188835424680242,
+      "context_hash": 862802249112876737,
+      "translation": "대부분의 특성은 모듈의 가져오기 관련 특성에 대응합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182741Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:4",
+      "source": "Here is the mapping.",
+      "source_hash": 906575727960408922,
+      "context_hash": 5040296887644218798,
+      "translation": "다음은 그 매핑입니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T19:23:32.182742Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:5",
+      "source": "The reverse of this mapping describes how the import machinery sets the module attributes right before calling exec_module().",
+      "source_hash": 10713946417721912446,
+      "context_hash": 18407429709376051832,
+      "translation": "이 매핑의 역매핑은 exec_module()을 호출하기 직전에 가져오기 메커니즘이 모듈 특성을 설정하는 방식을 설명합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T19:23:32.182742Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:3/seg:0",
+      "source": "On ModuleSpec",
+      "source_hash": 3211334196178632174,
+      "context_hash": 2594802228805993982,
+      "translation": "ModuleSpec에서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182743Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:4/seg:0",
+      "source": "On Modules",
+      "source_hash": 16347426846028617220,
+      "context_hash": 3618716056755106161,
+      "translation": "모듈에서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182743Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:5/seg:0",
+      "source": "name",
+      "source_hash": 7809095717631950189,
+      "context_hash": 10139699671951770799,
+      "translation": "name",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182743Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:6/seg:0",
+      "source": "__name__",
+      "source_hash": 15124548097384542655,
+      "context_hash": 7889321020970784213,
+      "translation": "__name__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182744Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:7/seg:0",
+      "source": "loader",
+      "source_hash": 6650956012900813647,
+      "context_hash": 13556093317144952873,
+      "translation": "loader",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182744Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:8/seg:0",
+      "source": "__loader__",
+      "source_hash": 5511190638832175147,
+      "context_hash": 760578520446904924,
+      "translation": "__loader__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182744Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:9/seg:0",
+      "source": "parent",
+      "source_hash": 11462223484902301007,
+      "context_hash": 11063351121414824074,
+      "translation": "parent",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182744Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:10/seg:0",
+      "source": "__package__",
+      "source_hash": 635331630936116871,
+      "context_hash": 8746859830451705590,
+      "translation": "__package__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182744Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:11/seg:0",
+      "source": "origin",
+      "source_hash": 7034821444952201446,
+      "context_hash": 17274935514674549185,
+      "translation": "origin",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182745Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:12/seg:0",
+      "source": "__file__*",
+      "source_hash": 9059067805248457191,
+      "context_hash": 13632858651414597053,
+      "translation": "__file__*",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182745Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:13/seg:0",
+      "source": "cached",
+      "source_hash": 10950921998947687709,
+      "context_hash": 7876939446452235810,
+      "translation": "cached",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182745Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:14/seg:0",
+      "source": "__cached__*,**",
+      "source_hash": 7583891542486648256,
+      "context_hash": 13588791725532045864,
+      "translation": "__cached__*,**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182745Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:15/seg:0",
+      "source": "submodule_search_locations",
+      "source_hash": 17129915761392609331,
+      "context_hash": 9310611108423850516,
+      "translation": "submodule_search_locations",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182745Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:16/seg:0",
+      "source": "__path__**",
+      "source_hash": 4276298086724377449,
+      "context_hash": 9802726233845974316,
+      "translation": "__path__**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182746Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:17/seg:0",
+      "source": "loader_state",
+      "source_hash": 16163240436455980666,
+      "context_hash": 10389669145403544262,
+      "translation": "loader_state",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182746Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:18/seg:0",
+      "source": "has_location",
+      "source_hash": 16418486233031041926,
+      "context_hash": 7723938902386362565,
+      "translation": "has_location",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:32.182746Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:19/seg:0",
+      "source": "While parent and has_location are read-only properties, the remaining attributes can be replaced after the module spec is created and even after import is complete.",
+      "source_hash": 5462995674423967475,
+      "context_hash": 16108681663179165150,
+      "translation": "parent 및 has_location은 읽기 전용 속성이지만, 나머지 속성은 모듈 사양이 생성된 후, 심지어 가져오기가 완료된 후에도 바꿀 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596666Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:19/seg:1",
+      "source": "This allows for unusual cases where directly modifying the spec is the best option.",
+      "source_hash": 3300453708363059635,
+      "context_hash": 17605830966447319002,
+      "translation": "이를 통해 사양을 직접 수정하는 것이 가장 좋은 선택인 특수한 경우를 처리할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596668Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:19/seg:2",
+      "source": "However, typical use should not involve changing the state of a module's spec.",
+      "source_hash": 11777898487526226393,
+      "context_hash": 18290061208142003198,
+      "translation": "그러나 일반적인 사용에서는 모듈 사양의 상태를 변경하지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596669Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:20/seg:0",
+      "source": "**origin**",
+      "source_hash": 13469960506601788249,
+      "context_hash": 4952596090531221681,
+      "translation": "**origin**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596669Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:21/seg:0",
+      "source": "\"origin\" is a string for the name of the place from which the module originates.",
+      "source_hash": 12943148089520108234,
+      "context_hash": 16808656857797682839,
+      "translation": "\"origin\"은 모듈이 비롯된 장소의 이름을 나타내는 문자열입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596669Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:21/seg:1",
+      "source": "See `origin`_ above.",
+      "source_hash": 31949484565690611,
+      "context_hash": 3056452900550639418,
+      "translation": "위의 `origin`_\\ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596670Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:21/seg:2",
+      "source": "Aside from the informational value, it is also used in the module's repr.",
+      "source_hash": 10786789634586819385,
+      "context_hash": 5221353484044489557,
+      "translation": "정보 제공 목적 외에도 모듈의 repr에서 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596670Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:21/seg:3",
+      "source": "In the case of a spec where \"has_location\" is true, ``__file__`` is set to the value of \"origin\".",
+      "source_hash": 15839295219568273574,
+      "context_hash": 5416229581649076402,
+      "translation": "\"has_location\"이 참인 사양의 경우 ``__file__``\\ 은 \"origin\"의 값으로 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596670Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:21/seg:4",
+      "source": "For built-in modules \"origin\" would be set to \"built-in\".",
+      "source_hash": 9322357728894158474,
+      "context_hash": 12932637139021139463,
+      "translation": "내장 모듈의 경우 \"origin\"은 \"built-in\"으로 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596671Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:22/seg:0",
+      "source": "**has_location**",
+      "source_hash": 9866593369048482329,
+      "context_hash": 16272971358839521230,
+      "translation": "**has_location**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596671Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:23/seg:0",
+      "source": "As explained in the `location`_ section above, many modules are \"locatable\", meaning there is a corresponding resource from which the module will be loaded and that resource can be described by a string.",
+      "source_hash": 6276786214338670510,
+      "context_hash": 11678310639143962569,
+      "translation": "위의 `location`_ 섹션에서 설명했듯이, 많은 모듈은 \"위치 지정 가능\"합니다. 즉, 모듈을 로드할 해당 리소스가 존재하며 그 리소스를 문자열로 설명할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596671Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:23/seg:1",
+      "source": "In contrast, non-locatable modules can't be loaded in this fashion, e.g. builtin modules and modules dynamically created in code.",
+      "source_hash": 16990931474682196623,
+      "context_hash": 9063068204362116852,
+      "translation": "반면 위치 지정이 불가능한 모듈은 이러한 방식으로 로드할 수 없습니다. 예를 들어 내장 모듈과 코드에서 동적으로 생성된 모듈이 이에 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596672Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:23/seg:2",
+      "source": "For these, the name is the only way to access them, so they have an \"origin\" but not a \"location\".",
+      "source_hash": 10587683360068894007,
+      "context_hash": 16980516656708006550,
+      "translation": "이러한 모듈은 이름으로만 접근할 수 있으므로 \"origin\"은 있지만 \"location\"은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596672Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:24/seg:0",
+      "source": "\"has_location\" is true if the module is locatable.",
+      "source_hash": 17576659254072725374,
+      "context_hash": 15691010041580739134,
+      "translation": "모듈을 위치 지정할 수 있으면 \"has_location\"은 참입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596672Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:24/seg:1",
+      "source": "In that case the spec's origin is used as the location and ``__file__`` is set to spec.origin.",
+      "source_hash": 5404081817170554943,
+      "context_hash": 7960009862267326798,
+      "translation": "이 경우 사양의 origin이 위치로 사용되고 ``__file__``\\ 은 spec.origin으로 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596672Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:24/seg:2",
+      "source": "If additional location information is required (e.g. zipimport), that information may be stored in spec.loader_state.",
+      "source_hash": 2571154484905770889,
+      "context_hash": 7157168312289250619,
+      "translation": "추가 위치 정보가 필요한 경우(예: zipimport), 해당 정보는 spec.loader_state에 저장될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596673Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:25/seg:0",
+      "source": "\"has_location\" may be implied from the existence of a load_data() method on the loader.",
+      "source_hash": 15305392713887530325,
+      "context_hash": 11173441903267843403,
+      "translation": "로더에 load_data() 메서드가 존재하면 \"has_location\"이 암시될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596673Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:26/seg:0",
+      "source": "Incidentally, not all locatable modules will be cache-able, but most will.",
+      "source_hash": 13151963542253147345,
+      "context_hash": 16915554303420287851,
+      "translation": "참고로 위치 지정 가능한 모든 모듈을 캐시할 수 있는 것은 아니지만, 대부분은 캐시할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596673Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:27/seg:0",
+      "source": "**submodule_search_locations**",
+      "source_hash": 12263824908082163802,
+      "context_hash": 11347911693740766705,
+      "translation": "**submodule_search_locations**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596673Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:28/seg:0",
+      "source": "The list of location strings, typically directory paths, in which to search for submodules.",
+      "source_hash": 11192248480857978613,
+      "context_hash": 5606752837092811332,
+      "translation": "서브모듈을 검색할 위치 문자열의 목록으로, 일반적으로 디렉터리 경로가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596674Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:28/seg:1",
+      "source": "If the module is a package this will be set to a list (even an empty one).",
+      "source_hash": 1534320541227975600,
+      "context_hash": 14354328543792833686,
+      "translation": "모듈이 패키지이면 이 값은 목록으로 설정됩니다(빈 목록일 수도 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596674Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:28/seg:2",
+      "source": "Otherwise it is None.",
+      "source_hash": 5748631796932141875,
+      "context_hash": 2839381441582310124,
+      "translation": "그렇지 않으면 None입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596674Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:29/seg:0",
+      "source": "The name of the corresponding module attribute, ``__path__``, is relatively ambiguous.",
+      "source_hash": 7189611567312151601,
+      "context_hash": 16081276349811883116,
+      "translation": "해당 모듈 속성의 이름인 ``__path__``\\ 은 비교적 모호합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596674Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:29/seg:1",
+      "source": "Instead of mirroring it, we use a more explicit attribute name that makes the purpose clear.",
+      "source_hash": 10262779012213374306,
+      "context_hash": 2714729541445623733,
+      "translation": "이를 그대로 반영하는 대신 목적을 명확하게 보여 주는 더 명시적인 속성 이름을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596674Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:30/seg:0",
+      "source": "**loader_state**",
+      "source_hash": 14604094830608192323,
+      "context_hash": 6207394199535236747,
+      "translation": "**loader_state**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596675Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:31/seg:0",
+      "source": "A finder may set loader_state to any value to provide additional data for the loader to use during loading.",
+      "source_hash": 14803139930204432969,
+      "context_hash": 3878682376930174337,
+      "translation": "파인더는 로더가 로드 중 사용할 추가 데이터를 제공하기 위해 loader_state를 임의의 값으로 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596675Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:31/seg:1",
+      "source": "A value of None is the default and indicates that there is no additional data.",
+      "source_hash": 5759369155238567542,
+      "context_hash": 12230947212272092731,
+      "translation": "None 값은 기본값이며 추가 데이터가 없음을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596675Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:31/seg:2",
+      "source": "Otherwise it can be set to any object, such as a dict, list, or types.SimpleNamespace, containing the relevant extra information.",
+      "source_hash": 13527562663674399567,
+      "context_hash": 3289337868044178656,
+      "translation": "그 외에는 관련 추가 정보가 포함된 dict, list 또는 types.SimpleNamespace와 같은 임의의 객체로 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596675Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:32/seg:0",
+      "source": "For example, zipimporter could use it to pass the zip archive name to the loader directly, rather than needing to derive it from origin or create a custom loader for each find operation.",
+      "source_hash": 6197137602764742869,
+      "context_hash": 16568140452885423170,
+      "translation": "예를 들어 zipimporter는 origin에서 압축 보관 파일 이름을 추출하거나 각 찾기 작업마다 사용자 지정 로더를 생성할 필요 없이, 이를 사용하여 압축 보관 파일 이름을 로더에 직접 전달할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596676Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:33/seg:0",
+      "source": "loader_state is meant for use by the finder and corresponding loader.",
+      "source_hash": 8262009584551180228,
+      "context_hash": 15280728396506596812,
+      "translation": "loader_state는 파인더와 해당 로더가 사용하기 위한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596676Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:33/seg:1",
+      "source": "It is not guaranteed to be a stable resource for any other use.",
+      "source_hash": 13845137753595355070,
+      "context_hash": 9063985194244021291,
+      "translation": "다른 용도를 위한 안정적인 리소스라는 보장은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596676Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:0/seg:0",
+      "source": "Factory Functions",
+      "source_hash": 4018622165279796358,
+      "context_hash": 4976298795135393684,
+      "translation": "팩토리 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:40.596676Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:1/seg:0",
+      "source": "**spec_from_file_location(name, location, \\*, loader=None, submodule_search_locations=None)**",
+      "source_hash": 11849467069452787348,
+      "context_hash": 10381508419432216678,
+      "translation": "**spec_from_file_location(name, location, \\*, loader=None, submodule_search_locations=None)**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046362Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:2/seg:0",
+      "source": "Build a spec from file-oriented information and loader APIs.",
+      "source_hash": 11155750800644966756,
+      "context_hash": 16793206994393061691,
+      "translation": "파일 중심 정보와 로더 API를 바탕으로 명세를 빌드합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046366Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:3/seg:0",
+      "source": "\"origin\" will be set to the location.",
+      "source_hash": 13130135013223818766,
+      "context_hash": 15697044797689238712,
+      "translation": "\"origin\"은 location으로 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046366Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:4/seg:0",
+      "source": "\"has_location\" will be set to True.",
+      "source_hash": 13714455698654230461,
+      "context_hash": 10978210274320725509,
+      "translation": "\"has_location\"은 True로 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046367Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:5/seg:0",
+      "source": "\"cached\" will be set to the result of calling cache_from_source().",
+      "source_hash": 12415429134716835405,
+      "context_hash": 4677599540840769137,
+      "translation": "\"cached\"는 cache_from_source()를 호출한 결과로 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046367Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:6/seg:0",
+      "source": "\"origin\" can be deduced from loader.get_filename() (if \"location\" is not passed in.",
+      "source_hash": 7237486607800630203,
+      "context_hash": 9213358647501739300,
+      "translation": "\"origin\"은 loader.get_filename()에서 추론할 수 있습니다(location이 전달되지 않은 경우).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046367Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:7/seg:0",
+      "source": "\"loader\" can be deduced from suffix if the location is a filename.",
+      "source_hash": 15545738333741478258,
+      "context_hash": 7024085928889302626,
+      "translation": "location이 파일 이름이면 \"loader\"는 접미사에서 추론할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046367Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:8/seg:0",
+      "source": "\"submodule_search_locations\" can be deduced from loader.is_package() and from os.path.dirname(location) if location is a filename.",
+      "source_hash": 17730521897947319878,
+      "context_hash": 9688499634800922742,
+      "translation": "location이 파일 이름이면 \"submodule_search_locations\"는 loader.is_package()와 os.path.dirname(location)에서 추론할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046368Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:9/seg:0",
+      "source": "**spec_from_loader(name, loader, \\*, origin=None, is_package=None)**",
+      "source_hash": 6026459643115726866,
+      "context_hash": 13689848568378868007,
+      "translation": "**spec_from_loader(name, loader, \\*, origin=None, is_package=None)**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046368Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:10/seg:0",
+      "source": "Build a spec with missing information filled in by using loader APIs.",
+      "source_hash": 2381751823935185101,
+      "context_hash": 10789158921180477856,
+      "translation": "로더 API를 사용하여 누락된 정보를 채운 명세를 빌드합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046368Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:11/seg:0",
+      "source": "\"has_location\" can be deduced from loader.get_data.",
+      "source_hash": 4736920207689149420,
+      "context_hash": 15508270917777048360,
+      "translation": "\"has_location\"은 loader.get_data에서 추론할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046368Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:12/seg:0",
+      "source": "\"origin\" can be deduced from loader.get_filename().",
+      "source_hash": 8832694158154240230,
+      "context_hash": 2707124665825202392,
+      "translation": "\"origin\"은 loader.get_filename()에서 추론할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046369Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:13/seg:0",
+      "source": "\"submodule_search_locations\" can be deduced from loader.is_package() and from os.path.dirname(location) if location is a filename.",
+      "source_hash": 17730521897947319878,
+      "context_hash": 15696104162567848280,
+      "translation": "location이 파일 이름이면 \"submodule_search_locations\"는 loader.is_package()와 os.path.dirname(location)에서 추론할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046369Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:0/seg:0",
+      "source": "Backward Compatibility",
+      "source_hash": 3447041900669616890,
+      "context_hash": 11264328139423671669,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T19:23:39.046369Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:0",
+      "source": "ModuleSpec doesn't have any.",
+      "source_hash": 16624534983666264420,
+      "context_hash": 10283476525074148296,
+      "translation": "ModuleSpec에는 그런 것이 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046370Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:1",
+      "source": "This would be a different story if Finder.find_module() were to return a module spec instead of loader.",
+      "source_hash": 13822249125883108469,
+      "context_hash": 3240096556565137492,
+      "translation": "Finder.find_module()이 로더 대신 모듈 명세를 반환하도록 한다면 이야기가 달라집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046370Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:2",
+      "source": "In that case, specs would have to act like the loader that would have been returned instead.",
+      "source_hash": 14638109373619974078,
+      "context_hash": 13671926835319173536,
+      "translation": "그런 경우 명세는 대신 반환되었을 로더처럼 동작해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046370Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:3",
+      "source": "Doing so would be relatively simple, but is an unnecessary complication.",
+      "source_hash": 4851854315331783151,
+      "context_hash": 10952129670328165440,
+      "translation": "그렇게 하는 것은 비교적 간단하지만 불필요한 복잡성을 초래합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046371Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:4",
+      "source": "It was part of earlier versions of this PEP.",
+      "source_hash": 5182446093111620083,
+      "context_hash": 3017528746749580494,
+      "translation": "이는 이 PEP의 이전 버전에 포함되어 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046371Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:0/seg:0",
+      "source": "Subclassing",
+      "source_hash": 5339074551186639848,
+      "context_hash": 3231179820631091251,
+      "translation": "서브클래싱",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046371Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:0",
+      "source": "Subclasses of ModuleSpec are allowed, but should not be necessary.",
+      "source_hash": 17926068323954733859,
+      "context_hash": 11644786176231087296,
+      "translation": "ModuleSpec의 서브클래스는 허용되지만 필요하지는 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046371Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:1",
+      "source": "Simply setting loader_state or adding functionality to a custom finder or loader will likely be a better fit and should be tried first.",
+      "source_hash": 5699730645830598293,
+      "context_hash": 3643164017628115737,
+      "translation": "단순히 loader_state를 설정하거나 사용자 지정 파인더 또는 로더에 기능을 추가하는 편이 더 적합할 가능성이 높으므로 먼저 시도해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046372Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:2",
+      "source": "However, as long as a subclass still fulfills the requirements of the import system, objects of that type are completely fine as the return value of Finder.find_spec().",
+      "source_hash": 7645556926339551176,
+      "context_hash": 11445373009772807971,
+      "translation": "그러나 서브클래스가 여전히 임포트 시스템의 요구 사항을 충족하는 한, 해당 유형의 객체는 Finder.find_spec()의 반환값으로 완전히 적합합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046372Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:3",
+      "source": "The same points apply to duck-typing.",
+      "source_hash": 5587679163773447226,
+      "context_hash": 2533098991553974035,
+      "translation": "덕 타이핑에도 동일한 사항이 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046372Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:0/seg:0",
+      "source": "Existing Types",
+      "source_hash": 726788314040070371,
+      "context_hash": 4358319496157551027,
+      "translation": "기존 유형",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046372Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:0/seg:0",
+      "source": "Module Objects",
+      "source_hash": 1513997963059411342,
+      "context_hash": 13540399058835665227,
+      "translation": "모듈 객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046372Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:1/seg:0",
+      "source": "Other than adding ``__spec__``, none of the import-related module attributes will be changed or deprecated, though some of them could be; any such deprecation can wait until Python 4.",
+      "source_hash": 16408604164088634590,
+      "context_hash": 11432274050727337591,
+      "translation": "``__spec__``\\ 을 추가하는 것 외에는 임포트와 관련된 모듈 속성이 변경되거나 폐기되지 않지만, 일부 속성은 변경되거나 폐기될 수 있습니다. 그러한 폐기는 Python 4까지 기다릴 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046373Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:2/seg:0",
+      "source": "A module's spec will not be kept in sync with the corresponding import-related attributes.",
+      "source_hash": 11737663519830512889,
+      "context_hash": 8997162599614515158,
+      "translation": "모듈의 명세는 이에 대응하는 임포트 관련 속성과 동기화된 상태로 유지되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046373Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:2/seg:1",
+      "source": "Though they may differ, in practice they will typically be the same.",
+      "source_hash": 18195992484738799048,
+      "context_hash": 10209531814794059197,
+      "translation": "서로 다를 수 있지만 실제로는 일반적으로 동일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046373Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:3/seg:0",
+      "source": "One notable exception is that case where a module is run as a script by using the ``-m`` flag.",
+      "source_hash": 13710227354969331317,
+      "context_hash": 12205600902244575859,
+      "translation": "한 가지 주목할 만한 예외는 ``-m`` 플래그를 사용하여 모듈을 스크립트로 실행하는 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046373Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:3/seg:1",
+      "source": "In that case ``module.__spec__.name`` will reflect the actual module name while ``module.__name__`` will be ``__main__``.",
+      "source_hash": 12029760952774896578,
+      "context_hash": 10926253615600462196,
+      "translation": "이 경우 ``module.__spec__.name``\\ 은 실제 모듈 이름을 반영하는 반면 ``module.__name__``\\ 은 ``__main__``\\ 이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:39.046374Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:4/seg:0",
+      "source": "A module's spec is not guaranteed to be identical between two modules with the same name.",
+      "source_hash": 14418621004354172125,
+      "context_hash": 12880358742635537958,
+      "translation": "동일한 이름을 가진 두 모듈 사이에서 모듈의 spec이 동일하다고 보장되지는 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249687Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:4/seg:1",
+      "source": "Likewise there is no guarantee that successive calls to importlib.find_spec() will return the same object or even an equivalent object, though at least the latter is likely.",
+      "source_hash": 5253301577043161205,
+      "context_hash": 2947256780477493076,
+      "translation": "마찬가지로 importlib.find_spec()를 연속해서 호출해도 동일한 객체나 심지어 동등한 객체가 반환된다고 보장할 수는 없지만, 적어도 후자일 가능성은 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249690Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:0/seg:0",
+      "source": "Finders",
+      "source_hash": 14844621915104600355,
+      "context_hash": 17398942855154304989,
+      "translation": "파인더",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249690Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:1/seg:0",
+      "source": "Finders are still responsible for identifying, and typically creating, the loader that should be used to load a module.",
+      "source_hash": 10184265166746364503,
+      "context_hash": 16523662366190667878,
+      "translation": "파인더는 모듈을 로드하는 데 사용해야 할 로더를 식별하고, 일반적으로 생성하는 역할을 여전히 담당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249690Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:1/seg:1",
+      "source": "That loader will now be stored in the module spec returned by find_spec() rather than returned directly.",
+      "source_hash": 12723997395318692480,
+      "context_hash": 18279621161458947020,
+      "translation": "이제 해당 로더는 직접 반환되는 대신 find_spec()이 반환하는 모듈 spec에 저장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249691Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:1/seg:2",
+      "source": "As is currently the case without the PEP, if a loader would be costly to create, that loader can be designed to defer the cost until later.",
+      "source_hash": 2658052817959031676,
+      "context_hash": 14321254656826744251,
+      "translation": "PEP가 없는 현재의 경우와 마찬가지로, 로더를 생성하는 데 비용이 많이 든다면 해당 비용을 나중으로 미루도록 로더를 설계할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249691Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:2/seg:0",
+      "source": "**MetaPathFinder.find_spec(name, path=None, target=None)**",
+      "source_hash": 6848162736642204427,
+      "context_hash": 10684043630692484057,
+      "translation": "**MetaPathFinder.find_spec(name, path=None, target=None)**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249691Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:3/seg:0",
+      "source": "**PathEntryFinder.find_spec(name, target=None)**",
+      "source_hash": 17436841390919467223,
+      "context_hash": 2239009000477606443,
+      "translation": "**PathEntryFinder.find_spec(name, target=None)**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249692Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:4/seg:0",
+      "source": "Finders must return ModuleSpec objects when find_spec() is called.",
+      "source_hash": 13326003978962126166,
+      "context_hash": 13512109305040622276,
+      "translation": "find_spec()이 호출되면 파인더는 ModuleSpec 객체를 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249692Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:4/seg:1",
+      "source": "This new method replaces find_module() and find_loader() (in the PathEntryFinder case).",
+      "source_hash": 10071358688457728506,
+      "context_hash": 15802759906420037044,
+      "translation": "이 새로운 메서드는 find_module()과 find_loader()를 대체합니다(PathEntryFinder의 경우).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249692Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:4/seg:2",
+      "source": "If a loader does not have find_spec(), find_module() and find_loader() are used instead, for backward-compatibility.",
+      "source_hash": 4029577182255497891,
+      "context_hash": 14588952944914027098,
+      "translation": "로더에 find_spec()이 없으면 하위 호환성을 위해 find_module()과 find_loader()가 대신 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249693Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:5/seg:0",
+      "source": "Adding yet another similar method to loaders is a case of practicality. find_module() could be changed to return specs instead of loaders.",
+      "source_hash": 9910766658174504939,
+      "context_hash": 15564004329406850907,
+      "translation": "로더에 또 하나의 유사한 메서드를 추가하는 것은 실용성을 고려한 조치입니다. find_module()을 로더 대신 spec을 반환하도록 변경할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249693Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:5/seg:1",
+      "source": "This is tempting because the import APIs have suffered enough, especially considering PathEntryFinder.find_loader() was just added in Python 3.3.",
+      "source_hash": 6785537801246905488,
+      "context_hash": 3033350856486185211,
+      "translation": "특히 PathEntryFinder.find_loader()가 Python 3.3에서 막 추가되었다는 점을 고려하면, import API가 충분히 많은 어려움을 겪어 왔기 때문에 이는 매력적으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249693Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:5/seg:2",
+      "source": "However, the extra complexity and a less-than-explicit method name aren't worth it.",
+      "source_hash": 834893186387825540,
+      "context_hash": 6727455956787565940,
+      "translation": "그러나 추가적인 복잡성과 명확성이 부족한 메서드 이름은 그럴 만한 가치가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249693Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:0/seg:0",
+      "source": "The \"target\" parameter of find_spec()",
+      "source_hash": 6211927415019158386,
+      "context_hash": 12910183827430334481,
+      "translation": "\"target\" 매개변수와 find_spec()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249694Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:1/seg:0",
+      "source": "A call to find_spec() may optionally include a \"target\" argument.",
+      "source_hash": 7391919153852819440,
+      "context_hash": 10760669332659737775,
+      "translation": "find_spec() 호출에는 선택적으로 \"target\" 인자가 포함될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249694Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:1/seg:1",
+      "source": "This is the module object that will be used subsequently as the target of loading.",
+      "source_hash": 14362035343324233434,
+      "context_hash": 1301452926598410624,
+      "translation": "이는 이후 로딩의 대상으로 사용될 모듈 객체입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249694Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:1/seg:2",
+      "source": "During normal import (and by default) \"target\" is None, meaning the target module has yet to be created.",
+      "source_hash": 17617323362424115170,
+      "context_hash": 18379605827035591189,
+      "translation": "일반적인 임포트 중에는(기본값에서도) \"target\"이 None이며, 이는 대상 모듈이 아직 생성되지 않았음을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249694Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:1/seg:3",
+      "source": "During reloading the module passed in to reload() is passed through to find_spec() as the target.",
+      "source_hash": 17548370882943261545,
+      "context_hash": 10115479655073572206,
+      "translation": "다시 로드하는 동안에는 reload()에 전달된 모듈이 target으로서 find_spec()에 전달됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249695Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:1/seg:4",
+      "source": "This argument allows the finder to build the module spec with more information than is otherwise available.",
+      "source_hash": 12520486397415753864,
+      "context_hash": 17669010638671698655,
+      "translation": "이 인자를 사용하면 파인더가 다른 방법으로는 얻을 수 없는 더 많은 정보를 바탕으로 모듈 spec을 구성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249695Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:1/seg:5",
+      "source": "Doing so is particularly relevant in identifying the loader to use.",
+      "source_hash": 7847860473813819820,
+      "context_hash": 17495341661906427030,
+      "translation": "이는 사용할 로더를 식별할 때 특히 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249695Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:2/seg:0",
+      "source": "Through find_spec() the finder will always identify the loader it will return in the spec (or return None).",
+      "source_hash": 18409542575310755481,
+      "context_hash": 8863336605639125026,
+      "translation": "find_spec()을 통해 파인더는 spec에서 반환할 로더를 항상 식별하거나 None을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249695Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:2/seg:1",
+      "source": "At the point the loader is identified, the finder should also decide whether or not the loader supports loading into the target module, in the case that \"target\" is passed in.",
+      "source_hash": 8639651660687605505,
+      "context_hash": 7630510095322585377,
+      "translation": "로더가 식별되는 시점에 파인더는 \"target\"이 전달된 경우 해당 로더가 대상 모듈로 로드하는 것을 지원하는지도 결정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249696Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:2/seg:2",
+      "source": "This decision may entail consulting with the loader.",
+      "source_hash": 9474647680670402772,
+      "context_hash": 14290362039390295452,
+      "translation": "이 결정을 위해 로더에 문의해야 할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249696Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:3/seg:0",
+      "source": "If the finder determines that the loader does not support loading into the target module, it should either find another loader or raise ImportError (completely stopping import of the module).",
+      "source_hash": 1201871545589871696,
+      "context_hash": 15841928457398297886,
+      "translation": "파인더가 해당 로더가 대상 모듈로 로드하는 것을 지원하지 않는다고 판단하면, 다른 로더를 찾거나 ImportError를 발생시켜야 합니다(모듈 임포트를 완전히 중단합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249696Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:3/seg:1",
+      "source": "This determination is especially important during reload since, as noted in `How Reloading Will Work`_, loaders will no longer be able to trivially identify a reload situation on their own.",
+      "source_hash": 15721782813500798627,
+      "context_hash": 6576210927766653161,
+      "translation": "이 판단은 특히 다시 로드하는 동안 중요합니다. `How Reloading Will Work`_\\ 에서 설명했듯이 로더는 더 이상 자체적으로 다시 로드 상황을 간단히 식별할 수 없기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249697Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:4/seg:0",
+      "source": "Two alternatives were presented to the \"target\" parameter: Loader.supports_reload() and adding \"target\" to Loader.exec_module() instead of find_spec().  supports_reload() was the initial approach to the reload situation. [#supports_reload]_  However, there was some opposition to the loader-specific, reload-centric approach. [#supports_reload_considered_harmful]_",
+      "source_hash": 12772648873073166232,
+      "context_hash": 502798486931261622,
+      "translation": "\"target\" 매개변수에 대한 두 가지 대안이 제시되었습니다. find_spec() 대신 Loader.supports_reload()를 사용하거나 Loader.exec_module()에 \"target\"을 추가하는 것입니다. supports_reload()는 다시 로드 상황에 대한 초기 접근 방식이었습니다. [#supports_reload]_ 그러나 로더별이며 다시 로드에 편중된 접근 방식에 대해서는 일부 반대가 있었습니다. [#supports_reload_considered_harmful]_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249697Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:5/seg:0",
+      "source": "As to \"target\" on exec_module(), the loader may need other information from the target module (or spec) during reload, more than just \"does this loader support reloading this module\", that is no longer available with the move away from load_module().",
+      "source_hash": 5524221653095253318,
+      "context_hash": 10656706246362469135,
+      "translation": "exec_module()의 \"target\"에 관해서는, 다시 로드하는 동안 로더가 단순히 \"이 로더가 이 모듈의 다시 로드를 지원하는가\"를 확인하는 것보다 대상 모듈(또는 spec)에서 더 많은 정보를 필요로 할 수 있으며, 이러한 정보는 load_module()에서 벗어나면서 더 이상 사용할 수 없게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249697Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:5/seg:1",
+      "source": "A proposal on the table was to add something like \"target\" to exec_module().  [#exec_module_target]_ However, putting \"target\" on find_spec() instead is more in line with the goals of this PEP.",
+      "source_hash": 5334124861864670158,
+      "context_hash": 13739855823296840685,
+      "translation": "제안된 방안 중 하나는 exec_module()에 \"target\"과 유사한 것을 추가하는 것이었습니다. [#exec_module_target]_ 그러나 대신 find_spec()에 \"target\"을 배치하는 것이 이 PEP의 목표에 더 부합합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249697Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:5/seg:2",
+      "source": "Furthermore, it obviates the need for supports_reload().",
+      "source_hash": 15643343202665930349,
+      "context_hash": 4193041718915252266,
+      "translation": "또한 이렇게 하면 supports_reload()가 필요하지 않게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:44.249697Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:0/seg:0",
+      "source": "Namespace Packages",
+      "source_hash": 7299950485611274689,
+      "context_hash": 5213421338337728673,
+      "translation": "네임스페이스 패키지",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:23:44.249698Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:1/seg:0",
+      "source": "Currently a path entry finder may return (None, portions) from find_loader() to indicate it found part of a possible namespace package.",
+      "source_hash": 18239107277688171523,
+      "context_hash": 11175435535724187732,
+      "translation": "현재 경로 엔트리 파인더는 가능한 네임스페이스 패키지의 일부를 찾았음을 나타내기 위해 find_loader()에서 (None, portions)을 반환할 수 있습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:21:47.240513Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:1/seg:1",
+      "source": "To achieve the same effect, find_spec() must return a spec with \"loader\" set to None (a.k.a. not set) and with submodule_search_locations set to the same portions as would have been provided by find_loader().",
+      "source_hash": 1729020188818837607,
+      "context_hash": 6938022505053667248,
+      "translation": "동일한 효과를 얻으려면 find_spec()은 \"loader\"가 None(즉, 설정되지 않음)으로 설정되고, submodule_search_locations가 find_loader()에서 제공되었을 동일한 portions로 설정된 스펙을 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240517Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:1/seg:2",
+      "source": "It's up to PathFinder how to handle such specs.",
+      "source_hash": 16555975207858677270,
+      "context_hash": 10347057604942316186,
+      "translation": "이러한 스펙을 처리하는 방법은 PathFinder에 달려 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240518Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:0/seg:0",
+      "source": "Loaders",
+      "source_hash": 11312488309646620257,
+      "context_hash": 6610363320087613843,
+      "translation": "로더",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240518Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:1/seg:0",
+      "source": "**Loader.exec_module(module)**",
+      "source_hash": 5361422173729382432,
+      "context_hash": 13253056092326129619,
+      "translation": "**Loader.exec_module(module)**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240518Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:2/seg:0",
+      "source": "Loaders will have a new method, exec_module().",
+      "source_hash": 3031714571618223777,
+      "context_hash": 3137539601770288484,
+      "translation": "로더에는 새로운 메서드인 exec_module()이 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240519Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:2/seg:1",
+      "source": "Its only job is to \"exec\" the module and consequently populate the module's namespace.",
+      "source_hash": 9270186582658565786,
+      "context_hash": 8020382973728104718,
+      "translation": "이 메서드의 유일한 작업은 모듈을 \"exec\"하여 결과적으로 모듈의 네임스페이스를 채우는 것입니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:21:47.240519Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:2/seg:2",
+      "source": "It is not responsible for creating or preparing the module object, nor for any cleanup afterward.",
+      "source_hash": 13370390379022765585,
+      "context_hash": 4003754081998625126,
+      "translation": "모듈 객체를 생성하거나 준비하는 일과 그 이후의 정리를 담당하지는 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240520Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:2/seg:3",
+      "source": "It has no return value. exec_module() will be used during both loading and reloading.",
+      "source_hash": 6949445002868974802,
+      "context_hash": 8386132029420601720,
+      "translation": "반환값은 없습니다. exec_module()은 로딩과 다시 로딩 모두에서 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240520Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:3/seg:0",
+      "source": "exec_module() should properly handle the case where it is called more than once.",
+      "source_hash": 17706090367890160921,
+      "context_hash": 14409015907013749142,
+      "translation": "exec_module()은 두 번 이상 호출되는 경우를 적절히 처리해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240521Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:3/seg:1",
+      "source": "For some kinds of modules this may mean raising ImportError every time after the first time the method is called.",
+      "source_hash": 1446293184159994,
+      "context_hash": 7358787893732339768,
+      "translation": "일부 종류의 모듈에서는 메서드가 처음 호출된 이후 매번 ImportError를 발생시키는 것을 의미할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240521Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:3/seg:2",
+      "source": "This is particularly relevant for reloading, where some kinds of modules do not support in-place reloading.",
+      "source_hash": 9827625315685128006,
+      "context_hash": 1625474048987035310,
+      "translation": "이는 일부 종류의 모듈이 제자리 다시 로딩을 지원하지 않는 다시 로딩에서 특히 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240523Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:4/seg:0",
+      "source": "**Loader.create_module(spec)**",
+      "source_hash": 14899117891966055075,
+      "context_hash": 6160650113979580352,
+      "translation": "**Loader.create_module(spec)**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240523Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:5/seg:0",
+      "source": "Loaders may also implement create_module() that will return a new module to exec.",
+      "source_hash": 15828014140903319433,
+      "context_hash": 14951999883530739206,
+      "translation": "로더는 exec할 새 모듈을 반환하는 create_module()도 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240523Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:5/seg:1",
+      "source": "It may return None to indicate that the default module creation code should be used.",
+      "source_hash": 12329042635402836184,
+      "context_hash": 1090599215609850906,
+      "translation": "기본 모듈 생성 코드를 사용해야 함을 나타내기 위해 None을 반환할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240524Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:5/seg:2",
+      "source": "One use case, though atypical, for create_module() is to provide a module that is a subclass of the builtin module type.",
+      "source_hash": 2889757238571714991,
+      "context_hash": 4343278072641471582,
+      "translation": "일반적이지는 않지만 create_module()의 한 가지 사용 사례는 내장 모듈 타입의 서브클래스인 모듈을 제공하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240524Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:5/seg:3",
+      "source": "Most loaders will not need to implement create_module(),",
+      "source_hash": 10130886042618021895,
+      "context_hash": 8415414891764217881,
+      "translation": "대부분의 로더는 create_module()을 구현할 필요가 없습니다,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240524Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:6/seg:0",
+      "source": "create_module() should properly handle the case where it is called more than once for the same spec/module.",
+      "source_hash": 16974307484056627421,
+      "context_hash": 18100076160454462806,
+      "translation": "create_module()은 동일한 스펙/모듈에 대해 두 번 이상 호출되는 경우를 적절히 처리해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240525Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:6/seg:1",
+      "source": "This may include returning None or raising ImportError.",
+      "source_hash": 10023295633590019687,
+      "context_hash": 10558522306007593433,
+      "translation": "여기에는 None을 반환하거나 ImportError를 발생시키는 것이 포함될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240525Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:7/seg:0",
+      "source": "exec_module() and create_module() should not set any import-related module attributes.",
+      "source_hash": 8348280686713479795,
+      "context_hash": 14433241133966684570,
+      "translation": "exec_module()과 create_module()은 가져오기 관련 모듈 속성을 설정해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240525Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:7/seg:1",
+      "source": "The fact that load_module() does is a design flaw that this proposal aims to correct.",
+      "source_hash": 7649421577654533470,
+      "context_hash": 7014703698788374191,
+      "translation": "load_module()이 그렇게 한다는 사실은 이 제안이 바로잡으려는 설계 결함입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240525Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:8/seg:0",
+      "source": "Other changes:",
+      "source_hash": 14705633466799370869,
+      "context_hash": 5085606153935637258,
+      "translation": "기타 변경 사항:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240526Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:9/seg:0",
+      "source": ":pep:`420` introduced the optional module_repr() loader method to limit the amount of special-casing in the module type's ``__repr__()``.",
+      "source_hash": 16134116836292952139,
+      "context_hash": 13306692914528380684,
+      "translation": ":pep:`420`\\ 에서는 모듈 타입의 ``__repr__()``\\ 에서 특수 처리해야 하는 경우를 줄이기 위해 선택적 module_repr() 로더 메서드를 도입했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240526Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:9/seg:1",
+      "source": "Since this method is part of ModuleSpec, it will be deprecated on loaders.",
+      "source_hash": 17497824622386509603,
+      "context_hash": 4463769300845164286,
+      "translation": "이 메서드는 ModuleSpec의 일부이므로 로더에서는 더 이상 사용되지 않도록 폐기될 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240526Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:9/seg:2",
+      "source": "However, if it exists on a loader it will be used exclusively.",
+      "source_hash": 12729804464438689267,
+      "context_hash": 1307483560004952610,
+      "translation": "그러나 로더에 이 메서드가 존재하면 해당 메서드만 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240526Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:10/seg:0",
+      "source": "Loader.init_module_attr() method, added prior to Python 3.4's release, will be removed in favor of the same method on ModuleSpec.",
+      "source_hash": 7180233870717165422,
+      "context_hash": 3847342669008227745,
+      "translation": "Python 3.4 릴리스 전에 추가된 Loader.init_module_attr() 메서드는 ModuleSpec의 동일한 메서드를 사용하도록 제거됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240527Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:11/seg:0",
+      "source": "However, InspectLoader.is_package() will not be deprecated even though the same information is found on ModuleSpec.",
+      "source_hash": 7517703412125209660,
+      "context_hash": 12081884428794475858,
+      "translation": "그러나 동일한 정보가 ModuleSpec에 있더라도 InspectLoader.is_package()는 폐기되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240530Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:11/seg:1",
+      "source": "ModuleSpec can use it to populate its own is_package if that information is not otherwise available.",
+      "source_hash": 13333802454149885273,
+      "context_hash": 2178000817261146126,
+      "translation": "ModuleSpec은 해당 정보를 다른 방법으로 사용할 수 없는 경우 자체 is_package를 채우는 데 이를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240530Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:11/seg:2",
+      "source": "Still, it will be made optional.",
+      "source_hash": 16649236905789262788,
+      "context_hash": 4474424622614505883,
+      "translation": "그래도 선택 사항으로 만들어질 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240531Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:12/seg:0",
+      "source": "In addition to executing a module during loading, loaders will still be directly responsible for providing APIs concerning module-related data.",
+      "source_hash": 4589560238535211165,
+      "context_hash": 13857195097546082634,
+      "translation": "로딩 중 모듈을 실행하는 것 외에도 로더는 모듈 관련 데이터에 관한 API를 제공할 직접적인 책임을 계속 집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240531Z",
+      "issues": []
+    },
+    {
+      "id": "section:37/block:0/seg:0",
+      "source": "Other Changes",
+      "source_hash": 7150102475041773264,
+      "context_hash": 4600172497085069300,
+      "translation": "기타 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240532Z",
+      "issues": []
+    },
+    {
+      "id": "section:37/block:1/seg:0",
+      "source": "The various finders and loaders provided by importlib will be updated to comply with this proposal.",
+      "source_hash": 5615774212299022208,
+      "context_hash": 13400478352116324030,
+      "translation": "importlib에서 제공하는 다양한 파인더와 로더는 이 제안을 준수하도록 업데이트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:21:47.240532Z",
+      "issues": []
+    },
+    {
+      "id": "section:37/block:2/seg:0",
+      "source": "Any other implementations of or dependencies on the import-related APIs (particularly finders and loaders) in the stdlib will be likewise adjusted to this PEP.",
+      "source_hash": 10136662263726889400,
+      "context_hash": 13844800838785385669,
+      "translation": "표준 라이브러리의 가져오기 관련 API(특히 finder와 loader)에 대한 다른 구현이나 종속성도 이 PEP에 맞게 마찬가지로 조정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800084Z",
+      "issues": []
+    },
+    {
+      "id": "section:37/block:2/seg:1",
+      "source": "While they should continue to work, any such changes that get missed should be considered bugs for the Python 3.4.x series.",
+      "source_hash": 15220039451354493341,
+      "context_hash": 17265393847827854536,
+      "translation": "이러한 변경 사항은 계속 작동해야 하지만, 누락된 변경 사항은 Python 3.4.x 시리즈의 버그로 간주해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800088Z",
+      "issues": []
+    },
+    {
+      "id": "section:37/block:3/seg:0",
+      "source": "The spec for the ``__main__`` module will reflect how the interpreter was started.",
+      "source_hash": 3858092882969694834,
+      "context_hash": 1187382285705503333,
+      "translation": "``__main__`` 모듈의 spec은 인터프리터가 시작된 방식을 반영합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:05:52.800089Z",
+      "issues": []
+    },
+    {
+      "id": "section:37/block:3/seg:1",
+      "source": "For instance, with ``-m`` the spec's name will be that of the module used, while ``__main__.__name__`` will still be \"__main__\".",
+      "source_hash": 18069788728193673087,
+      "context_hash": 2537863884399759173,
+      "translation": "예를 들어 ``-m``\\ 을 사용하면 spec의 이름은 사용된 모듈의 이름이 되지만, ``__main__.__name__``\\ 은 여전히 \"__main__\"입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800090Z",
+      "issues": []
+    },
+    {
+      "id": "section:37/block:4/seg:0",
+      "source": "We will add importlib.find_spec() to mirror importlib.find_loader() (which becomes deprecated).",
+      "source_hash": 8749006848458143453,
+      "context_hash": 946156959257018466,
+      "translation": "더 이상 사용되지 않게 되는 importlib.find_loader()를 본떠 importlib.find_spec()을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800091Z",
+      "issues": []
+    },
+    {
+      "id": "section:37/block:5/seg:0",
+      "source": "importlib.reload() is changed to use ModuleSpec.",
+      "source_hash": 3518787759573968631,
+      "context_hash": 13009144798657832009,
+      "translation": "importlib.reload()는 ModuleSpec을 사용하도록 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800091Z",
+      "issues": []
+    },
+    {
+      "id": "section:37/block:6/seg:0",
+      "source": "importlib.reload() will now make use of the per-module import lock.",
+      "source_hash": 9820335014002451126,
+      "context_hash": 11214540648950512226,
+      "translation": "이제 importlib.reload()는 모듈별 가져오기 잠금을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800091Z",
+      "issues": []
+    },
+    {
+      "id": "section:38/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 4507858164531350553,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:05:52.800092Z",
+      "issues": []
+    },
+    {
+      "id": "section:38/block:1/seg:0",
+      "source": "A reference implementation is available at http://bugs.python.org/issue18864.",
+      "source_hash": 17109158261955440204,
+      "context_hash": 669981551337930198,
+      "translation": "참조 구현은 http://bugs.python.org/issue18864 에서 이용할 수 있습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T19:51:01.584403Z",
+      "issues": []
+    },
+    {
+      "id": "section:39/block:0/seg:0",
+      "source": "Implementation Notes",
+      "source_hash": 12106557228374282900,
+      "context_hash": 6985978954878966837,
+      "translation": "구현 참고 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800094Z",
+      "issues": []
+    },
+    {
+      "id": "section:39/block:1/seg:0",
+      "source": "\\* The implementation of this PEP needs to be cognizant of its impact on pkgutil (and setuptools).  pkgutil has some generic function-based extensions to :pep:`302` which may break if importlib starts wrapping loaders without the tools' knowledge.",
+      "source_hash": 17808939864930665415,
+      "context_hash": 3090236263083612897,
+      "translation": "\\* 이 PEP의 구현은 pkgutil(및 setuptools)에 미치는 영향을 고려해야 합니다. pkgutil에는 :pep:`302`\\ 에 대한 일부 일반적인 함수 기반 확장이 있으며, importlib가 도구에서 이를 알지 못하는 상태로 loader를 래핑하기 시작하면 이러한 확장이 중단될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800094Z",
+      "issues": []
+    },
+    {
+      "id": "section:39/block:2/seg:0",
+      "source": "\\* Other modules to look at: runpy (and pythonrun.c), pickle, pydoc, inspect.",
+      "source_hash": 10397864055032352915,
+      "context_hash": 14936012893966584931,
+      "translation": "\\* 살펴보아야 할 다른 모듈로는 runpy(및 pythonrun.c), pickle, pydoc, inspect가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800094Z",
+      "issues": []
+    },
+    {
+      "id": "section:39/block:3/seg:0",
+      "source": "For instance, pickle should be updated in the ``__main__`` case to look at ``module.__spec__.name``.",
+      "source_hash": 2193198855943943515,
+      "context_hash": 9456067768766919767,
+      "translation": "예를 들어 pickle은 ``__main__``\\ 인 경우 ``module.__spec__.name``\\ 을 확인하도록 업데이트해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800095Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:0/seg:0",
+      "source": "Rejected Additions to the PEP",
+      "source_hash": 11229719394178272444,
+      "context_hash": 9908263577691799215,
+      "translation": "PEP에 추가하는 내용 중 거부된 것",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800095Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:1/seg:0",
+      "source": "There were a few proposed additions to this proposal that did not fit well enough into its scope.",
+      "source_hash": 15474642673337431383,
+      "context_hash": 17916657330553855187,
+      "translation": "이 제안의 범위에 충분히 잘 맞지 않는 몇 가지 추가 내용이 제안되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800095Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:2/seg:0",
+      "source": "There is no \"PathModuleSpec\" subclass of ModuleSpec that separates out has_location, cached, and submodule_search_locations.",
+      "source_hash": 16505905123180486693,
+      "context_hash": 17064944193986918211,
+      "translation": "has_location, cached, submodule_search_locations를 분리하는 ModuleSpec의 \"PathModuleSpec\" 서브클래스는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800095Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:2/seg:1",
+      "source": "While that might make the separation cleaner, module objects don't have that distinction.",
+      "source_hash": 2858539008804660266,
+      "context_hash": 10786850019175824364,
+      "translation": "그렇게 하면 분리가 더 깔끔해질 수 있지만, 모듈 객체에는 그러한 구분이 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800096Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:2/seg:2",
+      "source": "ModuleSpec will support both cases equally well.",
+      "source_hash": 2107454329807534435,
+      "context_hash": 5271148699104402899,
+      "translation": "ModuleSpec은 두 경우를 동등하게 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800096Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:3/seg:0",
+      "source": "While \"ModuleSpec.is_package\" would be a simple additional attribute (aliasing self.submodule_search_locations is not None), it perpetuates the artificial (and mostly erroneous) distinction between modules and packages.",
+      "source_hash": 1986471980531085678,
+      "context_hash": 14945433803901357107,
+      "translation": "\"ModuleSpec.is_package\"는 간단한 추가 속성일 수 있지만(self.submodule_search_locations is not None의 별칭), 모듈과 패키지 사이의 인위적이고 (대부분 잘못된) 구분을 영속화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800096Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:4/seg:0",
+      "source": "The module spec `Factory Functions`_ could be classmethods on ModuleSpec.",
+      "source_hash": 13331392587069774962,
+      "context_hash": 7657289074997016623,
+      "translation": "모듈 spec의 `Factory Functions`_\\ 은 ModuleSpec의 클래스 메서드가 될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800096Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:4/seg:1",
+      "source": "However that would expose them on *all* modules via ``__spec__``, which has the potential to unnecessarily confuse non-advanced Python users.",
+      "source_hash": 17191551014930275920,
+      "context_hash": 5875829206738103560,
+      "translation": "그러나 그러면 ``__spec__``\\ 를 통해 *모든* 모듈에 이를 노출하게 되므로, 고급 사용자가 아닌 Python 사용자에게 불필요한 혼란을 줄 가능성이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:51:01.584405Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:4/seg:2",
+      "source": "The factory functions have a specific use case, to support finder authors.",
+      "source_hash": 15465464490847782790,
+      "context_hash": 11977481658223124795,
+      "translation": "팩토리 함수에는 finder 작성자를 지원한다는 특정 사용 사례가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800097Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:4/seg:3",
+      "source": "See `ModuleSpec Users`_.",
+      "source_hash": 3804688071359716771,
+      "context_hash": 4709832721715474180,
+      "translation": "`ModuleSpec Users`_\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800097Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:5/seg:0",
+      "source": "Likewise, several other methods could be added to ModuleSpec that expose the specific uses of module specs by the import machinery:",
+      "source_hash": 2444494870960880625,
+      "context_hash": 11516858113098849389,
+      "translation": "마찬가지로 가져오기 메커니즘이 모듈 spec을 사용하는 구체적인 방식을 노출하는 몇 가지 다른 메서드를 ModuleSpec에 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800097Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:6/seg:0",
+      "source": "create() - a wrapper around Loader.create_module().",
+      "source_hash": 3754962185922289118,
+      "context_hash": 3066938208009028051,
+      "translation": "create() - Loader.create_module()을 감싸는 래퍼입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800098Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:7/seg:0",
+      "source": "exec(module) - a wrapper around Loader.exec_module().",
+      "source_hash": 3092812269225830015,
+      "context_hash": 8421684649528561131,
+      "translation": "exec(module) - Loader.exec_module()을 감싸는 래퍼입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800098Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:8/seg:0",
+      "source": "load() - an analogue to the deprecated Loader.load_module().",
+      "source_hash": 4421740085520064723,
+      "context_hash": 3107051902327359887,
+      "translation": "load() - 더 이상 사용되지 않는 Loader.load_module()에 해당하는 메서드입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800098Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:9/seg:0",
+      "source": "As with the factory functions, exposing these methods via module.__spec__ is less than desirable.",
+      "source_hash": 1248010509617024869,
+      "context_hash": 3129148662863566392,
+      "translation": "팩토리 함수와 마찬가지로, module.__spec__\\ 을 통해 이러한 메서드를 노출하는 것은 바람직하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:09:26.364371Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:9/seg:1",
+      "source": "They would end up being an attractive nuisance, even if only exposed as \"private\" attributes (as they were in previous versions of this PEP).",
+      "source_hash": 5567908750920842753,
+      "context_hash": 2272923000451851107,
+      "translation": "이러한 메서드는 \"비공개\" 속성으로만 노출하더라도 매력적인 방해 요소가 될 수 있으며(이 PEP의 이전 버전에서 그랬던 것처럼), 결국 그렇게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800099Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:9/seg:2",
+      "source": "If someone finds a need for these methods later, we can expose the via an appropriate API (separate from ModuleSpec) at that point, perhaps relative to :pep:`406` (import engine).",
+      "source_hash": 13516241627178688895,
+      "context_hash": 9106862687624620346,
+      "translation": "나중에 누군가 이러한 메서드가 필요하다고 판단하면, 그 시점에 적절한 API(ModuleSpec과는 별개)를 통해 이를 노출할 수 있습니다. 예를 들어 :pep:`406`\\ (import engine)과 관련된 방식이 될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:05:52.800099Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:10/seg:0",
+      "source": "Conceivably, the load() method could optionally take a list of modules with which to interact instead of sys.modules.",
+      "source_hash": 13150645661348312040,
+      "context_hash": 10544092744905257077,
+      "translation": "아마도 load() 메서드는 sys.modules 대신 상호작용할 모듈 목록을 선택적으로 받을 수 있을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:55.321367Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:10/seg:1",
+      "source": "Also, load() could be leveraged to implement multi-version imports.",
+      "source_hash": 17595999104624298143,
+      "context_hash": 7785246718908720294,
+      "translation": "또한 load()는 다중 버전 임포트를 구현하는 데 활용될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:55.321375Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:10/seg:2",
+      "source": "Both are interesting ideas, but definitely outside the scope of this proposal.",
+      "source_hash": 5773029388376032287,
+      "context_hash": 6782597033668036474,
+      "translation": "둘 다 흥미로운 아이디어이지만, 이 제안의 범위를 확실히 벗어납니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:55.321376Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:11/seg:0",
+      "source": "Others left out:",
+      "source_hash": 4199392136546563229,
+      "context_hash": 17611031312425797669,
+      "translation": "제외된 것들:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:55.321376Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:12/seg:0",
+      "source": "Add ModuleSpec.submodules (RO-property) - returns possible submodules relative to the spec.",
+      "source_hash": 16304759957180776142,
+      "context_hash": 10045374675234595999,
+      "translation": "ModuleSpec.submodules(읽기 전용 속성)를 추가합니다 - 스펙에 상대적인 가능한 서브모듈들을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:55.321377Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:13/seg:0",
+      "source": "Add ModuleSpec.loaded (RO-property) - the module in sys.module, if any.",
+      "source_hash": 9533769568954677652,
+      "context_hash": 1224052523491286380,
+      "translation": "ModuleSpec.loaded(읽기 전용 속성)를 추가합니다 - 있다면 sys.module에 있는 모듈입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:55.321378Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:14/seg:0",
+      "source": "Add ModuleSpec.data - a descriptor that wraps the data API of the spec's loader.",
+      "source_hash": 7333435000413426476,
+      "context_hash": 9829260492144571516,
+      "translation": "ModuleSpec.data를 추가합니다 - 스펙의 로더의 데이터 API를 감싸는 디스크립터입니다.",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T17:28:55.321379Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:15/seg:0",
+      "source": "Also see [#cleaner_reload_support]_.",
+      "source_hash": 11284666219215036632,
+      "context_hash": 6806397539823966952,
+      "translation": "[#cleaner_reload_support]_\\ 도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:55.321383Z",
+      "issues": []
+    },
+    {
+      "id": "section:41/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 7725341079048440913,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:55.321384Z",
+      "issues": []
+    },
+    {
+      "id": "section:41/block:1/seg:0",
+      "source": "http://docs.python.org/3/reference/import.html",
+      "source_hash": 6333804916487477180,
+      "context_hash": 4843529609777329603,
+      "translation": "http://docs.python.org/3/reference/import.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:55.321385Z",
+      "issues": []
+    },
+    {
+      "id": "section:41/block:2/seg:0",
+      "source": "http://bugs.python.org/issue19413",
+      "source_hash": 12514491751385668493,
+      "context_hash": 5872808076368565582,
+      "translation": "http://bugs.python.org/issue19413",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:55.321385Z",
+      "issues": []
+    }
+  ]
+}

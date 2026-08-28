@@ -1,0 +1,1866 @@
+{
+  "version": 1,
+  "source_hash": 11966796900333457912,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "CPython platform support",
+      "source_hash": 8649406542416079088,
+      "context_hash": 16530898886277989957,
+      "translation": "CPython 플랫폼 지원",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141069Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 6475705920467790261,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141071Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP documents how an operating system (platform) becomes supported in CPython, what platforms are currently supported, and documents past support.",
+      "source_hash": 3676089041989682907,
+      "context_hash": 10356062162691928027,
+      "translation": "이 PEP는 운영체제(플랫폼)가 CPython에서 지원되게 되는 과정, 현재 지원되는 플랫폼이 무엇인지, 그리고 과거의 지원 내역을 문서화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141072Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 8708146008493360293,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141072Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Over time, the CPython source code has collected various pieces of platform-specific code, which, at some point in time, was considered necessary to use CPython on a specific platform.",
+      "source_hash": 17740560729616595723,
+      "context_hash": 6314826731633151837,
+      "translation": "시간이 흐르면서 CPython 소스 코드에는 다양한 플랫폼별 코드 조각들이 쌓여왔으며, 이들은 한때 특정 플랫폼에서 CPython을 사용하기 위해 필요하다고 여겨졌던 것들입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141072Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Without access to this platform, it is not possible to determine whether this code is still needed.",
+      "source_hash": 5386919923856788794,
+      "context_hash": 16903619934720129033,
+      "translation": "이 플랫폼에 접근할 수 없으면, 이 코드가 여전히 필요한지 판단할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141073Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "As a result, this code may either break during CPython's evolution, or it may become unnecessary as the platforms evolve as well.",
+      "source_hash": 15153684367489932154,
+      "context_hash": 13782230713297581314,
+      "translation": "그 결과, 이 코드는 CPython이 발전하는 과정에서 깨질 수도 있고, 플랫폼 역시 함께 발전함에 따라 불필요해질 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141073Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Allowing these fragments to grow poses the risk of unmaintainability: without having experts for a large number of platforms, it is not possible to determine whether a certain change to the CPython source code will work on all supported platforms.",
+      "source_hash": 15864225864059482482,
+      "context_hash": 15241998161958793587,
+      "translation": "이러한 조각들이 계속 늘어나도록 방치하면 유지보수 불가능이라는 위험이 발생합니다: 수많은 플랫폼에 대한 전문가 없이는, CPython 소스 코드에 대한 특정 변경이 지원되는 모든 플랫폼에서 동작할지 판단할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141073Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "To reduce this risk, this PEP specifies what is required for a platform to be considered supported by the CPython core team, as well as providing a procedure to remove code for platforms with few or no CPython users.",
+      "source_hash": 5592446051821826691,
+      "context_hash": 4245454659435666405,
+      "translation": "이 위험을 줄이기 위해, 이 PEP는 어떤 플랫폼이 CPython 코어 팀에 의해 지원되는 것으로 간주되기 위해 필요한 사항을 명시하며, 사용자가 거의 없거나 전혀 없는 플랫폼에 대한 코드를 제거하는 절차 또한 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141073Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "On the other hand, allowing these fragments in the main repository can promote collaboration, can help identify non-portable parts of the code base, and is necessary for bootstrapping support for a \"new\" platform.",
+      "source_hash": 4653017851848598610,
+      "context_hash": 3285470542055985443,
+      "translation": "반면, 메인 저장소에 이러한 조각들을 허용하는 것은 협업을 촉진할 수 있고, 코드베이스에서 이식성이 낮은 부분을 식별하는 데 도움이 될 수 있으며, \"새로운\" 플랫폼에 대한 지원을 부트스트랩하는 데 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141073Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "This PEP specifies what it means for a platform to be \"unsupported\", and how the core team handles code for such platforms.",
+      "source_hash": 15240492783116865365,
+      "context_hash": 18167137499067163774,
+      "translation": "이 PEP는 어떤 플랫폼이 \"지원되지 않음\"이라는 것이 무엇을 의미하는지, 그리고 코어 팀이 그러한 플랫폼에 대한 코드를 어떻게 다루는지를 명시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141074Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "This PEP also explicitly lists what platforms are directly *supported* by the CPython development team.",
+      "source_hash": 15086113518964994447,
+      "context_hash": 7609697246914415785,
+      "translation": "이 PEP는 또한 CPython 개발 팀이 직접 *지원하는* 플랫폼을 명시적으로 나열합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141074Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Support tiers",
+      "source_hash": 6850995059947190501,
+      "context_hash": 11816544442401005328,
+      "translation": "지원 등급",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141074Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Platform support is broken down into *tiers*.",
+      "source_hash": 16044134237613599543,
+      "context_hash": 18107170476429533491,
+      "translation": "플랫폼 지원은 *등급*\\ 으로 나뉩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141074Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "Each tier comes with different requirements which lead to different promises being made about support.",
+      "source_hash": 17030942697911335356,
+      "context_hash": 339787239048699074,
+      "translation": "각 등급에는 서로 다른 요구 사항이 따르며, 이는 지원에 대해 서로 다른 약속으로 이어집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:56.141075Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "To be promoted to a tier, steering council support is required and is expected to be driven by team consensus.",
+      "source_hash": 13431947304456574233,
+      "context_hash": 9270220800473487193,
+      "translation": "어느 티어로 승격되려면 운영 위원회의 지원이 필요하며, 이는 팀의 합의에 의해 주도될 것으로 예상됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420719Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "Demotion to a lower tier occurs when the requirements of the current tier are no longer met for a platform for an extended period of time based on the judgment of the release manager or steering council.",
+      "source_hash": 11116863338583430795,
+      "context_hash": 15092519513277199790,
+      "translation": "더 낮은 티어로의 강등은 릴리스 관리자 또는 운영 위원회의 판단에 따라 특정 플랫폼이 현재 티어의 요구 사항을 장기간 충족하지 못할 때 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420725Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "For platforms which no longer meet the requirements of any tier by b1 of a new feature release, an announcement will be made to warn the community of the pending removal of support for the platform (e.g. in the b1 announcement).",
+      "source_hash": 813442962343334742,
+      "context_hash": 13590888286187948795,
+      "translation": "새 기능 릴리스의 b1 시점까지 어떤 티어의 요구 사항도 충족하지 못하는 플랫폼에 대해서는, 해당 플랫폼에 대한 지원이 곧 제거될 예정임을 커뮤니티에 경고하는 공지가 이루어집니다(예: b1 공지문에서).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420726Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:3",
+      "source": "If the platform is not brought into line for at least one of the tiers by the first release candidate, it will be listed as unsupported in this PEP.",
+      "source_hash": 7883794339271242870,
+      "context_hash": 7186202012224306575,
+      "translation": "첫 번째 릴리스 후보 시점까지 최소 하나의 티어에 부합하도록 조정되지 않은 플랫폼은 이 PEP에서 지원되지 않는 것으로 명시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420727Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Tier 1",
+      "source_hash": 14535404454636562925,
+      "context_hash": 8686824695978706518,
+      "translation": "티어 1",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420727Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "`STATUS <https://github.com/python/cpython/actions/workflows/build.yml?query=branch%3Amain+is%3Acompleted>`__",
+      "source_hash": 15469182466968416232,
+      "context_hash": 17505521850108276307,
+      "translation": "`STATUS <https://github.com/python/cpython/actions/workflows/build.yml?query=branch%3Amain+is%3Acompleted>`__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420728Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "CI failures block releases.",
+      "source_hash": 1675654111394972025,
+      "context_hash": 6009060768242855473,
+      "translation": "CI 실패는 릴리스를 막습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420729Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Changes which would break the ``main`` branch are not allowed to be merged; any breakage should be fixed or reverted immediately.",
+      "source_hash": 9545989688800496052,
+      "context_hash": 1604315371208319463,
+      "translation": "``main``\\ 브랜치를 손상시키는 변경 사항은 병합이 허용되지 않으며, 손상이 발생하면 즉시 수정하거나 되돌려야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420729Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "All core developers are responsible to keep ``main``, and thus these platforms, working.",
+      "source_hash": 12391305495548813217,
+      "context_hash": 11093307893944859451,
+      "translation": "모든 코어 개발자는 ``main``\\, 그리고 이에 따라 이 플랫폼들이 정상적으로 동작하도록 유지할 책임이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420730Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "Failures on these platforms **block a release**.",
+      "source_hash": 12106165171709211348,
+      "context_hash": 7217971584695872607,
+      "translation": "이 플랫폼들에서의 실패는 **릴리스를 막습니다**\\.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420730Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "Target Triple",
+      "source_hash": 5138332585172752116,
+      "context_hash": 2379129905728908593,
+      "translation": "대상 트리플",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420730Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "Notes",
+      "source_hash": 6248434630477978300,
+      "context_hash": 17499938267400895810,
+      "translation": "참고 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420731Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "aarch64-apple-darwin",
+      "source_hash": 9542078018681589562,
+      "context_hash": 4404036193114639441,
+      "translation": "aarch64-apple-darwin",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420731Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "clang",
+      "source_hash": 15595479718986702446,
+      "context_hash": 1795311630619622385,
+      "translation": "clang",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420731Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "aarch64-unknown-linux-gnu",
+      "source_hash": 17841394712361585967,
+      "context_hash": 2993281793960650547,
+      "translation": "aarch64-unknown-linux-gnu",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420732Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:0",
+      "source": "glibc, gcc",
+      "source_hash": 11982652461665937075,
+      "context_hash": 2596353326434397480,
+      "translation": "glibc, gcc",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:53.420732Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:0",
+      "source": "i686-pc-windows-msvc",
+      "source_hash": 8164738249654813742,
+      "context_hash": 9343105385967472495,
+      "translation": "i686-pc-windows-msvc",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030892Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:0",
+      "source": "x86_64-pc-windows-msvc",
+      "source_hash": 15675232653652708525,
+      "context_hash": 16654023379269972728,
+      "translation": "x86_64-pc-windows-msvc",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030895Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:15/seg:0",
+      "source": "x86_64-unknown-linux-gnu",
+      "source_hash": 3100612114163755163,
+      "context_hash": 13606676636533763730,
+      "translation": "x86_64-unknown-linux-gnu",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030895Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:16/seg:0",
+      "source": "glibc, gcc",
+      "source_hash": 11982652461665937075,
+      "context_hash": 7344762521393649796,
+      "translation": "glibc, gcc",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030895Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Tier 2",
+      "source_hash": 15077996160897198762,
+      "context_hash": 781490490111260216,
+      "translation": "Tier 2",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030896Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "`STATUS <https://buildbot.python.org/all/#/builders?tags=%2B3.x&tags=%2Btier-2>`__",
+      "source_hash": 6474025983686545696,
+      "context_hash": 14189212294194181708,
+      "translation": "`STATUS <https://buildbot.python.org/all/#/builders?tags=%2B3.x&tags=%2Btier-2>`__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030896Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Must have a reliable buildbot.",
+      "source_hash": 3011968112367267540,
+      "context_hash": 331420806453123047,
+      "translation": "신뢰할 수 있는 빌드봇이 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030897Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "At least **two** core developers are signed up to support the platform.",
+      "source_hash": 17308010160450359444,
+      "context_hash": 18426459256656675892,
+      "translation": "최소 **두** 명의 코어 개발자가 해당 플랫폼을 지원하기로 등록되어 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030897Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "Changes which break any of these platforms are to be **fixed or reverted within 24 hours**.",
+      "source_hash": 13433962292489409998,
+      "context_hash": 6290553367961816178,
+      "translation": "이 플랫폼들 중 어느 것이든 깨뜨리는 변경 사항은 **24시간 이내에 수정되거나 되돌려져야** 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030898Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "Failures on these platforms **block a release**.",
+      "source_hash": 12106165171709211348,
+      "context_hash": 4971289290143478599,
+      "translation": "이 플랫폼들에서의 실패는 **릴리스를 막습니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030898Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "Target Triple",
+      "source_hash": 5138332585172752116,
+      "context_hash": 2379129905728908593,
+      "translation": "대상 트리플",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030898Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "Notes",
+      "source_hash": 6248434630477978300,
+      "context_hash": 13714046325059487600,
+      "translation": "참고 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030899Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "Contacts",
+      "source_hash": 3185423728876132286,
+      "context_hash": 18128684338201898564,
+      "translation": "연락처",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030899Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "aarch64-unknown-linux-gnu",
+      "source_hash": 17841394712361585967,
+      "context_hash": 893685173013396973,
+      "translation": "aarch64-unknown-linux-gnu",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030899Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "glibc, clang",
+      "source_hash": 11351476198198516519,
+      "context_hash": 7623949949341509375,
+      "translation": "glibc, clang",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:51.030899Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "Victor Stinner, Gregory P.",
+      "source_hash": 6624550286979529464,
+      "context_hash": 9541900988870344456,
+      "translation": "Victor Stinner, Gregory P.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825068Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:1",
+      "source": "Smith",
+      "source_hash": 4172208128541087888,
+      "context_hash": 7019203720937547282,
+      "translation": "Smith",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825071Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "aarch64-pc-windows-msvc",
+      "source_hash": 13968533548784984119,
+      "context_hash": 11965701402834340887,
+      "translation": "aarch64-pc-windows-msvc",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825072Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "Steve Dower, Diego Russo, Chris Eibl",
+      "source_hash": 9471227580006815352,
+      "context_hash": 2678490365780606713,
+      "translation": "Steve Dower, Diego Russo, Chris Eibl",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825072Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "wasm32-unknown-wasip1",
+      "source_hash": 5001684251495273687,
+      "context_hash": 5153481933799099426,
+      "translation": "wasm32-unknown-wasip1",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825072Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:0",
+      "source": "WASI SDK, Wasmtime",
+      "source_hash": 10147965661654639344,
+      "context_hash": 4736693801888955573,
+      "translation": "WASI SDK, Wasmtime",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825073Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:0",
+      "source": "Brett Cannon, Michael Droettboom, Savannah Ostrowski",
+      "source_hash": 1317833248290793395,
+      "context_hash": 7232634370672636658,
+      "translation": "Brett Cannon, Michael Droettboom, Savannah Ostrowski",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825073Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:18/seg:0",
+      "source": "x86_64-apple-darwin",
+      "source_hash": 6463078395422345022,
+      "context_hash": 7907999444042658178,
+      "translation": "x86_64-apple-darwin",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825074Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:19/seg:0",
+      "source": "macOS, clang",
+      "source_hash": 13584330927993045093,
+      "context_hash": 7725953564243039300,
+      "translation": "macOS, clang",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825074Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:20/seg:0",
+      "source": "Sam Gross, Barry Warsaw, Ronald Oussoren",
+      "source_hash": 11753594128412918427,
+      "context_hash": 18260381269792091912,
+      "translation": "Sam Gross, Barry Warsaw, Ronald Oussoren",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825074Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:21/seg:0",
+      "source": "x86_64-unknown-linux-gnu",
+      "source_hash": 3100612114163755163,
+      "context_hash": 10086628057020825638,
+      "translation": "x86_64-unknown-linux-gnu",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825075Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:22/seg:0",
+      "source": "glibc, clang",
+      "source_hash": 11351476198198516519,
+      "context_hash": 4881615733707712187,
+      "translation": "glibc, clang",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825075Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:23/seg:0",
+      "source": "Victor Stinner, Gregory P.",
+      "source_hash": 6624550286979529464,
+      "context_hash": 9541900988870344456,
+      "translation": "Victor Stinner, Gregory P.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825075Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:23/seg:1",
+      "source": "Smith",
+      "source_hash": 4172208128541087888,
+      "context_hash": 18110141617123129539,
+      "translation": "Smith",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825075Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Tier 3",
+      "source_hash": 11450313295840613153,
+      "context_hash": 1806184857344800363,
+      "translation": "Tier 3",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825076Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "`STATUS <https://buildbot.python.org/all/#/builders?tags=%2B3.x&tags=%2Btier-3>`__",
+      "source_hash": 8097593779712426325,
+      "context_hash": 6121909879446265545,
+      "translation": "`STATUS <https://buildbot.python.org/all/#/builders?tags=%2B3.x&tags=%2Btier-3>`__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:50.825076Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "Must have a reliable buildbot.",
+      "source_hash": 3011968112367267540,
+      "context_hash": 3555960153777773670,
+      "translation": "신뢰할 수 있는 빌드봇을 갖추어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051623Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "At least **one** core developer is signed up to support the platform.",
+      "source_hash": 6161012397036561178,
+      "context_hash": 13809685873760464933,
+      "translation": "최소 **한** 명의 핵심 개발자가 해당 플랫폼을 지원하기로 등록되어 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051627Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "No response SLA to failures.",
+      "source_hash": 11312874465018180124,
+      "context_hash": 11502670879338893594,
+      "translation": "실패에 대한 응답 SLA가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051628Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "Failures on these platforms do **not** block a release.",
+      "source_hash": 8379683164294100339,
+      "context_hash": 9387196613918213916,
+      "translation": "이러한 플랫폼에서의 실패는 릴리스를 막지 **않습니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051628Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Unsupported platforms",
+      "source_hash": 17837610895614652129,
+      "context_hash": 16847595194309233984,
+      "translation": "지원되지 않는 플랫폼",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051628Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "All platforms not listed in the above tiers are *unsupported* by the core team.",
+      "source_hash": 10579026501019381977,
+      "context_hash": 17686436762349252710,
+      "translation": "위 등급에 나열되지 않은 모든 플랫폼은 핵심 팀에 의해 *지원되지 않습니다*.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051629Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "The core team does not develop and test on such platforms, and so they cannot provide any promises that Python will work on them.",
+      "source_hash": 8427965941960803396,
+      "context_hash": 14709231993247029752,
+      "translation": "핵심 팀은 그러한 플랫폼에서 개발 및 테스트를 수행하지 않으므로, Python이 해당 플랫폼에서 동작한다는 어떠한 보장도 제공할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051629Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "However, the code base does include unsupported code -- that is, code specific to unsupported platforms.",
+      "source_hash": 6092964464353066360,
+      "context_hash": 1365509913652189463,
+      "translation": "그러나 코드베이스에는 지원되지 않는 코드, 즉 지원되지 않는 플랫폼에 특화된 코드가 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051629Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "Contributions in this area are welcome as long as they:",
+      "source_hash": 15405654281215907245,
+      "context_hash": 876878633956031250,
+      "translation": "이 영역에 대한 기여는 다음 조건을 만족하는 한 환영합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051629Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "pose a minimal maintenance burden to the core team, and",
+      "source_hash": 13283809060834046332,
+      "context_hash": 5472493960689237446,
+      "translation": "핵심 팀에 미치는 유지보수 부담이 최소한이어야 하며,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051630Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "benefit substantially more people than the contributor.",
+      "source_hash": 2700816969123783294,
+      "context_hash": 12723395360684080965,
+      "translation": "기여자 본인보다 상당히 더 많은 사람에게 이익이 되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051630Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "We assume contributors are able to maintain modifications/patches, test patched builds, redistribute modified code, make promises to their users, and otherwise support \"their\" platform.",
+      "source_hash": 11309087923616060057,
+      "context_hash": 3314465360159205246,
+      "translation": "기여자는 수정/패치를 유지보수하고, 패치된 빌드를 테스트하고, 수정된 코드를 재배포하고, 자신의 사용자에게 약속을 하며, 그 밖에도 \"자신의\" 플랫폼을 지원할 수 있다고 가정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051630Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:1",
+      "source": "With that in mind, it is generally unnecessary to backport unsupported fixes to CPython's maintenance branches.",
+      "source_hash": 12734984117865722496,
+      "context_hash": 1230079098156829506,
+      "translation": "이를 염두에 두면, 지원되지 않는 수정 사항을 CPython의 유지보수 브랜치로 백포트할 필요는 일반적으로 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051630Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "Unsupported code that *does* cause a maintenance burden, or obstructs general improvements, may be rejected or removed from the code base without a deprecation process.",
+      "source_hash": 5562874245037395869,
+      "context_hash": 15787436652550073954,
+      "translation": "유지보수 부담을 *실제로* 일으키거나 전반적인 개선을 방해하는 지원되지 않는 코드는 폐기 절차 없이 코드베이스에서 거부되거나 제거될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051630Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:1",
+      "source": "Core team members that do this intentionally are encouraged to notify people listed in the `Ports and contacts list`_ in the Python developer's guide, to review any submitted fixes (if unobtrusive), and to consider adding configuration or extension capabilities necessary for workarounds.",
+      "source_hash": 17271450842148255086,
+      "context_hash": 13391422203723279100,
+      "translation": "이를 의도적으로 수행하는 핵심 팀 구성원은 Python 개발자 가이드의 `Ports and contacts list`_\\ 에 등재된 사람들에게 알리고, 제출된 수정 사항이 있다면(거슬리지 않는 경우) 검토하며, 우회 방법에 필요한 구성 또는 확장 기능 추가를 고려할 것을 권장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:22.051631Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "People interested in unsupported platforms may add themselves to the `Ports and contacts list`_ to request that they be notified on issues related to \"their\" platform.",
+      "source_hash": 5645041801748744173,
+      "context_hash": 17113821779073544248,
+      "translation": "지원되지 않는 플랫폼에 관심 있는 사람들은 \"자신의\" 플랫폼과 관련된 문제를 통지받도록 요청하기 위해 `Ports and contacts list`_\\ 에 자신을 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651812Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:1",
+      "source": "There is, however, no formal guarantee that they *will* be notified.",
+      "source_hash": 8608250161578957738,
+      "context_hash": 8361336267750862474,
+      "translation": "그러나 반드시 통지를 *받게* 된다는 공식적인 보장은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651816Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "Platforms not listed in this PEP may also be supported by the wider Python community in other ways.",
+      "source_hash": 10438223702543835802,
+      "context_hash": 2510621037559148832,
+      "translation": "이 PEP에 나열되지 않은 플랫폼도 더 넓은 Python 커뮤니티에 의해 다른 방식으로 지원될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651816Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:1",
+      "source": "If your desired platform is not listed above, please perform a search online to see if someone is already providing support in some form.",
+      "source_hash": 1273370305413185272,
+      "context_hash": 10464397624381287300,
+      "translation": "원하는 플랫폼이 위에 나열되어 있지 않다면, 이미 누군가 어떤 형태로든 지원을 제공하고 있는지 온라인에서 검색해 보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651816Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Notes",
+      "source_hash": 6248434630477978300,
+      "context_hash": 1772515023119352575,
+      "translation": "참고",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651817Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Microsoft Windows",
+      "source_hash": 12833001306218989096,
+      "context_hash": 12755989347887515854,
+      "translation": "Microsoft Windows",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651817Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Windows versions prior to Windows 10 follow Microsoft's `Fixed Lifecycle Policy <https://learn.microsoft.com/en-us/lifecycle/policies/fixed>`__, with a mainstream support phase for 5 years after release, where the product is generally commercially available, and an additional 5 year extended support phase, where paid support is still available and certain bug fixes are released. `Extended Security Updates (ESU) <https://learn.microsoft.com/en-us/lifecycle/faq/extended-security-updates>`_ is a paid program available to high-volume enterprise customers as a \"last resort\" option to receive certain security updates after extended support ends.",
+      "source_hash": 7610410257831909562,
+      "context_hash": 15444796347994303222,
+      "translation": "Windows 10 이전 버전의 Windows는 Microsoft의 `Fixed Lifecycle Policy <https://learn.microsoft.com/en-us/lifecycle/policies/fixed>`__\\ 를 따르며, 출시 후 5년간의 주류 지원 단계에서는 제품이 일반적으로 상업적으로 이용 가능하고, 추가로 5년간의 확장 지원 단계에서는 유료 지원이 여전히 제공되며 특정 버그 수정이 배포됩니다. `Extended Security Updates (ESU) <https://learn.microsoft.com/en-us/lifecycle/faq/extended-security-updates>`_\\ 는 확장 지원이 종료된 후 특정 보안 업데이트를 받기 위한 \"최후의 수단\" 옵션으로 대량 구매 기업 고객에게 제공되는 유료 프로그램입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651818Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "ESU is considered a distinct phase that follows the expiration of extended support.",
+      "source_hash": 11599833694769096621,
+      "context_hash": 982727284734775078,
+      "translation": "ESU는 확장 지원 만료 이후에 이어지는 별개의 단계로 간주됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651818Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "Windows 10 and later follow Microsoft's `Modern Lifecycle Policy <https://learn.microsoft.com/en-us/lifecycle/policies/modern>`__, which varies per-product, per-version, per-edition and per-channel.",
+      "source_hash": 2094643819192041281,
+      "context_hash": 12574883238319418877,
+      "translation": "Windows 10 이상은 Microsoft의 `Modern Lifecycle Policy <https://learn.microsoft.com/en-us/lifecycle/policies/modern>`__\\ 를 따르며, 이는 제품별, 버전별, 에디션별, 채널별로 다릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651818Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "Generally, feature updates (1709, 22H2) occur every 6-12 months and are supported for 18-36 months; Server and IoT editions, and LTSC channel releases are supported for 5-10 years, and the latest feature release of a major version (Windows 10, Windows 11) generally receives new updates for at least 10 years following release.",
+      "source_hash": 9272724194607708151,
+      "context_hash": 9984534097597419606,
+      "translation": "일반적으로 기능 업데이트(1709, 22H2)는 6~12개월마다 발생하며 18~36개월간 지원됩니다. Server 및 IoT 에디션과 LTSC 채널 릴리스는 5~10년간 지원되며, 주 버전(Windows 10, Windows 11)의 최신 기능 릴리스는 일반적으로 출시 후 최소 10년간 새 업데이트를 받습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651818Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:2",
+      "source": "Microsoft's `Windows Lifecycle FAQ <https://learn.microsoft.com/en-us/lifecycle/faq/windows>`_ has more specific and up-to-date guidance.",
+      "source_hash": 3727499265091650642,
+      "context_hash": 15876446595914318255,
+      "translation": "Microsoft의 `Windows Lifecycle FAQ <https://learn.microsoft.com/en-us/lifecycle/faq/windows>`_\\ 에서 더 구체적이고 최신의 안내를 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651818Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "CPython's Windows support currently follows Microsoft's lifecycles.",
+      "source_hash": 10825124820145991231,
+      "context_hash": 17784290766264944389,
+      "translation": "CPython의 Windows 지원은 현재 Microsoft의 수명 주기를 따릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651819Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:1",
+      "source": "A new feature release X.Y.0 will support all Windows versions whose *extended support* phase has not yet expired.",
+      "source_hash": 5253050174766917127,
+      "context_hash": 7297082720568629416,
+      "translation": "새로운 기능 릴리스 X.Y.0은 *확장 지원* 단계가 아직 만료되지 않은 모든 Windows 버전을 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651819Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:2",
+      "source": "Subsequent bug fix releases will support the same Windows versions as the original feature release, even if no longer supported by Microsoft.",
+      "source_hash": 18191814126430617764,
+      "context_hash": 3405374695664257593,
+      "translation": "이후의 버그 수정 릴리스는 Microsoft에서 더 이상 지원하지 않더라도 원래 기능 릴리스와 동일한 Windows 버전을 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651819Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:3",
+      "source": "New versions of Windows released while CPython is in maintenance mode may be supported at the discretion of the core team and release manager.",
+      "source_hash": 2281038867926481282,
+      "context_hash": 15430748968844199088,
+      "translation": "CPython이 유지 관리 모드에 있는 동안 출시된 새로운 Windows 버전은 코어 팀과 릴리스 관리자의 재량에 따라 지원될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:09.651819Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "As of 2024, our current interpretation of Microsoft's lifecycles is that Windows for IoT and embedded systems is out of scope for new CPython releases, as the intent of those is to avoid feature updates.",
+      "source_hash": 12449765243046361288,
+      "context_hash": 8260440859013481103,
+      "translation": "2024년 기준으로, Microsoft의 수명 주기에 대한 저희의 현재 해석은 IoT 및 임베디드 시스템용 Windows는 새로운 CPython 릴리스의 범위에서 제외된다는 것입니다. 이는 해당 제품군의 목적이 기능 업데이트를 피하는 데 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402978Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:1",
+      "source": "Windows Server will usually be the oldest version still receiving free security fixes, and that will determine the earliest supported client release with equivalent API version (which will usually be past its end-of-life).",
+      "source_hash": 13326816349979653457,
+      "context_hash": 279927052924207839,
+      "translation": "Windows Server는 보통 무료 보안 수정을 계속 받는 가장 오래된 버전이 될 것이며, 이는 동등한 API 버전을 가진 최초로 지원되는 클라이언트 릴리스를 결정하게 됩니다(이는 보통 수명 종료를 지난 상태일 것입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402982Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "Each feature release is built by a specific version of Microsoft Visual Studio.",
+      "source_hash": 12524086987028647992,
+      "context_hash": 10395880096999143865,
+      "translation": "각 기능 릴리스는 특정 버전의 Microsoft Visual Studio로 빌드됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402983Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:1",
+      "source": "That version should have mainstream support when the release is made.",
+      "source_hash": 617664724545393148,
+      "context_hash": 329800927436281101,
+      "translation": "해당 버전은 릴리스가 이루어질 당시 메인스트림 지원 상태여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402983Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:2",
+      "source": "Developers of extension modules will generally need to use the same Visual Studio release; they are concerned both with the availability of the versions they need to use, and with keeping the zoo of versions small.",
+      "source_hash": 16639538121623192243,
+      "context_hash": 8936329902351257675,
+      "translation": "확장 모듈 개발자는 일반적으로 동일한 Visual Studio 릴리스를 사용해야 합니다. 이들은 자신이 사용해야 하는 버전의 가용성과, 버전들의 종류를 작게 유지하는 것 모두에 관심을 두고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402984Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:3",
+      "source": "The CPython source tree will keep unmaintained build files for older Visual Studio releases, for which patches will be accepted.",
+      "source_hash": 2570668020389174197,
+      "context_hash": 16145329901386458676,
+      "translation": "CPython 소스 트리는 이전 Visual Studio 릴리스용으로 더 이상 유지 관리되지 않는 빌드 파일을 보존하며, 이에 대한 패치는 받아들여집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402985Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:4",
+      "source": "Such build files will be removed from the source tree 3 years after the extended support for the compiler has ended (but continue to remain available in revision control).",
+      "source_hash": 3034410624664016851,
+      "context_hash": 7722848108607271753,
+      "translation": "이러한 빌드 파일은 해당 컴파일러의 확장 지원이 종료된 후 3년이 지나면 소스 트리에서 제거됩니다(다만 리비전 관리 시스템에는 계속 남아 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402985Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "POSIX",
+      "source_hash": 12961967081441818850,
+      "context_hash": 12140916797351906327,
+      "translation": "POSIX",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402986Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:0",
+      "source": "Features specified in POSIX are expected to work according to the standard.",
+      "source_hash": 11255421026477284585,
+      "context_hash": 4290946295333866342,
+      "translation": "POSIX에 명시된 기능은 표준에 따라 동작할 것으로 기대됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402986Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:1",
+      "source": "This cuts two ways:",
+      "source_hash": 16071986215441996733,
+      "context_hash": 14385021394790706907,
+      "translation": "이는 두 가지 방향으로 작용합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402987Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:0",
+      "source": "If a POSIX feature is available, it is expected to conform to POSIX.",
+      "source_hash": 2178302422622654964,
+      "context_hash": 12834492282001927060,
+      "translation": "POSIX 기능을 사용할 수 있다면, 이는 POSIX를 준수할 것으로 기대됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402987Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:0",
+      "source": "Workarounds for out-of-spec platforms are acceptable.",
+      "source_hash": 10694901503892852642,
+      "context_hash": 14021635886536538032,
+      "translation": "명세를 벗어난 플랫폼에 대한 우회 방법은 허용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402987Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:1",
+      "source": "For unsupported platforms, disabling functionality is preferred over a non-trivial workaround.",
+      "source_hash": 12385581327178121936,
+      "context_hash": 1661454443741199075,
+      "translation": "지원되지 않는 플랫폼의 경우, 사소하지 않은 우회 방법보다는 기능을 비활성화하는 쪽이 선호됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402988Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:11/seg:0",
+      "source": "CPython should make no assumptions about POSIX features beyond what's specified in POSIX.",
+      "source_hash": 7819136411626123685,
+      "context_hash": 9991910027310037228,
+      "translation": "CPython은 POSIX에 명시된 범위를 넘어서는 POSIX 기능에 대해 어떠한 가정도 해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402988Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:12/seg:0",
+      "source": "For example, while POSIX specifies ``errno`` as an ``int`` with no restrictions, error codes on all supported platforms happen to be positive.",
+      "source_hash": 9089019822258614286,
+      "context_hash": 12301272220656411108,
+      "translation": "예를 들어, POSIX는 ``errno``\\ 를 아무런 제약 없는 ``int``\\ 로 명시하고 있지만, 지원되는 모든 플랫폼에서 오류 코드는 우연히 양수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402989Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:12/seg:1",
+      "source": "Relying on this would be considered a bug, even if it only manifests on unsupported platforms.",
+      "source_hash": 6972491118217645014,
+      "context_hash": 6025907898758877951,
+      "translation": "이에 의존하는 것은, 설사 지원되지 않는 플랫폼에서만 드러나는 문제라 하더라도 버그로 간주될 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:15.402989Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:13/seg:0",
+      "source": "Legacy C Locale",
+      "source_hash": 15230483450861277552,
+      "context_hash": 5290216170507190207,
+      "translation": "레거시 C 로케일",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258380Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:14/seg:0",
+      "source": "Starting with CPython 3.7.0, \\*nix platforms are expected to provide at least one of ``C.UTF-8`` (full locale), ``C.utf8`` (full locale) or ``UTF-8`` (``LC_CTYPE``-only locale) as an alternative to the legacy ``C`` locale.",
+      "source_hash": 10100872170508597817,
+      "context_hash": 6823328842637211351,
+      "translation": "CPython 3.7.0부터, \\*nix 플랫폼은 레거시 ``C`` 로캘의 대안으로 ``C.UTF-8``\\ (전체 로캘), ``C.utf8``\\ (전체 로캘) 또는 ``UTF-8``\\ (``LC_CTYPE``\\ 전용 로캘) 중 적어도 하나를 제공할 것으로 예상됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258382Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:15/seg:0",
+      "source": "Any Unicode-related integration problems that occur only in the legacy ``C`` locale and cannot be reproduced in an appropriately configured non-ASCII locale will be closed as \"won't fix\".",
+      "source_hash": 1892129912365986253,
+      "context_hash": 12859329304766698549,
+      "translation": "레거시 ``C`` 로케일에서만 발생하고 적절히 구성된 비-ASCII 로케일에서는 재현되지 않는 유니코드 관련 통합 문제는 \"수정하지 않음\"으로 종료됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258383Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:16/seg:0",
+      "source": "WASI",
+      "source_hash": 1020528521167835492,
+      "context_hash": 12201727481345276615,
+      "translation": "WASI",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258383Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:17/seg:0",
+      "source": "WASI support is defined in :pep:`816`.",
+      "source_hash": 11938991531235255725,
+      "context_hash": 8450131404288200403,
+      "translation": "WASI 지원은 :pep:`816`\\ 에 정의되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258383Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:19/seg:0",
+      "source": "Python",
+      "source_hash": 15947104486033060433,
+      "context_hash": 10569071888281663129,
+      "translation": "Python",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258383Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:20/seg:0",
+      "source": "WASI",
+      "source_hash": 1020528521167835492,
+      "context_hash": 7364505364865200873,
+      "translation": "WASI",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258384Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:21/seg:0",
+      "source": "WASI SDK",
+      "source_hash": 6884232323238678215,
+      "context_hash": 4609595027388307344,
+      "translation": "WASI SDK",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258384Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:22/seg:0",
+      "source": "3.15",
+      "source_hash": 14080325323510566646,
+      "context_hash": 16153054184922755458,
+      "translation": "3.15",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258384Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:23/seg:0",
+      "source": "0.1",
+      "source_hash": 11528054419535718031,
+      "context_hash": 16065117036602566024,
+      "translation": "0.1",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258384Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:24/seg:0",
+      "source": "33",
+      "source_hash": 5286759298248796023,
+      "context_hash": 6755887032763667796,
+      "translation": "33",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258385Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:25/seg:0",
+      "source": "3.14",
+      "source_hash": 4473772579858639843,
+      "context_hash": 10922727732264306978,
+      "translation": "3.14",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258385Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:26/seg:0",
+      "source": "0.1",
+      "source_hash": 11528054419535718031,
+      "context_hash": 8004010241574432595,
+      "translation": "0.1",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258385Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:27/seg:0",
+      "source": "24",
+      "source_hash": 1848777359602499734,
+      "context_hash": 4945294439367786474,
+      "translation": "24",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258386Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:28/seg:0",
+      "source": "3.13",
+      "source_hash": 6533969235130561856,
+      "context_hash": 7190318103077689777,
+      "translation": "3.13",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258386Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:29/seg:0",
+      "source": "0.1",
+      "source_hash": 11528054419535718031,
+      "context_hash": 14383655274818813306,
+      "translation": "0.1",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:19.258386Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:30/seg:0",
+      "source": "24",
+      "source_hash": 1848777359602499734,
+      "context_hash": 8700512643063857389,
+      "translation": "24",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858007Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:31/seg:0",
+      "source": "3.12",
+      "source_hash": 821829621479950816,
+      "context_hash": 7190318103077689777,
+      "translation": "3.12",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858010Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:32/seg:0",
+      "source": "0.1",
+      "source_hash": 11528054419535718031,
+      "context_hash": 8319971618986110054,
+      "translation": "0.1",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858010Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:33/seg:0",
+      "source": "21",
+      "source_hash": 6016790709393671791,
+      "context_hash": 11607226973303414348,
+      "translation": "21",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858010Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:34/seg:0",
+      "source": "3.11",
+      "source_hash": 17200034372502994091,
+      "context_hash": 9550350773775788863,
+      "translation": "3.11",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858011Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:35/seg:0",
+      "source": "0.1",
+      "source_hash": 11528054419535718031,
+      "context_hash": 10249101677555573358,
+      "translation": "0.1",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858011Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:36/seg:0",
+      "source": "21",
+      "source_hash": 6016790709393671791,
+      "context_hash": 2409318445186900905,
+      "translation": "21",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858011Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:37/seg:0",
+      "source": "All versions prior to Python 3.15 predate :pep:`816`.",
+      "source_hash": 2095674792365915019,
+      "context_hash": 1646920133178329779,
+      "translation": "Python 3.15 이전의 모든 버전은 :pep:`816`\\ 보다 앞섭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858011Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:37/seg:1",
+      "source": "The version support for those earlier versions is based on what was supported when that PEP was written.",
+      "source_hash": 4350553767840454624,
+      "context_hash": 13691519717010768891,
+      "translation": "그 이전 버전들에 대한 버전 지원은 해당 PEP가 작성될 당시 지원되던 내용을 기준으로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858012Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:38/seg:0",
+      "source": "WASI was a tier 3 platform for Python 3.11 and 3.12, and became a tier 2 platform starting with Python 3.13.",
+      "source_hash": 9631527488096447651,
+      "context_hash": 856857057846979841,
+      "translation": "WASI는 Python 3.11과 3.12에서는 티어 3 플랫폼이었으며, Python 3.13부터 티어 2 플랫폼이 되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858012Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:39/seg:0",
+      "source": "WASI 0.2 support has been skipped due to lack of time, to the point that it was deemed better to go straight to WASI 0.3 instead.",
+      "source_hash": 1917674788206165941,
+      "context_hash": 18329504494711919926,
+      "translation": "WASI 0.2 지원은 시간 부족으로 건너뛰었으며, 그 대신 곧바로 WASI 0.3으로 가는 것이 더 낫다고 판단되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858013Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:39/seg:1",
+      "source": "This is based on a recommendation from the `Bytecode Alliance <https://bytecodealliance.org>`__.",
+      "source_hash": 9460956547354249089,
+      "context_hash": 15705323876707480867,
+      "translation": "이는 `Bytecode Alliance <https://bytecodealliance.org>`__\\ 의 권고에 근거한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858013Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:40/seg:0",
+      "source": "WASI SDK 26 and 27 have a `bug <https://github.com/WebAssembly/wasi-libc/issues/617>`__ which causes CPython to hang in certain situations, and so they have been skipped.",
+      "source_hash": 5269770667199013587,
+      "context_hash": 5168993372150157486,
+      "translation": "WASI SDK 26과 27에는 특정 상황에서 CPython이 멈추게 만드는 `버그 <https://github.com/WebAssembly/wasi-libc/issues/617>`__\\ 가 있어, 이들은 건너뛰었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858014Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Unsupporting platforms",
+      "source_hash": 11877793638176368598,
+      "context_hash": 4737989726486376620,
+      "translation": "플랫폼 지원 중단",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858014Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "If a platform drops out of tiered support, a note must be posted in this PEP that the platform is no longer actively supported.",
+      "source_hash": 13516393598491681944,
+      "context_hash": 16502194051252589586,
+      "translation": "플랫폼이 계층화 지원에서 제외되는 경우, 해당 플랫폼이 더 이상 적극적으로 지원되지 않는다는 안내가 이 PEP에 게시되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858014Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "This note must include:",
+      "source_hash": 9883212591508422432,
+      "context_hash": 17084150579224290401,
+      "translation": "이 안내에는 다음이 포함되어야 합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:11:58.858015Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "The name of the system,",
+      "source_hash": 14858049201219720591,
+      "context_hash": 6144623363580159863,
+      "translation": "시스템의 이름,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132478Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "The first release number that does not support this platform anymore, and",
+      "source_hash": 15919420865773269792,
+      "context_hash": 13727118945963034065,
+      "translation": "이 플랫폼을 더 이상 지원하지 않는 최초의 릴리스 번호, 그리고",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132483Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "The first release where the historical support code is actively removed.",
+      "source_hash": 16087125717704004416,
+      "context_hash": 5568810369667745304,
+      "translation": "오래된 지원 코드가 실제로 제거되는 최초의 릴리스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132483Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "In some cases, it is not possible to identify the specific list of systems for which some code is used (e.g. when autoconf tests for absence of some feature which is considered present on all supported systems).",
+      "source_hash": 15878878656874774761,
+      "context_hash": 5714409997945519875,
+      "translation": "어떤 경우에는 특정 코드가 사용되는 시스템의 구체적인 목록을 식별할 수 없습니다(예: 모든 지원 시스템에 존재한다고 간주되는 기능의 부재를 autoconf가 테스트하는 경우).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132484Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:1",
+      "source": "In this case, the name will give the precise condition (usually a preprocessor symbol) that will become unsupported.",
+      "source_hash": 13261953728258326418,
+      "context_hash": 7733076529909561375,
+      "translation": "이 경우 이름은 지원되지 않게 될 정확한 조건(보통 전처리기 심볼)을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132485Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "At the same time, the CPython build must be changed to produce a warning if somebody tries to install CPython on this platform.",
+      "source_hash": 10369212777446800708,
+      "context_hash": 16768405231648954079,
+      "translation": "동시에, 누군가 이 플랫폼에 CPython을 설치하려고 하면 경고를 발생시키도록 CPython 빌드를 변경해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132485Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:1",
+      "source": "On platforms using autoconf, configure should also be made emit a warning about the unsupported platform.",
+      "source_hash": 9630447775605475145,
+      "context_hash": 5201622046566966368,
+      "translation": "autoconf를 사용하는 플랫폼에서는 configure도 지원되지 않는 플랫폼에 대한 경고를 발생시키도록 만들어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132485Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "This gives potential users of the platform a chance to step forward and offer maintenance.",
+      "source_hash": 17451608081808074347,
+      "context_hash": 6494924019402620193,
+      "translation": "이는 해당 플랫폼의 잠재적 사용자들이 나서서 유지 관리를 맡을 기회를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132486Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:1",
+      "source": "We do not treat a platform that loses Tier 3 support any worse than a platform that was never supported.",
+      "source_hash": 18427414466764433788,
+      "context_hash": 5733060045315687035,
+      "translation": "Tier 3 지원을 잃은 플랫폼을 한 번도 지원된 적이 없는 플랫폼보다 더 나쁘게 취급하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132486Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "No-longer-supported platforms",
+      "source_hash": 3623962844450037992,
+      "context_hash": 5279495994343274279,
+      "translation": "더 이상 지원되지 않는 플랫폼",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132487Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "| Name:             MS-DOS, MS-Windows 3.x",
+      "source_hash": 7497449699023029057,
+      "context_hash": 6498671441578813420,
+      "translation": "| 이름:             MS-DOS, MS-Windows 3.x",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132487Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "| Name:             SunOS 4",
+      "source_hash": 3958579868839676994,
+      "context_hash": 3440894727540183729,
+      "translation": "| 이름:             SunOS 4",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132487Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "| Name:             DYNIX",
+      "source_hash": 8095530180291877157,
+      "context_hash": 1680201965582473177,
+      "translation": "| 이름:             DYNIX",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132488Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "| Name:             dgux",
+      "source_hash": 3175994180765162089,
+      "context_hash": 17882140338043984455,
+      "translation": "| 이름:             dgux",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132488Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "| Name:             Minix",
+      "source_hash": 2589292722792744592,
+      "context_hash": 5187875539346019729,
+      "translation": "| 이름:             Minix",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132488Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "| Name:             Irix 4 and --with-sgi-dl",
+      "source_hash": 15056345502451433128,
+      "context_hash": 15311897004191728919,
+      "translation": "| 이름:             Irix 4 및 --with-sgi-dl",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:01.132488Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "| Name:             Linux 1",
+      "source_hash": 15884649595666738165,
+      "context_hash": 14649922586219355044,
+      "translation": "| Name:             Linux 1",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715821Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "| Name:             Systems defining __d6_pthread_create (configure.in)",
+      "source_hash": 15613188504239253391,
+      "context_hash": 17581343120937123590,
+      "translation": "| Name:             __d6_pthread_create를 정의하는 시스템 (configure.in)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715823Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "| Name:             Systems defining PY_PTHREAD_D4, PY_PTHREAD_D6,",
+      "source_hash": 17416636382321526274,
+      "context_hash": 17036733655257788464,
+      "translation": "| Name:             thread_pthread.h에서 PY_PTHREAD_D4, PY_PTHREAD_D6,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715824Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:10/seg:0",
+      "source": "or PY_PTHREAD_D7 in thread_pthread.h",
+      "source_hash": 13562730718547864350,
+      "context_hash": 7296780751908095652,
+      "translation": "또는 PY_PTHREAD_D7을 정의하는 시스템",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715824Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:0",
+      "source": "| Name:             Systems using --with-dl-dld",
+      "source_hash": 365601277238873359,
+      "context_hash": 8051965783938090658,
+      "translation": "| Name:             --with-dl-dld를 사용하는 시스템",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715824Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:12/seg:0",
+      "source": "| Name:             Systems using --without-universal-newlines,",
+      "source_hash": 4599636875243071063,
+      "context_hash": 7659550897307745185,
+      "translation": "| Name:             --without-universal-newlines를 사용하는 시스템,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715824Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:13/seg:0",
+      "source": "| Name:             MacOS 9",
+      "source_hash": 7221889943205958282,
+      "context_hash": 997913495506178703,
+      "translation": "| Name:             MacOS 9",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715824Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:14/seg:0",
+      "source": "| Name:             Systems using --with-wctype-functions",
+      "source_hash": 5209310886419092004,
+      "context_hash": 6935772052293123859,
+      "translation": "| Name:             --with-wctype-functions를 사용하는 시스템",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715825Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:15/seg:0",
+      "source": "| Name:             Win9x, WinME, NT4",
+      "source_hash": 18146737066993305937,
+      "context_hash": 8529540072977227808,
+      "translation": "| Name:             Win9x, WinME, NT4",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715825Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:16/seg:0",
+      "source": "| Name:             AtheOS",
+      "source_hash": 5655924952643992971,
+      "context_hash": 1060246434730532907,
+      "translation": "| Name:             AtheOS",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715825Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:17/seg:0",
+      "source": "| Name:             BeOS",
+      "source_hash": 3178076472723978674,
+      "context_hash": 2518393283695256400,
+      "translation": "| Name:             BeOS",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715825Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:18/seg:0",
+      "source": "| Name:             Systems using Mach C Threads",
+      "source_hash": 10151879914030193582,
+      "context_hash": 660111364174274291,
+      "translation": "| Name:             Mach C 스레드를 사용하는 시스템",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715825Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:19/seg:0",
+      "source": "| Name:             SunOS lightweight processes (LWP)",
+      "source_hash": 2152424602425384191,
+      "context_hash": 7111851964732001912,
+      "translation": "| Name:             SunOS 경량 프로세스(LWP)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715825Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:20/seg:0",
+      "source": "| Name:             Systems using --with-pth (GNU pth threads)",
+      "source_hash": 15783358226831252482,
+      "context_hash": 8063404001436454812,
+      "translation": "| Name:             --with-pth(GNU pth 스레드)를 사용하는 시스템",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715826Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:21/seg:0",
+      "source": "| Name:             Systems using Irix threads",
+      "source_hash": 3081610801611760031,
+      "context_hash": 11691706903096363150,
+      "translation": "| Name:             Irix 스레드를 사용하는 시스템",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715826Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:22/seg:0",
+      "source": "| Name:             OSF* systems (issue 8606)",
+      "source_hash": 10247856906460808881,
+      "context_hash": 3914379323344772390,
+      "translation": "| Name:             OSF* 시스템 (issue 8606)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:12:00.715826Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:23/seg:0",
+      "source": "| Name:             OS/2 (issue 16135)",
+      "source_hash": 7964499941535626046,
+      "context_hash": 10980366000510659901,
+      "translation": "| 이름:             OS/2 (issue 16135)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817027Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:24/seg:0",
+      "source": "| Name:             VMS (issue 16136)",
+      "source_hash": 12444505183124063460,
+      "context_hash": 6329678289299662225,
+      "translation": "| 이름:             VMS (issue 16136)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817030Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:25/seg:0",
+      "source": "| Name:             Windows 2000",
+      "source_hash": 1676431968066349161,
+      "context_hash": 828075606501993304,
+      "translation": "| 이름:             Windows 2000",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817030Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:26/seg:0",
+      "source": "| Name:             Windows systems where COMSPEC points to command.com",
+      "source_hash": 18304813043430934775,
+      "context_hash": 7670913370936016936,
+      "translation": "| 이름:             COMSPEC가 command.com을 가리키는 Windows 시스템",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817030Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:27/seg:0",
+      "source": "| Name:             RISC OS",
+      "source_hash": 3524737285691391440,
+      "context_hash": 5945978939367386911,
+      "translation": "| 이름:             RISC OS",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817030Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:28/seg:0",
+      "source": "| Name:             IRIX",
+      "source_hash": 191298644747230653,
+      "context_hash": 11898564559777058277,
+      "translation": "| 이름:             IRIX",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817031Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:29/seg:0",
+      "source": "| Name:             Systems without multithreading support",
+      "source_hash": 12848293209005734631,
+      "context_hash": 15309466979793439042,
+      "translation": "| 이름:             멀티스레딩을 지원하지 않는 시스템",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817031Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Discussions",
+      "source_hash": 10987630735954210954,
+      "context_hash": 361607056439496179,
+      "translation": "토론",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817031Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "November 2025: `Policy for unsupported platforms <https://discuss.python.org/t/104986>`_ (Petr Viktorin)",
+      "source_hash": 2472114024497429826,
+      "context_hash": 16102437848137172176,
+      "translation": "2025년 11월: `지원되지 않는 플랫폼에 대한 정책 <https://discuss.python.org/t/104986>`_ (Petr Viktorin)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817031Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "April 2022: `Consider adding a Tier 3 to tiered platform support <https://mail.python.org/archives/list/python-committers@python.org/thread/V3OZPJGA5VJFYM6XYGPZIVPOIYKX6KTD/>`_ (Victor Stinner)",
+      "source_hash": 8629978833861636956,
+      "context_hash": 10316099714755042794,
+      "translation": "2022년 4월: `계층화된 플랫폼 지원에 3단계 추가 고려 <https://mail.python.org/archives/list/python-committers@python.org/thread/V3OZPJGA5VJFYM6XYGPZIVPOIYKX6KTD/>`_ (Victor Stinner)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817032Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "March 2022: `Proposed tiered platform support <https://mail.python.org/archives/list/python-committers@python.org/thread/K757345KX6W5ZLTWYBUXOXQTJJTL7GW5/>`_ (Brett Cannon)",
+      "source_hash": 14625654937988018167,
+      "context_hash": 4900635861548331891,
+      "translation": "2022년 3월: `계층화된 플랫폼 지원 제안 <https://mail.python.org/archives/list/python-committers@python.org/thread/K757345KX6W5ZLTWYBUXOXQTJJTL7GW5/>`_ (Brett Cannon)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817032Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "February 2015: `Update to PEP 11 to clarify garnering platform support <https://mail.python.org/archives/list/python-dev@python.org/thread/OEQHRR2COYZDL6LZ42RBZOMIUB32WI34/>`_ (Brett Cannon)",
+      "source_hash": 6964100026110329344,
+      "context_hash": 13044593637862581490,
+      "translation": "2015년 2월: `플랫폼 지원 확보를 명확히 하기 위한 PEP 11 갱신 <https://mail.python.org/archives/list/python-dev@python.org/thread/OEQHRR2COYZDL6LZ42RBZOMIUB32WI34/>`_ (Brett Cannon)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817032Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "May 2014: `Where is our official policy of what platforms we do support? <https://mail.python.org/archives/list/python-dev@python.org/thread/T7WTUJ6TD3IGYGWV3M4PHJWNLM2WPZAW/>`_ (Brett Cannon)",
+      "source_hash": 15564610186416362870,
+      "context_hash": 9569900122420767855,
+      "translation": "2014년 5월: `우리가 지원하는 플랫폼에 대한 공식 정책은 어디에 있는가? <https://mail.python.org/archives/list/python-dev@python.org/thread/T7WTUJ6TD3IGYGWV3M4PHJWNLM2WPZAW/>`_ (Brett Cannon)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817032Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "August 2007: `PEP 11 update - Call for port maintainers to step forward <https://mail.python.org/archives/list/python-dev@python.org/thread/DSSGXU5LBCMKYMZBRVB6RF3YAB6ST5AV/>`_ (Skip Montanaro)",
+      "source_hash": 5520816687255359634,
+      "context_hash": 3600380069606576991,
+      "translation": "2007년 8월: `PEP 11 갱신 - 포트 관리자 자원 요청 <https://mail.python.org/archives/list/python-dev@python.org/thread/DSSGXU5LBCMKYMZBRVB6RF3YAB6ST5AV/>`_ (Skip Montanaro)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:08:11.817033Z",
+      "issues": []
+    }
+  ]
+}

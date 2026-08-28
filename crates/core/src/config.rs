@@ -153,6 +153,11 @@ fn default_glossary_path() -> String {
 pub struct SourceConfig {
     pub path: String,
     pub pattern: String,
+    /// Source-relative glob patterns omitted from directory-wide discovery.
+    /// An explicitly requested file can still be translated, which keeps this
+    /// a selection aid rather than an access-control mechanism.
+    #[serde(default)]
+    pub exclude: Vec<String>,
     pub parser: String,
     /// Parser-owned generated syntax data. Required by parsers such as Verso
     /// whose authoritative grammar runs in an external toolchain.

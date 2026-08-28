@@ -1,0 +1,1136 @@
+{
+  "version": 1,
+  "source_hash": 13487466928461426259,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Adding Frozen Syntax to Optimize Immutable Types",
+      "source_hash": 8949692178597669246,
+      "context_hash": 16530898886277989957,
+      "translation": "불변 타입 최적화를 위한 동결 구문 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594496Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 1176147613852058074,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594498Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes *frozen display* syntax: ``f{1, 2, 3}`` evaluates to a :class:`frozenset`, and ``f{'a': 1}`` evaluates to a ``frozendict``.",
+      "source_hash": 17162068620763687533,
+      "context_hash": 4057358921482574455,
+      "translation": "이 PEP는 *동결 디스플레이* 구문을 제안합니다. ``f{1, 2, 3}``\\ 은 :class:`frozenset`\\ 으로 평가되고, ``f{'a': 1}``\\ 은 ``frozendict``\\ 로 평가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594499Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "Because immutability is guaranteed by the syntax itself rather than inferred from usage, the compiler can treat frozen displays as first-class citizens of its optimization pipeline: constant displays are folded into a single ``LOAD_CONST`` with an exact result type at compile time and cached in ``.pyc`` files.",
+      "source_hash": 12696677178990558022,
+      "context_hash": 8460302555578609924,
+      "translation": "불변성이 사용 방식에서 추론되는 것이 아니라 구문 자체로 보장되므로, 컴파일러는 동결 디스플레이를 최적화 파이프라인의 일급 구성 요소로 취급할 수 있습니다. 즉, 상수 디스플레이는 컴파일 시 정확한 결과 타입을 갖는 단일 ``LOAD_CONST``\\ 로 접혀 ``.pyc`` 파일에 캐시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594499Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 3102838356381371805,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594499Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Python has display syntax for its mutable containers but none for its immutable ones.",
+      "source_hash": 4134368254236773944,
+      "context_hash": 8807139907697214068,
+      "translation": "Python에는 가변 컨테이너를 위한 디스플레이 구문은 있지만 불변 컨테이너를 위한 구문은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594499Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Today an immutable set must be written as ``frozenset({1, 2, 3})`` and an immutable mapping as ``frozendict({'a': 1})``.",
+      "source_hash": 9457416493561723848,
+      "context_hash": 17117526756010026626,
+      "translation": "현재 불변 집합은 ``frozenset({1, 2, 3})``\\ 으로, 불변 매핑은 ``frozendict({'a': 1})``\\ 으로 작성해야 합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T19:32:34.594500Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "Each of these:",
+      "source_hash": 11603989745922435642,
+      "context_hash": 13623310801397316874,
+      "translation": "각각 다음과 같은 문제점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594500Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "builds a mutable set or dict, then copies it into the immutable type.",
+      "source_hash": 12917778481004636960,
+      "context_hash": 4046206213275786167,
+      "translation": "가변 집합이나 딕셔너리를 만든 다음 불변 타입으로 복사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594500Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "looks up the name ``frozenset`` or ``frozendict`` at runtime on every execution.",
+      "source_hash": 595768608200783172,
+      "context_hash": 16748639586295521495,
+      "translation": "실행할 때마다 런타임에 ``frozenset``\\ 이나 ``frozendict``\\ 라는 이름을 조회합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594501Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "cannot be easily optimized by the compiler, because either name may be rebound and the call may have arbitrary side effects, or value can be of unexpected type for the optimization, value can be non uniquely referenced.",
+      "source_hash": 407229231634888800,
+      "context_hash": 3378298254057919439,
+      "translation": "두 이름 중 어느 것이든 재바인딩될 수 있고 호출에 임의의 부작용이 있을 수 있으므로, 또는 값이 최적화에 예상하지 못한 타입일 수 있고 고유하게 참조되지 않을 수 있으므로 컴파일러가 쉽게 최적화할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594501Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "CPython already hints at the opportunity: the peephole optimizer rewrites a constant set display into a frozenset, but only as the right operand of ``in``.",
+      "source_hash": 10934803482940220810,
+      "context_hash": 4298493928742889932,
+      "translation": "CPython은 이미 이러한 가능성을 보여 줍니다. peephole 최적화 프로그램은 상수 집합 디스플레이를 frozenset으로 다시 작성하지만, ``in``\\ 의 오른쪽 피연산자인 경우에만 그렇게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594501Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "Assign the same display to a variable and the optimization is gone.",
+      "source_hash": 2660059824500792734,
+      "context_hash": 2160343098331912048,
+      "translation": "같은 디스플레이를 변수에 할당하면 최적화가 사라집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594501Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:2",
+      "source": "The root cause is that the compiler can never prove immutability of a ``set`` or ``dict`` display, so it must rebuild it on every execution.",
+      "source_hash": 9943140869257952348,
+      "context_hash": 16037656031302737134,
+      "translation": "근본 원인은 컴파일러가 ``set``\\ 이나 ``dict``\\ 디스플레이의 불변성을 결코 증명할 수 없으므로 실행할 때마다 이를 다시 만들어야 한다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594502Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:3",
+      "source": "A display whose *semantics* guarantee immutability removes that barrier once and for all.",
+      "source_hash": 7669131551243035827,
+      "context_hash": 13765541773557617654,
+      "translation": "*semantics*\\ 가 불변성을 보장하는 디스플레이는 이러한 장벽을 완전히 제거합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594502Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "One of the goals of this PEP is to increase the use of immutable containers in CPython, preparing for a concurrent future in which free-threading and subinterpreters become significantly more common.",
+      "source_hash": 7361491085085779110,
+      "context_hash": 7769664447002781570,
+      "translation": "이 PEP의 목표 중 하나는 CPython에서 불변 컨테이너의 사용을 늘려, 프리 스레딩과 서브인터프리터가 훨씬 더 일반화되는 동시성 중심의 미래를 준비하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594502Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "Efficient creation of immutable data structures and convenient syntax would encourage the use of ``frozendict`` and ``frozenset``.",
+      "source_hash": 698175000785033660,
+      "context_hash": 11079701133609388239,
+      "translation": "불변 데이터 구조를 효율적으로 생성하고 편리한 구문을 제공하면 ``frozendict``\\ 와 ``frozenset``\\ 의 사용이 촉진될 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594503Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:2",
+      "source": "This would reduce bugs caused by accidental mutation of shared mutable containers while also improving performance.",
+      "source_hash": 16769748037816535000,
+      "context_hash": 10399469237745005614,
+      "translation": "이를 통해 공유 가변 컨테이너의 우발적인 변경으로 발생하는 버그를 줄이는 동시에 성능도 향상할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594503Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:3",
+      "source": "For example, subinterpreters already share ``frozenset`` objects, and there are plans to share ``frozendict`` objects as well.",
+      "source_hash": 8873730741433883040,
+      "context_hash": 13914714344010276945,
+      "translation": "예를 들어 서브인터프리터는 이미 ``frozenset`` 객체를 공유하고 있으며, ``frozendict`` 객체도 공유할 계획이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594503Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "Immutable container displays have been requested and discussed by the community several times, most recently in the `frozenset and frozendict comprehensions <https://discuss.python.org/t/frozenset-and-frozendict-comprehensions/101584>`__ thread on Discourse.",
+      "source_hash": 8759880037145193543,
+      "context_hash": 4430291354280037992,
+      "translation": "불변 컨테이너 디스플레이는 커뮤니티에서 여러 차례 요청되고 논의되었으며, 최근에는 Discourse의 `frozenset and frozendict comprehensions <https://discuss.python.org/t/frozenset-and-frozendict-comprehensions/101584>`__ 스레드에서 논의되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594503Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 7538060907477033176,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594504Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Syntax, not a builtin call",
+      "source_hash": 2437340664615827851,
+      "context_hash": 1732278646269452764,
+      "translation": "내장 함수 호출이 아닌 구문",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594504Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Only syntax gives the compiler a semantic guarantee.",
+      "source_hash": 874635899101852399,
+      "context_hash": 3481881049301751951,
+      "translation": "구문만이 컴파일러에 의미론적 보장을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594504Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "A call to ``frozenset(...)`` can be shadowed, but a frozen display cannot.",
+      "source_hash": 10130459706110925995,
+      "context_hash": 5667816492314631364,
+      "translation": "``frozenset(...)``\\ 호출은 가려질 수 있지만 동결 디스플레이는 가려질 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594504Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "Every optimization described below follows from this single property.",
+      "source_hash": 3680896892021153093,
+      "context_hash": 14759353551462246229,
+      "translation": "아래에서 설명하는 모든 최적화는 이 단일 속성에서 비롯됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594504Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Static analysis benefits in the same way.",
+      "source_hash": 17929303930327569617,
+      "context_hash": 8024575141901523310,
+      "translation": "정적 분석도 같은 방식으로 이점을 얻습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594505Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "Today, tools that don't perform semantic analysis must assume that ``frozenset(...)`` refers to the builtin.",
+      "source_hash": 8120307784883523992,
+      "context_hash": 16542153800601576223,
+      "translation": "의미론적 분석을 수행하지 않는 도구는 현재 ``frozenset(...)``\\ 가 내장 함수를 가리킨다고 가정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594505Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "A frozen display turns that assumption into a syntactic guarantee, so analyzers can treat the result as immutable with full confidence.",
+      "source_hash": 9479430920183406195,
+      "context_hash": 7221952252958280086,
+      "translation": "동결 디스플레이는 이러한 가정을 구문적 보장으로 바꾸므로, 분석기는 완전한 확신을 가지고 결과를 불변으로 취급할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594505Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:3",
+      "source": "This holds even for purely syntactic tools that perform no name resolution.",
+      "source_hash": 314293073528236607,
+      "context_hash": 15411329330069814347,
+      "translation": "이는 이름 확인을 전혀 수행하지 않는 순수 구문 도구에도 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594506Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Linters and formatters can automatically rewrite ``frozenset({1, 2, 3})`` and ``frozendict({1: 2})`` to be ``f{1, 2, 3}`` and ``f{1: 2}`` on newer Python versions.",
+      "source_hash": 13367863560307900899,
+      "context_hash": 12939776472455223796,
+      "translation": "린터와 포매터는 최신 Python 버전에서 ``frozenset({1, 2, 3})``\\ 와 ``frozendict({1: 2})``\\ 를 각각 ``f{1, 2, 3}``\\ 와 ``f{1: 2}``\\ 로 자동으로 다시 작성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594506Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Why ``f{...}``",
+      "source_hash": 5678655528868574063,
+      "context_hash": 8463224624897147090,
+      "translation": "왜 ``f{...}``\\ 인가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:34.594506Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "The ``f`` prefix reads as *frozen*, mirroring the familiar f-string prefix convention.",
+      "source_hash": 16727358240436354974,
+      "context_hash": 10064267713535901201,
+      "translation": "``f`` 접두사는 익숙한 f-문자열 접두사 규칙을 반영하여 *frozen*\\ 을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339134Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "Sharing the letter with f-strings is not a problem: strings are immutable too, so either way an ``f`` prefixed expression evaluates to an immutable value. ``f{`` is a syntax error in all current Python versions, so the syntax is fully backward compatible.",
+      "source_hash": 16245576406599091799,
+      "context_hash": 4667610818317684250,
+      "translation": "f-문자열과 문자를 공유하는 것은 문제가 되지 않습니다. 문자열도 불변이므로 어느 경우든 ``f`` 접두사가 붙은 표현식은 불변 값으로 평가됩니다. ``f{``\\ 는 현재 모든 Python 버전에서 구문 오류이므로 이 구문은 완전한 하위 호환성을 갖습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339138Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "The tokenizer emits a single ``FLBRACE`` token for ``f{``, so ``f {1}`` (with a space) remains an error and there is no ambiguity with the name ``f`` or with f-strings.",
+      "source_hash": 780859193336122493,
+      "context_hash": 4669289127706677694,
+      "translation": "토크나이저는 ``f{``\\ 에 대해 단일 ``FLBRACE`` 토큰을 방출하므로, ``f {1}`` (공백 포함)는 여전히 오류이며 이름 ``f`` 또는 f-문자열과 모호하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339138Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 16025042174653654753,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339138Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Grammar",
+      "source_hash": 14258080603256687658,
+      "context_hash": 4569611422298704673,
+      "translation": "문법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339138Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Our goal is to make new syntax and grammar identical to existing ``set`` and ``dict`` syntax and grammar rules.",
+      "source_hash": 4741003556389867764,
+      "context_hash": 4127713926087284037,
+      "translation": "목표는 새로운 구문과 문법을 기존 ``set`` 및 ``dict`` 구문과 문법 규칙과 동일하게 만드는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339139Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "New alternatives are added to ``atom``, mirroring ``set`` and ``dict`` displays and comprehensions:",
+      "source_hash": 13483108737553775857,
+      "context_hash": 5109392965441437926,
+      "translation": "``atom``\\ 에 새로운 대안이 추가되며, ``set`` 및 ``dict`` 디스플레이와 컴프리헨션을 반영합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339139Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "``f{1, 2, 3}`` is a frozenset display.",
+      "source_hash": 10203000510250710626,
+      "context_hash": 10705505272913230162,
+      "translation": "``f{1, 2, 3}``\\ 은 frozenset 디스플레이입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339139Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "``f{'a': 1, 'b': 2}`` is a frozendict display.",
+      "source_hash": 9311053286165468231,
+      "context_hash": 120918993905819434,
+      "translation": "``f{'a': 1, 'b': 2}``\\ 은 frozendict 디스플레이입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339139Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "``f{}`` is an empty frozendict, mirroring ``{}``.",
+      "source_hash": 12328962865778520069,
+      "context_hash": 12539102963778685825,
+      "translation": "``f{}``\\ 는 ``{}``\\ 를 반영하는 빈 frozendict입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339140Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "Star unpacking follows the existing displays: ``f{*xs}`` is a frozenset display (like ``{*xs}``) and ``f{**d}`` is a frozendict display (like ``{**d}``).",
+      "source_hash": 12616456589884283276,
+      "context_hash": 11084487600306738147,
+      "translation": "별표 언패킹은 기존 디스플레이를 따릅니다. ``f{*xs}``\\ 는 frozenset 디스플레이(``{*xs}``\\ 와 같음)이고, ``f{**d}``\\ 는 frozendict 디스플레이(``{**d}``\\ 와 같음)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339140Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "Comprehensions are supported: ``f{x for x in xs}`` is a frozenset comprehension and ``f{k: v for k, v in items}`` is a frozendict comprehension.",
+      "source_hash": 8773211461909048067,
+      "context_hash": 2047092157851863546,
+      "translation": "컴프리헨션이 지원됩니다. ``f{x for x in xs}``\\ 는 frozenset 컴프리헨션이고, ``f{k: v for k, v in items}``\\ 는 frozendict 컴프리헨션입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339140Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:0",
+      "source": "Async comprehensions are also supported in async contexts: ``f{x async for arange(5)}`` is a frozenset async comprehension and ``f{k: v async for k, v in items}`` is a frozendict async comprehension.",
+      "source_hash": 8276220648069717601,
+      "context_hash": 3023780660826053289,
+      "translation": "비동기 컨텍스트에서는 비동기 컴프리헨션도 지원됩니다. ``f{x async for arange(5)}``\\ 는 frozenset 비동기 컴프리헨션이고, ``f{k: v async for k, v in items}``\\ 는 frozendict 비동기 컴프리헨션입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339140Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:0",
+      "source": ":pep:`798` and unpacking in comprehensions is also supported. ``f{*nums for nums in list_of_nums}`` is a frozenset compehension with unpacking and ``f{**items for nums in list_of_items}`` is a frozendict comprehension with unpacking.",
+      "source_hash": 16171687864466542640,
+      "context_hash": 5011100107776621063,
+      "translation": ":pep:`798` 및 컴프리헨션에서의 언패킹도 지원됩니다. ``f{*nums for nums in list_of_nums}``\\ 는 언패킹을 포함한 frozenset 컴프리헨션이고, ``f{**items for nums in list_of_items}``\\ 는 언패킹을 포함한 frozendict 컴프리헨션입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339141Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "AST",
+      "source_hash": 2898004629751195084,
+      "context_hash": 1108373441962404863,
+      "translation": "AST",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339141Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Four new expression nodes are added: ``FrozenSet(elts)``, ``FrozenDict(keys, values)``, ``FrozenSetComp(elt, generators)``, and ``FrozenDictComp(key, value, generators)``, structurally identical to their mutable counterparts.",
+      "source_hash": 11688692142140027301,
+      "context_hash": 17522627434215109685,
+      "translation": "네 개의 새로운 표현식 노드가 추가됩니다: ``FrozenSet(elts)``, ``FrozenDict(keys, values)``, ``FrozenSetComp(elt, generators)``, ``FrozenDictComp(key, value, generators)``\\ 이며, 구조적으로 해당 가변 대응 노드와 동일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339141Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "Distinct nodes (rather than a flag) let every downstream consumer (e.g. the symbol table, the AST optimizer, the code generator, and third-party tools) dispatch on immutability directly.",
+      "source_hash": 4018721249864129147,
+      "context_hash": 5682281992356039302,
+      "translation": "서로 구별되는 노드는 플래그를 사용하는 대신 모든 후속 소비자(예: 심볼 테이블, AST 최적화기, 코드 제너레이터 및 서드파티 도구)가 불변성에 따라 직접 디스패치하도록 합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T20:01:06.234254Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Semantics",
+      "source_hash": 5247952156600537200,
+      "context_hash": 7614080849104744514,
+      "translation": "의미론",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339143Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "A frozenset display evaluates to exactly what ``frozenset({...})`` returns.",
+      "source_hash": 2007396915207762839,
+      "context_hash": 6066334913779508891,
+      "translation": "frozenset 디스플레이는 ``frozenset({...})``\\ 이 반환하는 것과 정확히 동일하게 평가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339143Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "A frozendict display evaluates to exactly what ``frozendict({...})`` returns.",
+      "source_hash": 15752297486145793824,
+      "context_hash": 9572130055087569394,
+      "translation": "frozendict 디스플레이는 ``frozendict({...})``\\ 이 반환하는 것과 정확히 동일하게 평가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339144Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "Both result types are immutable and hashable, which is what makes the compile-time treatment below sound.",
+      "source_hash": 9216264333574165096,
+      "context_hash": 4989197245534536840,
+      "translation": "두 결과 유형 모두 불변이고 해시 가능하므로, 아래의 컴파일 시점 처리가 타당해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339144Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Bytecode",
+      "source_hash": 8289810777463243924,
+      "context_hash": 16013234584693169198,
+      "translation": "바이트코드",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:32:42.339144Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Two new instructions are added:",
+      "source_hash": 17109475478060926089,
+      "context_hash": 13393556491495492029,
+      "translation": "두 개의 새로운 명령어가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339145Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "``BUILD_FROZENSET (count)`` works like ``BUILD_SET``, but the freshly created, uniquely referenced set is frozen in place with no copy.",
+      "source_hash": 4473728889247696772,
+      "context_hash": 17265639303067282025,
+      "translation": "``BUILD_FROZENSET (count)``\\ 는 ``BUILD_SET``\\ 처럼 작동하지만, 새로 생성되어 유일하게 참조되는 집합을 복사 없이 제자리에서 동결합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339145Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "``BUILD_FROZENMAP (count)`` works like ``BUILD_MAP``, but creates a ``frozendict``.",
+      "source_hash": 13975602001365204286,
+      "context_hash": 14796692376539388414,
+      "translation": "``BUILD_FROZENMAP (count)``\\ 은 ``BUILD_MAP``\\ 처럼 작동하지만 ``frozendict``\\ 를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339145Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "``count`` is an ordinary oparg with the same format and meaning as in the existing ``BUILD_SET`` and ``BUILD_MAP`` instructions.",
+      "source_hash": 196087450612454660,
+      "context_hash": 2196205077143224241,
+      "translation": "``count``\\ 는 기존 ``BUILD_SET`` 및 ``BUILD_MAP`` 명령어와 동일한 형식과 의미를 갖는 일반적인 oparg입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339146Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "Displays that use star-unpacking or exceed the stack-use guideline fall back to building the mutable container and freezing it in place.",
+      "source_hash": 13847858178276744194,
+      "context_hash": 13833061356769976102,
+      "translation": "별표 언패킹을 사용하거나 스택 사용 지침을 초과하는 디스플레이는 가변 컨테이너를 생성한 다음 제자리에서 동결하는 방식으로 대체됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339146Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:1",
+      "source": "The result is indistinguishable.",
+      "source_hash": 17231762312718319245,
+      "context_hash": 11172571933289662125,
+      "translation": "결과는 구별할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339146Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:2",
+      "source": "Comprehensions take the same path, so they need no new opcodes.",
+      "source_hash": 16494696732030314321,
+      "context_hash": 14481747488303281573,
+      "translation": "컴프리헨션도 동일한 경로를 따르므로 새로운 opcode가 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339146Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "The optimization pipeline",
+      "source_hash": 13584595977453309759,
+      "context_hash": 16369487724751723025,
+      "translation": "최적화 파이프라인",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339146Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "The central claim of this PEP is that frozen displays are not merely convenient syntax: they give every stage of the compiler a guarantee it can act on.",
+      "source_hash": 958641462781188009,
+      "context_hash": 1661348046736552185,
+      "translation": "이 PEP의 핵심 주장은 동결된 디스플레이가 단순히 편리한 구문에 그치지 않는다는 것입니다. 동결된 디스플레이는 컴파일러의 모든 단계가 활용할 수 있는 보장을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:42.339147Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "The reference implementation already exercises the full pipeline:",
+      "source_hash": 6449952948693213572,
+      "context_hash": 4960155368677026656,
+      "translation": "참조 구현은 이미 전체 파이프라인을 실행합니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T19:32:42.339147Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "**AST preprocessing.** ``FrozenSet`` and ``FrozenDict`` participate in AST-level constant folding of their elements.",
+      "source_hash": 8844224445455731028,
+      "context_hash": 4618849030355917264,
+      "translation": "**AST 전처리.** ``FrozenSet``\\ 와 ``FrozenDict``\\ 는 요소의 AST 수준 상수 폴딩에 참여합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276803Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "**Code generation.** The common case compiles to a single ``BUILD_FROZENSET`` / ``BUILD_FROZENDICT`` instruction with no name lookup, no temporary copy, and an exact, statically known result type (used by the compiler's type inference, e.g. to reject ``f{1, 2}[0]`` at compile time).",
+      "source_hash": 12916821422438086231,
+      "context_hash": 13529398140880069289,
+      "translation": "**코드 생성.** 일반적인 경우에는 이름 조회, 임시 복사 없이 단일 ``BUILD_FROZENSET`` / ``BUILD_FROZENDICT`` 명령어로 컴파일되며, 정적으로 정확히 알려진 결과 타입을 사용합니다(예를 들어 컴파일러의 타입 추론에서 컴파일 시점에 ``f{1, 2}[0]``\\ 를 거부하는 데 사용합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276806Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "**Control flow graph (CFG) constant folding.** A display whose keys and values are all constants is folded into a single ``LOAD_CONST``, serialized into the ``.pyc`` by marshal, and shared across all executions: zero per-execution construction cost.",
+      "source_hash": 14014875737524738824,
+      "context_hash": 8274368580453253634,
+      "translation": "**제어 흐름 그래프(CFG) 상수 폴딩.** 키와 값이 모두 상수인 디스플레이는 하나의 ``LOAD_CONST``\\ 로 폴딩되고, marshal에 의해 ``.pyc``\\ 에 직렬화되며, 모든 실행에서 공유됩니다. 따라서 실행마다 구성하는 비용이 전혀 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276807Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:1",
+      "source": "Unlike the existing list/set folds, this is *unconditionally* valid, since immutability comes from the language semantics, not from how the value is used.",
+      "source_hash": 564887707753518825,
+      "context_hash": 16165742900794965580,
+      "translation": "기존 리스트/세트 폴딩과 달리 이는 *무조건적으로* 유효합니다. 불변성은 값이 사용되는 방식이 아니라 언어 의미론에서 비롯되기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276807Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:2",
+      "source": "A display with a non-constant element, e.g. ``f{'key': ['list']}``, is still built at runtime.",
+      "source_hash": 10137222911704675433,
+      "context_hash": 17009122132073842194,
+      "translation": "예를 들어 ``f{'key': ['list']}``\\ 와 같이 상수가 아닌 요소가 있는 디스플레이는 런타임에 계속 구성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276807Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "**Constant deduplication.** Frozen constants participate in ``co_consts`` deduplication.",
+      "source_hash": 801427579575759312,
+      "context_hash": 17771141547310257684,
+      "translation": "**상수 중복 제거.** 동결된 상수는 ``co_consts`` 중복 제거에 참여합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276807Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:1",
+      "source": "For a frozendict the deduplication key keeps the insertion order, so a display never loses its iteration order to an equal display with a different key order.",
+      "source_hash": 13690236901594317574,
+      "context_hash": 15465123437782389395,
+      "translation": "frozendict의 경우 중복 제거 키가 삽입 순서를 유지하므로, 디스플레이가 키 순서가 다른 동일한 디스플레이 때문에 자신의 순회 순서를 잃는 일은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276808Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "This PEP deliberately makes no claims about JIT-level optimization: the JIT project is currently on hold following the `Steering Council's announcement <https://discuss.python.org/t/an-announcement-from-the-steering-council-regarding-the-jit-project/107638>`__.",
+      "source_hash": 4376971488821383797,
+      "context_hash": 4981021182306235061,
+      "translation": "이 PEP는 JIT 수준의 최적화에 대해 의도적으로 어떠한 주장도 하지 않습니다. JIT 프로젝트는 `Steering Council's announcement <https://discuss.python.org/t/an-announcement-from-the-steering-council-regarding-the-jit-project/107638>`__\\ 에 따라 현재 중단된 상태입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276808Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "The pipeline also opens future work that mutable displays can never support: sharing folded frozen constants across code objects and immortalizing them under free threading.",
+      "source_hash": 789093401905171777,
+      "context_hash": 8305795674215501534,
+      "translation": "또한 이 파이프라인은 변경 가능한 디스플레이가 지원할 수 없는 향후 작업을 가능하게 합니다. 코드 객체 간에 폴딩된 동결 상수를 공유하고 자유 스레딩 환경에서 이를 불멸화하는 작업입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276808Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 10324002123222013835,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276809Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "``f{`` is a syntax error today, so no existing code changes meaning.",
+      "source_hash": 3107126120087007016,
+      "context_hash": 123002045383210216,
+      "translation": "``f{``\\ 는 현재 구문 오류이므로 기존 코드의 의미는 변경되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276809Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "The changes visible to tooling are: a new ``FLBRACE`` token, four new AST node types, two new opcodes, and a bytecode magic number bump.",
+      "source_hash": 15459715919909078170,
+      "context_hash": 10029440252244228680,
+      "translation": "도구에서 확인할 수 있는 변경 사항은 새로운 ``FLBRACE`` 토큰, 네 가지 새로운 AST 노드 유형, 두 가지 새로운 옵코드 및 바이트코드 매직 넘버 증가입니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:32:58.276809Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 7535727443301473278,
+      "translation": "이 내용을 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276810Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "\"Prefix a set or dict display with ``f`` to make it frozen\".",
+      "source_hash": 16193207861573471549,
+      "context_hash": 12257304186344800227,
+      "translation": "\"세트 또는 딕셔너리 디스플레이 앞에 ``f``\\ 를 접두사로 붙여 동결된 것으로 만듭니다\".",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276810Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "Style guidance: prefer ``f{...}`` over ``frozenset({...})`` for literal values on Python 3.16+.",
+      "source_hash": 15536194879093360746,
+      "context_hash": 11140799554815312083,
+      "translation": "스타일 지침: Python 3.16 이상에서 리터럴 값에는 ``frozenset({...})``\\ 보다 ``f{...}``\\ 를 선호하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276811Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:2",
+      "source": "Constant frozen displays are free after the first execution.",
+      "source_hash": 61811054597779718,
+      "context_hash": 17863425888131331240,
+      "translation": "상수 동결 디스플레이는 첫 번째 실행 이후 비용이 들지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276811Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Impact on the Standard Library",
+      "source_hash": 1707619306020123734,
+      "context_hash": 3116407273623017382,
+      "translation": "표준 라이브러리에 미치는 영향",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:32:58.276811Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "A quick survey of the standard library (excluding tests) finds about 105 ``frozenset(...)`` and 65 ``frozendict(...)`` call sites, of which about 46 and 22 respectively pass a literal display and could be written as ``f{...}``.",
+      "source_hash": 13922421779014163315,
+      "context_hash": 4020852248773816336,
+      "translation": "표준 라이브러리를 간단히 조사한 결과(테스트 제외), 약 105개의 ``frozenset(...)`` 및 65개의 ``frozendict(...)`` 호출 지점이 발견되었으며, 이 중 각각 약 46개와 22개는 리터럴 디스플레이를 전달하므로 ``f{...}``\\ 로 작성할 수 있습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:32:58.276812Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "They spread across widely used modules such as ``typing``, ``dataclasses``, ``functools``, ``copy``, and ``traceback``.",
+      "source_hash": 7645421221070583937,
+      "context_hash": 1322667773774167105,
+      "translation": "이러한 호출 지점은 ``typing``, ``dataclasses``, ``functools``, ``copy`` 및 ``traceback``\\ 과 같이 널리 사용되는 모듈 전반에 분포합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276812Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "These numbers are only an estimate of the potential effect.",
+      "source_hash": 17442281793179585837,
+      "context_hash": 12118584371916308363,
+      "translation": "이 수치는 잠재적 영향에 대한 추정치일 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276813Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:1",
+      "source": "This PEP does not propose a mechanical rewrite of the standard library.",
+      "source_hash": 15212773636582774990,
+      "context_hash": 15638106844279717605,
+      "translation": "이 PEP는 표준 라이브러리의 기계적 재작성을 제안하지 않습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:32:58.276813Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 15762444152968353965,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T19:32:58.276814Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "A complete implementation, including the parser, AST, code generator, and CFG constant folding, is available in the `fset_fdict branch <https://github.com/corona10/cpython/tree/fset_fdict>`__ of the author's CPython fork.",
+      "source_hash": 7114056776674986896,
+      "context_hash": 683053942396023572,
+      "translation": "파서, AST, 코드 제너레이터 및 CFG 상수 폴딩을 포함한 완전한 구현은 저자의 CPython 포크에 있는 `fset_fdict branch <https://github.com/corona10/cpython/tree/fset_fdict>`__\\ 에서 사용할 수 있습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T20:01:06.234257Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 2274132513722298884,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276815Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Alternative spellings",
+      "source_hash": 3311818178596504074,
+      "context_hash": 7122326995099549834,
+      "translation": "대체 표기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276815Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "Many spellings were considered. ``f`` was chosen simply because it is the prefix that best evokes *frozen*:",
+      "source_hash": 13315086519014368151,
+      "context_hash": 8568371692364435220,
+      "translation": "많은 표기가 고려되었습니다. ``f``\\ 는 *frozen*\\ 을 가장 잘 연상시키는 접두사이기 때문에 단순히 선택되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276815Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "Single letter prefixes: ``i{'key': 1}`` (immutable), ``z{'key': 1}``.",
+      "source_hash": 10081437592431872893,
+      "context_hash": 12256498158847361627,
+      "translation": "한 글자 접두사: ``i{'key': 1}``\\ (불변), ``z{'key': 1}``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276816Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:1",
+      "source": "This was rejected because types are called ``frozen``, ``f`` as a prefix reads the best.",
+      "source_hash": 1649847121344067088,
+      "context_hash": 2925134660719994471,
+      "translation": "형식이 ``frozen``\\ 이라고 불리기 때문에 이는 거부되었으며, 접두사로는 ``f``\\ 가 가장 잘 읽힙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:01:06.234258Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "Multi letter prefixes: ``fr{'key': 1}``, ``fz{'key': 1}``, ``frz{'key': 1}``.",
+      "source_hash": 7052928605476122447,
+      "context_hash": 1891454379861282596,
+      "translation": "여러 글자 접두사: ``fr{'key': 1}``, ``fz{'key': 1}``, ``frz{'key': 1}``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276816Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:1",
+      "source": "This was rejected because it just adds an extra letter to write and read with no extra real value.",
+      "source_hash": 4653274534949907171,
+      "context_hash": 4015150806923940499,
+      "translation": "이는 실제로 추가되는 가치 없이 작성하고 읽을 글자만 하나 더 늘리기 때문에 거부했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:32:58.276817Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:0",
+      "source": "Symbol prefixes: ``${'key': 1}``, ``+{'key': 1}``.",
+      "source_hash": 10971787288706910571,
+      "context_hash": 1603674184125339385,
+      "translation": "기호 접두사: ``${'key': 1}``, ``+{'key': 1}``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339039Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:1",
+      "source": "This was rejected because most symbols already have a meaning as operators.",
+      "source_hash": 323610110798305690,
+      "context_hash": 7346374695841238845,
+      "translation": "대부분의 기호가 이미 연산자로서 의미를 가지기 때문에 이는 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339043Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:2",
+      "source": "We can't reuse them for this new purpose.",
+      "source_hash": 13358455141215700893,
+      "context_hash": 7356886663067811311,
+      "translation": "이러한 기호를 이 새로운 용도로 재사용할 수는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339044Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:3",
+      "source": "We also don't want to add new symbols like ``$`` to keep them for something else in the future.",
+      "source_hash": 6829166000265735275,
+      "context_hash": 6188479536570405189,
+      "translation": "향후 다른 용도로 사용하기 위해 ``$`` 같은 새 기호를 추가하고 싶지도 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339044Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:0",
+      "source": "Bracket variants: ``{{'key': 1}}``, ``|{'key': 1}|``, ``{|'key': 1|}``.",
+      "source_hash": 7323353137602274151,
+      "context_hash": 8764233337373357742,
+      "translation": "괄호 변형: ``{{'key': 1}}``, ``|{'key': 1}|``, ``{|'key': 1|}``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339044Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:1",
+      "source": "This was rejected because adding a single token ``f{`` is easier than adding two tokens.",
+      "source_hash": 12525008378448296689,
+      "context_hash": 8643261526726877451,
+      "translation": "단일 토큰 ``f{``\\ 를 추가하는 것이 토큰 두 개를 추가하는 것보다 쉽기 때문에 이는 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339046Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:2",
+      "source": "Writing ``f{`` is also easier than writing two different brackets. ``{{}}`` is rejected because it is a valid syntax right now.",
+      "source_hash": 6919318782318583377,
+      "context_hash": 14321488060291222587,
+      "translation": "``f{``\\ 를 작성하는 것도 서로 다른 두 괄호를 작성하는 것보다 쉽습니다. ``{{}}``\\ 는 현재 유효한 구문이므로 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339046Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:6/seg:0",
+      "source": "Word prefixes: ``frozen{'key': 1}``, ``fdict{'key': 1}``, ``frozendict {'key': 1}``.",
+      "source_hash": 9015711644373740640,
+      "context_hash": 9068167653827968785,
+      "translation": "단어 접두사: ``frozen{'key': 1}``, ``fdict{'key': 1}``, ``frozendict {'key': 1}``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339047Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:6/seg:1",
+      "source": "This was rejected because it is rather verbose.",
+      "source_hash": 10611354448731660824,
+      "context_hash": 11959733351838931657,
+      "translation": "상당히 장황하기 때문에 이는 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339047Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:7/seg:0",
+      "source": "We also rejected using ``F{`` as it is possible with fstrings.",
+      "source_hash": 13689674303069162173,
+      "context_hash": 2504314060871586190,
+      "translation": "f-string에서는 가능하므로 ``F{``\\ 를 사용하는 것도 거부했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339048Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:7/seg:1",
+      "source": "This was rejected to keep the syntax as minimalistic as possible and not to create extra ``F{`` token.",
+      "source_hash": 11699217652511739981,
+      "context_hash": 6813851823971690734,
+      "translation": "구문을 가능한 한 간결하게 유지하고 추가적인 ``F{`` 토큰을 만들지 않기 위해 이는 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339048Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Freezing methods",
+      "source_hash": 10149873199202799323,
+      "context_hash": 8754286015076944155,
+      "translation": "동결 메서드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339048Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Methods such as ``{'key': 1}.freeze()`` or ``{'key': 1}.take_frozendict()`` are not real alternatives: they can be added independently of this PEP.",
+      "source_hash": 14304215087082513429,
+      "context_hash": 12203499106974643757,
+      "translation": "``{'key': 1}.freeze()`` 또는 ``{'key': 1}.take_frozendict()``\\ 와 같은 메서드는 진정한 대안이 아닙니다. 이러한 메서드는 이 PEP와 독립적으로 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339049Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "While such methods can be a great feature on its own, making this the only way to create immutable containers is not an option:",
+      "source_hash": 2907416386622862783,
+      "context_hash": 6539352135242994980,
+      "translation": "이러한 메서드는 그 자체로 훌륭한 기능이 될 수 있지만, 이것을 불변 컨테이너를 만드는 유일한 방법으로 제한하는 것은 선택지가 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339049Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "Multiline expressions with such methods are really hard to read, because you need to read the very last line to know the type of the object.",
+      "source_hash": 13563156884790202655,
+      "context_hash": 4055090275232830050,
+      "translation": "이러한 메서드를 사용하는 여러 줄 표현식은 객체의 타입을 알기 위해 맨 마지막 줄까지 읽어야 하므로 읽기가 매우 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339049Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "It is quite verbose to write for common cases.",
+      "source_hash": 5449817162980282303,
+      "context_hash": 4104220704300444336,
+      "translation": "일반적인 경우에 작성하기에는 상당히 장황합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339050Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "It does not provide syntax guarantees for static analysis tools.",
+      "source_hash": 12042174162161430739,
+      "context_hash": 1154982823875652668,
+      "translation": "정적 분석 도구에 대한 구문 보장을 제공하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339050Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:0",
+      "source": "It may have a different semantics when used as ``a = {1: 2}; b(a.take_frozenset())``, depending on `how the internals would look like <https://github.com/capi-workgroup/decisions/issues/109>`_, it might mean that ``a`` would be cleared.",
+      "source_hash": 15995870834459843891,
+      "context_hash": 13707009046359979404,
+      "translation": "``a = {1: 2}; b(a.take_frozenset())``\\ 로 사용할 때 `how the internals would look like <https://github.com/capi-workgroup/decisions/issues/109>`_ 에 따라 의미가 달라질 수 있으며, ``a``\\ 가 비워진다는 의미일 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:24:07.339050Z",
+      "issues": []
+    }
+  ]
+}

@@ -25,11 +25,23 @@ impl TranslationEvaluator for FormatEvaluator {
         // Markdown-style inline markup), so applying these checks there rejects
         // valid TeX quotations such as ``term'' and mathematical `*` tokens.
         if context.markup != Markup::Latex {
+            let source_code_runs = mark_runs(&context.source, '`')
+                - if context.markup == Markup::Rst {
+                    rst_reference_runs(&context.source)
+                } else {
+                    0
+                };
+            let translation_code_runs = mark_runs(&context.translation, '`')
+                - if context.markup == Markup::Rst {
+                    rst_reference_runs(&context.translation)
+                } else {
+                    0
+                };
             let checks = [
                 (
                     "Inline code markers (`)",
-                    mark_runs(&context.source, '`'),
-                    mark_runs(&context.translation, '`'),
+                    source_code_runs,
+                    translation_code_runs,
                 ),
                 (
                     "Emphasis marker runs",
@@ -117,6 +129,18 @@ impl TranslationEvaluator for FormatEvaluator {
         // there is no doubled form to escape to — the way out is a
         // backslash-escaped space, which renders as nothing.
         if context.markup == Markup::Rst {
+            let malformed_roles = rst_malformed_role_closures(&context.translation);
+            if !malformed_roles.is_empty() {
+                issues.push(EvaluationIssue {
+                    severity: IssueSeverity::Error,
+                    kind: IssueKind::FormatLost,
+                    message: format!(
+                        "{} has an extra backtick after an RST role. Preserve the role as, for example, :pep:`649`.",
+                        malformed_roles.join(", "),
+                    ),
+                });
+            }
+
             let broken = rst_broken_pairs(&context.translation);
             if !broken.is_empty() && rst_broken_pairs(&context.source).is_empty() {
                 let shown: Vec<&str> = broken.iter().map(String::as_str).collect();
@@ -130,6 +154,23 @@ impl TranslationEvaluator for FormatEvaluator {
                          marker with a backslash-escaped space, which renders as \
                          nothing: ``heap``\\ 에, **bold**\\ 를, 실행\\ **될**.",
                         shown.join(", "),
+                    ),
+                });
+            }
+
+            let broken = rst_broken_bracket_references(&context.translation);
+            if !broken.is_empty()
+                && rst_broken_bracket_references(&context.source).is_empty()
+            {
+                issues.push(EvaluationIssue {
+                    severity: IssueSeverity::Error,
+                    kind: IssueKind::FormatLost,
+                    message: format!(
+                        "{} is not recognized as a footnote or citation reference: \
+                         reStructuredText requires whitespace or punctuation after the \
+                         trailing underscore. Separate a Korean particle with a \
+                         backslash-escaped space, which renders as nothing: [2]_\\ 에.",
+                        broken.join(", "),
                     ),
                 });
             }
@@ -893,6 +934,7 @@ fn pair_up(chars: &[char], mark: char) -> Pairing {
 /// marker, so the rule applies after the underscores.
 fn rst_broken_pairs(text: &str) -> Vec<String> {
     let chars = chars(text);
+    let backtick_mask = rst_backtick_mask(&chars);
     let run_len = |at: usize, mark: char| chars[at..].iter().take_while(|c| **c == mark).count();
     let mut found = Vec::new();
 
@@ -901,7 +943,7 @@ fn rst_broken_pairs(text: &str) -> Vec<String> {
         let mut open: Option<(usize, usize)> = None;
         let mut i = 0;
         while i < chars.len() {
-            if chars[i] != mark {
+            if chars[i] != mark || (mark == '*' && backtick_mask[i]) {
                 i += 1;
                 continue;
             }
@@ -959,6 +1001,273 @@ fn rst_broken_pairs(text: &str) -> Vec<String> {
     found
 }
 
+fn rst_backtick_mask(chars: &[char]) -> Vec<bool> {
+    let mut mask = vec![false; chars.len()];
+    let mut at = 0usize;
+    while at < chars.len() {
+        if chars[at] != '`' {
+            at += 1;
+            continue;
+        }
+        let run = chars[at..].iter().take_while(|ch| **ch == '`').count();
+        let mut scan = at + run;
+        let close = loop {
+            let Some(offset) = chars[scan..].iter().position(|ch| *ch == '`') else {
+                break None;
+            };
+            let candidate = scan + offset;
+            let candidate_run = chars[candidate..]
+                .iter()
+                .take_while(|ch| **ch == '`')
+                .count();
+            if candidate_run == run {
+                break Some(candidate + run);
+            }
+            scan = candidate + candidate_run;
+        };
+        let Some(end) = close else {
+            at += run;
+            continue;
+        };
+        mask[at..end].fill(true);
+        at = end;
+    }
+    mask
+}
+
+/// Footnote and citation references whose trailing underscore touches a word.
+///
+/// A Korean particle naturally produces ``[2]_에서`` or ``[RFC]_는``. As with
+/// other RST inline markup, the adjacent word character prevents docutils from
+/// recognizing the reference. A backslash-escaped space keeps the source valid
+/// without adding visible whitespace: ``[2]_\ 에서``.
+fn rst_broken_bracket_references(text: &str) -> Vec<String> {
+    let chars = chars(text);
+    let mut found = Vec::new();
+    let mut at = 0usize;
+
+    while at < chars.len() {
+        if chars[at] != '[' {
+            at += 1;
+            continue;
+        }
+        let Some(close_offset) = chars[at + 1..]
+            .iter()
+            .position(|ch| *ch == ']' || *ch == '\n')
+        else {
+            break;
+        };
+        let close = at + 1 + close_offset;
+        if chars[close] == '\n' {
+            at = close + 1;
+            continue;
+        }
+        let underscore = close + 1;
+        let after = underscore + 1;
+        if chars.get(underscore) == Some(&'_') {
+            if at > 0 && is_word(chars[at - 1]) {
+                found.push(chars[at - 1..=underscore].iter().collect());
+            }
+            if chars
+                .get(after)
+                .is_some_and(|ch| is_word(*ch) || matches!(ch, '(' | '[' | '{' | '<'))
+            {
+                found.push(chars[at..=after].iter().collect());
+            }
+        }
+        at = close + 1;
+    }
+    found
+}
+
+fn rst_malformed_role_closures(text: &str) -> Vec<String> {
+    let chars = chars(text);
+    let mut found = Vec::new();
+    let mut at = 0usize;
+    while at < chars.len() {
+        if chars[at] != ':' {
+            at += 1;
+            continue;
+        }
+        let Some(open_offset) = chars[at + 1..]
+            .iter()
+            .position(|ch| *ch == '`' || ch.is_whitespace())
+        else {
+            break;
+        };
+        let open = at + 1 + open_offset;
+        if chars[open] != '`' || chars.get(open.wrapping_sub(1)) != Some(&':') {
+            at = open + 1;
+            continue;
+        }
+        let Some(close_offset) = chars[open + 1..].iter().position(|ch| *ch == '`') else {
+            break;
+        };
+        let close = open + 1 + close_offset;
+        if chars.get(close + 1) == Some(&'`') {
+            found.push(chars[at..=close + 1].iter().collect());
+        }
+        at = close + 1;
+    }
+    found
+}
+
+/// Insert invisible RST boundaries where Korean particles touch inline markup.
+///
+/// This is a deterministic typography repair, not a translation decision. It
+/// runs before evaluation so a model does not spend retries rediscovering the
+/// same ``\\ `` escape for every literal, role, emphasis span, footnote, and
+/// citation. If the source segment itself looks structurally incomplete (for
+/// example because a literal spans two parser segments), that class of repair
+/// is skipped rather than guessing at a segment boundary.
+pub(crate) fn repair_rst_boundaries(source: &str, translation: &str) -> String {
+    let repaired_line_start;
+    let translation = if line_start_construct(source).is_none()
+        && matches!(
+            line_start_construct(translation),
+            Some("an attribute entry (`:name:`)") | Some("a block title (`.`)")
+        )
+    {
+        let trimmed = translation.trim_start();
+        let indent_len = translation.len() - trimmed.len();
+        repaired_line_start = format!(
+            "{}관련 {trimmed}",
+            &translation[..indent_len]
+        );
+        repaired_line_start.as_str()
+    } else {
+        translation
+    };
+
+    let chars = chars(translation);
+    let backtick_mask = rst_backtick_mask(&chars);
+    let mut insertions = std::collections::BTreeSet::new();
+    let mut spaces = std::collections::BTreeSet::new();
+
+    for token in source.split_whitespace() {
+        let url = token
+            .trim_start_matches(['(', '[', '{', '<', '\'', '"'])
+            .trim_end_matches(['.', ',', ';', ':', ')', ']', '}', '>', '\'', '"']);
+        if !url.starts_with("http://") && !url.starts_with("https://") {
+            continue;
+        }
+        for (byte_at, _) in translation.match_indices(url) {
+            let byte_end = byte_at + url.len();
+            if translation[byte_end..]
+                .chars()
+                .next()
+                .is_some_and(is_word)
+            {
+                insertions.insert(translation[..byte_end].chars().count());
+            }
+        }
+    }
+
+    if rst_broken_bracket_references(source).is_empty() {
+        let mut at = 0usize;
+        while at < chars.len() {
+            if chars[at] != '[' {
+                at += 1;
+                continue;
+            }
+            let Some(close_offset) = chars[at + 1..]
+                .iter()
+                .position(|ch| *ch == ']' || *ch == '\n')
+            else {
+                break;
+            };
+            let close = at + 1 + close_offset;
+            if chars[close] == '\n' {
+                at = close + 1;
+                continue;
+            }
+            let underscore = close + 1;
+            let after = underscore + 1;
+            if chars.get(underscore) == Some(&'_') {
+                if at > 0 && is_word(chars[at - 1]) {
+                    spaces.insert(at);
+                }
+                if chars
+                    .get(after)
+                    .is_some_and(|ch| is_word(*ch) || matches!(ch, '(' | '[' | '{' | '<'))
+                {
+                    insertions.insert(after);
+                }
+            }
+            at = close + 1;
+        }
+    }
+
+    if rst_broken_pairs(source).is_empty() {
+        let run_len = |at: usize, mark: char| chars[at..].iter().take_while(|c| **c == mark).count();
+        for mark in ['`', '*'] {
+            let mut open: Option<(usize, usize)> = None;
+            let mut at = 0usize;
+            while at < chars.len() {
+                if chars[at] != mark || (mark == '*' && backtick_mask[at]) {
+                    at += 1;
+                    continue;
+                }
+                let len = run_len(at, mark);
+                match open {
+                    None => {
+                        if !chars.get(at + len).is_some_and(|ch| !ch.is_whitespace()) {
+                            at += len;
+                            continue;
+                        }
+                        let blocked = at > 0 && is_word(chars[at - 1]);
+                        if !blocked {
+                            open = Some((at, len));
+                        } else if chars[at + len..].contains(&mark) {
+                            insertions.insert(at);
+                            open = Some((at, len));
+                        }
+                        at += len;
+                    }
+                    Some((_, open_len)) => {
+                        if len != open_len || chars[at - 1].is_whitespace() {
+                            at += len;
+                            continue;
+                        }
+                        let mut end = at + len;
+                        if mark == '`' {
+                            while chars.get(end).is_some_and(|ch| *ch == '_') {
+                                end += 1;
+                            }
+                        }
+                        if chars
+                            .get(end)
+                            .is_some_and(|ch| is_word(*ch) || matches!(ch, '(' | '[' | '{' | '<'))
+                        {
+                            insertions.insert(end);
+                        }
+                        open = None;
+                        at += len;
+                    }
+                }
+            }
+        }
+    }
+
+    if insertions.is_empty() && spaces.is_empty() {
+        return translation.to_string();
+    }
+    let mut repaired = String::with_capacity(
+        translation.len() + insertions.len() * 2 + spaces.len(),
+    );
+    for boundary in 0..=chars.len() {
+        if spaces.contains(&boundary) {
+            repaired.push(' ');
+        } else if insertions.contains(&boundary) {
+            repaired.push_str("\\ ");
+        }
+        if let Some(ch) = chars.get(boundary) {
+            repaired.push(*ch);
+        }
+    }
+    repaired
+}
+
 /// The block construct `text` would open if it sat at the start of a line, or
 /// `None` for ordinary prose.
 ///
@@ -996,11 +1305,51 @@ fn line_start_construct(text: &str) -> Option<&'static str> {
         '[' if text.ends_with(']') => Some("an attribute line (`[...]`)"),
         ':' => {
             let end = rest.find(':')?;
-            (end > 0 && !rest[..end].contains(char::is_whitespace))
-                .then_some("an attribute entry (`:name:`)")
+            (end > 0).then_some("an attribute entry (`:name:`)")
         }
         _ => None,
     }
+}
+
+/// Backtick runs used by an RST named reference are hyperlink syntax, not
+/// inline code markers. This covers both `label`_ and a translated visible
+/// label written as `번역 <label_>`_.
+fn rst_reference_runs(text: &str) -> usize {
+    let chars = chars(text);
+    let mut runs = 0;
+    let mut at = 0;
+    while at < chars.len() {
+        if chars[at] != '`'
+            || chars.get(at.wrapping_sub(1)) == Some(&'`')
+            || chars.get(at + 1) == Some(&'`')
+        {
+            at += 1;
+            continue;
+        }
+        let mut scan = at + 1;
+        let mut close = None;
+        while scan < chars.len() {
+            if chars[scan] != '`' {
+                scan += 1;
+                continue;
+            }
+            let run = chars[scan..].iter().take_while(|ch| **ch == '`').count();
+            if run > 1 {
+                scan += run;
+                continue;
+            }
+            if chars.get(scan + 1) == Some(&'_') {
+                close = Some(scan);
+            }
+            scan += 1;
+            break;
+        }
+        if close.is_some() {
+            runs += 2;
+        }
+        at = scan;
+    }
+    runs
 }
 
 #[cfg(test)]
@@ -1089,6 +1438,10 @@ mod tests {
             line_start_construct(":toc: left"),
             Some("an attribute entry (`:name:`)")
         );
+        assert_eq!(
+            line_start_construct(":Contact person:"),
+            Some("an attribute entry (`:name:`)")
+        );
         assert_eq!(line_start_construct("// note"), Some("a comment (`//`)"));
         assert_eq!(line_start_construct("보통 문장입니다."), None);
         assert_eq!(line_start_construct("3.14 입니다."), None);
@@ -1153,6 +1506,7 @@ mod tests {
         );
         let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
         assert!(result.passed, "{:?}", result.issues);
+
     }
 
     #[tokio::test]
@@ -1164,6 +1518,7 @@ mod tests {
         );
         let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
         assert!(result.passed, "{:?}", result.issues);
+
     }
 
     #[test]
@@ -1312,6 +1667,7 @@ mod tests {
         );
         let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
         assert!(result.passed, "{:?}", result.issues);
+
     }
 
     /// A mark with a word against its left opens nothing, so this emphasis is
@@ -1424,6 +1780,146 @@ mod tests {
         assert!(rst_broken_pairs("`PyPy website`_\\ 를 참고하십시오").is_empty());
     }
 
+    #[tokio::test]
+    async fn rst_footnote_reference_requires_a_boundary_before_a_particle() {
+        let ctx = context_in(
+            Markup::Rst,
+            "Follow the procedure [2]_ carefully.",
+            "절차 [2]_에서 설명한 대로 주의해서 진행합니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed, "{:?}", result.issues);
+        assert!(
+            result
+                .issues
+                .iter()
+                .any(|issue| issue.message.contains("[2]_에")),
+            "{:?}",
+            result.issues
+        );
+    }
+
+    #[tokio::test]
+    async fn rst_footnote_reference_requires_a_boundary_after_the_previous_word() {
+        let ctx = context_in(
+            Markup::Rst,
+            "Discussed by Hye-Shik Chang [1]_.",
+            "Hye-Shik Chang[1]_\\ 에 의해 논의되었습니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn rst_footnote_reference_accepts_a_backslash_escaped_space() {
+        let ctx = context_in(
+            Markup::Rst,
+            "Follow the procedure [2]_ carefully.",
+            "절차 [2]_\\ 에서 설명한 대로 주의해서 진행합니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[test]
+    fn rst_boundary_repair_handles_particles_on_inline_constructs() {
+        assert_eq!(
+            repair_rst_boundaries(
+                "See ``heap``, *meaning*, :pep:`310`, and [2]_ for details.",
+                "``heap``에, *의미*를, :pep:`310`뿐 아니라 Chang[2]_에서도 확인합니다.",
+            ),
+            "``heap``\\ 에, *의미*\\ 를, :pep:`310`\\ 뿐 아니라 Chang [2]_\\ 에서도 확인합니다."
+        );
+        assert_eq!(
+            repair_rst_boundaries("can execute independently", "실행**될 수 있는** 작업"),
+            "실행\\ **될 수 있는** 작업"
+        );
+        assert_eq!(
+            repair_rst_boundaries(
+                "The ``**kwargs: Unpack[K]`` allows *inferring* a TypedDict.",
+                "``**kwargs: Unpack[K]``\\ 는 TypedDict를 *추론*할 수 있게 합니다.",
+            ),
+            "``**kwargs: Unpack[K]``\\ 는 TypedDict를 *추론*\\ 할 수 있게 합니다."
+        );
+    }
+
+    #[test]
+    fn rst_boundary_repair_keeps_roles_and_dot_names_out_of_column_zero() {
+        assert_eq!(
+            repair_rst_boundaries(
+                "As explained in :pep:`252`, descriptors have a get method.",
+                ":pep:`252`\\ 에서 설명한 것처럼 디스크립터에는 get 메서드가 있습니다.",
+            ),
+            "관련 :pep:`252`\\ 에서 설명한 것처럼 디스크립터에는 get 메서드가 있습니다."
+        );
+        assert_eq!(
+            repair_rst_boundaries("The .NET platform is supported.", ".NET 플랫폼을 지원합니다."),
+            "관련 .NET 플랫폼을 지원합니다."
+        );
+    }
+
+    #[test]
+    fn rst_boundary_repair_separates_a_url_from_a_korean_particle() {
+        assert_eq!(
+            repair_rst_boundaries(
+                "Results are published on http://docs.python.org.",
+                "결과는 http://docs.python.org에서 공개됩니다.",
+            ),
+            "결과는 http://docs.python.org\\ 에서 공개됩니다."
+        );
+    }
+
+    #[tokio::test]
+    async fn rst_translated_named_reference_alias_is_not_inline_code() {
+        let ctx = context_in(
+            Markup::Rst,
+            "Package docutils.parsers: markup parsers_.",
+            "docutils.parsers 패키지: 마크업 `파서 <parsers_>`_.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+
+        let ctx = context_in(
+            Markup::Rst,
+            "Read the `strong arguments`_ in ``python-dev``.",
+            "``python-dev``\\ 에서 `강력한 주장 <strong arguments_>`_\\ 을 읽으십시오.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+
+        let ctx = context_in(
+            Markup::Rst,
+            "See `the definitions <https://example.com>`__ of an ``.add_note()`` method.",
+            "`여러 ``.add_note()`` 메서드 정의 <https://example.com>`__\\ 를 보십시오.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+
+        let ctx = context_in(
+            Markup::Rst,
+            "Use ``value`` as described by the `reference`_.",
+            "`참조 <reference_>`_\\ 에 설명된 대로 ``value``\\ 를 사용합니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[test]
+    fn rst_boundary_repair_respects_a_source_split_inside_markup() {
+        let source = "RHS`` would roughly be ``fallback``";
+        let translation = "RHS`` 는 대략 ``fallback``\\ 과 같습니다";
+        assert_eq!(repair_rst_boundaries(source, translation), translation);
+    }
+
+    #[test]
+    fn rst_bracket_reference_detection_covers_citations_and_named_footnotes() {
+        assert_eq!(
+            rst_broken_bracket_references("[RFC]_는 표준입니다. [#named]_에서 계속됩니다."),
+            vec!["[RFC]_는", "[#named]_에"]
+        );
+        assert!(rst_broken_bracket_references("[RFC]_\\ 는 표준입니다.").is_empty());
+    }
+
     #[test]
     fn rst_prose_is_not_markup() {
         for text in [
@@ -1445,6 +1941,25 @@ mod tests {
         assert_eq!(
             rst_broken_pairs(":ref:`contact`를 보십시오"),
             vec!["`contact`를"]
+        );
+    }
+
+    #[tokio::test]
+    async fn rst_role_rejects_an_extra_closing_backtick() {
+        let ctx = context_in(
+            Markup::Rst,
+            "PEP :pep:`649` defines the behavior.",
+            ":pep:`649``\\ 에서 동작을 정의합니다.",
+        );
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+        assert!(!result.passed, "{:?}", result.issues);
+        assert!(
+            result
+                .issues
+                .iter()
+                .any(|issue| issue.message.contains("extra backtick")),
+            "{:?}",
+            result.issues
         );
     }
 

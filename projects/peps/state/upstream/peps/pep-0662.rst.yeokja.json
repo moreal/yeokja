@@ -1,0 +1,1340 @@
+{
+  "version": 1,
+  "source_hash": 333879359191393593,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Editable installs via virtual wheels",
+      "source_hash": 1151919696527885749,
+      "context_hash": 16530898886277989957,
+      "translation": "가상 휠을 통한 편집 가능 설치",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564217Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 12278642745818332201,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564221Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This document describes extensions to the build backend and frontend communication (as introduced by :pep:`517`) to allow projects to be installed in editable mode by introducing virtual wheels.",
+      "source_hash": 3378812979898387713,
+      "context_hash": 214227753139738897,
+      "translation": "이 문서는 가상 휠을 도입하여 프로젝트를 편집 가능 모드로 설치할 수 있도록, :pep:`517`\\ 에서 소개된 빌드 백엔드와 프런트엔드 간 통신의 확장을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:47:07.753908Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 14225279251283475082,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564223Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "During development, many Python users prefer to install their libraries so that changes to the underlying source code and resources are automatically reflected in subsequent interpreter invocations without an additional installation step.",
+      "source_hash": 12326580782886825100,
+      "context_hash": 3056025844182249681,
+      "translation": "개발 중에 많은 Python 사용자는 추가 설치 단계 없이 이후 인터프리터 호출에서 기반 소스 코드와 리소스의 변경 사항이 자동으로 반영되도록 라이브러리를 설치하는 것을 선호합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:28:39.564223Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "This mode is usually called \"development mode\" or \"editable installs\".",
+      "source_hash": 1775837768473579602,
+      "context_hash": 1835134113873758113,
+      "translation": "이 모드는 일반적으로 \"개발 모드\" 또는 \"편집 가능 설치\"라고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564224Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "Currently, there is no standardized way to accomplish this, as it was explicitly left out of :pep:`517` due to the complexity of the actual observed behaviors.",
+      "source_hash": 7407595671741996920,
+      "context_hash": 4646601926709489068,
+      "translation": "현재는 실제로 관찰된 동작의 복잡성 때문에 :pep:`517`\\ 에서 명시적으로 제외되었으므로, 이를 수행할 표준화된 방법이 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:47:07.753918Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "At the moment, users to get this behaviour perform one of the following:",
+      "source_hash": 15060751689687764329,
+      "context_hash": 9867814232111524298,
+      "translation": "현재 사용자는 이 동작을 얻기 위해 다음 중 하나를 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564225Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "For just Python code by adding the relevant source directories to ``sys.path`` (configurable from the command line interface via the ``PYTHONPATH`` environment variable).",
+      "source_hash": 9942768746319992344,
+      "context_hash": 14185069214274612456,
+      "translation": "Python 코드만 대상으로 하는 경우 관련 소스 디렉터리를 ``sys.path``\\ 에 추가합니다(명령줄 인터페이스에서 ``PYTHONPATH`` 환경 변수를 통해 구성할 수 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564225Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "Note in this case, the users have to install the project dependencies themselves, and entry points or project metadata are not generated.",
+      "source_hash": 18153562456291706536,
+      "context_hash": 4237612214206352077,
+      "translation": "이 경우 사용자가 프로젝트 의존성을 직접 설치해야 하며, 진입점이나 프로젝트 메타데이터는 생성되지 않는다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564226Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "setuptools_ provides the `setup.py develop`_ mechanism: that installs a ``pth`` file that injects the project root onto the ``sys.path`` at interpreter startup time, generates the project metadata, and also installs project dependencies. pip_ exposes calling this mechanism via the `pip install -e <project_directory>`_ command-line interface.",
+      "source_hash": 17359132644007241302,
+      "context_hash": 12795521581397103764,
+      "translation": "setuptools_는 `setup.py develop`_ 메커니즘을 제공합니다. 이 메커니즘은 인터프리터 시작 시 프로젝트 루트를 ``sys.path``\\ 에 주입하는 ``pth`` 파일을 설치하고, 프로젝트 메타데이터를 생성하며, 프로젝트 의존성도 설치합니다. pip_는 `pip install -e <project_directory>`_ 명령줄 인터페이스를 통해 이 메커니즘을 호출할 수 있도록 제공합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:28:39.564226Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "flit_ provides the `flit install --symlink`_ command that symlinks the project files into the interpreters ``purelib`` folder, generates the project metadata, and also installs dependencies.",
+      "source_hash": 11646088151630253232,
+      "context_hash": 12340599148300330653,
+      "translation": "flit_는 프로젝트 파일을 인터프리터의 ``purelib`` 폴더에 심볼릭 링크하고, 프로젝트 메타데이터를 생성하며, 의존성도 설치하는 `flit install --symlink`_ 명령을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564226Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "Note, this allows supporting resource files too.",
+      "source_hash": 4078323038630217608,
+      "context_hash": 9961696141811820522,
+      "translation": "또한 이 방법을 사용하면 리소스 파일도 지원할 수 있다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564227Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "As these examples shows an editable install can be achieved in multiple ways and at the moment there's no standard way of doing it.",
+      "source_hash": 18078614535966677492,
+      "context_hash": 7609753760619090206,
+      "translation": "이러한 예에서 보듯이 편집 가능 설치는 여러 방식으로 달성할 수 있으며, 현재 이를 수행하는 표준 방법은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564227Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "Furthermore, it's not clear whose responsibility it is to achieve and define what an editable installation is:",
+      "source_hash": 2339573416877579339,
+      "context_hash": 2056858134338006634,
+      "translation": "게다가 편집 가능 설치를 달성하고 그것이 무엇인지 정의하는 책임이 누구에게 있는지도 명확하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564227Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "allow the build backend to define and materialize it,",
+      "source_hash": 16781253609509925660,
+      "context_hash": 3116222566353961232,
+      "translation": "빌드 백엔드가 이를 정의하고 구현하도록 허용하는 것,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564227Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "allow the build frontend to define and materialize it,",
+      "source_hash": 18347482879061159308,
+      "context_hash": 2849566713063210148,
+      "translation": "빌드 프론트엔드가 이를 정의하고 구현하도록 허용하는 것,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564228Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "explicitly define and standardize one method from the possible options.",
+      "source_hash": 11525367138424941322,
+      "context_hash": 3764201657503928862,
+      "translation": "가능한 선택지 중 하나의 방법을 명시적으로 정의하고 표준화하는 것.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564228Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "The author of this PEP believes there's no one size fits all solution here, each method of achieving editable effect has its pros and cons.",
+      "source_hash": 3730907237438251541,
+      "context_hash": 8831133210450703484,
+      "translation": "이 PEP의 작성자는 여기에는 모든 경우에 맞는 단일 해결책이 없다고 생각하며, 편집 가능 효과를 달성하는 각 방법에는 장단점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564228Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:1",
+      "source": "Therefore this PEP rejects option three as it's unlikely for the community to agree on a single solution.",
+      "source_hash": 120440272101455087,
+      "context_hash": 5099216720190560602,
+      "translation": "따라서 이 PEP는 커뮤니티가 단일 해결책에 합의할 가능성이 낮으므로 세 번째 선택지를 거부합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564229Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:2",
+      "source": "Furthermore, question remains as to whether the frontend or the build backend should own this responsibility. :pep:`660` proposes the build backend to own this, while the current PEP proposes primarily the frontend, but still allows the backend to take take control if it wants to do so.",
+      "source_hash": 17582339050494096793,
+      "context_hash": 9582191652929986978,
+      "translation": "또한 이 책임을 프런트엔드와 빌드 백엔드 중 어느 쪽이 맡아야 하는지에 대한 의문이 남아 있습니다. :pep:`660`\\ 은 빌드 백엔드가 이를 맡도록 제안하는 반면, 현재 PEP는 주로 프런트엔드가 맡도록 제안하지만 백엔드가 원할 경우 제어권을 가질 수 있도록 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:47:07.753920Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 17368005975614714283,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564229Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": ":pep:`517` deferred \"Editable installs\" because this would have delayed further its adoption, and there wasn't an agreement on how editable installs should be achieved.",
+      "source_hash": 8904466252846534598,
+      "context_hash": 4681233185202319116,
+      "translation": ":pep:`517`\\ 은 \"Editable installs\"를 미루었는데, 이를 포함하면 채택이 더 지연되었을 것이며 편집 가능 설치를 어떻게 구현해야 하는지에 대한 합의도 없었기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:47:07.753922Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "Due to the popularity of the setuptools_ and pip_ projects, the status quo prevailed, and the backend could achieve editable mode by providing a ``setup.py develop`` implementation, which the user could trigger via `pip install -e <project_directory>`_.",
+      "source_hash": 10042778081945757295,
+      "context_hash": 14522306381771715360,
+      "translation": "setuptools_ 및 pip_ 프로젝트의 인기로 인해 기존 방식이 유지되었으며, 백엔드는 사용자가 `pip install -e <project_directory>`_\\ 를 통해 실행할 수 있는 ``setup.py develop`` 구현을 제공하여 편집 가능 모드를 달성할 수 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564230Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "By defining an editable interface between the build backend and frontend, we can eliminate the ``setup.py`` file and their current communication method.",
+      "source_hash": 17613650648180230955,
+      "context_hash": 16491792401312193607,
+      "translation": "빌드 백엔드와 프론트엔드 간의 편집 가능 인터페이스를 정의하면 ``setup.py`` 파일과 현재의 통신 방식을 제거할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564230Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Terminology and goals",
+      "source_hash": 18439410228245482311,
+      "context_hash": 11144218673034511877,
+      "translation": "용어 및 목표",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564231Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "This PEP aims to delineate the frontend and the backend roles clearly and give the developers of each the maximum ability to provide valuable features to their users.",
+      "source_hash": 9619159528758109326,
+      "context_hash": 7726689701927809671,
+      "translation": "이 PEP는 프론트엔드와 백엔드의 역할을 명확히 구분하고, 각 역할의 개발자가 사용자에게 유용한 기능을 최대한 제공할 수 있도록 하는 것을 목표로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564231Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "In this proposal, the backend's role is to prepare the project for an editable installation, and then provide enough information to the frontend so that the frontend can manifest and enforce the editable installation.",
+      "source_hash": 12959926799983661976,
+      "context_hash": 8027640915880174205,
+      "translation": "이 제안에서 백엔드의 역할은 프로젝트를 편집 가능 설치를 위해 준비한 다음, 프론트엔드가 편집 가능 설치를 구현하고 적용할 수 있도록 충분한 정보를 제공하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564232Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "The information the backend provides to the frontend is a wheel that follows the existing specification within :pep:`427`.",
+      "source_hash": 10623497978338040797,
+      "context_hash": 290081878943422513,
+      "translation": "백엔드가 프런트엔드에 제공하는 정보는 :pep:`427`\\ 에 명시된 기존 사양을 따르는 휠입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:47:07.753923Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "The wheel metadata about the archive itself (``{distribution}-{version}.dist-info/WHEEL``) must also contain the key ``Editable`` with value of ``true``.",
+      "source_hash": 12801499842123460185,
+      "context_hash": 14499138142194357943,
+      "translation": "아카이브 자체에 대한 휠 메타데이터(``{distribution}-{version}.dist-info/WHEEL``\\ )에는 ``Editable``\\ 키와 ``true``\\ 값을 포함해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564233Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "However, instead of providing the project files within the wheel, it must provide an ``editable.json`` file (at the root level of the wheel) that defines the files to be exposed by the frontend.",
+      "source_hash": 10730036445610940883,
+      "context_hash": 10724163296723830021,
+      "translation": "그러나 휠 내에 프로젝트 파일을 제공하는 대신, 프론트엔드에 노출할 파일을 정의하는 ``editable.json`` 파일을 휠의 루트 수준에 제공해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:39.564234Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "The content of this file is formulated as a mapping of absolute source tree paths to relative target interpreter destination paths within a scheme mapping.",
+      "source_hash": 260505370038315420,
+      "context_hash": 17243393989339500791,
+      "translation": "이 파일의 내용은 스킴 매핑 내에서 절대 소스 트리 경로를 인터프리터의 상대 대상 목적지 경로에 대응시키는 매핑으로 구성됩니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:28:39.564234Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "A wheel that satisfies the previous two paragraphs is a virtual wheel.",
+      "source_hash": 5118342523681490555,
+      "context_hash": 13157761871707461383,
+      "translation": "이전 두 문단을 충족하는 휠은 가상 휠입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915541Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:1",
+      "source": "The frontend's role is to take the virtual wheel and install the project in editable mode.",
+      "source_hash": 4496582855053972362,
+      "context_hash": 16731065273140092004,
+      "translation": "프런트엔드의 역할은 가상 휠을 가져와 프로젝트를 편집 가능 모드로 설치하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915545Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:2",
+      "source": "The way it achieves this is entirely up to the frontend and is considered implementation detail.",
+      "source_hash": 15252938179967095574,
+      "context_hash": 3936221487596559746,
+      "translation": "이를 수행하는 방식은 전적으로 프런트엔드에 달려 있으며 구현 세부 사항으로 간주합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915546Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "The editable installation mode implies that the source code of the project being installed is available in a local directory.",
+      "source_hash": 7388908498050490762,
+      "context_hash": 8026799729179620814,
+      "translation": "편집 가능 설치 모드는 설치 중인 프로젝트의 소스 코드가 로컬 디렉터리에서 사용 가능함을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915547Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:1",
+      "source": "Once the project is installed in editable mode, some changes to the project code in the local source tree will become effective without the need for a new installation step.",
+      "source_hash": 3705715436594907660,
+      "context_hash": 13173010045953552974,
+      "translation": "프로젝트가 편집 가능 모드로 설치되면 로컬 소스 트리의 프로젝트 코드에 대한 일부 변경 사항은 새로운 설치 단계 없이 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915548Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:2",
+      "source": "At a minimum, changes to the text of non-generated files that existed at the installation time should be reflected upon the subsequent import of the package.",
+      "source_hash": 15784878050865559396,
+      "context_hash": 5102047762486441367,
+      "translation": "최소한 설치 시점에 존재했던 비생성 파일의 텍스트 변경 사항은 이후 패키지를 임포트할 때 반영되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915548Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "Some kinds of changes, such as adding or modifying entry points or new dependencies, require a new installation step to become effective.",
+      "source_hash": 13552142115749970770,
+      "context_hash": 15377188194420743763,
+      "translation": "엔트리 포인트를 추가하거나 수정하는 경우 또는 새로운 의존성을 추가하는 경우와 같은 일부 변경 사항은 적용되려면 새로운 설치 단계가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915549Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:1",
+      "source": "These changes are typically made in build backend configuration files (such as ``pyproject.toml``).",
+      "source_hash": 13437472883405591067,
+      "context_hash": 5424848479281103483,
+      "translation": "이러한 변경 사항은 일반적으로 ``pyproject.toml``\\ 과 같은 빌드 백엔드 구성 파일에서 이루어집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915549Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:2",
+      "source": "This requirement is consistent with the general user expectation that such modifications will only become effective after re-installation.",
+      "source_hash": 14941695562162105737,
+      "context_hash": 7032306318495039076,
+      "translation": "이러한 요구 사항은 이러한 수정 사항이 재설치 후에만 적용될 것이라는 일반적인 사용자의 기대와 일치합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915549Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "While users expect editable installations to behave identically to standard installations, this may not always be possible and may be in tension with other user expectations.",
+      "source_hash": 17135414667858441867,
+      "context_hash": 6195930864777705029,
+      "translation": "사용자는 편집 가능 설치가 표준 설치와 동일하게 동작하기를 기대하지만, 이것이 항상 가능하지는 않으며 다른 사용자의 기대와 충돌할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915550Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:1",
+      "source": "Depending on how a frontend implements the editable mode, some differences may be visible, such as the presence of additional files (compared to a typical installation), either in the source tree or the interpreter's installation path.",
+      "source_hash": 13375651282610259923,
+      "context_hash": 3276015802298931113,
+      "translation": "프런트엔드가 편집 가능 모드를 구현하는 방식에 따라 일부 차이가 나타날 수 있으며, 예를 들어 소스 트리나 인터프리터의 설치 경로에 일반적인 설치와 비교하여 추가 파일이 존재할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:28:30.915550Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "Frontends should seek to minimize differences between the behavior of editable and standard installations and document known differences.",
+      "source_hash": 15369291046855303745,
+      "context_hash": 13828392440048697736,
+      "translation": "프런트엔드는 편집 가능 설치와 표준 설치의 동작 차이를 최소화하도록 노력하고 알려진 차이점을 문서화해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915552Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "For reference, a non-editable installation works as follows:",
+      "source_hash": 17806482050488805697,
+      "context_hash": 4318719026860068273,
+      "translation": "참고로, 편집 불가능 설치는 다음과 같이 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915552Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "The **developer** is using a tool, we'll call it here the **frontend**, to drive the project development (e.g., pip_).",
+      "source_hash": 2366039997159644101,
+      "context_hash": 10073127143159632534,
+      "translation": "**개발자**\\ 는 프로젝트 개발을 진행하기 위해 여기서 **프런트엔드**\\ 라고 부를 도구(예: pip_)를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915552Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:1",
+      "source": "When the user wants to trigger a package build and installation of a project, they'll communicate with the **frontend**.",
+      "source_hash": 17113225395584386590,
+      "context_hash": 11745075172183103051,
+      "translation": "사용자가 프로젝트의 패키지 빌드 및 설치를 트리거하려는 경우, 사용자는 **프런트엔드**\\ 와 통신합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915553Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "The frontend uses a **build frontend** to trigger the build of a wheel (e.g., build_).",
+      "source_hash": 10725457507984357247,
+      "context_hash": 8096874602617064503,
+      "translation": "프런트엔드는 **빌드 프런트엔드**\\ 를 사용하여 휠 빌드를 트리거합니다(예: build_).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915553Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:1",
+      "source": "The build frontend uses :pep:`517` to communicate with the **build backend** (e.g. setuptools_) - with the build backend installed into a :pep:`518` environment.",
+      "source_hash": 9230765122173687024,
+      "context_hash": 1521275619538513140,
+      "translation": "빌드 프런트엔드는 :pep:`517`\\ 을 사용하여 **빌드 백엔드**\\ (예: setuptools_)와 통신하며, 빌드 백엔드는 :pep:`518` 환경에 설치되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915553Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:2",
+      "source": "Once invoked, the backend returns a wheel.",
+      "source_hash": 5004231691678740597,
+      "context_hash": 732556948022548755,
+      "translation": "호출되면 백엔드는 휠을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915554Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:0",
+      "source": "The frontend takes the wheel and feeds it to an **installer** (e.g., installer_) to install the wheel into the target Python interpreter.",
+      "source_hash": 8629565253272867811,
+      "context_hash": 6264928816838928775,
+      "translation": "프런트엔드는 휠을 가져와 **설치 관리자**\\ (예: installer_)에게 전달하여 대상 Python 인터프리터에 휠을 설치합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:28:30.915554Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "The Mechanism",
+      "source_hash": 2477416326702106313,
+      "context_hash": 14569684186266066452,
+      "translation": "메커니즘",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915555Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "This PEP adds two optional hooks to the :pep:`517` backend interface.",
+      "source_hash": 18207273982289185514,
+      "context_hash": 614988345765198816,
+      "translation": "이 PEP는 :pep:`517` 백엔드 인터페이스에 두 개의 선택적 훅을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915555Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "One of the hooks is used to specify the build dependencies of an editable install.",
+      "source_hash": 6069487870571122167,
+      "context_hash": 12438728665250682609,
+      "translation": "훅 중 하나는 편집 가능 설치의 빌드 의존성을 지정하는 데 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915556Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "The other hook returns the necessary information via the build frontend the frontend needs to create an editable install.",
+      "source_hash": 11043019869762643936,
+      "context_hash": 15625782885102515161,
+      "translation": "다른 훅은 프런트엔드가 편집 가능 설치를 만드는 데 필요한 정보를 빌드 프런트엔드를 통해 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915556Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "``get_requires_for_build_editable``",
+      "source_hash": 17826079555410279004,
+      "context_hash": 13517821009121420919,
+      "translation": "``get_requires_for_build_editable``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915556Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "This hook MUST return an additional sequence of strings containing :pep:`508` dependency specifications, above and beyond those specified in the ``pyproject.toml`` file.",
+      "source_hash": 17663390516600327386,
+      "context_hash": 17811828536801146579,
+      "translation": "이 훅은 ``pyproject.toml`` 파일에 지정된 의존성 사양에 더하여 :pep:`508` 의존성 사양을 포함하는 문자열의 추가 시퀀스를 반드시 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915557Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "The frontend must ensure that these dependencies are available in the build environment in which the ``build_editable`` hook is called.",
+      "source_hash": 12442618458636317978,
+      "context_hash": 8968411783005630422,
+      "translation": "프런트엔드는 ``build_editable`` 훅이 호출되는 빌드 환경에서 이러한 의존성을 사용할 수 있도록 해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915557Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "If not defined, the default implementation is equivalent to returning ``[]``.",
+      "source_hash": 6805636111337466615,
+      "context_hash": 8847108009654208498,
+      "translation": "정의되지 않은 경우 기본 구현은 ``[]``\\ 을 반환하는 것과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915557Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "``prepare_metadata_for_build_editable``",
+      "source_hash": 4287260749769951333,
+      "context_hash": 18262587953665718694,
+      "translation": "``prepare_metadata_for_build_editable``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915557Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "Must create a ``.dist-info`` directory containing wheel metadata inside the specified ``metadata_directory`` (i.e., creates a directory like ``{metadata_directory}/{package}-{version}.dist-info/``).",
+      "source_hash": 1443589728108479687,
+      "context_hash": 9821450134330430146,
+      "translation": "이 훅은 지정된 ``metadata_directory`` 안에 휠 메타데이터를 포함하는 ``.dist-info`` 디렉터리를 생성해야 합니다(즉, ``{metadata_directory}/{package}-{version}.dist-info/``\\ 와 같은 디렉터리를 생성합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915558Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "This directory MUST be a valid ``.dist-info`` directory as defined in the wheel specification, except that it need not contain ``RECORD`` or signatures.",
+      "source_hash": 7242673070815927031,
+      "context_hash": 17751738487413731119,
+      "translation": "이 디렉터리는 휠 사양에 정의된 유효한 ``.dist-info`` 디렉터리여야 하지만, ``RECORD`` 또는 서명을 포함할 필요는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915558Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:2",
+      "source": "The hook MAY also create other files inside this directory, and a build frontend MUST preserve, but otherwise ignore, such files; the intention here is that in cases where the metadata depends on build-time decisions, the build backend may need to record these decisions in some convenient format for re-use by the actual wheel-building step.",
+      "source_hash": 12208403767860994164,
+      "context_hash": 7792760733771177927,
+      "translation": "훅은 이 디렉터리 안에 다른 파일도 생성할 수 있으며, 빌드 프런트엔드는 이러한 파일을 보존하되 그 외에는 무시해야 합니다. 이는 메타데이터가 빌드 시점의 결정에 의존하는 경우 빌드 백엔드가 실제 휠 빌드 단계에서 재사용할 수 있도록 이러한 결정을 편리한 형식으로 기록해야 할 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915558Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "This must return the basename (not the full path) of the ``.dist-info`` directory it creates, as a unicode string.",
+      "source_hash": 1530689968813437286,
+      "context_hash": 8100935733731633402,
+      "translation": "이 훅은 생성한 ``.dist-info`` 디렉터리의 전체 경로가 아닌 기본 이름을 유니코드 문자열로 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:30.915559Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "If a build frontend needs this information and the method is not defined, it should call ``build_editable`` and look at the resulting metadata directly.",
+      "source_hash": 17684900521898109340,
+      "context_hash": 8423361829513146864,
+      "translation": "빌드 프런트엔드에 이 정보가 필요하지만 해당 메서드가 정의되어 있지 않다면, ``build_editable``\\ 을 호출하고 결과 메타데이터를 직접 확인해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816221Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "``build_editable``",
+      "source_hash": 13365649016032552454,
+      "context_hash": 882772773922976705,
+      "translation": "``build_editable``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816224Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Must build a .whl file, and place it in the specified ``wheel_directory``.",
+      "source_hash": 1495973782274212202,
+      "context_hash": 12377936661737832715,
+      "translation": "지정된 ``wheel_directory``\\ 에 .whl 파일을 빌드하여 배치해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:47:07.753925Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "It must return the basename (not the full path) of the ``.whl`` file it creates, as a unicode string.",
+      "source_hash": 1833262103341397925,
+      "context_hash": 12935761002516368507,
+      "translation": "생성한 ``.whl`` 파일의 기본 이름(전체 경로가 아님)을 유니코드 문자열로 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816225Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:2",
+      "source": "The wheel file must be of type virtual wheel as defined under the terminology section.",
+      "source_hash": 10472989811263248025,
+      "context_hash": 3510106169751903778,
+      "translation": "휠 파일은 용어 정의 섹션에 정의된 가상 휠 유형이어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816225Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "If the build frontend has previously called ``prepare_metadata_for_build_editable`` and depends on the wheel resulting from this call to have metadata matching this earlier call, then it should provide the path to the created ``.dist-info`` directory as the ``metadata_directory`` argument.",
+      "source_hash": 558345626725674210,
+      "context_hash": 13427882430961611790,
+      "translation": "빌드 프런트엔드가 이전에 ``prepare_metadata_for_build_editable``\\ 을 호출했고, 이 호출로 생성되는 휠의 메타데이터가 이전 호출과 일치해야 한다면, 생성된 ``.dist-info`` 디렉터리의 경로를 ``metadata_directory``\\ 인자로 제공해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816226Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "If this argument is provided, then ``build_editable`` MUST produce a wheel with identical metadata.",
+      "source_hash": 3592317835014047774,
+      "context_hash": 3252757946650269473,
+      "translation": "이 인자가 제공되면 ``build_editable``\\ 은 동일한 메타데이터를 포함하는 휠을 반드시 생성해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816226Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:2",
+      "source": "The directory passed in by the build frontend MUST be identical to the directory created by ``prepare_metadata_for_build_editable``, including any unrecognized files it created.",
+      "source_hash": 5685492858373843052,
+      "context_hash": 15627685832084152508,
+      "translation": "빌드 프런트엔드가 전달하는 디렉터리는 ``prepare_metadata_for_build_editable``\\ 이 생성한 디렉터리와 완전히 동일해야 하며, 해당 메서드가 생성한 인식되지 않은 파일도 포함해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816227Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "Backends which do not provide the ``prepare_metadata_for_build_editable`` hook may either silently ignore the ``metadata_directory`` parameter to ``build_editable``, or else raise an exception when it is set to anything other than ``None``.",
+      "source_hash": 16646164480029829995,
+      "context_hash": 532740303669226357,
+      "translation": "``prepare_metadata_for_build_editable`` 훅을 제공하지 않는 백엔드는 ``build_editable``\\ 의 ``metadata_directory`` 매개변수를 조용히 무시하거나, 해당 매개변수가 ``None``\\ 이 아닌 값으로 설정되었을 때 예외를 발생시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816227Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "The source directory may be read-only, in such cases the backend may raise an error that the frontend can display to the user.",
+      "source_hash": 3159760613284646430,
+      "context_hash": 6264773975327534646,
+      "translation": "소스 디렉터리는 읽기 전용일 수 있으며, 이러한 경우 백엔드는 프런트엔드가 사용자에게 표시할 수 있는 오류를 발생시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816227Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:1",
+      "source": "The backend may store intermediate artifacts in cache locations or temporary directories.",
+      "source_hash": 16870010593150191015,
+      "context_hash": 7678912934095714585,
+      "translation": "백엔드는 캐시 위치나 임시 디렉터리에 중간 산출물을 저장할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816227Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:2",
+      "source": "The presence or absence of any caches should not make a material difference to the final result of the build.",
+      "source_hash": 1389125230731940483,
+      "context_hash": 6502057220381859971,
+      "translation": "캐시의 존재 여부가 빌드의 최종 결과에 실질적인 차이를 만들어서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816228Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "The content of the ``editable.json`` MUST pass against the following JSON schema:",
+      "source_hash": 12048160413244506039,
+      "context_hash": 14172536548328886390,
+      "translation": "``editable.json``\\ 의 내용은 다음 JSON 스키마에 대한 검사를 반드시 통과해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816228Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:0",
+      "source": "For example:",
+      "source_hash": 4114854479619665730,
+      "context_hash": 4458321484134696191,
+      "translation": "예:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816228Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:0",
+      "source": "The scheme paths map from project source absolute paths to target directory relative paths.",
+      "source_hash": 5887487086288811806,
+      "context_hash": 15226199038547856301,
+      "translation": "스킴 경로는 프로젝트 소스의 절대 경로를 대상 디렉터리의 상대 경로에 매핑합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816229Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:1",
+      "source": "We allow backends to change the project layout from the project source directory to what the interpreter will see by using the mapping.",
+      "source_hash": 3059015911707500652,
+      "context_hash": 13467633354700606836,
+      "translation": "이 매핑을 사용하면 백엔드가 프로젝트 소스 디렉터리의 프로젝트 레이아웃을 인터프리터가 보게 될 레이아웃으로 변경할 수 있습니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:28:58.816229Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:11/seg:0",
+      "source": "For example if the backend returns ``\"purelib\": {\"/me/project/src\": \"\"}`` this would mean that expose all files and modules within ``/me/project/src`` at the root of the ``purelib`` path within the target interpreter.",
+      "source_hash": 8114264008845684698,
+      "context_hash": 13501740762217173445,
+      "translation": "예를 들어 백엔드가 ``\"purelib\": {\"/me/project/src\": \"\"}``\\ 를 반환하면, 이는 ``/me/project/src`` 내의 모든 파일과 모듈을 대상 인터프리터의 ``purelib`` 경로 루트에 노출한다는 의미입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:28:58.816230Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Build frontend requirements",
+      "source_hash": 11316625629985499840,
+      "context_hash": 3041616495522674287,
+      "translation": "빌드 프런트엔드 요구 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816230Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "The build frontend is responsible for setting up the environment for the build backend to generate the virtual wheel.",
+      "source_hash": 589024640497534134,
+      "context_hash": 15523248170238987685,
+      "translation": "빌드 프런트엔드는 빌드 백엔드가 가상 휠을 생성할 수 있도록 환경을 설정할 책임이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816231Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "All recommendations from :pep:`517` for the build wheel hook applies here too.",
+      "source_hash": 2898620585567515648,
+      "context_hash": 1398509800378465953,
+      "translation": "빌드 휠 훅에 대한 :pep:`517`\\ 의 모든 권고 사항은 여기에도 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816231Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Frontend requirements",
+      "source_hash": 7652270967725303010,
+      "context_hash": 5877744612710833562,
+      "translation": "프런트엔드 요구 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816231Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The frontend must install the virtual wheel exactly as defined within :pep:`427`.",
+      "source_hash": 17079316137982921851,
+      "context_hash": 647919880747635488,
+      "translation": "프런트엔드는 :pep:`427`\\ 에 정의된 대로 가상 휠을 정확히 설치해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816231Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "Furthermore is responsible for also installing the files defined within the ``editable.json`` file.",
+      "source_hash": 901327477054565414,
+      "context_hash": 2989099157557370726,
+      "translation": "또한 ``editable.json``\\ 에 정의된 파일도 설치할 책임이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816232Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "The manner in which it does is left up to the frontend, and is encouraged for the frontend to communicate with the user exactly the method chosen, and what limitations that solution will have.",
+      "source_hash": 11087604391285045248,
+      "context_hash": 7237486198685822841,
+      "translation": "설치 방식은 프런트엔드에 맡기며, 프런트엔드는 선택한 방법과 해당 방법의 제한 사항을 사용자에게 정확히 알리는 것이 권장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816232Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "The frontend must create a ``direct_url.json`` file in the ``.dist-info`` directory of the installed distribution, in compliance with :pep:`610`.",
+      "source_hash": 9391918135140639656,
+      "context_hash": 15670670595059847633,
+      "translation": "프런트엔드는 :pep:`610`\\ 을 준수하여 설치된 배포 패키지의 ``.dist-info`` 디렉터리에 ``direct_url.json`` 파일을 생성해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816232Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:1",
+      "source": "The ``url`` value must be a ``file://`` URL pointing to the project directory (i.e., the directory containing ``pyproject.toml``), and the ``dir_info`` value must be ``{'editable': true}``.",
+      "source_hash": 16791483173237051075,
+      "context_hash": 13463420126396069369,
+      "translation": "``url`` 값은 프로젝트 디렉터리(즉, ``pyproject.toml``\\ 을 포함하는 디렉터리)를 가리키는 ``file://`` URL이어야 하며, ``dir_info`` 값은 ``{'editable': true}``\\ 이어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816232Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "The frontend can rely on the ``prepare_metadata_for_build_editable`` hook when installing in editable mode.",
+      "source_hash": 3769974167553369228,
+      "context_hash": 8839168547505664353,
+      "translation": "프런트엔드는 편집 가능 모드로 설치할 때 ``prepare_metadata_for_build_editable`` 훅을 활용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816233Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "If the frontend concludes it cannot achieve an editable installation with the information provided by the build backend it should fail and raise an error to clarify to the user why not.",
+      "source_hash": 9737838342481355502,
+      "context_hash": 10833859542447825639,
+      "translation": "프런트엔드가 빌드 백엔드에서 제공한 정보로 편집 가능 설치를 수행할 수 없다고 판단하면, 실패하고 그 이유를 사용자에게 명확히 설명하는 오류를 발생시켜야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816233Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "The frontend might implement one or more editable installation mechanisms and can leave it up to the user the choose one that its optimal to the use case of the user.",
+      "source_hash": 1916522641422454081,
+      "context_hash": 10725941470275528752,
+      "translation": "프런트엔드는 하나 이상의 편집 가능 설치 메커니즘을 구현할 수 있으며, 사용 사례에 가장 적합한 메커니즘을 사용자가 선택하도록 할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816233Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:1",
+      "source": "For example, pip could add an editable mode flag, and allow the user to choose between ``pth`` files or symlinks ( ``pip install -e . --editable-mode=pth`` vs ``pip install -e . --editable-mode=symlink``).",
+      "source_hash": 4818508585435460365,
+      "context_hash": 8315585025347061771,
+      "translation": "예를 들어 pip는 편집 가능 모드 플래그를 추가하고, 사용자가 ``pth`` 파일과 심볼릭 링크 중에서 선택하도록 할 수 있습니다( ``pip install -e . --editable-mode=pth`` vs ``pip install -e . --editable-mode=symlink``).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816234Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Example editable implementations",
+      "source_hash": 16077079454678490123,
+      "context_hash": 8430211819482080047,
+      "translation": "편집 가능 구현 예시",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:58.816234Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "To show how this PEP might be used, we'll now present a few case studies.",
+      "source_hash": 6955452452999073066,
+      "context_hash": 11608828191953820886,
+      "translation": "이 PEP가 어떻게 사용될 수 있는지 보여 주기 위해 이제 몇 가지 사례 연구를 제시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676364Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "Note the offered solutions are purely for illustration purpose and are not normative for the frontend/backend.",
+      "source_hash": 18258031422051073417,
+      "context_hash": 11303243941678622936,
+      "translation": "제시된 해결책은 순전히 예시를 위한 것이며 프런트엔드/백엔드에 대한 규범이 아니라는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676368Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "Add the source tree as is to the interpreter",
+      "source_hash": 10504993638913946582,
+      "context_hash": 2864909522492753959,
+      "translation": "소스 트리를 있는 그대로 인터프리터에 추가하기",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:28:53.676368Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "This is one of the simplest implementations, it will add the source tree as is into the interpreters scheme paths, the ``editable.json`` within the virtual wheel might look like:",
+      "source_hash": 9665884218243185352,
+      "context_hash": 8004633171760905909,
+      "translation": "이는 가장 간단한 구현 중 하나로, 소스 트리를 있는 그대로 인터프리터의 scheme 경로에 추가하며, 가상 휠 내의 ``editable.json``\\ 은 다음과 같이 보일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676370Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "The frontend then could either:",
+      "source_hash": 4471063254496126671,
+      "context_hash": 2859498254270088638,
+      "translation": "그러면 프런트엔드는 다음 중 하나를 수행할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676370Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "Add the source directory onto the target interpreters ``sys.path`` during startup of it.",
+      "source_hash": 11978179736557826917,
+      "context_hash": 18214499696160790725,
+      "translation": "시작할 때 대상 인터프리터의 ``sys.path``\\ 에 소스 디렉터리를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676371Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:1",
+      "source": "This is done by creating a ``pth`` file into the target interpreters ``purelib`` folder. setuptools_ does this today and is what `pip install -e <project_directory>`_ translate too.",
+      "source_hash": 17646761521276101356,
+      "context_hash": 3092841003045003039,
+      "translation": "이는 대상 인터프리터의 ``purelib`` 폴더에 ``pth`` 파일을 생성하여 수행합니다. setuptools_\\ 는 현재 이 작업을 수행하며, `pip install -e <project_directory>`_\\ 도 동일하게 변환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676371Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:2",
+      "source": "This solution is fast and cross-platform compatible.",
+      "source_hash": 6081050697447502476,
+      "context_hash": 14143975169915559041,
+      "translation": "이 해결책은 빠르고 플랫폼 간 호환성이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676371Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:3",
+      "source": "However, this puts the entire source tree onto the system, potentially exposing modules that would not be available in a standard installation case.",
+      "source_hash": 1582179270796757966,
+      "context_hash": 11484920952084307055,
+      "translation": "그러나 이렇게 하면 전체 소스 트리가 시스템에 추가되어, 표준 설치에서는 사용할 수 없을 모듈이 노출될 가능성이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676372Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "Symlink the folder, or the individual files within it.",
+      "source_hash": 6220942794424809320,
+      "context_hash": 13004677989100501599,
+      "translation": "폴더 또는 그 안의 개별 파일에 심볼릭 링크를 생성하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676372Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:1",
+      "source": "This method is what flit does via its `flit install --symlink`_.",
+      "source_hash": 8422313153490729872,
+      "context_hash": 4967189874585739681,
+      "translation": "이 방법은 flit이 `flit install --symlink`_ 를 통해 수행하는 방식입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676372Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:2",
+      "source": "This solution requires the current platform to support symlinks.",
+      "source_hash": 7022005998949410328,
+      "context_hash": 4958031817340593096,
+      "translation": "이 해결책을 사용하려면 현재 플랫폼이 심볼릭 링크를 지원해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676373Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:3",
+      "source": "Still, it allows potentially to symlink individual files, which could solve the problem of including files that should be excluded from the source tree.",
+      "source_hash": 18197929465995005216,
+      "context_hash": 13538148792724938664,
+      "translation": "그래도 개별 파일에 심볼릭 링크를 생성할 수 있으므로, 소스 트리에서 제외해야 하는 파일이 포함되는 문제를 해결할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676373Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:0",
+      "source": "Using custom importers",
+      "source_hash": 15276510626635352582,
+      "context_hash": 3940628282500404905,
+      "translation": "사용자 지정 임포터 사용하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676373Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:9/seg:0",
+      "source": "For a more robust and more dynamic collaboration between the build backend and the target interpreter, we can take advantage of the import system allowing the registration of custom importers.",
+      "source_hash": 16710970895419932061,
+      "context_hash": 2116950483732676537,
+      "translation": "빌드 백엔드와 대상 인터프리터 간의 더욱 견고하고 동적인 협업을 위해, 사용자 지정 임포터의 등록을 허용하는 임포트 시스템을 활용할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:28:53.676374Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:9/seg:1",
+      "source": "See :pep:`302` for more details and editables_ as an example of this.",
+      "source_hash": 18227523067091075281,
+      "context_hash": 8661845950989375827,
+      "translation": "자세한 내용은 :pep:`302`\\ 를 참조하고, 그 예로 editables_\\ 를 확인하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676375Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:9/seg:2",
+      "source": "The backend can generate a new importer during the editable build (or install it as an additional dependency) and register it at interpreter startup by adding a ``pth`` file.",
+      "source_hash": 11353493470195055456,
+      "context_hash": 6915684187146111723,
+      "translation": "백엔드는 편집 가능 빌드 중에 새 임포터를 생성하거나 이를 추가 종속성으로 설치한 다음, ``pth`` 파일을 추가하여 인터프리터 시작 시 등록할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:28:53.676375Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:11/seg:0",
+      "source": "The backend here registered a hook that is called whenever a new module is imported, allowing dynamic and on-demand functionality.",
+      "source_hash": 6734223211810743152,
+      "context_hash": 12166916292474285857,
+      "translation": "여기서 백엔드는 새 모듈을 가져올 때마다 호출되는 훅을 등록하여 동적이고 필요에 따른 기능을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676376Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:11/seg:1",
+      "source": "Potential use cases where this is useful:",
+      "source_hash": 4280220537597714981,
+      "context_hash": 13011472130613037524,
+      "translation": "이것이 유용할 수 있는 잠재적인 사용 사례는 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676376Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:12/seg:0",
+      "source": "Expose a source folder, but honor module excludes: the backend may generate an import hook that consults the exclusion table before allowing a source file loader to discover a file in the source directory or not.",
+      "source_hash": 4403828859464805700,
+      "context_hash": 15164370097617339073,
+      "translation": "소스 폴더를 노출하되 모듈 제외를 준수합니다. 백엔드는 소스 파일 로더가 소스 디렉터리에서 파일을 발견하도록 허용하기 전에 제외 테이블을 참조하여 허용 여부를 결정하는 임포트 훅을 생성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676376Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:13/seg:0",
+      "source": "For a project, let there be two modules, ``A.py`` and ``B.py``.",
+      "source_hash": 3873897237905196261,
+      "context_hash": 6533170733562385621,
+      "translation": "어떤 프로젝트에 ``A.py``\\ 와 ``B.py``\\ 라는 두 모듈이 있다고 합시다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676376Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:13/seg:1",
+      "source": "These are two separate files in the source directory; however, while building a wheel, they are merged into one mega file ``project.py``.",
+      "source_hash": 12159509620455927535,
+      "context_hash": 2991350244217087203,
+      "translation": "이 모듈은 소스 디렉터리에 있는 서로 별개의 두 파일이지만, 휠을 빌드하는 동안 하나의 대형 파일인 ``project.py``\\ 로 병합됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676377Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:13/seg:2",
+      "source": "In this case, with this PEP, the backend could generate an import hook that reads the source files at import time and merges them in memory before materializing it as a module.",
+      "source_hash": 3580125550405652430,
+      "context_hash": 6885286983906509335,
+      "translation": "이 경우 이 PEP를 사용하면 백엔드가 가져오기 시점에 소스 파일을 읽고 메모리에서 병합한 다음 모듈로 실체화하는 임포트 훅을 생성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676377Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:14/seg:0",
+      "source": "Automatically update out-of-date C-extensions: the backend may generate an import hook that checks the last modified timestamp for a C-extension source file.",
+      "source_hash": 12453532264100435191,
+      "context_hash": 8352214161698087053,
+      "translation": "오래된 C 확장을 자동으로 업데이트합니다. 백엔드는 C 확장 소스 파일의 최종 수정 타임스탬프를 확인하는 임포트 훅을 생성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676377Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:14/seg:1",
+      "source": "If it is greater than the current C-extension binary, trigger an update by calling the compiler before import.",
+      "source_hash": 4828177912895027964,
+      "context_hash": 12209989532286083857,
+      "translation": "해당 타임스탬프가 현재 C 확장 바이너리보다 최신이면, 가져오기 전에 컴파일러를 호출하여 업데이트를 실행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676377Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Rejected ideas",
+      "source_hash": 1257763793238798310,
+      "context_hash": 7658560916003619977,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676378Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "This PEP competes with :pep:`660` and rejects that proposal because we think the mechanism of achieving an editable installation should be within the frontend rather than the build backend.",
+      "source_hash": 5108346509769155965,
+      "context_hash": 8725134380237730770,
+      "translation": "이 PEP는 :pep:`660`\\ 과 경쟁하며 해당 제안을 거부합니다. 편집 가능 설치를 구현하는 메커니즘은 빌드 백엔드가 아니라 프런트엔드에 있어야 한다고 생각하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676378Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "Furthermore, this approach allows the ecosystem to use alternative means to accomplish the editable installation effect (e.g., insert path on ``sys.path`` or symlinks instead of just implying the loose wheel mode from the backend described by that PEP).",
+      "source_hash": 4915091388199702857,
+      "context_hash": 6861556504287900358,
+      "translation": "또한 이 접근 방식은 생태계가 편집 가능 설치 효과를 달성하기 위한 대체 수단(예: 해당 PEP에서 설명한 백엔드의 느슨한 휠 모드를 단순히 암시하는 대신 ``sys.path``\\ 에 경로를 삽입하거나 심볼릭 링크를 사용하는 방법)을 사용할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676378Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "Prominently, :pep:`660` does not allow using symlinks to expose code and data files without also extending the wheel file standard with symlink support.",
+      "source_hash": 8274630702630285904,
+      "context_hash": 15745653883694641732,
+      "translation": "특히 :pep:`660`\\ 은 심볼릭 링크 지원을 추가하여 휠 파일 표준을 확장하지 않고는 심볼릭 링크를 사용해 코드와 데이터 파일을 노출하는 것을 허용하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676379Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:1",
+      "source": "It's not clear how the wheel format could be extended to support symlinks that refer not to files within the wheel itself, but files only available on the local disk.",
+      "source_hash": 3049600452662988959,
+      "context_hash": 5109122451486022683,
+      "translation": "휠 형식을 확장하여 휠 자체 내의 파일이 아니라 로컬 디스크에서만 사용할 수 있는 파일을 참조하는 심볼릭 링크를 지원하는 방법은 명확하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:28:53.676379Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:2",
+      "source": "It's important to note that the backend itself (or backend generated code) must not generate these symlinks (e.g., at interpreter startup time) as that would conflict with the frontends book keeping of what files need to be uninstalled.",
+      "source_hash": 3327842473328072971,
+      "context_hash": 4512476464023699257,
+      "translation": "백엔드 자체 또는 백엔드가 생성한 코드가 이러한 심볼릭 링크를 생성해서는 안 된다는 점(예: 인터프리터 시작 시점)을 유의해야 합니다. 그렇게 하면 제거해야 할 파일을 프런트엔드가 기록해 두는 작업과 충돌하기 때문입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:28:53.676380Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "Finally, :pep:`660` adds support only for ``purelib`` and ``platlib`` files.",
+      "source_hash": 3122037488369242000,
+      "context_hash": 15312808093704148355,
+      "translation": "마지막으로, :pep:`660`\\ 은 ``purelib`` 및 ``platlib`` 파일만 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:56.886198Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:1",
+      "source": "It purposefully avoids supporting other types of information that the wheel format supports: ``include``, ``data`` and ``scripts``.",
+      "source_hash": 13448857715887715173,
+      "context_hash": 15956329524187677011,
+      "translation": "휠 형식에서 지원하는 다른 정보 유형인 ``include``, ``data`` 및 ``scripts``\\ 는 의도적으로 지원하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:56.886206Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:2",
+      "source": "With this path the frontend can support these on a best effort basis via the symlinks mechanism (though this feature is not universally available - on Windows require enablement).",
+      "source_hash": 13909546177359983510,
+      "context_hash": 15218315713795969067,
+      "translation": "이 경로를 사용하면 프런트엔드는 심볼릭 링크 메커니즘을 통해 가능한 범위에서 이러한 파일 유형을 지원할 수 있습니다(이 기능은 어디에서나 사용할 수 있는 것은 아니며 - Windows에서는 활성화해야 합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:56.886206Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:3",
+      "source": "We believe its beneficial to add best effort support for these file types, rather than exclude the possibility of supporting them at all.",
+      "source_hash": 4837001034248727300,
+      "context_hash": 1399607437468626390,
+      "translation": "이러한 파일 유형을 전혀 지원할 가능성을 배제하기보다는 가능한 범위에서 지원을 추가하는 것이 유익하다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:56.886207Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 4045655225779324853,
+      "translation": "참고 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:56.886208Z",
+      "issues": []
+    }
+  ]
+}

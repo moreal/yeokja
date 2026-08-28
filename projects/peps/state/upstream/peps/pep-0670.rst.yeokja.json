@@ -1,0 +1,2370 @@
+{
+  "version": 1,
+  "source_hash": 17628289347692105770,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Convert macros to functions in the Python C API",
+      "source_hash": 7341735552598166861,
+      "context_hash": 16530898886277989957,
+      "translation": "Python C API에서 매크로를 함수로 변환하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509631Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 4299552416192356043,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509634Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Macros in the C API will be converted to static inline functions or regular functions.",
+      "source_hash": 5985344517414796071,
+      "context_hash": 12953844538132033205,
+      "translation": "C API의 매크로를 정적 인라인 함수 또는 일반 함수로 변환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509634Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This will help avoid macro pitfalls in C/C++, and make the functions usable from other programming languages.",
+      "source_hash": 16961502747444959665,
+      "context_hash": 2558016613027079192,
+      "translation": "이렇게 하면 C/C++에서 매크로의 함정을 피하고, 다른 프로그래밍 언어에서도 함수를 사용할 수 있게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509634Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "To avoid compiler warnings, function arguments of pointer types will be cast to appropriate types using additional macros.",
+      "source_hash": 8793173420802378676,
+      "context_hash": 14153589890844843459,
+      "translation": "컴파일러 경고를 피하기 위해 포인터 타입의 함수 인자를 추가 매크로를 사용하여 적절한 타입으로 캐스팅합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509635Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "The cast will not be done in the limited C API version 3.11: users who opt in to the new limited API may need to add casts to the exact expected type.",
+      "source_hash": 6109225908591006652,
+      "context_hash": 17800149854565442625,
+      "translation": "제한된 C API 버전 3.11에서는 캐스팅하지 않습니다. 새로운 제한된 API를 선택하여 사용하는 사용자는 정확히 예상되는 타입으로 캐스팅을 추가해야 할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509635Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "To avoid introducing incompatible changes, macros which can be used as l-value in an assignment will not be converted.",
+      "source_hash": 3008230629161306484,
+      "context_hash": 9268104860460792921,
+      "translation": "호환되지 않는 변경 사항이 도입되는 것을 피하기 위해 대입에서 l-value로 사용할 수 있는 매크로는 변환하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509635Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 15730318336897436035,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509636Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The use of macros may have unintended adverse effects that are hard to avoid, even for experienced C developers.",
+      "source_hash": 4916108243565494382,
+      "context_hash": 8205036164930342067,
+      "translation": "매크로를 사용하면 숙련된 C 개발자라도 피하기 어려운 의도하지 않은 부작용이 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509636Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Some issues have been known for years, while others have been discovered recently in Python.",
+      "source_hash": 1463599388560990712,
+      "context_hash": 14313503001357157575,
+      "translation": "일부 문제는 수년 동안 알려져 왔지만, 다른 문제는 최근 Python에서 발견되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509636Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "Working around macro pitfalls makes the macro code harder to read and to maintain.",
+      "source_hash": 9736353542609527825,
+      "context_hash": 16696873716478632257,
+      "translation": "매크로의 함정을 우회하면 매크로 코드를 읽고 유지 관리하기가 더 어려워집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509636Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Converting macros to functions has multiple advantages:",
+      "source_hash": 17499682150746432772,
+      "context_hash": 13244002373942307591,
+      "translation": "매크로를 함수로 변환하면 여러 가지 이점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509636Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Functions don't suffer from macro pitfalls, for example the following ones described in `GCC documentation <https://gcc.gnu.org/onlinedocs/cpp/Macro-Pitfalls.html>`_:",
+      "source_hash": 13826885334228333200,
+      "context_hash": 10864457145524343880,
+      "translation": "함수에는 매크로의 함정이 없습니다. 예를 들어 다음은 `GCC 문서 <https://gcc.gnu.org/onlinedocs/cpp/Macro-Pitfalls.html>`_\\ 에 설명된 함정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509637Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "Misnesting",
+      "source_hash": 7325854179571253480,
+      "context_hash": 9648922944046799238,
+      "translation": "잘못된 중첩",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509637Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "Operator precedence problems",
+      "source_hash": 9781459161246189632,
+      "context_hash": 6750183228976360768,
+      "translation": "연산자 우선순위 문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509637Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Swallowing the semicolon",
+      "source_hash": 15232416520922600675,
+      "context_hash": 9877033956176808559,
+      "translation": "세미콜론 삼킴",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509637Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "Duplication of side effects",
+      "source_hash": 8021181154743520315,
+      "context_hash": 3138812627235707500,
+      "translation": "부수 효과 중복",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509637Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "Self-referential macros",
+      "source_hash": 13096410389850673092,
+      "context_hash": 1091644218962884305,
+      "translation": "자기 참조 매크로",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509638Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "Argument prescan",
+      "source_hash": 7452934495075413485,
+      "context_hash": 10005380622864825905,
+      "translation": "인자 사전 스캔",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509638Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "Newlines in arguments",
+      "source_hash": 4395106410627285228,
+      "context_hash": 6910392761358225685,
+      "translation": "인자의 줄 바꿈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509638Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:0",
+      "source": "Functions don't need the following workarounds for macro pitfalls, making them usually easier to read and to maintain than similar macro code:",
+      "source_hash": 4031350000028003124,
+      "context_hash": 664485589695589889,
+      "translation": "함수에는 매크로의 함정을 피하기 위한 다음과 같은 우회 방법이 필요하지 않으므로, 일반적으로 유사한 매크로 코드보다 읽고 유지 관리하기가 더 쉽습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509638Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:0",
+      "source": "Adding parentheses around arguments.",
+      "source_hash": 16223978647432088038,
+      "context_hash": 4102118873529095805,
+      "translation": "인자 주위에 괄호 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509638Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:0",
+      "source": "Using line continuation characters if the function is written on multiple lines.",
+      "source_hash": 5845133408501820824,
+      "context_hash": 13909499084388281281,
+      "translation": "함수를 여러 줄에 걸쳐 작성하는 경우 줄 연속 문자를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509639Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:14/seg:0",
+      "source": "Adding commas to execute multiple expressions.",
+      "source_hash": 18403872277746535967,
+      "context_hash": 5978818373851382570,
+      "translation": "여러 표현식을 실행하기 위해 쉼표를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509639Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:15/seg:0",
+      "source": "Using ``do { ... } while (0)`` to write multiple statements.",
+      "source_hash": 14012104592328856167,
+      "context_hash": 14468697933294555467,
+      "translation": "여러 문을 작성하기 위해 ``do { ... } while (0)``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509639Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:16/seg:0",
+      "source": "Argument types and the return type of functions are well defined.",
+      "source_hash": 5750288095037847147,
+      "context_hash": 4099776623132803205,
+      "translation": "함수의 인자 타입과 반환 타입은 명확하게 정의됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509640Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:17/seg:0",
+      "source": "Debuggers and profilers can retrieve the name of inlined functions.",
+      "source_hash": 13698156890480631891,
+      "context_hash": 12949454684424914989,
+      "translation": "디버거와 프로파일러는 인라인 함수의 이름을 가져올 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509640Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:18/seg:0",
+      "source": "Debuggers can put breakpoints on inlined functions.",
+      "source_hash": 1379527735012918035,
+      "context_hash": 17506973894444919848,
+      "translation": "디버거는 인라인 함수에 중단점을 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509640Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:19/seg:0",
+      "source": "Variables have a well-defined scope.",
+      "source_hash": 9341569257469948970,
+      "context_hash": 12003534088634283449,
+      "translation": "변수의 범위는 명확하게 정의됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509640Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:20/seg:0",
+      "source": "Converting macros and static inline functions to regular functions makes these regular functions accessible to projects which use Python but cannot use macros and static inline functions.",
+      "source_hash": 4025697261245985847,
+      "context_hash": 3160764352002802235,
+      "translation": "매크로와 정적 인라인 함수를 일반 함수로 변환하면, Python을 사용하지만 매크로와 정적 인라인 함수는 사용할 수 없는 프로젝트에서도 이러한 일반 함수에 접근할 수 있게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509641Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 16550777760490482458,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509641Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Convert macros to static inline functions",
+      "source_hash": 3439150396121302382,
+      "context_hash": 1144766677157278629,
+      "translation": "매크로를 정적 인라인 함수로 변환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:04.509641Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Most macros will be converted to static inline functions.",
+      "source_hash": 5841101590945651186,
+      "context_hash": 1293149573255637969,
+      "translation": "대부분의 매크로는 정적 인라인 함수로 변환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123570Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "The following macros will not be converted:",
+      "source_hash": 5484690450026537692,
+      "context_hash": 16869611308993933669,
+      "translation": "다음 매크로는 변환되지 않습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123572Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Object-like macros (i.e. those which don't need parentheses and arguments).",
+      "source_hash": 2549689518230003851,
+      "context_hash": 3150473161211489248,
+      "translation": "객체형 매크로(즉, 괄호와 인자가 필요하지 않은 매크로)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123573Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "For example:",
+      "source_hash": 4114854479619665730,
+      "context_hash": 11170308388368287147,
+      "translation": "예를 들면 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123573Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "Empty macros.",
+      "source_hash": 10621967066517947528,
+      "context_hash": 13303774524212017604,
+      "translation": "빈 매크로입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123573Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:1",
+      "source": "Example: ``#define Py_HAVE_CONDVAR``.",
+      "source_hash": 6597396026848308733,
+      "context_hash": 2716705775768902734,
+      "translation": "예: ``#define Py_HAVE_CONDVAR``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123573Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "Macros only defining a value, even if a constant with a well defined type would be better.",
+      "source_hash": 8348379953809005870,
+      "context_hash": 3947909595323199212,
+      "translation": "잘 정의된 형식을 갖는 상수가 더 좋더라도 값만 정의하는 매크로입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123574Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:1",
+      "source": "Example: ``#define METH_VARARGS 0x0001``.",
+      "source_hash": 10060729465754176016,
+      "context_hash": 11547007536805217465,
+      "translation": "예: ``#define METH_VARARGS 0x0001``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123574Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "Compatibility layer for different C compilers, C language extensions, or recent C features.",
+      "source_hash": 11141268107567545016,
+      "context_hash": 15276771189010904612,
+      "translation": "서로 다른 C 컴파일러, C 언어 확장 또는 최신 C 기능을 위한 호환성 계층입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123574Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:1",
+      "source": "Example: ``Py_GCC_ATTRIBUTE()``, ``Py_ALWAYS_INLINE``, ``Py_MEMCPY()``.",
+      "source_hash": 6001540241206654065,
+      "context_hash": 11903479332928796773,
+      "translation": "예: ``Py_GCC_ATTRIBUTE()``, ``Py_ALWAYS_INLINE``, ``Py_MEMCPY()``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123574Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "Macros used for definitions rather than behavior.",
+      "source_hash": 11046762899831026719,
+      "context_hash": 1645698746104818537,
+      "translation": "동작이 아니라 정의에 사용되는 매크로입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123575Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:1",
+      "source": "Example: ``PyAPI_FUNC``, ``Py_DEPRECATED``, ``Py_PYTHON_H``.",
+      "source_hash": 12325106990938770127,
+      "context_hash": 4508325288397895078,
+      "translation": "예: ``PyAPI_FUNC``, ``Py_DEPRECATED``, ``Py_PYTHON_H``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123575Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "Macros that need C preprocessor features, like stringification and concatenation.",
+      "source_hash": 9112598933402700986,
+      "context_hash": 18097242545525908270,
+      "translation": "문자열화와 연결 같은 C 전처리기 기능이 필요한 매크로입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123575Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:1",
+      "source": "Example: ``Py_STRINGIFY()``.",
+      "source_hash": 14246897213300541929,
+      "context_hash": 1332338488605519395,
+      "translation": "예: ``Py_STRINGIFY()``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123575Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "Macros which cannot be converted to functions.",
+      "source_hash": 9069802835080480596,
+      "context_hash": 17913270512483833094,
+      "translation": "함수로 변환할 수 없는 매크로입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123576Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:1",
+      "source": "Examples: ``Py_BEGIN_ALLOW_THREADS`` (contains an unpaired ``}``), ``Py_VISIT`` (relies on specific variable names), Py_RETURN_RICHCOMPARE (returns from the calling function).",
+      "source_hash": 4118616884345708403,
+      "context_hash": 7110590288907979046,
+      "translation": "예: ``Py_BEGIN_ALLOW_THREADS``\\ (짝이 맞지 않는 ``}``\\ 를 포함함), ``Py_VISIT``\\ (특정 변수 이름에 의존함), Py_RETURN_RICHCOMPARE(호출하는 함수에서 반환함)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123576Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "Macros which can be used as an l-value in assignments.",
+      "source_hash": 4651125428836874350,
+      "context_hash": 697596450538710766,
+      "translation": "대입에서 l-value로 사용할 수 있는 매크로입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123576Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:1",
+      "source": "This would be an incompatible change and is out of the scope of this PEP.",
+      "source_hash": 3673258614826869536,
+      "context_hash": 241523333695484369,
+      "translation": "이는 호환되지 않는 변경이며 이 PEP의 범위를 벗어납니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123576Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:2",
+      "source": "Example: ``PyBytes_AS_STRING()``.",
+      "source_hash": 17424014635994364731,
+      "context_hash": 1525142897375000563,
+      "translation": "예: ``PyBytes_AS_STRING()``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123577Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "Macros which have different return types depending on the code path or arguments.",
+      "source_hash": 625253899362691782,
+      "context_hash": 16690032776725654127,
+      "translation": "코드 경로 또는 인자에 따라 반환 형식이 다른 매크로입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123577Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Convert static inline functions to regular functions",
+      "source_hash": 15883892787053537574,
+      "context_hash": 2041069616084144515,
+      "translation": "정적 인라인 함수를 일반 함수로 변환",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123577Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Static inline functions in the public C API may be converted to regular functions, but only if there is no measurable performance impact of changing the function.",
+      "source_hash": 16968487300014199363,
+      "context_hash": 9808187201838971616,
+      "translation": "공개 C API의 정적 인라인 함수는 해당 함수 변경으로 인한 측정 가능한 성능 저하가 없는 경우에만 일반 함수로 변환할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123577Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "The performance impact should be measured with benchmarks.",
+      "source_hash": 9610718450826608441,
+      "context_hash": 17445278520721741293,
+      "translation": "성능 영향은 벤치마크를 사용하여 측정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123578Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Cast pointer arguments",
+      "source_hash": 11353932560313380733,
+      "context_hash": 14849392603736313548,
+      "translation": "포인터 인자 캐스팅",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123578Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Currently, most macros accepting pointers cast pointer arguments to their expected types.",
+      "source_hash": 4136121055853066188,
+      "context_hash": 5617317242626888620,
+      "translation": "현재 포인터를 받는 대부분의 매크로는 포인터 인자를 예상 형식으로 캐스팅합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123578Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "For example, in Python 3.6, the ``Py_TYPE()`` macro casts its argument to ``PyObject*``:",
+      "source_hash": 5860732804016630687,
+      "context_hash": 379012477237972265,
+      "translation": "예를 들어 Python 3.6에서 ``Py_TYPE()`` 매크로는 인자를 ``PyObject*``\\ 로 캐스팅합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123578Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "The ``Py_TYPE()`` macro accepts the ``PyObject*`` type, but also any pointer types, such as ``PyLongObject*`` and ``PyDictObject*``.",
+      "source_hash": 7157950435954339889,
+      "context_hash": 12248049594405741602,
+      "translation": "``Py_TYPE()`` 매크로는 ``PyObject*``\\ 형식을 허용하지만, ``PyLongObject*`` 및 ``PyDictObject*``\\ 와 같은 모든 포인터 형식도 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123579Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "Functions are strongly typed, and can only accept one type of argument.",
+      "source_hash": 13362548898795696152,
+      "context_hash": 12805346709226306985,
+      "translation": "함수는 강한 형식 검사를 적용하므로 한 가지 인자 형식만 허용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123579Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "To avoid compiler errors and warnings in existing code, when a macro is converted to a function and the macro casts at least one of its arguments a new macro will be added to keep the cast.",
+      "source_hash": 16982205208513226887,
+      "context_hash": 13651898497873176842,
+      "translation": "기존 코드에서 컴파일러 오류와 경고가 발생하지 않도록, 매크로를 함수로 변환할 때 해당 매크로가 인자 중 하나 이상을 캐스팅하면 캐스팅을 유지하는 새 매크로가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123579Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:1",
+      "source": "The new macro and the function will have the same name.",
+      "source_hash": 1571984565089403703,
+      "context_hash": 3569731560757359437,
+      "translation": "새 매크로와 함수는 동일한 이름을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123579Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "Example with the ``Py_TYPE()`` macro converted to a static inline function:",
+      "source_hash": 12036644762705264767,
+      "context_hash": 2280091071124865660,
+      "translation": "``Py_TYPE()`` 매크로를 정적 인라인 함수로 변환한 예:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:09.123580Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "The cast is kept for all pointer types, not only ``PyObject*``.",
+      "source_hash": 7130088153145911060,
+      "context_hash": 3143775524251841199,
+      "translation": "캐스트는 ``PyObject*``\\ 뿐만 아니라 모든 포인터 타입에 대해 유지됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660118Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:1",
+      "source": "This includes casts to ``void*``: removing a cast to ``void*`` would emit a new warning if the function is called with a ``const void*`` variable.",
+      "source_hash": 7520150378751970454,
+      "context_hash": 1868105981182953879,
+      "translation": "여기에는 ``void*``\\ 로의 캐스트도 포함됩니다. ``void*``\\ 로의 캐스트를 제거하면 함수가 ``const void*`` 변수를 사용하여 호출될 때 새로운 경고가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660121Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:2",
+      "source": "For example, the ``PyUnicode_WRITE()`` macro casts its *data* argument to ``void*``, and so it currently accepts ``const void*`` type, even though it writes into *data*.",
+      "source_hash": 15730248493419584226,
+      "context_hash": 7879528870454340950,
+      "translation": "예를 들어 ``PyUnicode_WRITE()`` 매크로는 *data* 인자를 ``void*``\\ 로 캐스팅하므로, *data*\\ 에 기록하더라도 현재 ``const void*`` 타입을 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660121Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:3",
+      "source": "This PEP will not change this.",
+      "source_hash": 3397642078375171409,
+      "context_hash": 4929404993486540179,
+      "translation": "이 PEP에서는 이를 변경하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660122Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "Avoid the cast in the limited C API version 3.11",
+      "source_hash": 6878451654705345728,
+      "context_hash": 7612827721586512444,
+      "translation": "제한 C API 버전 3.11에서는 캐스트를 피하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660122Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:0",
+      "source": "The casts will be excluded from the limited C API version 3.11 and newer.",
+      "source_hash": 1646046792158417613,
+      "context_hash": 14065806684761504444,
+      "translation": "캐스트는 제한 C API 버전 3.11 및 이후 버전에서 제외됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660123Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:1",
+      "source": "When an API user opts into the new limited API, they must pass the expected type or perform the cast.",
+      "source_hash": 240947496037014279,
+      "context_hash": 7859631247467918624,
+      "translation": "API 사용자가 새로운 제한 API를 선택하면 예상되는 타입을 전달하거나 캐스트를 수행해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660123Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:11/seg:0",
+      "source": "As an example, ``Py_TYPE()`` will be defined like this:",
+      "source_hash": 4761544143395598968,
+      "context_hash": 17577475177951429617,
+      "translation": "예를 들어 ``Py_TYPE()``\\ 은 다음과 같이 정의됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660124Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Return type is not changed",
+      "source_hash": 5685834476734493678,
+      "context_hash": 12868831895234119466,
+      "translation": "반환 타입은 변경하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660124Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "When a macro is converted to a function, its return type must not change to prevent emitting new compiler warnings.",
+      "source_hash": 18322038803908342671,
+      "context_hash": 8672277800209586377,
+      "translation": "매크로를 함수로 변환할 때 새로운 컴파일러 경고가 발생하지 않도록 반환 타입을 변경해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660125Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "For example, Python 3.7 changed the return type of ``PyUnicode_AsUTF8()`` from ``char*`` to ``const char*`` (`commit <https://github.com/python/cpython/commit/2a404b63d48d73bbaa007d89efb7a01048475acd>`__).",
+      "source_hash": 1774963445130067521,
+      "context_hash": 12221172708773368781,
+      "translation": "예를 들어 Python 3.7에서는 ``PyUnicode_AsUTF8()``\\ 의 반환 타입을 ``char*``\\ 에서 ``const char*``\\ 로 변경했습니다 (`commit <https://github.com/python/cpython/commit/2a404b63d48d73bbaa007d89efb7a01048475acd>`__).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660125Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "The change emitted new compiler warnings when building C extensions expecting ``char*``.",
+      "source_hash": 17728537589915207514,
+      "context_hash": 8267080731722959950,
+      "translation": "이 변경으로 인해 ``char*``\\ 를 예상하는 C 확장을 빌드할 때 새로운 컴파일러 경고가 발생했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660126Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:2",
+      "source": "This PEP doesn't change the return type to prevent this issue.",
+      "source_hash": 2435490008478073745,
+      "context_hash": 6716937187054244965,
+      "translation": "이 문제를 방지하기 위해 이 PEP에서는 반환 타입을 변경하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660126Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 7603075060688338600,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660126Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The PEP is designed to avoid C API incompatible changes.",
+      "source_hash": 11761669658563980467,
+      "context_hash": 9098207541623995648,
+      "translation": "이 PEP는 C API와 호환되지 않는 변경을 피하도록 설계되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660127Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Only C extensions explicitly targeting the limited C API version 3.11 must now pass the expected types to functions: pointer arguments are no longer cast to the expected types.",
+      "source_hash": 9061068776788256217,
+      "context_hash": 126101591639779646,
+      "translation": "이제 제한 C API 버전 3.11을 명시적으로 대상으로 하는 C 확장만 함수에 예상되는 타입을 전달해야 합니다. 포인터 인자는 더 이상 예상되는 타입으로 캐스팅되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660127Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "Function arguments of pointer types are still cast and return types are not changed to prevent emitting new compiler warnings.",
+      "source_hash": 4706473818980865666,
+      "context_hash": 6453562292588035360,
+      "translation": "새로운 컴파일러 경고가 발생하지 않도록 포인터 타입의 함수 인자는 여전히 캐스팅하며 반환 타입은 변경하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660127Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "Macros which can be used as l-value in an assignment are not modified by this PEP to avoid incompatible changes.",
+      "source_hash": 12032654793562645851,
+      "context_hash": 13655231152525371544,
+      "translation": "대입문에서 l-value로 사용할 수 있는 매크로는 호환되지 않는 변경을 피하기 위해 이 PEP에서 수정하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660127Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Examples of Macro Pitfalls",
+      "source_hash": 16878417686328546969,
+      "context_hash": 16566717075782981162,
+      "translation": "매크로의 함정 예시",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660128Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Duplication of side effects",
+      "source_hash": 8021181154743520315,
+      "context_hash": 2216396513134621133,
+      "translation": "부작용의 중복",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660128Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Macros:",
+      "source_hash": 3934526708170409836,
+      "context_hash": 9431072586845691646,
+      "translation": "매크로:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660128Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "If the *op* or the *X* argument has a side effect, the side effect is duplicated: it executed twice by ``PySet_Check()`` and ``Py_IS_NAN()``.",
+      "source_hash": 17067896247335999183,
+      "context_hash": 13455179174272900792,
+      "translation": "*op* 인자 또는 *X* 인자에 부작용이 있으면 부작용이 중복됩니다. ``PySet_Check()`` 및 ``Py_IS_NAN()``\\ 에서 각각 두 번 실행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660129Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "For example, the ``pos++`` argument in the ``PyUnicode_WRITE(kind, data, pos++, ch)`` code has a side effect.",
+      "source_hash": 5456787949861372118,
+      "context_hash": 15246978772649088114,
+      "translation": "예를 들어 ``PyUnicode_WRITE(kind, data, pos++, ch)`` 코드의 ``pos++`` 인자에는 부작용이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660129Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:1",
+      "source": "This code is safe because the ``PyUnicode_WRITE()`` macro only uses its 3rd argument once and so does not duplicate ``pos++`` side effect.",
+      "source_hash": 9160822494948066092,
+      "context_hash": 9100502789552790344,
+      "translation": "``PyUnicode_WRITE()`` 매크로가 세 번째 인자를 한 번만 사용하므로 ``pos++``\\ 의 부작용이 중복되지 않아 이 코드는 안전합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660129Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Misnesting",
+      "source_hash": 7325854179571253480,
+      "context_hash": 15460055327207628888,
+      "translation": "잘못된 중첩",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660130Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "Example of the `bpo-43181: Python macros don't shield arguments <https://bugs.python.org/issue43181>`_.",
+      "source_hash": 10857598738106894985,
+      "context_hash": 11635497297594308482,
+      "translation": "`bpo-43181: Python macros don't shield arguments <https://bugs.python.org/issue43181>`_\\ 의 예시입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660130Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "The ``PyObject_TypeCheck()`` macro before it has been fixed:",
+      "source_hash": 3871431647002663649,
+      "context_hash": 5925581298230680503,
+      "translation": "그 전에 있던 ``PyObject_TypeCheck()`` 매크로는 수정되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660130Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "C++ usage example:",
+      "source_hash": 14741967665420028033,
+      "context_hash": 3663277700816691831,
+      "translation": "C++ 사용 예시:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660130Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "The preprocessor first expands it:",
+      "source_hash": 14093186750765108608,
+      "context_hash": 12987731070851715662,
+      "translation": "전처리기는 먼저 이를 확장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660131Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "C++ ``\"<\"`` and ``\">\"`` characters are not treated as brackets by the preprocessor, so the ``Py_IS_TYPE()`` macro is invoked with 3 arguments:",
+      "source_hash": 7088711452619743504,
+      "context_hash": 14365917309972173015,
+      "translation": "전처리기에서는 C++ ``\"<\"`` 및 ``\">\"`` 문자를 괄호로 취급하지 않으므로 ``Py_IS_TYPE()`` 매크로가 인자 3개와 함께 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660131Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:0",
+      "source": "``ob``",
+      "source_hash": 3889835038811773721,
+      "context_hash": 13526944080294559609,
+      "translation": "``ob``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660131Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:9/seg:0",
+      "source": "``f<a``",
+      "source_hash": 4684711879171608792,
+      "context_hash": 80438478215476070,
+      "translation": "``f<a``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:12.660131Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:10/seg:0",
+      "source": "``b>(c)``",
+      "source_hash": 17672754972330270540,
+      "context_hash": 17013155412741370375,
+      "translation": "``b>(c)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672674Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:11/seg:0",
+      "source": "The compilation fails with an error on ``Py_IS_TYPE()`` which only takes 2 arguments.",
+      "source_hash": 8475571532570168973,
+      "context_hash": 9827692626230890434,
+      "translation": "``Py_IS_TYPE()``\\ 가 2개의 인수만 받기 때문에 컴파일이 오류와 함께 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672678Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:12/seg:0",
+      "source": "The bug is that the *op* and *tp* arguments of ``PyObject_TypeCheck()`` must be put between parentheses: replace ``Py_IS_TYPE(ob, tp)`` with ``Py_IS_TYPE((ob), (tp))``.",
+      "source_hash": 14842904199158414337,
+      "context_hash": 10264148966310001010,
+      "translation": "버그는 ``PyObject_TypeCheck()``\\ 의 *op*\\ 및 *tp*\\ 인자를 괄호 안에 넣어야 한다는 것입니다. ``Py_IS_TYPE(ob, tp)``\\ 를 ``Py_IS_TYPE((ob), (tp))``\\ 로 바꾸십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672678Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:12/seg:1",
+      "source": "In regular C code, these parentheses are redundant, can be seen as a bug, and so are often forgotten when writing macros.",
+      "source_hash": 16822534890087162208,
+      "context_hash": 8216765388729618517,
+      "translation": "일반적인 C 코드에서는 이러한 괄호가 불필요하고 버그로 보일 수 있으므로, 매크로를 작성할 때 자주 빠뜨립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672679Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:13/seg:0",
+      "source": "To avoid Macro Pitfalls, the ``PyObject_TypeCheck()`` macro has been converted to a static inline function: `commit <https://github.com/python/cpython/commit/4bb2a1ebc569eee6f1b46ecef1965a26ae8cb76d>`__.",
+      "source_hash": 16789325064423536648,
+      "context_hash": 15133533638569394984,
+      "translation": "매크로 함정을 피하기 위해 ``PyObject_TypeCheck()`` 매크로를 정적 인라인 함수로 변환했습니다: `commit <https://github.com/python/cpython/commit/4bb2a1ebc569eee6f1b46ecef1965a26ae8cb76d>`__.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672679Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Examples of hard to read macros",
+      "source_hash": 4820049349619818026,
+      "context_hash": 15504218988602126056,
+      "translation": "읽기 어려운 매크로의 예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672680Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "PyObject_INIT()",
+      "source_hash": 15217194604761940745,
+      "context_hash": 16048944178159431463,
+      "translation": "PyObject_INIT()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672680Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "Example showing the usage of commas in a macro which has a return value.",
+      "source_hash": 11699973342729931707,
+      "context_hash": 10781262236046177568,
+      "translation": "반환 값을 갖는 매크로에서 쉼표 사용을 보여 주는 예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672680Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "Python 3.7 macro:",
+      "source_hash": 16764829609125739637,
+      "context_hash": 13397429974513240519,
+      "translation": "Python 3.7 매크로:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672681Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:0",
+      "source": "Python 3.8 function (simplified code):",
+      "source_hash": 10852103481890063242,
+      "context_hash": 6089301328028002589,
+      "translation": "Python 3.8 함수(간소화된 코드):",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672681Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:6/seg:0",
+      "source": "The function doesn't need the line continuation character ``\"\\\"``.",
+      "source_hash": 8461741595970080259,
+      "context_hash": 8205339424814785307,
+      "translation": "함수에는 줄 연속 문자 ``\"\\\"``\\ 가 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672681Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:7/seg:0",
+      "source": "It has an explicit ``\"return op;\"`` rather than the surprising ``\", (op)\"`` syntax at the end of the macro.",
+      "source_hash": 15410445880656448464,
+      "context_hash": 12661756803537219461,
+      "translation": "매크로 끝의 놀라운 ``\", (op)\"`` 구문 대신 명시적인 ``\"return op;\"``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672681Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:8/seg:0",
+      "source": "It uses short statements on multiple lines, rather than being written as a single long line.",
+      "source_hash": 8899709951672114962,
+      "context_hash": 16555915442635909800,
+      "translation": "하나의 긴 줄로 작성하는 대신 여러 줄에 짧은 문장을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672682Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:9/seg:0",
+      "source": "Inside the function, the *op* argument has the well defined type ``PyObject*`` and so doesn't need casts like ``(PyObject *)(op)``.",
+      "source_hash": 1725539834270206374,
+      "context_hash": 10168313755048432369,
+      "translation": "함수 내부에서 *op* 인자는 잘 정의된 ``PyObject*`` 타입을 가지므로 ``(PyObject *)(op)``\\ 와 같은 캐스트가 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672682Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:10/seg:0",
+      "source": "Arguments don't need to be put inside parentheses: use ``typeobj``, rather than ``(typeobj)``.",
+      "source_hash": 7451635826979370472,
+      "context_hash": 5427658639361093759,
+      "translation": "인수를 괄호 안에 넣을 필요가 없습니다. ``(typeobj)`` 대신 ``typeobj``\\ 를 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672682Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "_Py_NewReference()",
+      "source_hash": 15510237752121433485,
+      "context_hash": 5505195538486103674,
+      "translation": "_Py_NewReference()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672682Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Example showing the usage of an ``#ifdef`` inside a macro.",
+      "source_hash": 2234900352954425866,
+      "context_hash": 14358065214802442683,
+      "translation": "매크로 내부에서 ``#ifdef``\\ 를 사용하는 예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672683Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "Python 3.7 macro (simplified code):",
+      "source_hash": 17178707162896892462,
+      "context_hash": 12294215589765444112,
+      "translation": "Python 3.7 매크로(간소화된 코드):",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672683Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "Python 3.8 function (simplified code):",
+      "source_hash": 10852103481890063242,
+      "context_hash": 10432210162374204469,
+      "translation": "Python 3.8 함수(간소화된 코드):",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672683Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "PyUnicode_READ_CHAR()",
+      "source_hash": 900599714900127824,
+      "context_hash": 4340355119531989106,
+      "translation": "PyUnicode_READ_CHAR()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672683Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "This macro reuses arguments, and possibly calls ``PyUnicode_KIND`` multiple times:",
+      "source_hash": 920109883754702757,
+      "context_hash": 2380955737269890271,
+      "translation": "이 매크로는 인수를 재사용하며, ``PyUnicode_KIND``\\ 를 여러 번 호출할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672684Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "Possible implementation as a static inlined function:",
+      "source_hash": 18374879642145769498,
+      "context_hash": 6139276162072130037,
+      "translation": "정적 인라인 함수로 가능한 구현:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672684Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Macros converted to functions since Python 3.8",
+      "source_hash": 2486508849455062100,
+      "context_hash": 8956183923129011641,
+      "translation": "Python 3.8부터 함수로 변환된 매크로",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672684Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "This is a list of macros already converted to functions between Python 3.8 and Python 3.11.",
+      "source_hash": 9405956889137852902,
+      "context_hash": 277152331850156813,
+      "translation": "다음은 Python 3.8과 Python 3.11 사이에 이미 함수로 변환된 매크로 목록입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672684Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "Even though some converted macros (like ``Py_INCREF()``) are very commonly used by C extensions, these conversions did not significantly impact Python performance and most of them didn't break backward compatibility.",
+      "source_hash": 7562500790720897007,
+      "context_hash": 14239712511239769614,
+      "translation": "변환된 일부 매크로(예: ``Py_INCREF()``)가 C 확장에서 매우 흔히 사용되지만, 이러한 변환은 Python 성능에 큰 영향을 주지 않았으며 대부분 하위 호환성을 깨뜨리지 않았습니다.",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T18:31:23.672684Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Macros converted to static inline functions",
+      "source_hash": 1740013347365781027,
+      "context_hash": 17413614733424903864,
+      "translation": "정적 인라인 함수로 변환된 매크로",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672686Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "Python 3.8:",
+      "source_hash": 17158889297852108164,
+      "context_hash": 17673039907614456136,
+      "translation": "Python 3.8:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672686Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "``Py_DECREF()``",
+      "source_hash": 2113708066188498440,
+      "context_hash": 10623215614009190690,
+      "translation": "``Py_DECREF()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672686Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "``Py_INCREF()``",
+      "source_hash": 11328265890940410089,
+      "context_hash": 4023747590329345901,
+      "translation": "``Py_INCREF()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672687Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:0",
+      "source": "``Py_XDECREF()``",
+      "source_hash": 6935562668255440032,
+      "context_hash": 1816004336344494868,
+      "translation": "``Py_XDECREF()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672687Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:0",
+      "source": "``Py_XINCREF()``",
+      "source_hash": 12726036106719804528,
+      "context_hash": 6543024432459602405,
+      "translation": "``Py_XINCREF()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672687Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:6/seg:0",
+      "source": "``PyObject_INIT()``",
+      "source_hash": 12708699399416040482,
+      "context_hash": 7831989727887833971,
+      "translation": "``PyObject_INIT()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.672687Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:7/seg:0",
+      "source": "``PyObject_INIT_VAR()``",
+      "source_hash": 10185559672215387687,
+      "context_hash": 3231463011151634490,
+      "translation": "``PyObject_INIT_VAR()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604116Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:8/seg:0",
+      "source": "``_PyObject_GC_UNTRACK()``",
+      "source_hash": 4436374801237042403,
+      "context_hash": 4614659962384122165,
+      "translation": "``_PyObject_GC_UNTRACK()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604120Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:9/seg:0",
+      "source": "``_Py_Dealloc()``",
+      "source_hash": 2246124082266270816,
+      "context_hash": 16897173055286066716,
+      "translation": "``_Py_Dealloc()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604120Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Macros converted to regular functions",
+      "source_hash": 1232872313255775872,
+      "context_hash": 1418487643543154600,
+      "translation": "일반 함수로 변환된 매크로",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604121Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Python 3.9:",
+      "source_hash": 5747954298236070098,
+      "context_hash": 1685044149499690523,
+      "translation": "Python 3.9:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604121Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "``PyIndex_Check()``",
+      "source_hash": 10355197280522306741,
+      "context_hash": 3754833716751444312,
+      "translation": "``PyIndex_Check()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604121Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "``PyObject_CheckBuffer()``",
+      "source_hash": 10851769319360027823,
+      "context_hash": 2951332691206094987,
+      "translation": "``PyObject_CheckBuffer()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604121Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "``PyObject_GET_WEAKREFS_LISTPTR()``",
+      "source_hash": 16311382092235474000,
+      "context_hash": 13579770751273999731,
+      "translation": "``PyObject_GET_WEAKREFS_LISTPTR()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604122Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "``PyObject_IS_GC()``",
+      "source_hash": 7560589334502206934,
+      "context_hash": 11855112257375982006,
+      "translation": "``PyObject_IS_GC()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604122Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:0",
+      "source": "``PyObject_NEW()``: alias to ``PyObject_New()``",
+      "source_hash": 13285032152742157666,
+      "context_hash": 5347662786203087138,
+      "translation": "``PyObject_NEW()``: ``PyObject_New()``\\ 의 별칭입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604122Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:0",
+      "source": "``PyObject_NEW_VAR()``: alias to ``PyObjectVar_New()``",
+      "source_hash": 14752401008769997520,
+      "context_hash": 6562594078465157027,
+      "translation": "``PyObject_NEW_VAR()``: ``PyObjectVar_New()``\\ 의 별칭입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604123Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:8/seg:0",
+      "source": "To avoid performance slowdown on Python built without LTO, private static inline functions have been added to the internal C API:",
+      "source_hash": 17061111875366910772,
+      "context_hash": 12693350865035222895,
+      "translation": "LTO 없이 빌드된 Python에서 성능 저하를 방지하기 위해 내부 C API에 비공개 정적 인라인 함수가 추가되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604123Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:9/seg:0",
+      "source": "``_PyIndex_Check()``",
+      "source_hash": 14153748589909203569,
+      "context_hash": 17700233295075081142,
+      "translation": "``_PyIndex_Check()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604123Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:10/seg:0",
+      "source": "``_PyObject_IS_GC()``",
+      "source_hash": 514303206780497473,
+      "context_hash": 12516837270128261412,
+      "translation": "``_PyObject_IS_GC()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604123Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:11/seg:0",
+      "source": "``_PyType_HasFeature()``",
+      "source_hash": 10149110404534978107,
+      "context_hash": 1015471618264375686,
+      "translation": "``_PyType_HasFeature()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604123Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:12/seg:0",
+      "source": "``_PyType_IS_GC()``",
+      "source_hash": 17830554412164850101,
+      "context_hash": 14308809794310115469,
+      "translation": "``_PyType_IS_GC()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604123Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Static inline functions converted to regular functions",
+      "source_hash": 1173057156154887345,
+      "context_hash": 3950245880440021386,
+      "translation": "정적 인라인 함수가 일반 함수로 변환되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604124Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "Python 3.11:",
+      "source_hash": 3021117290753784597,
+      "context_hash": 11568265760820768829,
+      "translation": "Python 3.11:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604124Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "``PyObject_CallOneArg()``",
+      "source_hash": 16111894304863204210,
+      "context_hash": 12861198475912344721,
+      "translation": "``PyObject_CallOneArg()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604124Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "``PyObject_Vectorcall()``",
+      "source_hash": 16915836365657058403,
+      "context_hash": 2512486040984455235,
+      "translation": "``PyObject_Vectorcall()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604124Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "``PyVectorcall_Function()``",
+      "source_hash": 13756499101966259230,
+      "context_hash": 10514276172377674175,
+      "translation": "``PyVectorcall_Function()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604124Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:0",
+      "source": "``_PyObject_FastCall()``",
+      "source_hash": 687828734606704677,
+      "context_hash": 151826284539674479,
+      "translation": "``_PyObject_FastCall()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604125Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:6/seg:0",
+      "source": "To avoid performance slowdown on Python built without LTO, a private static inline function has been added to the internal C API:",
+      "source_hash": 5116062243634315676,
+      "context_hash": 12285277516502785293,
+      "translation": "LTO 없이 빌드된 Python에서 성능 저하를 방지하기 위해 내부 C API에 비공개 정적 인라인 함수가 추가되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604125Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:7/seg:0",
+      "source": "``_PyVectorcall_FunctionInline()``",
+      "source_hash": 2017222263968832303,
+      "context_hash": 10114307205893450972,
+      "translation": "``_PyVectorcall_FunctionInline()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604126Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Incompatible changes",
+      "source_hash": 1053264756503389394,
+      "context_hash": 2259338497846780935,
+      "translation": "호환성이 깨지는 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604126Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "While other converted macros didn't break the backward compatibility, there is an exception.",
+      "source_hash": 8420630573735680052,
+      "context_hash": 2797660447130543199,
+      "translation": "변환된 다른 매크로는 하위 호환성을 깨뜨리지 않았지만, 예외가 있습니다.",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T18:31:16.604126Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:0",
+      "source": "The 3 macros ``Py_REFCNT()``, ``Py_TYPE()`` and ``Py_SIZE()`` have been converted to static inline functions in Python 3.10 and 3.11 to disallow using them as l-value in assignment.",
+      "source_hash": 13591170040516466866,
+      "context_hash": 173667992148192872,
+      "translation": "``Py_REFCNT()``, ``Py_TYPE()`` 및 ``Py_SIZE()``\\ 의 3개 매크로는 대입문에서 l-value로 사용하지 못하도록 Python 3.10 및 3.11에서 정적 인라인 함수로 변환되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604127Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:1",
+      "source": "It is an incompatible change made on purpose: see `bpo-39573 <https://bugs.python.org/issue39573>`_ for the rationale.",
+      "source_hash": 10688553200271698904,
+      "context_hash": 3487448104849708104,
+      "translation": "이는 의도적으로 적용된 호환성이 깨지는 변경 사항입니다. 그 근거는 `bpo-39573 <https://bugs.python.org/issue39573>`_\\ 에서 확인하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604127Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:0",
+      "source": "This PEP does not propose converting macros which can be used as l-value to avoid introducing new incompatible changes.",
+      "source_hash": 1120401792429565498,
+      "context_hash": 15685912428775571108,
+      "translation": "이 PEP에서는 새로운 호환성이 깨지는 변경 사항이 도입되는 것을 방지하기 위해 l-value로 사용할 수 있는 매크로를 변환하는 것을 제안하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604128Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Performance concerns and benchmarks",
+      "source_hash": 6056137255388920417,
+      "context_hash": 15933504113019057189,
+      "translation": "성능 관련 우려와 벤치마크",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604128Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "There have been concerns that converting macros to functions can degrade performance.",
+      "source_hash": 1555127252682651541,
+      "context_hash": 16714086289226948645,
+      "translation": "매크로를 함수로 변환하면 성능이 저하될 수 있다는 우려가 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604128Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "This section explains performance concerns and shows benchmark results using `PR 29728 <https://github.com/python/cpython/pull/29728>`_, which replaces the following static inline functions with macros:",
+      "source_hash": 15584358851114718412,
+      "context_hash": 9785220984140157266,
+      "translation": "이 절에서는 다음 정적 인라인 함수를 매크로로 대체하는 `PR 29728 <https://github.com/python/cpython/pull/29728>`_\\ 을 사용하여 성능 관련 우려를 설명하고 벤치마크 결과를 보여 줍니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:16.604129Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "``PyObject_TypeCheck()``",
+      "source_hash": 6204463949504924627,
+      "context_hash": 18010327189967167004,
+      "translation": "``PyObject_TypeCheck()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553123Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:4/seg:0",
+      "source": "``PyType_Check()``, ``PyType_CheckExact()``",
+      "source_hash": 17613798178379302557,
+      "context_hash": 7741285776788378958,
+      "translation": "``PyType_Check()``, ``PyType_CheckExact()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553126Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:0",
+      "source": "``PyType_HasFeature()``",
+      "source_hash": 4272967478448351951,
+      "context_hash": 18061831163086457309,
+      "translation": "``PyType_HasFeature()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553127Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:0",
+      "source": "``PyVectorcall_NARGS()``",
+      "source_hash": 7448821483355888309,
+      "context_hash": 10514950875849539692,
+      "translation": "``PyVectorcall_NARGS()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553127Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:7/seg:0",
+      "source": "``Py_DECREF()``, ``Py_XDECREF()``",
+      "source_hash": 1161815662821733000,
+      "context_hash": 11199307085085211585,
+      "translation": "``Py_DECREF()``, ``Py_XDECREF()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553127Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:8/seg:0",
+      "source": "``Py_INCREF()``, ``Py_XINCREF()``",
+      "source_hash": 10100794984251143029,
+      "context_hash": 4461212733166966438,
+      "translation": "``Py_INCREF()``, ``Py_XINCREF()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553128Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:9/seg:0",
+      "source": "``Py_IS_TYPE()``",
+      "source_hash": 8139922082045504290,
+      "context_hash": 12219588100993868951,
+      "translation": "``Py_IS_TYPE()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553129Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:10/seg:0",
+      "source": "``Py_NewRef()``",
+      "source_hash": 18354814745133992545,
+      "context_hash": 4575166283646347099,
+      "translation": "``Py_NewRef()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553130Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:11/seg:0",
+      "source": "``Py_REFCNT()``, ``Py_TYPE()``, ``Py_SIZE()``",
+      "source_hash": 17046397266760972638,
+      "context_hash": 15648738716184239207,
+      "translation": "``Py_REFCNT()``, ``Py_TYPE()``, ``Py_SIZE()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553130Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:12/seg:0",
+      "source": "The benchmarks were run on Fedora 35 (Linux) with GCC 11 on a laptop with 8 logical CPUs (4 physical CPU cores).",
+      "source_hash": 12313856619136062696,
+      "context_hash": 5478743450139028799,
+      "translation": "벤치마크는 논리 CPU 8개(물리 CPU 코어 4개)가 장착된 노트북에서 GCC 11을 사용하여 Fedora 35(Linux)에서 실행했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553130Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Static inline functions",
+      "source_hash": 1866298671972546358,
+      "context_hash": 9177168840311601877,
+      "translation": "정적 인라인 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553131Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "First of all, converting macros to *static inline* functions has negligible impact on performance: the measured differences are consistent with noise due to unrelated factors.",
+      "source_hash": 4206614229902523015,
+      "context_hash": 14246620752093397860,
+      "translation": "우선, 매크로를 *정적 인라인* 함수로 변환해도 성능에는 무시할 수 있을 정도의 영향만 있습니다. 측정된 차이는 관련 없는 요인으로 인한 잡음과 일치합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553131Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:0",
+      "source": "Static inline functions are a new feature in the C99 standard.",
+      "source_hash": 4884182152526338470,
+      "context_hash": 12295015900453364486,
+      "translation": "정적 인라인 함수는 C99 표준의 새로운 기능입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553131Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:1",
+      "source": "Modern C compilers have efficient heuristics to decide if a function should be inlined or not.",
+      "source_hash": 15877985315430648849,
+      "context_hash": 2665914624346875683,
+      "translation": "최신 C 컴파일러에는 함수를 인라인할지 여부를 결정하는 효율적인 휴리스틱이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553132Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:0",
+      "source": "When a C compiler decides to not inline, there is likely a good reason.",
+      "source_hash": 16422534527168050394,
+      "context_hash": 14904241869366518379,
+      "translation": "C 컴파일러가 인라인하지 않기로 결정했다면, 그럴 만한 이유가 있을 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553132Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:1",
+      "source": "For example, inlining would reuse a register which requires to save/restore the register value on the stack and so increases the stack memory usage, or be less efficient.",
+      "source_hash": 17633997844452949473,
+      "context_hash": 11219124815072996269,
+      "translation": "예를 들어, 인라인하면 스택에서 레지스터 값을 저장하고 복원해야 하는 레지스터를 재사용하게 되어 스택 메모리 사용량이 증가하거나, 효율성이 떨어질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553132Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:4/seg:0",
+      "source": "Benchmark of the ``./python -m test -j5`` command on Python built in release mode with ``gcc -O3``, LTO and PGO:",
+      "source_hash": 3271527916329935485,
+      "context_hash": 4489004633515689119,
+      "translation": "``gcc -O3`` 및 LTO와 PGO를 사용하여 릴리스 모드로 빌드한 Python에서 ``./python -m test -j5`` 명령의 벤치마크입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553132Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:5/seg:0",
+      "source": "Macros (PR 29728): 361 sec +- 1 sec",
+      "source_hash": 1430628776161479714,
+      "context_hash": 11753738379266339442,
+      "translation": "매크로(PR 29728): 361초 +- 1초",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553133Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:6/seg:0",
+      "source": "Static inline functions (reference): 361 sec +- 1 sec",
+      "source_hash": 9521137598719741309,
+      "context_hash": 8918647158497221190,
+      "translation": "정적 인라인 함수(참조): 361초 +- 1초",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553133Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:7/seg:0",
+      "source": "There is **no significant performance difference** between macros and static inline functions when static inline functions **are inlined**.",
+      "source_hash": 11986692393752675253,
+      "context_hash": 6180847494166690743,
+      "translation": "정적 인라인 함수가 **인라인되는** 경우, 매크로와 정적 인라인 함수 사이에는 **유의미한 성능 차이가 없습니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553133Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "Debug build",
+      "source_hash": 11563834258885040725,
+      "context_hash": 6163916459205195513,
+      "translation": "디버그 빌드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553134Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "Performance in debug builds *can* suffer when macros are converted to functions.",
+      "source_hash": 9830754886853112393,
+      "context_hash": 3270805445393998115,
+      "translation": "디버그 빌드에서는 매크로를 함수로 변환하면 성능이 *저하될 수* 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553134Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:1",
+      "source": "This is compensated by better debuggability: debuggers can retrieve function names, set breakpoints inside functions, etc.",
+      "source_hash": 18175740479728718612,
+      "context_hash": 11157716006676704714,
+      "translation": "이는 디버깅 가능성이 향상되는 것으로 보완됩니다. 디버거가 함수 이름을 검색하고 함수 내부에 중단점을 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553135Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:0",
+      "source": "On Windows, when Python is built in debug mode by Visual Studio, static inline functions are not inlined.",
+      "source_hash": 9740959507352517055,
+      "context_hash": 11277338373051277784,
+      "translation": "Windows에서 Visual Studio로 Python을 디버그 모드로 빌드하면 정적 인라인 함수가 인라인되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553135Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:0",
+      "source": "On other platforms, ``./configure --with-pydebug`` uses the ``-Og`` compiler option on compilers that support it (including GCC and LLVM Clang). ``-Og`` means “optimize debugging experience”.",
+      "source_hash": 4361329331257463340,
+      "context_hash": 10003874285683749719,
+      "translation": "다른 플랫폼에서는 ``./configure --with-pydebug``\\ 가 이를 지원하는 컴파일러(GCC와 LLVM Clang 포함)에서 ``-Og`` 컴파일러 옵션을 사용합니다. ``-Og``\\ 은 “디버깅 환경을 최적화한다”는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553135Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:1",
+      "source": "Otherwise, the ``-O0`` compiler option is used. ``-O0`` means “disable most optimizations”.",
+      "source_hash": 564431229110408907,
+      "context_hash": 18391368604850876782,
+      "translation": "그렇지 않으면 ``-O0`` 컴파일러 옵션을 사용합니다. ``-O0``\\ 은 “대부분의 최적화를 비활성화한다”는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553136Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:4/seg:0",
+      "source": "With GCC 11, ``gcc -Og`` can inline static inline functions, whereas ``gcc -O0`` does not inline static inline functions.",
+      "source_hash": 14565761934381313300,
+      "context_hash": 14803615690943718411,
+      "translation": "GCC 11에서는 ``gcc -Og``\\ 가 정적 인라인 함수를 인라인할 수 있지만, ``gcc -O0``\\ 은 정적 인라인 함수를 인라인하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553137Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:5/seg:0",
+      "source": "Benchmark of the ``./python -m test -j10`` command on Python built in debug mode with ``gcc -O0`` (that is, compiler optimizations, including inlining, are explicitly disabled):",
+      "source_hash": 2853243776143083861,
+      "context_hash": 4973101140109295037,
+      "translation": "``gcc -O0``\\ 을 사용하여 디버그 모드로 빌드한 Python에서 ``./python -m test -j10`` 명령의 벤치마크입니다(즉, 인라인을 포함한 컴파일러 최적화가 명시적으로 비활성화됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553137Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:6/seg:0",
+      "source": "Macros (PR 29728): 345 sec ± 5 sec",
+      "source_hash": 8853763366646542500,
+      "context_hash": 2049749982850774820,
+      "translation": "매크로(PR 29728): 345초 ± 5초",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553137Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:7/seg:0",
+      "source": "Static inline functions (reference): 360 sec ± 6 sec",
+      "source_hash": 10153149178255452004,
+      "context_hash": 16445888846356630440,
+      "translation": "정적 인라인 함수(참조): 360초 ± 6초",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553137Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:8/seg:0",
+      "source": "Replacing macros with static inline functions makes Python **1.04x slower** when the compiler **does not inline** static inline functions.",
+      "source_hash": 8969890530046373138,
+      "context_hash": 18085343626371446603,
+      "translation": "컴파일러가 정적 인라인 함수를 **인라인하지 않으면**, 매크로를 정적 인라인 함수로 대체할 때 Python이 **1.04배 더 느려집니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:23.553138Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:9/seg:0",
+      "source": "Note that benchmarks should not be run on a Python debug build.",
+      "source_hash": 2930624994784982591,
+      "context_hash": 16266801309528875372,
+      "translation": "벤치마크는 Python 디버그 빌드에서 실행해서는 안 된다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231434Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:9/seg:1",
+      "source": "Moreover, using link-time optimization (LTO) and profile-guided optimization (PGO) is recommended for best performance and reliable benchmarks.",
+      "source_hash": 5373191053588250837,
+      "context_hash": 7285657563416151351,
+      "translation": "또한 최상의 성능과 신뢰할 수 있는 벤치마크를 위해 링크 타임 최적화(LTO)와 프로파일 기반 최적화(PGO)를 사용하는 것이 권장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231439Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:9/seg:2",
+      "source": "PGO helps the compiler to decide if functions should be inlined or not.",
+      "source_hash": 5594193234703577304,
+      "context_hash": 17767790805983467509,
+      "translation": "PGO는 함수의 인라인화 여부를 컴파일러가 결정하는 데 도움을 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231439Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "Force inlining",
+      "source_hash": 13227350718263004769,
+      "context_hash": 13271579186088812210,
+      "translation": "강제 인라인화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231440Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "The ``Py_ALWAYS_INLINE`` macro can be used to force inlining.",
+      "source_hash": 16034942126125699284,
+      "context_hash": 9370331688145279428,
+      "translation": "``Py_ALWAYS_INLINE`` 매크로를 사용하여 인라인화를 강제할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231440Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:1",
+      "source": "This macro uses ``__attribute__((always_inline))`` with GCC and Clang, and ``__forceinline`` with MSC.",
+      "source_hash": 11618322362081885731,
+      "context_hash": 14168527018496168959,
+      "translation": "이 매크로는 GCC 및 Clang에서는 ``__attribute__((always_inline))``\\ 를, MSC에서는 ``__forceinline``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231440Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:0",
+      "source": "Previous attempts to use ``Py_ALWAYS_INLINE`` didn't show any benefit, and were abandoned.",
+      "source_hash": 18141866614940430407,
+      "context_hash": 14272147020117210370,
+      "translation": "``Py_ALWAYS_INLINE``\\ 을 사용하려는 이전 시도에서는 아무런 이점이 나타나지 않아 중단되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231441Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:1",
+      "source": "See for example `bpo-45094 <https://bugs.python.org/issue45094>`_ \"Consider using ``__forceinline`` and ``__attribute__((always_inline))`` on static inline functions (``Py_INCREF``, ``Py_TYPE``) for debug build\".",
+      "source_hash": 16837511600941861449,
+      "context_hash": 3389316812827588076,
+      "translation": "예를 들어 `bpo-45094 <https://bugs.python.org/issue45094>`_ \"디버그 빌드에서 정적 인라인 함수(``Py_INCREF``, ``Py_TYPE``)에 ``__forceinline`` 및 ``__attribute__((always_inline))``\\ 을 사용하는 것을 고려하십시오\"를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231441Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:0",
+      "source": "When the ``Py_INCREF()`` macro was converted to a static inline function in 2018 (`commit <https://github.com/python/cpython/commit/2aaf0c12041bcaadd7f2cc5a54450eefd7a6ff12>`__), it was decided not to force inlining.",
+      "source_hash": 8634075364603701833,
+      "context_hash": 766526035172455241,
+      "translation": "2018년에 ``Py_INCREF()`` 매크로를 정적 인라인 함수로 변환할 때 (`commit <https://github.com/python/cpython/commit/2aaf0c12041bcaadd7f2cc5a54450eefd7a6ff12>`__), 인라인화를 강제하지 않기로 결정했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231441Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:1",
+      "source": "The machine code was analyzed with multiple C compilers and compiler options, and ``Py_INCREF()`` was always inlined without having to force inlining.",
+      "source_hash": 247633533556930642,
+      "context_hash": 17891250299123800316,
+      "translation": "기계어 코드를 여러 C 컴파일러와 컴파일러 옵션으로 분석했으며, ``Py_INCREF()``\\ 은 인라인화를 강제하지 않아도 항상 인라인화되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231442Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:2",
+      "source": "The only case where it was not inlined was the debug build.",
+      "source_hash": 10247975619425106483,
+      "context_hash": 14857869918177102806,
+      "translation": "인라인화되지 않은 유일한 경우는 디버그 빌드였습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231442Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:3",
+      "source": "See discussion in `bpo-35059 <https://bugs.python.org/issue35059>`_ \"Convert ``Py_INCREF()`` and ``PyObject_INIT()`` to inlined functions\".",
+      "source_hash": 14882118970960890926,
+      "context_hash": 15611806984619229654,
+      "translation": "`bpo-35059 <https://bugs.python.org/issue35059>`_ \"``Py_INCREF()`` 및 ``PyObject_INIT()``\\ 을 인라인 함수로 변환\"에서 논의를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231442Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Disabling inlining",
+      "source_hash": 13259913868907068527,
+      "context_hash": 3456873043469628708,
+      "translation": "인라인화 비활성화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231443Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "On the other side, the ``Py_NO_INLINE`` macro can be used to disable inlining.",
+      "source_hash": 9964373257738667500,
+      "context_hash": 10986387712193015848,
+      "translation": "반면 ``Py_NO_INLINE`` 매크로를 사용하여 인라인화를 비활성화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231443Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:1",
+      "source": "It can be used to reduce the stack memory usage, or to prevent inlining on LTO+PGO builds, which generally inline code more aggressively: see `bpo-33720 <https://bugs.python.org/issue33720>`_.",
+      "source_hash": 5039378873602233708,
+      "context_hash": 13738088551997152430,
+      "translation": "이 매크로는 스택 메모리 사용량을 줄이거나, 일반적으로 코드를 더 적극적으로 인라인화하는 LTO+PGO 빌드에서 인라인화를 방지하는 데 사용할 수 있습니다. `bpo-33720 <https://bugs.python.org/issue33720>`_\\ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231443Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:2",
+      "source": "The ``Py_NO_INLINE`` macro uses ``__attribute__ ((noinline))`` with GCC and Clang, and ``__declspec(noinline)`` with MSC.",
+      "source_hash": 105878170843392837,
+      "context_hash": 1666246860251303003,
+      "translation": "``Py_NO_INLINE`` 매크로는 GCC 및 Clang에서는 ``__attribute__ ((noinline))``\\ 을, MSC에서는 ``__declspec(noinline)``\\ 을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231444Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:2/seg:0",
+      "source": "This technique is available, though we currently don't know a concrete function for which it would be useful.",
+      "source_hash": 15250985941323698825,
+      "context_hash": 53690985437945856,
+      "translation": "이 기법을 사용할 수는 있지만, 현재로서는 이것이 유용할 구체적인 함수를 알지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231444Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:2/seg:1",
+      "source": "Note that with macros, it is not possible to disable inlining at all.",
+      "source_hash": 2411031639859048699,
+      "context_hash": 10937567525806733266,
+      "translation": "매크로를 사용하면 인라인화를 전혀 비활성화할 수 없다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231444Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 4092157265373616480,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231444Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:0/seg:0",
+      "source": "Keep macros, but fix some macro issues",
+      "source_hash": 1448920905359329876,
+      "context_hash": 828866544887365057,
+      "translation": "매크로를 유지하되 일부 매크로 문제 수정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231445Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:0",
+      "source": "Macros are always \"inlined\" with any C compiler.",
+      "source_hash": 8356811519253488756,
+      "context_hash": 12109901089471996830,
+      "translation": "매크로는 모든 C 컴파일러에서 항상 \"인라인화\"됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231446Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:2/seg:0",
+      "source": "The duplication of side effects can be worked around in the caller of the macro.",
+      "source_hash": 9577867980379483431,
+      "context_hash": 1439120306640263506,
+      "translation": "부작용 중복 문제는 매크로를 호출하는 쪽에서 우회할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231446Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:3/seg:0",
+      "source": "People using macros should be considered \"consenting adults\".",
+      "source_hash": 5748981130723712927,
+      "context_hash": 6637464239777265196,
+      "translation": "매크로를 사용하는 사람은 \"동의한 성인\"으로 간주해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231446Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:3/seg:1",
+      "source": "People who feel unsafe with macros should simply not use them.",
+      "source_hash": 903131433547622970,
+      "context_hash": 14571981749634321519,
+      "translation": "매크로를 안전하지 않다고 느끼는 사람은 단순히 매크로를 사용하지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231446Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:4/seg:0",
+      "source": "These ideas are rejected because macros *are* error prone, and it is too easy to miss a macro pitfall when writing and reviewing macro code.",
+      "source_hash": 5148282211562682668,
+      "context_hash": 349008223944288971,
+      "translation": "매크로는 *본질적으로* 오류가 발생하기 쉽고, 매크로 코드를 작성하고 검토할 때 매크로의 함정을 놓치기 너무 쉽기 때문에 이러한 아이디어는 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231447Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:4/seg:1",
+      "source": "Moreover, macros are harder to read and maintain than functions.",
+      "source_hash": 3543790103313934943,
+      "context_hash": 8137251459436585428,
+      "translation": "또한 매크로는 함수보다 읽고 유지 관리하기가 더 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231447Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:0/seg:0",
+      "source": "Post History",
+      "source_hash": 16027854311262844610,
+      "context_hash": 10764076106748977032,
+      "translation": "이후 기록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231447Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:1/seg:0",
+      "source": "python-dev mailing list threads:",
+      "source_hash": 2443514173058442860,
+      "context_hash": 17307336457544433326,
+      "translation": "python-dev 메일링 리스트 스레드:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231448Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:2/seg:0",
+      "source": "`Version 2 of PEP 670 - Convert macros to functions in the Python C API <https://mail.python.org/archives/list/python-dev@python.org/thread/VM6I3UHVMME6QRSUOYLK6N2OZHP454W6/>`_ (February 2022)",
+      "source_hash": 12081143357119066293,
+      "context_hash": 4564869146825411221,
+      "translation": "`Version 2 of PEP 670 - Convert macros to functions in the Python C API <https://mail.python.org/archives/list/python-dev@python.org/thread/VM6I3UHVMME6QRSUOYLK6N2OZHP454W6/>`_ (2022년 2월)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231449Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:3/seg:0",
+      "source": "`Steering Council reply to PEP 670 -- Convert macros to functions in the Python C API <https://mail.python.org/archives/list/python-dev@python.org/message/IJ3IBVY3JDPROKX55YNDT6XZTVTTPGOP/>`_ (February 2022)",
+      "source_hash": 14399031115627060869,
+      "context_hash": 7990615671614619182,
+      "translation": "`Steering Council reply to PEP 670 -- Convert macros to functions in the Python C API <https://mail.python.org/archives/list/python-dev@python.org/message/IJ3IBVY3JDPROKX55YNDT6XZTVTTPGOP/>`_ (2022년 2월)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231449Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:4/seg:0",
+      "source": "`PEP 670: Convert macros to functions in the Python C API <https://mail.python.org/archives/list/python-dev@python.org/thread/2GN646CGWGTO6ZHHU7JTA5XWDF4ULM77/>`_ (October 2021)",
+      "source_hash": 1328169662425515567,
+      "context_hash": 8444889270351824593,
+      "translation": "`PEP 670: Convert macros to functions in the Python C API <https://mail.python.org/archives/list/python-dev@python.org/thread/2GN646CGWGTO6ZHHU7JTA5XWDF4ULM77/>`_ (2021년 10월)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231450Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 1954862373203482176,
+      "translation": "참고 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:31:31.231450Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:0",
+      "source": "`bpo-45490 <https://bugs.python.org/issue45490>`_: [C API] PEP 670: Convert macros to functions in the Python C API (October 2021).",
+      "source_hash": 17332953191403134040,
+      "context_hash": 15995348292731237141,
+      "translation": "`bpo-45490 <https://bugs.python.org/issue45490>`_: [C API] PEP 670: Python C API의 매크로를 함수로 변환합니다(2021년 10월).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613612Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:2/seg:0",
+      "source": "`What to do with unsafe macros <https://discuss.python.org/t/what-to-do-with-unsafe-macros/7771>`_ (March 2021).",
+      "source_hash": 107449240253458693,
+      "context_hash": 8705512865710954372,
+      "translation": "`안전하지 않은 매크로를 어떻게 처리할 것인가 <https://discuss.python.org/t/what-to-do-with-unsafe-macros/7771>`_\\ (2021년 3월).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613617Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:3/seg:0",
+      "source": "`bpo-43502 <https://bugs.python.org/issue43502>`_: [C-API] Convert obvious unsafe macros to static inline functions (March 2021).",
+      "source_hash": 6184215051688488851,
+      "context_hash": 13536567041972857557,
+      "translation": "`bpo-43502 <https://bugs.python.org/issue43502>`_: [C-API] 명백히 안전하지 않은 매크로를 정적 인라인 함수로 변환합니다(2021년 3월).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613618Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:0/seg:0",
+      "source": "Version History",
+      "source_hash": 4090460138332875984,
+      "context_hash": 12850893570706035583,
+      "translation": "버전 기록입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613618Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:0",
+      "source": "Version 2:",
+      "source_hash": 12384406636299572064,
+      "context_hash": 6116581533995115519,
+      "translation": "버전 2입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613619Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:2/seg:0",
+      "source": "Stricter policy on not changing argument types and return type.",
+      "source_hash": 9899165280293989213,
+      "context_hash": 11318554679350273259,
+      "translation": "인자 유형과 반환 유형을 변경하지 않는 것에 대한 더 엄격한 정책입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613620Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:3/seg:0",
+      "source": "Better explain why pointer arguments require a cast to not emit new compiler warnings.",
+      "source_hash": 14879630276122157700,
+      "context_hash": 16414327744897863627,
+      "translation": "새로운 컴파일러 경고가 발생하지 않도록 포인터 인자에 캐스트가 필요한 이유를 더 잘 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613621Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:4/seg:0",
+      "source": "Macros which can be used as l-values are no longer modified by the PEP.",
+      "source_hash": 13594535476307428044,
+      "context_hash": 12321271582786166938,
+      "translation": "l-value로 사용할 수 있는 매크로는 이제 PEP에서 수정하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613621Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:5/seg:0",
+      "source": "Macros having multiple return types are no longer modified by the PEP.",
+      "source_hash": 17198780848220710492,
+      "context_hash": 7538723681560062316,
+      "translation": "여러 반환 유형을 갖는 매크로는 이제 PEP에서 수정하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613622Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:6/seg:0",
+      "source": "Limited C API version 3.11 no longer casts pointer arguments.",
+      "source_hash": 10948824983370112647,
+      "context_hash": 11347263951608838429,
+      "translation": "Limited C API 버전 3.11에서는 더 이상 포인터 인자를 캐스트하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613622Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:7/seg:0",
+      "source": "No longer remove return values of macros \"which should not have a return value\".",
+      "source_hash": 17807987588409695328,
+      "context_hash": 3750212930107974452,
+      "translation": "“반환 값을 가져서는 안 되는” 매크로의 반환 값을 더 이상 제거하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613622Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:8/seg:0",
+      "source": "Add \"Macros converted to functions since Python 3.8\" section.",
+      "source_hash": 10321251497139279142,
+      "context_hash": 3575247574352970485,
+      "translation": "“Python 3.8 이후 함수로 변환된 매크로” 절을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613623Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:9/seg:0",
+      "source": "Add \"Benchmark comparing macros and static inline functions\" section.",
+      "source_hash": 9181810170538392748,
+      "context_hash": 11440229039264302581,
+      "translation": "“매크로와 정적 인라인 함수를 비교하는 벤치마크” 절을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613623Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:10/seg:0",
+      "source": "Version 1: First public version",
+      "source_hash": 14382008139648876309,
+      "context_hash": 11922915802063708499,
+      "translation": "버전 1: 최초 공개 버전입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:18.613624Z",
+      "issues": []
+    }
+  ]
+}

@@ -1,0 +1,1554 @@
+{
+  "version": 1,
+  "source_hash": 2481695585153342435,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Defining a Stable ABI",
+      "source_hash": 14231999918660598393,
+      "context_hash": 14160909316896590539,
+      "translation": "안정적인 ABI 정의",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857680Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:1/seg:0",
+      "source": ":ref:`devguide:c-api` (development docs)",
+      "source_hash": 1344369124999708791,
+      "context_hash": 12791979622543962133,
+      "translation": ":ref:`devguide:c-api` (개발 문서)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857685Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 6417341927147749645,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857685Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Currently, each feature release introduces a new name for the Python DLL on Windows, and may cause incompatibilities for extension modules on Unix.",
+      "source_hash": 5741228445319313143,
+      "context_hash": 11222620949611957402,
+      "translation": "현재 각 기능 릴리스는 Windows에서 Python DLL에 새로운 이름을 도입하며, Unix의 확장 모듈에 호환성 문제를 일으킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857686Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This PEP proposes to define a stable set of API functions which are guaranteed to be available for the lifetime of Python 3, and which will also remain binary-compatible across versions.",
+      "source_hash": 10739388614202068047,
+      "context_hash": 1807198102223174008,
+      "translation": "이 PEP는 Python 3의 수명 동안 사용 가능하도록 보장되고 버전 간에도 바이너리 호환성을 유지하는 안정적인 API 함수 집합을 정의할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857686Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "Extension modules and applications embedding Python can work with different feature releases as long as they restrict themselves to this stable ABI.",
+      "source_hash": 13291010006796775978,
+      "context_hash": 15282522389312816107,
+      "translation": "확장 모듈과 Python을 임베드하는 애플리케이션은 이 안정적인 ABI로 제한하는 한 서로 다른 기능 릴리스에서도 작동할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857686Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 17758511750758507074,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857686Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The primary source of ABI incompatibility are changes to the lay-out of in-memory structures.",
+      "source_hash": 3277203288139375213,
+      "context_hash": 14756413141402027676,
+      "translation": "ABI 호환성 문제의 주요 원인은 메모리 내 구조체의 배치 변경입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857687Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "For example, the way in which string interning works, or the data type used to represent the size of an object, have changed during the life of Python 2.x.",
+      "source_hash": 7058350733441128857,
+      "context_hash": 7327802409378291397,
+      "translation": "예를 들어 문자열 인터닝이 작동하는 방식이나 객체의 크기를 나타내는 데 사용되는 데이터 형식은 Python 2.x의 수명 동안 변경되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857687Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "As a consequence, extension modules making direct access to fields of strings, lists, or tuples, would break if their code is loaded into a newer version of the interpreter without recompilation: offsets of other fields may have changed, making the extension modules access the wrong data.",
+      "source_hash": 13048590574672176353,
+      "context_hash": 7429195881144828161,
+      "translation": "그 결과 문자열, 리스트 또는 튜플의 필드에 직접 접근하는 확장 모듈은 다시 컴파일하지 않고 해당 코드를 더 최신 버전의 인터프리터에 로드하면 작동하지 않게 됩니다. 다른 필드의 오프셋이 변경되어 확장 모듈이 잘못된 데이터에 접근할 수 있기 때문입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:03:15.857687Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "In some cases, the incompatibilities only affect internal objects of the interpreter, such as frame or code objects.",
+      "source_hash": 14666732595694179902,
+      "context_hash": 7810789634193112899,
+      "translation": "경우에 따라 호환성 문제는 프레임 객체나 코드 객체와 같은 인터프리터의 내부 객체에만 영향을 줍니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:03:15.857689Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "For example, the way line numbers are represented has changed in the 2.x lifetime, as has the way in which local variables are stored (due to the introduction of closures).",
+      "source_hash": 8127701221604006896,
+      "context_hash": 15914161990714716767,
+      "translation": "예를 들어 줄 번호가 표현되는 방식이 2.x의 수명 동안 변경되었으며, 클로저의 도입으로 인해 지역 변수가 저장되는 방식도 변경되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857690Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "Even though most applications probably never used these objects, changing them had required to change the PYTHON_API_VERSION.",
+      "source_hash": 1062945241628849916,
+      "context_hash": 6560554519099421405,
+      "translation": "대부분의 애플리케이션은 이러한 객체를 전혀 사용하지 않았을 가능성이 높지만, 이를 변경하려면 PYTHON_API_VERSION도 변경해야 했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857690Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "On Linux, changes to the ABI are often not much of a problem: the system will provide a default Python installation, and many extension modules are already provided pre-compiled for that version.",
+      "source_hash": 413178557349780548,
+      "context_hash": 3925785418436954434,
+      "translation": "Linux에서는 ABI 변경이 대체로 큰 문제가 되지 않습니다. 시스템이 기본 Python 설치를 제공하며 많은 확장 모듈이 이미 해당 버전에 맞게 미리 컴파일되어 제공되기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857691Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "If additional modules are needed, or additional Python versions, users can typically compile them themselves on the system, resulting in modules that use the right ABI.",
+      "source_hash": 1180363109045217646,
+      "context_hash": 13438159243227422093,
+      "translation": "추가 모듈이나 추가 Python 버전이 필요한 경우 사용자는 일반적으로 시스템에서 직접 이를 컴파일할 수 있으며, 그 결과 올바른 ABI를 사용하는 모듈이 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857691Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "On Windows, multiple simultaneous installations of different Python versions are common, and extension modules are compiled by their authors, not by end users.",
+      "source_hash": 2957230592818047572,
+      "context_hash": 8921424336298603270,
+      "translation": "Windows에서는 서로 다른 Python 버전의 동시 설치가 일반적이며, 확장 모듈은 최종 사용자가 아니라 작성자가 컴파일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857691Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "To reduce the risk of ABI incompatibilities, Python currently introduces a new DLL name pythonXY.dll for each feature release, whether or not ABI incompatibilities actually exist.",
+      "source_hash": 11804688257762901580,
+      "context_hash": 13661191312759757327,
+      "translation": "ABI 호환성 문제의 위험을 줄이기 위해 Python은 현재 실제로 ABI 호환성 문제가 존재하는지 여부와 관계없이 각 기능 릴리스마다 새로운 DLL 이름인 pythonXY.dll을 도입합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857691Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "With this PEP, it will be possible to reduce the dependency of binary extension modules on a specific Python feature release, and applications embedding Python can be made work with different releases.",
+      "source_hash": 9204437266959519174,
+      "context_hash": 11825193132029264198,
+      "translation": "이 PEP를 통해 바이너리 확장 모듈이 특정 Python 기능 릴리스에 의존하는 정도를 줄일 수 있으며, Python을 임베드하는 애플리케이션이 서로 다른 릴리스에서 작동하도록 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857692Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 2894160289210241638,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857692Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "The ABI specification falls into two parts: an API specification, specifying what function (groups) are available for use with the ABI, and a linkage specification specifying what libraries to link with.",
+      "source_hash": 5297292762930779038,
+      "context_hash": 3051319908831187425,
+      "translation": "ABI 사양은 두 부분으로 나뉩니다. ABI에서 사용할 수 있는 함수(그룹)를 지정하는 API 사양과 링크할 라이브러리를 지정하는 링크 사양입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857692Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "The actual ABI (layout of structures in memory, function calling conventions) is not specified, but implied by the compiler.",
+      "source_hash": 15665834722302773617,
+      "context_hash": 17206919280607847356,
+      "translation": "실제 ABI(메모리 내 구조체의 배치와 함수 호출 규약)는 지정되지 않으며 컴파일러에 의해 암시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857692Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "As a recommendation, a specific ABI is recommended for selected platforms.",
+      "source_hash": 7935836827434795226,
+      "context_hash": 13952481988704516384,
+      "translation": "권장 사항으로, 선택된 플랫폼에는 특정 ABI를 사용할 것을 권장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857693Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "During evolution of Python, new ABI functions will be added.",
+      "source_hash": 8162836712464516107,
+      "context_hash": 5158306993040258346,
+      "translation": "Python이 발전하는 동안 새로운 ABI 함수가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857693Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "Applications using them will then have a requirement on a minimum version of Python; this PEP provides no mechanism for such applications to fall back when the Python library is too old.",
+      "source_hash": 16426192847470838185,
+      "context_hash": 17858882444651860446,
+      "translation": "그러면 이를 사용하는 애플리케이션에는 Python 최소 버전에 대한 요구 사항이 생기며, Python 라이브러리가 너무 오래된 경우 이러한 애플리케이션이 대체 동작으로 전환할 수 있는 메커니즘은 이 PEP에서 제공하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857693Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Terminology",
+      "source_hash": 3039974644254127226,
+      "context_hash": 15118193613714249095,
+      "translation": "용어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857694Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Applications and extension modules that want to use this ABI are collectively referred to as \"applications\" from here on.",
+      "source_hash": 14939275465136926312,
+      "context_hash": 13813284886842823798,
+      "translation": "이 ABI를 사용하려는 애플리케이션과 확장 모듈을 앞으로 통칭하여 “애플리케이션”이라고 부릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857694Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Header Files and Preprocessor Definitions",
+      "source_hash": 5181151967166891604,
+      "context_hash": 1901954406211903984,
+      "translation": "헤더 파일 및 전처리기 정의",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857694Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Applications shall only include the header file Python.h (before including any system headers), or, optionally, include pyconfig.h, and then Python.h.",
+      "source_hash": 1417537452638104704,
+      "context_hash": 15811671929198209130,
+      "translation": "애플리케이션은 헤더 파일 Python.h만 포함해야 합니다(모든 시스템 헤더를 포함하기 전에 포함해야 함). 또는 선택적으로 pyconfig.h를 포함한 다음 Python.h를 포함할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857694Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "During the compilation of applications, the preprocessor macro Py_LIMITED_API must be defined.",
+      "source_hash": 1696916909996357796,
+      "context_hash": 17667531810495842100,
+      "translation": "애플리케이션을 컴파일하는 동안 전처리기 매크로 Py_LIMITED_API를 정의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857695Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "Doing so will hide all definitions that are not part of the ABI.",
+      "source_hash": 18014970799640541682,
+      "context_hash": 8876317454844459482,
+      "translation": "이렇게 하면 ABI의 일부가 아닌 모든 정의가 숨겨집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857695Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Structures",
+      "source_hash": 2416526050560516112,
+      "context_hash": 12798620158512775483,
+      "translation": "구조체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857695Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Only the following structures and structure fields are accessible to applications:",
+      "source_hash": 2162883110352527748,
+      "context_hash": 18254496946252667769,
+      "translation": "애플리케이션은 다음 구조체와 구조체 필드에만 접근할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:03:15.857696Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "PyObject (ob_refcnt, ob_type)",
+      "source_hash": 8394751615457877033,
+      "context_hash": 11786428724903389535,
+      "translation": "PyObject (ob_refcnt, ob_type)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467590Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "PyVarObject (ob_base, ob_size)",
+      "source_hash": 3503954003514122458,
+      "context_hash": 6919842083131120880,
+      "translation": "PyVarObject (ob_base, ob_size)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467593Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "PyMethodDef (ml_name, ml_meth, ml_flags, ml_doc)",
+      "source_hash": 11619691423417564938,
+      "context_hash": 7194953046689957866,
+      "translation": "PyMethodDef (ml_name, ml_meth, ml_flags, ml_doc)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467593Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "PyMemberDef (name, type, offset, flags, doc)",
+      "source_hash": 18199118683030104734,
+      "context_hash": 6403640166383406196,
+      "translation": "PyMemberDef (name, type, offset, flags, doc)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467593Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "PyGetSetDef (name, get, set, doc, closure)",
+      "source_hash": 1778121707466239863,
+      "context_hash": 18237100606685725781,
+      "translation": "PyGetSetDef (name, get, set, doc, closure)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467594Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "PyModuleDefBase (ob_base, m_init, m_index, m_copy)",
+      "source_hash": 2833528666677195361,
+      "context_hash": 8477905245383270257,
+      "translation": "PyModuleDefBase (ob_base, m_init, m_index, m_copy)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467594Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "PyModuleDef (m_base, m_name, m_doc, m_size, m_methods, m_traverse, m_clear, m_free)",
+      "source_hash": 5147599240488722020,
+      "context_hash": 17654885774518910247,
+      "translation": "PyModuleDef (m_base, m_name, m_doc, m_size, m_methods, m_traverse, m_clear, m_free)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467594Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "PyStructSequence_Field (name, doc)",
+      "source_hash": 1830969707948473445,
+      "context_hash": 17492064230163059012,
+      "translation": "PyStructSequence_Field (name, doc)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467595Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:0",
+      "source": "PyStructSequence_Desc (name, doc, fields, sequence)",
+      "source_hash": 3196770891280901905,
+      "context_hash": 18059943887701681722,
+      "translation": "PyStructSequence_Desc (name, doc, fields, sequence)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467595Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:11/seg:0",
+      "source": "PyType_Slot (see below)",
+      "source_hash": 2114119653365821984,
+      "context_hash": 98951163110252293,
+      "translation": "PyType_Slot (아래 참조)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467595Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:12/seg:0",
+      "source": "PyType_Spec (see below)",
+      "source_hash": 16766816341498412836,
+      "context_hash": 7316312443262510466,
+      "translation": "PyType_Spec (아래 참조)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467595Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:13/seg:0",
+      "source": "The accessor macros to these fields (Py_REFCNT, Py_TYPE, Py_SIZE) are also available to applications.",
+      "source_hash": 2200914134818258227,
+      "context_hash": 15923573034190753542,
+      "translation": "이러한 필드에 대한 접근자 매크로(Py_REFCNT, Py_TYPE, Py_SIZE)도 애플리케이션에서 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467596Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:14/seg:0",
+      "source": "The following types are available, but opaque (i.e. incomplete):",
+      "source_hash": 5322555033270404957,
+      "context_hash": 4944745676205545980,
+      "translation": "다음 타입을 사용할 수 있지만, 불투명합니다(즉, 불완전합니다):",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467596Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:15/seg:0",
+      "source": "PyThreadState",
+      "source_hash": 613108449622168183,
+      "context_hash": 14134235046876151815,
+      "translation": "PyThreadState",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467596Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:16/seg:0",
+      "source": "PyInterpreterState",
+      "source_hash": 4575835072318699658,
+      "context_hash": 9845820940580624762,
+      "translation": "PyInterpreterState",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467596Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:17/seg:0",
+      "source": "struct _frame",
+      "source_hash": 8330155764871822749,
+      "context_hash": 14916043251872225477,
+      "translation": "struct _frame",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467596Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:18/seg:0",
+      "source": "struct symtable",
+      "source_hash": 12773176274843960690,
+      "context_hash": 8123645014117798357,
+      "translation": "struct symtable",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467597Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:19/seg:0",
+      "source": "struct _node",
+      "source_hash": 246734824187588281,
+      "context_hash": 14028157834573541882,
+      "translation": "struct _node",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467597Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:20/seg:0",
+      "source": "PyWeakReference",
+      "source_hash": 8139165518852788093,
+      "context_hash": 8074679133408884966,
+      "translation": "PyWeakReference",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467597Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:21/seg:0",
+      "source": "PyLongObject",
+      "source_hash": 9717140147843082591,
+      "context_hash": 7905541413973159776,
+      "translation": "PyLongObject",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467597Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:22/seg:0",
+      "source": "PyTypeObject",
+      "source_hash": 17433423406932950047,
+      "context_hash": 16494548809612998895,
+      "translation": "PyTypeObject",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467597Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Type Objects",
+      "source_hash": 15162282433195052912,
+      "context_hash": 13409840496674186467,
+      "translation": "타입 객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467597Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The structure of type objects is not available to applications; declaration of \"static\" type objects is not possible anymore (for applications using this ABI).",
+      "source_hash": 18003967338673983459,
+      "context_hash": 10375089351152745616,
+      "translation": "타입 객체의 구조는 애플리케이션에서 사용할 수 없습니다. \"static\" 타입 객체의 선언은 더 이상 가능하지 않습니다(이 ABI를 사용하는 애플리케이션의 경우).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:46:32.232043Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "Instead, type objects get created dynamically.",
+      "source_hash": 6044438836654377391,
+      "context_hash": 14004646032157586297,
+      "translation": "대신 타입 객체는 동적으로 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467598Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:2",
+      "source": "To allow an easy creation of types (in particular, to be able to fill out function pointers easily), the following structures and functions are available",
+      "source_hash": 1174678652623605406,
+      "context_hash": 2302145152134048678,
+      "translation": "타입을 쉽게 생성할 수 있도록(특히 함수 포인터를 쉽게 채울 수 있도록) 다음 구조체와 함수를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467599Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "To specify a slot, a unique slot id must be provided.",
+      "source_hash": 17147113466073239430,
+      "context_hash": 7733448287556321546,
+      "translation": "슬롯을 지정하려면 고유한 슬롯 ID를 제공해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467599Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "New Python versions may introduce new slot ids, but slot ids will never be recycled.",
+      "source_hash": 18112911214523365469,
+      "context_hash": 5428121013822570371,
+      "translation": "새로운 Python 버전에서는 새로운 슬롯 ID가 도입될 수 있지만, 슬롯 ID가 재사용되는 일은 절대 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467599Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:2",
+      "source": "Slots may get deprecated, but continue to be supported throughout Python 3.x.",
+      "source_hash": 6869605475878938052,
+      "context_hash": 5047056317270590135,
+      "translation": "슬롯은 폐기될 수 있지만, Python 3.x 전체에서 계속 지원됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467599Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "The slot ids are named like the field names of the structures that hold the pointers in Python 3.1, with an added ``Py_`` prefix (i.e. Py_tp_dealloc instead of just tp_dealloc):",
+      "source_hash": 13477285862928630116,
+      "context_hash": 3820556839584736527,
+      "translation": "슬롯 ID는 Python 3.1에서 포인터를 보유하는 구조체의 필드 이름에 ``Py_`` 접두사를 추가한 형태로 명명됩니다(즉, 단순히 tp_dealloc 대신 Py_tp_dealloc입니다):",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467600Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "tp_dealloc, tp_getattr, tp_setattr, tp_repr, tp_hash, tp_call, tp_str, tp_getattro, tp_setattro, tp_doc, tp_traverse, tp_clear, tp_richcompare, tp_iter, tp_iternext, tp_methods, tp_base, tp_descr_get, tp_descr_set, tp_init, tp_alloc, tp_new, tp_is_gc, tp_bases, tp_del",
+      "source_hash": 12934926322210544580,
+      "context_hash": 3590916772973410059,
+      "translation": "tp_dealloc, tp_getattr, tp_setattr, tp_repr, tp_hash, tp_call, tp_str, tp_getattro, tp_setattro, tp_doc, tp_traverse, tp_clear, tp_richcompare, tp_iter, tp_iternext, tp_methods, tp_base, tp_descr_get, tp_descr_set, tp_init, tp_alloc, tp_new, tp_is_gc, tp_bases, tp_del",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467600Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "nb_add nb_subtract nb_multiply nb_remainder nb_divmod nb_power nb_negative nb_positive nb_absolute nb_bool nb_invert nb_lshift nb_rshift nb_and nb_xor nb_or nb_int nb_float nb_inplace_add nb_inplace_subtract nb_inplace_multiply nb_inplace_remainder nb_inplace_power nb_inplace_lshift nb_inplace_rshift nb_inplace_and nb_inplace_xor nb_inplace_or nb_floor_divide nb_true_divide nb_inplace_floor_divide nb_inplace_true_divide nb_index",
+      "source_hash": 17281302374876013756,
+      "context_hash": 13049807647195249619,
+      "translation": "nb_add nb_subtract nb_multiply nb_remainder nb_divmod nb_power nb_negative nb_positive nb_absolute nb_bool nb_invert nb_lshift nb_rshift nb_and nb_xor nb_or nb_int nb_float nb_inplace_add nb_inplace_subtract nb_inplace_multiply nb_inplace_remainder nb_inplace_power nb_inplace_lshift nb_inplace_rshift nb_inplace_and nb_inplace_xor nb_inplace_or nb_floor_divide nb_true_divide nb_inplace_floor_divide nb_inplace_true_divide nb_index",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467600Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "sq_length sq_concat sq_repeat sq_item sq_ass_item sq_contains sq_inplace_concat sq_inplace_repeat",
+      "source_hash": 15459024752258906809,
+      "context_hash": 8378250091025942922,
+      "translation": "sq_length sq_concat sq_repeat sq_item sq_ass_item sq_contains sq_inplace_concat sq_inplace_repeat",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:28.467600Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "mp_length mp_subscript mp_ass_subscript",
+      "source_hash": 11962313277016162448,
+      "context_hash": 5765668047515263260,
+      "translation": "mp_length mp_subscript mp_ass_subscript",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611687Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:0",
+      "source": "The following fields cannot be set during type definition:",
+      "source_hash": 2232235222992923531,
+      "context_hash": 8612811947236307135,
+      "translation": "다음 필드는 형식 정의 중에 설정할 수 없습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611691Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:0",
+      "source": "tp_dict tp_mro tp_cache tp_subclasses tp_weaklist tp_print",
+      "source_hash": 16951132400654753407,
+      "context_hash": 7437788068720470629,
+      "translation": "tp_dict tp_mro tp_cache tp_subclasses tp_weaklist tp_print",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611691Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:11/seg:0",
+      "source": "tp_weaklistoffset tp_dictoffset",
+      "source_hash": 9089850504842934318,
+      "context_hash": 2565948242803088968,
+      "translation": "tp_weaklistoffset tp_dictoffset",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611692Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "typedefs",
+      "source_hash": 9889551168142655485,
+      "context_hash": 3418012592548931339,
+      "translation": "typedef",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611692Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "In addition to the typedefs for structs listed above, the following typedefs are available.",
+      "source_hash": 3123728849997295916,
+      "context_hash": 7308032556022342093,
+      "translation": "위에 나열한 구조체의 typedef 외에도 다음 typedef를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611695Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "Their inclusion in the ABI means that the underlying type must not change on a platform (even though it may differ across platforms).",
+      "source_hash": 10401875375740505655,
+      "context_hash": 2282939317585741044,
+      "translation": "이러한 typedef가 ABI에 포함된다는 것은 플랫폼에서 기반 형식이 변경되어서는 안 된다는 의미입니다(플랫폼마다 다를 수는 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611695Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Py_uintptr_t Py_intptr_t Py_ssize_t",
+      "source_hash": 3173535869614658606,
+      "context_hash": 15993893512675601935,
+      "translation": "Py_uintptr_t Py_intptr_t Py_ssize_t",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611696Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "unaryfunc binaryfunc ternaryfunc inquiry lenfunc ssizeargfunc ssizessizeargfunc ssizeobjargproc ssizessizeobjargproc objobjargproc objobjproc visitproc traverseproc destructor getattrfunc getattrofunc setattrfunc setattrofunc reprfunc hashfunc richcmpfunc getiterfunc iternextfunc descrgetfunc descrsetfunc initproc newfunc allocfunc",
+      "source_hash": 17738166858582958042,
+      "context_hash": 4002352531981899871,
+      "translation": "unaryfunc binaryfunc ternaryfunc inquiry lenfunc ssizeargfunc ssizessizeargfunc ssizeobjargproc ssizessizeobjargproc objobjargproc objobjproc visitproc traverseproc destructor getattrfunc getattrofunc setattrfunc setattrofunc reprfunc hashfunc richcmpfunc getiterfunc iternextfunc descrgetfunc descrsetfunc initproc newfunc allocfunc",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611696Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "PyCFunction PyCFunctionWithKeywords PyNoArgsFunction PyCapsule_Destructor",
+      "source_hash": 17876491424098490691,
+      "context_hash": 8616081485568261554,
+      "translation": "PyCFunction PyCFunctionWithKeywords PyNoArgsFunction PyCapsule_Destructor",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611696Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "getter setter",
+      "source_hash": 565094160112044985,
+      "context_hash": 12380029161058539802,
+      "translation": "getter setter",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611696Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "PyOS_sighandler_t",
+      "source_hash": 11294346195309344431,
+      "context_hash": 16991136559560020315,
+      "translation": "PyOS_sighandler_t",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611696Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "PyGILState_STATE",
+      "source_hash": 17110362241959836410,
+      "context_hash": 17453892307499263843,
+      "translation": "PyGILState_STATE",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611697Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:0",
+      "source": "Py_UCS4",
+      "source_hash": 13444042629724219625,
+      "context_hash": 11448122818493998997,
+      "translation": "Py_UCS4",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611697Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:0",
+      "source": "Most notably, Py_UNICODE is not available as a typedef, since the same Python version may use different definitions of it on the same platform (depending on whether it uses narrow or wide code units).",
+      "source_hash": 14986229453830156368,
+      "context_hash": 1153980575348197824,
+      "translation": "특히 Py_UNICODE는 typedef로 사용할 수 없습니다. 동일한 Python 버전이라도 같은 플랫폼에서 이를 서로 다르게 정의할 수 있기 때문입니다(좁은 코드 단위를 사용하는지 넓은 코드 단위를 사용하는지에 따라 다릅니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611697Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:1",
+      "source": "Applications that need to access the contents of a Unicode string can convert it to wchar_t.",
+      "source_hash": 5803649876579326107,
+      "context_hash": 16758435426541402424,
+      "translation": "유니코드 문자열의 내용에 액세스해야 하는 애플리케이션은 이를 wchar_t로 변환할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611697Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Functions and function-like Macros",
+      "source_hash": 6372311185016221888,
+      "context_hash": 14538122352852452005,
+      "translation": "함수 및 함수형 매크로",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611697Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "By default, all functions are available, unless they are excluded below.",
+      "source_hash": 12830026937164019143,
+      "context_hash": 14600858238035682385,
+      "translation": "기본적으로 아래에서 제외된 함수를 제외한 모든 함수를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611698Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "Whether a function is documented or not does not matter.",
+      "source_hash": 4638381061501137944,
+      "context_hash": 4900330095716287460,
+      "translation": "함수가 문서화되었는지 여부는 중요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611698Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "Function-like macros (in particular, field access macros) remain available to applications, but get replaced by function calls (unless their definition only refers to features of the ABI, such as the various _Check macros)",
+      "source_hash": 7181071933410731101,
+      "context_hash": 12950476620695515937,
+      "translation": "함수형 매크로(특히 필드 접근 매크로)는 애플리케이션에서 계속 사용할 수 있지만, 함수 호출로 대체됩니다(정의가 다양한 _Check 매크로와 같이 ABI의 기능만 참조하는 경우는 제외합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611698Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "ABI function declarations will not change their parameters or return types.",
+      "source_hash": 5407751475615868699,
+      "context_hash": 13109741223240213710,
+      "translation": "ABI 함수 선언의 매개변수 형식이나 반환 형식은 변경되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611699Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:1",
+      "source": "If a change to the signature becomes necessary, a new function will be introduced.",
+      "source_hash": 1061812530112782101,
+      "context_hash": 13354549307756955469,
+      "translation": "시그니처를 변경해야 하는 경우에는 새 함수가 도입됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611699Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:2",
+      "source": "If the new function is source-compatible (e.g. if just the return type changes), an alias macro may get added to redirect calls to the new function when the applications is recompiled.",
+      "source_hash": 2672050968702093327,
+      "context_hash": 6633357348143438988,
+      "translation": "새 함수가 소스 호환성을 유지하는 경우(예: 반환 형식만 변경되는 경우), 애플리케이션을 다시 컴파일할 때 호출을 새 함수로 리디렉션하는 별칭 매크로가 추가될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611699Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "If continued provision of the old function is not possible, it may get deprecated, then removed, causing applications that use that function to break.",
+      "source_hash": 13388616345727639956,
+      "context_hash": 212931144972385980,
+      "translation": "기존 함수를 계속 제공할 수 없는 경우 해당 함수는 사용 중단된 후 제거될 수 있으며, 그 함수를 사용하는 애플리케이션이 작동하지 않게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611699Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Excluded Functions",
+      "source_hash": 17288378933632568372,
+      "context_hash": 1769073159568502205,
+      "translation": "제외된 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611699Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "All functions starting with _Py are not available to applications.",
+      "source_hash": 16034890768437366605,
+      "context_hash": 4071853767246159844,
+      "translation": "_Py로 시작하는 모든 함수는 애플리케이션에서 사용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611700Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "Also, all functions that expect parameter types that are unavailable to applications are excluded from the ABI, such as PyAST_FromNode (which expects a ``node*``).",
+      "source_hash": 1691317577462938441,
+      "context_hash": 13383145053537142704,
+      "translation": "또한 애플리케이션에서 사용할 수 없는 매개변수 형식을 요구하는 모든 함수도 ABI에서 제외됩니다. 예를 들어 PyAST_FromNode(``node*``\\ 를 요구함)가 이에 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611700Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Functions declared in the following header files are not part of the ABI:",
+      "source_hash": 746242434800500727,
+      "context_hash": 10713480950837449547,
+      "translation": "다음 헤더 파일에 선언된 함수는 ABI에 포함되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611700Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "bytes_methods.h",
+      "source_hash": 9566702302859616428,
+      "context_hash": 7265593867838434742,
+      "translation": "bytes_methods.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611700Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "cellobject.h",
+      "source_hash": 5376614268004880373,
+      "context_hash": 5774539443653375589,
+      "translation": "cellobject.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611701Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "classobject.h",
+      "source_hash": 868853384008731217,
+      "context_hash": 11033578171201671482,
+      "translation": "classobject.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611701Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "code.h",
+      "source_hash": 16953870627414208308,
+      "context_hash": 2359773022691849912,
+      "translation": "code.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:29.611701Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "compile.h",
+      "source_hash": 16895195575977877448,
+      "context_hash": 6607543593941961959,
+      "translation": "compile.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759428Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "datetime.h",
+      "source_hash": 5591206175500617741,
+      "context_hash": 9948477385938830390,
+      "translation": "datetime.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759433Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "dtoa.h",
+      "source_hash": 1583682941901647740,
+      "context_hash": 13830131543819623844,
+      "translation": "dtoa.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759433Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:10/seg:0",
+      "source": "frameobject.h",
+      "source_hash": 15266912454005662781,
+      "context_hash": 8509283306677669396,
+      "translation": "frameobject.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759433Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:0",
+      "source": "funcobject.h",
+      "source_hash": 4386870576096590374,
+      "context_hash": 15435222465872620317,
+      "translation": "funcobject.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759434Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:12/seg:0",
+      "source": "genobject.h",
+      "source_hash": 5067631425103156891,
+      "context_hash": 10532517430821238231,
+      "translation": "genobject.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759434Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:13/seg:0",
+      "source": "longintrepr.h",
+      "source_hash": 5659393185446072929,
+      "context_hash": 3032019082387681774,
+      "translation": "longintrepr.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759434Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:14/seg:0",
+      "source": "parsetok.h",
+      "source_hash": 10589355948657623542,
+      "context_hash": 12740558803163899578,
+      "translation": "parsetok.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759434Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:15/seg:0",
+      "source": "pyarena.h",
+      "source_hash": 13657032656219826420,
+      "context_hash": 2947693466806282777,
+      "translation": "pyarena.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759435Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:16/seg:0",
+      "source": "pyatomic.h",
+      "source_hash": 3885240189423119517,
+      "context_hash": 11642245787990399095,
+      "translation": "pyatomic.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759435Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:17/seg:0",
+      "source": "pyctype.h",
+      "source_hash": 3297329832740733944,
+      "context_hash": 8779379685797579921,
+      "translation": "pyctype.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759435Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:18/seg:0",
+      "source": "pydebug.h",
+      "source_hash": 11841486875962332776,
+      "context_hash": 11765747839633624246,
+      "translation": "pydebug.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759436Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:19/seg:0",
+      "source": "pytime.h",
+      "source_hash": 15662573925616850168,
+      "context_hash": 5621279616521869687,
+      "translation": "pytime.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759436Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:20/seg:0",
+      "source": "symtable.h",
+      "source_hash": 8147896914978884910,
+      "context_hash": 355747067880040380,
+      "translation": "symtable.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759436Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:21/seg:0",
+      "source": "token.h",
+      "source_hash": 3672857651755458107,
+      "context_hash": 1671276599493902518,
+      "translation": "token.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759436Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:22/seg:0",
+      "source": "ucnhash.h",
+      "source_hash": 16768883507437774359,
+      "context_hash": 2662828646110230404,
+      "translation": "ucnhash.h",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759436Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:23/seg:0",
+      "source": "In addition, functions expecting ``FILE*`` are not part of the ABI, to avoid depending on a specific version of the Microsoft C runtime DLL on Windows.",
+      "source_hash": 16579343368557581780,
+      "context_hash": 4837298937920565199,
+      "translation": "또한 ``FILE*``\\ 를 예상하는 함수는 Windows에서 특정 버전의 Microsoft C 런타임 DLL에 의존하지 않도록 ABI의 일부가 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759437Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:24/seg:0",
+      "source": "Module and type initializer and finalizer functions are not available (PyByteArray_Init, PyOS_FiniInterrupts and all functions ending in _Fini or _ClearFreeList).",
+      "source_hash": 7372540018308669688,
+      "context_hash": 9659365096014390321,
+      "translation": "모듈 및 타입 초기화 함수와 종료 함수는 사용할 수 없습니다(PyByteArray_Init, PyOS_FiniInterrupts 및 _Fini 또는 _ClearFreeList로 끝나는 모든 함수).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759438Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:25/seg:0",
+      "source": "Several functions dealing with interpreter implementation details are not available:",
+      "source_hash": 3822510079810976787,
+      "context_hash": 16828956067838846252,
+      "translation": "인터프리터 구현 세부 사항을 다루는 다음과 같은 여러 함수는 사용할 수 없습니다:",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T17:58:28.759438Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:26/seg:0",
+      "source": "PyInterpreterState_Head, PyInterpreterState_Next, PyInterpreterState_ThreadHead, PyThreadState_Next",
+      "source_hash": 2514377207094354737,
+      "context_hash": 2444446718525330622,
+      "translation": "PyInterpreterState_Head, PyInterpreterState_Next, PyInterpreterState_ThreadHead, PyThreadState_Next",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759440Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:27/seg:0",
+      "source": "Py_SubversionRevision, Py_SubversionShortBranch",
+      "source_hash": 10851743304386824756,
+      "context_hash": 4472091281554576704,
+      "translation": "Py_SubversionRevision, Py_SubversionShortBranch",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759441Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:28/seg:0",
+      "source": "PyStructSequence_InitType is not available, as it requires the caller to provide a static type object.",
+      "source_hash": 16775877708083869926,
+      "context_hash": 13315546911651772754,
+      "translation": "PyStructSequence_InitType은 호출자가 정적 타입 객체를 제공해야 하므로 사용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759441Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:29/seg:0",
+      "source": "Py_FatalError will be moved from pydebug.h into some other header file (e.g. pyerrors.h).",
+      "source_hash": 10839761748480317710,
+      "context_hash": 16161350832126226961,
+      "translation": "Py_FatalError는 pydebug.h에서 다른 헤더 파일(예: pyerrors.h)로 이동될 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759441Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:30/seg:0",
+      "source": "The exact list of functions being available is given in the Windows module definition file for python3.dll [1]_.",
+      "source_hash": 11804865365905405440,
+      "context_hash": 12938254486519070404,
+      "translation": "사용 가능한 함수의 정확한 목록은 Windows 모듈 정의 파일인 python3.dll [1]_\\ 에 제시되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759442Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Global Variables",
+      "source_hash": 4479392436386114469,
+      "context_hash": 1161968577939482410,
+      "translation": "전역 변수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759442Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "Global variables representing types and exceptions are available to applications.",
+      "source_hash": 16742785846484140504,
+      "context_hash": 1494607000377327422,
+      "translation": "타입과 예외를 나타내는 전역 변수는 애플리케이션에서 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759442Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "In addition, selected global variables referenced in macros (such as Py_True and Py_False) are available.",
+      "source_hash": 12982994284345780320,
+      "context_hash": 11207881121986200099,
+      "translation": "또한 매크로에서 참조되는 일부 전역 변수(예: Py_True 및 Py_False)도 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759442Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "A complete list of global variable definitions is given in the python3.def file [1]_; those declared DATA denote variables.",
+      "source_hash": 7214841476099561937,
+      "context_hash": 4932053549806390446,
+      "translation": "전역 변수 정의의 전체 목록은 python3.def 파일 [1]_;에 제공되어 있으며, DATA로 선언된 항목은 변수를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759443Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Other Macros",
+      "source_hash": 9476313629311668415,
+      "context_hash": 9190584218166214852,
+      "translation": "기타 매크로",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759443Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "All macros defining symbolic constants are available to applications; the numeric values will not change.",
+      "source_hash": 12127664253422865943,
+      "context_hash": 8520118452424746529,
+      "translation": "기호 상수를 정의하는 모든 매크로는 애플리케이션에서 사용할 수 있으며, 숫자 값은 변경되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759443Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "In addition, the following macros are available:",
+      "source_hash": 3171084207646846303,
+      "context_hash": 601966918695933287,
+      "translation": "또한 다음 매크로를 사용할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759446Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "Py_BEGIN_ALLOW_THREADS, Py_BLOCK_THREADS, Py_UNBLOCK_THREADS, Py_END_ALLOW_THREADS",
+      "source_hash": 9600117056337554820,
+      "context_hash": 3318988931797670143,
+      "translation": "Py_BEGIN_ALLOW_THREADS, Py_BLOCK_THREADS, Py_UNBLOCK_THREADS, Py_END_ALLOW_THREADS",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:58:28.759447Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "The Buffer Interface",
+      "source_hash": 3626539970071260647,
+      "context_hash": 8554152271668089912,
+      "translation": "버퍼 인터페이스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:09.633490Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "The buffer interface (type Py_buffer, type slots bf_getbuffer and bf_releasebuffer, etc) has been omitted from the ABI, since the stability of the Py_buffer structure is not clear at this time.",
+      "source_hash": 3094746000903933148,
+      "context_hash": 16822489619952661885,
+      "translation": "버퍼 인터페이스(Py_buffer 타입, bf_getbuffer와 bf_releasebuffer 등의 타입 슬롯)는 현재 Py_buffer 구조체의 안정성이 명확하지 않기 때문에 ABI에서 제외되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:09.633493Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "Inclusion in the ABI can be considered in future releases.",
+      "source_hash": 17145184869270563701,
+      "context_hash": 16890141158023675669,
+      "translation": "ABI에의 포함은 이후 릴리스에서 고려될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:09.633494Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Signature Changes",
+      "source_hash": 13882731938775928261,
+      "context_hash": 1941807057010810713,
+      "translation": "시그니처 변경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:09.633494Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "A number of functions currently expect a specific struct, even though callers typically have PyObject* available.",
+      "source_hash": 13321377979165346286,
+      "context_hash": 15028872095452119698,
+      "translation": "다수의 함수가 호출자가 일반적으로 PyObject*를 사용할 수 있음에도 불구하고 현재 특정 구조체를 요구합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:09.633495Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "These have been changed to expect PyObject* as the parameter; this will cause warnings in applications that currently explicitly cast to the parameter type.",
+      "source_hash": 9062022760031019880,
+      "context_hash": 2013695145617968058,
+      "translation": "이들은 매개변수로 PyObject*를 요구하도록 변경되었으며, 이는 현재 매개변수 타입으로 명시적으로 캐스팅하는 애플리케이션에서 경고를 발생시킬 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:09.633495Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:2",
+      "source": "These functions are PySlice_GetIndices, PySlice_GetIndicesEx, PyUnicode_AsWideChar, and PyEval_EvalCode.",
+      "source_hash": 4669814877622703660,
+      "context_hash": 3577895807666648885,
+      "translation": "이 함수들은 PySlice_GetIndices, PySlice_GetIndicesEx, PyUnicode_AsWideChar, PyEval_EvalCode입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:09.633495Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Linkage",
+      "source_hash": 12354237594138595794,
+      "context_hash": 13039870997527296160,
+      "translation": "링키지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:09.633495Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "On Windows, applications shall link with python3.dll; an import library python3.lib will be available.",
+      "source_hash": 9206182660106846583,
+      "context_hash": 14126782429321248880,
+      "translation": "Windows에서 애플리케이션은 python3.dll과 링크해야 하며, 임포트 라이브러리 python3.lib을 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:09.633496Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "This DLL will redirect all of its API functions through /export linker options to the full interpreter DLL, i.e. python3y.dll.",
+      "source_hash": 10610029917338054501,
+      "context_hash": 13261616890389241248,
+      "translation": "이 DLL은 자신의 모든 API 함수를 /export 링커 옵션을 통해 전체 인터프리터 DLL, 즉 python3y.dll로 리디렉션합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T17:33:09.633496Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "On Unix systems, the ABI is typically provided by the python executable itself.",
+      "source_hash": 13655633557218278648,
+      "context_hash": 14348572620438461355,
+      "translation": "Unix 시스템에서 ABI는 일반적으로 python 실행 파일 자체에 의해 제공됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:09.633497Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:1",
+      "source": "PyModule_Create is changed to pass ``3`` as the API version if the extension module was compiled with Py_LIMITED_API; the version check for the API version will accept either 3 or the current PYTHON_API_VERSION as conforming.",
+      "source_hash": 8777277502766206494,
+      "context_hash": 9934257038694731304,
+      "translation": "PyModule_Create는 확장 모듈이 Py_LIMITED_API로 컴파일된 경우 API 버전으로 ``3``\\ 을 전달하도록 변경되었으며, API 버전 검사는 3 또는 현재의 PYTHON_API_VERSION 중 하나를 준수하는 것으로 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:09.633497Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:2",
+      "source": "If Python is compiled as a shared library, it is installed as both libpython3.so, and libpython3.y.so; applications conforming to this PEP should then link to the former (extension modules can continue to link with no libpython shared object, but rather rely on runtime linking).",
+      "source_hash": 1249997685346593087,
+      "context_hash": 11844125485415340373,
+      "translation": "Python이 공유 라이브러리로 컴파일된 경우 libpython3.so와 libpython3.y.so 둘 다로 설치되며, 이 PEP를 준수하는 애플리케이션은 전자와 링크해야 합니다(확장 모듈은 계속 libpython 공유 객체 없이 링크될 수 있으며, 대신 런타임 링킹에 의존합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:09.633497Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:3",
+      "source": "The ABI version is symbolically available as ``PYTHON_ABI_VERSION``.",
+      "source_hash": 12003080994888038305,
+      "context_hash": 490413143396454769,
+      "translation": "ABI 버전은 ``PYTHON_ABI_VERSION``\\ 으로 심볼릭하게 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:09.633497Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "Also on Unix, the :pep:`3149` tag abi<PYTHON_ABI_VERSION> is accepted in file names of extension modules.",
+      "source_hash": 11084416707434969603,
+      "context_hash": 6752647872704868183,
+      "translation": "또한 Unix에서는 확장 모듈 파일 이름에 :pep:`3149` 태그 abi<PYTHON_ABI_VERSION>이 허용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:12.621307Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:1",
+      "source": "No checking is performed that files named in this way are actually restricted to the limited API, and no support for building such files will be added to distutils due to the distutils code freeze.",
+      "source_hash": 1218058656377549179,
+      "context_hash": 7764611743603303156,
+      "translation": "이런 방식으로 이름 붙여진 파일이 실제로 제한된 API에만 국한되어 있는지 확인하는 작업은 수행되지 않으며, distutils 코드 동결로 인해 이러한 파일을 빌드하기 위한 지원이 distutils에 추가되지도 않을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:12.621310Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Implementation Strategy",
+      "source_hash": 16963618974217056924,
+      "context_hash": 1812927851541857619,
+      "translation": "구현 전략",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:12.621311Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "This PEP will be implemented in a branch [2]_, allowing users to check whether their modules conform to the ABI.",
+      "source_hash": 8345603011936144090,
+      "context_hash": 6474702613910258077,
+      "translation": "이 PEP는 브랜치\\ [2]_\\ 에서 구현될 것이며, 사용자가 자신의 모듈이 ABI를 준수하는지 확인할 수 있게 해줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:12.621311Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "To avoid users having to rewrite their type definitions, a script to convert C source code containing type definitions will be provided [3]_.",
+      "source_hash": 14535381651738740293,
+      "context_hash": 14759167028911110535,
+      "translation": "사용자가 타입 정의를 다시 작성해야 하는 번거로움을 피하기 위해, 타입 정의가 포함된 C 소스 코드를 변환하는 스크립트가 제공될 것입니다\\ [3]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:12.621312Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 5832034529292810388,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:12.621312Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "\"python3 module definition file\":",
+      "source_hash": 12807213221428476935,
+      "context_hash": 2035965305600022602,
+      "translation": "\"python3 모듈 정의 파일\":",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:12.621312Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "http://svn.python.org/projects/python/branches/pep-0384/PC/python3.def",
+      "source_hash": 18117177042537130661,
+      "context_hash": 10529784380260430965,
+      "translation": "http://svn.python.org/projects/python/branches/pep-0384/PC/python3.def",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:12.621313Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "\"PEP 384 branch\":",
+      "source_hash": 3490544002078390625,
+      "context_hash": 8954136551076031699,
+      "translation": "\"PEP 384 브랜치\":",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:12.621313Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:0",
+      "source": "http://svn.python.org/projects/python/branches/pep-0384/",
+      "source_hash": 14161922516023663778,
+      "context_hash": 10485923027690202964,
+      "translation": "http://svn.python.org/projects/python/branches/pep-0384/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:12.621313Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:0",
+      "source": "\"ABI type conversion script\":",
+      "source_hash": 6703674992759510118,
+      "context_hash": 15436333810461465485,
+      "translation": "\"ABI 타입 변환 스크립트\":",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:12.621314Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:6/seg:0",
+      "source": "http://svn.python.org/projects/python/branches/pep-0384/Tools/scripts/abitype.py",
+      "source_hash": 14750081597851890650,
+      "context_hash": 14817445554592384226,
+      "translation": "http://svn.python.org/projects/python/branches/pep-0384/Tools/scripts/abitype.py",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:12.621314Z",
+      "issues": []
+    }
+  ]
+}

@@ -1,0 +1,1082 @@
+{
+  "version": 1,
+  "source_hash": 15788246282530737099,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Time zone support improvements",
+      "source_hash": 13142764161993852463,
+      "context_hash": 16530898886277989957,
+      "translation": "시간대 지원 개선",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509025Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 660410106275586840,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509028Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes the implementation of concrete time zone support in the Python standard library, and also improvements to the time zone API to deal with ambiguous time specifications during DST changes.",
+      "source_hash": 10633645870177294104,
+      "context_hash": 12744045342169643960,
+      "translation": "이 PEP는 Python 표준 라이브러리에 구체적인 시간대 지원을 구현하고, DST 변경 중 모호한 시간 명세를 처리할 수 있도록 시간대 API도 개선할 것을 제안합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:26:12.509029Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Withdrawal",
+      "source_hash": 1967635778469700538,
+      "context_hash": 14253682059069124973,
+      "translation": "철회",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509029Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "After lengthy discussion it has turned out that the things I thought was problem in datetime's implementation are intentional.",
+      "source_hash": 7566716608393402220,
+      "context_hash": 9629544538783911192,
+      "translation": "오랜 논의 끝에 제가 datetime\\ 의 구현에서 문제라고 생각했던 사항들이 의도된 것임이 밝혀졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509030Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Those include completely ignoring DST transitions when making date time arithmetic.",
+      "source_hash": 14688146539689109507,
+      "context_hash": 14908408275421929363,
+      "translation": "여기에는 날짜시간 산술을 수행할 때 DST 전환을 완전히 무시하는 것이 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509030Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "That makes the is_dst flags part of this PEP pointless, as they would have no useful function. ``datetime`` by design does not separate between ambiguous datetimes and will never do so.",
+      "source_hash": 7614129561746387028,
+      "context_hash": 1909475702360662979,
+      "translation": "따라서 is_dst 플래그는 아무런 유용한 기능도 하지 못하므로 이 PEP의 일부로서 무의미합니다. ``datetime``\\ 은 설계상 모호한 날짜시간을 구분하지 않으며 앞으로도 그렇게 하지 않을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509030Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "I therefore withdraw this PEP.",
+      "source_hash": 1313157401967090347,
+      "context_hash": 13788580303008772450,
+      "translation": "따라서 이 PEP를 철회합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509031Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "**UPDATE**: The :pep:`615` \"Support for the IANA Time Zone Database in the Standard Library\" added the ``zoneinfo`` module to Python 3.9 and superseded this PEP.",
+      "source_hash": 6648653333502815459,
+      "context_hash": 16551201582102445971,
+      "translation": "**UPDATE**: :pep:`615` \"표준 라이브러리에서 IANA 시간대 데이터베이스 지원\"은 Python 3.9에 ``zoneinfo`` 모듈을 추가했으며 이 PEP를 대체했습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:26:12.509031Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Proposal",
+      "source_hash": 17139217736364358932,
+      "context_hash": 6139339655619012477,
+      "translation": "제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509031Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Concrete time zone support",
+      "source_hash": 1829675574807531787,
+      "context_hash": 16152455639017625573,
+      "translation": "구체적인 시간대 지원",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509032Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "The time zone support in Python has no concrete implementation in the standard library outside of a tzinfo baseclass that supports fixed offsets.",
+      "source_hash": 14803237778289505106,
+      "context_hash": 4115546391186084575,
+      "translation": "Python의 시간대 지원에는 고정 오프셋을 지원하는 tzinfo 기반 클래스 외에 표준 라이브러리 내의 구체적인 구현이 없습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:26:12.509032Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "To properly support time zones you need to include a database over all time zones, both current and historical, including daylight saving changes.",
+      "source_hash": 1681371934681058728,
+      "context_hash": 6875957835398731909,
+      "translation": "시간대를 적절히 지원하려면 현재 시간대와 과거의 시간대를 모두 포함하고 일광 절약 시간 변경까지 포함하는 모든 시간대의 데이터베이스가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509032Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "But such information changes frequently, so even if we include the last information in a Python release, that information would be outdated just a few months later.",
+      "source_hash": 9608621845762735589,
+      "context_hash": 5970556915650742363,
+      "translation": "그러나 이러한 정보는 자주 변경되므로 Python 릴리스에 최신 정보를 포함하더라도 불과 몇 달 후에는 해당 정보가 오래된 것이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509033Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Time zone support has therefore only been available through two third-party modules, ``pytz`` and ``dateutil``, both who include and wrap the \"zoneinfo\" database.",
+      "source_hash": 6780802745534007493,
+      "context_hash": 17471981024454531337,
+      "translation": "따라서 시간대 지원은 두 서드파티 모듈인 ``pytz``\\ 와 ``dateutil``\\ 을 통해서만 제공되어 왔으며, 두 모듈 모두 \"zoneinfo\" 데이터베이스를 포함하고 래핑합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509033Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "This database, also called \"tz\" or \"The Olsen database\", is the de facto standard time zone database over time zones, and it is included in most Unix and Unix-like operating systems, including OS X.",
+      "source_hash": 18350083438876098327,
+      "context_hash": 16291438435871423729,
+      "translation": "\"tz\" 또는 \"The Olsen database\"라고도 불리는 이 데이터베이스는 시간대에 대한 사실상의 표준 시간대 데이터베이스이며, OS X를 포함한 대부분의 Unix 및 Unix 계열 운영 체제에 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509033Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "This gives us the opportunity to include the code that supports the zoneinfo data in the standard library, but by default use the operating system's copy of the data, which typically will be kept updated by the updating mechanism of the operating system or distribution.",
+      "source_hash": 3917403911751767043,
+      "context_hash": 6847931980098476405,
+      "translation": "이를 통해 표준 라이브러리에 zoneinfo 데이터를 지원하는 코드를 포함하되, 기본적으로 운영 체제의 데이터 사본을 사용하고, 일반적으로 운영 체제 또는 배포판의 업데이트 메커니즘을 통해 해당 사본이 최신 상태로 유지되도록 할 수 있습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:26:12.509033Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "For those who have an operating system that does not include the zoneinfo database, for example Windows, the Python source distribution will include a copy of the zoneinfo database, and a distribution containing the latest zoneinfo database will also be available at the Python Package Index, so it can be easily installed with the Python packaging tools such as ``easy_install`` or ``pip``.",
+      "source_hash": 5535795522172985514,
+      "context_hash": 7391327358749430253,
+      "translation": "Windows와 같이 zoneinfo 데이터베이스를 포함하지 않는 운영 체제를 사용하는 경우 Python 소스 배포판에 zoneinfo 데이터베이스의 사본이 포함되며, 최신 zoneinfo 데이터베이스를 포함한 배포 패키지도 Python 패키지 색인에서 제공되므로 ``easy_install``\\ 이나 ``pip``\\ 같은 Python 패키징 도구로 쉽게 설치할 수 있습니다.",
+      "glossary_snapshot": {
+        "package index": "패키지 색인"
+      },
+      "translated_at": "2026-08-28T19:26:12.509034Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:1",
+      "source": "This could also be done on Unices that are no longer receiving updates and therefore have an outdated database.",
+      "source_hash": 12047061126987345579,
+      "context_hash": 9275116024980959974,
+      "translation": "더 이상 업데이트를 받지 않아 데이터베이스가 오래된 Unix 계열 시스템에서도 이를 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509034Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "With such a mechanism Python would have full-time zone support in the standard library on any platform, and a simple package installation would provide an updated time zone database on those platforms where the zoneinfo database isn't included, such as Windows, or on platforms where OS updates are no longer provided.",
+      "source_hash": 179637490633031481,
+      "context_hash": 18196510844522879860,
+      "translation": "이러한 메커니즘을 사용하면 Python은 모든 플랫폼에서 표준 라이브러리를 통해 완전한 시간대 지원을 제공하며, 간단한 패키지 설치만으로 Windows처럼 zoneinfo 데이터베이스가 포함되지 않은 플랫폼이나 운영 체제 업데이트가 더 이상 제공되지 않는 플랫폼에서 업데이트된 시간대 데이터베이스를 사용할 수 있게 됩니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:26:12.509035Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "The time zone support will be implemented by making the ``datetime`` module into a package, and adding time zone support to ``datetime`` based on Stuart Bishop's ``pytz`` module.",
+      "source_hash": 323317366315893662,
+      "context_hash": 11591593892245173247,
+      "translation": "시간대 지원은 ``datetime``\\ 모듈을 패키지로 만들고 Stuart Bishop의 ``pytz``\\ 모듈을 기반으로 ``datetime``\\ 에 시간대 지원을 추가하여 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509035Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Getting the local time zone",
+      "source_hash": 9571081969423752538,
+      "context_hash": 15458941798790353016,
+      "translation": "현지 시간대 가져오기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509035Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "On Unix there is no standard way of finding the name of the time zone that is being used.",
+      "source_hash": 14682675203984761241,
+      "context_hash": 6330674835021997266,
+      "translation": "Unix에는 사용 중인 시간대의 이름을 알아내는 표준 방법이 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509036Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "All the information that is available is the time zone abbreviations, such as ``EST`` and ``PDT``, but many of those abbreviations are ambiguous and therefore you can't rely on them to figure out which time zone you are located in.",
+      "source_hash": 9351160127581669750,
+      "context_hash": 15862078297433797248,
+      "translation": "사용할 수 있는 모든 정보는 ``EST``\\ 와 ``PDT``\\ 같은 시간대 약어뿐이지만, 이러한 약어 중 상당수는 모호하므로 이를 바탕으로 자신이 어느 시간대에 있는지 알아낼 수 있다고 의존해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509036Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "There is however a standard for finding the compiled time zone information since it's located in ``/etc/localtime``.",
+      "source_hash": 7614912738463836270,
+      "context_hash": 10384139215020252061,
+      "translation": "그러나 컴파일된 시간대 정보가 ``/etc/localtime``\\ 에 있으므로 이를 찾는 표준 방법은 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509036Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "Therefore, it is possible to create a local time zone object with the correct time zone information even though you don't know the name of the time zone.",
+      "source_hash": 9924560468722660656,
+      "context_hash": 18358422515636576811,
+      "translation": "따라서 시간대의 이름을 알지 못하더라도 올바른 시간대 정보를 가진 현지 시간대 객체를 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509036Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:2",
+      "source": "A function in ``datetime`` should be provided to return the local time zone.",
+      "source_hash": 17415791480075817415,
+      "context_hash": 4423765804661647666,
+      "translation": "현지 시간대를 반환하는 함수를 ``datetime``\\ 에 제공해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509037Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "The support for this will be made by integrating Lennart Regebro's ``tzlocal`` module into the new ``datetime`` module.",
+      "source_hash": 7807559975144837338,
+      "context_hash": 2658506598824732810,
+      "translation": "이를 위한 지원은 Lennart Regebro의 ``tzlocal``\\ 모듈을 새로운 ``datetime``\\ 모듈에 통합하여 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509037Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "For Windows it will look up the local Windows time zone name, and use a mapping between Windows time zone names and zoneinfo time zone names provided by the Unicode consortium to convert that to a zoneinfo time zone.",
+      "source_hash": 15784225932134658142,
+      "context_hash": 4837358054108334538,
+      "translation": "Windows에서는 현지 Windows 시간대 이름을 조회하고, 유니코드 컨소시엄이 제공하는 Windows 시간대 이름과 zoneinfo 시간대 이름 간의 매핑을 사용하여 이를 zoneinfo 시간대로 변환합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T19:26:12.509037Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "The mapping should be updated before each major or bugfix release, scripts for doing so will be provided in the ``Tools/`` directory.",
+      "source_hash": 16353126106876561075,
+      "context_hash": 10069964638147694374,
+      "translation": "매핑은 각 주요 릴리스 또는 버그 수정 릴리스 전에 업데이트해야 하며, 이를 수행하는 스크립트는 ``Tools/``\\ 디렉터리에 제공됩니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T19:26:12.509038Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Ambiguous times",
+      "source_hash": 1516122590414831886,
+      "context_hash": 17102059547698816025,
+      "translation": "모호한 시간",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:26:12.509038Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "When changing over from daylight savings time (DST) the clock is turned back one hour.",
+      "source_hash": 16264037317289321953,
+      "context_hash": 9204654847473040643,
+      "translation": "일광 절약 시간제(DST)에서 전환할 때 시계를 한 시간 되돌립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460054Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "This means that the times during that hour happens twice, once with DST and then once without DST.",
+      "source_hash": 2112619753727113473,
+      "context_hash": 2113802327138934679,
+      "translation": "이는 해당 한 시간 동안의 시간이 DST 적용 시 한 번, DST 미적용 시 다시 한 번, 총 두 번 발생한다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460059Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:2",
+      "source": "Similarly, when changing to daylight savings time, one hour goes missing.",
+      "source_hash": 10953558216829582879,
+      "context_hash": 10713799029101989654,
+      "translation": "마찬가지로 일광 절약 시간제로 전환할 때는 한 시간이 사라집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460059Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "The current time zone API can not differentiate between the two ambiguous times during a change from DST.",
+      "source_hash": 6421792480080642487,
+      "context_hash": 7394240467742396135,
+      "translation": "현재 시간대 API는 DST에서 전환하는 동안 발생하는 두 개의 모호한 시간을 구분할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460060Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "For example, in Stockholm the time of 2012-11-28 02:00:00 happens twice, both at UTC 2012-11-28 00:00:00 and also at 2012-11-28 01:00:00.",
+      "source_hash": 3955882407588717118,
+      "context_hash": 16396489556605886697,
+      "translation": "예를 들어 스톡홀름에서는 2012-11-28 02:00:00이라는 시간이 UTC 2012-11-28 00:00:00과 2012-11-28 01:00:00에 모두 두 번 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460060Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "The current time zone API can not disambiguate this and therefore it's unclear which time should be returned",
+      "source_hash": 3250877994682278210,
+      "context_hash": 9096422214364610912,
+      "translation": "현재 시간대 API는 이를 명확히 구분할 수 없으므로 어느 시간을 반환해야 하는지 명확하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460060Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "``pytz`` solved this problem by adding ``is_dst`` parameters to several methods of the tzinfo objects to make it possible to disambiguate times when this is desired.",
+      "source_hash": 495551726800935787,
+      "context_hash": 15390103590675645763,
+      "translation": "``pytz``\\ 는 이러한 문제가 필요할 때 시간을 구분할 수 있도록 tzinfo 객체의 여러 메서드에 ``is_dst`` 매개변수를 추가하여 이 문제를 해결했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460061Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "This PEP proposes to add these ``is_dst`` parameters to the relevant methods of the ``datetime`` API, and therefore add this functionality directly to ``datetime``.",
+      "source_hash": 16648113801915791452,
+      "context_hash": 11160743933924943552,
+      "translation": "이 PEP는 ``datetime`` API의 관련 메서드에 이러한 ``is_dst`` 매개변수를 추가하고, 따라서 이 기능을 ``datetime``\\ 에 직접 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460062Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:1",
+      "source": "This is likely the hardest part of this PEP as this involves updating the C version of the ``datetime`` library with this functionality, as this involved writing new code, and not just reorganizing existing external libraries.",
+      "source_hash": 295944583888589322,
+      "context_hash": 3031528575208697340,
+      "translation": "이는 기존 외부 라이브러리를 단순히 재구성하는 것이 아니라 새 코드를 작성해야 하므로, 이 기능을 포함하도록 ``datetime`` 라이브러리의 C 버전을 업데이트해야 한다는 점에서 이 PEP에서 가장 어려운 부분일 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460062Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Implementation API",
+      "source_hash": 14883172840139545507,
+      "context_hash": 12558428638527955395,
+      "translation": "구현 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460063Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "The zoneinfo database",
+      "source_hash": 13139775555372190377,
+      "context_hash": 6146974598988390191,
+      "translation": "zoneinfo 데이터베이스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460063Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The latest version of the zoneinfo database should exist in the ``Lib/tzdata`` directory of the Python source control system.",
+      "source_hash": 15402479437255928348,
+      "context_hash": 10665830114260454575,
+      "translation": "최신 버전의 zoneinfo 데이터베이스는 Python 소스 제어 시스템의 ``Lib/tzdata`` 디렉터리에 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460064Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "This copy of the database should be updated before every Python feature and bug-fix release, but not for releases of Python versions that are in security-fix-only-mode.",
+      "source_hash": 9935179663166289375,
+      "context_hash": 3128547905162408708,
+      "translation": "이 데이터베이스 사본은 모든 Python 기능 릴리스와 버그 수정 릴리스 전에 업데이트해야 하지만, 보안 수정 전용 모드인 Python 버전의 릴리스에서는 업데이트하지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460064Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Scripts to update the database will be provided in ``Tools/``, and the release instructions will be updated to include this update.",
+      "source_hash": 1039351251500503075,
+      "context_hash": 871801859124794428,
+      "translation": "데이터베이스를 업데이트하는 스크립트가 ``Tools/``\\ 에 제공되며, 릴리스 지침에도 이 업데이트가 포함되도록 수정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460065Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "New configure options ``--enable-internal-timezone-database`` and ``--disable-internal-timezone-database`` will be implemented to enable and disable the installation of this database when installing from source.",
+      "source_hash": 3339669592045166960,
+      "context_hash": 8694055883507009230,
+      "translation": "소스에서 설치할 때 이 데이터베이스의 설치를 활성화하거나 비활성화할 수 있도록 새 configure 옵션 ``--enable-internal-timezone-database`` 및 ``--disable-internal-timezone-database``\\ 를 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460065Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "A source install will default to installing them.",
+      "source_hash": 9920959088011046765,
+      "context_hash": 8206874514577437327,
+      "translation": "소스 설치에서는 기본적으로 해당 데이터베이스를 설치합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460065Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "Binary installers for systems that have a system-provided zoneinfo database may skip installing the included database since it would never be used for these platforms.",
+      "source_hash": 11017828651602785599,
+      "context_hash": 1714676329651281071,
+      "translation": "시스템에서 제공하는 zoneinfo 데이터베이스가 있는 시스템의 바이너리 설치 프로그램은 포함된 데이터베이스가 해당 플랫폼에서 절대 사용되지 않으므로 설치를 건너뛸 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460066Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:1",
+      "source": "For other platforms, for example Windows, binary installers must install the included database.",
+      "source_hash": 17461166987608672295,
+      "context_hash": 14766762413006706608,
+      "translation": "그 밖의 플랫폼, 예를 들어 Windows에서는 바이너리 설치 프로그램이 포함된 데이터베이스를 설치해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460066Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Changes in the ``datetime``-module",
+      "source_hash": 15383362414874231432,
+      "context_hash": 1808412040224839530,
+      "translation": "``datetime`` 모듈의 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460066Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "The public API of the new time zone support contains one new class, one new function, one new exception and four new collections.",
+      "source_hash": 14089520509434926394,
+      "context_hash": 13387063867740037279,
+      "translation": "새로운 시간대 지원의 공개 API에는 새 클래스 하나, 새 함수 하나, 새 예외 하나, 새 컬렉션 네 개가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460067Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "In addition to this, several methods on the datetime object gets a new ``is_dst`` parameter.",
+      "source_hash": 17763054268069004695,
+      "context_hash": 14074825699187832847,
+      "translation": "이와 더불어 datetime 객체의 여러 메서드에 새 ``is_dst`` 매개변수가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460067Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "New class ``dsttimezone``",
+      "source_hash": 17672855101798526769,
+      "context_hash": 11698367852301225144,
+      "translation": "새 클래스 ``dsttimezone``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460068Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "This class provides a concrete implementation of the ``tzinfo`` base class that implements DST support.",
+      "source_hash": 1344337140105901220,
+      "context_hash": 3316941234324356979,
+      "translation": "이 클래스는 DST 지원을 구현하는 ``tzinfo`` 베이스 클래스의 구체적인 구현을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460068Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "New function ``zoneinfo(name=None, db_path=None)``",
+      "source_hash": 8992111745403756774,
+      "context_hash": 10888047949100237595,
+      "translation": "새 함수 ``zoneinfo(name=None, db_path=None)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460068Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "This function takes a name string that must be a string specifying a valid zoneinfo time zone, i.e. \"US/Eastern\", \"Europe/Warsaw\" or \"Etc/GMT\".",
+      "source_hash": 13521479349042117210,
+      "context_hash": 2118697509878439986,
+      "translation": "이 함수는 유효한 zoneinfo 시간대를 지정하는 문자열이어야 하는 이름 문자열을 받습니다. 예를 들어 \"US/Eastern\", \"Europe/Warsaw\" 또는 \"Etc/GMT\"입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460068Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:1",
+      "source": "If not given, the local time zone will be looked up.",
+      "source_hash": 5513818754128432450,
+      "context_hash": 2251965809013300503,
+      "translation": "지정하지 않으면 로컬 시간대를 조회합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460069Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:2",
+      "source": "If an invalid zone name is given, or the local time zone can not be retrieved, the function raises ``UnknownTimeZoneError``.",
+      "source_hash": 14742423483810115050,
+      "context_hash": 10922598761386919638,
+      "translation": "유효하지 않은 영역 이름이 지정되거나 로컬 시간대를 검색할 수 없으면 함수는 ``UnknownTimeZoneError``\\ 를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460069Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "The function also takes an optional path to the location of the zoneinfo database which should be used.",
+      "source_hash": 17203593575693662017,
+      "context_hash": 11045127064369142653,
+      "translation": "이 함수는 사용할 zoneinfo 데이터베이스의 위치를 지정하는 선택적 경로도 받습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460070Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:1",
+      "source": "If not specified, the function will look for databases in the following order:",
+      "source_hash": 410200875511658590,
+      "context_hash": 15825842807603514181,
+      "translation": "지정하지 않으면 함수는 다음 순서로 데이터베이스를 검색합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460070Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "Check if the ``tzdata-update`` module is installed, and then use that database.",
+      "source_hash": 4288230360378204117,
+      "context_hash": 16282727792004784176,
+      "translation": "``tzdata-update`` 모듈이 설치되어 있는지 확인한 다음 해당 데이터베이스를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460070Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:0",
+      "source": "Use the database in ``/usr/share/zoneinfo``, if it exists.",
+      "source_hash": 17568194509790948522,
+      "context_hash": 867819813257539800,
+      "translation": "존재하는 경우 ``/usr/share/zoneinfo``\\ 의 데이터베이스를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460071Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:0",
+      "source": "Use the Python-provided database in ``Lib/tzdata``.",
+      "source_hash": 6181082111285615979,
+      "context_hash": 15671408953477965930,
+      "translation": "Python에서 제공하는 ``Lib/tzdata``\\ 의 데이터베이스를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:26.460071Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:10/seg:0",
+      "source": "If no database is found an ``UnknownTimeZoneError`` or subclass thereof will be raised with a message explaining that no zoneinfo database can be found, but that you can install one with the ``tzdata-update`` package.",
+      "source_hash": 17542169119008761387,
+      "context_hash": 1964714261904669182,
+      "translation": "데이터베이스를 찾을 수 없는 경우, zoneinfo 데이터베이스를 찾을 수 없지만 ``tzdata-update`` 패키지로 설치할 수 있다는 메시지와 함께 ``UnknownTimeZoneError``\\ 나 그 서브클래스가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549927Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:11/seg:0",
+      "source": "New parameter ``is_dst``",
+      "source_hash": 15029778303739332367,
+      "context_hash": 13046008941757803432,
+      "translation": "새로운 매개변수 ``is_dst``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549933Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:12/seg:0",
+      "source": "A new ``is_dst`` parameter is added to several methods to handle time ambiguity during DST changeovers.",
+      "source_hash": 10267364136167289187,
+      "context_hash": 10855261480930596996,
+      "translation": "DST 전환 시 발생하는 시간 모호성을 처리하기 위해 여러 메서드에 새로운 ``is_dst`` 매개변수가 추가되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549933Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:13/seg:0",
+      "source": "``tzinfo.utcoffset(dt, is_dst=False)``",
+      "source_hash": 10437279375754517589,
+      "context_hash": 10371137890627087232,
+      "translation": "``tzinfo.utcoffset(dt, is_dst=False)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549934Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:14/seg:0",
+      "source": "``tzinfo.dst(dt, is_dst=False)``",
+      "source_hash": 10452716421801909714,
+      "context_hash": 545273857400250867,
+      "translation": "``tzinfo.dst(dt, is_dst=False)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549934Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:15/seg:0",
+      "source": "``tzinfo.tzname(dt, is_dst=False)``",
+      "source_hash": 1574866729079231990,
+      "context_hash": 2502138413462190472,
+      "translation": "``tzinfo.tzname(dt, is_dst=False)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549935Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:16/seg:0",
+      "source": "``datetime.astimezone(tz, is_dst=False)``",
+      "source_hash": 2677882643410643096,
+      "context_hash": 6348027812274127146,
+      "translation": "``datetime.astimezone(tz, is_dst=False)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549935Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:17/seg:0",
+      "source": "The ``is_dst`` parameter can be ``False`` (default), ``True``, or ``None``.",
+      "source_hash": 7569996942141504265,
+      "context_hash": 15744361645963568048,
+      "translation": "``is_dst`` 매개변수는 ``False``\\ (기본값), ``True``, 또는 ``None``\\ 일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549936Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:18/seg:0",
+      "source": "``False`` will specify that the given datetime should be interpreted as not happening during daylight savings time, i.e. that the time specified is after the change from DST.",
+      "source_hash": 1750954126583821017,
+      "context_hash": 16423917410644500684,
+      "translation": "``False``\\ 는 주어진 datetime이 일광 절약 시간 중이 아닌, 즉 지정된 시간이 DST 전환 이후로 해석되어야 함을 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549936Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:18/seg:1",
+      "source": "This is default to preserve existing behavior.",
+      "source_hash": 1299085800924980845,
+      "context_hash": 11706368133347272153,
+      "translation": "이는 기존 동작을 유지하기 위한 기본값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549936Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:19/seg:0",
+      "source": "``True`` will specify that the given datetime should be interpreted as happening during daylight savings time, i.e. that the time specified is before the change from DST.",
+      "source_hash": 10529167677746308745,
+      "context_hash": 83562909088565244,
+      "translation": "``True``\\ 는 주어진 datetime이 일광 절약 시간 중, 즉 지정된 시간이 DST 전환 이전으로 해석되어야 함을 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549937Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:20/seg:0",
+      "source": "``None`` will raise an ``AmbiguousTimeError`` exception if the time specified was during a DST change over.",
+      "source_hash": 2031356225801634035,
+      "context_hash": 15682569661632320223,
+      "translation": "``None``\\ 은 지정된 시간이 DST 전환 중이었던 경우 ``AmbiguousTimeError`` 예외를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549937Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:20/seg:1",
+      "source": "It will also raise a ``NonExistentTimeError`` if a time is specified during the \"missing time\" in a change to DST.",
+      "source_hash": 4439243871976094525,
+      "context_hash": 9224503180755680028,
+      "translation": "또한 DST로의 전환 중 \"존재하지 않는 시간\"에 해당하는 시간이 지정된 경우 ``NonExistentTimeError``\\ 를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549938Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:21/seg:0",
+      "source": "New exceptions",
+      "source_hash": 3988522356407050505,
+      "context_hash": 18437739103015687361,
+      "translation": "새로운 예외들",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549938Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:22/seg:0",
+      "source": "``UnknownTimeZoneError``",
+      "source_hash": 2950489032561799002,
+      "context_hash": 12336768733133024497,
+      "translation": "``UnknownTimeZoneError``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549938Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:23/seg:0",
+      "source": "This exception is a subclass of KeyError and raised when giving a time zone specification that can't be found",
+      "source_hash": 13018098292212933401,
+      "context_hash": 12902271931924247085,
+      "translation": "이 예외는 KeyError의 서브클래스이며, 찾을 수 없는 시간대 지정이 주어졌을 때 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549938Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:25/seg:0",
+      "source": "``InvalidTimeError``",
+      "source_hash": 12516171191158044163,
+      "context_hash": 2470937709243619876,
+      "translation": "``InvalidTimeError``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549938Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:26/seg:0",
+      "source": "This exception serves as a base for ``AmbiguousTimeError`` and ``NonExistentTimeError``, to enable you to trap these two separately.",
+      "source_hash": 87021135144869178,
+      "context_hash": 16226072192304562000,
+      "translation": "이 예외는 ``AmbiguousTimeError``\\ 와 ``NonExistentTimeError``\\ 의 베이스 역할을 하여, 이 두 가지를 별도로 잡을 수 있게 해줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549939Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:26/seg:1",
+      "source": "It will subclass from ValueError, so that you can catch these errors together with inputs like the 29th of February 2011.",
+      "source_hash": 10861268592952445853,
+      "context_hash": 18283030073598061334,
+      "translation": "이는 ValueError의 서브클래스가 되어, 2011년 2월 29일과 같은 입력값과 함께 이 오류들을 잡을 수 있게 해줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549939Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:27/seg:0",
+      "source": "``AmbiguousTimeError``",
+      "source_hash": 4932823663132195246,
+      "context_hash": 9841428602733106163,
+      "translation": "``AmbiguousTimeError``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549939Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:28/seg:0",
+      "source": "This exception is raised when giving a datetime specification that is ambiguous while setting ``is_dst`` to None",
+      "source_hash": 9898873706978212568,
+      "context_hash": 14479642498805739513,
+      "translation": "이 예외는 ``is_dst``\\ 를 None으로 설정한 상태에서 모호한 datetime 지정이 주어졌을 때 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549939Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:30/seg:0",
+      "source": "``NonExistentTimeError``",
+      "source_hash": 2350805237855259833,
+      "context_hash": 5595355743362869413,
+      "translation": "``NonExistentTimeError``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549940Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:31/seg:0",
+      "source": "This exception is raised when giving a datetime specification for a time that due to daylight saving does not exist, while setting ``is_dst`` to None",
+      "source_hash": 5921376795316395861,
+      "context_hash": 2706701653740981024,
+      "translation": "이 예외는 ``is_dst``\\ 를 None으로 설정한 상태에서 일광 절약 시간으로 인해 존재하지 않는 시간에 대한 datetime 지정이 주어졌을 때 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549940Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:33/seg:0",
+      "source": "New collections",
+      "source_hash": 12212123512741465149,
+      "context_hash": 3143471412118641816,
+      "translation": "새로운 컬렉션들",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549940Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:34/seg:0",
+      "source": "``all_timezones`` is the exhaustive list of the time zone names that can be used, listed alphabetically.",
+      "source_hash": 2104585588475466466,
+      "context_hash": 13551607072940370589,
+      "translation": "``all_timezones``\\ 은 사용할 수 있는 시간대 이름의 전체 목록으로, 알파벳순으로 나열되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549941Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:35/seg:0",
+      "source": "``common_timezones`` is a list of useful, current time zones, listed alphabetically.",
+      "source_hash": 4764264795062613752,
+      "context_hash": 7732953101627183613,
+      "translation": "``common_timezones``\\ 는 유용하고 현재 사용 중인 시간대의 목록으로, 알파벳순으로 나열되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549941Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "The ``tzdata-update``-package",
+      "source_hash": 16204435080056673639,
+      "context_hash": 10586858771094380102,
+      "translation": "``tzdata-update`` 패키지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549941Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The zoneinfo database will be packaged for easy installation with ``easy_install``/``pip``/``buildout``.",
+      "source_hash": 13429564178848828076,
+      "context_hash": 9473923439824480179,
+      "translation": "zoneinfo 데이터베이스는 ``easy_install``/``pip``/``buildout``\\ 으로 쉽게 설치할 수 있도록 패키징될 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549941Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "This package will not install any Python code, and will not contain any Python code except that which is needed for installation.",
+      "source_hash": 5230923662280461548,
+      "context_hash": 16835720142458367808,
+      "translation": "이 패키지는 어떠한 Python 코드도 설치하지 않으며, 설치에 필요한 것을 제외하고는 어떠한 Python 코드도 포함하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549941Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "It will be kept updated with the same tools as the internal database, but released whenever the ``zoneinfo``-database is updated, and use the same version schema.",
+      "source_hash": 11500682096783549268,
+      "context_hash": 4255972735582845542,
+      "translation": "이는 내부 데이터베이스와 동일한 도구로 계속 업데이트되지만, ``zoneinfo`` 데이터베이스가 업데이트될 때마다 릴리스되며 동일한 버전 스키마를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549942Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Differences from the ``pytz`` API",
+      "source_hash": 10651638346941838255,
+      "context_hash": 12299651137094277669,
+      "translation": "``pytz`` API와의 차이점",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:27.549943Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "``pytz`` has the functions ``localize()`` and ``normalize()`` to work around that ``tzinfo`` doesn't have is_dst.",
+      "source_hash": 16259106418088331553,
+      "context_hash": 1170649125451964158,
+      "translation": "``pytz``\\ 는 ``tzinfo``\\ 에 is_dst가 없다는 문제를 해결하기 위해 ``localize()``\\ 와 ``normalize()`` 함수를 가지고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:11.574626Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "When ``is_dst`` is implemented directly in ``datetime.tzinfo`` they are no longer needed.",
+      "source_hash": 17388921403267184675,
+      "context_hash": 11638100137620234299,
+      "translation": "``is_dst``\\ 가 ``datetime.tzinfo``\\ 에 직접 구현되면 더 이상 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:11.574633Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "The ``timezone()`` function is called ``zoneinfo()`` to avoid clashing with the ``timezone`` class introduced in Python 3.2.",
+      "source_hash": 8574111516355998305,
+      "context_hash": 2008656041737835239,
+      "translation": "``timezone()`` 함수는 Python 3.2에 도입된 ``timezone`` 클래스와의 충돌을 피하기 위해 ``zoneinfo()``\\ 로 불립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:11.574634Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "``zoneinfo()`` will return the local time zone if called without arguments.",
+      "source_hash": 3282030266227056648,
+      "context_hash": 5611164737940514805,
+      "translation": "``zoneinfo()``\\ 는 인자 없이 호출되면 로컬 시간대를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:11.574635Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "The class ``pytz.StaticTzInfo`` is there to provide the ``is_dst`` support for static time zones.",
+      "source_hash": 16367854528627626893,
+      "context_hash": 15032787707744848223,
+      "translation": "``pytz.StaticTzInfo`` 클래스는 정적 시간대에 대한 ``is_dst`` 지원을 제공하기 위해 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:11.574636Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:1",
+      "source": "When ``is_dst`` support is included in ``datetime.tzinfo`` it is no longer needed.",
+      "source_hash": 3930318587461616597,
+      "context_hash": 11431966574733057176,
+      "translation": "``is_dst`` 지원이 ``datetime.tzinfo``\\ 에 포함되면 더 이상 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:11.574637Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "``InvalidTimeError`` subclasses from ``ValueError``.",
+      "source_hash": 18183796067291200189,
+      "context_hash": 16717029440349284586,
+      "translation": "``InvalidTimeError``\\ 는 ``ValueError``\\ 의 서브클래스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:11.574638Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Resources",
+      "source_hash": 7175885783996305697,
+      "context_hash": 8847379875624887377,
+      "translation": "참고 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:11.574639Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "http://pytz.sourceforge.net/",
+      "source_hash": 15576564857222852705,
+      "context_hash": 10288998846527047885,
+      "translation": "http://pytz.sourceforge.net/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:11.574650Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "http://pypi.python.org/pypi/tzlocal",
+      "source_hash": 14099695000845333093,
+      "context_hash": 17446198299672953083,
+      "translation": "http://pypi.python.org/pypi/tzlocal",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:11.574653Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "http://pypi.python.org/pypi/python-dateutil",
+      "source_hash": 7167001311209223060,
+      "context_hash": 1110567431605073185,
+      "translation": "http://pypi.python.org/pypi/python-dateutil",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:11.574654Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "http://unicode.org/cldr/data/common/supplemental/windowsZones.xml",
+      "source_hash": 7362741477035660191,
+      "context_hash": 5245789102983521,
+      "translation": "http://unicode.org/cldr/data/common/supplemental/windowsZones.xml",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:16:11.574654Z",
+      "issues": []
+    }
+  ]
+}

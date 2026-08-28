@@ -1,0 +1,2198 @@
+{
+  "version": 1,
+  "source_hash": 14394091139020467982,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "JIT Compilation",
+      "source_hash": 2565853774332920233,
+      "context_hash": 16530898886277989957,
+      "translation": "JIT 컴파일",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741883Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 14767736038414232668,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741886Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Earlier this year, an `experimental \"just-in-time\" compiler <https://github.com/python/cpython/pull/113465>`__ was merged into CPython's ``main`` development branch.",
+      "source_hash": 8088400695117694348,
+      "context_hash": 10511781802876377005,
+      "translation": "올해 초, `실험적인 \"just-in-time\" 컴파일러 <https://github.com/python/cpython/pull/113465>`__\\ 가 CPython의 ``main`` 개발 브랜치에 병합되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741886Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "While recent CPython releases have included other substantial internal changes, this addition represents a particularly significant departure from the way CPython has traditionally executed Python code.",
+      "source_hash": 5344693291543348965,
+      "context_hash": 15225295233927953090,
+      "translation": "최근 CPython 릴리스에 다른 상당한 내부 변경 사항도 포함되었지만, 이 추가 사항은 CPython이 전통적으로 Python 코드를 실행해 온 방식에서 특히 크게 벗어난 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741887Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "As such, it deserves wider discussion.",
+      "source_hash": 6904238480654780446,
+      "context_hash": 901022870714855164,
+      "translation": "따라서 이에 대해 더 폭넓게 논의할 필요가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741887Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "This PEP aims to summarize the design decisions behind this addition, the current state of the implementation, and future plans for making the JIT a permanent, non-experimental part of CPython.",
+      "source_hash": 15075540011608827951,
+      "context_hash": 18301892427335941052,
+      "translation": "이 PEP는 이 추가 사항의 이면에 있는 설계 결정, 현재 구현 상태, 그리고 JIT를 CPython의 영구적이고 비실험적인 구성 요소로 만들기 위한 향후 계획을 요약하는 것을 목표로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741887Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "It does *not* seek to provide a comprehensive overview of *how* the JIT works, instead focusing on the particular advantages and disadvantages of the chosen approach, as well as answering many questions that have been asked about the JIT since its introduction.",
+      "source_hash": 3144785146709785627,
+      "context_hash": 17806923592036816473,
+      "translation": "이 문서는 JIT가 *어떻게* 작동하는지에 대한 포괄적인 개요를 제공하려는 것이 *아니라*, 선택한 접근 방식의 구체적인 장단점에 초점을 맞추고, JIT가 도입된 이후 제기된 많은 질문에 답하고자 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741887Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "Readers interested in learning more about the new JIT are encouraged to consult the following resources:",
+      "source_hash": 13820451886244378394,
+      "context_hash": 12846828927161353108,
+      "translation": "새로운 JIT에 대해 더 자세히 알고 싶은 독자는 다음 자료를 참조하시기 바랍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741888Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:0",
+      "source": "The `presentation <https://youtu.be/HxSHIpEQRjs>`__ which first introduced the JIT at the 2023 CPython Core Developer Sprint.",
+      "source_hash": 3696246054174657079,
+      "context_hash": 8124273678133819751,
+      "translation": "2023년 CPython 핵심 개발자 스프린트에서 JIT를 처음 소개한 `발표 자료 <https://youtu.be/HxSHIpEQRjs>`__\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741888Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:1",
+      "source": "It includes relevant background, a light technical introduction to the \"copy-and-patch\" technique used, and an open discussion of its design amongst the core developers present.",
+      "source_hash": 4754180043316742568,
+      "context_hash": 3608517536852911758,
+      "translation": "여기에는 관련 배경 지식, 사용된 \"copy-and-patch\" 기법에 대한 간략한 기술적 소개, 그리고 참석한 핵심 개발자들 사이에서 이루어진 해당 설계에 관한 공개 토론이 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741888Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:2",
+      "source": "Slides for this talk can be found on `GitHub <https://github.com/brandtbucher/brandtbucher/blob/master/2023/10/10/a_jit_compiler_for_cpython.pdf>`__.",
+      "source_hash": 1636425213806781409,
+      "context_hash": 8152086376668941188,
+      "translation": "이 발표의 슬라이드는 `GitHub <https://github.com/brandtbucher/brandtbucher/blob/master/2023/10/10/a_jit_compiler_for_cpython.pdf>`__\\ 에서 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741889Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:5/seg:0",
+      "source": "The `open access paper <https://dl.acm.org/doi/10.1145/3485513>`__ originally describing copy-and-patch.",
+      "source_hash": 9689087569820562211,
+      "context_hash": 5504153664889020345,
+      "translation": "copy-and-patch를 처음 설명한 `오픈 액세스 논문 <https://dl.acm.org/doi/10.1145/3485513>`__\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741889Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:6/seg:0",
+      "source": "The `blog post <https://sillycross.github.io/2023/05/12/2023-05-12>`__ by the paper's author detailing the implementation of a copy-and-patch JIT compiler for Lua.",
+      "source_hash": 14469278649901017453,
+      "context_hash": 5327828717021717314,
+      "translation": "해당 논문의 저자가 Lua용 copy-and-patch JIT 컴파일러의 구현을 자세히 설명한 `블로그 게시물 <https://sillycross.github.io/2023/05/12/2023-05-12>`__\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741889Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:6/seg:1",
+      "source": "While this is a great low-level explanation of the approach, note that it also incorporates other techniques and makes implementation decisions that are not particularly relevant to CPython's JIT.",
+      "source_hash": 16365870459247892973,
+      "context_hash": 13024205428816680950,
+      "translation": "이는 이 접근 방식을 저수준에서 훌륭하게 설명하지만, 다른 기법도 포함하고 있으며 CPython의 JIT와는 특별히 관련이 없는 구현 결정을 내린다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741889Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:7/seg:0",
+      "source": "The `implementation <#reference-implementation>`__ itself.",
+      "source_hash": 5855275233347695999,
+      "context_hash": 13629304998956723307,
+      "translation": "`구현 <#reference-implementation>`__ 자체입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741890Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 2745542338336398426,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741890Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Until this point, CPython has always executed Python code by compiling it to bytecode, which is interpreted at runtime.",
+      "source_hash": 10342164817106948694,
+      "context_hash": 8280798203095971092,
+      "translation": "지금까지 CPython은 항상 Python 코드를 바이트코드로 컴파일하여 실행 시점에 해석하는 방식으로 실행해 왔습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:50:41.741890Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "This bytecode is a more-or-less direct translation of the source code: it is untyped, and largely unoptimized.",
+      "source_hash": 13958494580532786988,
+      "context_hash": 17404861546406041623,
+      "translation": "이 바이트코드는 소스 코드의 거의 직접적인 변환입니다. 타입이 지정되지 않았으며 대체로 최적화되지 않았습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:50:41.741891Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Since the Python 3.11 release, CPython has used a \"specializing adaptive interpreter\" (:pep:`659`), which `rewrites these bytecode instructions in-place <https://youtu.be/shQtrn1v7sQ>`__ with type-specialized versions as they run.",
+      "source_hash": 11336827180953272261,
+      "context_hash": 2328245782613859177,
+      "translation": "Python 3.11 릴리스 이후 CPython은 \"전문화 적응형 인터프리터\"(:pep:`659`)를 사용해 왔으며, 이 인터프리터는 실행 중에 이러한 바이트코드 명령을 `제자리에서 다시 작성하여 <https://youtu.be/shQtrn1v7sQ>`__ 타입별 전문화 버전으로 바꿉니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:41.741892Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "This new interpreter delivers significant performance improvements, despite the fact that its optimization potential is limited by the boundaries of individual bytecode instructions.",
+      "source_hash": 14580799608801671479,
+      "context_hash": 13061513471938081923,
+      "translation": "이 새로운 인터프리터는 각 바이트코드 명령의 경계에 의해 최적화 가능성이 제한되는데도 상당한 성능 향상을 제공합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:50:41.741892Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "It also collects a wealth of new profiling information: the types flowing though a program, the memory layout of particular objects, and what paths through the program are being executed the most.",
+      "source_hash": 1823037003211815991,
+      "context_hash": 8320571308758304533,
+      "translation": "또한 프로그램을 통해 흐르는 타입, 특정 객체의 메모리 배치, 프로그램에서 어떤 경로가 가장 많이 실행되는지와 같은 풍부한 새로운 프로파일링 정보를 수집합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741893Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:3",
+      "source": "In other words, *what* to optimize, and *how* to optimize it.",
+      "source_hash": 8460818126495083477,
+      "context_hash": 14571064076468417673,
+      "translation": "다시 말해, *무엇*\\ 을 최적화할지와 *어떻게* 최적화할지에 대한 정보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741893Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Since the Python 3.12 release, CPython has generated this interpreter from a `C-like domain-specific language <https://github.com/python/cpython/blob/main/Python/bytecodes.c>`__ (DSL).",
+      "source_hash": 880306765466362065,
+      "context_hash": 16487177898890508002,
+      "translation": "Python 3.12 릴리스 이후 CPython은 `C와 유사한 도메인별 언어 <https://github.com/python/cpython/blob/main/Python/bytecodes.c>`__ (DSL)로 이 인터프리터를 생성해 왔습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:41.741893Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "In addition to taming some of the complexity of the new adaptive interpreter, the DSL also allows CPython's maintainers to avoid hand-writing tedious boilerplate code in many parts of the interpreter, compiler, and standard library that must be kept in sync with the instruction definitions.",
+      "source_hash": 14388708894771716891,
+      "context_hash": 1520984437901788471,
+      "translation": "새로운 적응형 인터프리터의 복잡성을 일부 제어하는 것 외에도, 이 DSL을 사용하면 CPython 유지 관리자들이 인터프리터, 컴파일러, 표준 라이브러리의 여러 부분에서 명령 정의와 동기화해야 하는 번거로운 상용구 코드를 직접 작성하지 않아도 됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:50:41.741894Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:2",
+      "source": "This ability to generate large amounts of runtime infrastructure from a single source of truth is not only convenient for maintenance; it also unlocks many possibilities for expanding CPython's execution in new ways.",
+      "source_hash": 13791947199138017143,
+      "context_hash": 4763737549268988943,
+      "translation": "단일 진실 공급원에서 대량의 런타임 인프라를 생성할 수 있는 이 기능은 유지 관리에 편리할 뿐만 아니라, CPython의 실행을 새로운 방식으로 확장할 수 있는 많은 가능성도 열어 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741895Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:3",
+      "source": "For instance, it makes it feasible to automatically generate tables for translating a sequence of instructions into an equivalent sequence of smaller \"micro-ops\", generate an optimizer for sequences of these micro-ops, and even generate an entire second interpreter for executing them.",
+      "source_hash": 9881395949106310549,
+      "context_hash": 17773117831897427104,
+      "translation": "예를 들어, 명령어 시퀀스를 더 작은 \"마이크로 연산\"의 동등한 시퀀스로 변환하기 위한 테이블을 자동으로 생성하고, 이러한 마이크로 연산 시퀀스를 위한 최적화 프로그램을 생성하며, 심지어 이를 실행하기 위한 완전히 별도의 두 번째 인터프리터까지 생성할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:41.741895Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "In fact, since early in the Python 3.13 release cycle, all CPython builds have included this exact micro-op translation, optimization, and execution machinery.",
+      "source_hash": 17266520068814708126,
+      "context_hash": 1708255929836321628,
+      "translation": "실제로 Python 3.13 릴리스 주기 초기부터 모든 CPython 빌드에는 바로 이 마이크로 연산 변환, 최적화 및 실행 기능이 포함되어 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741900Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "However, it is disabled by default; the overhead of interpreting even optimized traces of micro-ops is just too large for most code.",
+      "source_hash": 6074408750656891071,
+      "context_hash": 14814911015891842508,
+      "translation": "그러나 기본적으로 비활성화되어 있습니다. 최적화된 마이크로 연산 트레이스조차 해석하는 오버헤드가 대부분의 코드에 너무 크기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741900Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "Heavier optimization probably won't improve the situation much either, since any efficiency gains made by new optimizations will likely be offset by the interpretive overhead of even smaller, more complex micro-ops.",
+      "source_hash": 7830313971507296525,
+      "context_hash": 17401285883361025820,
+      "translation": "더 강력한 최적화도 상황을 크게 개선하지는 못할 것입니다. 새로운 최적화로 얻는 효율성 향상이 더 작고 복잡한 마이크로 연산을 해석하는 오버헤드로 상쇄될 가능성이 높기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741900Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "The most obvious strategy to overcome this new bottleneck is to statically compile these optimized traces.",
+      "source_hash": 10586779898255928339,
+      "context_hash": 2725142234859857015,
+      "translation": "이 새로운 병목을 극복하는 가장 분명한 전략은 이러한 최적화된 트레이스를 정적으로 컴파일하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741900Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "This presents opportunities to avoid several sources of indirection and overhead introduced by interpretation.",
+      "source_hash": 10419682584538546302,
+      "context_hash": 4526099870328783606,
+      "translation": "이렇게 하면 해석으로 도입되는 여러 간접 참조 및 오버헤드를 피할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:41.741901Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:2",
+      "source": "In particular, it allows the removal of dispatch overhead between micro-ops (by replacing a generic interpreter with a straight-line sequence of hot code), instruction decoding overhead for individual micro-ops (by \"burning\" the values or addresses of arguments, constants, and cached values directly into machine instructions), and memory traffic (by moving data off of heap-allocated Python frames and into physical hardware registers).",
+      "source_hash": 16754074410998664553,
+      "context_hash": 17236718793866844397,
+      "translation": "특히 이를 통해 마이크로 연산 사이의 디스패치 오버헤드(일반 인터프리터를 핫 코드의 직선형 시퀀스로 대체), 개별 마이크로 연산의 명령 디코딩 오버헤드(인자, 상수 및 캐시된 값의 값이나 주소를 기계 명령에 직접 \"구워 넣기\"), 그리고 메모리 트래픽(힙에 할당된 Python 프레임에서 데이터를 가져와 물리적 하드웨어 레지스터로 옮기기)을 제거할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:41.741901Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Since much of this data varies even between identical runs of a program and the existing optimization pipeline makes heavy use of runtime profiling information, it doesn't make much sense to compile these traces ahead of time and would be a substantial redesign of the existing specification and micro-op tracing infrastructure that has already been implemented.",
+      "source_hash": 8423585256229784524,
+      "context_hash": 12536719585398251579,
+      "translation": "이 데이터의 상당 부분은 동일한 프로그램 실행 간에도 달라지며 기존 최적화 파이프라인은 런타임 프로파일링 정보를 많이 활용하므로, 이러한 트레이스를 미리 컴파일하는 것은 별로 의미가 없으며 이미 구현된 기존 사양 및 마이크로 연산 트레이싱 인프라를 대대적으로 재설계해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660502Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "As has been demonstrated for many other dynamic languages (`and even Python itself <https://www.pypy.org>`__), the most promising approach is to compile the optimized micro-ops \"just in time\" for execution.",
+      "source_hash": 2147288621317819351,
+      "context_hash": 8783637104811567850,
+      "translation": "다른 많은 동적 언어(`and even Python itself <https://www.pypy.org>`__\\ 에서도 입증되었듯이), 가장 유망한 접근 방식은 최적화된 마이크로 연산을 실행 시점에 맞춰 컴파일하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660506Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 9424640460582508935,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660506Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Despite their reputation, JIT compilers are not magic \"go faster\" machines.",
+      "source_hash": 2229455762723107305,
+      "context_hash": 3063055496736570108,
+      "translation": "JIT 컴파일러는 평판과 달리 마법 같은 \"더 빠르게 실행하는\" 기계가 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660506Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "Developing and maintaining any sort of optimizing compiler for even a single platform, let alone all of CPython's most popular supported platforms, is an incredibly complicated, expensive task.",
+      "source_hash": 5926259770222287644,
+      "context_hash": 17346833400060569618,
+      "translation": "단일 플랫폼을 위한 최적화 컴파일러만 개발하고 유지 관리하는 것도, CPython이 지원하는 가장 인기 있는 모든 플랫폼을 대상으로 하는 것은 말할 것도 없이, 믿을 수 없을 만큼 복잡하고 비용이 많이 드는 작업입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660507Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "Using an existing compiler framework like LLVM can make this task simpler, but only at the cost of introducing heavy runtime dependencies and significantly higher JIT compilation overhead.",
+      "source_hash": 5450216361987049320,
+      "context_hash": 13419887148241575860,
+      "translation": "LLVM과 같은 기존 컴파일러 프레임워크를 사용하면 이 작업을 더 간단하게 만들 수 있지만, 그 대가로 무거운 런타임 의존성과 상당히 높은 JIT 컴파일 오버헤드를 도입해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660507Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "It's clear that successfully compiling Python code at runtime requires not only high-quality Python-specific optimizations for the code being run, *but also* quick generation of efficient machine code for the optimized program.",
+      "source_hash": 4534571422852860745,
+      "context_hash": 1147019363425552918,
+      "translation": "런타임에 Python 코드를 성공적으로 컴파일하려면 실행 중인 코드에 대한 고품질 Python 전용 최적화뿐만 아니라 *또한* 최적화된 프로그램을 위한 효율적인 머신 코드를 신속하게 생성해야 한다는 점은 분명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:58:01.348417Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "The Python core development team has the necessary skills and experience for the former (a middle-end tightly coupled to the interpreter), and copy-and-patch compilation provides an attractive solution for the latter.",
+      "source_hash": 16749389171436567983,
+      "context_hash": 13749254921520663695,
+      "translation": "Python 핵심 개발 팀은 전자(인터프리터와 긴밀하게 결합된 미들엔드)에 필요한 기술과 경험을 갖추고 있으며, copy-and-patch 컴파일은 후자에 대한 매력적인 해결책을 제공합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:08.660508Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "In a nutshell, copy-and-patch allows a high-quality template JIT compiler to be generated from the same DSL used to generate the rest of the interpreter.",
+      "source_hash": 16479100773144183809,
+      "context_hash": 7858505535397723389,
+      "translation": "간단히 말해, copy-and-patch를 사용하면 인터프리터의 나머지 부분을 생성하는 데 사용되는 것과 동일한 DSL로 고품질 템플릿 JIT 컴파일러를 생성할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:08.660509Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "For a widely-used, volunteer-driven project like CPython, this benefit cannot be overstated: CPython's maintainers, by merely editing the bytecode definitions, will also get the JIT backend updated \"for free\", for *all* JIT-supported platforms, at once.",
+      "source_hash": 13590419517797468020,
+      "context_hash": 6756325484703904443,
+      "translation": "CPython처럼 널리 사용되며 자원봉사자 중심으로 운영되는 프로젝트에서는 이 이점을 아무리 강조해도 지나치지 않습니다. CPython의 유지 관리자들은 바이트코드 정의를 단순히 편집하기만 해도 *모든* JIT 지원 플랫폼에서 JIT 백엔드도 한 번에 \"무료로\" 업데이트할 수 있습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:58:01.348421Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:2",
+      "source": "This is equally true whether instructions are being added, modified, or removed.",
+      "source_hash": 16489437011448876370,
+      "context_hash": 10043966162191619438,
+      "translation": "이는 명령어를 추가하거나 수정하거나 제거하는 경우에도 동일하게 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660511Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "Like the rest of the interpreter, the JIT compiler is generated at build time, and has no runtime dependencies.",
+      "source_hash": 2571100573339536352,
+      "context_hash": 16384424167825808802,
+      "translation": "인터프리터의 나머지 부분과 마찬가지로 JIT 컴파일러는 빌드 시점에 생성되며 런타임 의존성이 없습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:08.660511Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:1",
+      "source": "It supports a wide range of platforms (see the `Support`_ section below), and has comparatively low maintenance burden.",
+      "source_hash": 12779495187745360020,
+      "context_hash": 15832233555624683938,
+      "translation": "광범위한 플랫폼을 지원하며(아래의 `Support`_ 섹션 참조), 유지 관리 부담도 비교적 낮습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660511Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:2",
+      "source": "In all, the current implementation is made up of about 900 lines of build-time Python code and 500 lines of runtime C code.",
+      "source_hash": 3499844901996633103,
+      "context_hash": 8004318930153197989,
+      "translation": "전체적으로 현재 구현은 빌드 시점 Python 코드 약 900줄과 런타임 C 코드 500줄로 구성되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660512Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 8296371648523364318,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660512Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "The JIT is currently not part of the default build configuration, and it is likely to remain that way for the foreseeable future (though official binaries may include it).",
+      "source_hash": 5325759640016373855,
+      "context_hash": 3611037255438853732,
+      "translation": "JIT는 현재 기본 빌드 구성에 포함되어 있지 않으며, 가까운 미래에도 그 상태가 유지될 가능성이 높습니다(다만 공식 바이너리에는 포함될 수 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660512Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "That said, the JIT will become non-experimental once all of the following conditions are met:",
+      "source_hash": 11670320278890611921,
+      "context_hash": 8446650862923033064,
+      "translation": "그렇지만 다음 조건을 모두 충족하면 JIT는 실험적 기능이 아니게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660512Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "It provides a meaningful performance improvement for at least one popular platform (realistically, on the order of 5%).",
+      "source_hash": 5049306582233726515,
+      "context_hash": 6501840821631604037,
+      "translation": "적어도 하나의 인기 플랫폼에서 의미 있는 성능 향상을 제공합니다(현실적으로는 약 5% 수준입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660513Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "It can be built, distributed, and deployed with minimal disruption.",
+      "source_hash": 5003103454512988030,
+      "context_hash": 6281070841592926450,
+      "translation": "최소한의 중단으로 빌드하고, 배포하고, 적용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660513Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "The Steering Council, upon request, has determined that it would provide more value to the community if enabled than if disabled (considering tradeoffs such as maintenance burden, memory usage, or the feasibility of alternate designs).",
+      "source_hash": 9907051357017165894,
+      "context_hash": 13595890660223481427,
+      "translation": "운영 위원회가 요청을 받아, 유지 관리 부담, 메모리 사용량 또는 대체 설계의 실행 가능성 등의 상충 요소를 고려했을 때 JIT를 비활성화했을 때보다 활성화했을 때 커뮤니티에 더 큰 가치를 제공한다고 판단합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660513Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "These criteria should be considered a starting point, and may be expanded over time.",
+      "source_hash": 17034431686287730854,
+      "context_hash": 1942476232439204511,
+      "translation": "이러한 기준은 출발점으로 간주해야 하며 시간이 지나면서 확장될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660514Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:1",
+      "source": "For example, discussion of this PEP may reveal that additional requirements (such as multiple committed maintainers, a security audit, documentation in the devguide, support for out-of-process debugging, or a runtime option to disable the JIT) should be added to this list.",
+      "source_hash": 6034133299087367392,
+      "context_hash": 2727566870703528307,
+      "translation": "예를 들어 이 PEP에 대한 논의를 통해 추가 요구 사항(여러 명의 확정된 유지 관리자, 보안 감사, devguide의 문서화, 프로세스 외부 디버깅 지원 또는 JIT를 비활성화하는 런타임 옵션 등)을 이 목록에 추가해야 한다는 사실이 드러날 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660514Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "Until the JIT is non-experimental, it should *not* be used in production, and may be broken or removed at any time without warning.",
+      "source_hash": 14897032854071331799,
+      "context_hash": 14660283901919319984,
+      "translation": "JIT가 실험적 기능이 아닌 상태가 될 때까지는 프로덕션에서 사용해서는 *안 되며*, 경고 없이 언제든지 손상되거나 제거될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660515Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "Once the JIT is no longer experimental, it should be treated in much the same way as other build options such as ``--enable-optimizations`` or ``--with-lto``.",
+      "source_hash": 3754229389905697290,
+      "context_hash": 4833230050854454954,
+      "translation": "JIT가 더 이상 실험적 기능이 아니게 되면 ``--enable-optimizations`` 또는 ``--with-lto``\\ 와 같은 다른 빌드 옵션과 거의 동일한 방식으로 취급해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660515Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:1",
+      "source": "It may be a recommended (or even default) option for some platforms, and release managers *may* choose to enable it in official releases.",
+      "source_hash": 10183947670333183714,
+      "context_hash": 1521544135734883622,
+      "translation": "일부 플랫폼에서는 권장 옵션(또는 기본 옵션)이 될 수 있으며, 릴리스 관리자는 공식 릴리스에서 이를 활성화할 *수도* 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660515Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Support",
+      "source_hash": 8279312071152581284,
+      "context_hash": 62379506841165260,
+      "translation": "지원",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660515Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "The JIT has been developed for all of :pep:`11`'s current tier one platforms, most of its tier two platforms, and one of its tier three platforms.",
+      "source_hash": 3047583837501198982,
+      "context_hash": 4796993679122191387,
+      "translation": "JIT는 :pep:`11`\\ 의 현재 1단계 플랫폼 전체, 2단계 플랫폼 대부분 및 3단계 플랫폼 하나를 대상으로 개발되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660516Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "Specifically, CPython's ``main`` branch has `CI <https://github.com/python/cpython/blob/main/.github/workflows/jit.yml>`__ building and testing the JIT for both release and debug builds on:",
+      "source_hash": 3958711314868139233,
+      "context_hash": 12707694700293839178,
+      "translation": "구체적으로 CPython의 ``main`` 브랜치에는 릴리스 빌드와 디버그 빌드 모두에서 JIT를 빌드하고 테스트하는 `CI <https://github.com/python/cpython/blob/main/.github/workflows/jit.yml>`__\\ 가 다음 환경에 구성되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660516Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "``aarch64-apple-darwin/clang``",
+      "source_hash": 17874561068340363580,
+      "context_hash": 12524227829693883325,
+      "translation": "``aarch64-apple-darwin/clang``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660516Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "``aarch64-pc-windows/msvc`` [#untested]_",
+      "source_hash": 5739091266498157700,
+      "context_hash": 4591945074920906777,
+      "translation": "``aarch64-pc-windows/msvc`` [#untested]_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660517Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "``aarch64-unknown-linux-gnu/clang`` [#emulated]_",
+      "source_hash": 2092702041925068092,
+      "context_hash": 10168774702217881839,
+      "translation": "``aarch64-unknown-linux-gnu/clang`` [#emulated]_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660517Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "``aarch64-unknown-linux-gnu/gcc`` [#emulated]_",
+      "source_hash": 5683403168967435221,
+      "context_hash": 16483826720990402584,
+      "translation": "``aarch64-unknown-linux-gnu/gcc`` [#emulated]_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:08.660517Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "``i686-pc-windows-msvc/msvc``",
+      "source_hash": 17305122883758806584,
+      "context_hash": 5365650470803089104,
+      "translation": "``i686-pc-windows-msvc/msvc``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951058Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "``x86_64-apple-darwin/clang``",
+      "source_hash": 1108749152181221834,
+      "context_hash": 4821242487555371598,
+      "translation": "``x86_64-apple-darwin/clang``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951063Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "``x86_64-pc-windows-msvc/msvc``",
+      "source_hash": 11664690551917211142,
+      "context_hash": 17800197485340365242,
+      "translation": "``x86_64-pc-windows-msvc/msvc``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951063Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "``x86_64-unknown-linux-gnu/clang``",
+      "source_hash": 15849319723782124975,
+      "context_hash": 16253041748204427219,
+      "translation": "``x86_64-unknown-linux-gnu/clang``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951064Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "``x86_64-unknown-linux-gnu/gcc``",
+      "source_hash": 13037473783324602943,
+      "context_hash": 1360485158167670191,
+      "translation": "``x86_64-unknown-linux-gnu/gcc``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951064Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "It's worth noting that some platforms, even future tier one platforms, may never gain JIT support.",
+      "source_hash": 2929494166079251833,
+      "context_hash": 8707762997684367604,
+      "translation": "일부 플랫폼, 심지어 향후 1등급 플랫폼도 JIT 지원을 영원히 얻지 못할 수 있다는 점에 유의할 필요가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951064Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:1",
+      "source": "This can be for a variety of reasons, including insufficient LLVM support (``powerpc64le-unknown-linux-gnu/gcc``), inherent limitations of the platform (``wasm32-unknown-wasi/clang``), or lack of developer interest (``x86_64-unknown-freebsd/clang``).",
+      "source_hash": 6816520124281135573,
+      "context_hash": 13462457296653639345,
+      "translation": "이는 불충분한 LLVM 지원(``powerpc64le-unknown-linux-gnu/gcc``), 플랫폼 자체의 한계(``wasm32-unknown-wasi/clang``), 또는 개발자의 관심 부족(``x86_64-unknown-freebsd/clang``)을 비롯한 다양한 이유 때문일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951065Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "Once JIT support for a platform is added (meaning, the JIT builds successfully without displaying warnings to the user), it should be treated in much the same way as :pep:`11` prescribes: it should have reliable CI/buildbots, and JIT failures on tier one and tier two platforms should block releases.",
+      "source_hash": 9187200351176083337,
+      "context_hash": 594748035156645681,
+      "translation": "플랫폼에 대한 JIT 지원이 추가되면(즉, 사용자에게 경고를 표시하지 않고 JIT가 성공적으로 빌드되면), :pep:`11`\\ 에서 규정하는 것과 거의 동일한 방식으로 처리해야 합니다. 안정적인 CI/빌드봇을 갖추어야 하며, 1등급 및 2등급 플랫폼에서의 JIT 실패는 릴리스를 차단해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951065Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:1",
+      "source": "Though it's not necessary to update :pep:`11` to specify JIT support, it may be helpful to do so anyway.",
+      "source_hash": 16540868264853597689,
+      "context_hash": 2109420145656438943,
+      "translation": "JIT 지원을 명시하도록 :pep:`11`\\ 을 업데이트할 필요는 없지만, 그렇게 하는 것이 도움이 될 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951065Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:2",
+      "source": "Otherwise, a list of supported platforms should be maintained in `the JIT's README <https://github.com/python/cpython/blob/main/Tools/jit/README.md>`__.",
+      "source_hash": 1307310159772336414,
+      "context_hash": 2143697249736254141,
+      "translation": "그렇지 않으면 지원되는 플랫폼 목록을 `JIT의 README <https://github.com/python/cpython/blob/main/Tools/jit/README.md>`__\\ 에 유지해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951065Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "Since it should always be possible to build CPython without the JIT, removing JIT support for a platform should *not* be considered a backwards-incompatible change.",
+      "source_hash": 3344405758748366791,
+      "context_hash": 10994165815019719913,
+      "translation": "JIT 없이도 CPython을 항상 빌드할 수 있어야 하므로, 플랫폼에 대한 JIT 지원 제거는 *not*\\ 하위 호환성을 깨뜨리는 변경으로 간주해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951066Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:1",
+      "source": "However, if it is reasonable to do so, the normal deprecation process should be followed as outlined in :pep:`387`.",
+      "source_hash": 13231586353264862940,
+      "context_hash": 17859481386349324376,
+      "translation": "그러나 그렇게 하는 것이 합리적이라면 :pep:`387`\\ 에 설명된 일반적인 사용 중단 절차를 따라야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951066Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "The JIT's build-time dependencies may be changed between releases, within reason.",
+      "source_hash": 18221210508181908361,
+      "context_hash": 12698233922783951039,
+      "translation": "JIT의 빌드 시 의존성은 합리적인 범위 내에서 릴리스 간에 변경될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951066Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 15919793167180129418,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951066Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Due to the fact that the current interpreter and the JIT backend are both generated from the same specification, the behavior of Python code should be completely unchanged.",
+      "source_hash": 1441325234401297238,
+      "context_hash": 8515018430270108644,
+      "translation": "현재 인터프리터와 JIT 백엔드가 모두 동일한 사양에서 생성된다는 사실로 인해 Python 코드의 동작은 완전히 변경되지 않아야 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:23.951067Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "In practice, observable differences that have been found and fixed during testing have tended to be bugs in the existing micro-op translation and optimization stages, rather than bugs in the copy-and-patch step.",
+      "source_hash": 16284123367541099909,
+      "context_hash": 17191452656348966984,
+      "translation": "실제로 테스트 중 발견되어 수정된 관찰 가능한 차이는 copy-and-patch 단계의 버그라기보다는 기존 마이크로 연산 변환 및 최적화 단계의 버그인 경우가 많았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951068Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Debugging",
+      "source_hash": 15467645757768540752,
+      "context_hash": 4460245698732693229,
+      "translation": "디버깅",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951068Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Tools that profile and debug Python code will continue to work fine.",
+      "source_hash": 11813235553412606437,
+      "context_hash": 14345647254925034540,
+      "translation": "Python 코드를 프로파일링하고 디버깅하는 도구는 계속해서 정상적으로 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951068Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "This includes in-process tools that use Python-provided functionality (like ``sys.monitoring``, ``sys.settrace``, or  ``sys.setprofile``), as well as out-of-process tools that walk Python frames from the interpreter state.",
+      "source_hash": 12252372528868991165,
+      "context_hash": 9643315668305274357,
+      "translation": "여기에는 Python이 제공하는 기능(예: ``sys.monitoring``, ``sys.settrace``, 또는 ``sys.setprofile``)을 사용하는 프로세스 내부 도구와, 인터프리터 상태에서 Python 프레임을 순회하는 프로세스 외부 도구가 모두 포함됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:23.951068Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "However, it appears that profilers and debuggers *for C code* are currently unable to trace back through JIT frames.",
+      "source_hash": 15308631245257447591,
+      "context_hash": 3829091848117427457,
+      "translation": "그러나 현재 *C 코드에 대한* 프로파일러와 디버거는 JIT 프레임을 거슬러 추적할 수 없는 것으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951069Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "Working with leaf frames is possible (this is how the JIT itself is debugged), though it is of limited utility due to the absence of proper debugging information for JIT frames.",
+      "source_hash": 8648517920894015083,
+      "context_hash": 12737940978522238846,
+      "translation": "리프 프레임을 대상으로 작업하는 것은 가능하지만(이 방식으로 JIT 자체를 디버깅합니다), JIT 프레임에 대한 적절한 디버깅 정보가 없기 때문에 그 유용성은 제한적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951069Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Since the code templates emitted by the JIT are compiled by Clang, it *may* be possible to allow JIT frames to be traced through by simply modifying the compiler flags to use frame pointers more carefully.",
+      "source_hash": 11070166068721290404,
+      "context_hash": 8869436926701270588,
+      "translation": "JIT가 생성하는 코드 템플릿은 Clang으로 컴파일되므로, 컴파일러 플래그를 수정하여 프레임 포인터를 더욱 신중하게 사용하면 JIT 프레임을 거슬러 추적할 수 있게 하는 것이 *가능할*\\ 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951069Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "It may also be possible to harvest and emit the debugging information produced by Clang.",
+      "source_hash": 5553199552904334355,
+      "context_hash": 4699417246923812345,
+      "translation": "Clang이 생성한 디버깅 정보를 수집하여 출력하는 것도 가능할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951070Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:2",
+      "source": "Neither of these ideas have been explored very deeply.",
+      "source_hash": 14606649196731130001,
+      "context_hash": 13383987817887532115,
+      "translation": "이 두 가지 아이디어 모두 매우 깊이 있게 탐구되지는 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951070Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "While this is an issue that *should* be fixed, fixing it is not a particularly high priority at this time.",
+      "source_hash": 2618988956504472454,
+      "context_hash": 12574769128354481430,
+      "translation": "이는 *수정되어야* 하는 문제이지만, 현재 이를 수정하는 것은 특별히 우선순위가 높지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951070Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "This is probably a problem best explored by somebody with more domain expertise in collaboration with those maintaining the JIT, who have little experience with the inner workings of these tools.",
+      "source_hash": 14446670912441721828,
+      "context_hash": 28503419247916448,
+      "translation": "이는 JIT 유지 관리자들과 협력하면서 이러한 도구의 내부 작동 방식에 대한 경험이 많지 않은, 해당 분야의 전문 지식이 더 많은 누군가가 탐구하는 것이 가장 적절한 문제일 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951070Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 12426487473689055987,
+      "translation": "보안 관련 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951071Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "This JIT, like any JIT, produces large amounts of executable data at runtime.",
+      "source_hash": 6440313378340152958,
+      "context_hash": 1851085269207232698,
+      "translation": "이 JIT는 다른 모든 JIT와 마찬가지로 런타임에 대량의 실행 가능 데이터를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951071Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "This introduces a potential new attack surface to CPython, since a malicious actor capable of influencing the contents of this data is therefore capable of executing arbitrary code.",
+      "source_hash": 5164679380318174274,
+      "context_hash": 17712414673832596350,
+      "translation": "따라서 이 데이터의 내용을 조작할 수 있는 악의적인 행위자는 임의의 코드를 실행할 수도 있으므로, 이는 CPython에 잠재적으로 새로운 공격 표면을 도입합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951071Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "This is a `well-known vulnerability <https://en.wikipedia.org/wiki/Just-in-time_compilation#Security>`__ of JIT compilers.",
+      "source_hash": 16981614516275005269,
+      "context_hash": 18110394023841098171,
+      "translation": "이는 JIT 컴파일러의 `잘 알려진 취약점 <https://en.wikipedia.org/wiki/Just-in-time_compilation#Security>`__\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951071Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "In order to mitigate this risk, the JIT has been written with best practices in mind.",
+      "source_hash": 15076109978760638205,
+      "context_hash": 12769090770850005421,
+      "translation": "이러한 위험을 완화하기 위해 JIT는 모범 사례를 염두에 두고 작성되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951071Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "In particular, the data in question is not exposed by the JIT compiler to other parts of the program while it remains writable, and at *no* point is the data both |wx|_.",
+      "source_hash": 4975573661931305122,
+      "context_hash": 15456722889475001867,
+      "translation": "특히 문제의 데이터는 쓰기 가능한 상태로 유지되는 동안 JIT 컴파일러에 의해 프로그램의 다른 부분에 노출되지 않으며, *어떠한* 시점에도 데이터가 |wx|_ 상태이면서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:23.951071Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "The nature of template-based JITs also seriously limits the kinds of code that can be generated, further reducing the likelihood of a successful exploit.",
+      "source_hash": 15282848136869718903,
+      "context_hash": 7621241831490820512,
+      "translation": "템플릿 기반 JIT의 특성은 생성할 수 있는 코드의 종류를 심각하게 제한하여, 성공적인 익스플로잇 가능성을 더욱 낮춥니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546221Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "As an additional precaution, the templates themselves are stored in static, read-only memory.",
+      "source_hash": 8957819248939946199,
+      "context_hash": 17076424559439405303,
+      "translation": "추가적인 예방 조치로 템플릿 자체는 정적 읽기 전용 메모리에 저장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546227Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "However, it would be naive to assume that no possible vulnerabilities exist in the JIT, especially at this early stage.",
+      "source_hash": 5304519091965689931,
+      "context_hash": 13633434988185169957,
+      "translation": "그러나 특히 아직 초기 단계인 현재, JIT에 가능한 취약점이 전혀 존재하지 않는다고 가정하는 것은 순진한 생각입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546228Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:1",
+      "source": "The author is not a security expert, but is available to join or work closely with the Python Security Response Team to triage and fix security issues as they arise.",
+      "source_hash": 18400444959129021411,
+      "context_hash": 7939584120895342815,
+      "translation": "작성자는 보안 전문가가 아니지만, 보안 문제가 발생하는 대로 이를 분류하고 수정하기 위해 Python 보안 대응 팀에 참여하거나 긴밀히 협력할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546228Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Apple Silicon",
+      "source_hash": 4819368639715591593,
+      "context_hash": 11104595195604789599,
+      "translation": "Apple Silicon",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546229Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Though difficult to test without actually signing and packaging a macOS release, it *appears* that macOS releases should `enable the JIT Entitlement for the Hardened Runtime <https://developer.apple.com/documentation/apple-silicon/porting-just-in-time-compilers-to-apple-silicon#Enable-the-JIT-Entitlement-for-the-Hardened-Runtime>`__.",
+      "source_hash": 13895124784613526181,
+      "context_hash": 10242720685367120300,
+      "translation": "실제로 macOS 릴리스에 서명하고 패키징하지 않고서는 테스트하기 어렵지만, macOS 릴리스는 `Hardened Runtime에 대한 JIT Entitlement를 활성화해야 하는 것 <https://developer.apple.com/documentation/apple-silicon/porting-just-in-time-compilers-to-apple-silicon#Enable-the-JIT-Entitlement-for-the-Hardened-Runtime>`__\\ 으로 *보입니다*.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:58:01.348426Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "This shouldn't make *installing* Python any harder, but may add additional steps for release managers to perform.",
+      "source_hash": 10594261806219021484,
+      "context_hash": 11860180379141715259,
+      "translation": "이로 인해 Python을 *설치하는* 일이 더 어려워지지는 않지만, 릴리스 관리자가 수행해야 할 단계가 추가될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546231Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 6820102829199675991,
+      "translation": "이것을 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546231Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Choose the sections that best describe you:",
+      "source_hash": 8930910743770983820,
+      "context_hash": 1998742070282944841,
+      "translation": "자신을 가장 잘 설명하는 섹션을 선택하십시오:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546231Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "**If you are a Python programmer or end user...**",
+      "source_hash": 18177182690777940440,
+      "context_hash": 10351480126921455361,
+      "translation": "**Python 프로그래머 또는 최종 사용자인 경우...**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546232Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "...nothing changes for you.",
+      "source_hash": 1213878465161110251,
+      "context_hash": 3725085762395823152,
+      "translation": "...아무것도 달라지지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546232Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:1",
+      "source": "Nobody should be distributing JIT-enabled CPython interpreters to you while it is still an experimental feature.",
+      "source_hash": 15470362579234318870,
+      "context_hash": 4955517587085451972,
+      "translation": "실험적 기능인 동안에는 누구도 JIT가 활성화된 CPython 인터프리터를 여러분에게 배포해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546232Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:2",
+      "source": "Once it is non-experimental, you will probably notice slightly better performance and slightly higher memory usage.",
+      "source_hash": 5976419455763861203,
+      "context_hash": 13971633499163881165,
+      "translation": "실험적 기능이 아니게 되면 성능이 약간 향상되고 메모리 사용량이 약간 증가한 것을 알아차리게 될 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546233Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:3",
+      "source": "You shouldn't be able to observe any other changes.",
+      "source_hash": 16642091532092960147,
+      "context_hash": 11312915038351329080,
+      "translation": "그 밖의 변화는 관찰할 수 없어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546233Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "**If you maintain third-party packages...**",
+      "source_hash": 17269385747667590926,
+      "context_hash": 7569676513997570166,
+      "translation": "**서드파티 패키지를 유지 관리하는 경우...**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546233Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "...nothing changes for you.",
+      "source_hash": 1213878465161110251,
+      "context_hash": 18361748969284825781,
+      "translation": "...아무것도 달라지지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546233Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:1",
+      "source": "There are no API or ABI changes, and the JIT is not exposed to third-party code.",
+      "source_hash": 1085551201371025591,
+      "context_hash": 7551783226300779005,
+      "translation": "API나 ABI 변경은 없으며, JIT는 서드파티 코드에 노출되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546234Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:2",
+      "source": "You shouldn't need to change your CI matrix, and you shouldn't be able to observe differences in the way your packages work when the JIT is enabled.",
+      "source_hash": 9819113310564693896,
+      "context_hash": 17278280609649794050,
+      "translation": "CI 매트릭스를 변경할 필요가 없으며, JIT가 활성화되었을 때 패키지가 작동하는 방식의 차이도 관찰할 수 없어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546234Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "**If you profile or debug Python code...**",
+      "source_hash": 18107330316660695049,
+      "context_hash": 11048005449254660284,
+      "translation": "**Python 코드를 프로파일링하거나 디버깅하는 경우...**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546235Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "...nothing changes for you.",
+      "source_hash": 1213878465161110251,
+      "context_hash": 2185155125522782816,
+      "translation": "...아무것도 달라지지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546235Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:1",
+      "source": "All Python profiling and tracing functionality remains.",
+      "source_hash": 702639980961956310,
+      "context_hash": 10479552246666283552,
+      "translation": "모든 Python 프로파일링 및 트레이싱 기능은 그대로 유지됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546235Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "**If you profile or debug C code...**",
+      "source_hash": 13334959645809144706,
+      "context_hash": 9982122566030165263,
+      "translation": "**C 코드를 프로파일링하거나 디버깅하는 경우...**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546236Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "...currently, the ability to trace *through* JIT frames is limited.",
+      "source_hash": 1158969434906064863,
+      "context_hash": 14873690788315179259,
+      "translation": "...현재 JIT 프레임을 *통과하여* 추적하는 기능은 제한적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546236Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:1",
+      "source": "This may cause issues if you need to observe the entire C call stack, rather than just \"leaf\" frames.",
+      "source_hash": 16102629353950312359,
+      "context_hash": 11983805483981911910,
+      "translation": "단순히 \"리프\" 프레임만이 아니라 전체 C 호출 스택을 관찰해야 하는 경우 문제가 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546236Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:2",
+      "source": "See the `Debugging`_ section above for more information.",
+      "source_hash": 16522601507505150591,
+      "context_hash": 8375202938290398539,
+      "translation": "자세한 내용은 위의 `Debugging`_ 섹션을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546236Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:10/seg:0",
+      "source": "**If you compile your own Python interpreter....**",
+      "source_hash": 9838291969968405012,
+      "context_hash": 9136471673590112095,
+      "translation": "**자체 Python 인터프리터를 컴파일하는 경우....**",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:17.546237Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:0",
+      "source": "...if you don't wish to build the JIT, you can simply ignore it.",
+      "source_hash": 11281136335068223007,
+      "context_hash": 9752927284476008012,
+      "translation": "...JIT를 빌드하지 않으려면 간단히 무시할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546239Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:1",
+      "source": "Otherwise, you will need to `install a compatible version of LLVM <https://github.com/python/cpython/blob/main/Tools/jit/README.md>`__, and pass the appropriate flag to the build scripts.",
+      "source_hash": 9342570076022420116,
+      "context_hash": 269755284691798430,
+      "translation": "그렇지 않으면 `호환되는 LLVM 버전을 설치 <https://github.com/python/cpython/blob/main/Tools/jit/README.md>`__\\ 하고 빌드 스크립트에 적절한 플래그를 전달해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546239Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:2",
+      "source": "Your build may take up to a minute longer.",
+      "source_hash": 15559923839295087912,
+      "context_hash": 7550325590667507677,
+      "translation": "빌드 시간이 최대 1분 더 길어질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546239Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:3",
+      "source": "Note that the JIT should *not* be distributed to end users or used in production while it is still in the experimental phase.",
+      "source_hash": 17167627859237598007,
+      "context_hash": 2350234897722602673,
+      "translation": "JIT가 아직 실험 단계인 동안에는 최종 사용자에게 배포하거나 프로덕션에서 사용해서는 *안 된다는* 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546240Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:12/seg:0",
+      "source": "**If you're a maintainer of CPython (or a fork of CPython)...**",
+      "source_hash": 10261095999472062577,
+      "context_hash": 8105087599600055484,
+      "translation": "**CPython(또는 CPython의 포크)의 유지 관리자인 경우...**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.546240Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:13/seg:0",
+      "source": "**...and you change the bytecode definitions or the main interpreter loop...**",
+      "source_hash": 10760744871499841315,
+      "context_hash": 17182397697625174325,
+      "translation": "**...바이트코드 정의 또는 주 인터프리터 루프를 변경하는 경우...**",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:50:17.546240Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:14/seg:0",
+      "source": "...in general, the JIT shouldn't be much of an inconvenience to you (depending on what you're trying to do).",
+      "source_hash": 1448489303279562737,
+      "context_hash": 9382082850260974628,
+      "translation": "...일반적으로 JIT는 (하려는 작업에 따라 다르지만) 사용자에게 큰 불편을 주지는 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866329Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:14/seg:1",
+      "source": "The micro-op interpreter isn't going anywhere, and still offers a debugging experience similar to what the main bytecode interpreter provides today.",
+      "source_hash": 10864615723218022409,
+      "context_hash": 9925064191584620641,
+      "translation": "마이크로 연산 인터프리터는 사라지지 않으며, 현재 주 바이트코드 인터프리터가 제공하는 것과 유사한 디버깅 경험을 계속 제공합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:11.866332Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:14/seg:2",
+      "source": "There is moderate likelihood that larger changes to the interpreter (such as adding new local variables, changing error handling and deoptimization logic, or changing the micro-op format) will require changes to the C template used to generate the JIT, which is meant to mimic the main interpreter loop.",
+      "source_hash": 12101589929584645076,
+      "context_hash": 12583326951851256016,
+      "translation": "인터프리터에 대한 더 큰 변경 사항(예: 새로운 지역 변수 추가, 오류 처리 및 디옵티마이제이션 로직 변경, 마이크로 연산 형식 변경)에는 JIT를 생성하는 데 사용되는 C 템플릿의 변경이 필요할 가능성이 보통 정도로 있습니다. 이 템플릿은 주 인터프리터 루프를 모방하도록 설계되었습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:11.866334Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:14/seg:3",
+      "source": "You may also occasionally just get unlucky and break JIT code generation, which will require you to either modify the Python build scripts yourself, or solicit the help of somebody more familiar with them (see below).",
+      "source_hash": 1012824353912888243,
+      "context_hash": 460418936736974557,
+      "translation": "때로는 운이 나빠 JIT 코드 생성을 중단할 수도 있으며, 이 경우 Python 빌드 스크립트를 직접 수정하거나 해당 스크립트에 더 익숙한 사람에게 도움을 요청해야 합니다(아래 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866335Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:15/seg:0",
+      "source": "**...and you work on the JIT itself...**",
+      "source_hash": 8128881914981148378,
+      "context_hash": 9704366458648484608,
+      "translation": "**...그리고 JIT 자체를 작업합니다...**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866335Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:16/seg:0",
+      "source": "...you hopefully already have a decent idea of what you're getting yourself into.",
+      "source_hash": 2935388147898372131,
+      "context_hash": 7970313778625957544,
+      "translation": "...자신이 무엇에 뛰어드는지 이미 어느 정도 잘 알고 계시기를 바랍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866336Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:16/seg:1",
+      "source": "You will be regularly modifying the Python build scripts, the C template used to generate the JIT, and the C code that actually makes up the runtime portion of the JIT.",
+      "source_hash": 9941103199917848744,
+      "context_hash": 7857888218825919773,
+      "translation": "Python 빌드 스크립트, JIT를 생성하는 데 사용되는 C 템플릿, 그리고 실제로 JIT의 런타임 부분을 구성하는 C 코드를 정기적으로 수정하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866336Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:16/seg:2",
+      "source": "You will also be dealing with all sorts of crashes, stepping over machine code in a debugger, staring at COFF/ELF/Mach-O dumps, developing on a wide range of platforms, and generally being the point of contact for the people changing the bytecode when CI starts failing on their PRs (see above).",
+      "source_hash": 7945240914752791211,
+      "context_hash": 13072847262777800999,
+      "translation": "또한 온갖 종류의 충돌을 처리하고, 디버거에서 머신 코드를 한 단계씩 실행하며, COFF/ELF/Mach-O 덤프를 들여다보고, 매우 다양한 플랫폼에서 개발하며, 일반적으로 CI가 해당 PR에서 바이트코드를 변경한 사람들의 PR에 실패하기 시작할 때 연락 창구 역할을 하게 됩니다(위 참조).",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:50:11.866337Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:16/seg:3",
+      "source": "Ideally, you're at least *familiar* with assembly, have taken a couple of courses with \"compilers\" in their name, and have read a blog post or two about linkers.",
+      "source_hash": 9578236904464140010,
+      "context_hash": 11475564993355182882,
+      "translation": "이상적으로는 최소한 어셈블리에 *익숙해야* 하고, 이름에 \"컴파일러\"가 들어간 강의를 두 개쯤 수강했으며, 링커에 관한 블로그 글도 한두 편 읽었어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866337Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:17/seg:0",
+      "source": "**...and you maintain other parts of CPython...**",
+      "source_hash": 14192357015097933655,
+      "context_hash": 15342416587698658181,
+      "translation": "**...그리고 CPython의 다른 부분을 유지 관리합니다...**",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866338Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:18/seg:0",
+      "source": "...nothing changes for you.",
+      "source_hash": 1213878465161110251,
+      "context_hash": 14879843827833472499,
+      "translation": "...아무것도 달라지지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866338Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:18/seg:1",
+      "source": "You shouldn't need to develop locally with JIT builds.",
+      "source_hash": 6618251733399945747,
+      "context_hash": 7866393200883186660,
+      "translation": "JIT 빌드로 로컬에서 개발할 필요는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866338Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:18/seg:2",
+      "source": "If you choose to do so (for example, to help reproduce and triage JIT issues), your builds may take up to a minute longer each time the relevant files are modified.",
+      "source_hash": 12621186097088307,
+      "context_hash": 7915681769431726324,
+      "translation": "그렇게 하기로 선택하는 경우(예를 들어 JIT 문제를 재현하고 분류하는 데 도움을 주기 위해), 관련 파일이 수정될 때마다 빌드 시간이 최대 1분 더 길어질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866339Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 11923325348314802605,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:50:11.866339Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "Key parts of the implementation include:",
+      "source_hash": 1896884951096101214,
+      "context_hash": 615884290583717549,
+      "translation": "구현의 주요 부분은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866340Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "|readme|_: Instructions for how to build the JIT.",
+      "source_hash": 18003543865013761581,
+      "context_hash": 6692276611074006793,
+      "translation": "|readme|_: JIT를 빌드하는 방법에 대한 지침입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866340Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "|jit|_: The entire runtime portion of the JIT compiler.",
+      "source_hash": 8875129440318154065,
+      "context_hash": 15496566221154860766,
+      "translation": "|jit|_: JIT 컴파일러의 전체 런타임 부분입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866340Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "|jit_stencils|_: An example of the JIT's generated templates.",
+      "source_hash": 16490020914909424696,
+      "context_hash": 2475813777062796633,
+      "translation": "|jit_stencils|_: JIT가 생성한 템플릿의 예입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866341Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "|template|_: The code which is compiled to produce the JIT's templates.",
+      "source_hash": 10390243706495929247,
+      "context_hash": 16394765374078078561,
+      "translation": "|template|_: JIT의 템플릿을 생성하기 위해 컴파일되는 코드입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866341Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "|targets|_: The code to compile and parse the templates at build time.",
+      "source_hash": 6503598091914464596,
+      "context_hash": 231874056299557491,
+      "translation": "|targets|_: 빌드 시 템플릿을 컴파일하고 구문 분석하는 코드입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866342Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 646224575298080999,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866342Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Maintain it outside of CPython",
+      "source_hash": 14883826136222143752,
+      "context_hash": 15515819563557044309,
+      "translation": "CPython 외부에서 유지 관리하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866342Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "While it is *probably* possible to maintain the JIT outside of CPython, its implementation is tied tightly enough to the rest of the interpreter that keeping it up-to-date would probably be more difficult than actually developing the JIT itself.",
+      "source_hash": 11507877011672818949,
+      "context_hash": 2784512524300101216,
+      "translation": "JIT를 CPython 외부에서 유지 관리하는 것이 *아마도* 가능하겠지만, JIT의 구현은 인터프리터의 나머지 부분과 충분히 긴밀하게 연결되어 있으므로 최신 상태로 유지하는 일이 JIT 자체를 실제로 개발하는 것보다 더 어려울 가능성이 큽니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:11.866342Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "Additionally, contributors working on the existing micro-op definitions and optimizations would need to modify and build two separate projects to measure the effects of their changes under the JIT (whereas today, infrastructure exists to do this automatically for any proposed change).",
+      "source_hash": 16531899664366899408,
+      "context_hash": 17070703389900422011,
+      "translation": "또한 기존 마이크로 연산 정의와 최적화 작업을 하는 기여자는 JIT에서 변경 사항의 효과를 측정하려면 두 개의 별도 프로젝트를 수정하고 빌드해야 합니다(반면 현재는 제안된 모든 변경 사항에 대해 이를 자동으로 수행하는 인프라가 존재합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866343Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "Releases of the separate \"JIT\" project would probably also need to correspond to specific CPython pre-releases and patch releases, depending on exactly what changes are present.",
+      "source_hash": 7314564561788765577,
+      "context_hash": 14134934112749367810,
+      "translation": "별도의 \"JIT\" 프로젝트 릴리스는 정확히 어떤 변경 사항이 포함되었는지에 따라 특정 CPython 프리릴리스 및 패치 릴리스와 대응해야 할 가능성도 큽니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866343Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:1",
+      "source": "Individual CPython commits between releases likely wouldn't have corresponding JIT releases at all, further complicating debugging efforts (such as bisection to find breaking changes upstream).",
+      "source_hash": 1509927783281220711,
+      "context_hash": 12028478821939136913,
+      "translation": "릴리스 사이의 개별 CPython 커밋에는 대응하는 JIT 릴리스가 아예 없을 가능성이 높으며, 이는 업스트림에서 문제를 일으킨 변경 사항을 찾기 위한 이분 탐색과 같은 디버깅 작업을 더욱 복잡하게 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866344Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "Since the JIT is already quite stable, and the ultimate goal is for it to be a non-experimental part of CPython, keeping it in ``main`` seems to be the best path forward.",
+      "source_hash": 1361951579036966214,
+      "context_hash": 5040094289607547662,
+      "translation": "JIT는 이미 상당히 안정적이고, 궁극적인 목표는 JIT를 CPython의 비실험적 구성 요소로 만드는 것이므로, JIT를 ``main``\\ 에 유지하는 것이 앞으로 나아갈 최선의 경로인 듯합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866344Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:1",
+      "source": "With that said, the relevant code is organized in such a way that the JIT can be easily \"deleted\" if it does not end up meeting its goals.",
+      "source_hash": 2042348751334601307,
+      "context_hash": 15966228412432078406,
+      "translation": "그렇다고 해도 관련 코드는 JIT가 목표를 달성하지 못할 경우 쉽게 \"삭제\"할 수 있도록 구성되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866344Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Turn it on by default",
+      "source_hash": 14374984477558001117,
+      "context_hash": 11771930178543306153,
+      "translation": "기본적으로 활성화하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866345Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "On the other hand, some have suggested that the JIT should be enabled by default in its current form.",
+      "source_hash": 16788609897479073461,
+      "context_hash": 10414341335289076154,
+      "translation": "반면 일부 사람들은 현재 형태의 JIT를 기본적으로 활성화해야 한다고 제안했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866345Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "Again, it is important to remember that a JIT is not a magic \"go faster\" machine; currently, the JIT is about as fast as the existing specializing interpreter.",
+      "source_hash": 10281794925368678881,
+      "context_hash": 1576488960480090359,
+      "translation": "다시 말하지만, JIT는 마법의 \"더 빠르게 실행하는\" 기계가 아니라는 점을 기억하는 것이 중요합니다. 현재 JIT는 기존의 특수화 인터프리터만큼 빠릅니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:11.866345Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:1",
+      "source": "This may sound underwhelming, but it is actually a fairly significant achievement, and it's the main reason why this approach was considered viable enough to be merged into ``main`` for further development.",
+      "source_hash": 9441721856277659560,
+      "context_hash": 12413172453383425110,
+      "translation": "이는 기대에 못 미치는 것처럼 들릴 수 있지만 실제로는 상당히 중요한 성과이며, 이 접근 방식이 추가 개발을 위해 ``main``\\ 에 병합할 만큼 실현 가능하다고 판단된 주된 이유입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:11.866346Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "While the JIT provides significant gains over the existing micro-op interpreter, it isn't yet a clear win when always enabled (especially considering its increased memory consumption and additional build-time dependencies).",
+      "source_hash": 18327148828012233985,
+      "context_hash": 1401914495657313569,
+      "translation": "JIT는 기존 마이크로 연산 인터프리터보다 상당한 성능 향상을 제공하지만, 항상 활성화했을 때는 아직 명확한 이점이라고 보기 어렵습니다(특히 증가한 메모리 사용량과 추가 빌드 시점 의존성을 고려하면).",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:17.871606Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:1",
+      "source": "That's the purpose of this PEP: to clarify expectations about the objective criteria that should be met in order to \"flip the switch\".",
+      "source_hash": 6699988956723216934,
+      "context_hash": 8525753989963938781,
+      "translation": "이것이 이 PEP의 목적입니다. 즉, “스위치를 켜기” 위해 충족해야 하는 객관적 기준에 대한 기대치를 명확히 하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871610Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "At least for now, having this in ``main``, but off by default, seems to be a good compromise between always turning it on and not having it available at all.",
+      "source_hash": 2210745070639618858,
+      "context_hash": 10333946847785312608,
+      "translation": "적어도 현재로서는 ``main``\\ 에 포함하되 기본적으로 비활성화하는 것이, 항상 활성화하는 것과 전혀 사용할 수 없게 하는 것 사이의 좋은 절충안인 것 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871611Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Support multiple compiler toolchains",
+      "source_hash": 16282084066778908530,
+      "context_hash": 370425939869192482,
+      "translation": "여러 컴파일러 도구 모음 지원",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871611Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Clang is specifically needed because it's the only C compiler with support for guaranteed tail calls (|musttail|_), which are required by CPython's `continuation-passing-style <https://en.wikipedia.org/wiki/Continuation-passing_style#Tail_calls>`__ approach to JIT compilation.",
+      "source_hash": 12227674380837038067,
+      "context_hash": 11786255920630098937,
+      "translation": "Clang이 특별히 필요한 이유는 보장된 테일 호출을 지원하는 유일한 C 컴파일러이기 때문이며, 이러한 호출은 CPython의 `연속 전달 방식 <https://en.wikipedia.org/wiki/Continuation-passing_style#Tail_calls>`__ JIT 컴파일 접근 방식에 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:58:01.348427Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "Without it, the tail-recursive calls between templates could result in unbounded C stack growth (and eventual overflow).",
+      "source_hash": 803480918237894320,
+      "context_hash": 17966930733887159108,
+      "translation": "이것이 없으면 템플릿 간 테일 재귀 호출로 인해 C 스택이 제한 없이 증가하여 결국 오버플로가 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871612Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "Since LLVM also includes other functionalities required by the JIT build process (namely, utilities for object file parsing and disassembly), and additional toolchains introduce additional testing and maintenance burden, it's convenient to only support one major version of one toolchain at this time.",
+      "source_hash": 12639669422332943162,
+      "context_hash": 13437912276989287331,
+      "translation": "LLVM에는 JIT 빌드 프로세스에 필요한 다른 기능(구체적으로 객체 파일 구문 분석 및 디스어셈블리를 위한 유틸리티)도 포함되어 있으며, 추가 도구 모음은 테스트 및 유지 관리 부담을 늘리므로, 현재로서는 하나의 도구 모음의 하나의 메이저 버전만 지원하는 것이 편리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871613Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Compile the base interpreter's bytecode",
+      "source_hash": 10996791091569143964,
+      "context_hash": 14427092831992359639,
+      "translation": "기본 인터프리터의 바이트코드 컴파일",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:17.871613Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "Most of the prior art for copy-and-patch uses it as a fast baseline JIT, whereas CPython's JIT is using the technique to compile optimized micro-op traces.",
+      "source_hash": 11314317815420722848,
+      "context_hash": 13502893466285728853,
+      "translation": "copy-and-patch에 관한 기존 구현 대부분은 이를 빠른 베이스라인 JIT로 사용하는 반면, CPython의 JIT는 이 기법을 사용하여 최적화된 마이크로 연산 추적을 컴파일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871614Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "In practice, the new JIT currently sits somewhere between the \"baseline\" and \"optimizing\" compiler tiers of other dynamic language runtimes.",
+      "source_hash": 5836504116192535012,
+      "context_hash": 1909713054274122387,
+      "translation": "실제로 새로운 JIT는 현재 다른 동적 언어 런타임의 “베이스라인” 컴파일러 계층과 “최적화” 컴파일러 계층 사이 어딘가에 위치합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871614Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:1",
+      "source": "This is because CPython uses its specializing adaptive interpreter to collect runtime profiling information, which is used to detect and optimize \"hot\" paths through the code.",
+      "source_hash": 11048259578467791978,
+      "context_hash": 6627166901154685362,
+      "translation": "이는 CPython이 전문화 적응형 인터프리터를 사용하여 런타임 프로파일링 정보를 수집하고, 이를 통해 코드 내 “핫” 경로를 감지하고 최적화하기 때문입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:17.871614Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:2",
+      "source": "This step is carried out using self-modifying code, a technique which is much more difficult to implement with a JIT compiler.",
+      "source_hash": 5032197833736998987,
+      "context_hash": 1587213075559787484,
+      "translation": "이 단계는 자기 수정 코드를 사용하여 수행되며, 이는 JIT 컴파일러로 구현하기가 훨씬 더 어려운 기법입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871615Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "While it's *possible* to compile normal bytecode using copy-and-patch (in fact, early prototypes predated the micro-op interpreter and did exactly this), it just doesn't seem to provide enough optimization potential as the more granular micro-op format.",
+      "source_hash": 12142364078556723041,
+      "context_hash": 13218936544501719662,
+      "translation": "copy-and-patch를 사용하여 일반 바이트코드를 컴파일하는 것은 *가능하지만*\\ (실제로 초기 프로토타입은 마이크로 연산 인터프리터보다 먼저 개발되었으며 정확히 이 작업을 수행했습니다), 더 세분화된 마이크로 연산 형식만큼 충분한 최적화 잠재력을 제공하지는 않는 것 같습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:17.871615Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Add GPU support",
+      "source_hash": 16494481290530970723,
+      "context_hash": 13808486056115160924,
+      "translation": "GPU 지원 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871616Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "The JIT is currently CPU-only.",
+      "source_hash": 12870979962937006036,
+      "context_hash": 3277142479044076906,
+      "translation": "JIT는 현재 CPU만 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871617Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "It does not, for example, offload NumPy array computations to CUDA GPUs, as JITs like `Numba <https://numba.pydata.org/numba-doc/latest/cuda/overview.html>`__ do.",
+      "source_hash": 7422191804450802833,
+      "context_hash": 8165131576004498912,
+      "translation": "예를 들어 `Numba <https://numba.pydata.org/numba-doc/latest/cuda/overview.html>`__\\ 와 같은 JIT가 수행하는 것처럼 NumPy 배열 계산을 CUDA GPU로 오프로딩하지는 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871617Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "There is already a rich ecosystem of tools for accelerating these sorts of specialized tasks, and CPython's JIT is not intended to replace them.",
+      "source_hash": 15259144644594319912,
+      "context_hash": 10257146454725012997,
+      "translation": "이러한 종류의 전문화된 작업을 가속하기 위한 풍부한 도구 생태계가 이미 존재하며, CPython의 JIT는 이를 대체하려는 목적이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871617Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:1",
+      "source": "Instead, it is meant to improve the performance of general-purpose Python code, which is less likely to benefit from deeper GPU integration.",
+      "source_hash": 9078924628081508767,
+      "context_hash": 13001493986310041133,
+      "translation": "대신 일반적인 Python 코드의 성능을 개선하는 것이 목적이며, 이러한 코드는 더 심층적인 GPU 통합의 혜택을 받을 가능성이 낮습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871617Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Open Issues",
+      "source_hash": 15188361361114285070,
+      "context_hash": 3753907025735319208,
+      "translation": "미해결 문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871618Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Speed",
+      "source_hash": 8727086473403956114,
+      "context_hash": 328307694771009727,
+      "translation": "속도",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871618Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "Currently, the JIT is `about as fast as the existing specializing interpreter <https://github.com/faster-cpython/benchmarking-public/blob/main/configs.svg>`__ on most platforms.",
+      "source_hash": 9557870174823937409,
+      "context_hash": 8526630371208605692,
+      "translation": "현재 JIT는 대부분의 플랫폼에서 기존 전문화 인터프리터와 `거의 비슷한 속도입니다 <https://github.com/faster-cpython/benchmarking-public/blob/main/configs.svg>`__.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871618Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "Improving this is obviously a top priority at this point, since providing a significant performance gain is the entire motivation for having a JIT at all.",
+      "source_hash": 9546906700474833137,
+      "context_hash": 8736907006348290507,
+      "translation": "JIT를 도입하는 근본적인 동기가 상당한 성능 향상을 제공하는 것이므로, 현 시점에서 이를 개선하는 것은 당연히 최우선 과제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871619Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:2",
+      "source": "A number of proposed improvements are already underway, and this ongoing work is being tracked in `GH-115802 <https://github.com/python/cpython/issues/115802>`__.",
+      "source_hash": 8693577135016768859,
+      "context_hash": 17409568435086747813,
+      "translation": "여러 제안된 개선 사항이 이미 진행 중이며, 이 작업은 `GH-115802 <https://github.com/python/cpython/issues/115802>`__\\ 에서 추적되고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871619Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Memory",
+      "source_hash": 6472943712808407901,
+      "context_hash": 14238457291651630229,
+      "translation": "메모리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871619Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "Because it allocates additional memory for executable machine code, the JIT does use more memory than the existing interpreter at runtime.",
+      "source_hash": 6533093555388126596,
+      "context_hash": 11025339846574003249,
+      "translation": "실행 가능한 기계어 코드를 위한 추가 메모리를 할당하므로, JIT는 런타임에 기존 인터프리터보다 더 많은 메모리를 사용합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:50:17.871619Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:1",
+      "source": "According to the official benchmarks, the JIT currently uses about `10-20% more memory than the base interpreter <https://github.com/faster-cpython/benchmarking-public/blob/main/memory_configs.svg>`__.",
+      "source_hash": 2805158189109189476,
+      "context_hash": 4893867649288854755,
+      "translation": "공식 벤치마크에 따르면 JIT는 현재 `기본 인터프리터보다 약 10~20% 더 많은 메모리를 사용합니다 <https://github.com/faster-cpython/benchmarking-public/blob/main/memory_configs.svg>`__.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871620Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:2",
+      "source": "The upper end of this range is due to ``aarch64-apple-darwin``, which has larger page sizes (and thus, a larger minimum allocation granularity).",
+      "source_hash": 12196346042885493461,
+      "context_hash": 12446281955699564705,
+      "translation": "이 범위의 상한은 더 큰 페이지 크기를 가지는 ``aarch64-apple-darwin`` 때문이며, 따라서 최소 할당 단위도 더 큽니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871620Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:0",
+      "source": "However, these numbers should be taken with a grain of salt, as the benchmarks themselves don't actually have a very high baseline of memory usage.",
+      "source_hash": 8239201391889642995,
+      "context_hash": 1997280662202249419,
+      "translation": "그러나 벤치마크 자체의 메모리 사용량 기준치가 실제로 그다지 높지 않으므로, 이 수치는 액면 그대로 받아들여서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871620Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:1",
+      "source": "Since they have a higher ratio of code to data, the JIT's memory overhead is more pronounced than it would be in a typical workload where memory pressure is more likely to be a real concern.",
+      "source_hash": 15262266550804239792,
+      "context_hash": 15527061981410548969,
+      "translation": "코드 대 데이터 비율이 더 높기 때문에 JIT의 메모리 오버헤드가 일반적인 워크로드에서보다 더 두드러지며, 일반적인 워크로드에서는 메모리 압박이 실제 문제가 될 가능성이 더 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871621Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:0",
+      "source": "Not much effort has been put into optimizing the JIT's memory usage yet, so these numbers likely represent a maximum that will be reduced over time.",
+      "source_hash": 10681786450728400444,
+      "context_hash": 4503985241466258541,
+      "translation": "아직 JIT의 메모리 사용량을 최적화하는 데 많은 노력이 투입되지는 않았으므로, 이 수치는 시간이 지나면서 감소할 최대치일 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871621Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:1",
+      "source": "Improving this is a medium priority, and is being tracked in `GH-116017 <https://github.com/python/cpython/issues/116017>`__.",
+      "source_hash": 1641804795727885532,
+      "context_hash": 4053742020225048224,
+      "translation": "이를 개선하는 것은 중간 우선순위 과제이며, `GH-116017 <https://github.com/python/cpython/issues/116017>`__\\ 에서 추적되고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871621Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:2",
+      "source": "We may consider exposing configurable parameters for limiting memory consumption in the future, but no official APIs will be exposed until the JIT meets the requirements to be considered non-experimental.",
+      "source_hash": 16509058718405583038,
+      "context_hash": 8459348807391946116,
+      "translation": "향후 메모리 소비를 제한하기 위한 구성 가능한 매개변수를 공개하는 방안을 고려할 수 있지만, JIT가 비실험적이라고 간주될 요건을 충족하기 전까지는 공식 API를 공개하지 않을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:17.871621Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:4/seg:0",
+      "source": "Earlier versions of the JIT had a more complicated memory allocation scheme which imposed a number of fragile limitations on the size and layout of the emitted code, and significantly bloated the memory footprint of Python executable.",
+      "source_hash": 2169101948244660287,
+      "context_hash": 7889065293067722677,
+      "translation": "JIT의 이전 버전에는 더 복잡한 메모리 할당 방식이 사용되었으며, 이 방식은 방출된 코드의 크기와 배치에 여러 가지 깨지기 쉬운 제약을 부과하고 Python 실행 파일의 메모리 사용량을 크게 늘렸습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392377Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:4/seg:1",
+      "source": "These issues are no longer present in the current design.",
+      "source_hash": 17438021453153572129,
+      "context_hash": 13343105449599622781,
+      "translation": "현재 설계에는 이러한 문제가 더 이상 존재하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392380Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Dependencies",
+      "source_hash": 11803522646710453942,
+      "context_hash": 5103042637929951592,
+      "translation": "의존성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392380Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "At the time of writing, the JIT has a build-time dependency on LLVM.",
+      "source_hash": 6065292280565632566,
+      "context_hash": 8804473337467638229,
+      "translation": "이 글을 작성하는 시점에 JIT는 빌드 시 LLVM에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392381Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:1",
+      "source": "LLVM is used to compile individual micro-op instructions into blobs of machine code, which are then linked together to form the JIT's templates.",
+      "source_hash": 455560711824010751,
+      "context_hash": 643239661823036920,
+      "translation": "LLVM은 개별 마이크로 연산 명령을 기계어 코드 블롭으로 컴파일하는 데 사용되며, 이러한 블롭은 함께 링크되어 JIT의 템플릿을 구성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392381Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:2",
+      "source": "These templates are used to build CPython itself.",
+      "source_hash": 18159740973039657613,
+      "context_hash": 10491001042991469728,
+      "translation": "이러한 템플릿은 CPython 자체를 빌드하는 데 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392381Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:3",
+      "source": "The JIT has no runtime dependency on LLVM and is therefore not at all exposed as a dependency to end users.",
+      "source_hash": 2863137622024192694,
+      "context_hash": 12751042557395997995,
+      "translation": "JIT는 LLVM에 대한 런타임 의존성이 없으므로 최종 사용자에게 의존성으로 전혀 노출되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392382Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "Building the JIT adds between 3 and 60 seconds to the build process, depending on platform.",
+      "source_hash": 7421052395462945087,
+      "context_hash": 17700233898303866167,
+      "translation": "JIT를 빌드하면 플랫폼에 따라 빌드 프로세스에 3초에서 60초가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392382Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:1",
+      "source": "It is only rebuilt whenever the generated files become out-of-date, so only those who are actively developing the main interpreter loop will be rebuilding it with any frequency.",
+      "source_hash": 12043863023623997665,
+      "context_hash": 8915129172217894793,
+      "translation": "생성된 파일이 최신 상태가 아닐 때만 다시 빌드되므로, 메인 인터프리터 루프를 적극적으로 개발하는 사람들만 이를 자주 다시 빌드하게 됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:37.392382Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "Unlike many other generated files in CPython, the JIT's generated files are not tracked by Git.",
+      "source_hash": 3968368865891830066,
+      "context_hash": 11614026996046026812,
+      "translation": "CPython의 다른 많은 생성 파일과 달리 JIT의 생성 파일은 Git에서 추적하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392383Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:1",
+      "source": "This is because they contain compiled binary code templates specific to not only the host platform, but also the current build configuration for that platform.",
+      "source_hash": 18440582949037841464,
+      "context_hash": 1393029748522209573,
+      "translation": "이는 해당 파일에 호스트 플랫폼뿐만 아니라 그 플랫폼의 현재 빌드 구성에도 특화된 컴파일된 바이너리 코드 템플릿이 포함되어 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392383Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:2",
+      "source": "As such, hosting them would require a significant engineering effort in order to build and host dozens of large binary files for each commit that changes the generated code.",
+      "source_hash": 14414965749796154348,
+      "context_hash": 17025133723141230964,
+      "translation": "따라서 생성된 코드가 변경되는 각 커밋에 대해 수십 개의 대형 바이너리 파일을 빌드하고 호스팅하려면 상당한 엔지니어링 작업이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392384Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:3",
+      "source": "While perhaps feasible, this is not a priority, since installing the required tools is not prohibitively difficult for most people building CPython, and the build step is not particularly time-consuming.",
+      "source_hash": 17192289273067267636,
+      "context_hash": 7009440223729809211,
+      "translation": "어쩌면 가능할 수도 있지만, CPython을 빌드하는 대부분의 사람에게 필요한 도구를 설치하는 일이 지나치게 어렵지 않고 빌드 단계에도 특별히 많은 시간이 걸리지 않으므로 이는 우선순위가 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392384Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:4/seg:0",
+      "source": "Since some still remain interested in this possibility, discussion is being tracked in `GH-115869 <https://github.com/python/cpython/issues/115869>`__.",
+      "source_hash": 11186586544156775180,
+      "context_hash": 7897369554391920476,
+      "translation": "일부 사람들은 여전히 이 가능성에 관심을 가지고 있으므로, 논의가 `GH-115869 <https://github.com/python/cpython/issues/115869>`__\\ 에서 추적되고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392384Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Footnotes",
+      "source_hash": 9125377107251733533,
+      "context_hash": 11757912171370038885,
+      "translation": "각주",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392384Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "Due to lack of available hardware, the JIT is built, but not",
+      "source_hash": 14838411185709233629,
+      "context_hash": 17442825441103994715,
+      "translation": "사용 가능한 하드웨어가 부족하기 때문에 이 플랫폼에서는 JIT가 빌드되지만",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392385Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:0",
+      "source": "tested, for this platform.",
+      "source_hash": 145523924360625505,
+      "context_hash": 13270225491449561216,
+      "translation": "테스트되지는 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392385Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:0",
+      "source": "Due to lack of available hardware, the JIT is built using",
+      "source_hash": 14907920821747190527,
+      "context_hash": 864430335342255948,
+      "translation": "사용 가능한 하드웨어가 부족하기 때문에 이 플랫폼에서는 JIT가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392385Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:4/seg:0",
+      "source": "cross-compilation and tested using hardware emulation for this platform.",
+      "source_hash": 1283865296085186765,
+      "context_hash": 14479484320074769538,
+      "translation": "교차 컴파일을 사용하여 빌드되고 하드웨어 에뮬레이션을 사용하여 테스트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392386Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:4/seg:1",
+      "source": "Some tests are skipped because emulation causes them to fail.",
+      "source_hash": 14952904928488014432,
+      "context_hash": 12248729645298254343,
+      "translation": "에뮬레이션으로 인해 일부 테스트가 실패하므로 해당 테스트는 건너뜁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392386Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:4/seg:2",
+      "source": "However, the JIT has been successfully built and tested for this platform on non-emulated hardware.",
+      "source_hash": 11482592076011533339,
+      "context_hash": 3406136377523254171,
+      "translation": "그러나 비에뮬레이션 하드웨어에서는 이 플랫폼용 JIT가 성공적으로 빌드되고 테스트되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:37.392386Z",
+      "issues": []
+    }
+  ]
+}

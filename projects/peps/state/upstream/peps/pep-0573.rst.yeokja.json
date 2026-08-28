@@ -1,0 +1,1622 @@
+{
+  "version": 1,
+  "source_hash": 17834725019943023277,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Module State Access from C Extension Methods",
+      "source_hash": 3292380784531436836,
+      "context_hash": 16530898886277989957,
+      "translation": "C 확장 메서드에서 모듈 상태에 접근하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359103Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 14404708980437602115,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359109Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes to add a way for CPython extension methods to access context, such as the state of the modules they are defined in.",
+      "source_hash": 8231908591790349656,
+      "context_hash": 16011824350840550649,
+      "translation": "이 PEP는 CPython 확장 메서드가 자신이 정의된 모듈의 상태와 같은 컨텍스트에 접근할 수 있는 방법을 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359110Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "This will allow extension methods to use direct pointer dereferences rather than PyState_FindModule for looking up module state, reducing or eliminating the performance cost of using module-scoped state over process global state.",
+      "source_hash": 8064427001619836051,
+      "context_hash": 11650934000092282613,
+      "translation": "이를 통해 확장 메서드는 모듈 상태를 조회할 때 PyState_FindModule 대신 직접 포인터 역참조를 사용할 수 있으며, 프로세스 전역 상태보다 모듈 범위 상태를 사용할 때 발생하는 성능 비용을 줄이거나 제거할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359110Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "This fixes one of the remaining roadblocks for adoption of :pep:`3121` (Extension module initialization and finalization) and :pep:`489` (Multi-phase extension module initialization).",
+      "source_hash": 12959593607408506766,
+      "context_hash": 868119694202492795,
+      "translation": "이는 :pep:`3121` (확장 모듈 초기화 및 종료) 및 :pep:`489` (다단계 확장 모듈 초기화)의 도입을 가로막는 남은 장애물 중 하나를 해결합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359111Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:0",
+      "source": "While this PEP takes an additional step towards fully solving the problems that :pep:`3121` and :pep:`489` started tackling, it does not attempt to resolve *all* remaining concerns.",
+      "source_hash": 1924509382386561192,
+      "context_hash": 674465227494941800,
+      "translation": "이 PEP는 :pep:`3121` 및 :pep:`489`\\ 가 해결하기 시작한 문제를 완전히 해결하는 데 추가적인 진전을 이루지만, 남아 있는 *모든* 우려 사항을 해결하려고 하지는 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:48:34.113252Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:1",
+      "source": "In particular, access to the module state from slot methods (``nb_add``, etc) is not solved.",
+      "source_hash": 10698483603685081699,
+      "context_hash": 15658969598032566098,
+      "translation": "특히 슬롯 메서드(``nb_add``, 등)에서 모듈 상태에 접근하는 문제는 해결되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359113Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Terminology",
+      "source_hash": 3039974644254127226,
+      "context_hash": 15364242945329021445,
+      "translation": "용어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359113Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Process-Global State",
+      "source_hash": 16599531743906143987,
+      "context_hash": 2150626333061094978,
+      "translation": "프로세스 전역 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359114Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "C-level static variables.",
+      "source_hash": 9828084540297780957,
+      "context_hash": 10483964193822343576,
+      "translation": "C 수준의 정적 변수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359114Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "Since this is very low-level memory storage, it must be managed carefully.",
+      "source_hash": 388039516830365492,
+      "context_hash": 10526478452170222561,
+      "translation": "이는 매우 저수준의 메모리 저장소이므로 신중하게 관리해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359114Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Per-module State",
+      "source_hash": 12277136753972019778,
+      "context_hash": 16370602647822458609,
+      "translation": "모듈별 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359115Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "State local to a module object, allocated dynamically as part of a module object's initialization.",
+      "source_hash": 8721408341146243979,
+      "context_hash": 17034490219279043022,
+      "translation": "모듈 객체에 로컬인 상태이며, 모듈 객체를 초기화하는 과정의 일부로 동적으로 할당됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359115Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "This isolates the state from other instances of the module (including those in other subinterpreters).",
+      "source_hash": 3275825875089368716,
+      "context_hash": 4130269889503853278,
+      "translation": "이를 통해 다른 서브인터프리터에 있는 모듈을 포함하여 모듈의 다른 인스턴스와 상태를 격리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359116Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Accessed by ``PyModule_GetState()``.",
+      "source_hash": 12536170979145600430,
+      "context_hash": 4834091561207368702,
+      "translation": "``PyModule_GetState()``\\ 를 통해 접근합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359116Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Static Type",
+      "source_hash": 17130168758063082055,
+      "context_hash": 2055717067161420707,
+      "translation": "정적 타입",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359116Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "A type object defined as a C-level static variable, i.e. a compiled-in type object.",
+      "source_hash": 15132276273015773546,
+      "context_hash": 16041867286622733962,
+      "translation": "C 수준의 정적 변수로 정의된 타입 객체, 즉 컴파일에 내장된 타입 객체입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359117Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "A static type needs to be shared between module instances and has no information of what module it belongs to.",
+      "source_hash": 12654121862052948416,
+      "context_hash": 13255421892629788046,
+      "translation": "정적 타입은 모듈 인스턴스 간에 공유되어야 하며 자신이 어느 모듈에 속하는지에 대한 정보가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359117Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "Static types do not have ``__dict__`` (although their instances might).",
+      "source_hash": 3486592471510837028,
+      "context_hash": 1994941051607286464,
+      "translation": "정적 타입에는 ``__dict__``\\ 가 없습니다(단, 해당 인스턴스에는 있을 수 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359117Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Heap Type",
+      "source_hash": 5511301423965540515,
+      "context_hash": 15225860987512954399,
+      "translation": "힙 타입",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359117Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "A type object created at run time.",
+      "source_hash": 7959273874172751527,
+      "context_hash": 11130638833443728665,
+      "translation": "실행 시간에 생성되는 타입 객체입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359118Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Defining Class",
+      "source_hash": 11606643283102451958,
+      "context_hash": 9249516350345048000,
+      "translation": "정의 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359118Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The defining class of a method (either bound or unbound) is the class on which the method was defined.",
+      "source_hash": 15547682954603261117,
+      "context_hash": 14097586769819740040,
+      "translation": "메서드(바운드 또는 언바운드)가 정의된 클래스가 해당 메서드의 정의 클래스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359118Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "A class that merely inherits the method from its base is not the defining class.",
+      "source_hash": 9242335862853635045,
+      "context_hash": 17691684478515454906,
+      "translation": "단순히 기반 클래스에서 메서드를 상속하는 클래스는 정의 클래스가 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359119Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "For example, ``int`` is the defining class of ``True.to_bytes``, ``True.__floor__`` and ``int.__repr__``.",
+      "source_hash": 7534181893735867216,
+      "context_hash": 2652359545653496728,
+      "translation": "예를 들어, ``int``\\ 는 ``True.to_bytes``, ``True.__floor__`` 및 ``int.__repr__``\\ 의 정의 클래스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359119Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "In C, the defining class is the one defined with the corresponding ``tp_methods`` or \"tp slots\" [#tp-slots]_ entry.",
+      "source_hash": 13767009576950734105,
+      "context_hash": 5497887011031889668,
+      "translation": "C에서는 해당 ``tp_methods``\\ 또는 \"tp slots\" [#tp-slots]_ 항목으로 정의된 클래스가 정의 클래스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359119Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "For methods defined in Python, the defining class is saved in the ``__class__`` closure cell.",
+      "source_hash": 153358383361071893,
+      "context_hash": 12608678683975386388,
+      "translation": "Python에서 정의된 메서드의 경우 정의 클래스는 ``__class__`` 클로저 셀에 저장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359119Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "C-API",
+      "source_hash": 5664545844492850945,
+      "context_hash": 15413393464932280733,
+      "translation": "C API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359120Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The \"Python/C API\" as described in Python documentation.",
+      "source_hash": 6241803195537025479,
+      "context_hash": 11390884239303846666,
+      "translation": "Python 문서에서 설명하는 \"Python/C API\"입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359120Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "CPython implements the C-API, but other implementations exist.",
+      "source_hash": 9393350333384287628,
+      "context_hash": 14729490062033952914,
+      "translation": "CPython은 C API를 구현하지만 다른 구현도 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359120Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 3842380446765510185,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359120Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": ":pep:`489` introduced a new way to initialize extension modules, which brings several advantages to extensions that implement it:",
+      "source_hash": 7828228461935115081,
+      "context_hash": 2186587607815891265,
+      "translation": ":pep:`489`\\ 는 확장 모듈을 초기화하는 새로운 방법을 도입했으며, 이를 구현하는 확장 모듈에 여러 이점을 제공합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:52.359121Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "The extension modules behave more like their Python counterparts.",
+      "source_hash": 9604735302305597632,
+      "context_hash": 16106940592421175919,
+      "translation": "확장 모듈은 Python 대응 모듈과 더 비슷하게 동작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213419Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "The extension modules can easily support loading into pre-existing module objects, which paves the way for extension module support for ``runpy`` or for systems that enable extension module reloading.",
+      "source_hash": 17553136825007085537,
+      "context_hash": 9588068173996794875,
+      "translation": "확장 모듈은 기존 모듈 객체에 쉽게 로드할 수 있으므로, ``runpy``\\ 에 대한 확장 모듈 지원이나 확장 모듈 다시 로드를 가능하게 하는 시스템을 위한 기반이 마련됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213423Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "Loading multiple modules from the same extension is possible, which makes it possible to test module isolation (a key feature for proper sub-interpreter support) from a single interpreter.",
+      "source_hash": 15287243321855425105,
+      "context_hash": 6079974548076348041,
+      "translation": "동일한 확장에서 여러 모듈을 로드할 수 있으므로, 단일 인터프리터에서 모듈 격리(적절한 서브인터프리터 지원을 위한 핵심 기능)를 테스트할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:15:50.213424Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "The biggest hurdle for adoption of :pep:`489` is allowing access to module state from methods of extension types.",
+      "source_hash": 8890274688093247111,
+      "context_hash": 15133322489521348527,
+      "translation": "관련 :pep:`489`\\ 의 채택을 가로막는 가장 큰 장애물은 확장 타입의 메서드에서 모듈 상태에 접근할 수 있도록 하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:08:34.764387Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:1",
+      "source": "Currently, the way to access this state from extension methods is by looking up the module via ``PyState_FindModule`` (in contrast to module level functions in extension modules, which receive a module reference as an argument).",
+      "source_hash": 18124571031441990248,
+      "context_hash": 11993439408814964950,
+      "translation": "현재 확장 메서드에서 이 상태에 접근하는 방법은 ``PyState_FindModule``\\ 을 통해 모듈을 조회하는 것입니다(확장 모듈의 모듈 수준 함수가 인자로 모듈 참조를 받는 것과는 대조적입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213426Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:2",
+      "source": "However, ``PyState_FindModule`` queries the thread-local state, making it relatively costly compared to C level process global access and consequently deterring module authors from using it.",
+      "source_hash": 7355232499309785087,
+      "context_hash": 7530504607386289551,
+      "translation": "그러나 ``PyState_FindModule``\\ 은 스레드 로컬 상태를 조회하므로 C 수준 프로세스 전역 접근에 비해 상대적으로 비용이 많이 들며, 결과적으로 모듈 작성자가 이를 사용하지 않게 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213426Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "Also, ``PyState_FindModule`` relies on the assumption that in each subinterpreter, there is at most one module corresponding to a given ``PyModuleDef``.",
+      "source_hash": 14384011842588716940,
+      "context_hash": 1408899041006271010,
+      "translation": "또한 ``PyState_FindModule``\\ 은 각 서브인터프리터에 주어진 ``PyModuleDef``\\ 에 대응하는 모듈이 최대 하나만 존재한다는 가정에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213427Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:1",
+      "source": "This assumption does not hold for modules that use :pep:`489`'s multi-phase initialization, so ``PyState_FindModule`` is unavailable for these modules.",
+      "source_hash": 10257212190242446603,
+      "context_hash": 5979271852174038247,
+      "translation": "이 가정은 :pep:`489`\\ 의 다단계 초기화를 사용하는 모듈에는 성립하지 않으므로, 이러한 모듈에서는 ``PyState_FindModule``\\ 을 사용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213427Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "A faster, safer way of accessing module-level state from extension methods is needed.",
+      "source_hash": 12133904318257972411,
+      "context_hash": 122144261373235547,
+      "translation": "확장 메서드에서 모듈 수준 상태에 접근할 수 있는 더 빠르고 안전한 방법이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213427Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Background",
+      "source_hash": 14089390735911585672,
+      "context_hash": 10171438747810536988,
+      "translation": "배경입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213427Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The implementation of a Python method may need access to one or more of the following pieces of information:",
+      "source_hash": 882226605670198690,
+      "context_hash": 10176703818432519364,
+      "translation": "Python 메서드의 구현에서는 다음 정보 중 하나 이상에 접근해야 할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213428Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "The instance it is called on (``self``)",
+      "source_hash": 7049435854340821655,
+      "context_hash": 8075755439091155357,
+      "translation": "메서드가 호출된 인스턴스(``self``)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213428Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "The underlying function",
+      "source_hash": 15609489679270111656,
+      "context_hash": 8027634903048023186,
+      "translation": "기반 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213428Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "The *defining class*, i. e. the class the method was defined in",
+      "source_hash": 6374642110293816354,
+      "context_hash": 4752303050487973165,
+      "translation": "*정의 클래스*\\ , 즉 메서드가 정의된 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213429Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "The corresponding module",
+      "source_hash": 89344578875996728,
+      "context_hash": 7129700296440484762,
+      "translation": "해당 모듈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213429Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "The module state",
+      "source_hash": 2969624639252886327,
+      "context_hash": 7986817608326584742,
+      "translation": "모듈 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213429Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "In Python code, the Python-level equivalents may be retrieved as",
+      "source_hash": 4990589007351899049,
+      "context_hash": 1149499228562279488,
+      "translation": "Python 코드에서는 Python 수준의 대응 항목을 다음과 같이 가져올 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213429Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "The defining class is not ``type(self)``, since ``type(self)`` might be a subclass of ``Foo``.",
+      "source_hash": 950696155276162857,
+      "context_hash": 17773876725739703633,
+      "translation": "정의 클래스는 ``type(self)``\\ 가 아닙니다. ``type(self)``\\ 가 ``Foo``\\ 의 서브클래스일 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213430Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:10/seg:0",
+      "source": "The statements marked (1) implicitly rely on name-based lookup via the function's ``__globals__``: either the ``Foo`` attribute to access the defining class and Python function object, or ``__name__`` to find the module object in ``sys.modules``.",
+      "source_hash": 5384278467705810357,
+      "context_hash": 2956978955295587554,
+      "translation": "(1)로 표시된 문은 함수의 ``__globals__``\\ 를 통한 이름 기반 조회에 암묵적으로 의존합니다. 즉, 정의 클래스와 Python 함수 객체에 접근하기 위한 ``Foo``\\ 속성 또는 ``sys.modules``\\ 에서 모듈 객체를 찾기 위한 ``__name__``\\ 에 의존합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213430Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:0",
+      "source": "In Python code, this is feasible, as ``__globals__`` is set appropriately when the function definition is executed, and even if the namespace has been manipulated to return a different object, at worst an exception will be raised.",
+      "source_hash": 7277436703170715254,
+      "context_hash": 492968172597832434,
+      "translation": "Python 코드에서는 함수 정의가 실행될 때 ``__globals__``\\ 가 적절하게 설정되므로 이것이 가능합니다. 또한 네임스페이스가 조작되어 다른 객체를 반환하더라도 최악의 경우 예외가 발생할 뿐입니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:15:50.213430Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:12/seg:0",
+      "source": "The ``__class__`` closure, (2), is a safer way to get the defining class, but it still relies on ``__closure__`` being set appropriately.",
+      "source_hash": 11257210050533185261,
+      "context_hash": 11720668505463279211,
+      "translation": "``__class__``\\ 클로저 (2)는 정의 클래스를 가져오는 더 안전한 방법이지만, 여전히 ``__closure__``\\ 가 적절하게 설정되어 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213431Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:13/seg:0",
+      "source": "By contrast, extension methods are typically implemented as normal C functions.",
+      "source_hash": 721228053543197751,
+      "context_hash": 16498298343605659878,
+      "translation": "이와 대조적으로 확장 메서드는 일반적으로 일반 C 함수로 구현됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213431Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:13/seg:1",
+      "source": "This means that they only have access to their arguments and C level thread-local and process-global states.",
+      "source_hash": 15341178902291106520,
+      "context_hash": 10284968600298298901,
+      "translation": "이는 확장 메서드가 인자와 C 수준의 스레드 로컬 및 프로세스 전역 상태에만 접근할 수 있음을 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213431Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:13/seg:2",
+      "source": "Traditionally, many extension modules have stored their shared state in C-level process globals, causing problems when:",
+      "source_hash": 9243489042050856613,
+      "context_hash": 11340527946200760650,
+      "translation": "전통적으로 많은 확장 모듈은 공유 상태를 C 수준의 프로세스 전역 변수에 저장해 왔으며, 이로 인해 다음과 같은 문제가 발생했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213431Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:14/seg:0",
+      "source": "running multiple initialize/finalize cycles in the same process",
+      "source_hash": 9164032359991703698,
+      "context_hash": 6602010359565058013,
+      "translation": "동일한 프로세스에서 여러 초기화/종료 주기를 실행하는 경우",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213432Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:15/seg:0",
+      "source": "reloading modules (e.g. to test conditional imports)",
+      "source_hash": 9060871336250440991,
+      "context_hash": 12817403590017876246,
+      "translation": "모듈을 다시 로드하는 경우(예: 조건부 임포트를 테스트하기 위해)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213432Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:16/seg:0",
+      "source": "loading extension modules in subinterpreters",
+      "source_hash": 4542461960119154964,
+      "context_hash": 14702411598703329169,
+      "translation": "서브인터프리터에서 확장 모듈을 로드하는 경우",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213432Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:17/seg:0",
+      "source": ":pep:`3121` attempted to resolve this by offering the ``PyState_FindModule`` API, but this still has significant problems when it comes to extension methods (rather than module level functions):",
+      "source_hash": 7260975536553599338,
+      "context_hash": 363458206892265789,
+      "translation": ":pep:`3121`\\ 은 ``PyState_FindModule``\\ API를 제공하여 이 문제를 해결하려 했지만, 확장 메서드와 관련해서는(모듈 수준 함수와는 달리) 여전히 중대한 문제가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213432Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:18/seg:0",
+      "source": "it is markedly slower than directly accessing C-level process-global state",
+      "source_hash": 11021383708157575094,
+      "context_hash": 7340257684222469838,
+      "translation": "C 수준 프로세스 전역 상태에 직접 접근하는 것보다 현저히 느립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213433Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:19/seg:0",
+      "source": "there is still some inherent reliance on process global state that means it still doesn't reliably handle module reloading",
+      "source_hash": 13486474674279852437,
+      "context_hash": 9669176276736905381,
+      "translation": "여전히 프로세스 전역 상태에 본질적으로 의존하므로 모듈 다시 로드를 안정적으로 처리하지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213433Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:20/seg:0",
+      "source": "It's also the case that when looking up a C-level struct such as module state, supplying an unexpected object layout can crash the interpreter, so it's significantly more important to ensure that extension methods receive the kind of object they expect.",
+      "source_hash": 153550165829921609,
+      "context_hash": 1164680805928769229,
+      "translation": "또한 모듈 상태와 같은 C 수준 구조체를 조회할 때 예상치 못한 객체 레이아웃을 제공하면 인터프리터가 충돌할 수 있으므로, 확장 메서드가 예상하는 종류의 객체를 받도록 보장하는 것이 훨씬 더 중요합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:15:50.213433Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Proposal",
+      "source_hash": 17139217736364358932,
+      "context_hash": 4050933373317235605,
+      "translation": "제안입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:15:50.213434Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "Currently, a bound extension method (``PyCFunction`` or ``PyCFunctionWithKeywords``) receives only ``self``, and (if applicable) the supplied positional and keyword arguments.",
+      "source_hash": 4022159900271457615,
+      "context_hash": 13635202404629616277,
+      "translation": "현재 바인딩된 확장 메서드(``PyCFunction`` 또는 ``PyCFunctionWithKeywords``)는 ``self``\\ 와 제공된 위치 인자 및 키워드 인자(해당하는 경우)만 받습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209432Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "While module-level extension functions already receive access to the defining module object via their ``self`` argument, methods of extension types don't have that luxury: they receive the bound instance via ``self``, and hence have no direct access to the defining class or the module level state.",
+      "source_hash": 1270835252775612298,
+      "context_hash": 13249552673054322711,
+      "translation": "모듈 수준 확장 함수는 이미 ``self`` 인자를 통해 정의 모듈 객체에 접근할 수 있지만, 확장 타입의 메서드에는 그러한 이점이 없습니다. 확장 타입의 메서드는 ``self``\\ 를 통해 바인딩된 인스턴스를 받으므로 정의 클래스나 모듈 수준 상태에 직접 접근할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209437Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "The additional module level context described above can be made available with two changes.",
+      "source_hash": 7621120500691508856,
+      "context_hash": 431103485690082566,
+      "translation": "위에서 설명한 추가 모듈 수준 컨텍스트는 두 가지 변경을 통해 사용할 수 있게 할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209438Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:1",
+      "source": "Both additions are optional; extension authors need to opt in to start using them:",
+      "source_hash": 12688620346312718812,
+      "context_hash": 9792270800232307708,
+      "translation": "두 추가 사항은 모두 선택 사항이며, 확장 작성자는 이를 사용하려면 명시적으로 선택해야 합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209438Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "Add a pointer to the module to heap type objects.",
+      "source_hash": 8825577507112194507,
+      "context_hash": 18397662210685852768,
+      "translation": "힙 타입 객체에 모듈 포인터를 추가하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209439Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "Pass the defining class to the underlying C function.",
+      "source_hash": 18066825756048874715,
+      "context_hash": 4631428335988657773,
+      "translation": "기반 C 함수에 정의 클래스를 전달하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209439Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "In CPython, the defining class is readily available at the time the built-in method object (``PyCFunctionObject``) is created, so it can be stored in a new struct that extends ``PyCFunctionObject``.",
+      "source_hash": 2096335164648791747,
+      "context_hash": 12400994477087225300,
+      "translation": "CPython에서는 내장 메서드 객체(``PyCFunctionObject``)가 생성될 때 정의 클래스를 쉽게 이용할 수 있으므로, ``PyCFunctionObject``\\ 를 확장하는 새 구조체에 저장할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209440Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "The module state can then be retrieved from the module object via ``PyModule_GetState``.",
+      "source_hash": 7683864602808882454,
+      "context_hash": 9426758371223992504,
+      "translation": "그러면 모듈 객체에서 ``PyModule_GetState``\\ 를 통해 모듈 상태를 가져올 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209440Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:0",
+      "source": "Note that this proposal implies that any type whose methods need to access `per-module state`_ must be a heap type, rather than a static type.",
+      "source_hash": 1392938278054010902,
+      "context_hash": 1912862848016907730,
+      "translation": "이 제안에 따르면 메서드가 `per-module state`_\\ 에 접근해야 하는 모든 타입은 정적 타입이 아니라 힙 타입이어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209441Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:1",
+      "source": "This is necessary to support loading multiple module objects from a single extension: a static type, as a C-level global, has no information about which module object it belongs to.",
+      "source_hash": 12503582016662119612,
+      "context_hash": 16814381837738530118,
+      "translation": "이는 하나의 확장에서 여러 모듈 객체를 로드할 수 있도록 하는 데 필요합니다. C 수준 전역인 정적 타입에는 자신이 어느 모듈 객체에 속하는지에 대한 정보가 없기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209441Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Slot methods",
+      "source_hash": 12770185518923013729,
+      "context_hash": 6205836786063349461,
+      "translation": "슬롯 메서드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209441Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "The above changes don't cover slot methods, such as ``tp_iter`` or ``nb_add``.",
+      "source_hash": 15789586307947903929,
+      "context_hash": 6860007675928108845,
+      "translation": "위의 변경 사항은 ``tp_iter`` 또는 ``nb_add``\\ 와 같은 슬롯 메서드를 다루지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209442Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "The problem with slot methods is that their C API is fixed, so we can't simply add a new argument to pass in the defining class.",
+      "source_hash": 2310760533512261530,
+      "context_hash": 14382201673764513282,
+      "translation": "슬롯 메서드의 문제는 해당 C API가 고정되어 있으므로 정의 클래스를 전달하기 위한 새 인자를 간단히 추가할 수 없다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209442Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:1",
+      "source": "Two possible solutions have been proposed to this problem:",
+      "source_hash": 16256640303911498637,
+      "context_hash": 11408370932992703568,
+      "translation": "이 문제에 대해서는 두 가지 가능한 해결책이 제안되었습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209442Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "Look up the class through walking the MRO.",
+      "source_hash": 1106208152687298690,
+      "context_hash": 5908365657258774822,
+      "translation": "MRO를 순회하여 클래스를 조회하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209443Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:1",
+      "source": "This is potentially expensive, but will be usable if performance is not a problem (such as when raising a module-level exception).",
+      "source_hash": 10580250683648975119,
+      "context_hash": 4065220369659539830,
+      "translation": "이는 잠재적으로 비용이 많이 들지만, 성능이 문제가 되지 않는 경우(예를 들어 모듈 수준 예외를 발생시킬 때) 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209443Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "Storing a pointer to the defining class of each slot in a separate table, ``__typeslots__`` [#typeslots-mail]_.",
+      "source_hash": 9801793051655892099,
+      "context_hash": 2504598600086572900,
+      "translation": "별도 테이블인 ``__typeslots__`` [#typeslots-mail]_\\ 에 각 슬롯의 정의 클래스를 가리키는 포인터를 저장하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209443Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:1",
+      "source": "This is technically feasible and fast, but quite invasive.",
+      "source_hash": 15244366286682533964,
+      "context_hash": 669973485629716766,
+      "translation": "이는 기술적으로 실현 가능하고 빠르지만, 변경 범위가 상당히 큽니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209443Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "Modules affected by this concern also have the option of using `thread-local state`_ or `PEP 567 context variables`_ as a caching mechanism, or else defining their own reload-friendly lookup caching scheme.",
+      "source_hash": 13117792107922650673,
+      "context_hash": 13455021217423040491,
+      "translation": "이 문제의 영향을 받는 모듈은 `thread-local state`_\\ 또는 `PEP 567 context variables`_\\ 를 캐싱 메커니즘으로 사용할 수도 있고, 자체적으로 다시 로드에 친화적인 조회 캐싱 방식을 정의할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209444Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:0",
+      "source": "Solving the issue generally is deferred to a future PEP.",
+      "source_hash": 10593695720485182567,
+      "context_hash": 13308962249025795660,
+      "translation": "이 문제를 일반적으로 해결하는 일은 향후 PEP로 미룹니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209444Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 17065873329910582585,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209445Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Adding module references to heap types",
+      "source_hash": 7940712910300728753,
+      "context_hash": 13443400198135217596,
+      "translation": "힙 타입에 모듈 참조 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209445Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "A new factory method will be added to the C-API for creating modules",
+      "source_hash": 8275504763821450738,
+      "context_hash": 4524849919717051967,
+      "translation": "모듈을 생성하기 위한 새 팩토리 메서드가 C-API에 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209446Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "This acts the same as ``PyType_FromSpecWithBases``, and additionally associates the provided module object with the new type. (In CPython, this will set ``ht_module`` described below.)",
+      "source_hash": 11958270039759294419,
+      "context_hash": 5091840883917245038,
+      "translation": "이는 ``PyType_FromSpecWithBases``\\ 와 동일하게 작동하며, 추가로 제공된 모듈 객체를 새 타입과 연결합니다. (CPython에서는 아래에 설명된 ``ht_module``\\ 을 설정합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209446Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "Additionally, an accessor, ``PyObject * PyType_GetModule(PyTypeObject *)`` will be provided.",
+      "source_hash": 1091929388126984928,
+      "context_hash": 18314106947703315590,
+      "translation": "또한 ``PyObject * PyType_GetModule(PyTypeObject *)``\\ 가 액세서로 제공됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209446Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:1",
+      "source": "It will return the type's associated module if one is set, otherwise it will set ``TypeError`` and return NULL.",
+      "source_hash": 3039748072019012622,
+      "context_hash": 9390526469923294896,
+      "translation": "설정된 경우 타입에 연결된 모듈을 반환하며, 그렇지 않으면 ``TypeError``\\ 를 설정하고 NULL을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209447Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:2",
+      "source": "When given a static type, it will always set ``TypeError`` and return NULL.",
+      "source_hash": 4763200685413295928,
+      "context_hash": 1455543388071377962,
+      "translation": "정적 타입이 주어지면 항상 ``TypeError``\\ 를 설정하고 NULL을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209447Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:0",
+      "source": "To implement this in CPython, the ``PyHeapTypeObject`` struct will get a new member, ``PyObject *ht_module``, that will store a pointer to the associated module.",
+      "source_hash": 6629659629612539083,
+      "context_hash": 9681573766464343200,
+      "translation": "CPython에서 이를 구현하기 위해 ``PyHeapTypeObject`` 구조체에는 연결된 모듈에 대한 포인터를 저장하는 새 멤버 ``PyObject *ht_module``\\ 를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209447Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:1",
+      "source": "It will be ``NULL`` by default and should not be modified after the type object is created.",
+      "source_hash": 9603116984023178204,
+      "context_hash": 3203380864400148306,
+      "translation": "기본값은 ``NULL``\\ 이며 타입 객체가 생성된 후에는 수정하지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209447Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:0",
+      "source": "The ``ht_module`` member will not be inherited by subclasses; it needs to be set using ``PyType_FromSpecWithBases`` for each individual type that needs it.",
+      "source_hash": 8080897609449602994,
+      "context_hash": 8416777276036486633,
+      "translation": "``ht_module`` 멤버는 서브클래스에 상속되지 않습니다. 이 멤버가 필요한 각각의 개별 타입에 대해 ``PyType_FromSpecWithBases``\\ 를 사용하여 설정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:16:08.209448Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:0",
+      "source": "Usually, creating a class with ``ht_module`` set will create a reference cycle involving the class and the module.",
+      "source_hash": 6959043793704536085,
+      "context_hash": 13517864449521376419,
+      "translation": "일반적으로 ``ht_module``\\ 이 설정된 클래스를 생성하면 클래스와 모듈이 관련된 참조 순환이 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085261Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:1",
+      "source": "This is not a problem, as tearing down modules is not a performance-sensitive operation, and module-level functions typically also create reference cycles.",
+      "source_hash": 6105431383824173058,
+      "context_hash": 15725069992289561474,
+      "translation": "모듈을 정리하는 작업은 성능에 민감한 작업이 아니며 모듈 수준 함수도 일반적으로 참조 순환을 생성하므로, 이는 문제가 되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085264Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:2",
+      "source": "The existing \"set all module globals to None\" code that breaks function cycles through ``f_globals`` will also break the new cycles through ``ht_module``.",
+      "source_hash": 13084885937184217755,
+      "context_hash": 627262579872116984,
+      "translation": "``f_globals``\\ 를 통한 함수 순환을 끊는 기존의 \"모든 모듈 전역 변수를 None으로 설정\"하는 코드가 ``ht_module``\\ 을 통한 새로운 순환도 끊습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085264Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Passing the defining class to extension methods",
+      "source_hash": 3003527981529631194,
+      "context_hash": 7399715028611288339,
+      "translation": "확장 메서드에 정의 클래스를 전달하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085265Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "A new signature flag, ``METH_METHOD``, will be added for use in ``PyMethodDef.ml_flags``.",
+      "source_hash": 8875824407003647117,
+      "context_hash": 4018583065504265664,
+      "translation": "``PyMethodDef.ml_flags``\\ 에서 사용하기 위한 새 시그니처 플래그인 ``METH_METHOD``\\ 이 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085265Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "Conceptually, it adds ``defining_class`` to the function signature.",
+      "source_hash": 1968909275489374883,
+      "context_hash": 17246772150237439180,
+      "translation": "개념적으로 이는 함수 시그니처에 ``defining_class``\\ 를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085266Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:2",
+      "source": "To make the initial implementation easier, the flag can only be used as ``(METH_FASTCALL | METH_KEYWORDS | METH_METHOD)``. (It can't be used with other flags like ``METH_O`` or bare ``METH_FASTCALL``, though it may be combined with ``METH_CLASS`` or ``METH_STATIC``).",
+      "source_hash": 9130104176632402237,
+      "context_hash": 10707481436082604584,
+      "translation": "초기 구현을 쉽게 하기 위해 이 플래그는 ``(METH_FASTCALL | METH_KEYWORDS | METH_METHOD)``\\ 로만 사용할 수 있습니다. (``METH_O``\\ 와 같은 다른 플래그나 단독 ``METH_FASTCALL``\\ 과는 함께 사용할 수 없지만, ``METH_CLASS``\\ 또는 ``METH_STATIC``\\ 과는 함께 사용할 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085266Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "C functions for methods defined using this flag combination will be called using a new C signature called ``PyCMethod``",
+      "source_hash": 3606127031415778693,
+      "context_hash": 11121116389114307915,
+      "translation": "이 플래그 조합을 사용하여 정의된 메서드의 C 함수는 ``PyCMethod``\\ 라는 새 C 시그니처를 사용하여 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085266Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "Additional combinations like ``(METH_VARARGS | METH_METHOD)`` may be added in the future (or even in the initial implementation of this PEP).",
+      "source_hash": 5068676471646572929,
+      "context_hash": 5907798395098872190,
+      "translation": "``(METH_VARARGS | METH_METHOD)``\\ 와 같은 추가 조합이 향후에 추가될 수 있습니다(또는 이 PEP의 초기 구현에 포함될 수도 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085267Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:1",
+      "source": "However, ``METH_METHOD`` should always be an *additional* flag, i.e., the defining class should only be passed in if needed.",
+      "source_hash": 6497073743992650698,
+      "context_hash": 9413191264584938527,
+      "translation": "그러나 ``METH_METHOD``\\ 은 항상 *additional* 플래그여야 합니다. 즉, 필요한 경우에만 정의 클래스를 전달해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085267Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:0",
+      "source": "In CPython, a new structure extending ``PyCFunctionObject`` will be added to hold the extra information",
+      "source_hash": 13270240104340323421,
+      "context_hash": 12916338151226567135,
+      "translation": "CPython에는 추가 정보를 저장하기 위해 ``PyCFunctionObject``\\ 를 확장하는 새 구조체가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085267Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:7/seg:0",
+      "source": "The ``PyCFunction`` implementation will pass ``mm_class`` into a ``PyCMethod`` C function when it finds the ``METH_METHOD`` flag being set.",
+      "source_hash": 3908805272246793016,
+      "context_hash": 2823499736688259526,
+      "translation": "``PyCFunction``\\ 구현은 ``METH_METHOD`` 플래그가 설정된 것을 발견하면 ``mm_class``\\ 를 ``PyCMethod`` C 함수에 전달합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085267Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:7/seg:1",
+      "source": "A new macro ``PyCFunction_GET_CLASS(cls)`` will be added for easier access to ``mm_class``.",
+      "source_hash": 13089374004508339517,
+      "context_hash": 13501346556563338652,
+      "translation": "``mm_class``\\ 에 더 쉽게 접근할 수 있도록 새 매크로 ``PyCFunction_GET_CLASS(cls)``\\ 가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085268Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:8/seg:0",
+      "source": "C methods may continue to use the other ``METH_*`` signatures if they do not require access to their defining class/module.",
+      "source_hash": 15209039497420034075,
+      "context_hash": 2748356068946478596,
+      "translation": "C 메서드는 정의 클래스나 모듈에 접근할 필요가 없다면 다른 ``METH_*`` 시그니처를 계속 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085268Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:8/seg:1",
+      "source": "If ``METH_METHOD`` is not set, casting to ``PyCMethodObject`` is invalid.",
+      "source_hash": 6357634925408768494,
+      "context_hash": 17520884453684806676,
+      "translation": "``METH_METHOD``\\ 이 설정되지 않은 경우 ``PyCMethodObject``\\ 로 캐스팅하는 것은 유효하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085268Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Argument Clinic",
+      "source_hash": 17936362038198562610,
+      "context_hash": 11414967603100425609,
+      "translation": "Argument Clinic",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085268Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "To support passing the defining class to methods using Argument Clinic, a new converter called ``defining_class`` will be added to CPython's Argument Clinic tool.",
+      "source_hash": 695479764691068327,
+      "context_hash": 10983568486805591824,
+      "translation": "Argument Clinic을 사용하는 메서드에 정의 클래스를 전달할 수 있도록 CPython의 Argument Clinic 도구에 ``defining_class``\\ 라는 새 변환기가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085269Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "Each method may only have one argument using this converter, and it must appear after ``self``, or, if ``self`` is not used, as the first argument.",
+      "source_hash": 3217675526469702913,
+      "context_hash": 9362963580816480462,
+      "translation": "각 메서드는 이 변환기를 사용하는 인자를 하나만 가질 수 있으며, 해당 인자는 ``self``\\ 뒤에 나타나야 합니다. ``self``\\ 를 사용하지 않는 경우에는 첫 번째 인자여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085269Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:1",
+      "source": "The argument will be of type ``PyTypeObject *``.",
+      "source_hash": 9063066272546885768,
+      "context_hash": 15468391028603548046,
+      "translation": "해당 인자의 타입은 ``PyTypeObject *``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085269Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "When used, Argument Clinic will select ``METH_FASTCALL | METH_KEYWORDS | METH_METHOD`` as the calling convention.",
+      "source_hash": 13923181069663591878,
+      "context_hash": 2989997480865479209,
+      "translation": "이를 사용하면 Argument Clinic은 ``METH_FASTCALL | METH_KEYWORDS | METH_METHOD``\\ 을 호출 규약으로 선택합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085269Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:1",
+      "source": "The argument will not appear in ``__text_signature__``.",
+      "source_hash": 15058334626309108053,
+      "context_hash": 11373742132998791429,
+      "translation": "해당 인자는 ``__text_signature__``\\ 에 나타나지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085269Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:4/seg:0",
+      "source": "The new converter will initially not be compatible with ``__init__`` and ``__new__`` methods, which cannot use the ``METH_METHOD`` convention.",
+      "source_hash": 4777120304063324772,
+      "context_hash": 1041370376885709666,
+      "translation": "새 변환기는 처음에는 ``__init__`` 및 ``__new__`` 메서드와 호환되지 않습니다. 이러한 메서드는 ``METH_METHOD``\\ 규약을 사용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085270Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Helpers",
+      "source_hash": 13603491018344580760,
+      "context_hash": 2501112199732741787,
+      "translation": "헬퍼",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085270Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "Getting to `per-module state`_ from a heap type is a very common task.",
+      "source_hash": 14097759857779368765,
+      "context_hash": 10615534017613391849,
+      "translation": "힙 타입에서 `per-module state`_\\ 에 접근하는 것은 매우 일반적인 작업입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085271Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "To make this easier, a helper will be added",
+      "source_hash": 6865102397096984348,
+      "context_hash": 7293435611227498835,
+      "translation": "이를 쉽게 하기 위한 헬퍼가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085271Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "This function takes a heap type and on success, it returns pointer to the state of the module that the heap type belongs to.",
+      "source_hash": 3217712670242365530,
+      "context_hash": 7108434005147758001,
+      "translation": "이 함수는 힙 타입을 받아 성공하면 해당 힙 타입이 속한 모듈의 상태를 가리키는 포인터를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085271Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:0",
+      "source": "On failure, two scenarios may occur.",
+      "source_hash": 3572806811576399433,
+      "context_hash": 3176091931121080046,
+      "translation": "실패할 경우 두 가지 상황이 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085271Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:1",
+      "source": "When a non-type object, or a type without a module is passed in, ``TypeError`` is set and ``NULL`` returned.",
+      "source_hash": 6909514730512218104,
+      "context_hash": 3706110937388436368,
+      "translation": "타입이 아닌 객체나 모듈이 없는 타입이 전달되면 ``TypeError``\\ 가 설정되고 ``NULL``\\ 이 반환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085271Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:2",
+      "source": "If the module is found, the pointer to the state, which may be ``NULL``, is returned without setting any exception.",
+      "source_hash": 445423569799208611,
+      "context_hash": 8056211673437948021,
+      "translation": "모듈을 찾으면 ``NULL``\\ 일 수도 있는 상태 포인터가 예외를 설정하지 않고 반환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085272Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Modules Converted in the Initial Implementation",
+      "source_hash": 14930627722957292494,
+      "context_hash": 12863152311789476984,
+      "translation": "초기 구현에서 변환되는 모듈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085272Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "To validate the approach, the ``_elementtree`` module will be modified during the initial implementation.",
+      "source_hash": 17739004576267113011,
+      "context_hash": 15773526022175061092,
+      "translation": "이 접근 방식을 검증하기 위해 초기 구현 중에 ``_elementtree`` 모듈이 수정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085272Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Summary of API Changes and Additions",
+      "source_hash": 12575713332325766666,
+      "context_hash": 9062005246142124504,
+      "translation": "API 변경 및 추가 사항 요약",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:01.085272Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "The following will be added to Python C-API:",
+      "source_hash": 1667067007039437867,
+      "context_hash": 13580226038968430805,
+      "translation": "다음이 Python C-API에 추가될 예정입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594786Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "``PyType_FromModuleAndSpec`` function",
+      "source_hash": 9828733386598017216,
+      "context_hash": 16890608874651374679,
+      "translation": "``PyType_FromModuleAndSpec`` 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594789Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "``PyType_GetModule`` function",
+      "source_hash": 11169030648967956890,
+      "context_hash": 9943156002455961918,
+      "translation": "``PyType_GetModule`` 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594790Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "``PyType_GetModuleState`` function",
+      "source_hash": 8259212529118936219,
+      "context_hash": 7686316488955311962,
+      "translation": "``PyType_GetModuleState`` 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594790Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:0",
+      "source": "``METH_METHOD`` call flag",
+      "source_hash": 2485528100188463898,
+      "context_hash": 7876924386245947758,
+      "translation": "``METH_METHOD`` 호출 플래그",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594790Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:6/seg:0",
+      "source": "``PyCMethod`` function signature",
+      "source_hash": 2311975450079830122,
+      "context_hash": 3134192591751030572,
+      "translation": "``PyCMethod`` 함수 시그니처",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594790Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:7/seg:0",
+      "source": "The following additions will be added as CPython implementation details, and won't be documented:",
+      "source_hash": 2911224843185675358,
+      "context_hash": 12843231556568690586,
+      "translation": "다음 추가 사항은 CPython 구현 세부 사항으로 추가되며, 문서화되지 않을 것입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594791Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:8/seg:0",
+      "source": "``PyCFunction_GET_CLASS`` macro",
+      "source_hash": 1842994040217450174,
+      "context_hash": 2961181590675042810,
+      "translation": "``PyCFunction_GET_CLASS`` 매크로",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594791Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:9/seg:0",
+      "source": "``PyCMethodObject`` struct",
+      "source_hash": 6619063273482368567,
+      "context_hash": 7928444298437810,
+      "translation": "``PyCMethodObject`` 구조체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594791Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:10/seg:0",
+      "source": "``ht_module`` member of ``_heaptypeobject``",
+      "source_hash": 6203169897214908608,
+      "context_hash": 16735799317779411678,
+      "translation": "``_heaptypeobject``\\ 의 ``ht_module`` 멤버",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594791Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:11/seg:0",
+      "source": "``defining_class`` converter in Argument Clinic",
+      "source_hash": 14000055223385421030,
+      "context_hash": 4029519571236628926,
+      "translation": "Argument Clinic의 ``defining_class`` 변환기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594791Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 419762217292915489,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594792Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "One new pointer is added to all heap types.",
+      "source_hash": 4368164091867642044,
+      "context_hash": 2449660374868459256,
+      "translation": "모든 힙 타입에 새 포인터 하나가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594792Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:1",
+      "source": "All other changes are adding new functions and structures, or changes to private implementation details.",
+      "source_hash": 12943689164601370124,
+      "context_hash": 3885575775380390870,
+      "translation": "다른 모든 변경 사항은 새 함수와 구조체를 추가하거나, 비공개 구현 세부 사항을 변경하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594792Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 3204056695891960315,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594793Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "An initial implementation is available in a Github repository [#gh-repo]_; a patchset is at [#gh-patch]_.",
+      "source_hash": 11756917070331975897,
+      "context_hash": 16069406486101686046,
+      "translation": "초기 구현은 Github 저장소 [#gh-repo]_\\ 에서 확인할 수 있으며, 패치셋은 [#gh-patch]_\\ 에 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:37:00.594793Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Possible Future Extensions",
+      "source_hash": 9173195766079362897,
+      "context_hash": 11727835742241819446,
+      "translation": "향후 가능한 확장",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655889Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "Slot methods",
+      "source_hash": 12770185518923013729,
+      "context_hash": 10743330907019813063,
+      "translation": "슬롯 메서드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655896Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "A way of passing defining class (or module state) to slot methods may be added in the future.",
+      "source_hash": 5560101793653265392,
+      "context_hash": 9707114449995177668,
+      "translation": "슬롯 메서드에 정의 클래스(또는 모듈 상태)를 전달하는 방법이 향후 추가될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655896Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:0",
+      "source": "A previous version of this PEP proposed a helper function that would determine a defining class by searching the MRO for a class that defines a slot to a particular function.",
+      "source_hash": 2649992779201967297,
+      "context_hash": 4135435623930203740,
+      "translation": "이 PEP의 이전 버전에서는 특정 함수에 슬롯을 정의하는 클래스를 MRO에서 검색하여 정의 클래스를 결정하는 헬퍼 함수를 제안했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655897Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:1",
+      "source": "However, this approach would fail if a class is mutated (which is, for heap types, possible from Python code).",
+      "source_hash": 15555765106000122539,
+      "context_hash": 605799773734481655,
+      "translation": "그러나 클래스가 변경되면(힙 타입의 경우 Python 코드에서 가능함) 이 접근 방식은 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655897Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:2",
+      "source": "Solving this problem is left to future discussions.",
+      "source_hash": 12341911979643621310,
+      "context_hash": 3098929195605896260,
+      "translation": "이 문제를 해결하는 것은 향후 논의로 남겨둡니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655898Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "Easy creation of types with module references",
+      "source_hash": 13039045483979681004,
+      "context_hash": 2036539821298656938,
+      "translation": "모듈 참조를 사용한 타입의 쉬운 생성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655898Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "It would be possible to add a :pep:`489` execution slot type to make creating heap types significantly easier than calling ``PyType_FromModuleAndSpec``.",
+      "source_hash": 874874704848105251,
+      "context_hash": 3206209275818094541,
+      "translation": "``PyType_FromModuleAndSpec``\\ 를 호출하는 것보다 힙 타입 생성을 훨씬 쉽게 만들기 위해 :pep:`489` 실행 슬롯 타입을 추가하는 것이 가능할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655899Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:1",
+      "source": "This is left to a future PEP.",
+      "source_hash": 1129628144622266828,
+      "context_hash": 8959048978259726471,
+      "translation": "이것은 향후 PEP로 남겨둡니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655899Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:0",
+      "source": "It may be good to add a good way to create static exception types from the limited API.",
+      "source_hash": 2503244158844389575,
+      "context_hash": 12845305827517074621,
+      "translation": "제한된 API에서 정적 예외 타입을 생성하는 좋은 방법을 추가하는 것이 좋을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655899Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:1",
+      "source": "Such exception types could be shared between subinterpreters, but instantiated without needing specific module state.",
+      "source_hash": 4130360730320474958,
+      "context_hash": 3820621005369876656,
+      "translation": "이러한 예외 타입은 서브인터프리터 간에 공유될 수 있지만, 특정 모듈 상태 없이 인스턴스화될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655900Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:2",
+      "source": "This is also left to possible future discussions.",
+      "source_hash": 3363769531576098896,
+      "context_hash": 16563797229472360202,
+      "translation": "이것 역시 향후 가능한 논의로 남겨둡니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655900Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Optimization",
+      "source_hash": 8147114492625738509,
+      "context_hash": 8244498054604941327,
+      "translation": "최적화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655900Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "As proposed here, methods defined with the ``METH_METHOD`` flag only support one specific signature.",
+      "source_hash": 4853308457880702977,
+      "context_hash": 10515903743528967937,
+      "translation": "여기서 제안된 대로, ``METH_METHOD`` 플래그로 정의된 메서드는 하나의 특정 시그니처만 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655900Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:2/seg:0",
+      "source": "If it turns out that other signatures are needed for performance reasons, they may be added.",
+      "source_hash": 7960064210756895199,
+      "context_hash": 11641360196929557589,
+      "translation": "성능상의 이유로 다른 시그니처가 필요한 것으로 밝혀지면, 추가될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655901Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 17989971750225243682,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:40.655901Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:0",
+      "source": "https://docs.python.org/3/c-api/typeobj.html#tp-slots",
+      "source_hash": 5739390643715355741,
+      "context_hash": 14864638310198937919,
+      "translation": "https://docs.python.org/3/c-api/typeobj.html#tp-slots",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:23:14.352325Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:0",
+      "source": "[Import-SIG] On singleton modules, heap types, and subinterpreters",
+      "source_hash": 9194282214949307924,
+      "context_hash": 7629868614852103769,
+      "translation": "[Import-SIG] 싱글턴 모듈, 힙 타입, 그리고 서브인터프리터에 관하여",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:23:14.352328Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:3/seg:0",
+      "source": "(https://mail.python.org/pipermail/import-sig/2015-July/001035.html)",
+      "source_hash": 13424626078398973341,
+      "context_hash": 9984105733816230312,
+      "translation": "(https://mail.python.org/pipermail/import-sig/2015-July/001035.html)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:23:14.352328Z",
+      "issues": []
+    }
+  ]
+}

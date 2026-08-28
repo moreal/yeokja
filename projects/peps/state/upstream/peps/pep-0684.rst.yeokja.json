@@ -1,0 +1,4043 @@
+{
+  "version": 1,
+  "source_hash": 14473695060369425531,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "A Per-Interpreter GIL",
+      "source_hash": 10495963320695674488,
+      "context_hash": 16530898886277989957,
+      "translation": "인터프리터별 GIL",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:23.544147Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 1141684859427692990,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544151Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Since Python 1.5 (1997), CPython users can run multiple interpreters in the same process.",
+      "source_hash": 2151614883662054484,
+      "context_hash": 17214225851704526662,
+      "translation": "Python 1.5(1997)부터 CPython 사용자는 동일한 프로세스에서 여러 인터프리터를 실행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544152Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "However, interpreters in the same process have always shared a significant amount of global state.",
+      "source_hash": 17052225809695197628,
+      "context_hash": 17842513231451246344,
+      "translation": "그러나 동일한 프로세스의 인터프리터들은 상당한 양의 전역 상태를 항상 공유해 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544152Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "This is a source of bugs, with a growing impact as more and more people use the feature.",
+      "source_hash": 9213075671679109086,
+      "context_hash": 11656833358606409158,
+      "translation": "이는 버그의 원인이 되며, 이 기능을 사용하는 사람이 점점 늘어남에 따라 그 영향도 커지고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544153Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:3",
+      "source": "Furthermore, sufficient isolation would facilitate true multi-core parallelism, where interpreters no longer share the GIL.",
+      "source_hash": 7518372094726457912,
+      "context_hash": 13089442477994277698,
+      "translation": "또한 충분한 격리를 통해 인터프리터가 더 이상 GIL을 공유하지 않는 진정한 멀티코어 병렬 처리를 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544153Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:4",
+      "source": "The changes outlined in this proposal will result in that level of interpreter isolation.",
+      "source_hash": 3018694881949471750,
+      "context_hash": 15891502320852927247,
+      "translation": "이 제안에서 설명하는 변경 사항을 통해 이러한 수준의 인터프리터 격리가 이루어집니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:23.544153Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "High-Level Summary",
+      "source_hash": 16094833449892905950,
+      "context_hash": 3178073629877631571,
+      "translation": "고수준 요약",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544154Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "At a high level, this proposal changes CPython in the following ways:",
+      "source_hash": 14077662397175588847,
+      "context_hash": 12987171824400555084,
+      "translation": "고수준에서 이 제안은 다음과 같은 방식으로 CPython을 변경합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544154Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "stops sharing the GIL between interpreters, given sufficient isolation",
+      "source_hash": 1988233154123593273,
+      "context_hash": 13951073318085409729,
+      "translation": "충분한 격리가 이루어지면 인터프리터 간 GIL 공유를 중단합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544154Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "adds several new interpreter config options for isolation settings",
+      "source_hash": 9291618597396359631,
+      "context_hash": 14383459188058437082,
+      "translation": "격리 설정을 위한 몇 가지 새로운 인터프리터 구성 옵션을 추가합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:23.544155Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "keeps incompatible extensions from causing problems",
+      "source_hash": 9241335532081463001,
+      "context_hash": 3394592283207342541,
+      "translation": "호환되지 않는 확장 기능으로 인해 문제가 발생하지 않도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544156Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "The GIL",
+      "source_hash": 5923074202910610813,
+      "context_hash": 18171805193038922601,
+      "translation": "GIL",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544156Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "The GIL protects concurrent access to most of CPython's runtime state.",
+      "source_hash": 4866448843419965884,
+      "context_hash": 13076459240355774513,
+      "translation": "GIL은 CPython 런타임 상태 대부분에 대한 동시 접근을 보호합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544157Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "So all that GIL-protected global state must move to each interpreter before the GIL can.",
+      "source_hash": 4380988804703970539,
+      "context_hash": 13124329518018796667,
+      "translation": "따라서 GIL로 보호되는 모든 전역 상태를 GIL을 각 인터프리터로 옮길 수 있기 전에 각 인터프리터로 이동해야 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:23.544157Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "(In a handful of cases, other mechanisms can be used to ensure thread-safe sharing instead, such as locks or \"immortal\" objects.)",
+      "source_hash": 3199363466381448750,
+      "context_hash": 7572383013159543530,
+      "translation": "(몇몇 경우에는 잠금이나 \"불멸\" 객체와 같은 다른 메커니즘을 대신 사용하여 스레드 안전한 공유를 보장할 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:54:18.968677Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "CPython Runtime State",
+      "source_hash": 10535202961662537261,
+      "context_hash": 647781378857913121,
+      "translation": "CPython 런타임 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544158Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Properly isolating interpreters requires that most of CPython's runtime state be stored in the ``PyInterpreterState`` struct.",
+      "source_hash": 14945631199046070388,
+      "context_hash": 1422176100382301677,
+      "translation": "인터프리터를 적절히 격리하려면 CPython 런타임 상태 대부분을 ``PyInterpreterState`` 구조체에 저장해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544159Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "Currently, only a portion of it is; the rest is found either in C global variables or in ``_PyRuntimeState``.",
+      "source_hash": 12856203324288005572,
+      "context_hash": 9718325442886433182,
+      "translation": "현재는 그중 일부만 저장되어 있으며, 나머지는 C 전역 변수나 ``_PyRuntimeState``\\ 에 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544159Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "Most of that will have to be moved.",
+      "source_hash": 6652713399361842921,
+      "context_hash": 7701786329084714932,
+      "translation": "이 중 대부분은 이동해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544159Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "This directly coincides with an ongoing effort (of many years) to greatly reduce internal use of global variables and consolidate the runtime state into ``_PyRuntimeState`` and ``PyInterpreterState``. (See `Consolidating Runtime Global State`_ below.)  That project has `significant merit on its own <Benefits to Consolidation_>`_ and has faced little controversy.",
+      "source_hash": 13591033364143980113,
+      "context_hash": 7007178328288797799,
+      "translation": "이는 전역 변수의 내부 사용을 크게 줄이고 런타임 상태를 ``_PyRuntimeState`` 및 ``PyInterpreterState``\\ 로 통합하기 위해 수년간 진행 중인 작업과 직접 일치합니다. (자세한 내용은 아래의 `Consolidating Runtime Global State`_\\ 를 참조하십시오.) 이 프로젝트는 `significant merit on its own <Benefits to Consolidation_>`_\\ 이 있으며 논란도 거의 없었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544159Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "So, while a per-interpreter GIL relies on the completion of that effort, that project should not be considered a part of this proposal--only a dependency.",
+      "source_hash": 7446352027200832748,
+      "context_hash": 3217667979072107406,
+      "translation": "따라서 인터프리터별 GIL은 해당 작업의 완료에 의존하지만, 그 프로젝트를 이 제안의 일부가 아니라 종속 항목으로만 간주해야 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:23.544160Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Other Isolation Considerations",
+      "source_hash": 12582987117281114556,
+      "context_hash": 14090861609548597819,
+      "translation": "기타 격리 고려 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544160Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "CPython's interpreters must be strictly isolated from each other, with few exceptions.",
+      "source_hash": 1884228885557202795,
+      "context_hash": 4946991887854224956,
+      "translation": "CPython의 인터프리터는 몇 가지 예외를 제외하고 서로 엄격하게 격리되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544161Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "To a large extent they already are.",
+      "source_hash": 13336626977927717612,
+      "context_hash": 12438772526655372917,
+      "translation": "대체로 이미 그렇게 격리되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544161Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "Each interpreter has its own copy of all modules, classes, functions, and variables.",
+      "source_hash": 6537808646629491627,
+      "context_hash": 12606631604850830327,
+      "translation": "각 인터프리터는 모든 모듈, 클래스, 함수 및 변수에 대한 자체 복사본을 가집니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:23.544161Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:3",
+      "source": "The CPython C-API docs `explain further <caveats_>`_.",
+      "source_hash": 5434909527889266410,
+      "context_hash": 2069407553956655279,
+      "translation": "CPython C-API 문서는 `explain further <caveats_>`_\\ 에서 더 자세히 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544162Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "However, aside from what has already been mentioned (e.g. the GIL), there are a couple of ways in which interpreters still share some state.",
+      "source_hash": 9376818067191431135,
+      "context_hash": 3747291831936494321,
+      "translation": "그러나 앞서 언급한 사항(예: GIL)을 제외하면 인터프리터가 여전히 일부 상태를 공유하는 방식이 몇 가지 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544162Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "First of all, some process-global resources (e.g. memory, file descriptors, environment variables) are shared.",
+      "source_hash": 4924651814407951139,
+      "context_hash": 1742410534610210045,
+      "translation": "무엇보다도 일부 프로세스 전역 리소스(예: 메모리, 파일 디스크립터, 환경 변수)가 공유됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544163Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "There are no plans to change this.",
+      "source_hash": 6617484224464364996,
+      "context_hash": 11059564733737014945,
+      "translation": "이를 변경할 계획은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:23.544163Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "Second, some isolation is faulty due to bugs or implementations that did not take multiple interpreters into account.",
+      "source_hash": 18056827200130456430,
+      "context_hash": 962764505234352401,
+      "translation": "둘째, 다중 인터프리터를 고려하지 않은 버그나 구현으로 인해 일부 격리가 제대로 작동하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516524Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:1",
+      "source": "This includes CPython's runtime and the stdlib, as well as extension modules that rely on global variables.",
+      "source_hash": 15306818699183095798,
+      "context_hash": 14990947746538326612,
+      "translation": "여기에는 CPython의 런타임과 표준 라이브러리뿐만 아니라 전역 변수에 의존하는 확장 모듈도 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516528Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:2",
+      "source": "Bugs should be opened in these cases, as some already have been.",
+      "source_hash": 4486475876611462281,
+      "context_hash": 13071710522838464885,
+      "translation": "이러한 경우에는 버그를 등록해야 하며, 이미 일부는 등록되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516528Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Depending on Immortal Objects",
+      "source_hash": 13112897441470453549,
+      "context_hash": 7814939280184120464,
+      "translation": "불멸 객체에 대한 의존",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516528Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": ":pep:`683` introduces immortal objects as a CPython-internal feature.",
+      "source_hash": 12987196813630933081,
+      "context_hash": 16230306397311249573,
+      "translation": ":pep:`683`\\ 은 CPython 내부 기능으로 불멸 객체를 도입합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516529Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "With immortal objects, we can share any otherwise immutable global objects between all interpreters.",
+      "source_hash": 15975071684062644247,
+      "context_hash": 6235620451420382287,
+      "translation": "불멸 객체를 사용하면, 그 외에는 변경할 수 없는 전역 객체를 모든 인터프리터 간에 공유할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516529Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:2",
+      "source": "Consequently, this PEP does not need to address how to deal with the various objects `exposed in the public C-API <capi objects_>`_.",
+      "source_hash": 12450230348128141801,
+      "context_hash": 10428618452589316583,
+      "translation": "따라서 이 PEP에서는 공개 C-API에 `exposed in the public C-API <capi objects_>`_ 노출된 다양한 객체를 처리하는 방법을 다룰 필요가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516529Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:3",
+      "source": "It also simplifies the question of what to do about the builtin static types.  (See `Global Objects`_ below.)",
+      "source_hash": 12678994516106352520,
+      "context_hash": 5798139457898013613,
+      "translation": "또한 내장 정적 타입에 대해 어떻게 처리할지라는 문제도 단순해집니다. (아래의 `Global Objects`_\\ 를 참조하십시오.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516530Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "Both issues have alternate solutions, but everything is simpler with immortal objects.",
+      "source_hash": 6074082830392296601,
+      "context_hash": 15319379966427614777,
+      "translation": "두 문제 모두 다른 해결책이 있지만, 불멸 객체를 사용하면 모든 것이 더 단순해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516530Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "If PEP 683 is not accepted then this one will be updated with the alternatives.",
+      "source_hash": 13961765293925886065,
+      "context_hash": 14039029346506052584,
+      "translation": "PEP 683이 수용되지 않으면 이 PEP를 대안과 함께 갱신합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516530Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:2",
+      "source": "This lets us reduce noise in this proposal.",
+      "source_hash": 7388379799306375117,
+      "context_hash": 12708485736424778289,
+      "translation": "이를 통해 이 제안의 불필요한 잡음을 줄일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516530Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 11148067182400458419,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516531Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The fundamental problem we're solving here is a lack of true multi-core parallelism (for Python code) in the CPython runtime.",
+      "source_hash": 4233497553767091949,
+      "context_hash": 16007629393362477456,
+      "translation": "여기에서 해결하려는 근본적인 문제는 CPython 런타임에서 진정한 멀티코어 병렬 처리(파이썬 코드의 경우)가 부족하다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516531Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "The GIL is the cause.",
+      "source_hash": 6488381624355414165,
+      "context_hash": 1514353388715481366,
+      "translation": "원인은 GIL입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516531Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:2",
+      "source": "While it usually isn't a problem in practice, at the very least it makes Python's multi-core story murky, which makes the GIL a consistent distraction.",
+      "source_hash": 4185253298920513545,
+      "context_hash": 6126127728777248147,
+      "translation": "일반적으로 실제 사용에서는 문제가 되지 않지만, 적어도 파이썬의 멀티코어 관련 상황을 불분명하게 만들며, 이로 인해 GIL은 지속적인 방해 요소가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516531Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "Isolated interpreters are also an effective mechanism to support certain concurrency models.  :pep:`554` discusses this in more detail.",
+      "source_hash": 4519872969455018881,
+      "context_hash": 10438587520612921191,
+      "translation": "격리된 인터프리터는 특정 동시성 모델을 지원하는 효과적인 메커니즘이기도 합니다. :pep:`554`\\ 에서 이 내용을 더 자세히 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516532Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Indirect Benefits",
+      "source_hash": 4248021192669579436,
+      "context_hash": 10858295147184055203,
+      "translation": "간접적인 이점",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516532Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Most of the effort needed for a per-interpreter GIL has benefits that make those tasks worth doing anyway:",
+      "source_hash": 9996990425311125481,
+      "context_hash": 3398137157924460822,
+      "translation": "인터프리터별 GIL에 필요한 대부분의 작업에는 어차피 수행할 가치가 있게 만드는 이점이 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:24.516532Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "makes multiple-interpreter behavior more reliable",
+      "source_hash": 13837779727774795905,
+      "context_hash": 16111424130895701797,
+      "translation": "다중 인터프리터 동작의 신뢰성을 높입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:24.516533Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "has led to fixes for long-standing runtime bugs that otherwise hadn't been prioritized",
+      "source_hash": 9198009296705611904,
+      "context_hash": 7367406891398556963,
+      "translation": "그렇지 않았다면 우선순위가 지정되지 않았을 장기간 지속된 런타임 버그의 수정으로 이어졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516534Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "has been exposing (and inspiring fixes for) previously unknown runtime bugs",
+      "source_hash": 10096809176996452467,
+      "context_hash": 719090349987530293,
+      "translation": "이전에는 알려지지 않았던 런타임 버그를 드러내고 이를 수정하도록 이끌었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516534Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "has driven cleaner runtime initialization (:pep:`432`, :pep:`587`)",
+      "source_hash": 5006764572016557949,
+      "context_hash": 13034003314274293564,
+      "translation": "더 깔끔한 런타임 초기화를 이끌었습니다(:pep:`432`, :pep:`587`).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516534Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "has driven cleaner and more complete runtime finalization",
+      "source_hash": 5384032567350535502,
+      "context_hash": 12634774541587829210,
+      "translation": "더 깔끔하고 완전한 런타임 종료를 이끌었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516534Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "led to structural layering of the C-API (e.g. ``Include/internal``)",
+      "source_hash": 14411996233697443050,
+      "context_hash": 15180538823739315879,
+      "translation": "C-API의 구조적 계층화를 이끌었습니다(예: ``Include/internal``).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516535Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:0",
+      "source": "also see `Benefits to Consolidation`_ below",
+      "source_hash": 16594732195355356096,
+      "context_hash": 14081273023606649377,
+      "translation": "아래의 `Benefits to Consolidation`_\\ 도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516535Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:0",
+      "source": "Furthermore, much of that work benefits other CPython-related projects:",
+      "source_hash": 4117193368834516457,
+      "context_hash": 3713178635043748657,
+      "translation": "또한 그 작업의 상당 부분은 다른 CPython 관련 프로젝트에도 도움이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516535Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:0",
+      "source": "performance improvements (\"`faster-cpython`_\")",
+      "source_hash": 12128556640060113908,
+      "context_hash": 2772866437330140695,
+      "translation": "성능 개선(\"`faster-cpython`_\")",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516535Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:11/seg:0",
+      "source": "pre-fork application deployment (e.g. `Instagram server`_)",
+      "source_hash": 16324731258795533821,
+      "context_hash": 1300218452258199278,
+      "translation": "포크 전 애플리케이션 배포(예: `Instagram server`_)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516535Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:12/seg:0",
+      "source": "extension module isolation (see :pep:`630`, etc.)",
+      "source_hash": 121937200594815756,
+      "context_hash": 6340049842680740547,
+      "translation": "확장 모듈 격리(:pep:`630` 등 참조)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516536Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:13/seg:0",
+      "source": "embedding CPython",
+      "source_hash": 16258976568545218237,
+      "context_hash": 4701699854561087950,
+      "translation": "CPython 임베딩",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516536Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Existing Use of Multiple Interpreters",
+      "source_hash": 9229730817536194016,
+      "context_hash": 10182934659052292657,
+      "translation": "다중 인터프리터의 기존 사용 방식",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:24.516536Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "The C-API for multiple interpreters has been used for many years.",
+      "source_hash": 9642459636740454750,
+      "context_hash": 16857868535739636106,
+      "translation": "다중 인터프리터를 위한 C-API는 수년간 사용되어 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881628Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "However, until relatively recently the feature wasn't widely known, nor extensively used (with the exception of mod_wsgi).",
+      "source_hash": 8092055978915905374,
+      "context_hash": 12561165781384848217,
+      "translation": "그러나 비교적 최근까지는 이 기능이 널리 알려지지 않았고, mod_wsgi를 제외하면 광범위하게 사용되지도 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881630Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "In the last few years use of multiple interpreters has been increasing.",
+      "source_hash": 3180156893360730539,
+      "context_hash": 12771406626960528555,
+      "translation": "지난 몇 년 동안 다중 인터프리터의 사용이 증가해 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881631Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "Here are some of the public projects using the feature currently:",
+      "source_hash": 11888043423572635737,
+      "context_hash": 5559157672468344592,
+      "translation": "현재 이 기능을 사용하는 공개 프로젝트는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881631Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "`mod_wsgi <https://github.com/GrahamDumpleton/mod_wsgi>`_",
+      "source_hash": 18025827913807295210,
+      "context_hash": 11051220423237240366,
+      "translation": "`mod_wsgi <https://github.com/GrahamDumpleton/mod_wsgi>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881631Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "`OpenStack Ceph <https://github.com/ceph/ceph/pull/14971>`_",
+      "source_hash": 214156038771563805,
+      "context_hash": 308610807383952003,
+      "translation": "`OpenStack Ceph <https://github.com/ceph/ceph/pull/14971>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881631Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "`JEP <https://github.com/ninia/jep>`_",
+      "source_hash": 11619314823628452263,
+      "context_hash": 4372675769748302346,
+      "translation": "`JEP <https://github.com/ninia/jep>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881632Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "`Kodi <https://github.com/xbmc/xbmc>`_",
+      "source_hash": 1123441990968549652,
+      "context_hash": 6253266974080250441,
+      "translation": "`Kodi <https://github.com/xbmc/xbmc>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881632Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "Note that, with :pep:`554`, multiple interpreter usage would likely grow significantly (via Python code rather than the C-API).",
+      "source_hash": 541385950451689031,
+      "context_hash": 11864591622789742541,
+      "translation": "참고로, :pep:`554`\\ 를 사용하면 C-API가 아닌 Python 코드를 통해 여러 인터프리터를 사용하는 일이 크게 증가할 가능성이 높습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:54:18.968681Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "PEP 554 (Multiple Interpreters in the Stdlib)",
+      "source_hash": 13588585208663690677,
+      "context_hash": 10240540722138939027,
+      "translation": "PEP 554 (표준 라이브러리의 다중 인터프리터)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881633Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": ":pep:`554` is strictly about providing a minimal stdlib module to give users access to multiple interpreters from Python code.",
+      "source_hash": 8261980927402802384,
+      "context_hash": 8792967439749171055,
+      "translation": ":pep:`554`\\ 는 Python 코드에서 사용자가 다중 인터프리터에 접근할 수 있도록 최소한의 표준 라이브러리 모듈을 제공하는 데만 엄격히 초점을 맞춥니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881633Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "In fact, it specifically avoids proposing any changes related to the GIL.",
+      "source_hash": 7922463791837874585,
+      "context_hash": 7551742136397967786,
+      "translation": "실제로 이 제안에서는 GIL과 관련된 변경 사항을 제안하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881633Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "Consider, however, that users of that module would benefit from a per-interpreter GIL, which makes PEP 554 more appealing.",
+      "source_hash": 11844335960123813134,
+      "context_hash": 11986135370719628718,
+      "translation": "그러나 해당 모듈의 사용자는 인터프리터별 GIL의 혜택을 받을 수 있으며, 이 점이 PEP 554를 더욱 매력적으로 만든다는 점을 고려하십시오.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:29.881634Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 15234883772360703738,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881634Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "During initial investigations in 2014, a variety of possible solutions for multi-core Python were explored, but each had its drawbacks without simple solutions:",
+      "source_hash": 8365685823497762623,
+      "context_hash": 9882148477437606350,
+      "translation": "2014년의 초기 조사 당시 멀티코어 Python을 위한 다양한 해결책을 검토했지만, 각각 간단한 해결책이 없는 단점을 지니고 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881634Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "the existing practice of releasing the GIL in extension modules",
+      "source_hash": 6084321995802357201,
+      "context_hash": 5304735344348831641,
+      "translation": "확장 모듈에서 GIL을 해제하는 기존 관행",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881635Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "doesn't help with Python code",
+      "source_hash": 15976831492269816523,
+      "context_hash": 16377199024554484248,
+      "translation": "Python 코드에는 도움이 되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881635Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "other Python implementations (e.g. Jython, IronPython)",
+      "source_hash": 4262929090545721147,
+      "context_hash": 16648381357154447861,
+      "translation": "다른 Python 구현(예: Jython, IronPython)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881635Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "CPython dominates the community",
+      "source_hash": 587304237818847452,
+      "context_hash": 11526759167105513797,
+      "translation": "CPython이 커뮤니티를 지배하고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881635Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "remove the GIL (e.g. gilectomy, \"no-gil\")",
+      "source_hash": 17838593487537569615,
+      "context_hash": 12980765922975459357,
+      "translation": "GIL 제거(예: gilectomy, \"no-gil\")",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881635Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "too much technical risk (at the time)",
+      "source_hash": 9649335385888157908,
+      "context_hash": 15211639689375025302,
+      "translation": "당시에는 기술적 위험이 너무 컸습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881635Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:0",
+      "source": "Trent Nelson's \"PyParallel\" project",
+      "source_hash": 6478604339133501591,
+      "context_hash": 6460514373861168428,
+      "translation": "Trent Nelson의 \"PyParallel\" 프로젝트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881636Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:9/seg:0",
+      "source": "incomplete; Windows-only at the time",
+      "source_hash": 18011797603906203462,
+      "context_hash": 13458879384575621236,
+      "translation": "당시에는 불완전했으며 Windows 전용이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881636Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:10/seg:0",
+      "source": "``multiprocessing``",
+      "source_hash": 5878901746539623183,
+      "context_hash": 5026788621866699587,
+      "translation": "``multiprocessing``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881636Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:11/seg:0",
+      "source": "too much work to make it effective enough; high penalties in some situations (at large scale, Windows)",
+      "source_hash": 1749125107740832121,
+      "context_hash": 7790292281348022986,
+      "translation": "충분히 효과적으로 만들기에는 작업량이 너무 많고, 일부 상황(대규모 환경 및 Windows)에서는 비용이 매우 큽니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881636Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:12/seg:0",
+      "source": "other parallelism tools (e.g. dask, ray, MPI)",
+      "source_hash": 18334127201640446205,
+      "context_hash": 10351614384359249641,
+      "translation": "다른 병렬 처리 도구(예: dask, ray, MPI)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881637Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:13/seg:0",
+      "source": "not a fit for the runtime/stdlib",
+      "source_hash": 2131127854557895266,
+      "context_hash": 5819577220754331895,
+      "translation": "런타임/표준 라이브러리에 적합하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881637Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:14/seg:0",
+      "source": "give up on multi-core (e.g. async, do nothing)",
+      "source_hash": 644398037238378728,
+      "context_hash": 9337765739821145015,
+      "translation": "멀티코어를 포기하는 방법(예: async, 아무것도 하지 않기)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881637Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:15/seg:0",
+      "source": "this can only end in tears",
+      "source_hash": 16228439721083897178,
+      "context_hash": 2260798731297896676,
+      "translation": "이는 결국 눈물로 끝날 수밖에 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881637Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:16/seg:0",
+      "source": "Even in 2014, it was fairly clear that a solution using isolated interpreters did not have a high level of technical risk and that most of the work was worth doing anyway. (The downside was the volume of work to be done.)",
+      "source_hash": 1233037765852642109,
+      "context_hash": 18294592717814971038,
+      "translation": "2014년에도 격리된 인터프리터를 사용하는 해결책은 기술적 위험 수준이 높지 않았고, 대부분의 작업은 어차피 수행할 가치가 있다는 점이 상당히 분명했습니다. (단점은 수행해야 할 작업의 규모였습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881637Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 1030118490790730424,
+      "translation": "명세",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881638Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "As `summarized above <High-Level Summary_>`__, this proposal involves the following changes, in the order they must happen:",
+      "source_hash": 10822186625730123566,
+      "context_hash": 17813349015647001472,
+      "translation": "`위에 요약한 내용 <High-Level Summary_>`__\\ 에서, 이 제안에는 다음 변경 사항이 반드시 수행되어야 하는 순서대로 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:29.881638Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "`consolidate global runtime state <Consolidating Runtime Global State_>`_ (including objects) into ``_PyRuntimeState``",
+      "source_hash": 1409734960276681847,
+      "context_hash": 17453793294071604013,
+      "translation": "`전역 런타임 상태 <Consolidating Runtime Global State_>`_ (객체 포함)를 ``_PyRuntimeState``\\ 로 통합합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101582Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "move nearly all of the state down into ``PyInterpreterState``",
+      "source_hash": 1998860121000205935,
+      "context_hash": 3870514289372319086,
+      "translation": "상태의 거의 전부를 ``PyInterpreterState``\\ 로 옮깁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101586Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "finally, move the GIL down into ``PyInterpreterState``",
+      "source_hash": 16008802217701555331,
+      "context_hash": 533452715003367052,
+      "translation": "마지막으로 GIL을 ``PyInterpreterState``\\ 로 옮깁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101587Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "everything else",
+      "source_hash": 2892639681674824482,
+      "context_hash": 5643122228796426557,
+      "translation": "그 밖의 모든 항목",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101588Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:0",
+      "source": "update the C-API",
+      "source_hash": 10106818322240506741,
+      "context_hash": 10891741860324199040,
+      "translation": "C-API를 업데이트합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101588Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:7/seg:0",
+      "source": "implement extension module restrictions",
+      "source_hash": 16731112892709596975,
+      "context_hash": 13611982505551464788,
+      "translation": "확장 모듈 제한을 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101588Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:8/seg:0",
+      "source": "work with popular extension maintainers to help with multi-interpreter support",
+      "source_hash": 11162589956326163092,
+      "context_hash": 5908242399495504935,
+      "translation": "다중 인터프리터 지원을 돕기 위해 주요 확장 모듈 유지 관리자들과 협력합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:51.101589Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Per-Interpreter State",
+      "source_hash": 15541521067176058294,
+      "context_hash": 5404486296691857093,
+      "translation": "인터프리터별 상태",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:51.101591Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "The following runtime state will be moved to ``PyInterpreterState``:",
+      "source_hash": 16665963586765902394,
+      "context_hash": 13899335369981798863,
+      "translation": "다음 런타임 상태는 ``PyInterpreterState``\\ 로 이동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101592Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "all global objects that are not safely shareable (fully immutable)",
+      "source_hash": 1502819945986317664,
+      "context_hash": 15612471602380499400,
+      "translation": "안전하게 공유할 수 없는 모든 전역 객체(완전히 불변인 객체)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101592Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "the GIL",
+      "source_hash": 12357112608194245543,
+      "context_hash": 11680314304332673081,
+      "translation": "GIL",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101592Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:0",
+      "source": "most mutable data that's currently protected by the GIL",
+      "source_hash": 924205204689080308,
+      "context_hash": 1443586959102585951,
+      "translation": "현재 GIL로 보호되는 대부분의 변경 가능한 데이터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101592Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:5/seg:0",
+      "source": "mutable data that's currently protected by some other per-interpreter lock",
+      "source_hash": 16155945237013837365,
+      "context_hash": 8119823365632151732,
+      "translation": "현재 다른 인터프리터별 잠금으로 보호되는 변경 가능한 데이터",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:51.101593Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:6/seg:0",
+      "source": "mutable data that may be used independently in different interpreters (also applies to extension modules, including those with multi-phase init)",
+      "source_hash": 15998090019395415781,
+      "context_hash": 7004864960870514843,
+      "translation": "서로 다른 인터프리터에서 독립적으로 사용할 수 있는 변경 가능한 데이터(다단계 초기화를 사용하는 확장 모듈을 포함한 확장 모듈에도 적용됩니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101594Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:7/seg:0",
+      "source": "all other mutable data not otherwise excluded below",
+      "source_hash": 12499880640325731922,
+      "context_hash": 8214907830607714197,
+      "translation": "아래에서 달리 제외되지 않은 그 밖의 모든 변경 가능한 데이터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101594Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:8/seg:0",
+      "source": "Furthermore, a portion of the full global state has already been moved to the interpreter, including GC, warnings, and atexit hooks.",
+      "source_hash": 5454660541883882905,
+      "context_hash": 8043019642544234903,
+      "translation": "또한 전체 전역 상태의 일부는 이미 인터프리터로 이동되었으며, 여기에는 GC, 경고 및 atexit 후크가 포함됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:51.101594Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:9/seg:0",
+      "source": "The following runtime state will not be moved:",
+      "source_hash": 12675779370286780187,
+      "context_hash": 6803874571719205320,
+      "translation": "다음 런타임 상태는 이동하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101595Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:10/seg:0",
+      "source": "global objects that are safely shareable, if any",
+      "source_hash": 16648742500161783952,
+      "context_hash": 936665006219877743,
+      "translation": "안전하게 공유할 수 있는 전역 객체(있는 경우)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101595Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:11/seg:0",
+      "source": "immutable data, often ``const``",
+      "source_hash": 9691143920848217564,
+      "context_hash": 12290939119931586534,
+      "translation": "대개 ``const``\\ 인 불변 데이터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101595Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:12/seg:0",
+      "source": "effectively immutable data (treated as immutable), for example:",
+      "source_hash": 10775526573876594501,
+      "context_hash": 6448723704338863074,
+      "translation": "사실상 불변인 데이터(불변으로 취급됨), 예를 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101596Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:13/seg:0",
+      "source": "some state is initialized early and never modified again",
+      "source_hash": 1261628588573122581,
+      "context_hash": 16938110471453512477,
+      "translation": "일부 상태는 초기에 초기화된 후 다시 수정되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101596Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:14/seg:0",
+      "source": "hashes for strings (``PyUnicodeObject``) are idempotently calculated when first needed and then cached",
+      "source_hash": 17830343344554568659,
+      "context_hash": 2848987643828667026,
+      "translation": "문자열(``PyUnicodeObject``)의 해시는 처음 필요할 때 멱등적으로 계산된 후 캐시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101596Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:15/seg:0",
+      "source": "all data that is guaranteed to be modified exclusively in the main thread, including:",
+      "source_hash": 13114435402757068552,
+      "context_hash": 8845731465443047938,
+      "translation": "메인 스레드에서만 수정되는 것이 보장되는 모든 데이터(다음을 포함합니다):",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101597Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:16/seg:0",
+      "source": "state used only in CPython's ``main()``",
+      "source_hash": 7406889686881419363,
+      "context_hash": 11926369895660139475,
+      "translation": "CPython의 ``main()``\\ 에서만 사용되는 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101597Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:17/seg:0",
+      "source": "the REPL's state",
+      "source_hash": 1781094708539588408,
+      "context_hash": 10454991362996183135,
+      "translation": "REPL의 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101597Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:18/seg:0",
+      "source": "data modified only during runtime init (effectively immutable afterward)",
+      "source_hash": 11072608036370033203,
+      "context_hash": 11359888365442493746,
+      "translation": "런타임 초기화 중에만 수정되는 데이터(그 이후에는 사실상 불변)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101598Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:19/seg:0",
+      "source": "mutable data that's protected by some global lock (other than the GIL)",
+      "source_hash": 8228089319117621077,
+      "context_hash": 9149797069200698167,
+      "translation": "GIL 이외의 일부 전역 잠금으로 보호되는 변경 가능한 데이터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101598Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:20/seg:0",
+      "source": "global state in atomic variables",
+      "source_hash": 4974524011993964952,
+      "context_hash": 1096162450147202537,
+      "translation": "원자 변수에 저장된 전역 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101598Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:21/seg:0",
+      "source": "mutable global state that can be changed (sensibly) to atomic variables",
+      "source_hash": 11358511226263254078,
+      "context_hash": 17811762824544991510,
+      "translation": "원자 변수로 합리적으로 변환할 수 있는 변경 가능한 전역 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101598Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:22/seg:0",
+      "source": "Memory Allocators",
+      "source_hash": 8993809975234374428,
+      "context_hash": 7153182605659326568,
+      "translation": "메모리 할당자",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:51.101599Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:23/seg:0",
+      "source": "This is one of the most sensitive parts of the work to isolate interpreters.",
+      "source_hash": 3290264988255711648,
+      "context_hash": 10782096775903895781,
+      "translation": "인터프리터를 격리하는 작업에서 가장 민감한 부분 중 하나입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640198Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:23/seg:1",
+      "source": "The simplest solution is to move the global state of the internal \"small block\" allocator to ``PyInterpreterState``, as we are doing with nearly all other runtime state.",
+      "source_hash": 4971597104476432159,
+      "context_hash": 16063141472894553461,
+      "translation": "가장 단순한 해결책은 다른 거의 모든 런타임 상태에 대해 수행하고 있는 것처럼, 내부 \"small block\" 할당자의 전역 상태를 ``PyInterpreterState``\\ 로 옮기는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640201Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:23/seg:2",
+      "source": "The following elaborates on the details and rationale.",
+      "source_hash": 10773965142061797170,
+      "context_hash": 3265002612207023886,
+      "translation": "다음에서는 세부 사항과 그 근거를 자세히 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640201Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:24/seg:0",
+      "source": "CPython provides a memory management C-API, with `three allocator domains`_: \"raw\", \"mem\", and \"object\".",
+      "source_hash": 3732866632150395471,
+      "context_hash": 16302135068839708809,
+      "translation": "CPython은 `three allocator domains`_\\ 를 사용하는 메모리 관리 C-API를 제공합니다: \"raw\", \"mem\", \"object\"입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640202Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:24/seg:1",
+      "source": "Each provides the equivalent of ``malloc()``, ``calloc()``, ``realloc()``, and ``free()``.",
+      "source_hash": 11403401173525546114,
+      "context_hash": 11904467936335380947,
+      "translation": "각각은 ``malloc()``, ``calloc()``, ``realloc()``, ``free()``\\ 에 해당하는 기능을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640202Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:24/seg:2",
+      "source": "A custom allocator for each domain can be set during runtime initialization and the current allocator can be wrapped with a hook using the same API (for example, the stdlib tracemalloc module).",
+      "source_hash": 3780884204696909817,
+      "context_hash": 6044165319361098470,
+      "translation": "런타임 초기화 중 각 도메인에 대한 사용자 정의 할당자를 설정할 수 있으며, 동일한 API를 사용하여 현재 할당자를 훅으로 래핑할 수 있습니다(예: 표준 라이브러리 tracemalloc 모듈).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640202Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:24/seg:3",
+      "source": "The allocators are currently runtime-global, shared by all interpreters.",
+      "source_hash": 14625714305491386692,
+      "context_hash": 18080710849596860226,
+      "translation": "현재 할당자는 런타임 전역이며 모든 인터프리터가 공유합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640203Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:25/seg:0",
+      "source": "The \"raw\" allocator is expected to be thread-safe and defaults to glibc's allocator (``malloc()``, etc.).",
+      "source_hash": 9006523402110075593,
+      "context_hash": 7739204653545542059,
+      "translation": "\"raw\" 할당자는 스레드 안전할 것으로 예상되며 glibc의 할당자(``malloc()``, 등)를 기본값으로 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640203Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:25/seg:1",
+      "source": "However, the \"mem\" and \"object\" allocators are not expected to be thread-safe and currently may rely on the GIL for thread-safety.",
+      "source_hash": 11606075152510781449,
+      "context_hash": 4018718277673187962,
+      "translation": "그러나 \"mem\" 및 \"object\" 할당자는 스레드 안전할 것으로 예상되지 않으며 현재 스레드 안전성을 위해 GIL에 의존할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640203Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:25/seg:2",
+      "source": "This is partly because the default allocator for both, AKA \"pyobject\", `is not thread-safe`_.",
+      "source_hash": 9085427766813880338,
+      "context_hash": 18078219914530180384,
+      "translation": "이는 두 할당자의 기본 할당자, 즉 \"pyobject\"가 `is not thread-safe`_ 이기 때문이기도 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640203Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:25/seg:3",
+      "source": "This is due to how all state for that allocator is stored in C global variables. (See ``Objects/obmalloc.c``.)",
+      "source_hash": 15733706337211889187,
+      "context_hash": 11367294778412600579,
+      "translation": "이는 해당 할당자의 모든 상태가 C 전역 변수에 저장되는 방식 때문입니다. (``Objects/obmalloc.c``\\ 를 참조하십시오.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640203Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:26/seg:0",
+      "source": "Thus we come back to the question of isolating runtime state.",
+      "source_hash": 6145563614959020546,
+      "context_hash": 12528910168468969069,
+      "translation": "따라서 런타임 상태를 격리하는 문제로 다시 돌아옵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640203Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:26/seg:1",
+      "source": "In order for interpreters to stop sharing the GIL, allocator thread-safety must be addressed.",
+      "source_hash": 11712136395073806958,
+      "context_hash": 18430119523779705740,
+      "translation": "인터프리터가 GIL 공유를 중단하려면 할당자의 스레드 안전성을 해결해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640204Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:26/seg:2",
+      "source": "If interpreters continue sharing the allocators then we need some other way to get thread-safety.",
+      "source_hash": 17677725474805348543,
+      "context_hash": 7714587089735468011,
+      "translation": "인터프리터가 할당자를 계속 공유한다면 스레드 안전성을 확보할 다른 방법이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640204Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:26/seg:3",
+      "source": "Otherwise interpreters must stop sharing the allocators.",
+      "source_hash": 14044755425004819376,
+      "context_hash": 1669591510422027143,
+      "translation": "그렇지 않으면 인터프리터가 할당자 공유를 중단해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640204Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:26/seg:4",
+      "source": "In both cases there are a number of possible solutions, each with potential downsides.",
+      "source_hash": 15177283459201502924,
+      "context_hash": 11822709631121162496,
+      "translation": "두 경우 모두 여러 가지 가능한 해결책이 있으며, 각각 잠재적인 단점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640205Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:27/seg:0",
+      "source": "To keep sharing the allocators, the simplest solution is to use a granular runtime-global lock around the calls to the \"mem\" and \"object\" allocators in ``PyMem_Malloc()``, ``PyObject_Malloc()``, etc.  This would impact performance, but there are some ways to mitigate that (e.g. only start locking once the first subinterpreter is created).",
+      "source_hash": 6615833661204278094,
+      "context_hash": 17535777937015514424,
+      "translation": "할당자를 계속 공유하려면 가장 단순한 해결책은 ``PyMem_Malloc()``, ``PyObject_Malloc()``, 등의 \"mem\" 및 \"object\" 할당자 호출 주위에 세분화된 런타임 전역 잠금을 사용하는 것입니다. 이는 성능에 영향을 주지만, 이를 완화할 방법이 일부 있습니다(예: 첫 번째 서브인터프리터가 생성된 후에만 잠금을 시작하는 방법).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640205Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:28/seg:0",
+      "source": "Another way to keep sharing the allocators is to require that the \"mem\" and \"object\" allocators be thread-safe.",
+      "source_hash": 4223049976239638336,
+      "context_hash": 2051229697841847589,
+      "translation": "할당자를 계속 공유하는 또 다른 방법은 \"mem\" 및 \"object\" 할당자가 스레드 안전하도록 요구하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640205Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:28/seg:1",
+      "source": "This would mean we'd have to make the pyobject allocator implementation thread-safe.",
+      "source_hash": 17866325520404872957,
+      "context_hash": 9585407715180587928,
+      "translation": "이는 pyobject 할당자 구현을 스레드 안전하게 만들어야 한다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640205Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:28/seg:2",
+      "source": "That could even involve re-implementing it using an extensible allocator like mimalloc.",
+      "source_hash": 17717221438273033808,
+      "context_hash": 15830476662808424338,
+      "translation": "여기에는 mimalloc과 같은 확장 가능한 할당자를 사용하여 이를 다시 구현하는 작업도 포함될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640205Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:28/seg:3",
+      "source": "The potential downside is in the cost to re-implement the allocator and the risk of defects inherent to such an endeavor.",
+      "source_hash": 3124097038218680643,
+      "context_hash": 13850184718371585906,
+      "translation": "잠재적인 단점은 할당자를 다시 구현하는 데 드는 비용과 이러한 작업에 내재된 결함 위험입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640206Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:29/seg:0",
+      "source": "Regardless, a switch to requiring thread-safe allocators would impact anyone that embeds CPython and currently sets a thread-unsafe allocator.",
+      "source_hash": 10711829786740947554,
+      "context_hash": 4425195803721971072,
+      "translation": "어쨌든 스레드 안전한 할당자를 요구하도록 전환하면 CPython을 임베드하고 현재 스레드 안전하지 않은 할당자를 설정하는 모든 사용자에게 영향을 미칩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640206Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:29/seg:1",
+      "source": "We'd need to consider who might be affected and how we reduce any negative impact (e.g. add a basic C-API to help make an allocator thread-safe).",
+      "source_hash": 11961332172849097764,
+      "context_hash": 7701384092398881033,
+      "translation": "누가 영향을 받을 수 있는지와 부정적인 영향을 줄일 방법을 고려해야 합니다(예: 할당자를 스레드 안전하게 만드는 데 도움이 되는 기본 C-API를 추가하는 방법).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640207Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:30/seg:0",
+      "source": "If we did stop sharing the allocators between interpreters, we'd have to do so only for the \"mem\" and \"object\" allocators.",
+      "source_hash": 11183631479880926417,
+      "context_hash": 5783150491552408791,
+      "translation": "인터프리터 간 할당자 공유를 중단한다면 \"mem\" 및 \"object\" 할당자에 대해서만 중단해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640207Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:30/seg:1",
+      "source": "We might also need to keep a full set of global allocators for certain runtime-level usage.",
+      "source_hash": 13588982057757175474,
+      "context_hash": 15495388356794982835,
+      "translation": "특정 런타임 수준의 용도를 위해 전역 할당자의 전체 집합을 유지해야 할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640207Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:30/seg:2",
+      "source": "There would be some performance penalty due to looking up the current interpreter and then pointer indirection to get the allocators.",
+      "source_hash": 11841783198286057060,
+      "context_hash": 4556246683219868067,
+      "translation": "현재 인터프리터를 조회한 다음 포인터 간접 참조를 통해 할당자를 가져와야 하므로 어느 정도 성능 저하가 발생합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:16:19.640208Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:30/seg:3",
+      "source": "Embedders would also likely have to provide a new allocator context for each interpreter.",
+      "source_hash": 492208844315733522,
+      "context_hash": 17314912334796790947,
+      "translation": "임베더는 각 인터프리터에 새로운 할당자 컨텍스트도 제공해야 할 가능성이 높습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:16:19.640208Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:30/seg:4",
+      "source": "On the plus side, allocator hooks (e.g. tracemalloc) would not be affected.",
+      "source_hash": 2548947448241689924,
+      "context_hash": 10931337546556858318,
+      "translation": "긍정적인 측면으로는 할당자 훅(예: tracemalloc)이 영향을 받지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640209Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:31/seg:0",
+      "source": "Ultimately, we will go with the simplest option:",
+      "source_hash": 7585837389666606303,
+      "context_hash": 14414476966375771458,
+      "translation": "궁극적으로 가장 단순한 옵션을 선택합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640209Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:32/seg:0",
+      "source": "keep the allocators in the global runtime state",
+      "source_hash": 13823594732520334306,
+      "context_hash": 11817424169997491606,
+      "translation": "할당자를 전역 런타임 상태에 유지합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640209Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:33/seg:0",
+      "source": "require that they be thread-safe",
+      "source_hash": 13809018688890918967,
+      "context_hash": 7869803740257583791,
+      "translation": "할당자가 스레드 안전하도록 요구합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640209Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:34/seg:0",
+      "source": "move the state of the default object allocator (AKA \"small block\" allocator) to ``PyInterpreterState``",
+      "source_hash": 8421372764133304543,
+      "context_hash": 13865129611134241502,
+      "translation": "기본 객체 할당자(즉, \"small block\" 할당자)의 상태를 ``PyInterpreterState``\\ 로 옮깁니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:19.640210Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:35/seg:0",
+      "source": "We experimented with `a rough implementation`_ and found it was fairly straightforward, and the performance penalty was essentially zero.",
+      "source_hash": 5047763599585165959,
+      "context_hash": 3955153258456350291,
+      "translation": "`a rough implementation`_\\ 을 실험해 보니 상당히 간단했으며 성능 저하는 사실상 0이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732643Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "C-API",
+      "source_hash": 5664545844492850945,
+      "context_hash": 9662952951790205400,
+      "translation": "C-API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732648Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Internally, the interpreter state will now track how the import system should handle extension modules which do not support use with multiple interpreters.",
+      "source_hash": 853186812722860526,
+      "context_hash": 3974911552507109499,
+      "translation": "이제 인터프리터 상태에서 여러 인터프리터와 함께 사용할 수 없는 확장 모듈을 임포트 시스템이 어떻게 처리해야 하는지 추적합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:47.732649Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "See `Restricting Extension Modules`_ below.",
+      "source_hash": 4260143256886295252,
+      "context_hash": 16207834276722195922,
+      "translation": "아래의 `Restricting Extension Modules`_ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732651Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:2",
+      "source": "We'll refer to that setting here as \"PyInterpreterState.strict_extension_compat\".",
+      "source_hash": 404870247044888986,
+      "context_hash": 15993749049537351398,
+      "translation": "여기서는 해당 설정을 \"PyInterpreterState.strict_extension_compat\"라고 부르겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732652Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "The following API will be made public, if they haven't been already:",
+      "source_hash": 5416752832272016165,
+      "context_hash": 3488406854197728652,
+      "translation": "다음 API는 아직 공개되지 않았다면 공개됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732652Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "``PyInterpreterConfig`` (struct)",
+      "source_hash": 13889212545620867891,
+      "context_hash": 5085012770388853359,
+      "translation": "``PyInterpreterConfig`` (구조체)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732653Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "``PyInterpreterConfig_INIT`` (macro)",
+      "source_hash": 9696548749676203512,
+      "context_hash": 7841808372837824618,
+      "translation": "``PyInterpreterConfig_INIT`` (매크로)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732653Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:0",
+      "source": "``PyInterpreterConfig_LEGACY_INIT`` (macro)",
+      "source_hash": 6503378284324406770,
+      "context_hash": 6076745954192900269,
+      "translation": "``PyInterpreterConfig_LEGACY_INIT`` (매크로)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732653Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:0",
+      "source": "``PyThreadState * Py_NewInterpreterFromConfig(PyInterpreterConfig *)``",
+      "source_hash": 18412258657335694451,
+      "context_hash": 14858769851969606355,
+      "translation": "``PyThreadState * Py_NewInterpreterFromConfig(PyInterpreterConfig *)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732653Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:0",
+      "source": "We will add two new fields to ``PyInterpreterConfig``:",
+      "source_hash": 16299554150812325575,
+      "context_hash": 5971404130507139098,
+      "translation": "``PyInterpreterConfig``\\ 에 두 개의 새 필드를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732654Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:8/seg:0",
+      "source": "``int own_gil``",
+      "source_hash": 3608075551471234036,
+      "context_hash": 8291634329047429780,
+      "translation": "``int own_gil``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732654Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:9/seg:0",
+      "source": "``int strict_extensions_compat``",
+      "source_hash": 4665265919217716511,
+      "context_hash": 7869531191998417186,
+      "translation": "``int strict_extensions_compat``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732654Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:10/seg:0",
+      "source": "We may add other fields over time, as needed (e.g. \"own_initial_thread\").",
+      "source_hash": 4785169876598575458,
+      "context_hash": 2148423697224233506,
+      "translation": "필요에 따라 시간이 지나면서 다른 필드도 추가할 수 있습니다(예: \"own_initial_thread\").",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732655Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:11/seg:0",
+      "source": "Regarding the initializer macros, ``PyInterpreterConfig_INIT`` would be used to get an isolated interpreter that also avoids subinterpreter-unfriendly features.",
+      "source_hash": 17183751658780638788,
+      "context_hash": 18207029873713302667,
+      "translation": "초기화 매크로와 관련하여 ``PyInterpreterConfig_INIT``\\ 은 서브인터프리터에 적합하지 않은 기능도 피하는 격리된 인터프리터를 가져오는 데 사용됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:47.732655Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:11/seg:1",
+      "source": "It would be the default for interpreters created through :pep:`554`.",
+      "source_hash": 5707392467259647494,
+      "context_hash": 18022039244417403502,
+      "translation": "이는 :pep:`554`\\ 를 통해 생성되는 인터프리터의 기본값이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:54:18.968689Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:11/seg:2",
+      "source": "The unrestricted (status quo) will continue to be available through ``PyInterpreterConfig_LEGACY_INIT``, which is already used for the main interpreter and ``Py_NewInterpreter()``.",
+      "source_hash": 11530095176789522335,
+      "context_hash": 858656278215602345,
+      "translation": "제한이 없는 기존 동작은 이미 메인 인터프리터와 ``Py_NewInterpreter()``\\ 에 사용되는 ``PyInterpreterConfig_LEGACY_INIT``\\ 을 통해 계속 사용할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:47.732657Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:11/seg:3",
+      "source": "This will not change.",
+      "source_hash": 4423271020282845636,
+      "context_hash": 13233990536913456254,
+      "translation": "이는 변경되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732657Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:12/seg:0",
+      "source": "A note about the \"main\" interpreter:",
+      "source_hash": 510700206266259765,
+      "context_hash": 17447827712513944258,
+      "translation": "\"main\" 인터프리터에 대한 참고 사항:",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:47.732658Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:13/seg:0",
+      "source": "Below, we mention the \"main\" interpreter several times.",
+      "source_hash": 7576855443335834747,
+      "context_hash": 13550231141775605623,
+      "translation": "아래에서는 \"main\" 인터프리터를 여러 차례 언급합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:47.732658Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:13/seg:1",
+      "source": "This refers to the interpreter created during runtime initialization, for which the initial ``PyThreadState`` corresponds to the process's main thread.",
+      "source_hash": 10687996103983501502,
+      "context_hash": 10445137642750518651,
+      "translation": "이는 런타임 초기화 중 생성되는 인터프리터를 가리키며, 이 인터프리터의 초기 ``PyThreadState``\\ 는 프로세스의 주 스레드에 해당합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:47.732659Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:13/seg:2",
+      "source": "It is has a number of unique responsibilities (e.g. handling signals), as well as a special role during runtime initialization/finalization.",
+      "source_hash": 5302867709764701139,
+      "context_hash": 17555594655771707806,
+      "translation": "이 인터프리터에는 고유한 여러 책임(예: 신호 처리)이 있으며, 런타임 초기화 및 종료 중 특별한 역할도 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732661Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:13/seg:3",
+      "source": "It is also usually (for now) the only interpreter. (Also see https://docs.python.org/3/c-api/init.html#sub-interpreter-support.)",
+      "source_hash": 6338000780331364102,
+      "context_hash": 17255190595152183294,
+      "translation": "또한 일반적으로(현재로서는) 유일한 인터프리터입니다. (또한 https://docs.python.org/3/c-api/init.html#sub-interpreter-support 를 참조하십시오.)",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:47.732661Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:14/seg:0",
+      "source": "PyInterpreterConfig.own_gil",
+      "source_hash": 7008476092458887408,
+      "context_hash": 8205414945782861690,
+      "translation": "PyInterpreterConfig.own_gil",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732662Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:15/seg:0",
+      "source": "If ``true`` (``1``) then the new interpreter will have its own \"global\" interpreter lock.",
+      "source_hash": 4077141437443143402,
+      "context_hash": 17160863364876722600,
+      "translation": "``true`` (``1``)\\ 이면 새 인터프리터는 자체 \"전역\" 인터프리터 잠금을 갖습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:47.732662Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:15/seg:1",
+      "source": "This means the new interpreter can run without getting interrupted by other interpreters.",
+      "source_hash": 1595626299999147045,
+      "context_hash": 4560407902653814049,
+      "translation": "이는 새 인터프리터가 다른 인터프리터에 의해 중단되지 않고 실행될 수 있음을 의미합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:47.732663Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:15/seg:2",
+      "source": "This effectively unblocks full use of multiple cores.",
+      "source_hash": 16734797355646090486,
+      "context_hash": 16184250095446376617,
+      "translation": "이로써 여러 코어를 완전히 사용할 수 있게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732663Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:15/seg:3",
+      "source": "That is the fundamental goal of this PEP.",
+      "source_hash": 7282113311030570940,
+      "context_hash": 2322270569573194692,
+      "translation": "이것이 이 PEP의 근본적인 목표입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732664Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:16/seg:0",
+      "source": "If ``false`` (``0``) then the new interpreter will use the main interpreter's lock.",
+      "source_hash": 15392366334757640222,
+      "context_hash": 14126686043735827469,
+      "translation": "``false`` (``0``)\\ 이면 새 인터프리터는 메인 인터프리터의 잠금을 사용합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:15:47.732664Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:16/seg:1",
+      "source": "This is the legacy (pre-3.12) behavior in CPython, where all interpreters share a single GIL.",
+      "source_hash": 8313418907678977833,
+      "context_hash": 16249841405513831937,
+      "translation": "이는 CPython에서 모든 인터프리터가 하나의 GIL을 공유하는 기존(3.12 이전) 동작입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732665Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:16/seg:2",
+      "source": "Sharing the GIL like this may be desirable when using extension modules that still depend on the GIL for thread safety.",
+      "source_hash": 12970890300305205160,
+      "context_hash": 5168954848072094821,
+      "translation": "이처럼 GIL을 공유하는 방식은 스레드 안전성을 위해 여전히 GIL에 의존하는 확장 모듈을 사용할 때 바람직할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:47.732665Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:17/seg:0",
+      "source": "In ``PyInterpreterConfig_INIT``, this will be ``true``.",
+      "source_hash": 9003894500402953831,
+      "context_hash": 15920412564520726574,
+      "translation": "``PyInterpreterConfig_INIT``\\ 에서는 ``true``\\ 가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149516Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:17/seg:1",
+      "source": "In ``PyInterpreterConfig_LEGACY_INIT``, this will be ``false``.",
+      "source_hash": 4274818795714651165,
+      "context_hash": 16448255138105411787,
+      "translation": "``PyInterpreterConfig_LEGACY_INIT``\\ 에서는 ``false``\\ 가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149519Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:18/seg:0",
+      "source": "Also, to play it safe, for now we will not allow ``own_gil`` to be true if a custom allocator was set during runtime init.",
+      "source_hash": 16467420628349663921,
+      "context_hash": 10081360002085671338,
+      "translation": "또한 안전을 위해, 현재로서는 런타임 초기화 중 사용자 정의 할당자가 설정된 경우 ``own_gil``\\ 이 true가 되도록 허용하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:54:18.968693Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:18/seg:1",
+      "source": "Wrapping the allocator, a la tracemalloc, will still be fine.",
+      "source_hash": 14378155712842732976,
+      "context_hash": 14256838547579970944,
+      "translation": "tracemalloc과 같이 할당자를 래핑하는 것은 여전히 괜찮습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149521Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:19/seg:0",
+      "source": "PyInterpreterConfig.strict_extensions_compat",
+      "source_hash": 2461303091232099184,
+      "context_hash": 15396329153389585364,
+      "translation": "PyInterpreterConfig.strict_extensions_compat",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149521Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:20/seg:0",
+      "source": "``PyInterpreterConfig.strict_extension_compat`` is basically the initial value used for \"PyInterpreterState.strict_extension_compat\".",
+      "source_hash": 5494993240778416118,
+      "context_hash": 17782088113673263866,
+      "translation": "``PyInterpreterConfig.strict_extension_compat``\\ 은 기본적으로 \"PyInterpreterState.strict_extension_compat\"에 사용되는 초기 값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149522Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Restricting Extension Modules",
+      "source_hash": 6944452054802498655,
+      "context_hash": 2825534016342161069,
+      "translation": "확장 모듈 제한",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149522Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Extension modules have many of the same problems as the runtime when state is stored in global variables.  :pep:`630` covers all the details of what extensions must do to support isolation, and thus safely run in multiple interpreters at once.",
+      "source_hash": 14805918144482698456,
+      "context_hash": 4869018183447668782,
+      "translation": "상태가 전역 변수에 저장될 때 확장 모듈은 런타임과 동일한 문제를 많이 겪습니다. :pep:`630`\\ 에서는 확장 모듈이 격리를 지원하고 여러 인터프리터에서 동시에 안전하게 실행되기 위해 해야 하는 모든 작업을 다룹니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149522Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "This includes dealing with their globals.",
+      "source_hash": 16251546632370300155,
+      "context_hash": 13056885608571999971,
+      "translation": "여기에는 확장 모듈의 전역 변수 처리가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149523Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "If an extension implements multi-phase init (see :pep:`489`) it is considered compatible with multiple interpreters.",
+      "source_hash": 17762714576317552671,
+      "context_hash": 8404742529718590828,
+      "translation": "확장 모듈이 다단계 초기화를 구현하면(:pep:`489` 참조) 여러 인터프리터와 호환되는 것으로 간주합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149523Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:1",
+      "source": "All other extensions are considered incompatible.  (See `Extension Module Thread Safety`_ for more details about how a per-interpreter GIL may affect that classification.)",
+      "source_hash": 14171465990163467970,
+      "context_hash": 6463311437157659201,
+      "translation": "그 외의 모든 확장 모듈은 호환되지 않는 것으로 간주합니다. 분류에 인터프리터별 GIL이 미치는 영향에 관한 자세한 내용은 `Extension Module Thread Safety`_\\ 를 참조하십시오.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:16:03.149523Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "If an incompatible extension is imported and the current \"PyInterpreterState.strict_extension_compat\" value is ``true`` then the import system will raise ``ImportError``.  (For ``false`` it simply doesn't check.) This will be done through ``importlib._bootstrap_external.ExtensionFileLoader`` (really, through ``_imp.create_dynamic()``, ``_PyImport_LoadDynamicModuleWithSpec()``, and ``PyModule_FromDefAndSpec2()``).",
+      "source_hash": 17643458714496315154,
+      "context_hash": 17113234444514795274,
+      "translation": "호환되지 않는 확장 모듈을 가져왔고 현재 \"PyInterpreterState.strict_extension_compat\" 값이 ``true``\\ 이면 가져오기 시스템에서 ``ImportError``\\ 를 발생시킵니다. (``false``\\ 인 경우에는 단순히 검사하지 않습니다.) 이 작업은 ``importlib._bootstrap_external.ExtensionFileLoader``\\ 를 통해 수행됩니다(실제로는 ``_imp.create_dynamic()``, ``_PyImport_LoadDynamicModuleWithSpec()``, ``PyModule_FromDefAndSpec2()``\\ 를 통해 수행됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149525Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "Such imports will never fail in the main interpreter (or in interpreters created through ``Py_NewInterpreter()``) since \"PyInterpreterState.strict_extension_compat\" initializes to ``false`` in both cases.",
+      "source_hash": 10873387132150774500,
+      "context_hash": 2989606585269182331,
+      "translation": "\"PyInterpreterState.strict_extension_compat\"은 두 경우 모두 ``false``\\ 로 초기화되므로, 주 인터프리터(또는 ``Py_NewInterpreter()``\\ 를 통해 생성된 인터프리터)에서는 이러한 가져오기가 절대 실패하지 않습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:16:03.149525Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:1",
+      "source": "Thus the legacy (pre-3.12) behavior is preserved.",
+      "source_hash": 8684098290741314325,
+      "context_hash": 14959676740671039715,
+      "translation": "따라서 레거시(3.12 이전) 동작이 보존됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149526Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:0",
+      "source": "We will work with popular extensions to help them support use in multiple interpreters.",
+      "source_hash": 12968882216508812841,
+      "context_hash": 18309418958909633227,
+      "translation": "널리 사용되는 확장 모듈이 여러 인터프리터에서 사용될 수 있도록 지원하는 작업을 해당 개발자들과 함께 진행할 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149526Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:1",
+      "source": "This may involve adding to CPython's public C-API, which we will address on a case-by-case basis.",
+      "source_hash": 16745641879095621041,
+      "context_hash": 9669824173380196198,
+      "translation": "여기에는 CPython의 공개 C-API에 추가하는 작업이 포함될 수 있으며, 이 문제는 사례별로 다룰 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149526Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:6/seg:0",
+      "source": "Extension Module Compatibility",
+      "source_hash": 3121759857008990934,
+      "context_hash": 18276087199654916630,
+      "translation": "확장 모듈 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149526Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:7/seg:0",
+      "source": "As noted in `Extension Modules`_, many extensions work fine in multiple interpreters (and under a per-interpreter GIL) without needing any changes.",
+      "source_hash": 1325102317121298200,
+      "context_hash": 18161398472567451345,
+      "translation": "`Extension Modules`_\\ 에서 언급했듯이, 많은 확장 모듈은 변경이 필요하지 않은 상태에서도 여러 인터프리터에서(그리고 인터프리터별 GIL 아래에서도) 문제없이 작동합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:16:03.149526Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:7/seg:1",
+      "source": "The import system will still fail if such a module doesn't explicitly indicate support.",
+      "source_hash": 16892888285778566651,
+      "context_hash": 16757301351870745937,
+      "translation": "이러한 모듈이 지원을 명시적으로 나타내지 않으면 가져오기 시스템은 여전히 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149527Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:7/seg:2",
+      "source": "At first, not many extension modules will, so this is a potential source of frustration.",
+      "source_hash": 6704112385598900448,
+      "context_hash": 10964118627650340832,
+      "translation": "처음에는 그렇게 하는 확장 모듈이 많지 않을 것이므로, 이는 불만을 일으킬 수 있는 잠재적인 원인입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149527Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:8/seg:0",
+      "source": "We will address this by adding a context manager to temporarily disable the check on multiple interpreter support: ``importlib.util.allow_all_extensions()``.",
+      "source_hash": 2923579350885188928,
+      "context_hash": 6707774132190415966,
+      "translation": "여러 인터프리터 지원 검사를 일시적으로 비활성화하는 컨텍스트 관리자를 추가하여 이 문제를 해결할 예정입니다: ``importlib.util.allow_all_extensions()``.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:16:03.149528Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:8/seg:1",
+      "source": "More or less, it will modify the current \"PyInterpreterState.strict_extension_compat\" value (e.g. through a private ``sys`` function).",
+      "source_hash": 14559649734192017736,
+      "context_hash": 1346000550765148212,
+      "translation": "대략적으로 말하면, 이는 현재의 \"PyInterpreterState.strict_extension_compat\" 값을 수정합니다(예: 비공개 ``sys`` 함수를 통해 수정합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149529Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:9/seg:0",
+      "source": "Extension Module Thread Safety",
+      "source_hash": 10504039415910113527,
+      "context_hash": 17500789008703460350,
+      "translation": "확장 모듈 스레드 안전성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149529Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:10/seg:0",
+      "source": "If a module supports use with multiple interpreters, that mostly implies it will work even if those interpreters do not share the GIL.",
+      "source_hash": 17917125713242182991,
+      "context_hash": 17924415819832718928,
+      "translation": "모듈이 여러 인터프리터에서의 사용을 지원한다면, 이는 대체로 해당 인터프리터들이 GIL을 공유하지 않더라도 작동한다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149529Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:10/seg:1",
+      "source": "The one caveat is where a module links against a library with internal global state that isn't thread-safe.  (Even something as innocuous as a static local variable as a temporary buffer can be a problem.)  With a shared GIL, that state is protected.",
+      "source_hash": 16039905042459054369,
+      "context_hash": 4719021048020508041,
+      "translation": "한 가지 예외는 모듈이 스레드 안전하지 않은 내부 전역 상태를 가진 라이브러리에 링크하는 경우입니다. (임시 버퍼로 사용하는 정적 지역 변수처럼 무해해 보이는 것조차 문제가 될 수 있습니다.) GIL을 공유하면 해당 상태가 보호됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149530Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:10/seg:2",
+      "source": "Without one, such modules must wrap any use of that state (e.g. through calls) with a lock.",
+      "source_hash": 2219093757574397872,
+      "context_hash": 9457044550564150595,
+      "translation": "공유 GIL이 없으면 이러한 모듈은 해당 상태를 사용하는 모든 작업을 잠금으로 감싸야 합니다(예: 호출을 통해 감쌉니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149530Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:11/seg:0",
+      "source": "Currently, it isn't clear whether or not supports-multiple-interpreters is sufficiently equivalent to supports-per-interpreter-gil, such that we can avoid any special accommodations.",
+      "source_hash": 16354879344548498057,
+      "context_hash": 881596377629320623,
+      "translation": "현재 supports-multiple-interpreters(여러 인터프리터 지원)가 supports-per-interpreter-gil(인터프리터별 GIL 지원)과 충분히 동등하여 특별한 조치를 피할 수 있는지는 명확하지 않습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:54:18.968694Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:11/seg:1",
+      "source": "This is still a point of meaningful discussion and investigation.",
+      "source_hash": 10236629801832510082,
+      "context_hash": 4771214715895729333,
+      "translation": "이는 여전히 의미 있는 논의와 조사가 진행 중인 사안입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149531Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:11/seg:2",
+      "source": "The practical distinction between the two (in the Python community, e.g. PyPI) is not yet understood well enough to settle the matter.",
+      "source_hash": 11884441149599197417,
+      "context_hash": 4468642767780299665,
+      "translation": "두 기능의 실질적인 차이는(예를 들어 PyPI와 같은 Python 커뮤니티에서) 이 문제를 결정할 만큼 충분히 이해되지 않은 상태입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149531Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:11/seg:3",
+      "source": "Likewise, it isn't clear what we might be able to do to help extension maintainers mitigate the problem (assuming it is one).",
+      "source_hash": 5743576463419305912,
+      "context_hash": 3584179570512988469,
+      "translation": "마찬가지로, 이 문제가 실제로 존재한다고 가정할 때 확장 모듈 유지 관리자가 이를 완화하도록 지원하기 위해 무엇을 할 수 있을지도 명확하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149531Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:12/seg:0",
+      "source": "In the meantime, we must proceed as though the difference would be large enough to cause problems for enough extension modules out there.",
+      "source_hash": 14507304927622796071,
+      "context_hash": 12339084990172478692,
+      "translation": "그동안에는 이러한 차이가 현재 존재하는 충분한 수의 확장 모듈에 문제를 일으킬 만큼 클 것이라고 가정하고 진행해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149532Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:12/seg:1",
+      "source": "The solution we would apply is:",
+      "source_hash": 12291340805577732882,
+      "context_hash": 3567644354088476040,
+      "translation": "적용할 해결책은 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:03.149532Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:13/seg:0",
+      "source": "add a ``PyModuleDef`` slot that indicates an extension can be imported under a per-interpreter GIL (i.e. opt in)",
+      "source_hash": 14672798262268763771,
+      "context_hash": 10399043512005824703,
+      "translation": "인터프리터별 GIL에서 확장을 가져올 수 있음을 나타내는 ``PyModuleDef`` 슬롯을 추가하십시오(즉, 옵트인하십시오)",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:16:05.947697Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:14/seg:0",
+      "source": "add that slot as part of the definition of a \"compatible\" extension, as discussed earlier",
+      "source_hash": 5557915624894454135,
+      "context_hash": 18044407973352132167,
+      "translation": "앞서 논의한 대로 해당 슬롯을 “호환 가능한” 확장의 정의에 포함되는 항목으로 추가하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947701Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:15/seg:0",
+      "source": "The downside is that not a single extension module will be able to take advantage of the per-interpreter GIL without extra effort by the module maintainer, regardless of how minor that effort.",
+      "source_hash": 5556237043703182204,
+      "context_hash": 15654758329122816958,
+      "translation": "단점은 모듈 유지 관리자가 아무리 사소하더라도 추가 작업을 하지 않으면 인터프리터별 GIL을 활용할 수 있는 확장 모듈이 단 하나도 없다는 것입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:16:05.947701Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:15/seg:1",
+      "source": "This compounds the problem described in `Extension Module Compatibility`_ and the same workaround applies.",
+      "source_hash": 16805619696588248446,
+      "context_hash": 12195740996233623893,
+      "translation": "이는 `Extension Module Compatibility`_\\ 에 설명된 문제를 악화시키며, 동일한 우회 방법이 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947702Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:15/seg:2",
+      "source": "Ideally, we would determine that there isn't enough difference to matter.",
+      "source_hash": 4822352661690034961,
+      "context_hash": 11374378306210788558,
+      "translation": "이상적으로는 차이가 문제가 될 만큼 충분히 크지 않다는 것을 확인해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947702Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:16/seg:0",
+      "source": "If we do end up requiring an opt-in for imports under a per-interpreter GIL, and later determine it isn't necessary, then we can switch the default at that point, make the old opt-in slot a noop, and add a new ``PyModuleDef`` slot for explicitly opting *out*.",
+      "source_hash": 7017267633512692071,
+      "context_hash": 1788086422158269990,
+      "translation": "인터프리터별 GIL에서 가져오기하려면 옵트인이 필요하게 되었지만 나중에 그것이 필요하지 않다고 판단한다면, 그 시점에 기본값을 전환하고 기존 옵트인 슬롯을 아무 작업도 하지 않도록 만든 다음 명시적으로 *옵트아웃*\\ 하기 위한 새로운 ``PyModuleDef`` 슬롯을 추가할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:16:05.947703Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:16/seg:1",
+      "source": "In fact, it makes sense to add that opt-out slot from the beginning.",
+      "source_hash": 11407485505162978586,
+      "context_hash": 12281901117344128787,
+      "translation": "실제로는 처음부터 해당 옵트아웃 슬롯을 추가하는 것이 타당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947703Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Documentation",
+      "source_hash": 10013224844392777931,
+      "context_hash": 8335353061346685085,
+      "translation": "문서화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947704Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "C-API: the \"Sub-interpreter support\" section of ``Doc/c-api/init.rst`` will detail the updated API",
+      "source_hash": 11323788436027688865,
+      "context_hash": 14668622989038462867,
+      "translation": "C-API: ``Doc/c-api/init.rst``\\ 의 “서브인터프리터 지원” 섹션에서 업데이트된 API를 자세히 설명합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:16:05.947704Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "C-API: that section will explain about the consequences of a per-interpreter GIL",
+      "source_hash": 5206620964824914790,
+      "context_hash": 9222152979262716079,
+      "translation": "C-API: 해당 섹션에서는 인터프리터별 GIL의 결과를 설명합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:16:05.947705Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "importlib: the ``ExtensionFileLoader`` entry will note import may fail in subinterpreters",
+      "source_hash": 15676818035918716293,
+      "context_hash": 8946632375506164946,
+      "translation": "importlib: ``ExtensionFileLoader``\\ 항목에 서브인터프리터에서 가져오기가 실패할 수 있음을 명시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947705Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:4/seg:0",
+      "source": "importlib: there will be a new entry about ``importlib.util.allow_all_extensions()``",
+      "source_hash": 17016927967425304426,
+      "context_hash": 9158864880092192879,
+      "translation": "importlib: ``importlib.util.allow_all_extensions()``\\ 에 관한 새 항목이 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947706Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Impact",
+      "source_hash": 13241537819021598767,
+      "context_hash": 7490783173082788297,
+      "translation": "영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947706Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 3215041977259738702,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947706Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "No behavior or APIs are intended to change due to this proposal, with two exceptions:",
+      "source_hash": 3390112204794587359,
+      "context_hash": 17244521975052945051,
+      "translation": "이 제안으로 인해 동작이나 API가 변경되지는 않지만, 두 가지 예외가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947706Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "some extensions will fail to import in some subinterpreters (see `the next section <Extension Modules_>`_)",
+      "source_hash": 16580549321923316833,
+      "context_hash": 16467350816827075652,
+      "translation": "일부 확장은 일부 서브인터프리터에서 가져오기에 실패합니다(`the next section <Extension Modules_>`_ 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947706Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "\"mem\" and \"object\" allocators that are currently not thread-safe may now be susceptible to data races when used in combination with multiple interpreters",
+      "source_hash": 4188364279075511004,
+      "context_hash": 6610927939820368729,
+      "translation": "현재 스레드로부터 안전하지 않은 “mem” 및 “object” 할당자는 여러 인터프리터와 함께 사용될 때 이제 데이터 경쟁의 영향을 받을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947707Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "The existing C-API for managing interpreters will preserve its current behavior, with new behavior exposed through new API.",
+      "source_hash": 17448657321944327385,
+      "context_hash": 8997734366666187301,
+      "translation": "인터프리터를 관리하기 위한 기존 C-API는 현재 동작을 유지하며, 새로운 API를 통해 새로운 동작이 제공됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947707Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:1",
+      "source": "No other API or runtime behavior is meant to change, including compatibility with the stable ABI.",
+      "source_hash": 17895597580684209266,
+      "context_hash": 8019475724414587283,
+      "translation": "안정 ABI와의 호환성을 포함하여 다른 API나 런타임 동작은 변경되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947707Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "See `Objects Exposed in the C-API`_ below for related discussion.",
+      "source_hash": 8814114005295686774,
+      "context_hash": 12121813456298287701,
+      "translation": "관련 논의는 아래의 `Objects Exposed in the C-API`_ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947708Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:0",
+      "source": "Extension Modules",
+      "source_hash": 2473043362673317740,
+      "context_hash": 9147811054902480436,
+      "translation": "확장 모듈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947708Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:0",
+      "source": "Currently the most common usage of Python, by far, is with the main interpreter running by itself.",
+      "source_hash": 3104376421910157284,
+      "context_hash": 1063589252564055634,
+      "translation": "현재 Python의 가장 일반적인 사용 방식은 단연 메인 인터프리터만 실행하는 것입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:16:05.947708Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:1",
+      "source": "This proposal has zero impact on extension modules in that scenario.",
+      "source_hash": 5989471158493668629,
+      "context_hash": 1738589220133777021,
+      "translation": "이 제안은 그러한 시나리오의 확장 모듈에 전혀 영향을 주지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947708Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:2",
+      "source": "Likewise, for better or worse, there is no change in behavior under multiple interpreters created using the existing ``Py_NewInterpreter()``.",
+      "source_hash": 7044258595845774536,
+      "context_hash": 6823612070136060125,
+      "translation": "마찬가지로 기존의 ``Py_NewInterpreter()``\\ 를 사용하여 만든 여러 인터프리터에서도 좋든 나쁘든 동작에는 변화가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947709Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:8/seg:0",
+      "source": "Keep in mind that some extensions already break when used in multiple interpreters, due to keeping module state in global variables (or due to the `internal state of linked libraries`_).",
+      "source_hash": 17058866330892608412,
+      "context_hash": 13222458962969357564,
+      "translation": "일부 확장은 모듈 상태를 전역 변수에 저장하기 때문에(또는 `internal state of linked libraries`_ 때문이기 때문에) 여러 인터프리터에서 사용하면 이미 중단된다는 점을 염두에 두십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947709Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:8/seg:1",
+      "source": "They may crash or, worse, experience inconsistent behavior.",
+      "source_hash": 3009063757632329324,
+      "context_hash": 7369588085619897412,
+      "translation": "확장이 충돌하거나, 더 나쁘게는 일관되지 않은 동작을 보일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947709Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:8/seg:2",
+      "source": "That was part of the motivation for :pep:`630` and friends, so this is not a new situation nor a consequence of this proposal.",
+      "source_hash": 11781748238789873678,
+      "context_hash": 17012772386646734971,
+      "translation": "이것이 :pep:`630` 및 관련 제안들의 동기 중 하나였으므로, 이는 새로운 상황도 아니며 이 제안의 결과도 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947710Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:9/seg:0",
+      "source": "In contrast, when the `proposed API <proposed capi_>`_ is used to create multiple interpreters, with the appropriate settings, the behavior will change for incompatible extensions.",
+      "source_hash": 8092030403451776584,
+      "context_hash": 7954499056072338126,
+      "translation": "이와 달리 적절한 설정과 함께 `proposed API <proposed capi_>`_\\ 를 사용하여 여러 인터프리터를 만들면 호환되지 않는 확장의 동작이 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947710Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:9/seg:1",
+      "source": "In that case, importing such an extension will fail (outside the main interpreter), as explained in `Restricting Extension Modules`_.",
+      "source_hash": 7625434265984632451,
+      "context_hash": 3732533684494110726,
+      "translation": "이 경우 `Restricting Extension Modules`_\\ 에 설명된 대로 이러한 확장을 가져오면 메인 인터프리터 외부에서는 실패합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:16:05.947710Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:9/seg:2",
+      "source": "For extensions that already break in multiple interpreters, this will be an improvement.",
+      "source_hash": 8716294263277835104,
+      "context_hash": 11991529148179577763,
+      "translation": "여러 인터프리터에서 이미 중단되는 확장의 경우 이는 개선입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947711Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:10/seg:0",
+      "source": "Additionally, some extension modules link against libraries with thread-unsafe internal global state. (See `Extension Module Thread Safety`_.) Such modules will have to start wrapping any direct or indirect use of that state in a lock.",
+      "source_hash": 7145495792936440657,
+      "context_hash": 8322955211728179635,
+      "translation": "또한 일부 확장 모듈은 스레드로부터 안전하지 않은 내부 전역 상태를 가진 라이브러리에 연결됩니다. (`Extension Module Thread Safety`_ 참조.) 이러한 모듈은 해당 상태를 직접 또는 간접적으로 사용하는 모든 부분을 잠금으로 감싸야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947711Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:10/seg:1",
+      "source": "This is the key difference from other modules that also implement multi-phase init and thus indicate support for multiple interpreters (i.e. isolation).",
+      "source_hash": 598690173021750650,
+      "context_hash": 11523685905121751505,
+      "translation": "이는 다중 단계 초기화도 구현하여 여러 인터프리터에 대한 지원, 즉 격리를 나타내는 다른 모듈과의 핵심적인 차이입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:05.947711Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:11/seg:0",
+      "source": "Now we get to the break in compatibility mentioned above.",
+      "source_hash": 977982442367160353,
+      "context_hash": 7860934758245266080,
+      "translation": "이제 위에서 언급한 호환성 단절에 이르렀습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428592Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:11/seg:1",
+      "source": "Some extensions are safe under multiple interpreters (and a per-interpreter GIL), even though they haven't indicated that.",
+      "source_hash": 8084938210585455067,
+      "context_hash": 5427023921335421335,
+      "translation": "일부 확장 기능은 여러 인터프리터(및 인터프리터별 GIL)에서 안전하지만, 그러한 사실을 나타내지는 않았습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:52.428595Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:11/seg:2",
+      "source": "Unfortunately, there is no reliable way for the import system to infer that such an extension is safe, so importing them will still fail.",
+      "source_hash": 15237861808975359245,
+      "context_hash": 17025728659486881842,
+      "translation": "안타깝게도 가져오기 시스템이 그러한 확장 기능이 안전한지 추론할 신뢰할 수 있는 방법이 없으므로, 이를 가져오려 하면 여전히 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428596Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:11/seg:3",
+      "source": "This case is addressed in `Extension Module Compatibility`_ above.",
+      "source_hash": 8604232711824444760,
+      "context_hash": 14035418149353199479,
+      "translation": "이 경우는 위의 `Extension Module Compatibility`_\\ 에서 다룹니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428596Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Extension Module Maintainers",
+      "source_hash": 4050467685026898615,
+      "context_hash": 13006412533284925841,
+      "translation": "확장 모듈 유지 관리자",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428596Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "One related consideration is that a per-interpreter GIL will likely drive increased use of multiple interpreters, particularly if :pep:`554` is accepted.",
+      "source_hash": 9699718627575793672,
+      "context_hash": 10672898193658653650,
+      "translation": "이와 관련하여, 인터프리터별 GIL은 여러 인터프리터의 사용 증가를 촉진할 가능성이 높으며, 특히 :pep:`554`\\ 가 승인되면 더욱 그러합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:52.428597Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "Some maintainers of large extension modules have expressed concern about the increased burden they anticipate due to increased use of multiple interpreters.",
+      "source_hash": 4652035038995216829,
+      "context_hash": 12415537392687832649,
+      "translation": "일부 대규모 확장 모듈 유지 관리자는 여러 인터프리터의 사용 증가로 인해 예상되는 부담 증가에 우려를 표명했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428597Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "Specifically, enabling support for multiple interpreters will require substantial work for some extension modules (albeit likely not many).",
+      "source_hash": 13731253764114072866,
+      "context_hash": 9413099749389385270,
+      "translation": "구체적으로 여러 인터프리터 지원을 활성화하려면 일부 확장 모듈(아마 많지는 않겠지만)에 상당한 작업이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428598Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:1",
+      "source": "To add that support, the maintainer(s) of such a module (often volunteers) would have to set aside their normal priorities and interests to focus on compatibility (see :pep:`630`).",
+      "source_hash": 6522330138658888093,
+      "context_hash": 14199952562661308706,
+      "translation": "그러한 지원을 추가하려면 해당 모듈의 유지 관리자(대개 자원봉사자)가 평소의 우선순위와 관심사를 제쳐 두고 호환성에 집중해야 합니다(:pep:`630` 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428598Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "Of course, extension maintainers are free to not add support for use in multiple interpreters.",
+      "source_hash": 17138620176764194726,
+      "context_hash": 18428767748341298927,
+      "translation": "물론 확장 모듈 유지 관리자는 여러 인터프리터에서의 사용을 지원하지 않도록 선택할 자유가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428598Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:1",
+      "source": "However, users will increasingly demand such support, especially if the feature grows in popularity.",
+      "source_hash": 7163486065490911638,
+      "context_hash": 14962623312456180531,
+      "translation": "그러나 특히 이 기능의 인기가 높아지면 사용자는 이러한 지원을 점점 더 요구할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428598Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "Either way, the situation can be stressful for maintainers of such extensions, particularly when they are doing the work in their spare time.",
+      "source_hash": 10042834767796072695,
+      "context_hash": 3236074038318907540,
+      "translation": "어느 쪽이든 그러한 확장 기능의 유지 관리자에게는 상황이 스트레스가 될 수 있으며, 특히 여가 시간에 작업을 수행하는 경우에는 더욱 그렇습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428599Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:1",
+      "source": "The concerns they have expressed are understandable, and we address the partial solution in the `Restricting Extension Modules`_ and `Extension Module Compatibility`_ sections.",
+      "source_hash": 15903250598720245710,
+      "context_hash": 5740021635517673769,
+      "translation": "이들이 표명한 우려는 이해할 만하며, `Restricting Extension Modules`_ 및 `Extension Module Compatibility`_ 절에서 부분적인 해결책을 다룹니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428599Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Alternate Python Implementations",
+      "source_hash": 12049069417429751669,
+      "context_hash": 10202541440163350011,
+      "translation": "대체 파이썬 구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428599Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "Other Python implementation are not required to provide support for multiple interpreters in the same process (though some do already).",
+      "source_hash": 8653181655016728897,
+      "context_hash": 5630325145174958799,
+      "translation": "다른 파이썬 구현은 동일한 프로세스에서 여러 인터프리터를 지원할 필요가 없습니다(일부 구현은 이미 지원하지만).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428599Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 619820044094116902,
+      "translation": "보안 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428599Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "There is no known impact to security with this proposal.",
+      "source_hash": 3776039260336444309,
+      "context_hash": 7758193746055587529,
+      "translation": "이 제안이 보안에 미치는 영향은 알려진 바가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428600Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Maintainability",
+      "source_hash": 17115801893002859253,
+      "context_hash": 1305384785730902871,
+      "translation": "유지 관리성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428600Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "On the one hand, this proposal has already motivated a number of improvements that make CPython *more* maintainable.",
+      "source_hash": 8305269254865490588,
+      "context_hash": 7534782887980015949,
+      "translation": "한편으로 이 제안은 CPython을 *더* 유지 관리하기 쉽게 만드는 여러 개선을 이미 촉진했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428600Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:1",
+      "source": "That is expected to continue.",
+      "source_hash": 18356012257713712698,
+      "context_hash": 10689418517357919622,
+      "translation": "이러한 추세는 계속될 것으로 예상됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428601Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:2",
+      "source": "On the other hand, the underlying work has already exposed various pre-existing defects in the runtime that have had to be fixed.",
+      "source_hash": 11155093080906478093,
+      "context_hash": 353304539476623867,
+      "translation": "다른 한편으로 기반 작업을 통해 런타임에 기존부터 존재했으며 수정해야 했던 다양한 결함이 이미 드러났습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428601Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:3",
+      "source": "That is also expected to continue as multiple interpreters receive more use.",
+      "source_hash": 6466601937508595814,
+      "context_hash": 16868890733438779229,
+      "translation": "여러 인터프리터가 더 많이 사용됨에 따라 이러한 현상도 계속될 것으로 예상됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428601Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:4",
+      "source": "Otherwise, there shouldn't be a significant impact on maintainability, so the net effect should be positive.",
+      "source_hash": 521324426825684938,
+      "context_hash": 2686664714123644242,
+      "translation": "그 밖에는 유지 관리성에 미치는 영향이 크지 않을 것이므로, 순효과는 긍정적일 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428601Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "Performance",
+      "source_hash": 1168761202931664327,
+      "context_hash": 14687875191954524379,
+      "translation": "성능",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428601Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "The work to consolidate globals has already provided a number of improvements to CPython's performance, both speeding it up and using less memory, and this should continue.",
+      "source_hash": 16691664557347779930,
+      "context_hash": 6585720640217601327,
+      "translation": "전역 변수를 통합하는 작업은 이미 CPython의 성능을 개선하여 속도를 높이고 메모리를 덜 사용하도록 했으며, 이러한 개선은 계속될 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428602Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:1",
+      "source": "The performance benefits of a per-interpreter GIL specifically have not been explored.",
+      "source_hash": 17486557517822287040,
+      "context_hash": 3198949551745562873,
+      "translation": "인터프리터별 GIL의 성능상 이점은 구체적으로 연구되지 않았습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:52.428602Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:2",
+      "source": "At the very least, it is not expected to make CPython slower (as long as interpreters are sufficiently isolated).",
+      "source_hash": 12614349721275328638,
+      "context_hash": 1773781472721516413,
+      "translation": "최소한 인터프리터가 충분히 격리되어 있는 한 CPython을 느리게 하지는 않을 것으로 예상됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428602Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:3",
+      "source": "And, obviously, it enable a variety of multi-core parallelism in Python code.",
+      "source_hash": 11128647600600009581,
+      "context_hash": 14430711085960669669,
+      "translation": "또한 분명히 파이썬 코드에서 다양한 멀티코어 병렬 처리가 가능해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428603Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 9629568904145434400,
+      "translation": "이 내용을 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428603Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "Unlike :pep:`554`, this is an advanced feature meant for a narrow set of users of the C-API.",
+      "source_hash": 16141010250092857476,
+      "context_hash": 15818956060863044697,
+      "translation": "관련 :pep:`554`\\ 와 달리, 이는 소수의 C-API 사용자를 위한 고급 기능입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:08:20.616944Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:1",
+      "source": "There is no expectation that the specifics of the API nor its direct application will be taught.",
+      "source_hash": 8448731341322351935,
+      "context_hash": 3395792989342459252,
+      "translation": "API의 세부 사항이나 API의 직접적인 적용을 가르칠 것으로 예상하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428603Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:0",
+      "source": "That said, if it were taught then it would boil down to the following:",
+      "source_hash": 1024284536413174527,
+      "context_hash": 11309576621935592664,
+      "translation": "그렇다고 하더라도 이를 가르친다면 다음과 같이 요약될 것입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.428603Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:0",
+      "source": "In addition to Py_NewInterpreter(), you can use Py_NewInterpreterFromConfig() to create an interpreter.",
+      "source_hash": 5853248371216340147,
+      "context_hash": 7865521998343560211,
+      "translation": "Py_NewInterpreter() 외에도 Py_NewInterpreterFromConfig()를 사용하여 인터프리터를 생성할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:52.215138Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:1",
+      "source": "The config you pass it indicates how you want that interpreter to behave.",
+      "source_hash": 7690662930899854804,
+      "context_hash": 15316494844153710272,
+      "translation": "전달하는 config는 해당 인터프리터가 어떻게 동작하기를 원하는지 나타냅니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:52.215145Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:0",
+      "source": "Furthermore, the maintainers of any extension modules that create isolated interpreters will likely need to explain the consequences of a per-interpreter GIL to their users.",
+      "source_hash": 7375107911834914285,
+      "context_hash": 5850694931990324071,
+      "translation": "또한, 격리된 인터프리터를 생성하는 모든 확장 모듈의 유지 관리자는 인터프리터별 GIL이 사용자에게 미치는 영향을 설명해야 할 가능성이 높습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:52.215147Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:1",
+      "source": "The first thing to explain is what :pep:`554` teaches about the concurrency model that isolated interpreters enables.",
+      "source_hash": 4456570857672648627,
+      "context_hash": 14568627907422437364,
+      "translation": "먼저 설명해야 할 것은 격리된 인터프리터가 가능하게 하는 동시성 모델에 대해 :pep:`554`\\ 가 알려 주는 내용입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215148Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:2",
+      "source": "That leads into the point that Python software written using that concurrency model can then take advantage of multi-core parallelism, which is currently prevented by the GIL.",
+      "source_hash": 18139161444807975536,
+      "context_hash": 5892046566504508086,
+      "translation": "이는 해당 동시성 모델을 사용하여 작성된 Python 소프트웨어가 이제 멀티코어 병렬성을 활용할 수 있다는 점으로 이어지며, 멀티코어 병렬성은 현재 GIL에 의해 방해받고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215149Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 14695334074232417679,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:36:52.215149Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "<TBD>",
+      "source_hash": 319502761467005881,
+      "context_hash": 17782629145185212345,
+      "translation": "<TBD>",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215150Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:0/seg:0",
+      "source": "Open Issues",
+      "source_hash": 15188361361114285070,
+      "context_hash": 10145930875768323365,
+      "translation": "미해결 문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215150Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:0",
+      "source": "Are we okay to require \"mem\" and \"object\" allocators to be thread-safe?",
+      "source_hash": 12011590236692971092,
+      "context_hash": 6068481891409232767,
+      "translation": "\"mem\" 및 \"object\" 할당자가 스레드로부터 안전하도록 요구해도 괜찮습니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215151Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:0",
+      "source": "How would a per-interpreter tracemalloc module relate to global allocators?",
+      "source_hash": 7913208513897071330,
+      "context_hash": 16940648147144212581,
+      "translation": "인터프리터별 tracemalloc 모듈은 전역 할당자와 어떤 관계를 맺게 됩니까?",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:52.215151Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:3/seg:0",
+      "source": "Would the faulthandler module be limited to the main interpreter (like the signal module) or would we leak that global state between interpreters (protected by a granular lock)?",
+      "source_hash": 8112864685289272295,
+      "context_hash": 916083195529870068,
+      "translation": "faulthandler 모듈은 (signal 모듈처럼) 주 인터프리터로 제한해야 합니까, 아니면 세분화된 잠금으로 보호하여 인터프리터 간에 해당 전역 상태가 누출되도록 해야 합니까?",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:52.215152Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:4/seg:0",
+      "source": "Split out an informational PEP with all the relevant info, based on the \"Consolidating Runtime Global State\" section?",
+      "source_hash": 10450976942961474793,
+      "context_hash": 7459360926740681204,
+      "translation": "\"Consolidating Runtime Global State\" 섹션을 바탕으로 관련 정보를 모두 포함한 정보 제공용 PEP를 별도로 분리할까요?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215153Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:5/seg:0",
+      "source": "How likely is it that a module works under multiple interpreters (isolation) but doesn't work under a per-interpreter GIL? (See `Extension Module Thread Safety`_.)",
+      "source_hash": 2890945787486138212,
+      "context_hash": 3860264851491815059,
+      "translation": "모듈이 여러 인터프리터(격리)에서는 작동하지만 인터프리터별 GIL에서는 작동하지 않을 가능성은 얼마나 됩니까? (`Extension Module Thread Safety`_\\ 를 참조하십시오.)",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:52.215153Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:6/seg:0",
+      "source": "If it is likely enough, what can we do to help extension maintainers mitigate the problem and enjoy use under a per-interpreter GIL?",
+      "source_hash": 843791912891573314,
+      "context_hash": 10324410706723774410,
+      "translation": "그 가능성이 충분히 높다면, 확장 모듈 유지 관리자들이 문제를 완화하고 인터프리터별 GIL에서 사용할 수 있도록 하려면 무엇을 할 수 있습니까?",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:52.215154Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:7/seg:0",
+      "source": "What would be a better (scarier-sounding) name for ``allow_all_extensions``?",
+      "source_hash": 5719501945198861489,
+      "context_hash": 6447077786755552568,
+      "translation": "``allow_all_extensions``\\ 에 더 나은 (더 무섭게 들리는) 이름은 무엇입니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215155Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:0/seg:0",
+      "source": "Deferred Functionality",
+      "source_hash": 8445974277649579534,
+      "context_hash": 4059884116957346679,
+      "translation": "연기된 기능",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215155Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:0",
+      "source": "``PyInterpreterConfig`` option to always run the interpreter in a new thread",
+      "source_hash": 11474168836620292554,
+      "context_hash": 14543990158564136224,
+      "translation": "인터프리터를 항상 새 스레드에서 실행하도록 하는 ``PyInterpreterConfig`` 옵션",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:52.215156Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:2/seg:0",
+      "source": "``PyInterpreterConfig`` option to assign a \"main\" thread to the interpreter and only run in that thread",
+      "source_hash": 11143906855679287915,
+      "context_hash": 2708755800329909001,
+      "translation": "인터프리터에 \"main\" 스레드를 할당하고 해당 스레드에서만 실행하도록 하는 ``PyInterpreterConfig`` 옵션",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:52.215156Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 11164274800768229532,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215157Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:1/seg:0",
+      "source": "<TBD>",
+      "source_hash": 319502761467005881,
+      "context_hash": 6368536549697981331,
+      "translation": "<TBD>",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215158Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:0/seg:0",
+      "source": "Extra Context",
+      "source_hash": 12768423858076952042,
+      "context_hash": 1413298731944476245,
+      "translation": "추가 맥락",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215158Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:0/seg:0",
+      "source": "Sharing Global Objects",
+      "source_hash": 14400821804816356753,
+      "context_hash": 8792636718421618015,
+      "translation": "전역 객체 공유",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215158Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:0",
+      "source": "We are sharing some global objects between interpreters.",
+      "source_hash": 4399531267143528296,
+      "context_hash": 157238042397712838,
+      "translation": "인터프리터 간에 일부 전역 객체를 공유합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215159Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:1",
+      "source": "This is an implementation detail and relates more to `globals consolidation <Consolidating Runtime Global State>`_ than to this proposal, but it is a significant enough detail to explain here.",
+      "source_hash": 6600740211900934296,
+      "context_hash": 1486261939973572515,
+      "translation": "이는 구현 세부 사항이며 이 제안보다는 `globals consolidation <Consolidating Runtime Global State>`_\\ 에 더 관련되지만, 여기에서 설명할 만큼 충분히 중요한 세부 사항입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215159Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:2/seg:0",
+      "source": "The alternative is to share no objects between interpreters, ever.",
+      "source_hash": 16526527236515836414,
+      "context_hash": 6912137758906982005,
+      "translation": "그 대안은 인터프리터 간에 객체를 절대로 공유하지 않는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215160Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:2/seg:1",
+      "source": "To accomplish that, we'd have to sort out the fate of all our static types, as well as deal with compatibility issues for the many objects `exposed in the public C-API <capi objects_>`_.",
+      "source_hash": 10699000773090475394,
+      "context_hash": 5154137188511142149,
+      "translation": "이를 실현하려면 모든 정적 타입의 향방을 정리해야 하며, `exposed in the public C-API <capi objects_>`_ 에 해당하는 많은 객체의 호환성 문제도 처리해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215160Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:3/seg:0",
+      "source": "That approach introduces a meaningful amount of extra complexity and higher risk, though prototyping has demonstrated valid solutions.",
+      "source_hash": 10198964093185290843,
+      "context_hash": 1947955468117946299,
+      "translation": "이 접근 방식은 상당한 추가 복잡성과 더 높은 위험을 초래하지만, 프로토타이핑을 통해 유효한 해결책이 입증되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215160Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:3/seg:1",
+      "source": "Also, it would likely result in a performance penalty.",
+      "source_hash": 6026076506479465990,
+      "context_hash": 6410918175817736137,
+      "translation": "또한 성능 저하가 발생할 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215161Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:4/seg:0",
+      "source": "`Immortal objects <Depending on Immortal Objects_>`_ allow us to share the otherwise immutable global objects.",
+      "source_hash": 12358182349806998136,
+      "context_hash": 8696388206610565300,
+      "translation": "`Immortal objects <Depending on Immortal Objects_>`_\\ 를 사용하면 그 밖에는 변경 불가능한 전역 객체를 공유할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215161Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:4/seg:1",
+      "source": "That way we avoid the extra costs.",
+      "source_hash": 9802323593155829247,
+      "context_hash": 6690037022533950811,
+      "translation": "이를 통해 추가 비용을 피할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215161Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:5/seg:0",
+      "source": "Objects Exposed in the C-API",
+      "source_hash": 3329101492383784070,
+      "context_hash": 1423237409041243972,
+      "translation": "C-API에 노출된 객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:52.215161Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:6/seg:0",
+      "source": "The C-API (including the limited API) exposes all the builtin types, including the builtin exceptions, as well as the builtin singletons.",
+      "source_hash": 17894189854690643744,
+      "context_hash": 4424374302408354063,
+      "translation": "C-API(제한된 API 포함)는 내장 예외를 포함한 모든 내장 타입과 내장 싱글턴을 노출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243009Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:6/seg:1",
+      "source": "The exceptions are exposed as ``PyObject *`` but the rest are exposed as the static values rather than pointers.",
+      "source_hash": 6574166107214910424,
+      "context_hash": 8966949335406721951,
+      "translation": "예외는 ``PyObject *``\\ 로 노출되지만 나머지는 포인터가 아니라 정적 값으로 노출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243012Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:6/seg:2",
+      "source": "This was one of the few non-trivial problems we had to solve for per-interpreter GIL.",
+      "source_hash": 16091803657689557305,
+      "context_hash": 14782594352074489202,
+      "translation": "이는 인터프리터별 GIL을 위해 해결해야 했던 몇 안 되는 쉽지 않은 문제 중 하나였습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:45.243012Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:7/seg:0",
+      "source": "With immortal objects this is a non-issue.",
+      "source_hash": 12919749225803036625,
+      "context_hash": 522753474571580756,
+      "translation": "불멸 객체를 사용하면 이는 문제가 되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243013Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:0/seg:0",
+      "source": "Consolidating Runtime Global State",
+      "source_hash": 12557504315921141396,
+      "context_hash": 2347784109646786040,
+      "translation": "런타임 전역 상태 통합",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243013Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:0",
+      "source": "As noted in `CPython Runtime State`_ above, there is an active effort (separate from this PEP) to consolidate CPython's global state into the ``_PyRuntimeState`` struct.",
+      "source_hash": 68492398867002404,
+      "context_hash": 10998693657862169408,
+      "translation": "위의 `CPython Runtime State`_\\ 에서 언급했듯이, (이 PEP와는 별개로) CPython의 전역 상태를 ``_PyRuntimeState`` 구조체로 통합하려는 작업이 진행 중입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243014Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:1",
+      "source": "Nearly all the work involves moving that state from global variables.",
+      "source_hash": 1882004223674999168,
+      "context_hash": 15598699561690368645,
+      "translation": "작업의 거의 전부는 해당 상태를 전역 변수에서 옮기는 일과 관련됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243014Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:2",
+      "source": "The project is particularly relevant to this proposal, so below is some extra detail.",
+      "source_hash": 10877434185802033809,
+      "context_hash": 3531610908341407058,
+      "translation": "이 프로젝트는 이 제안과 특히 관련이 있으므로, 아래에 추가 세부 사항을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243014Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:2/seg:0",
+      "source": "Benefits to Consolidation",
+      "source_hash": 14833164901702133748,
+      "context_hash": 15722542184876769376,
+      "translation": "통합의 이점",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243014Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:3/seg:0",
+      "source": "Consolidating the globals has a variety of benefits:",
+      "source_hash": 9119642846310555151,
+      "context_hash": 9297599646654351494,
+      "translation": "전역 변수를 통합하면 다음과 같은 다양한 이점이 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243014Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:4/seg:0",
+      "source": "greatly reduces the number of C globals (best practice for C code)",
+      "source_hash": 6761500607036460918,
+      "context_hash": 4957708260114538090,
+      "translation": "C 전역 변수의 수를 크게 줄입니다(C 코드의 모범 사례).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243015Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:5/seg:0",
+      "source": "the move draws attention to runtime state that is unstable or broken",
+      "source_hash": 18104658048183155672,
+      "context_hash": 1400338783462580470,
+      "translation": "상태를 옮기는 과정에서 불안정하거나 손상된 런타임 상태에 주목하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243015Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:6/seg:0",
+      "source": "encourages more consistency in how runtime state is used",
+      "source_hash": 9797356379766191319,
+      "context_hash": 17975444654958819653,
+      "translation": "런타임 상태를 사용하는 방식의 일관성이 향상됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243015Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:7/seg:0",
+      "source": "makes it easier to discover/identify CPython's runtime state",
+      "source_hash": 10003195357090550278,
+      "context_hash": 9018199798488747239,
+      "translation": "CPython의 런타임 상태를 발견하고 식별하기가 쉬워집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243015Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:8/seg:0",
+      "source": "makes it easier to statically allocate runtime state in a consistent way",
+      "source_hash": 13665338708572737036,
+      "context_hash": 10744433118337211176,
+      "translation": "일관된 방식으로 런타임 상태를 정적으로 할당하기가 쉬워집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243015Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:9/seg:0",
+      "source": "better memory locality for runtime state",
+      "source_hash": 15972021351371331691,
+      "context_hash": 14008993753058421225,
+      "translation": "런타임 상태의 메모리 지역성이 향상됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243016Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:10/seg:0",
+      "source": "Furthermore all the benefits listed in `Indirect Benefits`_ above also apply here, and the same projects listed there benefit.",
+      "source_hash": 936918210420812611,
+      "context_hash": 16537017402267238808,
+      "translation": "또한 위의 `Indirect Benefits`_\\ 에 나열된 모든 이점이 여기에도 적용되며, 해당 항목에 나열된 동일한 프로젝트도 이점을 얻습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243016Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:11/seg:0",
+      "source": "Scale of Work",
+      "source_hash": 13256267686448543374,
+      "context_hash": 13643008485156452125,
+      "translation": "작업 규모",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243016Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:12/seg:0",
+      "source": "The number of global variables to be moved is large enough to matter, but most are Python objects that can be dealt with in large groups (like ``Py_IDENTIFIER``).",
+      "source_hash": 12414590264440859611,
+      "context_hash": 1336158839051302345,
+      "translation": "옮겨야 할 전역 변수의 수는 무시할 수 없을 만큼 많지만, 대부분은 큰 그룹 단위로 처리할 수 있는 Python 객체입니다(예: ``Py_IDENTIFIER``).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243016Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:12/seg:1",
+      "source": "In nearly all cases, moving these globals to the interpreter is highly mechanical.",
+      "source_hash": 5605726516113351951,
+      "context_hash": 15511603213720961805,
+      "translation": "거의 모든 경우에 이러한 전역 변수를 인터프리터로 옮기는 작업은 매우 기계적입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:36:45.243017Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:12/seg:2",
+      "source": "That doesn't require cleverness but instead requires someone to put in the time.",
+      "source_hash": 13954565318715275163,
+      "context_hash": 11281249525941288105,
+      "translation": "이는 기지를 필요로 하는 일이 아니라 누군가가 시간을 들여 수행해야 하는 일입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243017Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:13/seg:0",
+      "source": "State To Be Moved",
+      "source_hash": 6868615928882913920,
+      "context_hash": 15103701426782722612,
+      "translation": "옮길 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243017Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:14/seg:0",
+      "source": "The remaining global variables can be categorized as follows:",
+      "source_hash": 13723707215683460585,
+      "context_hash": 11037769629228305741,
+      "translation": "남은 전역 변수는 다음과 같이 분류할 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243018Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:15/seg:0",
+      "source": "global objects",
+      "source_hash": 8228419296102345155,
+      "context_hash": 8964399947435404479,
+      "translation": "전역 객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243018Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:16/seg:0",
+      "source": "static types (incl. exception types)",
+      "source_hash": 17526462519573185169,
+      "context_hash": 12158182351781661425,
+      "translation": "정적 타입(예외 타입 포함)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243018Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:17/seg:0",
+      "source": "non-static types (incl. heap types, structseq types)",
+      "source_hash": 3840317850146315772,
+      "context_hash": 12594645875497936322,
+      "translation": "비정적 타입(힙 타입 및 structseq 타입 포함)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243018Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:18/seg:0",
+      "source": "singletons (static)",
+      "source_hash": 5439936718095566741,
+      "context_hash": 14402030403917641406,
+      "translation": "싱글턴(정적)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243019Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:19/seg:0",
+      "source": "singletons (initialized once)",
+      "source_hash": 9393123716383941202,
+      "context_hash": 10472348953955221454,
+      "translation": "싱글턴(한 번 초기화됨)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243019Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:20/seg:0",
+      "source": "cached objects",
+      "source_hash": 1849454939271842847,
+      "context_hash": 7225699964126577499,
+      "translation": "캐시된 객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243019Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:21/seg:0",
+      "source": "non-objects",
+      "source_hash": 15864877977510409610,
+      "context_hash": 4194664061468372900,
+      "translation": "비객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243019Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:22/seg:0",
+      "source": "will not (or unlikely to) change after init",
+      "source_hash": 10171767869535364061,
+      "context_hash": 11629909305892811032,
+      "translation": "초기화 후 변경되지 않거나 변경될 가능성이 낮음",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243019Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:23/seg:0",
+      "source": "only used in the main thread",
+      "source_hash": 4125766625219432578,
+      "context_hash": 1613843269654699740,
+      "translation": "주 스레드에서만 사용됨",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:45.243020Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:24/seg:0",
+      "source": "initialized lazily",
+      "source_hash": 1645743425217464704,
+      "context_hash": 8949451093746041929,
+      "translation": "지연 초기화됨",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544126Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:25/seg:0",
+      "source": "pre-allocated buffers",
+      "source_hash": 11172991591728622524,
+      "context_hash": 11613363922108902320,
+      "translation": "사전 할당된 버퍼",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544129Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:26/seg:0",
+      "source": "state",
+      "source_hash": 2938068125400169966,
+      "context_hash": 14099747286642356824,
+      "translation": "상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544130Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:27/seg:0",
+      "source": "Those globals are spread between the core runtime, the builtin modules, and the stdlib extension modules.",
+      "source_hash": 11344013172381301294,
+      "context_hash": 12513489136554374048,
+      "translation": "이러한 전역 변수는 핵심 런타임, 내장 모듈 및 표준 라이브러리 확장 모듈에 분산되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544130Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:28/seg:0",
+      "source": "For a breakdown of the remaining globals, run:",
+      "source_hash": 12582496804427533987,
+      "context_hash": 12118137151282467820,
+      "translation": "나머지 전역 변수의 내역을 보려면 다음을 실행하십시오:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544131Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:30/seg:0",
+      "source": "Already Completed Work",
+      "source_hash": 6438503566167299386,
+      "context_hash": 15227714658518610304,
+      "translation": "이미 완료된 작업",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544131Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:31/seg:0",
+      "source": "As mentioned, this work has been going on for many years.",
+      "source_hash": 1029335114309585857,
+      "context_hash": 6080119029031976029,
+      "translation": "앞서 언급했듯이 이 작업은 수년 동안 진행되어 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544131Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:31/seg:1",
+      "source": "Here are some of the things that have already been done:",
+      "source_hash": 10983949784712791701,
+      "context_hash": 5822811558584822643,
+      "translation": "다음은 이미 완료된 작업 중 일부입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544131Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:32/seg:0",
+      "source": "cleanup of runtime initialization (see :pep:`432` / :pep:`587`)",
+      "source_hash": 9901942050599651700,
+      "context_hash": 8997603772627092308,
+      "translation": "런타임 초기화 정리(:pep:`432` / :pep:`587` 참조)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544132Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:33/seg:0",
+      "source": "extension module isolation machinery (see :pep:`384` / :pep:`3121` / :pep:`489`)",
+      "source_hash": 11910467891552166588,
+      "context_hash": 11502893817593020070,
+      "translation": "확장 모듈 격리 메커니즘(:pep:`384` / :pep:`3121` / :pep:`489` 참조)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544132Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:34/seg:0",
+      "source": "isolation for many builtin modules",
+      "source_hash": 17683854462750354779,
+      "context_hash": 7817656480159827011,
+      "translation": "여러 내장 모듈의 격리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544132Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:35/seg:0",
+      "source": "isolation for many stdlib extension modules",
+      "source_hash": 11441310920206860201,
+      "context_hash": 3498129371231817523,
+      "translation": "여러 표준 라이브러리 확장 모듈의 격리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544132Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:36/seg:0",
+      "source": "addition of ``_PyRuntimeState``",
+      "source_hash": 8391884138604170571,
+      "context_hash": 7416858473067979765,
+      "translation": "``_PyRuntimeState`` 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544133Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:37/seg:0",
+      "source": "no more ``_Py_IDENTIFIER()``",
+      "source_hash": 11791255961826658426,
+      "context_hash": 12968824449033951477,
+      "translation": "더 이상 ``_Py_IDENTIFIER()`` 사용 안 함",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544133Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:38/seg:0",
+      "source": "statically allocated:",
+      "source_hash": 10046714791075218537,
+      "context_hash": 7895952395407828498,
+      "translation": "정적으로 할당됨:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544133Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:39/seg:0",
+      "source": "empty string",
+      "source_hash": 12216061564010789172,
+      "context_hash": 12515378012484482386,
+      "translation": "빈 문자열",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544134Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:40/seg:0",
+      "source": "string literals",
+      "source_hash": 4415074946485266730,
+      "context_hash": 6973324955061965843,
+      "translation": "문자열 리터럴",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544134Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:41/seg:0",
+      "source": "identifiers",
+      "source_hash": 7542314476182796831,
+      "context_hash": 13297135116948357404,
+      "translation": "식별자",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544134Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:42/seg:0",
+      "source": "latin-1 strings",
+      "source_hash": 12979620099492893801,
+      "context_hash": 1285969604764304478,
+      "translation": "라틴-1 문자열",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544134Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:43/seg:0",
+      "source": "length-1 bytes",
+      "source_hash": 3914662768067480598,
+      "context_hash": 11443131294852577218,
+      "translation": "길이가 1인 바이트열",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544135Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:44/seg:0",
+      "source": "empty tuple",
+      "source_hash": 13311078785443267163,
+      "context_hash": 4949849656332567530,
+      "translation": "빈 튜플",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544135Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:45/seg:0",
+      "source": "Tooling",
+      "source_hash": 7443226215039443553,
+      "context_hash": 3743045746940468686,
+      "translation": "도구",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544135Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:46/seg:0",
+      "source": "As already indicated, there are several tools to help identify the globals and reason about them.",
+      "source_hash": 10641119085307201098,
+      "context_hash": 15288986761234826011,
+      "translation": "앞서 설명했듯이 전역 변수를 식별하고 이를 분석하는 데 도움이 되는 여러 도구가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544135Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:47/seg:0",
+      "source": "``Tools/c-analyzer/cpython/globals-to-fix.tsv`` - the list of remaining globals",
+      "source_hash": 9677415538791684886,
+      "context_hash": 10293610822417324463,
+      "translation": "``Tools/c-analyzer/cpython/globals-to-fix.tsv`` - 남은 전역 변수 목록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544135Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:48/seg:0",
+      "source": "``Tools/c-analyzer/c-analyzer.py``",
+      "source_hash": 330127483401299233,
+      "context_hash": 4853607278561413738,
+      "translation": "``Tools/c-analyzer/c-analyzer.py``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544136Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:49/seg:0",
+      "source": "``analyze`` - identify all the globals",
+      "source_hash": 12532604619250011353,
+      "context_hash": 18346889114801081072,
+      "translation": "``analyze`` - 모든 전역 변수 식별",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544136Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:50/seg:0",
+      "source": "``check`` - fail if there are any unsupported globals that aren't ignored",
+      "source_hash": 7779156765964293932,
+      "context_hash": 1006431836550844177,
+      "translation": "``check`` - 무시되지 않은 지원되지 않는 전역 변수가 있으면 실패",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544136Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:51/seg:0",
+      "source": "``Tools/c-analyzer/table-file.py`` - summarize the known globals",
+      "source_hash": 10507665144001843676,
+      "context_hash": 9372936859562101980,
+      "translation": "``Tools/c-analyzer/table-file.py`` - 알려진 전역 변수 요약",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544138Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:52/seg:0",
+      "source": "Also, the check for unsupported globals is incorporated into CI so that no new globals are accidentally added.",
+      "source_hash": 13874103972111399996,
+      "context_hash": 11192229140811738451,
+      "translation": "또한 지원되지 않는 전역 변수 검사가 CI에 통합되어 있으므로 새로운 전역 변수가 실수로 추가되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544138Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:53/seg:0",
+      "source": "Global Objects",
+      "source_hash": 9258035490769647103,
+      "context_hash": 7454326593504835713,
+      "translation": "전역 객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:36:39.544138Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:54/seg:0",
+      "source": "Global objects that are safe to be shared (without a GIL) between interpreters can stay on ``_PyRuntimeState``.",
+      "source_hash": 1652228804377127980,
+      "context_hash": 13560976153672622890,
+      "translation": "인터프리터 간에 (전역 인터프리터 잠금 없이) 안전하게 공유할 수 있는 전역 객체는 ``_PyRuntimeState``\\ 에 유지할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041937Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:54/seg:1",
+      "source": "Not only must the object be effectively immutable (e.g. singletons, strings), but not even the refcount can change for it to be safe.",
+      "source_hash": 4848938173898008920,
+      "context_hash": 5627950438455502670,
+      "translation": "객체는 사실상 불변이어야 할 뿐만 아니라(예: 싱글턴, 문자열), 안전하려면 참조 카운트조차 변경될 수 없어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041942Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:54/seg:2",
+      "source": "Immortality (:pep:`683`) provides that.  (The alternative is that no objects are shared, which adds significant complexity to the solution, particularly for the objects `exposed in the public C-API <capi objects_>`_.)",
+      "source_hash": 7156937700316917898,
+      "context_hash": 11923698522680121643,
+      "translation": "불멸성(:pep:`683`)이 이를 제공합니다. (대안은 객체를 전혀 공유하지 않는 것이지만, 이는 특히 `exposed in the public C-API <capi objects_>`_\\ 객체의 경우 해결책에 상당한 복잡성을 추가합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041943Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:55/seg:0",
+      "source": "Builtin static types are a special case of global objects that will be shared.",
+      "source_hash": 15891297402617109331,
+      "context_hash": 18147923795673176579,
+      "translation": "내장 정적 타입은 공유될 전역 객체의 특수한 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041944Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:55/seg:1",
+      "source": "They are effectively immutable except for one part: ``__subclasses__`` (AKA ``tp_subclasses``).",
+      "source_hash": 15823192450775036669,
+      "context_hash": 10938754617303739336,
+      "translation": "이들은 한 부분인 ``__subclasses__`` (AKA ``tp_subclasses``)을 제외하면 사실상 불변입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041944Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:55/seg:2",
+      "source": "We expect that nothing else on a builtin type will change, even the content of ``__dict__`` (AKA ``tp_dict``).",
+      "source_hash": 13199649299993863873,
+      "context_hash": 18165201604583081859,
+      "translation": "``__dict__``\\ 의 내용(AKA ``tp_dict``)조차도 내장 타입에서 다른 어떤 것도 변경되지 않을 것으로 예상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041945Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:56/seg:0",
+      "source": "``__subclasses__`` for the builtin types will be dealt with by making it a getter that does a lookup on the current ``PyInterpreterState`` for that type.",
+      "source_hash": 15806573017093439250,
+      "context_hash": 14528081213305760387,
+      "translation": "내장 타입의 ``__subclasses__``\\ 는 해당 타입에 대해 현재 ``PyInterpreterState``\\ 에서 조회를 수행하는 게터로 만들어 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041945Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 14702652661940190277,
+      "translation": "참조",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041945Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:1/seg:0",
+      "source": "Related:",
+      "source_hash": 17305823896487398582,
+      "context_hash": 12653930605893637069,
+      "translation": "관련 항목:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041946Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:2/seg:0",
+      "source": ":pep:`384` \"Defining a Stable ABI\"",
+      "source_hash": 15750357526722542414,
+      "context_hash": 9663339020785952740,
+      "translation": ":pep:`384` \"안정적인 ABI 정의\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041946Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:3/seg:0",
+      "source": ":pep:`432` \"Restructuring the CPython startup sequence\"",
+      "source_hash": 8044195681947966228,
+      "context_hash": 1604808786952874449,
+      "translation": ":pep:`432` \"CPython 시작 시퀀스 재구성\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041947Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:4/seg:0",
+      "source": ":pep:`489` \"Multi-phase extension module initialization\"",
+      "source_hash": 14008759206803058426,
+      "context_hash": 3775253642425116376,
+      "translation": ":pep:`489` \"다단계 확장 모듈 초기화\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041947Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:5/seg:0",
+      "source": ":pep:`554` \"Multiple Interpreters in the Stdlib\"",
+      "source_hash": 11060596337161432252,
+      "context_hash": 4405226450889578808,
+      "translation": ":pep:`554` \"표준 라이브러리의 다중 인터프리터\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041947Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:6/seg:0",
+      "source": ":pep:`573` \"Module State Access from C Extension Methods\"",
+      "source_hash": 5075218451735483327,
+      "context_hash": 5726337805940241570,
+      "translation": ":pep:`573` \"C 확장 메서드에서 모듈 상태에 접근하기\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041947Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:7/seg:0",
+      "source": ":pep:`587` \"Python Initialization Configuration\"",
+      "source_hash": 6783681820250468031,
+      "context_hash": 7911568257206997051,
+      "translation": ":pep:`587` \"Python 초기화 구성\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041948Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:8/seg:0",
+      "source": ":pep:`630` \"Isolating Extension Modules\"",
+      "source_hash": 11026731170459299013,
+      "context_hash": 11974758168053017773,
+      "translation": ":pep:`630` \"확장 모듈 격리\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041948Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:9/seg:0",
+      "source": ":pep:`683` \"Immortal Objects, Using a Fixed Refcount\"",
+      "source_hash": 10611042591391338784,
+      "context_hash": 8798988975031581076,
+      "translation": ":pep:`683` \"고정 참조 카운트를 사용하는 불멸 객체\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041948Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:10/seg:0",
+      "source": ":pep:`3121` \"Extension Module Initialization and Finalization\"",
+      "source_hash": 15051349988801153682,
+      "context_hash": 5816392195943702499,
+      "translation": ":pep:`3121` \"확장 모듈 초기화 및 종료\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:10:58.041948Z",
+      "issues": []
+    }
+  ]
+}

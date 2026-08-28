@@ -1,0 +1,1229 @@
+{
+  "version": 1,
+  "source_hash": 13245022757218533512,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Asynchronous IO support",
+      "source_hash": 10989432429974427412,
+      "context_hash": 16530898886277989957,
+      "translation": "비동기 IO 지원",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427423Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 3283218213212034775,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427427Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP describes an abstraction of asynchronous IO for the Python standard library.",
+      "source_hash": 1504526518658882056,
+      "context_hash": 11288381426074469511,
+      "translation": "이 PEP는 Python 표준 라이브러리를 위한 비동기 IO의 추상화를 설명합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:35:09.427427Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "The goal is to reach an abstraction that can be implemented by many different asynchronous IO backends and provides a target for library developers to write code portable between those different backends.",
+      "source_hash": 14166274262240064580,
+      "context_hash": 4476819001976400221,
+      "translation": "목표는 여러 가지 비동기 IO 백엔드에서 구현할 수 있고 라이브러리 개발자가 서로 다른 백엔드 간에 이식 가능한 코드를 작성할 수 있는 기준을 제공하는 추상화에 도달하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427428Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 9490563949747484360,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427428Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "People who want to write asynchronous code in Python right now have a few options:",
+      "source_hash": 15244604401844292744,
+      "context_hash": 13545832844910902698,
+      "translation": "현재 Python에서 비동기 코드를 작성하려는 사람에게는 몇 가지 선택지가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427429Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "``asyncore`` and ``asynchat``",
+      "source_hash": 10892021385680831335,
+      "context_hash": 15257110986486385313,
+      "translation": "``asyncore`` 및 ``asynchat``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427429Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "something bespoke, most likely based on the ``select`` module",
+      "source_hash": 14743520372858602757,
+      "context_hash": 2139103586889148173,
+      "translation": "대개 ``select`` 모듈을 기반으로 하는 맞춤형 방식",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427430Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "using a third party library, such as Twisted_ or gevent_",
+      "source_hash": 14812390521095276046,
+      "context_hash": 15964857305540423057,
+      "translation": "Twisted_ 또는 gevent_와 같은 서드 파티 라이브러리 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427430Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "Unfortunately, each of these options has its downsides, which this PEP tries to address.",
+      "source_hash": 16912386788185049025,
+      "context_hash": 9229759469875252384,
+      "translation": "안타깝게도 이러한 선택지에는 각각 단점이 있으며, 이 PEP는 이를 해결하려고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427430Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Despite having been part of the Python standard library for a long time, the asyncore module suffers from fundamental flaws following from an inflexible API that does not stand up to the expectations of a modern asynchronous networking module.",
+      "source_hash": 3568328336612883731,
+      "context_hash": 6103857428521145377,
+      "translation": "asyncore 모듈은 오랫동안 Python 표준 라이브러리의 일부였지만, 현대적인 비동기 네트워킹 모듈의 기대에 부응하지 못하는 융통성 없는 API에서 비롯된 근본적인 결함을 안고 있습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:35:09.427431Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "Moreover, its approach is too simplistic to provide developers with all the tools they need in order to fully exploit the potential of asynchronous networking.",
+      "source_hash": 1557862452391450179,
+      "context_hash": 15446298980753158207,
+      "translation": "또한 그 접근 방식은 개발자가 비동기 네트워킹의 잠재력을 완전히 활용하는 데 필요한 모든 도구를 제공하기에는 지나치게 단순합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427431Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "The most popular solution right now used in production involves the use of third party libraries.",
+      "source_hash": 1937905150809242050,
+      "context_hash": 17998288207948571049,
+      "translation": "현재 운영 환경에서 사용되는 가장 인기 있는 해결책은 서드 파티 라이브러리를 사용하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427432Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:1",
+      "source": "These often provide satisfactory solutions, but there is a lack of compatibility between these libraries, which tends to make codebases very tightly coupled to the library they use.",
+      "source_hash": 1786567592477708692,
+      "context_hash": 1494307921037035487,
+      "translation": "이러한 라이브러리는 흔히 만족스러운 해결책을 제공하지만, 라이브러리 간에 호환성이 부족하여 코드베이스가 사용하는 라이브러리에 매우 긴밀하게 결합되는 경향이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427432Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "This current lack of portability between different asynchronous IO libraries causes a lot of duplicated effort for third party library developers.",
+      "source_hash": 8035536513371359217,
+      "context_hash": 9147800548289118226,
+      "translation": "서로 다른 비동기 IO 라이브러리 간에 현재 존재하는 이러한 이식성 부족은 서드 파티 라이브러리 개발자에게 많은 중복 작업을 초래합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427432Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:1",
+      "source": "A sufficiently powerful abstraction could mean that asynchronous code gets written once, but used everywhere.",
+      "source_hash": 15564648322074085778,
+      "context_hash": 11458548937999273164,
+      "translation": "충분히 강력한 추상화가 있다면 비동기 코드를 한 번 작성하고 어디서나 사용할 수 있을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427433Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "An eventual added goal would be for standard library implementations of wire and network protocols to evolve towards being real protocol implementations, as opposed to standalone libraries that do everything including calling ``recv()`` blockingly.",
+      "source_hash": 490228089447905421,
+      "context_hash": 14242964140810471700,
+      "translation": "장기적으로 추가할 수 있는 목표는 유선 및 네트워크 프로토콜의 표준 라이브러리 구현이, ``recv()``\\ 를 블로킹 방식으로 호출하는 것을 비롯해 모든 작업을 수행하는 독립형 라이브러리가 아니라 실제 프로토콜 구현으로 발전하도록 하는 것입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리",
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:09.427433Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:1",
+      "source": "This means they could be easily reused for both synchronous and asynchronous code.",
+      "source_hash": 8381656770118010871,
+      "context_hash": 11558426816965164934,
+      "translation": "이렇게 하면 동기 코드와 비동기 코드 모두에서 쉽게 재사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427434Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Communication abstractions",
+      "source_hash": 6810905417821736763,
+      "context_hash": 8748554187831324997,
+      "translation": "통신 추상화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427434Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Transports",
+      "source_hash": 8503553090651075834,
+      "context_hash": 1901240899355595153,
+      "translation": "전송",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427435Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Transports provide a uniform API for reading bytes from and writing bytes to different kinds of connections.",
+      "source_hash": 10343219535123166142,
+      "context_hash": 13295502048725638557,
+      "translation": "전송은 서로 다른 종류의 연결에서 바이트를 읽고 바이트를 쓰기 위한 통일된 API를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427435Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "Transports in this PEP are always ordered, reliable, bidirectional, stream-oriented two-endpoint connections.",
+      "source_hash": 5616144538798310524,
+      "context_hash": 3427586259798128914,
+      "translation": "이 PEP의 전송은 항상 순서가 보장되고 신뢰할 수 있으며 양방향이고 스트림 지향적인 두 엔드포인트 연결입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427435Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "This might be a TCP socket, an SSL connection, a pipe (named or otherwise), a serial port...",
+      "source_hash": 13172859008579859910,
+      "context_hash": 16693301416047141834,
+      "translation": "TCP 소켓, SSL 연결, 파이프(명명된 파이프이든 아니든), 직렬 포트 등일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427435Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:3",
+      "source": "It may abstract a file descriptor on POSIX platforms or a Handle on Windows or some other data structure appropriate to a particular platform.",
+      "source_hash": 16897456816137409090,
+      "context_hash": 1245391858782022034,
+      "translation": "POSIX 플랫폼의 파일 디스크립터나 Windows의 Handle 또는 특정 플랫폼에 적합한 다른 데이터 구조를 추상화할 수 있습니다.",
+      "glossary_snapshot": {
+        "descriptor": "디스크립터"
+      },
+      "translated_at": "2026-08-28T18:35:09.427436Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:4",
+      "source": "It encapsulates all of the particular implementation details of using that platform data structure and presents a uniform interface for application developers.",
+      "source_hash": 5217612235783318472,
+      "context_hash": 7917833394091400531,
+      "translation": "해당 플랫폼 데이터 구조를 사용하는 데 필요한 모든 구체적인 구현 세부 사항을 캡슐화하고 애플리케이션 개발자에게 통일된 인터페이스를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427436Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Transports talk to two things: the other side of the connection on one hand, and a protocol on the other.",
+      "source_hash": 12257626088598609293,
+      "context_hash": 10635622501091643688,
+      "translation": "전송은 두 가지 대상과 통신합니다. 한편으로는 연결의 반대편과 통신하고, 다른 한편으로는 프로토콜과 통신합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:09.427437Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "It's a bridge between the specific underlying transfer mechanism and the protocol.",
+      "source_hash": 1529527297669862642,
+      "context_hash": 12994945862160124564,
+      "translation": "전송은 구체적인 하위 전송 메커니즘과 프로토콜 사이의 다리입니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:09.427437Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "Its job can be described as allowing the protocol to just send and receive bytes, taking care of all of the magic that needs to happen to those bytes to be eventually sent across the wire.",
+      "source_hash": 18021358147885389018,
+      "context_hash": 9208474717216246263,
+      "translation": "전송의 역할은 프로토콜이 바이트를 보내고 받기만 하면 되도록 하며, 해당 바이트가 최종적으로 유선을 통해 전송되기 위해 필요한 모든 처리를 담당하는 것으로 설명할 수 있습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:09.427438Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "The primary feature of a transport is sending bytes to a protocol and receiving bytes from the underlying protocol.",
+      "source_hash": 15919762895150865666,
+      "context_hash": 164364626575170276,
+      "translation": "전송의 주요 기능은 프로토콜에 바이트를 보내고 하위 프로토콜에서 바이트를 받는 것입니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:09.427438Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "Writing to the transport is done using the ``write`` and ``write_sequence`` methods.",
+      "source_hash": 1217006931110085126,
+      "context_hash": 18209106991353612946,
+      "translation": "전송에 쓰는 작업은 ``write`` 및 ``write_sequence`` 메서드를 사용하여 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427442Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:2",
+      "source": "The latter method is a performance optimization, to allow software to take advantage of specific capabilities in some transport mechanisms.",
+      "source_hash": 11327596941773388810,
+      "context_hash": 10784580152597678196,
+      "translation": "후자의 메서드는 일부 전송 메커니즘의 특정 기능을 소프트웨어가 활용할 수 있도록 하는 성능 최적화입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427443Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:3",
+      "source": "Specifically, this allows transports to use writev_ instead of write_ or send_, also known as scatter/gather IO.",
+      "source_hash": 898850419274676923,
+      "context_hash": 558552144025648177,
+      "translation": "구체적으로 이는 전송이 writev_ 대신 write_ 또는 send_\\ 를 사용할 수 있도록 하며, 이를 산란/수집 IO라고도 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:09.427443Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "A transport can be paused and resumed.",
+      "source_hash": 8585685553243921788,
+      "context_hash": 5258802163262300696,
+      "translation": "트랜스포트는 일시 중지했다가 재개할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143168Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:1",
+      "source": "This will cause it to buffer data coming from protocols and stop sending received data to the protocol.",
+      "source_hash": 2489230695594701701,
+      "context_hash": 6026805667289592076,
+      "translation": "이렇게 하면 트랜스포트가 프로토콜에서 전달되는 데이터를 버퍼링하고, 수신한 데이터를 프로토콜로 보내는 작업을 중지합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:10.143171Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "A transport can also be closed, half-closed and aborted.",
+      "source_hash": 15606469173245030561,
+      "context_hash": 3064916196593828774,
+      "translation": "트랜스포트는 닫거나, 반쯤 닫거나, 중단할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143173Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:1",
+      "source": "A closed transport will finish writing all of the data queued in it to the underlying mechanism, and will then stop reading or writing data.",
+      "source_hash": 14399211628348496435,
+      "context_hash": 801063096508649435,
+      "translation": "닫힌 트랜스포트는 자신에게 대기 중인 모든 데이터를 하위 메커니즘에 쓰는 작업을 완료한 다음, 데이터 읽기 또는 쓰기를 중지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143173Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:2",
+      "source": "Aborting a transport stops it, closing the connection without sending any data that is still queued.",
+      "source_hash": 2089445968978834260,
+      "context_hash": 17977012167545539942,
+      "translation": "트랜스포트를 중단하면 트랜스포트가 중지되고, 아직 대기 중인 데이터를 전송하지 않은 채 연결이 닫힙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143174Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "Further writes will result in exceptions being thrown.",
+      "source_hash": 14275019517496166192,
+      "context_hash": 13746366984818705783,
+      "translation": "이후에 쓰기를 시도하면 예외가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143174Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:1",
+      "source": "A half-closed transport may not be written to anymore, but will still accept incoming data.",
+      "source_hash": 7809989842295738498,
+      "context_hash": 16761778838262414795,
+      "translation": "반쯤 닫힌 트랜스포트에는 더 이상 데이터를 쓸 수 없지만, 들어오는 데이터는 계속 수락합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143175Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Protocols",
+      "source_hash": 3845210122882863030,
+      "context_hash": 5904624692517743707,
+      "translation": "프로토콜",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143175Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Protocols are probably more familiar to new users.",
+      "source_hash": 10956638852033983101,
+      "context_hash": 16807896755195982028,
+      "translation": "프로토콜은 새로운 사용자에게 아마 더 익숙할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143175Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "The terminology is consistent with what you would expect from something called a protocol: the protocols most people think of first, like HTTP, IRC, SMTP... are all examples of something that would be implemented in a protocol.",
+      "source_hash": 11783763596116969582,
+      "context_hash": 1896447734047975443,
+      "translation": "용어는 프로토콜이라고 부르는 것에서 예상할 수 있는 내용과 일관됩니다. 대부분의 사람이 가장 먼저 떠올리는 HTTP, IRC, SMTP 같은 프로토콜은 모두 프로토콜에서 구현되는 것의 예입니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:10.143176Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "The shortest useful definition of a protocol is a (usually two-way) bridge between the transport and the rest of the application logic.",
+      "source_hash": 4955656473316259024,
+      "context_hash": 1895040096965818232,
+      "translation": "프로토콜의 가장 간단하면서도 유용한 정의는 트랜스포트와 나머지 애플리케이션 로직 사이를 연결하는 (대개 양방향) 다리입니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:10.143176Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "A protocol will receive bytes from a transport and translates that information into some behavior, typically resulting in some method calls on an object.",
+      "source_hash": 4313643192196435475,
+      "context_hash": 7486358112641456576,
+      "translation": "프로토콜은 트랜스포트에서 바이트를 수신하고 해당 정보를 어떤 동작으로 변환하며, 일반적으로 객체의 일부 메서드 호출로 이어집니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:10.143177Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:2",
+      "source": "Similarly, application logic calls some methods on the protocol, which the protocol translates into bytes and communicates to the transport.",
+      "source_hash": 15899388100440733667,
+      "context_hash": 15027677279301802207,
+      "translation": "마찬가지로 애플리케이션 로직은 프로토콜의 일부 메서드를 호출하고, 프로토콜은 이를 바이트로 변환하여 트랜스포트와 통신합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:10.143177Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "One of the simplest protocols is a line-based protocol, where data is delimited by ``\\r\\n``.",
+      "source_hash": 6021988995248155115,
+      "context_hash": 12276186178991271013,
+      "translation": "가장 단순한 프로토콜 중 하나는 데이터가 ``\\r\\n``\\ 으로 구분되는 줄 기반 프로토콜입니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:10.143179Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "The protocol will receive bytes from the transport and buffer them until there is at least one complete line.",
+      "source_hash": 15641769880767989597,
+      "context_hash": 8839917101144036757,
+      "translation": "프로토콜은 트랜스포트에서 바이트를 수신하고 완전한 줄이 하나 이상 생길 때까지 이를 버퍼링합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:10.143179Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:2",
+      "source": "Once that's done, it will pass this line along to some object.",
+      "source_hash": 8989798924587031991,
+      "context_hash": 504520253044303044,
+      "translation": "작업이 완료되면 해당 줄을 어떤 객체에 전달합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143180Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:3",
+      "source": "Ideally that would be accomplished using a callable or even a completely separate object composed by the protocol, but it could also be implemented by subclassing (as is the case with Twisted's ``LineReceiver``).",
+      "source_hash": 16741494788307111717,
+      "context_hash": 10156952349629616513,
+      "translation": "이상적으로는 호출 가능 객체나 프로토콜이 구성한 완전히 별개의 객체를 사용하여 이를 수행하지만, 서브클래싱으로 구현할 수도 있습니다(Twisted의 ``LineReceiver``\\ 가 그 예입니다).",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체",
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:10.143180Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:4",
+      "source": "For the other direction, the protocol could have a ``write_line`` method, which adds the required ``\\r\\n`` and passes the new bytes buffer on to the transport.",
+      "source_hash": 4790424833959652412,
+      "context_hash": 1151634771762340838,
+      "translation": "반대 방향으로는 프로토콜에 ``write_line`` 메서드가 있을 수 있으며, 이 메서드는 필요한 ``\\r\\n``\\ 을 추가하고 새 바이트 버퍼를 트랜스포트에 전달합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:10.143181Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "This PEP suggests a generalized ``LineReceiver`` called ``ChunkProtocol``, where a \"chunk\" is a message in a stream, delimited by the specified delimiter.",
+      "source_hash": 9958447730706760826,
+      "context_hash": 6502153179918844617,
+      "translation": "이 PEP는 ``LineReceiver``\\ 를 일반화한 ``ChunkProtocol``\\ 을 제안합니다. 여기서 “청크”는 지정된 구분 기호로 구분되는 스트림 내 메시지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143182Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:1",
+      "source": "Instances take a delimiter and a callable that will be called with a chunk of data once it's received (as opposed to Twisted's subclassing behavior).  ``ChunkProtocol`` also has a ``write_chunk`` method analogous to the ``write_line`` method described above.",
+      "source_hash": 236863664977554421,
+      "context_hash": 14133437210572587692,
+      "translation": "인스턴스는 구분 기호와, 수신이 완료되면 데이터 청크를 전달하여 호출할 호출 가능 객체를 받습니다(Twisted의 서브클래싱 동작과는 다릅니다). ``ChunkProtocol``\\ 에는 위에서 설명한 ``write_line`` 메서드와 유사한 ``write_chunk`` 메서드도 있습니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T18:35:10.143182Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Why separate protocols and transports?",
+      "source_hash": 5006006196542863613,
+      "context_hash": 18334415286263305265,
+      "translation": "프로토콜과 트랜스포트를 분리하는 이유는 무엇입니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143183Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "This separation between protocol and transport often confuses people who first come across it.",
+      "source_hash": 9627061640444939253,
+      "context_hash": 16397928035326610704,
+      "translation": "프로토콜과 트랜스포트를 이렇게 분리하는 방식은 이를 처음 접하는 사람을 자주 혼란스럽게 합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:10.143183Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "In fact, the standard library itself does not make this distinction in many cases, particularly not in the API it provides to users.",
+      "source_hash": 6133064331255326196,
+      "context_hash": 5051125349582655537,
+      "translation": "실제로 표준 라이브러리 자체는 여러 경우에 이러한 구분을 하지 않으며, 특히 사용자에게 제공하는 API에서는 그렇습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:35:10.143184Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "It is nonetheless a very useful distinction.",
+      "source_hash": 17664071925473111346,
+      "context_hash": 11578846114328791952,
+      "translation": "그럼에도 이는 매우 유용한 구분입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143186Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "In the worst case, it simplifies the implementation by clear separation of concerns.",
+      "source_hash": 3505444630844989036,
+      "context_hash": 946618304351306805,
+      "translation": "최악의 경우에도 관심사를 명확히 분리하여 구현을 단순화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143186Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:2",
+      "source": "However, it often serves the far more useful purpose of being able to reuse protocols across different transports.",
+      "source_hash": 14266893241145080095,
+      "context_hash": 6690755642146233345,
+      "translation": "그러나 이 구분은 서로 다른 트랜스포트에서 프로토콜을 재사용할 수 있게 한다는 훨씬 더 유용한 목적에 기여하는 경우가 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143186Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "Consider a simple RPC protocol.",
+      "source_hash": 17805475228634278611,
+      "context_hash": 17591403548146385848,
+      "translation": "간단한 RPC 프로토콜을 생각해 보십시오.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:10.143187Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "The same bytes may be transferred across many different transports, for example pipes or sockets.",
+      "source_hash": 8662531494624031523,
+      "context_hash": 6360649205525835856,
+      "translation": "예를 들어 파이프나 소켓처럼 서로 다른 여러 트랜스포트를 통해 동일한 바이트를 전송할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:10.143188Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:2",
+      "source": "To help with this, we separate the protocol out from the transport.",
+      "source_hash": 9818234914359043597,
+      "context_hash": 730328113926128863,
+      "translation": "이를 지원하기 위해 프로토콜을 트랜스포트에서 분리합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:10.143188Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:3",
+      "source": "The protocol just reads and writes bytes, and doesn't really care what mechanism is used to eventually transfer those bytes.",
+      "source_hash": 2561213176356354489,
+      "context_hash": 16799897168516328933,
+      "translation": "프로토콜은 바이트를 읽고 쓰기만 하며, 결국 해당 바이트를 전송하는 데 어떤 메커니즘이 사용되는지는 사실상 신경 쓰지 않습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:10.143188Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "This also allows for protocols to be stacked or nested easily, allowing for even more code reuse.",
+      "source_hash": 16336662561849466871,
+      "context_hash": 14495603992024180993,
+      "translation": "이를 통해 프로토콜을 쉽게 스택으로 쌓거나 중첩할 수 있으므로, 코드를 더욱 많이 재사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436401Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:1",
+      "source": "A common example of this is JSON-RPC: according to the specification, it can be used across both sockets and HTTP [#jsonrpc]_.",
+      "source_hash": 4842405836949162050,
+      "context_hash": 14590620195513700249,
+      "translation": "이에 대한 일반적인 예로 JSON-RPC가 있습니다. 사양에 따르면 JSON-RPC는 소켓과 HTTP 모두에서 사용할 수 있습니다 [#jsonrpc]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436405Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:2",
+      "source": "In practice, it tends to be primarily encapsulated in HTTP.",
+      "source_hash": 14698570949599356958,
+      "context_hash": 17196144808385888480,
+      "translation": "실제로는 주로 HTTP에 캡슐화되는 경향이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436406Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:3",
+      "source": "The protocol-transport abstraction allows us to build a stack of protocols and transports that allow you to use HTTP as if it were a transport.",
+      "source_hash": 14606229061836320243,
+      "context_hash": 5609564531651983756,
+      "translation": "프로토콜-전송 추상화를 사용하면 HTTP를 전송인 것처럼 사용할 수 있도록 프로토콜과 전송의 스택을 구축할 수 있습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:05.436407Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:4",
+      "source": "For JSON-RPC, that might get you a stack somewhat like this:",
+      "source_hash": 3038178124478428797,
+      "context_hash": 6746302669546964109,
+      "translation": "JSON-RPC의 경우 다음과 비슷한 스택을 구성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436409Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "TCP socket transport",
+      "source_hash": 5036163994201236223,
+      "context_hash": 4051472822650242059,
+      "translation": "TCP 소켓 전송",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436410Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "HTTP protocol",
+      "source_hash": 13160064158647652990,
+      "context_hash": 14451901982019642859,
+      "translation": "HTTP 프로토콜",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:05.436410Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "HTTP-based transport",
+      "source_hash": 12366164941798189757,
+      "context_hash": 14316920147071667922,
+      "translation": "HTTP 기반 전송",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436411Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "JSON-RPC protocol",
+      "source_hash": 2293639241020735739,
+      "context_hash": 11121113647160252210,
+      "translation": "JSON-RPC 프로토콜",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:35:05.436411Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "Application code",
+      "source_hash": 12549033992321899652,
+      "context_hash": 17471301131057800728,
+      "translation": "애플리케이션 코드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436412Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Flow control",
+      "source_hash": 4495182600573596591,
+      "context_hash": 4739281013932426316,
+      "translation": "흐름 제어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436412Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Consumers",
+      "source_hash": 2661992726596201233,
+      "context_hash": 1810061509410303902,
+      "translation": "소비자",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436412Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Consumers consume bytes produced by producers.",
+      "source_hash": 10297996252501051159,
+      "context_hash": 1557329164767964180,
+      "translation": "소비자는 생산자가 생성한 바이트를 소비합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436445Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "Together with producers, they make flow control possible.",
+      "source_hash": 3392971399726626898,
+      "context_hash": 6528723509604554317,
+      "translation": "소비자는 생산자와 함께 흐름 제어를 가능하게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436456Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Consumers primarily play a passive role in flow control.",
+      "source_hash": 141683367292945741,
+      "context_hash": 7689565710171078924,
+      "translation": "소비자는 흐름 제어에서 주로 수동적인 역할을 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436458Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "They get called whenever a producer has some data available.",
+      "source_hash": 15038978931304485246,
+      "context_hash": 12557254330749388187,
+      "translation": "생산자가 사용할 수 있는 데이터를 보유할 때마다 소비자가 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436459Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:2",
+      "source": "They then process that data, and typically yield control back to the producer.",
+      "source_hash": 3916540216334939965,
+      "context_hash": 15652273733550202012,
+      "translation": "그러면 소비자는 해당 데이터를 처리하고, 일반적으로 제어권을 생산자에게 다시 넘깁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436461Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "Consumers typically implement buffers of some sort.",
+      "source_hash": 11194546717533308812,
+      "context_hash": 9366056360292069951,
+      "translation": "소비자는 일반적으로 어떤 형태로든 버퍼를 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436462Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "They make flow control possible by telling their producer about the current status of those buffers.",
+      "source_hash": 16111283161659848261,
+      "context_hash": 3112859790725900464,
+      "translation": "소비자는 버퍼의 현재 상태를 생산자에게 알려 흐름 제어를 가능하게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436463Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:2",
+      "source": "A consumer can instruct a producer to stop producing entirely, stop producing temporarily, or resume producing if it has been told to pause previously.",
+      "source_hash": 17057971952668930821,
+      "context_hash": 1787420019510807422,
+      "translation": "소비자는 생산자에게 생산을 완전히 중지하거나, 일시적으로 중지하거나, 이전에 일시 중지하라는 지시를 받은 경우 생산을 재개하도록 지시할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436465Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "Producers are registered to the consumer using the ``register`` method.",
+      "source_hash": 1954642540063493765,
+      "context_hash": 18188348675316713682,
+      "translation": "생산자는 ``register`` 메서드를 사용하여 소비자에게 등록됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436465Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Producers",
+      "source_hash": 2354956898703639378,
+      "context_hash": 2505748717956062604,
+      "translation": "생산자",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436467Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Where consumers consume bytes, producers produce them.",
+      "source_hash": 10054659171604969989,
+      "context_hash": 9705123220087337609,
+      "translation": "소비자가 바이트를 소비하는 반면, 생산자는 바이트를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436468Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "Producers are modeled after the IPushProducer_ interface found in Twisted.",
+      "source_hash": 8962312175853791733,
+      "context_hash": 6990024728555544546,
+      "translation": "생산자는 Twisted에 있는 IPushProducer_ 인터페이스를 본떠 설계됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436469Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "Although there is an IPullProducer_ as well, it is on the whole far less interesting and therefore probably out of the scope of this PEP.",
+      "source_hash": 11414602885897909595,
+      "context_hash": 16061570147130662058,
+      "translation": "IPullProducer_도 있지만, 전반적으로 훨씬 덜 흥미롭기 때문에 이 PEP의 범위를 벗어날 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436470Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "Although producers can be told to stop producing entirely, the two most interesting methods they have are ``pause`` and ``resume``.",
+      "source_hash": 5063333988110006059,
+      "context_hash": 5348777576960935705,
+      "translation": "생산자에게 생산을 완전히 중지하도록 지시할 수 있지만, 생산자가 제공하는 가장 흥미로운 두 메서드는 ``pause``\\ 와 ``resume``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436471Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:1",
+      "source": "These are usually called by the consumer, to signify whether it is ready to process (\"consume\") more data or not.",
+      "source_hash": 11723861581678517141,
+      "context_hash": 10037619074511636335,
+      "translation": "이러한 메서드는 일반적으로 소비자가 더 많은 데이터를 처리(“소비”)할 준비가 되었는지 여부를 나타내기 위해 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436472Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:2",
+      "source": "Consumers and producers cooperate to make flow control possible.",
+      "source_hash": 8378153255865203705,
+      "context_hash": 10199792509278440885,
+      "translation": "소비자와 생산자는 협력하여 흐름 제어를 가능하게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436472Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "In addition to the Twisted IPushProducer_ interface, producers have a ``half_register`` method which is called with the consumer when the consumer tries to register that producer.",
+      "source_hash": 1947751037504026652,
+      "context_hash": 2278318183217118369,
+      "translation": "Twisted의 IPushProducer_ 인터페이스 외에도 생산자에게는 ``half_register`` 메서드가 있으며, 소비자가 해당 생산자를 등록하려고 할 때 이 메서드가 소비자와 함께 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436473Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:1",
+      "source": "In most cases, this will just be a case of setting ``self.consumer = consumer``, but some producers may require more complex preconditions or behavior when a consumer is registered.",
+      "source_hash": 2344017690288224271,
+      "context_hash": 2706110417644022588,
+      "translation": "대부분의 경우 이는 단순히 ``self.consumer = consumer``\\ 를 설정하는 것에 해당하지만, 일부 생산자는 소비자가 등록될 때 더 복잡한 사전 조건이나 동작을 요구할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436474Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:2",
+      "source": "End-users are not supposed to call this method directly.",
+      "source_hash": 3816575009601919940,
+      "context_hash": 10716064324974893563,
+      "translation": "최종 사용자는 이 메서드를 직접 호출해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436475Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "Considered API alternatives",
+      "source_hash": 16769023032755564905,
+      "context_hash": 3596534039662557361,
+      "translation": "검토한 API 대안들",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:35:05.436480Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "Generators as producers",
+      "source_hash": 12330324276590962991,
+      "context_hash": 3973604257349037628,
+      "translation": "프로듀서로서의 제너레이터",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720097Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "Generators have been suggested as way to implement producers.",
+      "source_hash": 7219350304471642848,
+      "context_hash": 3272435796423578318,
+      "translation": "제너레이터를 프로듀서를 구현하는 방법으로 사용하자는 제안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720100Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:1",
+      "source": "However, there appear to be a few problems with this.",
+      "source_hash": 17993456310669643617,
+      "context_hash": 18289692116371775524,
+      "translation": "그러나 여기에는 몇 가지 문제가 있는 것으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720100Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:0",
+      "source": "First of all, there is a conceptual problem.",
+      "source_hash": 364104031683507483,
+      "context_hash": 12636558559958045493,
+      "translation": "우선 개념적인 문제가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720101Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:1",
+      "source": "A generator, in a sense, is \"passive\".",
+      "source_hash": 11980627510724593278,
+      "context_hash": 1048472138679820547,
+      "translation": "제너레이터는 어떤 의미에서는 \"수동적\"입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:27:07.720101Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:2",
+      "source": "It needs to be told, through a method call, to take action.",
+      "source_hash": 10445786476228964229,
+      "context_hash": 8302970056004111794,
+      "translation": "제너레이터가 동작하려면 메서드 호출을 통해 동작하라는 지시를 받아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720102Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:3",
+      "source": "A producer is \"active\": it initiates those method calls.",
+      "source_hash": 13168991216843268045,
+      "context_hash": 5609214665287755217,
+      "translation": "프로듀서는 \"능동적\"이며, 이러한 메서드 호출을 시작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720102Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:4",
+      "source": "A real producer has a symmetric relationship with its consumer.",
+      "source_hash": 5182114354149820035,
+      "context_hash": 7348209345238053973,
+      "translation": "실제 프로듀서는 컨슈머와 대칭적인 관계를 맺습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720102Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:5",
+      "source": "In the case of a generator-turned-producer, only the consumer would have a reference, and the producer is blissfully unaware of the consumer's existence.",
+      "source_hash": 6345516256425756401,
+      "context_hash": 18207893854819875049,
+      "translation": "제너레이터를 프로듀서로 바꾼 경우에는 컨슈머만 참조를 가지며, 프로듀서는 컨슈머의 존재를 전혀 인식하지 못합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:27:07.720103Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:0",
+      "source": "This conceptual problem translates into a few technical issues as well.",
+      "source_hash": 13611100561630782162,
+      "context_hash": 3318751760733020210,
+      "translation": "이러한 개념적 문제는 몇 가지 기술적인 문제로도 이어집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720103Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:1",
+      "source": "After a successful ``write`` method call on its consumer, a (push) producer is free to take action once more.",
+      "source_hash": 10346542605029966698,
+      "context_hash": 2340462378429645800,
+      "translation": "컨슈머에 대한 ``write`` 메서드 호출이 성공한 후, (푸시) 프로듀서는 다시 한 번 동작할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720104Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:9/seg:2",
+      "source": "In the case of a generator, it would need to be told, either by asking for the next object through the iteration protocol (a process which could block indefinitely), or perhaps by throwing some kind of signal exception into it.",
+      "source_hash": 16957413823687107422,
+      "context_hash": 18167309875478235958,
+      "translation": "제너레이터의 경우에는 반복 프로토콜을 통해 다음 객체를 요청하거나(이 과정은 무기한 차단될 수 있습니다), 어떤 종류의 신호 예외를 제너레이터에 던져 동작하라는 지시를 받아야 합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜",
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:27:07.720104Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:10/seg:0",
+      "source": "This signaling setup may provide a technically feasible solution, but it is still unsatisfactory.",
+      "source_hash": 4060789491923639852,
+      "context_hash": 10946457396709601922,
+      "translation": "이러한 신호 전달 방식은 기술적으로 실행 가능한 해결책을 제공할 수 있지만, 여전히 만족스럽지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720105Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:10/seg:1",
+      "source": "For one, this introduces unwarranted complexity in the consumer, which now not only needs to understand how to receive and process data, but also how to ask for new data and deal with the case of no new data being available.",
+      "source_hash": 5246983483851467721,
+      "context_hash": 15602060569586158098,
+      "translation": "무엇보다도 이는 컨슈머에 불필요한 복잡성을 추가합니다. 이제 컨슈머는 데이터를 수신하고 처리하는 방법뿐만 아니라 새 데이터를 요청하는 방법과 새 데이터를 사용할 수 없는 경우를 처리하는 방법도 이해해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720105Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:11/seg:0",
+      "source": "This latter edge case is particularly problematic.",
+      "source_hash": 18075742590403220692,
+      "context_hash": 5172050591541015531,
+      "translation": "이 후자의 예외 상황은 특히 문제가 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720105Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:11/seg:1",
+      "source": "It needs to be taken care of, since the entire operation is not allowed to block.",
+      "source_hash": 1003939103022322078,
+      "context_hash": 7636442676383191590,
+      "translation": "전체 작업이 차단되어서는 안 되므로 이를 처리해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720105Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:11/seg:2",
+      "source": "However, generators can not raise an exception on iteration without terminating, thereby losing the state of the generator.",
+      "source_hash": 2901601238589577167,
+      "context_hash": 5826850936459152229,
+      "translation": "그러나 제너레이터는 종료되지 않고는 반복 중에 예외를 발생시킬 수 없으며, 그 결과 제너레이터의 상태를 잃게 됩니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:27:07.720106Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:11/seg:3",
+      "source": "As a result, signaling a lack of available data would have to be done using a sentinel value, instead of being done using th exception mechanism.",
+      "source_hash": 5509346520273278869,
+      "context_hash": 2124117446718732392,
+      "translation": "따라서 사용 가능한 데이터가 없다는 신호는 예외 메커니즘을 사용하는 대신 센티넬 값을 사용하여 전달해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720106Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:12/seg:0",
+      "source": "Last but not least, nobody produced actually working code demonstrating how they could be used.",
+      "source_hash": 15497293468281445818,
+      "context_hash": 11068277705731867227,
+      "translation": "마지막으로, 제너레이터를 어떻게 사용할 수 있는지 보여 주는 실제로 작동하는 코드를 작성한 사람은 아무도 없었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720107Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 11427902531485753713,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720107Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Sections `2.1 <http://json-rpc.org/wiki/specification#a2.1JSON-RPCoverstreamconnections>`_ and",
+      "source_hash": 8215432502357797627,
+      "context_hash": 4560132234538035029,
+      "translation": "섹션 `2.1 <http://json-rpc.org/wiki/specification#a2.1JSON-RPCoverstreamconnections>`_ 및",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720107Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "`2.2 <http://json-rpc.org/wiki/specification#a2.2JSON-RPCoverHTTP>`_ .",
+      "source_hash": 11693626916614706444,
+      "context_hash": 17456976202472439792,
+      "translation": "`2.2 <http://json-rpc.org/wiki/specification#a2.2JSON-RPCoverHTTP>`_ .",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:27:07.720108Z",
+      "issues": []
+    }
+  ]
+}

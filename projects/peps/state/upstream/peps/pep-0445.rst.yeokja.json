@@ -1,0 +1,2204 @@
+{
+  "version": 1,
+  "source_hash": 4729629909407752493,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Add new APIs to customize Python memory allocators",
+      "source_hash": 17232782006084608893,
+      "context_hash": 16530898886277989957,
+      "translation": "Python 메모리 할당자를 사용자 지정하기 위한 새 API 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264837Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 10325668278733098181,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264839Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes new Application Programming Interfaces (API) to customize Python memory allocators.",
+      "source_hash": 13331833868768457267,
+      "context_hash": 13932362468056532963,
+      "translation": "이 PEP는 Python 메모리 할당자를 사용자 지정하기 위한 새로운 응용 프로그래밍 인터페이스(API)를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264839Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "The only implementation required to conform to this PEP is CPython, but other implementations may choose to be compatible, or to re-use a similar scheme.",
+      "source_hash": 7154798828996083959,
+      "context_hash": 4049022989958242250,
+      "translation": "이 PEP를 준수해야 하는 유일한 구현은 CPython이지만, 다른 구현은 호환성을 유지하거나 유사한 방식을 재사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264840Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 10133196134719974519,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264840Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Use cases:",
+      "source_hash": 8950006918604060877,
+      "context_hash": 1153642416104677434,
+      "translation": "사용 사례:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264840Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Applications embedding Python which want to isolate Python memory from the memory of the application, or want to use a different memory allocator optimized for its Python usage",
+      "source_hash": 6923825593820093206,
+      "context_hash": 5635273165217867889,
+      "translation": "Python 메모리를 애플리케이션의 메모리와 격리하거나 Python 사용에 최적화된 다른 메모리 할당자를 사용하려는 Python 임베딩 애플리케이션",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264840Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Python running on embedded devices with low memory and slow CPU.",
+      "source_hash": 6514262175388143091,
+      "context_hash": 12506176198257077430,
+      "translation": "메모리가 부족하고 CPU가 느린 임베디드 장치에서 실행되는 Python입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264840Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "A custom memory allocator can be used for efficiency and/or to get access all the memory of the device.",
+      "source_hash": 13623587228458712228,
+      "context_hash": 12479875773320199825,
+      "translation": "효율성을 높이거나 장치의 모든 메모리에 액세스하기 위해 사용자 지정 메모리 할당자를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264841Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "Debug tools for memory allocators:",
+      "source_hash": 14049226246336889594,
+      "context_hash": 12118964229294218497,
+      "translation": "메모리 할당자용 디버그 도구:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264841Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "track the memory usage (find memory leaks)",
+      "source_hash": 17374521541786277533,
+      "context_hash": 12503953333847551602,
+      "translation": "메모리 사용량을 추적합니다(메모리 누수 찾기).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264841Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "get the location of a memory allocation: Python filename and line number, and the size of a memory block",
+      "source_hash": 4078798708126962961,
+      "context_hash": 4466143781575312910,
+      "translation": "메모리 할당 위치(파일 이름과 줄 번호)와 메모리 블록의 크기를 확인합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264841Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "detect buffer underflow, buffer overflow and misuse of Python allocator APIs (see `Redesign Debug Checks on Memory Block Allocators as Hooks`_)",
+      "source_hash": 15162437779991904696,
+      "context_hash": 1273464546409869721,
+      "translation": "버퍼 언더플로, 버퍼 오버플로 및 Python 할당자 API의 오용을 감지합니다(`Redesign Debug Checks on Memory Block Allocators as Hooks`_ 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264842Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "force memory allocations to fail to test handling of the ``MemoryError`` exception",
+      "source_hash": 18194987783269329862,
+      "context_hash": 10500522783623214138,
+      "translation": "``MemoryError`` 예외 처리를 테스트하기 위해 메모리 할당이 실패하도록 강제합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264842Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Proposal",
+      "source_hash": 17139217736364358932,
+      "context_hash": 3190532131561068880,
+      "translation": "제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264842Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "New Functions and Structures",
+      "source_hash": 18375018573111449216,
+      "context_hash": 17912928656916043651,
+      "translation": "새 함수 및 구조체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264842Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Add a new GIL-free (no need to hold the GIL) memory allocator:",
+      "source_hash": 1410228698098980153,
+      "context_hash": 410099050404452543,
+      "translation": "새로운 GIL 비종속( GIL을 보유할 필요가 없는) 메모리 할당자를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264842Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "``void* PyMem_RawMalloc(size_t size)``",
+      "source_hash": 13520161222791882791,
+      "context_hash": 2468517079010498020,
+      "translation": "``void* PyMem_RawMalloc(size_t size)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264842Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "``void* PyMem_RawRealloc(void *ptr, size_t new_size)``",
+      "source_hash": 2125189274865486834,
+      "context_hash": 5197538490237293906,
+      "translation": "``void* PyMem_RawRealloc(void *ptr, size_t new_size)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264843Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "``void PyMem_RawFree(void *ptr)``",
+      "source_hash": 17743702768878094629,
+      "context_hash": 10440569012765678288,
+      "translation": "``void PyMem_RawFree(void *ptr)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264843Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "The newly allocated memory will not have been initialized in any way.",
+      "source_hash": 937214293867764764,
+      "context_hash": 14095938317983493363,
+      "translation": "새로 할당된 메모리는 어떤 방식으로도 초기화되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264843Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "Requesting zero bytes returns a distinct non-*NULL* pointer if possible, as if ``PyMem_Malloc(1)`` had been called instead.",
+      "source_hash": 8050467647284240580,
+      "context_hash": 6314973184688941218,
+      "translation": "0바이트를 요청하면 가능한 경우 ``PyMem_Malloc(1)``\\ 을 호출한 것처럼 서로 구별되는, *NULL*\\ 이 아닌 포인터를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264843Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "Add a new ``PyMemAllocator`` structure",
+      "source_hash": 9317484319672894007,
+      "context_hash": 1274698409923291801,
+      "translation": "새로운 ``PyMemAllocator`` 구조체를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264843Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "Add a new ``PyMemAllocatorDomain`` enum to choose the Python allocator domain.",
+      "source_hash": 18255964866193528934,
+      "context_hash": 4348310329792796983,
+      "translation": "Python 할당자 도메인을 선택하기 위한 새로운 ``PyMemAllocatorDomain`` 열거형을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264844Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:1",
+      "source": "Domains:",
+      "source_hash": 12965878318632362564,
+      "context_hash": 16894758116375713999,
+      "translation": "도메인:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264844Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "``PYMEM_DOMAIN_RAW``: ``PyMem_RawMalloc()``, ``PyMem_RawRealloc()`` and ``PyMem_RawFree()``",
+      "source_hash": 12081099890322180864,
+      "context_hash": 8398665981369344358,
+      "translation": "``PYMEM_DOMAIN_RAW``: ``PyMem_RawMalloc()``, ``PyMem_RawRealloc()`` 및 ``PyMem_RawFree()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264844Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "``PYMEM_DOMAIN_MEM``: ``PyMem_Malloc()``, ``PyMem_Realloc()`` and ``PyMem_Free()``",
+      "source_hash": 2672489902260720117,
+      "context_hash": 5707481340207637973,
+      "translation": "``PYMEM_DOMAIN_MEM``: ``PyMem_Malloc()``, ``PyMem_Realloc()`` 및 ``PyMem_Free()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264844Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:0",
+      "source": "``PYMEM_DOMAIN_OBJ``: ``PyObject_Malloc()``, ``PyObject_Realloc()`` and ``PyObject_Free()``",
+      "source_hash": 1305339968315312017,
+      "context_hash": 16988373295784039984,
+      "translation": "``PYMEM_DOMAIN_OBJ``: ``PyObject_Malloc()``, ``PyObject_Realloc()`` 및 ``PyObject_Free()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264844Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:0",
+      "source": "Add new functions to get and set memory block allocators:",
+      "source_hash": 4761054223598321725,
+      "context_hash": 15320013010039978352,
+      "translation": "메모리 블록 할당자를 가져오고 설정하는 새 함수를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264845Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:0",
+      "source": "``void PyMem_GetAllocator(PyMemAllocatorDomain domain, PyMemAllocator *allocator)``",
+      "source_hash": 8674002294092447571,
+      "context_hash": 8952443451492667303,
+      "translation": "``void PyMem_GetAllocator(PyMemAllocatorDomain domain, PyMemAllocator *allocator)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264845Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:15/seg:0",
+      "source": "``void PyMem_SetAllocator(PyMemAllocatorDomain domain, PyMemAllocator *allocator)``",
+      "source_hash": 6258419541777372177,
+      "context_hash": 4115499337820791372,
+      "translation": "``void PyMem_SetAllocator(PyMemAllocatorDomain domain, PyMemAllocator *allocator)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264845Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:16/seg:0",
+      "source": "The new allocator must return a distinct non-*NULL* pointer when requesting zero bytes",
+      "source_hash": 15337008884950558833,
+      "context_hash": 13499200068497357333,
+      "translation": "새 할당자는 0바이트를 요청할 때 서로 구별되는, *NULL*\\ 이 아닌 포인터를 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:37.264845Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:17/seg:0",
+      "source": "For the ``PYMEM_DOMAIN_RAW`` domain, the allocator must be thread-safe: the GIL is not held when the allocator is called.",
+      "source_hash": 5372326436107767015,
+      "context_hash": 11379257788384127601,
+      "translation": "``PYMEM_DOMAIN_RAW`` 도메인에서는 할당자가 스레드 안전해야 합니다. 할당자가 호출될 때 GIL이 유지되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392070Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:0",
+      "source": "Add a new ``PyObjectArenaAllocator`` structure",
+      "source_hash": 10863736972115800077,
+      "context_hash": 2347010272114665545,
+      "translation": "새로운 ``PyObjectArenaAllocator`` 구조체를 추가하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392073Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:20/seg:0",
+      "source": "Add new functions to get and set the arena allocator used by *pymalloc*:",
+      "source_hash": 12807689212921021393,
+      "context_hash": 2700474969531831880,
+      "translation": "*pymalloc*\\ 에서 사용하는 아레나 할당자를 가져오고 설정하는 새 함수를 추가하십시오:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392073Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:21/seg:0",
+      "source": "``void PyObject_GetArenaAllocator(PyObjectArenaAllocator *allocator)``",
+      "source_hash": 1835714738170891951,
+      "context_hash": 2852346329433137533,
+      "translation": "``void PyObject_GetArenaAllocator(PyObjectArenaAllocator *allocator)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392073Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:22/seg:0",
+      "source": "``void PyObject_SetArenaAllocator(PyObjectArenaAllocator *allocator)``",
+      "source_hash": 17380980735590891786,
+      "context_hash": 2209170713070037044,
+      "translation": "``void PyObject_SetArenaAllocator(PyObjectArenaAllocator *allocator)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392074Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:23/seg:0",
+      "source": "Add a new function to reinstall the debug checks on memory allocators when a memory allocator is replaced with ``PyMem_SetAllocator()``:",
+      "source_hash": 1902512363590188166,
+      "context_hash": 14474635990995721852,
+      "translation": "메모리 할당자가 ``PyMem_SetAllocator()``\\ 로 교체될 때 메모리 할당자에 디버그 검사를 다시 설치하는 새 함수를 추가하십시오:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392074Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:24/seg:0",
+      "source": "``void PyMem_SetupDebugHooks(void)``",
+      "source_hash": 17477763588227238715,
+      "context_hash": 6790873862403527893,
+      "translation": "``void PyMem_SetupDebugHooks(void)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392074Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:25/seg:0",
+      "source": "Install the debug hooks on all memory block allocators.",
+      "source_hash": 10171948025746242249,
+      "context_hash": 2112635178731393867,
+      "translation": "모든 메모리 블록 할당자에 디버그 후크를 설치하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392075Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:25/seg:1",
+      "source": "The function can be called more than once, hooks are only installed once.",
+      "source_hash": 14083886158246563697,
+      "context_hash": 8408824520153244124,
+      "translation": "이 함수는 여러 번 호출할 수 있으며, 후크는 한 번만 설치됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392075Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:26/seg:0",
+      "source": "The function does nothing is Python is not compiled in debug mode.",
+      "source_hash": 15591673100264625248,
+      "context_hash": 17249620143683382229,
+      "translation": "Python이 디버그 모드로 컴파일되지 않았다면 이 함수는 아무 작업도 수행하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392075Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:27/seg:0",
+      "source": "Memory block allocators always return *NULL* if *size* is greater than ``PY_SSIZE_T_MAX``.",
+      "source_hash": 7399856380579165116,
+      "context_hash": 1367930014520186231,
+      "translation": "메모리 블록 할당자는 *size*\\ 가 ``PY_SSIZE_T_MAX``\\ 보다 크면 항상 *NULL*\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392075Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:27/seg:1",
+      "source": "The check is done before calling the inner function.",
+      "source_hash": 17403114735209762893,
+      "context_hash": 4752956807143462113,
+      "translation": "이 검사는 내부 함수를 호출하기 전에 수행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392076Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:28/seg:0",
+      "source": "The *pymalloc* allocator is optimized for objects smaller than 512 bytes with a short lifetime.",
+      "source_hash": 12795661740923346541,
+      "context_hash": 9863788839740955170,
+      "translation": "*pymalloc* 할당자는 수명이 짧은 512바이트 미만의 객체에 최적화되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392076Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:28/seg:1",
+      "source": "It uses memory mappings with a fixed size of 256 KB called \"arenas\".",
+      "source_hash": 4489403865128391978,
+      "context_hash": 8400474997700110863,
+      "translation": "이 할당자는 \"아레나\"라고 하는 256KB 고정 크기의 메모리 매핑을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392076Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:29/seg:0",
+      "source": "Here is how the allocators are set up by default:",
+      "source_hash": 2746316852865994606,
+      "context_hash": 15977006868035062653,
+      "translation": "할당자는 기본적으로 다음과 같이 설정됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392077Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:30/seg:0",
+      "source": "``PYMEM_DOMAIN_RAW``, ``PYMEM_DOMAIN_MEM``: ``malloc()``, ``realloc()`` and ``free()``; call ``malloc(1)`` when requesting zero bytes",
+      "source_hash": 12329636673243312470,
+      "context_hash": 1633796917864037839,
+      "translation": "``PYMEM_DOMAIN_RAW``, ``PYMEM_DOMAIN_MEM``: ``malloc()``, ``realloc()`` 및 ``free()``\\ 를 사용하며, 0바이트를 요청하면 ``malloc(1)``\\ 을 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392077Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:31/seg:0",
+      "source": "``PYMEM_DOMAIN_OBJ``: *pymalloc* allocator which falls back on ``PyMem_Malloc()`` for allocations larger than 512 bytes",
+      "source_hash": 16910486984397305821,
+      "context_hash": 7446627857811268670,
+      "translation": "``PYMEM_DOMAIN_OBJ``: 512바이트보다 큰 할당에 대해서는 ``PyMem_Malloc()``\\ 으로 대체하는 *pymalloc* 할당자입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392077Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:32/seg:0",
+      "source": "*pymalloc* arena allocator: ``VirtualAlloc()`` and ``VirtualFree()`` on Windows, ``mmap()`` and ``munmap()`` when available, or ``malloc()`` and ``free()``",
+      "source_hash": 16524439579508821568,
+      "context_hash": 15031230303153685638,
+      "translation": "*pymalloc* 아레나 할당자: Windows에서는 ``VirtualAlloc()`` 및 ``VirtualFree()``\\ 를 사용하고, 사용 가능한 경우 ``mmap()`` 및 ``munmap()``\\ 을 사용하며, 그렇지 않으면 ``malloc()`` 및 ``free()``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392077Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Redesign Debug Checks on Memory Block Allocators as Hooks",
+      "source_hash": 4589972406945571825,
+      "context_hash": 16927312377361360117,
+      "translation": "메모리 블록 할당자의 디버그 검사를 후크로 재설계",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392078Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Since Python 2.3, Python implements different checks on memory allocators in debug mode:",
+      "source_hash": 15819262010417216550,
+      "context_hash": 1162463327712008171,
+      "translation": "Python 2.3부터 Python은 디버그 모드에서 메모리 할당자에 대해 다양한 검사를 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392078Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Newly allocated memory is filled with the byte ``0xCB``, freed memory is filled with the byte ``0xDB``.",
+      "source_hash": 2732132369828835913,
+      "context_hash": 17298579276405073984,
+      "translation": "새로 할당된 메모리는 바이트 ``0xCB``\\ 로 채워지고, 해제된 메모리는 바이트 ``0xDB``\\ 로 채워집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392078Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "Detect API violations, ex: ``PyObject_Free()`` called on a memory block allocated by ``PyMem_Malloc()``",
+      "source_hash": 3012379011580259590,
+      "context_hash": 12260540227007370114,
+      "translation": "API 위반을 감지합니다. 예를 들어 ``PyMem_Malloc()``\\ 으로 할당된 메모리 블록에 ``PyObject_Free()``\\ 가 호출되는 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392078Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "Detect write before the start of the buffer (buffer underflow)",
+      "source_hash": 10480117860585990569,
+      "context_hash": 3427857182215847530,
+      "translation": "버퍼 시작 이전에 기록하는 행위(버퍼 언더플로)를 감지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392078Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "Detect write after the end of the buffer (buffer overflow)",
+      "source_hash": 11232743589501006157,
+      "context_hash": 7793790124546789506,
+      "translation": "버퍼 끝 이후에 기록하는 행위(버퍼 오버플로)를 감지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392079Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "In Python 3.3, the checks are installed by replacing ``PyMem_Malloc()``, ``PyMem_Realloc()``, ``PyMem_Free()``, ``PyObject_Malloc()``, ``PyObject_Realloc()`` and ``PyObject_Free()`` using macros.",
+      "source_hash": 6577011510220601632,
+      "context_hash": 12500374680319163107,
+      "translation": "Python 3.3에서는 매크로를 사용하여 ``PyMem_Malloc()``, ``PyMem_Realloc()``, ``PyMem_Free()``, ``PyObject_Malloc()``, ``PyObject_Realloc()`` 및 ``PyObject_Free()``\\ 를 교체하는 방식으로 검사를 설치합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392079Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:1",
+      "source": "The new allocator allocates a larger buffer and writes a pattern to detect buffer underflow, buffer overflow and use after free (by filling the buffer with the byte ``0xDB``).",
+      "source_hash": 13778167405639044,
+      "context_hash": 6480879750585005127,
+      "translation": "새 할당자는 더 큰 버퍼를 할당하고, 버퍼 언더플로와 버퍼 오버플로 및 해제 후 사용을 감지하기 위해 패턴을 기록합니다(버퍼를 바이트 ``0xDB``\\ 로 채움).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392079Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:2",
+      "source": "It uses the original ``PyObject_Malloc()`` function to allocate memory.",
+      "source_hash": 4534372757446659303,
+      "context_hash": 14049124568349729450,
+      "translation": "메모리를 할당할 때 원래 ``PyObject_Malloc()`` 함수를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392079Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:3",
+      "source": "So ``PyMem_Malloc()`` and ``PyMem_Realloc()`` indirectly call ``PyObject_Malloc()`` and ``PyObject_Realloc()``.",
+      "source_hash": 4242647605551506231,
+      "context_hash": 4659448461555641645,
+      "translation": "따라서 ``PyMem_Malloc()`` 및 ``PyMem_Realloc()``\\ 은 간접적으로 ``PyObject_Malloc()`` 및 ``PyObject_Realloc()``\\ 을 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392080Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "This PEP redesigns the debug checks as hooks on the existing allocators in debug mode.",
+      "source_hash": 5249039596307261922,
+      "context_hash": 4364737837207512372,
+      "translation": "이 PEP는 디버그 모드에서 기존 할당자에 대한 후크로 디버그 검사를 재설계합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392080Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:1",
+      "source": "Examples of call traces without the hooks:",
+      "source_hash": 5906685246102943100,
+      "context_hash": 3960534404237698708,
+      "translation": "후크가 없는 호출 추적의 예는 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392080Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "``PyMem_RawMalloc()`` => ``_PyMem_RawMalloc()`` => ``malloc()``",
+      "source_hash": 13463569904030541467,
+      "context_hash": 4506641247764636229,
+      "translation": "``PyMem_RawMalloc()`` => ``_PyMem_RawMalloc()`` => ``malloc()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392080Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "``PyMem_Realloc()`` => ``_PyMem_RawRealloc()`` => ``realloc()``",
+      "source_hash": 6525365640621283339,
+      "context_hash": 13142004763022904479,
+      "translation": "``PyMem_Realloc()`` => ``_PyMem_RawRealloc()`` => ``realloc()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:56.392080Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "``PyObject_Free()`` => ``_PyObject_Free()``",
+      "source_hash": 16612902965347640433,
+      "context_hash": 2576296286428686474,
+      "translation": "``PyObject_Free()`` => ``_PyObject_Free()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601110Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "Call traces when the hooks are installed (debug mode):",
+      "source_hash": 5649891961976069048,
+      "context_hash": 2880348248236708603,
+      "translation": "후크가 설치된 경우의 호출 추적(디버그 모드):",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601115Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "``PyMem_RawMalloc()`` => ``_PyMem_DebugMalloc()`` => ``_PyMem_RawMalloc()`` => ``malloc()``",
+      "source_hash": 4152310499734118446,
+      "context_hash": 16029057358003161717,
+      "translation": "``PyMem_RawMalloc()`` => ``_PyMem_DebugMalloc()`` => ``_PyMem_RawMalloc()`` => ``malloc()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601116Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "``PyMem_Realloc()`` => ``_PyMem_DebugRealloc()`` => ``_PyMem_RawRealloc()`` => ``realloc()``",
+      "source_hash": 537775048976499020,
+      "context_hash": 7094268581569220201,
+      "translation": "``PyMem_Realloc()`` => ``_PyMem_DebugRealloc()`` => ``_PyMem_RawRealloc()`` => ``realloc()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601116Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "``PyObject_Free()`` => ``_PyMem_DebugFree()`` => ``_PyObject_Free()``",
+      "source_hash": 16597688742572266686,
+      "context_hash": 11206797081947195937,
+      "translation": "``PyObject_Free()`` => ``_PyMem_DebugFree()`` => ``_PyObject_Free()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601117Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "As a result, ``PyMem_Malloc()`` and ``PyMem_Realloc()`` now call ``malloc()`` and ``realloc()`` in both release mode and debug mode, instead of calling ``PyObject_Malloc()`` and ``PyObject_Realloc()`` in debug mode.",
+      "source_hash": 13777067754223129163,
+      "context_hash": 4464619675469340633,
+      "translation": "그 결과 이제 릴리스 모드와 디버그 모드 모두에서 ``PyMem_Malloc()`` 및 ``PyMem_Realloc()``\\ 은 ``malloc()`` 및 ``realloc()``\\ 을 호출하며, 디버그 모드에서 ``PyObject_Malloc()`` 및 ``PyObject_Realloc()``\\ 을 호출하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601118Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:0",
+      "source": "When at least one memory allocator is replaced with ``PyMem_SetAllocator()``, the ``PyMem_SetupDebugHooks()`` function must be called to reinstall the debug hooks on top on the new allocator.",
+      "source_hash": 18183087178073209402,
+      "context_hash": 18445219711069689468,
+      "translation": "하나 이상의 메모리 할당자를 ``PyMem_SetAllocator()``\\ 로 교체한 경우, 새 할당자 위에 디버그 후크를 다시 설치하려면 ``PyMem_SetupDebugHooks()`` 함수를 호출해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601118Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Don't call malloc() directly anymore",
+      "source_hash": 730983657916932335,
+      "context_hash": 8875738810957060014,
+      "translation": "더 이상 malloc()을 직접 호출하지 마십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601119Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "``PyObject_Malloc()`` falls back on ``PyMem_Malloc()`` instead of ``malloc()`` if size is greater or equal than 512 bytes, and ``PyObject_Realloc()`` falls back on ``PyMem_Realloc()`` instead of ``realloc()``",
+      "source_hash": 3250152271453392374,
+      "context_hash": 7034673436350122890,
+      "translation": "크기가 512바이트 이상이면 ``PyObject_Malloc()``\\ 은 ``malloc()`` 대신 ``PyMem_Malloc()``\\ 으로 대체 실행되며, ``PyObject_Realloc()``\\ 은 ``realloc()`` 대신 ``PyMem_Realloc()``\\ 으로 대체 실행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601119Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "Direct calls to ``malloc()`` are replaced with ``PyMem_Malloc()``, or ``PyMem_RawMalloc()`` if the GIL is not held.",
+      "source_hash": 17800674858154205929,
+      "context_hash": 13818702556489872368,
+      "translation": "``malloc()``\\ 에 대한 직접 호출은 ``PyMem_Malloc()``\\ 으로 교체하며, GIL을 보유하지 않은 경우에는 ``PyMem_RawMalloc()``\\ 으로 교체합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601120Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "External libraries like zlib or OpenSSL can be configured to allocate memory using ``PyMem_Malloc()`` or ``PyMem_RawMalloc()``.",
+      "source_hash": 4492609923207380653,
+      "context_hash": 4620810675667690925,
+      "translation": "zlib 또는 OpenSSL과 같은 외부 라이브러리는 ``PyMem_Malloc()`` 또는 ``PyMem_RawMalloc()``\\ 을 사용하여 메모리를 할당하도록 구성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601120Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "If the allocator of a library can only be replaced globally (rather than on an object-by-object basis), it shouldn't be replaced when Python is embedded in an application.",
+      "source_hash": 13959626988503737200,
+      "context_hash": 7718678313258369964,
+      "translation": "라이브러리의 할당자를 객체별 방식이 아니라 전역적으로만 교체할 수 있다면, Python이 애플리케이션에 임베드된 경우에는 이를 교체해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601121Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "For the \"track memory usage\" use case, it is important to track memory allocated in external libraries to have accurate reports, because these allocations can be large (e.g. they can raise a ``MemoryError`` exception) and would otherwise be missed in memory usage reports.",
+      "source_hash": 17178316840936374868,
+      "context_hash": 124267961986743518,
+      "translation": "\"메모리 사용량 추적\" 사용 사례에서는 정확한 보고서를 작성하기 위해 외부 라이브러리에서 할당된 메모리도 추적하는 것이 중요합니다. 이러한 할당은 클 수 있으며(예를 들어 ``MemoryError`` 예외를 발생시킬 수 있음), 그렇지 않으면 메모리 사용량 보고서에서 누락되기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601121Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Examples",
+      "source_hash": 2926230321239078022,
+      "context_hash": 15535717396812555867,
+      "translation": "예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601122Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Use case 1: Replace Memory Allocators, keep pymalloc",
+      "source_hash": 14677266089657997181,
+      "context_hash": 2677960875171745708,
+      "translation": "사용 사례 1: 메모리 할당자 교체, pymalloc 유지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601122Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Dummy example wasting 2 bytes per memory block, and 10 bytes per *pymalloc* arena",
+      "source_hash": 1235085603377617736,
+      "context_hash": 16156431130626030297,
+      "translation": "메모리 블록마다 2바이트, *pymalloc* 아레나마다 10바이트를 낭비하는 더미 예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601123Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Use case 2: Replace Memory Allocators, override pymalloc",
+      "source_hash": 17360687543668699827,
+      "context_hash": 9540135837106458699,
+      "translation": "사용 사례 2: 메모리 할당자 교체, pymalloc 재정의",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601123Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "If you have a dedicated allocator optimized for allocations of objects smaller than 512 bytes with a short lifetime, pymalloc can be overridden (replace ``PyObject_Malloc()``).",
+      "source_hash": 8537126484976407895,
+      "context_hash": 6733459616587386663,
+      "translation": "수명이 짧고 512바이트보다 작은 객체의 할당에 최적화된 전용 할당자가 있다면 pymalloc을 재정의할 수 있습니다(``PyObject_Malloc()``\\ 을 교체합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601123Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "Dummy example wasting 2 bytes per memory block",
+      "source_hash": 15442369139764476728,
+      "context_hash": 10898293341396588044,
+      "translation": "메모리 블록마다 2바이트를 낭비하는 더미 예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601124Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "The *pymalloc* arena does not need to be replaced, because it is no more used by the new allocator.",
+      "source_hash": 8670702907908648482,
+      "context_hash": 2528095105340817456,
+      "translation": "새 할당자가 더 이상 사용하지 않으므로 *pymalloc* 아레나는 교체할 필요가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601124Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Use case 3: Setup Hooks On Memory Block Allocators",
+      "source_hash": 16367634578265922967,
+      "context_hash": 5312583499527610465,
+      "translation": "사용 사례 3: 메모리 블록 할당자에 후크 설정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601124Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Example to setup hooks on all memory block allocators",
+      "source_hash": 15860408857206254900,
+      "context_hash": 5809631867395908976,
+      "translation": "모든 메모리 블록 할당자에 후크를 설정하는 예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601125Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "``PyMem_SetupDebugHooks()`` does not need to be called because memory allocator are not replaced: the debug checks on memory block allocators are installed automatically at startup.",
+      "source_hash": 15327536407134352520,
+      "context_hash": 11018567032622923881,
+      "translation": "메모리 할당자는 교체되지 않으므로 ``PyMem_SetupDebugHooks()``\\ 를 호출할 필요가 없습니다. 메모리 블록 할당자에 대한 디버그 검사는 시작 시 자동으로 설치됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601125Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Performances",
+      "source_hash": 2679233202726982889,
+      "context_hash": 8555423230385387998,
+      "translation": "성능",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601125Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "The implementation of this PEP (issue #3329) has no visible overhead on the Python benchmark suite.",
+      "source_hash": 8660142273243818359,
+      "context_hash": 12483169328927140013,
+      "translation": "이 PEP(issue #3329)의 구현은 Python 벤치마크 모음에서 눈에 띄는 오버헤드가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601125Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "Results of the `Python benchmarks suite <http://hg.python.org/benchmarks>`_ (-b 2n3): some tests are 1.04x faster, some tests are 1.04 slower.",
+      "source_hash": 13576425842860832072,
+      "context_hash": 8674625486443025886,
+      "translation": "`Python benchmarks suite <http://hg.python.org/benchmarks>`_\\ 의 결과(-b 2n3): 일부 테스트는 1.04배 더 빠르고, 일부 테스트는 1.04배 더 느립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601126Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "Results of pybench microbenchmark: \"+0.1%\" slower globally (diff between -4.9% and +5.6%).",
+      "source_hash": 693147701123726789,
+      "context_hash": 8658195409906719705,
+      "translation": "pybench 마이크로벤치마크 결과: 전체적으로 \"+0.1%\" 더 느립니다(-4.9%와 +5.6% 사이의 차이).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601126Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "The full output of benchmarks is attached to the issue #3329.",
+      "source_hash": 10765963809796021831,
+      "context_hash": 12661142712600569403,
+      "translation": "벤치마크의 전체 출력은 issue #3329에 첨부되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601126Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Rejected Alternatives",
+      "source_hash": 4665383330312454579,
+      "context_hash": 3727333901836128335,
+      "translation": "거부된 대안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601127Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "More specific functions to get/set memory allocators",
+      "source_hash": 6656953537528540490,
+      "context_hash": 10815662926884858650,
+      "translation": "메모리 할당자를 가져오고 설정하기 위한 더 구체적인 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601127Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "It was originally proposed a larger set of C API functions, with one pair of functions for each allocator domain:",
+      "source_hash": 4219602490696506731,
+      "context_hash": 4095732537852697423,
+      "translation": "원래는 각 할당자 도메인마다 한 쌍의 함수를 두는 더 큰 C API 함수 집합이 제안되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601127Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "``void PyMem_GetRawAllocator(PyMemAllocator *allocator)``",
+      "source_hash": 777740149265529136,
+      "context_hash": 5919815531888407748,
+      "translation": "``void PyMem_GetRawAllocator(PyMemAllocator *allocator)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.601128Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "``void PyMem_GetAllocator(PyMemAllocator *allocator)``",
+      "source_hash": 12108223377042637605,
+      "context_hash": 17747115809606476064,
+      "translation": "``void PyMem_GetAllocator(PyMemAllocator *allocator)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422088Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:0",
+      "source": "``void PyObject_GetAllocator(PyMemAllocator *allocator)``",
+      "source_hash": 5298071619872338803,
+      "context_hash": 3598416472737101914,
+      "translation": "``void PyObject_GetAllocator(PyMemAllocator *allocator)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422092Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:5/seg:0",
+      "source": "``void PyMem_SetRawAllocator(PyMemAllocator *allocator)``",
+      "source_hash": 8401778645142773378,
+      "context_hash": 11258757943894577234,
+      "translation": "``void PyMem_SetRawAllocator(PyMemAllocator *allocator)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422092Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:6/seg:0",
+      "source": "``void PyMem_SetAllocator(PyMemAllocator *allocator)``",
+      "source_hash": 13501593162624712692,
+      "context_hash": 8182499034010387464,
+      "translation": "``void PyMem_SetAllocator(PyMemAllocator *allocator)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422092Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:7/seg:0",
+      "source": "``void PyObject_SetAllocator(PyMemAllocator *allocator)``",
+      "source_hash": 1129963189225240461,
+      "context_hash": 15347313180207910337,
+      "translation": "``void PyObject_SetAllocator(PyMemAllocator *allocator)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422093Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:8/seg:0",
+      "source": "This alternative was rejected because it is not possible to write generic code with more specific functions: code must be duplicated for each memory allocator domain.",
+      "source_hash": 14967424063572176733,
+      "context_hash": 17534149686717218905,
+      "translation": "이 대안은 더 구체적인 함수를 사용해서는 일반 코드를 작성할 수 없기 때문에 거부되었습니다. 메모리 할당자 도메인마다 코드를 복제해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422093Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Make PyMem_Malloc() reuse PyMem_RawMalloc() by default",
+      "source_hash": 1073507327589230578,
+      "context_hash": 388301507280174500,
+      "translation": "PyMem_Malloc()이 기본적으로 PyMem_RawMalloc()을 재사용하도록 변경합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422094Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "If ``PyMem_Malloc()`` called ``PyMem_RawMalloc()`` by default, calling ``PyMem_SetAllocator(PYMEM_DOMAIN_RAW, alloc)`` would also patch ``PyMem_Malloc()`` indirectly.",
+      "source_hash": 15103281321632614293,
+      "context_hash": 1862267434773885047,
+      "translation": "``PyMem_Malloc()``\\ 이 기본적으로 ``PyMem_RawMalloc()``\\ 을 호출한다면, ``PyMem_SetAllocator(PYMEM_DOMAIN_RAW, alloc)``\\ 을 호출하는 것이 간접적으로 ``PyMem_Malloc()``\\ 도 수정하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422094Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "This alternative was rejected because ``PyMem_SetAllocator()`` would have a different behaviour depending on the domain.",
+      "source_hash": 1775797117692151948,
+      "context_hash": 5438284216013356895,
+      "translation": "이 대안은 ``PyMem_SetAllocator()``\\ 의 동작이 도메인에 따라 달라지기 때문에 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422094Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:1",
+      "source": "Always having the same behaviour is less error-prone.",
+      "source_hash": 9743171219457778680,
+      "context_hash": 9925725402665057063,
+      "translation": "항상 동일하게 동작하도록 하는 편이 오류가 발생할 가능성이 낮습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422094Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Add a new PYDEBUGMALLOC environment variable",
+      "source_hash": 228228876985666181,
+      "context_hash": 4685890145053761339,
+      "translation": "새로운 PYDEBUGMALLOC 환경 변수를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422095Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "It was proposed to add a new ``PYDEBUGMALLOC`` environment variable to enable debug checks on memory block allocators.",
+      "source_hash": 6418764979446485764,
+      "context_hash": 1830248787407043879,
+      "translation": "메모리 블록 할당자에 대한 디버그 검사를 활성화하기 위해 새로운 ``PYDEBUGMALLOC`` 환경 변수를 추가하자는 제안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422095Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "It would have had the same effect as calling the ``PyMem_SetupDebugHooks()``, without the need to write any C code.",
+      "source_hash": 10145301918913964582,
+      "context_hash": 3796576233259735914,
+      "translation": "C 코드를 작성하지 않고도 ``PyMem_SetupDebugHooks()``\\ 를 호출하는 것과 동일한 효과를 얻을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422095Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:2",
+      "source": "Another advantage is to allow to enable debug checks even in release mode: debug checks would always be compiled in, but only enabled when the environment variable is present and non-empty.",
+      "source_hash": 6171723630131034679,
+      "context_hash": 962983331714204362,
+      "translation": "또 다른 장점은 릴리스 모드에서도 디버그 검사를 활성화할 수 있다는 점입니다. 디버그 검사는 항상 컴파일되지만, 환경 변수가 존재하고 비어 있지 않을 때만 활성화됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422096Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "This alternative was rejected because a new environment variable would make Python initialization even more complex. :pep:`432` tries to simplify the CPython startup sequence.",
+      "source_hash": 4168932019729282638,
+      "context_hash": 17956146931205964266,
+      "translation": "이 대안은 새로운 환경 변수가 Python 초기화를 더욱 복잡하게 만들기 때문에 거부되었습니다. :pep:`432`\\ 는 CPython 시작 시퀀스를 단순화하려고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422096Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Use macros to get customizable allocators",
+      "source_hash": 6215508075042207803,
+      "context_hash": 7873735778108577587,
+      "translation": "사용자 정의 가능한 할당자를 얻기 위해 매크로를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422096Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "To have no overhead in the default configuration, customizable allocators would be an optional feature enabled by a configuration option or by macros.",
+      "source_hash": 3277750292849158391,
+      "context_hash": 966101227090271655,
+      "translation": "기본 구성에서 오버헤드가 없도록 사용자 정의 가능한 할당자는 구성 옵션이나 매크로로 활성화되는 선택적 기능이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422096Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "This alternative was rejected because the use of macros implies having to recompile extensions modules to use the new allocator and allocator hooks.",
+      "source_hash": 16906744865820736945,
+      "context_hash": 15448740750032430603,
+      "translation": "이 대안은 매크로를 사용하면 새로운 할당자와 할당자 훅을 사용하기 위해 확장 모듈을 다시 컴파일해야 하기 때문에 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422097Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:1",
+      "source": "Not having to recompile Python nor extension modules makes debug hooks easier to use in practice.",
+      "source_hash": 11728261452603957816,
+      "context_hash": 17711295969041925066,
+      "translation": "Python이나 확장 모듈을 다시 컴파일할 필요가 없으므로 실제로 디버그 훅을 더 쉽게 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422097Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Pass the C filename and line number",
+      "source_hash": 11649587805438814285,
+      "context_hash": 371649824434557704,
+      "translation": "C 파일 이름과 줄 번호를 전달합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422097Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "Define allocator functions as macros using ``__FILE__`` and ``__LINE__`` to get the C filename and line number of a memory allocation.",
+      "source_hash": 17670616578242954219,
+      "context_hash": 1037813814185135420,
+      "translation": "메모리 할당의 C 파일 이름과 줄 번호를 얻기 위해 ``__FILE__``\\ 과 ``__LINE__``\\ 을 사용하는 매크로로 할당자 함수를 정의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422097Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "Example of ``PyMem_Malloc`` macro with the modified ``PyMemAllocator`` structure",
+      "source_hash": 9932113317950525450,
+      "context_hash": 15812489133886067756,
+      "translation": "수정된 ``PyMemAllocator``\\ 구조를 사용하는 ``PyMem_Malloc`` 매크로의 예입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422097Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:0",
+      "source": "The GC allocator functions would also have to be patched.",
+      "source_hash": 4181969363770095669,
+      "context_hash": 6268199223952479079,
+      "translation": "GC 할당자 함수도 수정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422098Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:1",
+      "source": "For example, ``_PyObject_GC_Malloc()`` is used in many C functions and so objects of different types would have the same allocation location.",
+      "source_hash": 6320297519269190637,
+      "context_hash": 10728480208668175548,
+      "translation": "예를 들어 ``_PyObject_GC_Malloc()``\\ 은 많은 C 함수에서 사용되므로 서로 다른 유형의 객체가 동일한 할당 위치를 갖게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422098Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:0",
+      "source": "This alternative was rejected because passing a filename and a line number to each allocator makes the API more complex: pass 3 new arguments (ctx, filename, lineno) to each allocator function, instead of just a context argument (ctx).",
+      "source_hash": 11304720160610968735,
+      "context_hash": 3128938642585504540,
+      "translation": "이 대안은 각 할당자에 파일 이름과 줄 번호를 전달하면 API가 더 복잡해지기 때문에 거부되었습니다. 각 할당자 함수에 컨텍스트 인자(ctx)만 전달하는 대신 새로운 인자 3개(ctx, filename, lineno)를 전달해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422098Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:1",
+      "source": "Having to also modify GC allocator functions adds too much complexity for a little gain.",
+      "source_hash": 7429510928857554657,
+      "context_hash": 16494528229180209762,
+      "translation": "GC 할당자 함수도 수정해야 하므로 얻는 이득에 비해 복잡성이 지나치게 커집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422098Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "GIL-free PyMem_Malloc()",
+      "source_hash": 4434307027058783210,
+      "context_hash": 16331580324273681320,
+      "translation": "GIL 없이 사용하는 PyMem_Malloc()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422099Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "In Python 3.3, when Python is compiled in debug mode, ``PyMem_Malloc()`` indirectly calls ``PyObject_Malloc()`` which requires the GIL to be held (it isn't thread-safe).",
+      "source_hash": 5080195073932406276,
+      "context_hash": 1017298697823153770,
+      "translation": "Python 3.3에서는 Python을 디버그 모드로 컴파일하면 ``PyMem_Malloc()``\\ 이 간접적으로 ``PyObject_Malloc()``\\ 을 호출하며, 이 함수는 GIL을 보유해야 합니다(스레드로부터 안전하지 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422099Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:1",
+      "source": "That's why ``PyMem_Malloc()`` must be called with the GIL held.",
+      "source_hash": 12129863408997311599,
+      "context_hash": 14386171143235440282,
+      "translation": "따라서 ``PyMem_Malloc()``\\ 은 GIL을 보유한 상태에서 호출해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422099Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "This PEP changes ``PyMem_Malloc()``: it now always calls ``malloc()`` rather than ``PyObject_Malloc()``.",
+      "source_hash": 8260231947249294161,
+      "context_hash": 15568117429646851103,
+      "translation": "이 PEP는 ``PyMem_Malloc()``\\ 을 변경합니다. 이제 ``PyObject_Malloc()``\\ 이 아니라 항상 ``malloc()``\\ 을 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422099Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:1",
+      "source": "The \"GIL must be held\" restriction could therefore be removed from ``PyMem_Malloc()``.",
+      "source_hash": 16032228715791512119,
+      "context_hash": 720676298098939587,
+      "translation": "따라서 ``PyMem_Malloc()``\\ 에서 “GIL을 보유해야 함”이라는 제한을 제거할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:58.422100Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "This alternative was rejected because allowing to call ``PyMem_Malloc()`` without holding the GIL can break applications which setup their own allocators or allocator hooks.",
+      "source_hash": 14327229587047095688,
+      "context_hash": 15309155527367697175,
+      "translation": "이 대안은 GIL을 보유하지 않은 상태에서 ``PyMem_Malloc()``\\ 을 호출하도록 허용하면 자체 할당자 또는 할당자 후크를 설정한 애플리케이션이 손상될 수 있기 때문에 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018059Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:1",
+      "source": "Holding the GIL is convenient to develop a custom allocator: no need to care about other threads.",
+      "source_hash": 14447801799983339857,
+      "context_hash": 8846425650349526804,
+      "translation": "GIL을 보유하면 사용자 지정 할당자를 편리하게 개발할 수 있습니다. 다른 스레드를 신경 쓸 필요가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018062Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:2",
+      "source": "It is also convenient for a debug allocator hook: Python objects can be safely inspected, and the C API may be used for reporting.",
+      "source_hash": 8510363265436085927,
+      "context_hash": 7133531966428770978,
+      "translation": "디버그 할당자 후크에도 편리합니다. Python 객체를 안전하게 검사할 수 있고, 보고에 C API를 사용할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018062Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "Moreover, calling ``PyGILState_Ensure()`` in a memory allocator has unexpected behaviour, especially at Python startup and when creating of a new Python thread state.",
+      "source_hash": 10841937579189706828,
+      "context_hash": 14637572654311562311,
+      "translation": "또한 메모리 할당자에서 ``PyGILState_Ensure()``\\ 를 호출하면 예상하지 못한 동작이 발생하며, 특히 Python 시작 시와 새 Python 스레드 상태를 생성할 때 그러합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018062Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:1",
+      "source": "It is better to free custom allocators of the responsibility of acquiring the GIL.",
+      "source_hash": 3935390919460016253,
+      "context_hash": 9006371221026061025,
+      "translation": "사용자 지정 할당자가 GIL을 획득할 책임을 지도록 하는 것이 더 낫습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018062Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Don't add PyMem_RawMalloc()",
+      "source_hash": 13931782479897134673,
+      "context_hash": 18002307431504804206,
+      "translation": "PyMem_RawMalloc()을 추가하지 마십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018063Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "Replace ``malloc()`` with ``PyMem_Malloc()``, but only if the GIL is held.",
+      "source_hash": 14308063790411843148,
+      "context_hash": 4922524258639465928,
+      "translation": "``malloc()``\\ 을 ``PyMem_Malloc()``\\ 으로 교체하되, GIL을 보유한 경우에만 교체하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018063Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "Otherwise, keep ``malloc()`` unchanged.",
+      "source_hash": 7817712923522018403,
+      "context_hash": 10147807733977307603,
+      "translation": "그렇지 않으면 ``malloc()``\\ 을 변경하지 않은 상태로 유지하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018063Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "The ``PyMem_Malloc()`` is used without the GIL held in some Python functions.",
+      "source_hash": 14066951276532567490,
+      "context_hash": 5308149664445664100,
+      "translation": "일부 Python 함수에서는 GIL을 보유하지 않은 상태로 ``PyMem_Malloc()``\\ 을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018063Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:1",
+      "source": "For example, the ``main()`` and ``Py_Main()`` functions of Python call ``PyMem_Malloc()`` whereas the GIL do not exist yet.",
+      "source_hash": 2480012702748802197,
+      "context_hash": 3149770124203005466,
+      "translation": "예를 들어 Python의 ``main()``\\ 및 ``Py_Main()``\\ 함수는 아직 GIL이 존재하지 않는데도 ``PyMem_Malloc()``\\ 을 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018064Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:2",
+      "source": "In this case, ``PyMem_Malloc()`` would be replaced with ``malloc()`` (or ``PyMem_RawMalloc()``).",
+      "source_hash": 7826539488776681546,
+      "context_hash": 5733652924234164095,
+      "translation": "이 경우 ``PyMem_Malloc()``\\ 을 ``malloc()``\\ (또는 ``PyMem_RawMalloc()``\\ )으로 교체합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018064Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "This alternative was rejected because ``PyMem_RawMalloc()`` is required for accurate reports of the memory usage.",
+      "source_hash": 16037885961520006458,
+      "context_hash": 17567731934752038015,
+      "translation": "이 대안은 메모리 사용량을 정확하게 보고하려면 ``PyMem_RawMalloc()``\\ 이 필요하기 때문에 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018064Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:1",
+      "source": "When a debug hook is used to track the memory usage, the memory allocated by direct calls to ``malloc()`` cannot be tracked. ``PyMem_RawMalloc()`` can be hooked and so all the memory allocated by Python can be tracked, including memory allocated without holding the GIL.",
+      "source_hash": 16410095598762654191,
+      "context_hash": 803476307942354264,
+      "translation": "메모리 사용량을 추적하기 위해 디버그 후크를 사용하는 경우, ``malloc()``\\ 을 직접 호출하여 할당한 메모리는 추적할 수 없습니다. ``PyMem_RawMalloc()``\\ 에 후크를 설정할 수 있으므로 GIL을 보유하지 않은 상태에서 할당한 메모리를 포함하여 Python이 할당한 모든 메모리를 추적할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018064Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Use existing debug tools to analyze memory use",
+      "source_hash": 12296709198740481963,
+      "context_hash": 14492754957142077161,
+      "translation": "메모리 사용량을 분석하려면 기존 디버그 도구를 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018064Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "There are many existing debug tools to analyze memory use.",
+      "source_hash": 17185935302274419257,
+      "context_hash": 8069771201709680270,
+      "translation": "메모리 사용량을 분석할 수 있는 기존 디버그 도구는 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018065Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:1",
+      "source": "Some examples: `Valgrind <http://valgrind.org/>`_, `Purify <http://ibm.com/software/awdtools/purify/>`_, `Clang AddressSanitizer <http://code.google.com/p/address-sanitizer/>`_, `failmalloc <http://www.nongnu.org/failmalloc/>`_, etc.",
+      "source_hash": 6863300323064346765,
+      "context_hash": 8496352168741782554,
+      "translation": "몇 가지 예로는 `Valgrind <http://valgrind.org/>`_, `Purify <http://ibm.com/software/awdtools/purify/>`_, `Clang AddressSanitizer <http://code.google.com/p/address-sanitizer/>`_, `failmalloc <http://www.nongnu.org/failmalloc/>`_ 등이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018065Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:0",
+      "source": "The problem is to retrieve the Python object related to a memory pointer to read its type and/or its content.",
+      "source_hash": 3591205303902141956,
+      "context_hash": 1532110575969015106,
+      "translation": "문제는 메모리 포인터와 관련된 Python 객체를 가져와 그 타입 및/또는 내용을 읽는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018065Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:1",
+      "source": "Another issue is to retrieve the source of the memory allocation: the C backtrace is usually useless (same reasoning than macros using ``__FILE__`` and ``__LINE__``, see `Pass the C filename and line number`_), the Python filename and line number (or even the Python traceback) is more useful.",
+      "source_hash": 17032883050951131498,
+      "context_hash": 10533431492131906566,
+      "translation": "또 다른 문제는 메모리 할당의 출처를 가져오는 것입니다. C 역추적은 일반적으로 쓸모가 없습니다(``__FILE__``\\ 및 ``__LINE__``\\ 을 사용하는 매크로와 같은 이유입니다. `Pass the C filename and line number`_\\ 를 참조하십시오). Python 파일 이름과 줄 번호 또는 Python 역추적이 훨씬 더 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018066Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:0",
+      "source": "This alternative was rejected because classic tools are unable to introspect Python internals to collect such information.",
+      "source_hash": 4386992518437735328,
+      "context_hash": 2080321610741805328,
+      "translation": "이 대안은 기존 도구가 이러한 정보를 수집하기 위해 Python 내부를 검사할 수 없기 때문에 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018066Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:1",
+      "source": "Being able to setup a hook on allocators called with the GIL held allows to collect a lot of useful data from Python internals.",
+      "source_hash": 11291884106530423403,
+      "context_hash": 10868200768758326546,
+      "translation": "GIL을 보유한 상태에서 호출되는 할당자에 후크를 설정할 수 있으면 Python 내부에서 유용한 데이터를 많이 수집할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018066Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Add a msize() function",
+      "source_hash": 2200630220481281213,
+      "context_hash": 717724968948773650,
+      "translation": "msize() 함수를 추가하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018066Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "Add another function to ``PyMemAllocator`` and ``PyObjectArenaAllocator`` structures",
+      "source_hash": 15025856844308325404,
+      "context_hash": 11120876073688365172,
+      "translation": "``PyMemAllocator``\\ 및 ``PyObjectArenaAllocator``\\ 구조체에 다른 함수를 추가하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018066Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "This function returns the size of a memory block or a memory mapping.",
+      "source_hash": 16667025373267394874,
+      "context_hash": 17639240356130706446,
+      "translation": "이 함수는 메모리 블록 또는 메모리 매핑의 크기를 반환합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T19:23:09.018067Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:1",
+      "source": "Return (size_t)-1 if the function is not implemented or if the pointer is unknown (ex: NULL pointer).",
+      "source_hash": 698650726378350694,
+      "context_hash": 9519339610047888351,
+      "translation": "함수가 구현되지 않았거나 포인터를 알 수 없는 경우(예: NULL 포인터) (size_t)-1을 반환하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018068Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:4/seg:0",
+      "source": "On Windows, this function can be implemented using ``_msize()`` and ``VirtualQuery()``.",
+      "source_hash": 3429159148420923005,
+      "context_hash": 1137447575925188875,
+      "translation": "Windows에서는 ``_msize()``\\ 및 ``VirtualQuery()``\\ 를 사용하여 이 함수를 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018068Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:0",
+      "source": "The function can be used to implement a hook tracking the memory usage.",
+      "source_hash": 9599605440546903870,
+      "context_hash": 7473431629148823207,
+      "translation": "이 함수는 메모리 사용량을 추적하는 후크를 구현하는 데 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018068Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:1",
+      "source": "The ``free()`` method of an allocator only gets the address of a memory block, whereas the size of the memory block is required to update the memory usage.",
+      "source_hash": 2827509171692937196,
+      "context_hash": 2718720754754697880,
+      "translation": "할당자의 ``free()``\\ 메서드는 메모리 블록의 주소만 가져오는 반면, 메모리 사용량을 갱신하려면 메모리 블록의 크기가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018068Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:0",
+      "source": "The additional ``msize()`` function was rejected because only few platforms implement it.",
+      "source_hash": 6996478987181881504,
+      "context_hash": 9495277601127783642,
+      "translation": "추가적인 ``msize()``\\ 함수는 이를 구현하는 플랫폼이 거의 없기 때문에 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018068Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:1",
+      "source": "For example, Linux with the GNU libc does not provide a function to get the size of a memory block. ``msize()`` is not currently used in the Python source code.",
+      "source_hash": 16795733195916642262,
+      "context_hash": 10658427613775357897,
+      "translation": "예를 들어 GNU libc를 사용하는 Linux는 메모리 블록의 크기를 가져오는 함수를 제공하지 않습니다. ``msize()``\\ 는 현재 Python 소스 코드에서 사용되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018069Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:2",
+      "source": "The function would only be used to track memory use, and make the API more complex.",
+      "source_hash": 17447549889842615266,
+      "context_hash": 4807635886736988270,
+      "translation": "이 함수는 메모리 사용량을 추적하는 데만 사용되며 API를 더 복잡하게 만들 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018069Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:3",
+      "source": "A debug hook can implement the function internally, there is no need to add it to ``PyMemAllocator`` and ``PyObjectArenaAllocator`` structures.",
+      "source_hash": 1897665940689614183,
+      "context_hash": 2285509919906546422,
+      "translation": "디버그 후크가 내부적으로 이 함수를 구현할 수 있으므로 ``PyMemAllocator``\\ 및 ``PyObjectArenaAllocator``\\ 구조체에 이를 추가할 필요가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018069Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "No context argument",
+      "source_hash": 2107717101019982141,
+      "context_hash": 17171418064415242871,
+      "translation": "컨텍스트 인자를 사용하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:23:09.018069Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "Simplify the signature of allocator functions, remove the context argument:",
+      "source_hash": 2276562390414433388,
+      "context_hash": 5421669651971618032,
+      "translation": "할당자 함수의 시그니처를 단순화하고 컨텍스트 인자를 제거합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389548Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:0",
+      "source": "``void* malloc(size_t size)``",
+      "source_hash": 5920984529068011842,
+      "context_hash": 12989298819375738860,
+      "translation": "``void* malloc(size_t size)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389551Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:0",
+      "source": "``void* realloc(void *ptr, size_t new_size)``",
+      "source_hash": 12336066521184447208,
+      "context_hash": 9503929685990621169,
+      "translation": "``void* realloc(void *ptr, size_t new_size)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389552Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:4/seg:0",
+      "source": "``void free(void *ptr)``",
+      "source_hash": 7955973236266230094,
+      "context_hash": 726885562020924549,
+      "translation": "``void free(void *ptr)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389552Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:5/seg:0",
+      "source": "It is likely for an allocator hook to be reused for ``PyMem_SetAllocator()`` and ``PyObject_SetAllocator()``, or even ``PyMem_SetRawAllocator()``, but the hook must call a different function depending on the allocator.",
+      "source_hash": 2742521503195354856,
+      "context_hash": 6044033664992990403,
+      "translation": "할당자 훅을 ``PyMem_SetAllocator()`` 및 ``PyObject_SetAllocator()``, 또는 ``PyMem_SetRawAllocator()``\\ 에 재사용할 가능성이 높지만, 훅은 할당자에 따라 다른 함수를 호출해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389552Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:5/seg:1",
+      "source": "The context is a convenient way to reuse the same custom allocator or hook for different Python allocators.",
+      "source_hash": 15816110373084539084,
+      "context_hash": 2292757534847884694,
+      "translation": "컨텍스트는 동일한 사용자 정의 할당자 또는 훅을 서로 다른 Python 할당자에 재사용하는 편리한 방법입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389553Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:6/seg:0",
+      "source": "In C++, the context can be used to pass *this*.",
+      "source_hash": 1498767795940873155,
+      "context_hash": 13484818457451483621,
+      "translation": "C++에서는 컨텍스트를 *this*\\ 를 전달하는 데 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389553Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "External Libraries",
+      "source_hash": 923363480270290545,
+      "context_hash": 1434212506628484920,
+      "translation": "외부 라이브러리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389553Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "Examples of API used to customize memory allocators.",
+      "source_hash": 7270883002567224979,
+      "context_hash": 6687721061320638223,
+      "translation": "메모리 할당자를 사용자 정의하는 데 사용되는 API의 예입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389554Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:0",
+      "source": "Libraries used by Python:",
+      "source_hash": 2601763753036031151,
+      "context_hash": 18186799847282178478,
+      "translation": "Python에서 사용되는 라이브러리:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389554Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:0",
+      "source": "OpenSSL: `CRYPTO_set_mem_functions() <http://git.openssl.org/gitweb/?p=openssl.git;a=blob;f=crypto/mem.c;h=f7984fa958eb1edd6c61f6667f3f2b29753be662;hb=HEAD#l124>`_ to set memory management functions globally",
+      "source_hash": 7467571871780192479,
+      "context_hash": 2930991640474384677,
+      "translation": "OpenSSL: 메모리 관리 함수를 전역적으로 설정하는 `CRYPTO_set_mem_functions() <http://git.openssl.org/gitweb/?p=openssl.git;a=blob;f=crypto/mem.c;h=f7984fa958eb1edd6c61f6667f3f2b29753be662;hb=HEAD#l124>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389554Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:4/seg:0",
+      "source": "expat: `parserCreate() <http://hg.python.org/cpython/file/cc27d50bd91a/Modules/expat/xmlparse.c#l724>`_ has a per-instance memory handler",
+      "source_hash": 16882198072305701350,
+      "context_hash": 14477630920928024178,
+      "translation": "expat: `parserCreate() <http://hg.python.org/cpython/file/cc27d50bd91a/Modules/expat/xmlparse.c#l724>`_\\ 는 인스턴스별 메모리 핸들러를 가집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389554Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:5/seg:0",
+      "source": "zlib: `zlib 1.2.8 Manual <http://www.zlib.net/manual.html#Usage>`_, pass an opaque pointer",
+      "source_hash": 13203154237678180216,
+      "context_hash": 12803560995011148234,
+      "translation": "zlib: `zlib 1.2.8 Manual <http://www.zlib.net/manual.html#Usage>`_, 불투명 포인터를 전달합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389555Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:6/seg:0",
+      "source": "bz2: `bzip2 and libbzip2, version 1.0.5 <http://www.bzip.org/1.0.5/bzip2-manual-1.0.5.html>`_, pass an opaque pointer",
+      "source_hash": 12918669998134874961,
+      "context_hash": 12472281539859400653,
+      "translation": "bz2: `bzip2 and libbzip2, version 1.0.5 <http://www.bzip.org/1.0.5/bzip2-manual-1.0.5.html>`_, 불투명 포인터를 전달합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389555Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:7/seg:0",
+      "source": "lzma: `LZMA SDK - How to Use <http://www.asawicki.info/news_1368_lzma_sdk_-_how_to_use.html>`_, pass an opaque pointer",
+      "source_hash": 7924761832244374825,
+      "context_hash": 6104235158929068539,
+      "translation": "lzma: `LZMA SDK - How to Use <http://www.asawicki.info/news_1368_lzma_sdk_-_how_to_use.html>`_, 불투명 포인터를 전달합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389555Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:8/seg:0",
+      "source": "lipmpdec: no opaque pointer (classic malloc API)",
+      "source_hash": 4210620937735200029,
+      "context_hash": 2047690582807252829,
+      "translation": "lipmpdec: 불투명 포인터가 없습니다(고전적인 malloc API).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389556Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:9/seg:0",
+      "source": "Other libraries:",
+      "source_hash": 4138145879745582840,
+      "context_hash": 12879107337783905247,
+      "translation": "기타 라이브러리:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389556Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:10/seg:0",
+      "source": "glib: `g_mem_set_vtable() <http://developer.gnome.org/glib/unstable/glib-Memory-Allocation.html#g-mem-set-vtable>`_",
+      "source_hash": 6013548327661208189,
+      "context_hash": 12131991738823988339,
+      "translation": "glib: `g_mem_set_vtable() <http://developer.gnome.org/glib/unstable/glib-Memory-Allocation.html#g-mem-set-vtable>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389556Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:11/seg:0",
+      "source": "libxml2: `xmlGcMemSetup() <http://xmlsoft.org/html/libxml-xmlmemory.html>`_, global",
+      "source_hash": 1710301942412120083,
+      "context_hash": 13391699529744916294,
+      "translation": "libxml2: `xmlGcMemSetup() <http://xmlsoft.org/html/libxml-xmlmemory.html>`_, 전역입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389556Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:12/seg:0",
+      "source": "Oracle's OCI: `Oracle Call Interface Programmer's Guide, Release 2 (9.2) <http://docs.oracle.com/cd/B10501_01/appdev.920/a96584/oci15re4.htm>`_, pass an opaque pointer",
+      "source_hash": 17316793761851900224,
+      "context_hash": 17335555302609667501,
+      "translation": "Oracle의 OCI: `Oracle Call Interface Programmer's Guide, Release 2 (9.2) <http://docs.oracle.com/cd/B10501_01/appdev.920/a96584/oci15re4.htm>`_, 불투명 포인터를 전달합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389557Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:13/seg:0",
+      "source": "The new *ctx* parameter of this PEP was inspired by the API of zlib and Oracle's OCI libraries.",
+      "source_hash": 1830488574713270446,
+      "context_hash": 2912947299272922655,
+      "translation": "이 PEP의 새로운 *ctx* 매개변수는 zlib 및 Oracle의 OCI 라이브러리 API에서 영감을 받았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389557Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:14/seg:0",
+      "source": "See also the `GNU libc: Memory Allocation Hooks <http://www.gnu.org/software/libc/manual/html_node/Hooks-for-Malloc.html>`_ which uses a different approach to hook memory allocators.",
+      "source_hash": 4225060276080376538,
+      "context_hash": 3325319933279471177,
+      "translation": "메모리 할당자를 훅으로 연결하는 다른 접근 방식을 사용하는 `GNU libc: Memory Allocation Hooks <http://www.gnu.org/software/libc/manual/html_node/Hooks-for-Malloc.html>`_\\ 도 참고하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389557Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "Memory Allocators",
+      "source_hash": 8993809975234374428,
+      "context_hash": 16625123754314099369,
+      "translation": "메모리 할당자",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389557Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "The C standard library provides the well known ``malloc()`` function.",
+      "source_hash": 3340687368948549065,
+      "context_hash": 5717215947555507342,
+      "translation": "C 표준 라이브러리는 잘 알려진 ``malloc()`` 함수를 제공합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:18:34.389558Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:1",
+      "source": "Its implementation depends on the platform and of the C library.",
+      "source_hash": 9618591327399430427,
+      "context_hash": 1679494999579839893,
+      "translation": "해당 구현은 플랫폼과 C 라이브러리에 따라 달라집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389558Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:2",
+      "source": "The GNU C library uses a modified ptmalloc2, based on \"Doug Lea's Malloc\" (dlmalloc).",
+      "source_hash": 12359727385086761057,
+      "context_hash": 17260948495701942577,
+      "translation": "GNU C 라이브러리는 \"Doug Lea's Malloc\"(dlmalloc)을 기반으로 수정된 ptmalloc2를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389559Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:3",
+      "source": "FreeBSD uses `jemalloc <http://www.canonware.com/jemalloc/>`_.",
+      "source_hash": 15475250893680874659,
+      "context_hash": 8959717479496457774,
+      "translation": "FreeBSD는 `jemalloc <http://www.canonware.com/jemalloc/>`_\\ 을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389559Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:4",
+      "source": "Google provides *tcmalloc* which is part of `gperftools <http://code.google.com/p/gperftools/>`_.",
+      "source_hash": 13086430539549645450,
+      "context_hash": 11886936379460888250,
+      "translation": "Google은 `gperftools <http://code.google.com/p/gperftools/>`_\\ 의 일부인 *tcmalloc*\\ 을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389559Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:0",
+      "source": "``malloc()`` uses two kinds of memory: heap and memory mappings.",
+      "source_hash": 12729643273045195018,
+      "context_hash": 10484375846774025089,
+      "translation": "``malloc()``\\ 은 두 종류의 메모리, 즉 힙과 메모리 매핑을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389559Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:1",
+      "source": "Memory mappings are usually used for large allocations (ex: larger than 256 KB), whereas the heap is used for small allocations.",
+      "source_hash": 4650386203690649657,
+      "context_hash": 18261225539230897872,
+      "translation": "메모리 매핑은 일반적으로 큰 할당(예: 256KB보다 큰 할당)에 사용되는 반면, 힙은 작은 할당에 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:34.389560Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:0",
+      "source": "On UNIX, the heap is handled by ``brk()`` and ``sbrk()`` system calls, and it is contiguous.",
+      "source_hash": 17300522953392078809,
+      "context_hash": 6869739531460498306,
+      "translation": "UNIX에서는 힙이 ``brk()`` 및 ``sbrk()`` 시스템 호출로 처리되며, 연속적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575932Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:1",
+      "source": "On Windows, the heap is handled by ``HeapAlloc()`` and can be discontiguous.",
+      "source_hash": 14206830095902151898,
+      "context_hash": 13027370505575514562,
+      "translation": "Windows에서는 힙이 ``HeapAlloc()``\\ 로 처리되며, 비연속적일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575937Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:2",
+      "source": "Memory mappings are handled by ``mmap()`` on UNIX and ``VirtualAlloc()`` on Windows, they can be discontiguous.",
+      "source_hash": 5832837753938785715,
+      "context_hash": 2505837751284385502,
+      "translation": "메모리 매핑은 UNIX에서는 ``mmap()``\\ 로, Windows에서는 ``VirtualAlloc()``\\ 로 처리되며, 비연속적일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575938Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:0",
+      "source": "Releasing a memory mapping gives back immediately the memory to the system.",
+      "source_hash": 4479602483406918862,
+      "context_hash": 3603451005311126634,
+      "translation": "메모리 매핑을 해제하면 메모리가 즉시 시스템에 반환됩니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:04:01.575938Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:1",
+      "source": "On UNIX, the heap memory is only given back to the system if the released block is located at the end of the heap.",
+      "source_hash": 5336050547263967676,
+      "context_hash": 5028372597885421249,
+      "translation": "UNIX에서는 해제된 블록이 힙의 끝에 위치한 경우에만 힙 메모리가 시스템에 반환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575941Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:2",
+      "source": "Otherwise, the memory will only be given back to the system when all the memory located after the released memory is also released.",
+      "source_hash": 18292059915795133470,
+      "context_hash": 11843291082179819094,
+      "translation": "그렇지 않으면 해제된 메모리 뒤에 위치한 모든 메모리도 해제될 때에만 메모리가 시스템에 반환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575941Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:5/seg:0",
+      "source": "To allocate memory on the heap, an allocator tries to reuse free space.",
+      "source_hash": 7652803515151254318,
+      "context_hash": 941150797570696347,
+      "translation": "힙에 메모리를 할당하기 위해 할당자는 빈 공간을 재사용하려고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575941Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:5/seg:1",
+      "source": "If there is no contiguous space big enough, the heap must be enlarged, even if there is more free space than required size.",
+      "source_hash": 17694957776759328526,
+      "context_hash": 2742921259915652703,
+      "translation": "충분히 큰 연속 공간이 없으면 필요한 크기보다 더 많은 빈 공간이 있더라도 힙을 확장해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575942Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:5/seg:2",
+      "source": "This issue is called the \"memory fragmentation\": the memory usage seen by the system is higher than real usage.",
+      "source_hash": 14885020965968564688,
+      "context_hash": 16894104339586471310,
+      "translation": "이 문제를 \"메모리 단편화\"라고 합니다. 시스템에서 확인되는 메모리 사용량이 실제 사용량보다 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575942Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:5/seg:3",
+      "source": "On Windows, ``HeapAlloc()`` creates a new memory mapping with ``VirtualAlloc()`` if there is not enough free contiguous memory.",
+      "source_hash": 1577319667182807605,
+      "context_hash": 15155201048062235834,
+      "translation": "Windows에서는 사용 가능한 연속 메모리가 충분하지 않으면 ``HeapAlloc()``\\ 이 ``VirtualAlloc()``\\ 으로 새 메모리 매핑을 생성합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:04:01.575942Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:6/seg:0",
+      "source": "CPython has a *pymalloc* allocator for allocations smaller than 512 bytes.",
+      "source_hash": 11959185830765474778,
+      "context_hash": 18077151835269050041,
+      "translation": "CPython에는 512바이트보다 작은 할당을 위한 *pymalloc* 할당자가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575943Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:6/seg:1",
+      "source": "This allocator is optimized for small objects with a short lifetime.",
+      "source_hash": 8620991967854017735,
+      "context_hash": 4342098966989147447,
+      "translation": "이 할당자는 수명이 짧은 작은 객체에 최적화되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575944Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:6/seg:2",
+      "source": "It uses memory mappings called \"arenas\" with a fixed size of 256 KB.",
+      "source_hash": 14467415245505949694,
+      "context_hash": 1680976053457647025,
+      "translation": "이 할당자는 \"아레나\"라고 하는 256KB의 고정 크기 메모리 매핑을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575944Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:7/seg:0",
+      "source": "Other allocators:",
+      "source_hash": 8954285957216234315,
+      "context_hash": 4739933226954893146,
+      "translation": "기타 할당자:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575944Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:8/seg:0",
+      "source": "Windows provides a `Low-fragmentation Heap <http://msdn.microsoft.com/en-us/library/windows/desktop/aa366750%28v=vs.85%29.aspx>`_.",
+      "source_hash": 9166590757288168219,
+      "context_hash": 1748640029076012923,
+      "translation": "Windows는 `Low-fragmentation Heap <http://msdn.microsoft.com/en-us/library/windows/desktop/aa366750%28v=vs.85%29.aspx>`_\\ 을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575944Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:9/seg:0",
+      "source": "The Linux kernel uses `slab allocation <http://en.wikipedia.org/wiki/Slab_allocation>`_.",
+      "source_hash": 2856321944512455604,
+      "context_hash": 18278481007953497728,
+      "translation": "Linux 커널은 `slab allocation <http://en.wikipedia.org/wiki/Slab_allocation>`_ 을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:04:01.575945Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:10/seg:0",
+      "source": "The glib library has a `Memory Slice API <https://developer.gnome.org/glib/unstable/glib-Memory-Slices.html>`_: efficient way to allocate groups of equal-sized chunks of memory",
+      "source_hash": 12665446004846635079,
+      "context_hash": 5703871053173155483,
+      "translation": "glib 라이브러리에는 `Memory Slice API <https://developer.gnome.org/glib/unstable/glib-Memory-Slices.html>`_\\ 가 있습니다: 동일한 크기의 메모리 청크 그룹을 할당하는 효율적인 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480377Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:11/seg:0",
+      "source": "This PEP allows to choose exactly which memory allocator is used for your application depending on its usage of the memory (number of allocations, size of allocations, lifetime of objects, etc.).",
+      "source_hash": 1740157008022224141,
+      "context_hash": 9093287799866840721,
+      "translation": "이 PEP를 사용하면 메모리 사용량(할당 횟수, 할당 크기, 객체 수명 등)에 따라 애플리케이션에서 사용할 메모리 할당자를 정확하게 선택할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480381Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Links",
+      "source_hash": 5907915396745706827,
+      "context_hash": 3593727516129565645,
+      "translation": "링크",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480381Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "CPython issues related to memory allocation:",
+      "source_hash": 4828950186225205541,
+      "context_hash": 18077501811481991241,
+      "translation": "메모리 할당과 관련된 CPython 이슈:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480382Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:2/seg:0",
+      "source": "`Issue #3329: Add new APIs to customize memory allocators <http://bugs.python.org/issue3329>`_",
+      "source_hash": 4090732032996527025,
+      "context_hash": 6854502357751158111,
+      "translation": "`이슈 #3329: 메모리 할당자를 커스터마이즈하는 새로운 API 추가 <http://bugs.python.org/issue3329>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480382Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:3/seg:0",
+      "source": "`Issue #13483: Use VirtualAlloc to allocate memory arenas <http://bugs.python.org/issue13483>`_",
+      "source_hash": 14105071881035492310,
+      "context_hash": 2595075099586641946,
+      "translation": "`이슈 #13483: 메모리 아레나를 할당하기 위해 VirtualAlloc 사용 <http://bugs.python.org/issue13483>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480382Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:4/seg:0",
+      "source": "`Issue #16742: PyOS_Readline drops GIL and calls PyOS_StdioReadline, which isn't thread safe <http://bugs.python.org/issue16742>`_",
+      "source_hash": 16859693874821374657,
+      "context_hash": 15150354538456053253,
+      "translation": "`이슈 #16742: PyOS_Readline이 GIL을 해제하고 스레드 안전하지 않은 PyOS_StdioReadline을 호출함 <http://bugs.python.org/issue16742>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480383Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:5/seg:0",
+      "source": "`Issue #18203: Replace calls to malloc() with PyMem_Malloc() or PyMem_RawMalloc() <http://bugs.python.org/issue18203>`_",
+      "source_hash": 14964008839564599196,
+      "context_hash": 6121108594004273480,
+      "translation": "`이슈 #18203: malloc() 호출을 PyMem_Malloc() 또는 PyMem_RawMalloc()으로 교체 <http://bugs.python.org/issue18203>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480383Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:6/seg:0",
+      "source": "`Issue #18227: Use Python memory allocators in external libraries like zlib or OpenSSL <http://bugs.python.org/issue18227>`_",
+      "source_hash": 4306144683740262314,
+      "context_hash": 4844488028574434954,
+      "translation": "`이슈 #18227: zlib나 OpenSSL 같은 외부 라이브러리에서 Python 메모리 할당자 사용 <http://bugs.python.org/issue18227>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480383Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:7/seg:0",
+      "source": "Projects analyzing the memory usage of Python applications:",
+      "source_hash": 17234648432417950412,
+      "context_hash": 17318283678722718694,
+      "translation": "Python 애플리케이션의 메모리 사용량을 분석하는 프로젝트:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480384Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:8/seg:0",
+      "source": "`pytracemalloc <https://pypi.python.org/pypi/pytracemalloc>`_",
+      "source_hash": 7564764383749329859,
+      "context_hash": 13107516692142633542,
+      "translation": "`pytracemalloc <https://pypi.python.org/pypi/pytracemalloc>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480384Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:9/seg:0",
+      "source": "`Meliae: Python Memory Usage Analyzer <https://pypi.python.org/pypi/meliae>`_",
+      "source_hash": 141468349165978112,
+      "context_hash": 8451565276585025903,
+      "translation": "`Meliae: Python 메모리 사용량 분석기 <https://pypi.python.org/pypi/meliae>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480385Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:10/seg:0",
+      "source": "`Guppy-PE: umbrella package combining Heapy and GSL <http://guppy-pe.sourceforge.net/>`_",
+      "source_hash": 7279674377303421574,
+      "context_hash": 15846291746835523019,
+      "translation": "`Guppy-PE: Heapy와 GSL을 결합한 우산 패키지 <http://guppy-pe.sourceforge.net/>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480385Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:11/seg:0",
+      "source": "`PySizer (developed for Python 2.4) <http://pysizer.8325.org/>`_",
+      "source_hash": 9442724948490750689,
+      "context_hash": 7046751720242343055,
+      "translation": "`PySizer (Python 2.4용으로 개발됨) <http://pysizer.8325.org/>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:27:02.480386Z",
+      "issues": []
+    }
+  ]
+}

@@ -1,0 +1,1650 @@
+{
+  "version": 1,
+  "source_hash": 9945756276394137370,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Adding a file system path protocol",
+      "source_hash": 1945138291221382054,
+      "context_hash": 16530898886277989957,
+      "translation": "파일 시스템 경로 프로토콜 추가",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:07:06.285757Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 4779031439667805304,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285761Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes a protocol for classes which represent a file system path to be able to provide a ``str`` or ``bytes`` representation.",
+      "source_hash": 13741662832005427639,
+      "context_hash": 9564216800681153737,
+      "translation": "이 PEP는 파일 시스템 경로를 나타내는 클래스가 ``str`` 또는 ``bytes`` 표현을 제공할 수 있도록 하는 프로토콜을 제안합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:07:06.285761Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "Changes to Python's standard library are also proposed to utilize this protocol where appropriate to facilitate the use of path objects where historically only ``str`` and/or ``bytes`` file system paths are accepted.",
+      "source_hash": 18446416572958119620,
+      "context_hash": 17196630609867577793,
+      "translation": "또한 역사적으로 ``str`` 및/또는 ``bytes`` 파일 시스템 경로만 허용되던 곳에서 경로 객체를 쉽게 사용할 수 있도록, 적절한 경우 이 프로토콜을 활용하도록 Python 표준 라이브러리를 변경할 것을 제안합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리",
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:07:06.285762Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "The goal is to facilitate the migration of users towards rich path objects while providing an easy way to work with code expecting ``str`` or ``bytes``.",
+      "source_hash": 10071290790801178129,
+      "context_hash": 2550928950509091564,
+      "translation": "목표는 ``str`` 또는 ``bytes``\\ 를 예상하는 코드로 쉽게 작업할 수 있도록 하면서 사용자가 풍부한 경로 객체로 마이그레이션하도록 지원하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285762Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 10771100947903653502,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285763Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Historically in Python, file system paths have been represented as strings or bytes.",
+      "source_hash": 314188097375596176,
+      "context_hash": 3769504171232775522,
+      "translation": "역사적으로 Python에서 파일 시스템 경로는 문자열 또는 바이트로 표현되어 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285763Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "This choice of representation has stemmed from C's own decision to represent file system paths as ``const char *`` [#libc-open]_.",
+      "source_hash": 16042983193491797738,
+      "context_hash": 5210134246753647212,
+      "translation": "이러한 표현 방식을 선택한 것은 파일 시스템 경로를 ``const char *`` [#libc-open]_\\ 로 표현하기로 한 C 자체의 결정에서 비롯되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285763Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "While that is a totally serviceable format to use for file system paths, it's not necessarily optimal.",
+      "source_hash": 8945539880001412828,
+      "context_hash": 6123916663696288190,
+      "translation": "이는 파일 시스템 경로에 사용하기에 충분히 적합한 형식이지만, 반드시 최적인 것은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285764Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:3",
+      "source": "At issue is the fact that while all file system paths can be represented as strings or bytes, not all strings or bytes represent a file system path.",
+      "source_hash": 7502943052485911436,
+      "context_hash": 15941594063599977579,
+      "translation": "문제는 모든 파일 시스템 경로를 문자열 또는 바이트로 표현할 수 있는 반면, 모든 문자열 또는 바이트가 파일 시스템 경로를 나타내는 것은 아니라는 사실입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285764Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:4",
+      "source": "This can lead to issues where any e.g. string duck-types to a file system path whether it actually represents a path or not.",
+      "source_hash": 13828035897497371780,
+      "context_hash": 10043433928702953092,
+      "translation": "이로 인해 예를 들어 어떤 문자열이 실제로 경로를 나타내는지 여부와 관계없이 파일 시스템 경로처럼 덕 타이핑되는 문제가 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285764Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "To help elevate the representation of file system paths from their representation as strings and bytes to a richer object representation, the pathlib module [#pathlib]_ was provisionally introduced in Python 3.4 through :pep:`428`.",
+      "source_hash": 1009153862568039798,
+      "context_hash": 6004446755689073942,
+      "translation": "파일 시스템 경로의 표현을 문자열 및 바이트 표현에서 더 풍부한 객체 표현으로 발전시키는 데 도움을 주기 위해, pathlib 모듈 [#pathlib]_\\ 이 :pep:`428`\\ 을 통해 Python 3.4에서 잠정적으로 도입되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285764Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "While considered by some as an improvement over strings and bytes for file system paths, it has suffered from a lack of adoption.",
+      "source_hash": 9881936849427136917,
+      "context_hash": 5934891195283807137,
+      "translation": "일부에서는 이를 파일 시스템 경로에 대한 문자열 및 바이트의 개선으로 여겼지만, 널리 채택되지 못했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285765Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "Typically the key issue listed for the low adoption rate has been the lack of support in the standard library.",
+      "source_hash": 3823185450236923335,
+      "context_hash": 12868096605338938749,
+      "translation": "일반적으로 낮은 채택률의 핵심 문제로 지적된 것은 표준 라이브러리의 지원 부족이었습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:07:06.285765Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:3",
+      "source": "This lack of support required users of pathlib to manually convert path objects to strings by calling ``str(path)`` which many found error-prone.",
+      "source_hash": 16062653063287067048,
+      "context_hash": 5966025915924937933,
+      "translation": "이러한 지원 부족으로 인해 pathlib 사용자는 ``str(path)``\\ 를 호출하여 경로 객체를 문자열로 수동 변환해야 했으며, 많은 사용자가 이를 오류가 발생하기 쉬운 방식이라고 여겼습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285765Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "One issue in converting path objects to strings comes from the fact that the only generic way to get a string representation of the path was to pass the object to ``str()``.",
+      "source_hash": 14505939634939425486,
+      "context_hash": 10102167463318893129,
+      "translation": "경로 객체를 문자열로 변환할 때의 한 가지 문제는 경로의 문자열 표현을 얻는 일반적인 방법이 객체를 ``str()``\\ 에 전달하는 것뿐이었다는 사실에서 비롯됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285766Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "This can pose a problem when done blindly as nearly all Python objects have some string representation whether they are a path or not, e.g. ``str(None)`` will give a result that ``builtins.open()`` [#builtins-open]_ will happily use to create a new file.",
+      "source_hash": 11427685447809315998,
+      "context_hash": 2243269348379186394,
+      "translation": "거의 모든 Python 객체가 경로인지 여부와 관계없이 어떤 문자열 표현을 가지므로 이를 무분별하게 수행하면 문제가 발생할 수 있습니다. 예를 들어 ``str(None)``\\ 은 ``builtins.open()`` [#builtins-open]_\\ 이 새 파일을 만드는 데 아무 문제 없이 사용할 결과를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285766Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "Exacerbating this whole situation is the ``DirEntry`` object [#os-direntry]_.",
+      "source_hash": 17646429423353436185,
+      "context_hash": 18037673392664097379,
+      "translation": "이 모든 상황을 더욱 악화시키는 것은 ``DirEntry`` 객체 [#os-direntry]_\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285766Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "While path objects have a representation that can be extracted using ``str()``, ``DirEntry`` objects expose a ``path`` attribute instead.",
+      "source_hash": 11313504002316795286,
+      "context_hash": 14857525819936478805,
+      "translation": "경로 객체에는 ``str()``\\ 를 사용하여 추출할 수 있는 표현이 있는 반면, ``DirEntry`` 객체는 대신 ``path`` 속성을 노출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285766Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "Having no common interface between path objects, ``DirEntry``, and any other third-party path library has become an issue.",
+      "source_hash": 15600764960887023958,
+      "context_hash": 4008582161303190003,
+      "translation": "경로 객체, ``DirEntry`` 및 기타 서드파티 경로 라이브러리 사이에 공통 인터페이스가 없다는 점이 문제가 되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285766Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:3",
+      "source": "A solution that allows any path-representing object to declare that it is a path and a way to extract a low-level representation that all path objects could support is desired.",
+      "source_hash": 3671837195438675424,
+      "context_hash": 16115508844702939912,
+      "translation": "경로를 나타내는 모든 객체가 자신이 경로임을 선언하고 모든 경로 객체가 지원할 수 있는 저수준 표현을 추출할 방법을 제공하는 해결책이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285767Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "This PEP then proposes to introduce a new protocol to be followed by objects which represent file system paths.",
+      "source_hash": 1198383057911060620,
+      "context_hash": 8992936271219430249,
+      "translation": "따라서 이 PEP는 파일 시스템 경로를 나타내는 객체가 따라야 할 새로운 프로토콜을 도입할 것을 제안합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:07:06.285767Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "Providing a protocol allows for explicit signaling of what objects represent file system paths as well as a way to extract a lower-level representation that can be used with older APIs which only support strings or bytes.",
+      "source_hash": 10151560584129071277,
+      "context_hash": 11521791406676495484,
+      "translation": "프로토콜을 제공하면 어떤 객체가 파일 시스템 경로를 나타내는지 명시적으로 알릴 수 있을 뿐만 아니라, 문자열 또는 바이트만 지원하는 이전 API와 함께 사용할 수 있는 저수준 표현을 추출할 방법도 제공할 수 있습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:07:06.285767Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Discussions regarding path objects that led to this PEP can be found in multiple threads on the python-ideas mailing list archive [#python-ideas-archive]_ for the months of March and April 2016 and on the python-dev mailing list archives [#python-dev-archive]_ during April 2016.",
+      "source_hash": 9416295902086909948,
+      "context_hash": 10139015345203621201,
+      "translation": "이 PEP로 이어진 경로 객체에 관한 논의는 2016년 3월과 4월의 python-ideas 메일링 리스트 아카이브 [#python-ideas-archive]_\\ 에 있는 여러 스레드와 2016년 4월의 python-dev 메일링 리스트 아카이브 [#python-dev-archive]_\\ 에서 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285768Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Proposal",
+      "source_hash": 17139217736364358932,
+      "context_hash": 725789479829946838,
+      "translation": "제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285768Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "This proposal is split into two parts.",
+      "source_hash": 11914241990180268396,
+      "context_hash": 12619389774667604834,
+      "translation": "이 제안은 두 부분으로 나뉩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285768Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "One part is the proposal of a protocol for objects to declare and provide support for exposing a file system path representation.",
+      "source_hash": 6754028580255965074,
+      "context_hash": 8643919447195960008,
+      "translation": "한 부분은 객체가 파일 시스템 경로 표현을 노출한다고 선언하고 이를 지원할 수 있도록 하는 프로토콜에 대한 제안입니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:07:06.285768Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "The other part deals with changes to Python's standard library to support the new protocol.",
+      "source_hash": 7792953286944759785,
+      "context_hash": 5695616352653042227,
+      "translation": "다른 부분은 새로운 프로토콜을 지원하도록 Python 표준 라이브러리를 변경하는 내용을 다룹니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜",
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:07:06.285769Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:3",
+      "source": "These changes will also lead to the pathlib module dropping its provisional status.",
+      "source_hash": 9958239982424835461,
+      "context_hash": 659560797611568084,
+      "translation": "이러한 변경으로 pathlib 모듈도 잠정적 상태를 벗어나게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:06.285770Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Protocol",
+      "source_hash": 4142721417948024591,
+      "context_hash": 12934763946425067321,
+      "translation": "프로토콜",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:07:06.285770Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "The following abstract base class defines the protocol for an object to be considered a path object",
+      "source_hash": 14050006385259789942,
+      "context_hash": 18372569888718349798,
+      "translation": "다음 추상 베이스 클래스는 객체가 경로 객체로 간주되기 위한 프로토콜을 정의합니다.",
+      "glossary_snapshot": {
+        "abstract base class": "추상 베이스 클래스",
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:07:06.285770Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Objects representing file system paths will implement the ``__fspath__()`` method which will return the ``str`` or ``bytes`` representation of the path.",
+      "source_hash": 8370164207935991989,
+      "context_hash": 6562219587730360894,
+      "translation": "파일 시스템 경로를 나타내는 객체는 경로의 ``str`` 또는 ``bytes`` 표현을 반환하는 ``__fspath__()`` 메서드를 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708632Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "The ``str`` representation is the preferred low-level path representation as it is human-readable and what people historically represent paths as.",
+      "source_hash": 2908891137392516785,
+      "context_hash": 2005540708408727710,
+      "translation": "``str`` 표현은 사람이 읽을 수 있고 사람들이 역사적으로 경로를 나타내 온 방식이므로 선호되는 저수준 경로 표현입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708637Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Standard library changes",
+      "source_hash": 15682479441845428456,
+      "context_hash": 11431214148520897756,
+      "translation": "표준 라이브러리 변경 사항",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:07:04.708637Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "It is expected that most APIs in Python's standard library that currently accept a file system path will be updated appropriately to accept path objects (whether that requires code or simply an update to documentation will vary).",
+      "source_hash": 4137238161211294134,
+      "context_hash": 17644706721375766108,
+      "translation": "현재 파일 시스템 경로를 허용하는 Python 표준 라이브러리의 대부분 API는 경로 객체를 허용하도록 적절히 업데이트될 것으로 예상합니다(이를 위해 코드 변경이 필요한지 아니면 단순히 문서를 업데이트하면 되는지는 각각 다릅니다).",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:07:04.708640Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "The modules mentioned below, though, deserve specific details as they have either fundamental changes that empower the ability to use path objects, or entail additions/removal of APIs.",
+      "source_hash": 5879831941859381553,
+      "context_hash": 2235749231407966601,
+      "translation": "그러나 아래에 언급된 모듈은 경로 객체를 사용할 수 있도록 하는 근본적인 변경 사항이 있거나 API의 추가 또는 제거를 수반하므로 구체적인 세부 사항을 설명할 필요가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708641Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "builtins",
+      "source_hash": 6467834236218113275,
+      "context_hash": 677611476635396243,
+      "translation": "builtins",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708641Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "``open()`` [#builtins-open]_ will be updated to accept path objects as well as continue to accept ``str`` and ``bytes``.",
+      "source_hash": 5110977480685093267,
+      "context_hash": 1296380664840745001,
+      "translation": "``open()`` [#builtins-open]_\\ 은 ``str`` 및 ``bytes``\\ 를 계속 허용하면서 경로 객체도 허용하도록 업데이트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708642Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "os",
+      "source_hash": 18111821395736665650,
+      "context_hash": 4455225218069863603,
+      "translation": "os",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708642Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "The ``fspath()`` function will be added with the following semantics",
+      "source_hash": 14992690593594903793,
+      "context_hash": 9898117199812952228,
+      "translation": "다음 의미 체계에 따라 ``fspath()`` 함수가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708642Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "The ``os.fsencode()`` [#os-fsencode]_ and ``os.fsdecode()`` [#os-fsdecode]_ functions will be updated to accept path objects.",
+      "source_hash": 13297567621573327494,
+      "context_hash": 12597963221073806945,
+      "translation": "``os.fsencode()`` [#os-fsencode]_ 및 ``os.fsdecode()`` [#os-fsdecode]_ 함수는 경로 객체를 허용하도록 업데이트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708643Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:1",
+      "source": "As both functions coerce their arguments to ``bytes`` and ``str``, respectively, they will be updated to call ``__fspath__()`` if present to convert the path object to a ``str`` or ``bytes`` representation, and then perform their appropriate coercion operations as if the return value from ``__fspath__()`` had been the original argument to the coercion function in question.",
+      "source_hash": 5316957391316542109,
+      "context_hash": 7106452171063489056,
+      "translation": "두 함수는 각각 인자를 ``bytes`` 및 ``str``\\ 로 강제 변환하므로, 경로 객체를 ``str`` 또는 ``bytes`` 표현으로 변환하기 위해 ``__fspath__()``\\ 가 있으면 이를 호출하도록 업데이트되며, 그런 다음 ``__fspath__()``\\ 의 반환 값이 해당 강제 변환 함수의 원래 인자였던 것처럼 적절한 강제 변환 작업을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708643Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "The addition of ``os.fspath()``, the updates to ``os.fsencode()``/``os.fsdecode()``, and the current semantics of ``pathlib.PurePath`` provide the semantics necessary to get the path representation one prefers.",
+      "source_hash": 3825934377206066976,
+      "context_hash": 15916798050172788617,
+      "translation": "``os.fspath()``\\ 의 추가, ``os.fsencode()``/``os.fsdecode()``\\ 의 업데이트 및 현재 ``pathlib.PurePath``\\ 의 의미 체계는 원하는 경로 표현을 얻는 데 필요한 의미 체계를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708644Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:1",
+      "source": "For a path object, ``pathlib.PurePath``/``Path`` can be used.",
+      "source_hash": 10369554119409412357,
+      "context_hash": 16181581170072679886,
+      "translation": "경로 객체에는 ``pathlib.PurePath``/``Path``\\ 를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708644Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:2",
+      "source": "To obtain the ``str`` or ``bytes`` representation without any coercion, then ``os.fspath()`` can be used.",
+      "source_hash": 15818732561965394172,
+      "context_hash": 12052283245149985491,
+      "translation": "강제 변환 없이 ``str`` 또는 ``bytes`` 표현을 얻으려면 ``os.fspath()``\\ 를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708645Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:3",
+      "source": "If a ``str`` is desired and the encoding of ``bytes`` should be assumed to be the default file system encoding, then ``os.fsdecode()`` should be used.",
+      "source_hash": 6825535889749691029,
+      "context_hash": 14159452478100517003,
+      "translation": "``str``\\ 이 필요하고 ``bytes``\\ 의 인코딩이 기본 파일 시스템 인코딩이라고 가정해야 한다면 ``os.fsdecode()``\\ 를 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708645Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:4",
+      "source": "If a ``bytes`` representation is desired and any strings should be encoded using the default file system encoding, then ``os.fsencode()`` is used.",
+      "source_hash": 6844480263960950697,
+      "context_hash": 17611131674737930825,
+      "translation": "``bytes`` 표현이 필요하고 모든 문자열을 기본 파일 시스템 인코딩을 사용하여 인코딩해야 한다면 ``os.fsencode()``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708645Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:5",
+      "source": "This PEP recommends using path objects when possible and falling back to string paths as necessary and using ``bytes`` as a last resort.",
+      "source_hash": 2859025911757790918,
+      "context_hash": 14534493486015667030,
+      "translation": "이 PEP에서는 가능한 경우 경로 객체를 사용하고, 필요에 따라 문자열 경로로 대체하며, 최후의 수단으로 ``bytes``\\ 를 사용할 것을 권장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708646Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "Another way to view this is as a hierarchy of file system path representations (highest- to lowest-level): path → str → bytes.",
+      "source_hash": 7644953780469613380,
+      "context_hash": 2245052859167202672,
+      "translation": "이를 보는 또 다른 방법은 파일 시스템 경로 표현의 계층 구조(높은 수준에서 낮은 수준 순)입니다: path → str → bytes.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708646Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:1",
+      "source": "The functions and classes under discussion can all accept objects on the same level of the hierarchy, but they vary in whether they promote or demote objects to another level.",
+      "source_hash": 15098543490093747859,
+      "context_hash": 757842343074877013,
+      "translation": "논의 중인 함수와 클래스는 모두 계층 구조에서 동일한 수준의 객체를 허용할 수 있지만, 객체를 다른 수준으로 승격하거나 강등하는 방식은 서로 다릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708646Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:2",
+      "source": "The ``pathlib.PurePath`` class can promote a ``str`` to a path object.",
+      "source_hash": 4215718830027307070,
+      "context_hash": 3402378820669779074,
+      "translation": "``pathlib.PurePath`` 클래스는 ``str``\\ 을 경로 객체로 승격할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708646Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:3",
+      "source": "The ``os.fspath()`` function can demote a path object to a ``str`` or ``bytes`` instance, depending on what ``__fspath__()`` returns.",
+      "source_hash": 10249676250174551132,
+      "context_hash": 9695281301647465725,
+      "translation": "``os.fspath()`` 함수는 ``__fspath__()``\\ 가 반환하는 값에 따라 경로 객체를 ``str`` 또는 ``bytes`` 인스턴스로 강등할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708647Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:4",
+      "source": "The ``os.fsdecode()`` function will demote a path object to a string or promote a ``bytes`` object to a ``str``.",
+      "source_hash": 9309845526030134694,
+      "context_hash": 1733711336146570065,
+      "translation": "``os.fsdecode()`` 함수는 경로 객체를 문자열로 강등하거나 ``bytes`` 객체를 ``str``\\ 로 승격합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708647Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:5",
+      "source": "The ``os.fsencode()`` function will demote a path or string object to ``bytes``.",
+      "source_hash": 10991926155443596885,
+      "context_hash": 570780968776510639,
+      "translation": "``os.fsencode()`` 함수는 경로 또는 문자열 객체를 ``bytes``\\ 로 강등합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708647Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:6",
+      "source": "There is no function that provides a way to demote a path object directly to ``bytes`` while bypassing string demotion.",
+      "source_hash": 12398771398118345163,
+      "context_hash": 1899630901516426795,
+      "translation": "문자열로 강등하는 과정을 거치지 않고 경로 객체를 직접 ``bytes``\\ 로 강등하는 방법을 제공하는 함수는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708647Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "The ``DirEntry`` object [#os-direntry]_ will gain an ``__fspath__()`` method.",
+      "source_hash": 16803680418365685996,
+      "context_hash": 9091991473718947486,
+      "translation": "``DirEntry`` 객체 [#os-direntry]_\\ 에 ``__fspath__()`` 메서드가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708647Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:1",
+      "source": "It will return the same value as currently found on the ``path`` attribute of ``DirEntry`` instances.",
+      "source_hash": 7671088857448343602,
+      "context_hash": 10324576274853226861,
+      "translation": "이 메서드는 ``DirEntry`` 인스턴스의 ``path`` 속성에서 현재 확인되는 것과 동일한 값을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708648Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "The Protocol_ ABC will be added to the ``os`` module under the name ``os.PathLike``.",
+      "source_hash": 9551891183241455083,
+      "context_hash": 11696629925614661320,
+      "translation": "Protocol_ ABC가 ``os.PathLike``\\ 라는 이름으로 ``os`` 모듈에 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708648Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "os.path",
+      "source_hash": 11652392716288704381,
+      "context_hash": 4073676273955940618,
+      "translation": "os.path",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708648Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "The various path-manipulation functions of ``os.path`` [#os-path]_ will be updated to accept path objects.",
+      "source_hash": 5500787833744264544,
+      "context_hash": 15459759750039858811,
+      "translation": "``os.path`` [#os-path]_\\ 의 다양한 경로 조작 함수는 경로 객체를 허용하도록 업데이트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708648Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:1",
+      "source": "For polymorphic functions that accept both bytes and strings, they will be updated to simply use ``os.fspath()``.",
+      "source_hash": 4945796211434514107,
+      "context_hash": 10161308796251765697,
+      "translation": "바이트와 문자열을 모두 허용하는 다형성 함수는 단순히 ``os.fspath()``\\ 를 사용하도록 업데이트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:04.708649Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "During the discussions leading up to this PEP it was suggested that ``os.path`` not be updated using an \"explicit is better than implicit\" argument.",
+      "source_hash": 14456201973150857388,
+      "context_hash": 14216968271699426890,
+      "translation": "이 PEP로 이어진 논의에서 “명시적인 것이 암묵적인 것보다 낫다”는 주장을 근거로 ``os.path``\\ 를 업데이트하지 말아야 한다는 의견이 제시되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417263Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:1",
+      "source": "The thinking was that since ``__fspath__()`` is polymorphic itself it may be better to have code working with ``os.path`` extract the path representation from path objects explicitly.",
+      "source_hash": 15924961447382953429,
+      "context_hash": 6837178752831679106,
+      "translation": "``__fspath__()``\\ 가 그 자체로 다형적이므로 ``os.path``\\ 를 사용하는 코드가 경로 객체에서 경로 표현을 명시적으로 추출하도록 하는 편이 더 나을 수 있다는 취지였습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417267Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:2",
+      "source": "There is also the consideration that adding support this deep into the low-level OS APIs will lead to code magically supporting path objects without requiring any documentation updated, leading to potential complaints when it doesn't work, unbeknownst to the project author.",
+      "source_hash": 16703002888736597227,
+      "context_hash": 4205112082809520607,
+      "translation": "또한 저수준 OS API의 이처럼 깊은 수준에 지원을 추가하면 문서를 업데이트하지 않아도 코드가 마법처럼 경로 객체를 지원하게 되어, 프로젝트 작성자가 알지 못하는 사이 작동하지 않을 때 잠재적인 불만이 제기될 수 있다는 고려도 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417267Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "But it is the view of this PEP that \"practicality beats purity\" in this instance.",
+      "source_hash": 17138737849401587774,
+      "context_hash": 14598626131370716158,
+      "translation": "그러나 이 경우에는 “실용성이 순수성보다 우선한다”는 것이 이 PEP의 견해입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417267Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:1",
+      "source": "To help facilitate the transition to supporting path objects, it is better to make the transition as easy as possible than to worry about unexpected/undocumented duck typing support for path objects by projects.",
+      "source_hash": 15232503396976390993,
+      "context_hash": 6383980095876660219,
+      "translation": "경로 객체 지원으로의 전환을 원활하게 진행하려면, 프로젝트에서 경로 객체에 대해 예상하지 못했거나 문서화되지 않은 덕 타이핑 지원을 걱정하기보다 전환을 가능한 한 쉽게 만드는 편이 낫습니다.",
+      "glossary_snapshot": {
+        "duck typing": "덕 타이핑"
+      },
+      "translated_at": "2026-08-28T19:07:07.417268Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:0",
+      "source": "There has also been the suggestion that ``os.path`` functions could be used in a tight loop and the overhead of checking or calling ``__fspath__()`` would be too costly.",
+      "source_hash": 3638485908139628564,
+      "context_hash": 11036043528332556517,
+      "translation": "또한 ``os.path``\\ 함수가 긴밀한 반복문에서 사용될 수 있으며 ``__fspath__()``\\ 를 확인하거나 호출하는 오버헤드가 너무 클 것이라는 의견도 제시되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417268Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:1",
+      "source": "In this scenario only path-consuming APIs would be directly updated and path-manipulating APIs like the ones in ``os.path`` would go unmodified.",
+      "source_hash": 1036864068402965958,
+      "context_hash": 13974675256740272372,
+      "translation": "이 경우에는 경로를 소비하는 API만 직접 업데이트하고, ``os.path``\\ 의 함수와 같은 경로 조작 API는 수정하지 않게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417269Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:2",
+      "source": "This would require library authors to update their code to support path objects if they performed any path manipulations, but if the library code passed the path straight through then the library wouldn't need to be updated.",
+      "source_hash": 10743294654488502981,
+      "context_hash": 3357787793177020364,
+      "translation": "라이브러리 작성자가 경로 조작을 수행한다면 경로 객체를 지원하도록 코드를 업데이트해야 하지만, 라이브러리 코드가 경로를 그대로 전달하기만 한다면 라이브러리를 업데이트할 필요가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417269Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:3",
+      "source": "It is the view of this PEP and Guido, though, that this is an unnecessary worry and that performance will still be acceptable.",
+      "source_hash": 15852127390964739975,
+      "context_hash": 240168123378213098,
+      "translation": "그러나 이 PEP와 Guido의 견해는 이것이 불필요한 걱정이며 성능도 여전히 허용 가능한 수준일 것이라는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417269Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:0",
+      "source": "pathlib",
+      "source_hash": 11168435473248655491,
+      "context_hash": 5838173388254944475,
+      "translation": "pathlib",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417269Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:18/seg:0",
+      "source": "The constructor for ``pathlib.PurePath`` and ``pathlib.Path`` will be updated to accept ``PathLike`` objects.",
+      "source_hash": 16397181720618731855,
+      "context_hash": 14782987676305730437,
+      "translation": "``pathlib.PurePath``\\ 와 ``pathlib.Path``\\ 의 생성자가 ``PathLike`` 객체를 허용하도록 업데이트됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417270Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:18/seg:1",
+      "source": "Both ``PurePath`` and ``Path`` will continue to not accept ``bytes`` path representations, and so if ``__fspath__()`` returns ``bytes`` it will raise an exception.",
+      "source_hash": 2551102217946354734,
+      "context_hash": 294126804687406105,
+      "translation": "``PurePath``\\ 와 ``Path``\\ 는 계속해서 ``bytes`` 경로 표현을 허용하지 않으므로 ``__fspath__()``\\ 가 ``bytes`` 를 반환하면 예외가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417270Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:19/seg:0",
+      "source": "The ``path`` attribute will be removed as this PEP makes it redundant (it has not been included in any released version of Python and so is not a backwards-compatibility concern).",
+      "source_hash": 17339535659105949933,
+      "context_hash": 3988611384497607650,
+      "translation": "이 PEP로 인해 ``path`` 속성이 불필요해지므로 해당 속성이 제거됩니다(출시된 Python 버전에 포함된 적이 없으므로 하위 호환성 문제는 아닙니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417270Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:20/seg:0",
+      "source": "C API",
+      "source_hash": 11070972781223705186,
+      "context_hash": 9046255294686841320,
+      "translation": "C API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417271Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:21/seg:0",
+      "source": "The C API will gain an equivalent function to ``os.fspath()``",
+      "source_hash": 10682137657259808914,
+      "context_hash": 17037560763834302635,
+      "translation": "C API에 ``os.fspath()``\\ 와 동등한 함수가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417271Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Backwards compatibility",
+      "source_hash": 15284458774507067265,
+      "context_hash": 11521363018478454943,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417271Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "There are no explicit backwards-compatibility concerns.",
+      "source_hash": 2226109012583777683,
+      "context_hash": 15146354910163820606,
+      "translation": "명시적인 하위 호환성 문제는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417271Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "Unless an object incidentally already defines a ``__fspath__()`` method there is no reason to expect the pre-existing code to break or expect to have its semantics implicitly changed.",
+      "source_hash": 6984799977634145016,
+      "context_hash": 12973059493906866821,
+      "translation": "객체가 우연히 이미 ``__fspath__()``\\ 메서드를 정의하고 있는 경우가 아니라면 기존 코드가 중단되거나 그 의미가 암묵적으로 변경될 것이라고 예상할 이유가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417272Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "Libraries wishing to support path objects and a version of Python prior to Python 3.6 and the existence of ``os.fspath()`` can use the idiom of ``path.__fspath__() if hasattr(path, \"__fspath__\") else path``.",
+      "source_hash": 297078948515470838,
+      "context_hash": 9208256552200209835,
+      "translation": "경로 객체와 Python 3.6 이전 버전 및 ``os.fspath()``\\ 가 존재하지 않는 환경을 지원하려는 라이브러리는 ``path.__fspath__() if hasattr(path, \"__fspath__\") else path`` 관용구를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417272Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 3139847431299121122,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417272Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "This is the task list for what this PEP proposes to be changed in Python 3.6:",
+      "source_hash": 16520668060916604818,
+      "context_hash": 3920543023555319984,
+      "translation": "다음은 이 PEP가 Python 3.6에서 변경하도록 제안하는 작업 목록입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417272Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "Remove the ``path`` attribute from pathlib (`done <http://bugs.python.org/issue22570>`__)",
+      "source_hash": 12789124382438734100,
+      "context_hash": 15491537077283380159,
+      "translation": "pathlib에서 ``path`` 속성 제거 (`done <http://bugs.python.org/issue22570>`__)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417273Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Remove the provisional status of pathlib (`done <https://hg.python.org/lookup/a5a013ca5687>`__)",
+      "source_hash": 10107971581546515241,
+      "context_hash": 759894249300760446,
+      "translation": "pathlib의 잠정 상태 제거 (`done <https://hg.python.org/lookup/a5a013ca5687>`__)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417273Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "Add ``os.PathLike`` (`code <https://hg.python.org/lookup/e672cf63d08a>`__ and `docs <http://hg.python.org/lookup/6239673d5e1d>`__ done)",
+      "source_hash": 48265324514370053,
+      "context_hash": 8408426062589143183,
+      "translation": "``os.PathLike`` 추가 (`code <https://hg.python.org/lookup/e672cf63d08a>`__ 및 `docs <http://hg.python.org/lookup/6239673d5e1d>`__ 완료)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417273Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "Add ``PyOS_FSPath()`` (`code <https://hg.python.org/lookup/780cbe18082e>`__ and `docs <http://hg.python.org/lookup/cec1f00c538d>`__ done)",
+      "source_hash": 6971704609370170951,
+      "context_hash": 1343161952554096070,
+      "translation": "``PyOS_FSPath()`` 추가 (`code <https://hg.python.org/lookup/780cbe18082e>`__ 및 `docs <http://hg.python.org/lookup/cec1f00c538d>`__ 완료)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417273Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "Add ``os.fspath()`` (`done <done <https://hg.python.org/lookup/780cbe18082e>`__)",
+      "source_hash": 6574598281287045690,
+      "context_hash": 11688516047031889585,
+      "translation": "``os.fspath()`` 추가 (`done <done <https://hg.python.org/lookup/780cbe18082e>`__)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417273Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "Update ``os.fsencode()`` (`done <https://hg.python.org/lookup/00991aa5fdb5>`__)",
+      "source_hash": 12685751202294369691,
+      "context_hash": 3109188608341324277,
+      "translation": "``os.fsencode()`` 업데이트 (`done <https://hg.python.org/lookup/00991aa5fdb5>`__)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417274Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "Update ``os.fsdecode()`` (`done <https://hg.python.org/lookup/00991aa5fdb5>`__)",
+      "source_hash": 9155503893289430780,
+      "context_hash": 7510312023350738628,
+      "translation": "``os.fsdecode()`` 업데이트 (`done <https://hg.python.org/lookup/00991aa5fdb5>`__)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417274Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:0",
+      "source": "Update ``pathlib.PurePath`` and ``pathlib.Path`` (`done <https://hg.python.org/lookup/a5a013ca5687>`__)",
+      "source_hash": 219724974360421958,
+      "context_hash": 15602439960569941776,
+      "translation": "``pathlib.PurePath``\\ 와 ``pathlib.Path``\\ 업데이트 (`done <https://hg.python.org/lookup/a5a013ca5687>`__)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417274Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:10/seg:0",
+      "source": "Add ``__fspath__()``",
+      "source_hash": 13454313140386704115,
+      "context_hash": 5148231171860202261,
+      "translation": "``__fspath__()`` 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417275Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:11/seg:0",
+      "source": "Add ``os.PathLike`` support to the constructors",
+      "source_hash": 8814430741846976655,
+      "context_hash": 302553708298430570,
+      "translation": "생성자에 ``os.PathLike`` 지원 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417275Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:12/seg:0",
+      "source": "Add ``__fspath__()`` to ``DirEntry`` (`done <https://hg.python.org/lookup/5a62d682636e>`__)",
+      "source_hash": 4226528243829268253,
+      "context_hash": 12640651984092922852,
+      "translation": "``DirEntry``\\ 에 ``__fspath__()`` 추가 (`done <https://hg.python.org/lookup/5a62d682636e>`__)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:07.417275Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:13/seg:0",
+      "source": "Update ``builtins.open()`` (`done <https://hg.python.org/lookup/254125a265d2>`__)",
+      "source_hash": 9483101953824283447,
+      "context_hash": 16658020266292958279,
+      "translation": "``builtins.open()``\\ 을 업데이트합니다 (`done <https://hg.python.org/lookup/254125a265d2>`__)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190791Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:14/seg:0",
+      "source": "Update ``os.path`` (`done <https://hg.python.org/cpython/rev/b64f83d6ff24>`__)",
+      "source_hash": 2453944985459424192,
+      "context_hash": 16646334193687969515,
+      "translation": "``os.path``\\ 를 업데이트합니다 (`done <https://hg.python.org/cpython/rev/b64f83d6ff24>`__)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190794Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:15/seg:0",
+      "source": "Add a `glossary <https://docs.python.org/3.6/glossary.html>`__ entry for \"path-like\" (`done <https://hg.python.org/lookup/9c57178f13dc>`__)",
+      "source_hash": 10787685892728246157,
+      "context_hash": 12010473415991964974,
+      "translation": "\"path-like\"에 대한 `glossary <https://docs.python.org/3.6/glossary.html>`__ 항목을 추가합니다 (`done <https://hg.python.org/lookup/9c57178f13dc>`__)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190794Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:16/seg:0",
+      "source": "Update `\"What's New\" <https://docs.python.org/3.6/whatsnew/3.6.html>`_ (`done <https://hg.python.org/cpython/rev/95361959d451>`__)",
+      "source_hash": 17432115722561746299,
+      "context_hash": 6354105549894508254,
+      "translation": "`\"What's New\" <https://docs.python.org/3.6/whatsnew/3.6.html>`_\\ 을 업데이트합니다 (`done <https://hg.python.org/cpython/rev/95361959d451>`__)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190794Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 14021335280053214976,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190795Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Other names for the protocol's method",
+      "source_hash": 1665870921138949303,
+      "context_hash": 11006757588650334528,
+      "translation": "프로토콜 메서드의 다른 이름",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:07:15.190795Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Various names were proposed during discussions leading to this PEP, including ``__path__``, ``__pathname__``, and ``__fspathname__``.",
+      "source_hash": 3595426275403530856,
+      "context_hash": 8534653627310969996,
+      "translation": "이 PEP로 이어지는 논의 중에 ``__path__``, ``__pathname__``, ``__fspathname__``\\ 을 비롯한 다양한 이름이 제안되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190796Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "In the end people seemed to gravitate towards ``__fspath__`` for being unambiguous without being unnecessarily long.",
+      "source_hash": 1393271002826440088,
+      "context_hash": 5689044482547875249,
+      "translation": "결국 사람들은 불필요하게 길지 않으면서도 모호하지 않다는 이유로 ``__fspath__``\\ 를 선호하는 듯했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190796Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Separate str/bytes methods",
+      "source_hash": 13151880180530635154,
+      "context_hash": 969861283679219721,
+      "translation": "str/bytes 메서드 분리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190796Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "At one point it was suggested that ``__fspath__()`` only return strings and another method named ``__fspathb__()`` be introduced to return bytes.",
+      "source_hash": 2759513474805570583,
+      "context_hash": 11132448286037780920,
+      "translation": "한때 ``__fspath__()``\\ 가 문자열만 반환하고, 바이트를 반환하는 ``__fspathb__()``\\ 라는 다른 메서드를 도입하자는 제안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190796Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "The thinking is that by making ``__fspath__()`` not be polymorphic it could make dealing with the potential string or bytes representations easier.",
+      "source_hash": 5419632785970962986,
+      "context_hash": 13017454563237843270,
+      "translation": "``__fspath__()``\\ 를 다형적으로 만들지 않으면 잠재적인 문자열 또는 바이트 표현을 더 쉽게 처리할 수 있다는 생각이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190796Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "But the general consensus was that returning bytes will more than likely be rare and that the various functions in the os module are the better abstraction to promote over direct calls to ``__fspath__()``.",
+      "source_hash": 3564431923770556675,
+      "context_hash": 4371509874161034156,
+      "translation": "그러나 일반적인 합의는 바이트를 반환하는 경우가 십중팔구 드물 것이며, ``__fspath__()``\\ 에 대한 직접 호출보다 os 모듈의 다양한 함수가 장려하기에 더 나은 추상화라는 것이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190797Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Providing a ``path`` attribute",
+      "source_hash": 9204090775864839023,
+      "context_hash": 4831147263038925052,
+      "translation": "``path`` 속성 제공",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190797Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "To help deal with the issue of ``pathlib.PurePath`` not inheriting from ``str``, originally it was proposed to introduce a ``path`` attribute to mirror what ``os.DirEntry`` provides.",
+      "source_hash": 10972184413294098942,
+      "context_hash": 12950090546747583022,
+      "translation": "``pathlib.PurePath``\\ 가 ``str``\\ 에서 상속되지 않는 문제를 해결하기 위해, 처음에는 ``os.DirEntry``\\ 가 제공하는 것과 유사한 ``path`` 속성을 도입하자는 제안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190797Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "In the end, though, it was determined that a protocol would provide the same result while not directly exposing an API that most people will never need to interact with directly.",
+      "source_hash": 9825544681112618688,
+      "context_hash": 18157658372495699394,
+      "translation": "그러나 결국 프로토콜을 사용하면 대부분의 사람이 직접 상호 작용할 필요가 없는 API를 직접 노출하지 않고도 동일한 결과를 제공할 수 있다고 판단되었습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:07:15.190797Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Have ``__fspath__()`` only return strings",
+      "source_hash": 10371938343961184599,
+      "context_hash": 13446374243894760462,
+      "translation": "``__fspath__()``\\ 가 문자열만 반환하도록 하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190798Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "Much of the discussion that led to this PEP revolved around whether ``__fspath__()`` should be polymorphic and return ``bytes`` as well as ``str`` or only return ``str``.",
+      "source_hash": 14674971380842040724,
+      "context_hash": 1281974872631586207,
+      "translation": "이 PEP로 이어진 논의의 상당 부분은 ``__fspath__()``\\ 가 다형적으로 작동하여 ``str``\\ 뿐만 아니라 ``bytes``\\ 도 반환해야 하는지, 아니면 ``str``\\ 만 반환해야 하는지를 중심으로 이루어졌습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190798Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "The general sentiment for this view was that ``bytes`` are difficult to work with due to their inherent lack of information about their encoding and :pep:`383` makes it possible to represent all file system paths using ``str`` with the ``surrogateescape`` handler.",
+      "source_hash": 1866239770895100358,
+      "context_hash": 3083792392835034339,
+      "translation": "이 관점의 일반적인 정서는 ``bytes``\\ 가 인코딩에 관한 정보가 본질적으로 부족하여 다루기 어렵고, :pep:`383`\\ 은 ``surrogateescape`` 처리기를 사용하여 모든 파일 시스템 경로를 ``str``\\ 로 표현할 수 있게 한다는 것이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190798Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:2",
+      "source": "Thus, it would be better to forcibly promote the use of ``str`` as the low-level path representation for high-level path objects.",
+      "source_hash": 1543258812158004026,
+      "context_hash": 8183326777817573023,
+      "translation": "따라서 고수준 경로 객체의 저수준 경로 표현으로 ``str``\\ 을 강제로 사용하도록 장려하는 것이 더 나았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190799Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "In the end, it was decided that using ``bytes`` to represent paths is simply not going to go away and thus they should be supported to some degree.",
+      "source_hash": 12100542325469671879,
+      "context_hash": 18382078771593273228,
+      "translation": "결국 경로를 표현하는 데 ``bytes``\\ 를 사용하는 방식은 단순히 사라지지 않을 것이므로 어느 정도 지원해야 한다고 결정되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190799Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:1",
+      "source": "The hope is that people will gravitate towards path objects like pathlib and that will move people away from operating directly with ``bytes``.",
+      "source_hash": 17673689179890251740,
+      "context_hash": 11986018955693579463,
+      "translation": "사람들이 pathlib와 같은 경로 객체를 선호하고 ``bytes``\\ 를 직접 조작하는 방식에서 멀어지기를 기대합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190799Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "A generic string encoding mechanism",
+      "source_hash": 7661082013514421773,
+      "context_hash": 4491684995240252058,
+      "translation": "일반적인 문자열 인코딩 메커니즘",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190799Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "At one point there was a discussion of developing a generic mechanism to extract a string representation of an object that had semantic meaning (``__str__()`` does not necessarily return anything of semantic significance beyond what may be helpful for debugging).",
+      "source_hash": 16035936645094250803,
+      "context_hash": 588222185020469157,
+      "translation": "한때 의미론적 의미를 지닌 객체의 문자열 표현을 추출하는 일반적인 메커니즘을 개발하는 논의가 있었습니다(``__str__()``\\ 는 디버깅에 도움이 되는 것 이상으로 반드시 의미론적으로 중요한 것을 반환하지는 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190800Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "In the end, it was deemed to lack a motivating need beyond the one this PEP is trying to solve in a specific fashion.",
+      "source_hash": 1647864232174518299,
+      "context_hash": 17854789172131404068,
+      "translation": "결국 이 메커니즘은 이 PEP가 특정한 방식으로 해결하려는 문제 외에는 이를 뒷받침할 필요성이 부족하다고 판단되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190800Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Have __fspath__ be an attribute",
+      "source_hash": 1990713657207810550,
+      "context_hash": 7105568242118910966,
+      "translation": "__fspath__을 속성으로 만들기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190800Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "It was briefly considered to have ``__fspath__`` be an attribute instead of a method.",
+      "source_hash": 2996000416818785004,
+      "context_hash": 11287668555765526827,
+      "translation": "``__fspath__``\\ 를 메서드가 아닌 속성으로 만들자는 방안이 잠시 고려되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190800Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "This was rejected for two reasons.",
+      "source_hash": 14466234281590219722,
+      "context_hash": 7641219270691303055,
+      "translation": "이는 두 가지 이유로 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190800Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:2",
+      "source": "One, historically protocols have been implemented as \"magic methods\" and not \"magic methods and attributes\".",
+      "source_hash": 12358344918388807979,
+      "context_hash": 14958743192098222868,
+      "translation": "첫째, 역사적으로 프로토콜은 \"매직 메서드\"로 구현되어 왔으며 \"매직 메서드와 속성\"으로 구현된 것이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190801Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:3",
+      "source": "Two, there is no guarantee that the lower-level representation of a path object will be pre-computed, potentially misleading users that there was no expensive computation behind the scenes in case the attribute was implemented as a property.",
+      "source_hash": 4092346172778874172,
+      "context_hash": 5603380583778860485,
+      "translation": "둘째, 경로 객체의 저수준 표현이 미리 계산되어 있다는 보장이 없으므로, 속성이 프로퍼티로 구현될 경우 내부적으로 비용이 큰 계산이 없다고 사용자를 오도할 가능성이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190801Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "This also indirectly ties into the idea of introducing a ``path`` attribute to accomplish the same thing.",
+      "source_hash": 5114690891960606812,
+      "context_hash": 18404867877578319215,
+      "translation": "이는 같은 목적을 달성하기 위해 ``path`` 속성을 도입하자는 아이디어와도 간접적으로 연결됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:15.190801Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:1",
+      "source": "This idea has an added issue, though, of accidentally having any object with a ``path`` attribute meet the protocol's duck typing.",
+      "source_hash": 6257140203594030472,
+      "context_hash": 16822055574226065710,
+      "translation": "그러나 이 아이디어에는 ``path`` 속성을 가진 모든 객체가 실수로 프로토콜의 덕 타이핑을 충족하게 된다는 추가적인 문제가 있습니다.",
+      "glossary_snapshot": {
+        "duck typing": "덕 타이핑",
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:07:15.190801Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:2",
+      "source": "Introducing a new magic method for the protocol helpfully avoids any accidental opting into the protocol.",
+      "source_hash": 18353146613573462392,
+      "context_hash": 16796432515222957026,
+      "translation": "프로토콜에 새로운 매직 메서드를 도입하면 실수로 프로토콜을 채택하는 일을 효과적으로 방지할 수 있습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:07:15.190802Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Provide specific type hinting support",
+      "source_hash": 10856003546207658405,
+      "context_hash": 1221604538795877001,
+      "translation": "구체적인 타입 힌팅 지원을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790329Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "There was some consideration to providing a generic ``typing.PathLike`` class which would allow for e.g. ``typing.PathLike[str]`` to specify a type hint for a path object which returned a string representation.",
+      "source_hash": 11477651359240853871,
+      "context_hash": 11883291971598642843,
+      "translation": "문자열 표현을 반환하는 경로 객체의 타입 힌트를 지정할 수 있도록, 예를 들어 ``typing.PathLike[str]``\\ 와 같이 사용할 수 있는 제네릭 ``typing.PathLike`` 클래스를 제공하는 방안이 일부 검토되었습니다.",
+      "glossary_snapshot": {
+        "type hint": "타입 힌트"
+      },
+      "translated_at": "2026-08-28T18:08:17.790332Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "While potentially beneficial, the usefulness was deemed too small to bother adding the type hint class.",
+      "source_hash": 17023802676116524217,
+      "context_hash": 5827366759940813886,
+      "translation": "잠재적으로 유용할 수 있지만, 타입 힌트 클래스를 추가할 만큼 유용하지는 않다고 판단되었습니다.",
+      "glossary_snapshot": {
+        "type hint": "타입 힌트"
+      },
+      "translated_at": "2026-08-28T18:08:17.790334Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "This also removed any desire to have a class in the ``typing`` module which represented the union of all acceptable path-representing types as that can be represented with ``typing.Union[str, bytes, os.PathLike]`` easily enough and the hope is users will slowly gravitate to path objects only.",
+      "source_hash": 6660810255919117842,
+      "context_hash": 1593239287634715509,
+      "translation": "또한 허용 가능한 모든 경로 표현 타입의 합집합을 나타내는 클래스를 ``typing`` 모듈에 두려는 필요성도 사라졌습니다. 이는 ``typing.Union[str, bytes, os.PathLike]``\\ 로 충분히 쉽게 표현할 수 있으며, 사용자들이 점차 경로 객체만 사용하게 되기를 기대하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790335Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Provide ``os.fspathb()``",
+      "source_hash": 11587080045146581264,
+      "context_hash": 15164808317653763578,
+      "translation": "``os.fspathb()``\\ 를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790335Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "It was suggested that to mirror the structure of e.g. ``os.getcwd()``/``os.getcwdb()``, that ``os.fspath()`` only return ``str`` and that another function named ``os.fspathb()`` be introduced that only returned ``bytes``.",
+      "source_hash": 5717637503845271754,
+      "context_hash": 5932109776982253445,
+      "translation": "예를 들어 ``os.getcwd()``/``os.getcwdb()``\\ 와 같은 구조를 따르도록 ``os.fspath()``\\ 는 ``str``\\ 만 반환하고, ``bytes``\\ 만 반환하는 ``os.fspathb()``\\ 라는 다른 함수를 도입하자는 제안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790335Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "This was rejected as the purposes of the ``*b()`` functions are tied to querying the file system where there is a need to get the raw bytes back.",
+      "source_hash": 1885387026132591246,
+      "context_hash": 6983763265326517446,
+      "translation": "그러나 이는 ``*b()`` 함수의 목적이 파일 시스템을 조회하여 원시 바이트를 반환해야 하는 경우와 연관되어 있으므로 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790335Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:2",
+      "source": "As this PEP does not work directly with data on a file system (but which *may* be), the view was taken this distinction is unnecessary.",
+      "source_hash": 7968480751844940615,
+      "context_hash": 7084699819524352513,
+      "translation": "이 PEP는 파일 시스템의 데이터를 직접 다루지는 않지만(그럴 *수도* 있지만), 이러한 구분은 불필요하다고 판단되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:56:49.513494Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:3",
+      "source": "It's also believed that the need for only bytes will not be common enough to need to support in such a specific manner as ``os.fsencode()`` will provide similar functionality.",
+      "source_hash": 14589892191808294575,
+      "context_hash": 1928544906972848751,
+      "translation": "또한 ``os.fsencode()``\\ 가 유사한 기능을 제공하므로 바이트만 필요한 경우가 이러한 특정 방식으로 지원해야 할 만큼 흔하지는 않을 것으로 여겨집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790336Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Call ``__fspath__()`` off of the instance",
+      "source_hash": 11532711302628937556,
+      "context_hash": 13088011430781495956,
+      "translation": "인스턴스에서 ``__fspath__()``\\ 를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790337Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "An earlier draft of this PEP had ``os.fspath()`` calling ``path.__fspath__()`` instead of ``type(path).__fspath__(path)``.",
+      "source_hash": 3820884058948047579,
+      "context_hash": 13276649355319595463,
+      "translation": "이 PEP의 초기 초안에서는 ``os.fspath()``\\ 가 ``type(path).__fspath__(path)`` 대신 ``path.__fspath__()``\\ 를 호출했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790337Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "The changed to be consistent with how other magic methods in Python are resolved.",
+      "source_hash": 9281671322225498590,
+      "context_hash": 4638651167687925036,
+      "translation": "이는 Python에서 다른 매직 메서드가 확인되는 방식과 일관되도록 변경되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790337Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Acknowledgements",
+      "source_hash": 16326275492144793040,
+      "context_hash": 9195685104332584625,
+      "translation": "감사의 말",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790338Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Thanks to everyone who participated in the various discussions related to this PEP that spanned both python-ideas and python-dev.",
+      "source_hash": 10242410420825571540,
+      "context_hash": 11513113627309116990,
+      "translation": "python-ideas와 python-dev 양쪽에 걸쳐 진행된 이 PEP 관련 다양한 논의에 참여해 주신 모든 분께 감사드립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790338Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:1",
+      "source": "Special thanks to Stephen Turnbull for direct feedback on early drafts of this PEP.",
+      "source_hash": 11420162329049530972,
+      "context_hash": 8170418649874164019,
+      "translation": "이 PEP의 초기 초안에 직접 의견을 보내 주신 Stephen Turnbull에게 특별히 감사드립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790338Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:2",
+      "source": "More special thanks to Koos Zevenhoven and Ethan Furman for not only feedback on early drafts of this PEP but also helping to drive the overall discussion on this topic across the two mailing lists.",
+      "source_hash": 18122359232767437163,
+      "context_hash": 16154444846659126838,
+      "translation": "이 PEP의 초기 초안에 의견을 보내 주셨을 뿐만 아니라, 두 메일링 리스트에서 이 주제에 관한 전반적인 논의를 이끌어 가는 데 도움을 주신 Koos Zevenhoven과 Ethan Furman에게 더욱 특별히 감사드립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790338Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 10724904265254346311,
+      "translation": "참고 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790339Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "The python-ideas mailing list archive",
+      "source_hash": 17651691279576778472,
+      "context_hash": 8836729213161304136,
+      "translation": "python-ideas 메일링 리스트 아카이브",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790339Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "(https://mail.python.org/pipermail/python-ideas/)",
+      "source_hash": 10161608685839545210,
+      "context_hash": 5411801300765880854,
+      "translation": "(https://mail.python.org/pipermail/python-ideas/)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790339Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "The python-dev mailing list archive",
+      "source_hash": 5258431285645150121,
+      "context_hash": 15939350947634232798,
+      "translation": "python-dev 메일링 리스트 아카이브",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790339Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "(https://mail.python.org/pipermail/python-dev/)",
+      "source_hash": 9126378862967138352,
+      "context_hash": 17255247712384950307,
+      "translation": "(https://mail.python.org/pipermail/python-dev/)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790339Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:0",
+      "source": "``open()`` documentation for the C standard library",
+      "source_hash": 16686008961616381228,
+      "context_hash": 17283296851162058005,
+      "translation": "C 표준 라이브러리의 ``open()`` 문서",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:08:17.790340Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:6/seg:0",
+      "source": "(http://www.gnu.org/software/libc/manual/html_node/Opening-and-Closing-Files.html)",
+      "source_hash": 7394829717466593196,
+      "context_hash": 6047727037673110798,
+      "translation": "(http://www.gnu.org/software/libc/manual/html_node/Opening-and-Closing-Files.html)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790340Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:7/seg:0",
+      "source": "The ``pathlib`` module",
+      "source_hash": 12849257166226665089,
+      "context_hash": 590034578790307437,
+      "translation": "``pathlib`` 모듈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790341Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:8/seg:0",
+      "source": "(https://docs.python.org/3/library/pathlib.html#module-pathlib)",
+      "source_hash": 16801117806826899857,
+      "context_hash": 14156973744416957239,
+      "translation": "(https://docs.python.org/3/library/pathlib.html#module-pathlib)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790341Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:9/seg:0",
+      "source": "The ``builtins.open()`` function",
+      "source_hash": 15148772107425193033,
+      "context_hash": 12297925429073919080,
+      "translation": "``builtins.open()`` 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790341Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:10/seg:0",
+      "source": "(https://docs.python.org/3/library/functions.html#open)",
+      "source_hash": 375104969855363102,
+      "context_hash": 11202860820341256736,
+      "translation": "(https://docs.python.org/3/library/functions.html#open)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790341Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:11/seg:0",
+      "source": "The ``os.fsencode()`` function",
+      "source_hash": 6310175315921413040,
+      "context_hash": 16110839351461081053,
+      "translation": "``os.fsencode()`` 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790341Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:12/seg:0",
+      "source": "(https://docs.python.org/3/library/os.html#os.fsencode)",
+      "source_hash": 4957672934010279613,
+      "context_hash": 5880550001089309784,
+      "translation": "(https://docs.python.org/3/library/os.html#os.fsencode)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790341Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:13/seg:0",
+      "source": "The ``os.fsdecode()`` function",
+      "source_hash": 8025041645519853206,
+      "context_hash": 11324430738180549741,
+      "translation": "``os.fsdecode()`` 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790342Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:14/seg:0",
+      "source": "(https://docs.python.org/3/library/os.html#os.fsdecode)",
+      "source_hash": 5601974022083319194,
+      "context_hash": 3243925399422202727,
+      "translation": "(https://docs.python.org/3/library/os.html#os.fsdecode)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790342Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:15/seg:0",
+      "source": "The ``os.DirEntry`` class",
+      "source_hash": 15199532885955651618,
+      "context_hash": 4851571071732872504,
+      "translation": "``os.DirEntry`` 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:17.790342Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:16/seg:0",
+      "source": "(https://docs.python.org/3/library/os.html#os.DirEntry)",
+      "source_hash": 564879451149930158,
+      "context_hash": 1992067738897537356,
+      "translation": "(https://docs.python.org/3/library/os.html#os.DirEntry)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:33.720098Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:17/seg:0",
+      "source": "The ``os.path`` module",
+      "source_hash": 17305601498607255646,
+      "context_hash": 9109428733563110185,
+      "translation": "``os.path`` 모듈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:33.720101Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:18/seg:0",
+      "source": "(https://docs.python.org/3/library/os.path.html#module-os.path)",
+      "source_hash": 2624306994558439046,
+      "context_hash": 7462139705490574371,
+      "translation": "(https://docs.python.org/3/library/os.path.html#module-os.path)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:33.720101Z",
+      "issues": []
+    }
+  ]
+}

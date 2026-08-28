@@ -1,0 +1,1651 @@
+{
+  "version": 1,
+  "source_hash": 16558392245125889678,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Extensible customizations of the interpreter at startup",
+      "source_hash": 12681656521420591836,
+      "context_hash": 16530898886277989957,
+      "translation": "시작 시 인터프리터의 확장 가능한 사용자 지정",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:58:08.780901Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 1704804448595364503,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780907Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes supporting extensible customization of the interpreter by allowing users to install files that will be executed at startup.",
+      "source_hash": 15317414742619508911,
+      "context_hash": 4979086799699708260,
+      "translation": "이 PEP는 사용자가 시작 시 실행될 파일을 설치할 수 있도록 하여 인터프리터의 확장 가능한 사용자 지정을 지원할 것을 제안합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:58:08.780908Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "PEP Rejection",
+      "source_hash": 5512811808106634069,
+      "context_hash": 9131009191216159075,
+      "translation": "PEP 거부",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780909Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "PEP 648 was rejected `by the steering council <https://mail.python.org/archives/list/python-dev@python.org/message/UHODNOGISLYUKX2K2JCCBYMZFEWZDSPO/>`__ as it has a limited number of use cases and further complicates the startup sequence.",
+      "source_hash": 13280354484877931551,
+      "context_hash": 16810382819235028088,
+      "translation": "PEP 648은 사용 사례가 제한적이고 시작 순서를 더욱 복잡하게 만든다는 이유로 `by the steering council <https://mail.python.org/archives/list/python-dev@python.org/message/UHODNOGISLYUKX2K2JCCBYMZFEWZDSPO/>`__ 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780909Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 2057925491240730441,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780910Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "System administrators, tools that repackage the interpreter and some libraries need to customize aspects of the interpreter at startup time.",
+      "source_hash": 1030331608204052182,
+      "context_hash": 4202271879607114829,
+      "translation": "시스템 관리자, 인터프리터를 재패키징하는 도구 및 일부 라이브러리는 시작 시 인터프리터의 측면을 사용자 지정해야 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:58:08.780910Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "This is usually achieved via ``sitecustomize.py`` for system administrators whilst libraries rely on exploiting ``pth`` files.",
+      "source_hash": 4455550019791271789,
+      "context_hash": 971742761372242623,
+      "translation": "시스템 관리자는 일반적으로 ``sitecustomize.py``\\ 를 통해 이를 수행하는 반면, 라이브러리는 ``pth``\\ 파일을 활용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780911Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "This PEP proposes a way of achieving the same functionality in a more user-friendly and structured way.",
+      "source_hash": 18032928327779250073,
+      "context_hash": 8479005018782726588,
+      "translation": "이 PEP는 동일한 기능을 보다 사용자 친화적이고 구조화된 방식으로 달성하는 방법을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780911Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Limitations of ``pth`` files",
+      "source_hash": 402805151662390862,
+      "context_hash": 14635846722790538570,
+      "translation": "``pth``\\ 파일의 한계",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780911Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "If a library needs to perform any customization before an import or that relates to the general working of the interpreter, they often rely on the fact that ``pth`` files, which are loaded at startup and implemented via the site module [#site]_, can include Python code that will be executed when the ``pth`` file is evaluated.",
+      "source_hash": 7821901581027480936,
+      "context_hash": 16161813437310081043,
+      "translation": "라이브러리가 임포트 전에 또는 인터프리터의 일반적인 작동과 관련하여 어떤 사용자 정의든 수행해야 하는 경우, 시작 시 로드되고 site 모듈 [#site]_\\ 을 통해 구현되는 ``pth`` 파일에 ``pth`` 파일이 평가될 때 실행되는 파이썬 코드를 포함할 수 있다는 사실에 의존하는 경우가 많습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:51:39.422386Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Note that ``pth`` files were originally developed to just add additional directories to ``sys.path``, but they may also contain lines which start with \"import\", which will be passed to ``exec()``.",
+      "source_hash": 17890330032153450226,
+      "context_hash": 18045712824325430717,
+      "translation": "``pth`` 파일은 원래 ``sys.path``\\ 에 추가 디렉터리를 더하기 위해 개발되었지만, \"import\"로 시작하는 줄도 포함할 수 있으며, 이러한 줄은 ``exec()``\\ 에 전달된다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:51:39.422390Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "Users have exploited this feature to allow the customizations that they needed.",
+      "source_hash": 9971182816272223394,
+      "context_hash": 3931593016278340745,
+      "translation": "사용자는 필요한 사용자 지정을 가능하게 하기 위해 이 기능을 활용해 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780913Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "See setuptools [#setuptools]_ or betterexceptions [#betterexceptions]_ as examples.",
+      "source_hash": 17563200342681923693,
+      "context_hash": 1448337624706569993,
+      "translation": "예를 들어 setuptools [#setuptools]_ 또는 betterexceptions [#betterexceptions]_\\ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780913Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Using ``pth`` files for this purpose is far from ideal for library developers, as they need to inject code into a single line preceded by an import, making it rather unreadable.",
+      "source_hash": 11244733578833821536,
+      "context_hash": 10075380637371171432,
+      "translation": "이러한 목적으로 ``pth``\\ 파일을 사용하는 것은 라이브러리 개발자에게 결코 이상적이지 않습니다. 임포트가 앞에 붙은 한 줄에 코드를 삽입해야 하므로 가독성이 매우 떨어지기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780914Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "Library developers following that practice will usually create a module that performs all actions on import, as done by betterexceptions [#betterexceptions]_, but the approach is still not really user friendly.",
+      "source_hash": 8631572251067002431,
+      "context_hash": 15169119932881820637,
+      "translation": "이러한 방식을 따르는 라이브러리 개발자는 일반적으로 betterexceptions [#betterexceptions]_\\ 에서처럼 임포트 시 모든 작업을 수행하는 모듈을 만들지만, 이 접근 방식은 여전히 사용자 친화적이라고 하기 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780914Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "Additionally, it is also non-ideal for users of the interpreter if they want to inspect what is being executed at Python startup as they need to review all the ``pth`` files for potential code execution which can be spread across all site paths.",
+      "source_hash": 6397152748065655419,
+      "context_hash": 712091575804029054,
+      "translation": "또한 인터프리터 사용자가 Python 시작 시 실행되는 내용을 검사하려는 경우에도 이상적이지 않습니다. 모든 사이트 경로에 걸쳐 분산되어 있을 수 있는 잠재적인 코드 실행을 확인하기 위해 모든 ``pth``\\ 파일을 검토해야 하기 때문입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:58:08.780914Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:1",
+      "source": "Most of those ``pth`` files will be \"legitimate\" ``pth`` files that just modify the path, answering the question of \"what is changing my interpreter at startup\" a rather complex one.",
+      "source_hash": 8005949628919118230,
+      "context_hash": 10049706653491737518,
+      "translation": "이러한 ``pth``\\ 파일 대부분은 경로만 수정하는 \"정상적인\" ``pth``\\ 파일이므로, \"시작 시 내 인터프리터를 변경하는 것은 무엇인가\"라는 질문에 답하기가 상당히 복잡해집니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:58:08.780915Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "Lastly, there have been multiple suggestions for removing code execution from ``pth`` files, see [#bpo-24534]_ and [#bpo-33944]_.",
+      "source_hash": 16017598630989792841,
+      "context_hash": 10533220115847522427,
+      "translation": "마지막으로 ``pth``\\ 파일에서 코드 실행을 제거하자는 제안이 여러 차례 있었으며, [#bpo-24534]_ 및 [#bpo-33944]_\\ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780915Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Limitations of ``sitecustomize.py``",
+      "source_hash": 15606436965174619278,
+      "context_hash": 4305854050437950065,
+      "translation": "``sitecustomize.py``\\ 의 한계",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780916Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Whilst sitecustomize is an acceptable solution, it assumes a single person is in charge of the system and the interpreter.",
+      "source_hash": 8481098789486540325,
+      "context_hash": 8038183858471788157,
+      "translation": "sitecustomize는 허용 가능한 해결책이지만, 시스템과 인터프리터를 한 사람이 담당한다고 가정합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:58:08.780916Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "If both the system administrator and the responsibility of provisioning the interpreter want to add customizations at the interpreter startup they need to agree on the contents of the file and combine all the changes.",
+      "source_hash": 9487578096043197659,
+      "context_hash": 4159254067254663015,
+      "translation": "시스템 관리자와 인터프리터 프로비저닝 담당자 모두 인터프리터 시작 시 사용자 지정을 추가하려는 경우, 파일의 내용에 합의하고 모든 변경 사항을 결합해야 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:58:08.780917Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "This is not a major limitation though, and it is not the main driver of this change.",
+      "source_hash": 16393954459362540974,
+      "context_hash": 9135887287486397463,
+      "translation": "그러나 이는 큰 한계가 아니며, 이 변경의 주된 동인도 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780917Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:3",
+      "source": "Should the change happen, it will also improve the situation for these users, as rather than having a ``sitecustomize.py`` which performs all those actions, they can have custom isolated files named after the features they want to enhance.",
+      "source_hash": 4898128217371147589,
+      "context_hash": 11007668591344583945,
+      "translation": "변경이 이루어진다면 이러한 사용자들의 상황도 개선됩니다. 모든 작업을 수행하는 ``sitecustomize.py``\\ 를 두는 대신, 향상하려는 기능의 이름을 딴 사용자 지정 격리 파일을 둘 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780917Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:4",
+      "source": "As an example, Ubuntu could change their current ``sitecustomize.py`` to just be ``ubuntu_apport_python_hook``.",
+      "source_hash": 11985261085784230197,
+      "context_hash": 13411378849214840016,
+      "translation": "예를 들어 Ubuntu는 현재의 ``sitecustomize.py``\\ 를 단순히 ``ubuntu_apport_python_hook``\\ 로 변경할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780918Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:5",
+      "source": "This not only better represents its intent but also gives users of the interpreter a better understanding of the modifications happening on their interpreter.",
+      "source_hash": 4141459260753622117,
+      "context_hash": 3638858719193658774,
+      "translation": "이는 의도를 더 잘 나타낼 뿐만 아니라 인터프리터 사용자에게 인터프리터에서 발생하는 수정 사항을 더 잘 이해할 수 있게 해 줍니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:58:08.780918Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 8008047761338347073,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780919Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "This PEP proposes supporting extensible customization of the interpreter at startup by executing all files discovered in directories named ``__sitecustomize__`` in sitepackages [#sitepackages-api]_ or usersitepackages [#usersitepackages-api]_ at startup time.",
+      "source_hash": 1342523073121519502,
+      "context_hash": 17175173201715659507,
+      "translation": "이 PEP는 시작 시 sitepackages [#sitepackages-api]_ 또는 usersitepackages [#usersitepackages-api]_\\ 에서 ``__sitecustomize__``\\ 라는 이름의 디렉터리에서 발견되는 모든 파일을 실행하여 인터프리터의 확장 가능한 사용자 지정을 지원할 것을 제안합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:58:08.780919Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Why ``__sitecustomize__``",
+      "source_hash": 12858517212647279903,
+      "context_hash": 16461476929315053872,
+      "translation": "``__sitecustomize__``\\ 인 이유",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780920Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The name aims to follow the already existing concept of ``sitecustomize.py``.",
+      "source_hash": 15099442811712730035,
+      "context_hash": 11344316974181368676,
+      "translation": "이 이름은 이미 존재하는 ``sitecustomize.py`` 개념을 따르기 위한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780920Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "As the directory will be within ``sys.path``, given that it is located in site paths, we choose to use double underscore around its name, to prevent colliding with the already existing ``sitecustomize.py``.",
+      "source_hash": 14662980149339285262,
+      "context_hash": 17116202608262107504,
+      "translation": "해당 디렉터리는 사이트 경로에 있으므로 ``sys.path``\\ 내부에 위치하게 됩니다. 따라서 이미 존재하는 ``sitecustomize.py``\\ 와 충돌하지 않도록 이름 양쪽에 밑줄 두 개를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780920Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Discovering the new ``__sitecustomize__`` directories",
+      "source_hash": 7337568249725399684,
+      "context_hash": 13597083000773604601,
+      "translation": "새로운 ``__sitecustomize__`` 디렉터리 찾기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:58:08.780920Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The Python interpreter will look at startup for directory named ``__sitecustomize__`` within any of the standard site-packages path.",
+      "source_hash": 5569388005153992176,
+      "context_hash": 2439887597308305870,
+      "translation": "Python 인터프리터는 시작 시 모든 표준 site-packages 경로 내에서 ``__sitecustomize__``\\ 라는 이름의 디렉터리를 찾습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:48.058537Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "These are commonly the Python system location and the user location, but are ultimately defined by the site module logic.",
+      "source_hash": 9961685840710252514,
+      "context_hash": 12421607690943310524,
+      "translation": "이는 일반적으로 Python 시스템 위치와 사용자 위치이지만, 궁극적으로는 site 모듈의 로직에 의해 정의됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058543Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "Users can use ``site.sitepackages`` [#sitepackages-api]_ and ``site.usersitepackages`` [#usersitepackages-api]_ to know the paths where the interpreter can discover ``__sitecustomize__`` directories.",
+      "source_hash": 10441322008039921442,
+      "context_hash": 18011784328330562012,
+      "translation": "사용자는 ``site.sitepackages`` [#sitepackages-api]_ 및 ``site.usersitepackages`` [#usersitepackages-api]_\\ 를 사용하여 인터프리터가 ``__sitecustomize__`` 디렉터리를 찾을 수 있는 경로를 확인할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:48.058543Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Time of ``__sitecustomize__`` discovery",
+      "source_hash": 2872932627855761330,
+      "context_hash": 10832190314263254107,
+      "translation": "``__sitecustomize__`` 검색 시점",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058544Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "The ``__sitecustomize__`` directories will be discovered exactly after ``pth`` files are discovered in a site-packages path as part of ``site.addsitedir`` [#siteaddsitedir]_.",
+      "source_hash": 6325857263881379829,
+      "context_hash": 853758965988945002,
+      "translation": "``__sitecustomize__`` 디렉터리는 ``site.addsitedir`` [#siteaddsitedir]_\\ 의 일부로 site-packages 경로에서 ``pth`` 파일을 검색한 직후에 정확히 검색됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058544Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "These is repeated for each of the site-packages path in the exact same order that is being followed today for ``pth`` files.",
+      "source_hash": 12030697471577428225,
+      "context_hash": 5552240301127101683,
+      "translation": "이는 현재 ``pth`` 파일에 적용되는 것과 정확히 동일한 순서로 각 site-packages 경로에 대해 반복됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058544Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Order of execution within ``__sitecustomize__``",
+      "source_hash": 17935869714807217643,
+      "context_hash": 11469427792306840318,
+      "translation": "``__sitecustomize__`` 내 실행 순서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058545Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The implementation will execute the files within ``__sitecustomize__`` by sorting them by name when discovering each of the ``__sitecustomize__`` directories.",
+      "source_hash": 13720409850769239307,
+      "context_hash": 1000839496205491610,
+      "translation": "구현은 각 ``__sitecustomize__`` 디렉터리를 발견할 때 이름순으로 정렬하여 ``__sitecustomize__``\\ 내부의 파일을 실행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:51:39.422391Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "We discourage users to rely on the order of execution though.",
+      "source_hash": 5311580409520594450,
+      "context_hash": 3404864264358201360,
+      "translation": "그러나 사용자가 실행 순서에 의존하지 않도록 권장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058546Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "We considered executing them in random order, but that could result in different results depending on how the interpreter chooses to pick up those files.",
+      "source_hash": 8358379468929585247,
+      "context_hash": 6344325752689021699,
+      "translation": "무작위 순서로 실행하는 방안도 고려했지만, 인터프리터가 해당 파일을 선택하는 방식에 따라 결과가 달라질 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:48.058546Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:1",
+      "source": "So even if it won't be a good practice to rely on other files being executed, we think that is better than having randomly different results on interpreter startup.",
+      "source_hash": 13361222605215355620,
+      "context_hash": 12502551095742922988,
+      "translation": "따라서 다른 파일이 실행되는 순서에 의존하는 것이 좋은 관행은 아니더라도, 인터프리터 시작 시 무작위로 다른 결과가 발생하는 것보다는 이것이 낫다고 생각합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:48.058547Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:2",
+      "source": "We chose to run the files after the ``pth`` files in case a user needs to add items to the path before running a files.",
+      "source_hash": 12171790512241121386,
+      "context_hash": 3079276870952518456,
+      "translation": "사용자가 파일을 실행하기 전에 경로에 항목을 추가해야 할 경우를 고려하여 ``pth`` 파일 이후에 파일을 실행하도록 선택했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058547Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Interaction with ``pth`` files",
+      "source_hash": 13284087048353138108,
+      "context_hash": 15179892322405595789,
+      "translation": "``pth`` 파일과의 상호 작용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058547Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "``pth`` files can be used to add paths into ``sys.path``, but this should not affect the ``__sitecustomize__`` discovery process, as those directories are looked up exclusively in site-packages paths.",
+      "source_hash": 16362115915529875706,
+      "context_hash": 9674618584714836848,
+      "translation": "``pth`` 파일을 사용하여 ``sys.path``\\ 에 경로를 추가할 수 있지만, ``__sitecustomize__`` 검색 프로세스에는 영향을 주지 않아야 합니다. 해당 디렉터리는 site-packages 경로에서만 독점적으로 조회되기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058548Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Execution of files within ``__sitecustomize__``",
+      "source_hash": 11617996333846372974,
+      "context_hash": 544883748075118663,
+      "translation": "``__sitecustomize__`` 내 파일 실행",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058548Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "When a ``__sitecustomize__`` directory is discovered, all of the files that have a ``.py`` extension within it will be read with ``io.open_code`` and executed by using ``exec`` [#exec]_.",
+      "source_hash": 11402665558805644302,
+      "context_hash": 16494838284755018968,
+      "translation": "``__sitecustomize__`` 디렉터리가 검색되면 그 안에서 ``.py`` 확장자를 가진 모든 파일을 ``io.open_code``\\ 로 읽고 ``exec`` [#exec]_\\ 를 사용하여 실행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058548Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "An empty dictionary will be passed as ``globals`` to the ``exec`` function to prevent unexpected interactions between different files.",
+      "source_hash": 4437727724852462629,
+      "context_hash": 18013627989353810135,
+      "translation": "서로 다른 파일 간의 예기치 않은 상호 작용을 방지하기 위해 빈 딕셔너리를 ``exec`` 함수의 ``globals``\\ 로 전달합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:57:48.058548Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Failure handling",
+      "source_hash": 3088669027073275349,
+      "context_hash": 11481631778670170439,
+      "translation": "오류 처리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058549Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "Any error on the execution of any of the files will not be logged unless the interpreter is run in verbose mode and it should not stop the evaluation of other files.",
+      "source_hash": 16337400822196221878,
+      "context_hash": 8054786016873421797,
+      "translation": "파일 실행 중 발생하는 모든 오류는 인터프리터가 자세한 정보 표시 모드로 실행되지 않는 한 기록되지 않으며, 다른 파일의 평가를 중단해서도 안 됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:48.058549Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "The user will receive a message in stderr saying that the file failed to be executed and that verbose mode can be used to get more information.",
+      "source_hash": 10375635814102925022,
+      "context_hash": 7513745086852112928,
+      "translation": "사용자는 파일 실행에 실패했으며 자세한 정보는 자세한 정보 표시 모드를 사용하여 확인할 수 있다는 메시지를 stderr에서 받게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058550Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:2",
+      "source": "This behaviour mimics the one existing for ``sitecustomize.py``.",
+      "source_hash": 11379900099617817233,
+      "context_hash": 11619200042902142612,
+      "translation": "이 동작은 기존 ``sitecustomize.py``\\ 의 동작을 모방합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058550Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Interaction with virtual environments",
+      "source_hash": 7694570478463724581,
+      "context_hash": 6110311138846885774,
+      "translation": "가상 환경과의 상호 작용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058550Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "The customizations applied to an interpreter via the new ``__sitecustomize__`` solutions will continue to work when a user creates a virtual environment the same way that ``sitecustomize.py`` interact with virtual environments.",
+      "source_hash": 18419359428177921997,
+      "context_hash": 13805467427969907133,
+      "translation": "새로운 ``__sitecustomize__`` 솔루션을 통해 인터프리터에 적용된 사용자 지정은 사용자가 가상 환경을 생성한 후에도 ``sitecustomize.py``\\ 가 가상 환경과 상호 작용하는 것과 동일한 방식으로 계속 작동합니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:48.058551Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "This is a difference when compared to ``pth`` files, which are not propagated into virtual environments unless ``include-system-site-packages`` is enabled.",
+      "source_hash": 15623334726301696915,
+      "context_hash": 6452081739778072055,
+      "translation": "이는 ``include-system-site-packages``\\ 가 활성화되지 않는 한 가상 환경으로 전파되지 않는 ``pth`` 파일과는 다른 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058552Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "If library maintainers have features installed via ``__sitecustomize__`` that they do not want to propagate into virtual environments, they should detect if they are running within a virtual environment by checking ``sys.prefix == sys.base_prefix``.",
+      "source_hash": 10657115799370524441,
+      "context_hash": 5349659730720446110,
+      "translation": "라이브러리 유지 관리자가 ``__sitecustomize__``\\ 를 통해 설치한 기능을 가상 환경으로 전파하지 않으려면 ``sys.prefix == sys.base_prefix``\\ 를 확인하여 가상 환경 내에서 실행 중인지 감지해야 합니다.",
+      "glossary_snapshot": {
+        "virtual environment": "가상 환경"
+      },
+      "translated_at": "2026-08-28T18:57:48.058552Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:1",
+      "source": "This behavior is similar to packages that modify the global ``sitecustomize.py``.",
+      "source_hash": 6977590103162123863,
+      "context_hash": 14590250168575756908,
+      "translation": "이 동작은 전역 ``sitecustomize.py``\\ 를 수정하는 패키지와 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058553Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Interaction with ``sitecustomize.py`` and ``usercustomize.py``",
+      "source_hash": 16021112321760122482,
+      "context_hash": 2457808039987498990,
+      "translation": "``sitecustomize.py`` 및 ``usercustomize.py``\\ 와의 상호 작용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058553Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Until removed, ``sitecustomize`` and ``usercustomize`` will be executed after ``__sitecustomize__`` similar to pth files.",
+      "source_hash": 8685181896099317309,
+      "context_hash": 16844286573545531806,
+      "translation": "제거될 때까지 ``sitecustomize`` 및 ``usercustomize``\\ 는 pth 파일과 유사하게 ``__sitecustomize__`` 이후에 실행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058553Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "See the Backward compatibility section for information on removal plans for ``sitecustomize`` and ``usercustomize``.",
+      "source_hash": 11392027853980602407,
+      "context_hash": 200237709499937786,
+      "translation": "``sitecustomize`` 및 ``usercustomize``\\ 의 제거 계획에 관한 정보는 하위 호환성 섹션을 참조하십시오.",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T18:57:48.058554Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Identifying all installed files",
+      "source_hash": 3292877539258264365,
+      "context_hash": 2952187209731162351,
+      "translation": "설치된 모든 파일 식별",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058554Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "To facilitate debugging of the Python startup, if the site module is invoked it will print the ``__sitecustomize__`` directories that will be discovered on startup.",
+      "source_hash": 7222238546064510033,
+      "context_hash": 8982944990300143819,
+      "translation": "Python 시작 과정의 디버깅을 용이하게 하기 위해 site 모듈이 호출되면 시작 시 검색될 ``__sitecustomize__`` 디렉터리를 출력합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058555Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Files naming convention",
+      "source_hash": 18267019968421886154,
+      "context_hash": 11013839949925887562,
+      "translation": "파일 명명 규칙",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:48.058555Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "Packages will be encouraged to include the name of the package within the name of the file to avoid collisions between packages.",
+      "source_hash": 1244822806243054491,
+      "context_hash": 7885337486674309313,
+      "translation": "패키지 간 충돌을 방지하기 위해 파일 이름에 패키지 이름을 포함하도록 패키지에 권장할 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898862Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "But the only requirement on the filename is that it ends in ``.py`` for the interpreter to execute them.",
+      "source_hash": 13694683358993050250,
+      "context_hash": 16864345838987620292,
+      "translation": "그러나 파일 이름에 대한 유일한 요구 사항은 인터프리터가 파일을 실행할 수 있도록 ``.py``\\ 로 끝나는 것입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:57.898868Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Disabling start files",
+      "source_hash": 2030996271295252635,
+      "context_hash": 14469464472119077598,
+      "translation": "시작 파일 비활성화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898871Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "In some scenarios, like when the startup time is key, it might be desired to disable this option altogether.",
+      "source_hash": 3383512437825647065,
+      "context_hash": 3116623855630160743,
+      "translation": "시작 시간이 중요한 경우와 같은 일부 상황에서는 이 옵션을 완전히 비활성화하는 것이 바람직할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898872Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:1",
+      "source": "The already existing flag ``-S`` [#s-flag]_ will disable all ``site``-related manipulation, including this new feature.",
+      "source_hash": 3796358885713884733,
+      "context_hash": 2868012017318111458,
+      "translation": "이미 존재하는 플래그 ``-S``\\ [#s-flag]_ 는 이 새로운 기능을 포함하여 ``site`` 관련 조작을 모두 비활성화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898872Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:2",
+      "source": "If the flag is passed in, ``__sitecustomize__`` directories will not be discovered.",
+      "source_hash": 1306659498596516967,
+      "context_hash": 16245208051918496192,
+      "translation": "이 플래그를 전달하면 ``__sitecustomize__`` 디렉터리를 검색하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898873Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "Additionally, to allow for starting the interpreter disabling only this new feature a new option will be added under ``-X``: ``disablesitecustomize``, which will disable the discovery of ``__sitecustomize__`` exclusively.",
+      "source_hash": 10511923939284493304,
+      "context_hash": 2118082425164753389,
+      "translation": "또한 이 새로운 기능만 비활성화한 상태로 인터프리터를 시작할 수 있도록 ``-X``\\ 아래에 ``disablesitecustomize``\\ 라는 새 옵션을 추가하며, 이 옵션은 ``__sitecustomize__`` 검색만 비활성화합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:57.898873Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "Lastly, the user can disable the discovery of ``__sitecustomize__`` directories only in the user site by disabling the user site via any of the multiple options in the ``site.py`` module.",
+      "source_hash": 6971813274836639409,
+      "context_hash": 16119448470127816364,
+      "translation": "마지막으로 사용자는 ``site.py`` 모듈의 여러 옵션 중 하나를 통해 사용자 사이트를 비활성화하여 사용자 사이트에서만 ``__sitecustomize__`` 디렉터리 검색을 비활성화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898874Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Support in build backends",
+      "source_hash": 97357886463786525,
+      "context_hash": 9020422938959447185,
+      "translation": "빌드 백엔드 지원",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898874Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "Whilst build backends can choose to provide an option to facilitate the installation of these files into a ``__sitecustomize__`` directory, this PEP does not address that directly.",
+      "source_hash": 5678893815658165631,
+      "context_hash": 4154762528544881704,
+      "translation": "빌드 백엔드는 이러한 파일을 ``__sitecustomize__`` 디렉터리에 설치하기 쉽게 하는 옵션을 제공할 수 있지만, 이 PEP에서는 이를 직접 다루지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898875Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "Similar to ``pth`` files, build backends can choose to not provide an easy-to-configure mechanism for ``__sitecustomize__`` files and let users hook into the installation process to include such files.",
+      "source_hash": 1330619464732925869,
+      "context_hash": 9648016857576466431,
+      "translation": "``pth`` 파일과 마찬가지로 빌드 백엔드는 ``__sitecustomize__`` 파일에 대해 쉽게 구성할 수 있는 메커니즘을 제공하지 않고, 사용자가 설치 프로세스에 연결하여 이러한 파일을 포함하도록 할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898875Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:2",
+      "source": "We do not think build backends enhanced support as a requirement for this PEP.",
+      "source_hash": 16687498929148172405,
+      "context_hash": 3460804743867834458,
+      "translation": "빌드 백엔드의 향상된 지원을 이 PEP의 요구 사항으로 보지는 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898876Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Impact on startup time",
+      "source_hash": 11649308252829443331,
+      "context_hash": 8288787346274188900,
+      "translation": "시작 시간에 미치는 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898876Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "A concern in this implementation is how Python interpreter startup time can be affected by this addition.",
+      "source_hash": 4175808099661968045,
+      "context_hash": 17393892579144837207,
+      "translation": "이 구현에서 우려되는 점은 이 추가 기능이 Python 인터프리터의 시작 시간에 영향을 미칠 수 있다는 것입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:57.898877Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:1",
+      "source": "We expect the performance impact to be highly coupled to the logic in the files that a user or sysadmin installs in the Python environment being tested.",
+      "source_hash": 18304777898207429134,
+      "context_hash": 4983930834791659655,
+      "translation": "성능 영향은 테스트 중인 Python 환경에 사용자 또는 시스템 관리자가 설치하는 파일의 논리와 밀접하게 연관될 것으로 예상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898878Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:0",
+      "source": "If the interpreter has any files in their ``__sitecustomize__`` directory, the file execution time plus a call reading the code will be added to the startup time.",
+      "source_hash": 16575929127196275330,
+      "context_hash": 4553288785804913261,
+      "translation": "인터프리터의 ``__sitecustomize__`` 디렉터리에 파일이 있으면 파일 실행 시간과 코드를 읽는 호출 시간이 시작 시간에 추가됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:57.898878Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:1",
+      "source": "This is similar to how code execution is impacting startup time through ``sitecustomize.py``, ``usercustomize.py`` and code in ``pth`` files.",
+      "source_hash": 6594353884272811534,
+      "context_hash": 5416884696711660515,
+      "translation": "이는 ``sitecustomize.py``, ``usercustomize.py`` 및 ``pth`` 파일의 코드를 통한 코드 실행이 시작 시간에 영향을 미치는 방식과 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898879Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:2",
+      "source": "We will therefore focus here on comparing this solution against those three, as otherwise the actual time added to startup is highly dependent on the code that is being executed in those files.",
+      "source_hash": 6589473330555111852,
+      "context_hash": 375691461404741317,
+      "translation": "따라서 실제로 시작 시간에 추가되는 시간은 해당 파일에서 실행되는 코드에 크게 좌우되므로, 여기서는 이 해결책을 앞의 세 가지와 비교하는 데 집중합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898879Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:0",
+      "source": "Results were gathered by running \"./python.exe -c pass\" with perf on 50 iterations, repeating 50 times the command on each iteration and getting the geometric mean of all the results.",
+      "source_hash": 5104533161328172386,
+      "context_hash": 4793054042732638736,
+      "translation": "결과는 50회 반복에 걸쳐 perf로 \"./python.exe -c pass\"를 실행하고, 각 반복마다 명령을 50회 반복 실행한 다음 모든 결과의 기하 평균을 구하여 수집했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898879Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:1",
+      "source": "The file used to run those benchmarks is checked in in the reference implementation [#reference-implementation]_.",
+      "source_hash": 11365789999879675712,
+      "context_hash": 11019515856239064517,
+      "translation": "이러한 벤치마크를 실행하는 데 사용한 파일은 참조 구현 [#reference-implementation]_\\ 에 체크인되어 있습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:57:57.898880Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:4/seg:0",
+      "source": "The benchmark was run with 3.10 alpha 7 compiled with PGO and LTO with the following parameters and system state:",
+      "source_hash": 13016598374133711440,
+      "context_hash": 16051269331317439818,
+      "translation": "벤치마크는 다음 매개변수와 시스템 상태에서 PGO 및 LTO를 사용하여 컴파일한 3.10 alpha 7로 실행했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898880Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:5/seg:0",
+      "source": "Perf event: Max sample rate set to 1 per second",
+      "source_hash": 8301544026796591398,
+      "context_hash": 7769470464356687230,
+      "translation": "Perf 이벤트: 최대 샘플링 속도를 초당 1회로 설정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898881Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:6/seg:0",
+      "source": "CPU Frequency: Minimum frequency of CPU 17,35 set to the maximum frequency",
+      "source_hash": 12166807187055064443,
+      "context_hash": 461154121784904694,
+      "translation": "CPU 주파수: CPU 17,35의 최소 주파수를 최대 주파수로 설정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898881Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:7/seg:0",
+      "source": "Turbo Boost (MSR): Turbo Boost disabled on CPU 17: MSR 0x1a0 set to 0x4000850089",
+      "source_hash": 13611112431147196588,
+      "context_hash": 1454925675753280039,
+      "translation": "Turbo Boost (MSR): CPU 17에서 Turbo Boost 비활성화: MSR 0x1a0을 0x4000850089로 설정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898882Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:8/seg:0",
+      "source": "IRQ affinity: Set default affinity to CPU 0-16,18-34",
+      "source_hash": 13160870522012321938,
+      "context_hash": 11436005088557598547,
+      "translation": "IRQ 선호도: 기본 선호도를 CPU 0-16,18-34로 설정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898882Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:9/seg:0",
+      "source": "IRQ affinity: Set affinity of IRQ 1,3-16,21,25-31,56-59,68-85,87,89-90,92-93,95-104 to CPU 0-16,18-34",
+      "source_hash": 16947748396829504499,
+      "context_hash": 8596769654883155930,
+      "translation": "IRQ 선호도: IRQ 1,3-16,21,25-31,56-59,68-85,87,89-90,92-93,95-104의 선호도를 CPU 0-16,18-34로 설정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898882Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:10/seg:0",
+      "source": "CPU: use 2 logical CPUs: 17,35",
+      "source_hash": 13017856648036859020,
+      "context_hash": 13236906266142763537,
+      "translation": "CPU: 논리 CPU 2개 사용: 17,35",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898883Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:11/seg:0",
+      "source": "Perf event: Maximum sample rate: 1 per second",
+      "source_hash": 4128182504821723730,
+      "context_hash": 5196210552411972259,
+      "translation": "Perf 이벤트: 최대 샘플링 속도: 초당 1회",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898883Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:12/seg:0",
+      "source": "ASLR: Full randomization",
+      "source_hash": 5946444595252496448,
+      "context_hash": 7907828153999108004,
+      "translation": "ASLR: 완전한 무작위화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898883Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:13/seg:0",
+      "source": "Linux scheduler: Isolated CPUs (2/36): 17,35",
+      "source_hash": 11635241780703149557,
+      "context_hash": 10069188813474699982,
+      "translation": "Linux 스케줄러: 격리된 CPU (2/36): 17,35",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898883Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:14/seg:0",
+      "source": "Linux scheduler: RCU disabled on CPUs (2/36): 17,35",
+      "source_hash": 11487211535951503695,
+      "context_hash": 7949916411969546711,
+      "translation": "Linux 스케줄러: CPU (2/36)에서 RCU 비활성화: 17,35",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898884Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:15/seg:0",
+      "source": "CPU Frequency: 0-16,18-34=min=1200 MHz, max=3600 MHz; 17,35=min=max=3600 MHz",
+      "source_hash": 4284915664643279267,
+      "context_hash": 4420844965010433782,
+      "translation": "CPU 주파수: 0-16,18-34=min=1200 MHz, max=3600 MHz; 17,35=min=max=3600 MHz",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:57.898884Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:16/seg:0",
+      "source": "Turbo Boost (MSR): CPU 17,35: disabled",
+      "source_hash": 15869469144429259545,
+      "context_hash": 12250115936965813258,
+      "translation": "Turbo Boost (MSR): CPU 17,35: 비활성화되어 있습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022568Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:17/seg:0",
+      "source": "The code placed to be executed in ``pth`` files, ``sitecustomize.py``, ``usercustomize.py`` and files within ``__sitecustomize__`` is the following:",
+      "source_hash": 11876809797229686800,
+      "context_hash": 12547384818910071026,
+      "translation": "``pth`` 파일, ``sitecustomize.py``, ``usercustomize.py`` 및 ``__sitecustomize__`` 내 파일에서 실행되도록 배치되는 코드는 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022573Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:18/seg:0",
+      "source": "import time; x = time.time() ** 5",
+      "source_hash": 6025512674139570527,
+      "context_hash": 5924040757627785887,
+      "translation": "import time; x = time.time() ** 5",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022573Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:19/seg:0",
+      "source": "The file is aimed at execution a simple operation but still expected to be negligible.",
+      "source_hash": 16157890556399517645,
+      "context_hash": 3089791497497580976,
+      "translation": "이 파일은 간단한 작업을 실행하기 위한 것이지만, 여전히 무시할 수 있을 정도로 소요 시간이 짧을 것으로 예상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022574Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:19/seg:1",
+      "source": "This is to put the experiment in a situation where we make visible any hit on performance due to the mechanism whilst still making it relatively realistic.",
+      "source_hash": 13684636861785877057,
+      "context_hash": 16793011604503031976,
+      "translation": "이는 메커니즘으로 인한 성능 저하를 드러내면서도 실험을 비교적 현실적인 상황에 놓기 위한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022574Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:19/seg:2",
+      "source": "Additionally, it starts with an import and is a single line to be able to be used in ``pth`` files.",
+      "source_hash": 14074276628153774649,
+      "context_hash": 7670241284552236994,
+      "translation": "또한 import로 시작하고 한 줄로 구성되어 ``pth`` 파일에서 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022574Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:21/seg:0",
+      "source": "Results can be reproduced with ``run-benchmark.py`` script provided in the reference implementation [#reference-implementation]_.",
+      "source_hash": 9490513430123997629,
+      "context_hash": 2450149982633517971,
+      "translation": "결과는 참조 구현 [#reference-implementation]_\\ 에서 제공하는 ``run-benchmark.py`` 스크립트로 재현할 수 있습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:57:50.022575Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:22/seg:0",
+      "source": "We interpret the following from these results:",
+      "source_hash": 11997493672311620886,
+      "context_hash": 3988638769524433357,
+      "translation": "이러한 결과에서 다음과 같이 해석합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022576Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:23/seg:0",
+      "source": "Using two ``__sitecustomize__`` scripts compared to ``sitecustomize.py`` and ``usercustomize.py`` slows down the interpreter by 0.3%.",
+      "source_hash": 1723663745337851880,
+      "context_hash": 10108681153883555347,
+      "translation": "``sitecustomize.py`` 및 ``usercustomize.py``\\ 를 사용하는 것과 비교하여 두 개의 ``__sitecustomize__`` 스크립트를 사용하면 인터프리터가 0.3% 느려집니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:50.022576Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:23/seg:1",
+      "source": "We expect this slowdown until ``sitecustomize.py`` and ``usercustomize.py`` are removed in a future release as even if the user does not create the files, the interpreter will still attempt to import them.",
+      "source_hash": 13059818610420983843,
+      "context_hash": 16923957706230166330,
+      "translation": "사용자가 해당 파일을 생성하지 않더라도 인터프리터는 여전히 해당 파일을 import하려고 시도하므로, 향후 릴리스에서 ``sitecustomize.py`` 및 ``usercustomize.py``\\ 가 제거될 때까지 이러한 성능 저하가 지속될 것으로 예상합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:50.022577Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:24/seg:0",
+      "source": "With the arbitrary 50 pth files with code tested, moving those to ``__sitecustomize__`` produces a speedup of ~3.5% in startup.",
+      "source_hash": 15498877246730078723,
+      "context_hash": 6305960362023250285,
+      "translation": "코드가 포함된 임의의 50개 pth 파일을 대상으로 테스트했을 때, 이를 ``__sitecustomize__``\\ 로 옮기면 시작 시간이 약 3.5% 단축됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022578Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:24/seg:1",
+      "source": "Which is likely related to the simpler logic to evaluate ``__sitecustomize__`` files compared to ``pth`` file execution.",
+      "source_hash": 4338658161733261981,
+      "context_hash": 14252247893260261407,
+      "translation": "이는 ``pth`` 파일 실행에 비해 ``__sitecustomize__`` 파일을 평가하는 로직이 더 단순하기 때문일 가능성이 큽니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022578Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:25/seg:0",
+      "source": "In general all measurements show that there is a low impact on startup time with this addition.",
+      "source_hash": 16663609085433620363,
+      "context_hash": 5473235767625164290,
+      "translation": "전반적으로 모든 측정 결과는 이 추가 기능이 시작 시간에 미치는 영향이 작다는 것을 보여줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022578Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Audit Event",
+      "source_hash": 7713872871916458799,
+      "context_hash": 7507329769740769222,
+      "translation": "감사 이벤트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022578Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "A new audit event will be added and triggered on ``__sitecustomize__`` execution to facilitate security inspection by calling ``sys.audit`` [#sysaudit]_ with \"sitecustimze.exec_file\" as name and the filename as argument.",
+      "source_hash": 7568804935543370834,
+      "context_hash": 5923844930880350291,
+      "translation": "보안 검사를 용이하게 하기 위해 ``__sitecustomize__`` 실행 시 새로운 감사 이벤트가 추가되고 트리거됩니다. 이를 위해 ``sys.audit``\\ 를 호출하며 [#sysaudit]_ 이름은 \"sitecustimze.exec_file\"로, 인자는 파일 이름으로 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022579Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Security implications",
+      "source_hash": 12756007822971658211,
+      "context_hash": 17328564387323149182,
+      "translation": "보안 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022579Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "This PEP aims to move all code execution from ``pth`` files to files within a ``__sitecustomize__`` directory.",
+      "source_hash": 11386798056609658865,
+      "context_hash": 11619494995303159748,
+      "translation": "이 PEP는 모든 코드 실행을 ``pth`` 파일에서 ``__sitecustomize__`` 디렉터리 내 파일로 옮기는 것을 목표로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022579Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:1",
+      "source": "We think this is an improvement to system admins for the following reasons:",
+      "source_hash": 15035840027649222275,
+      "context_hash": 17049988225755953789,
+      "translation": "다음과 같은 이유로 이것이 시스템 관리자에게 개선된 사항이라고 생각합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022580Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:0",
+      "source": "Allows to quickly identify the code being executed at startup time by the interpreter by looking into a single directory rather than having to scan all ``pth`` files.",
+      "source_hash": 12828872694954471695,
+      "context_hash": 1847257773538354329,
+      "translation": "모든 ``pth`` 파일을 검사하는 대신 단일 디렉터리를 살펴봄으로써 인터프리터가 시작 시 실행하는 코드를 신속하게 식별할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:50.022580Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:0",
+      "source": "Allows to track usage of this feature through the new proposed audit event.",
+      "source_hash": 3192841259164362122,
+      "context_hash": 12766002452252721913,
+      "translation": "새로 제안된 감사 이벤트를 통해 이 기능의 사용 현황을 추적할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022580Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:4/seg:0",
+      "source": "Gives finer grain control by allowing to tune permissions on the ``__sitecustomize__`` directory, potentially allowing users to install only packages that does not change the interpreter startup.",
+      "source_hash": 15346001526660896721,
+      "context_hash": 8420484066054291180,
+      "translation": "``__sitecustomize__`` 디렉터리의 권한을 조정할 수 있으므로 더 세밀하게 제어할 수 있으며, 이를 통해 인터프리터 시작 방식을 변경하지 않는 패키지만 사용자가 설치하도록 할 수도 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:50.022581Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:5/seg:0",
+      "source": "In short, whilst this allows for a malicious users to drop a file that will be executed at startup, it's an improvement compared to the existing ``pth`` files.",
+      "source_hash": 4971912979499402726,
+      "context_hash": 6121521091214330196,
+      "translation": "요컨대 악의적인 사용자가 시작 시 실행될 파일을 추가할 수 있게 되기는 하지만, 기존 ``pth`` 파일에 비하면 개선된 방식입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022581Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "How to teach this",
+      "source_hash": 6522813814239166646,
+      "context_hash": 959097638696600369,
+      "translation": "교육 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022581Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "This can be documented and taught as simple as saying that the interpreter will try to look for the ``__sitecustomize__`` directory at startup in its site paths and if it finds any files with ``.py`` extension, it will then execute it one by one.",
+      "source_hash": 11348590093495134212,
+      "context_hash": 1694096455014459993,
+      "translation": "인터프리터가 시작 시 사이트 경로에서 ``__sitecustomize__`` 디렉터리를 찾으며, ``.py`` 확장자를 가진 파일을 찾으면 파일을 하나씩 실행한다고 간단히 설명하여 문서화하고 교육할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:50.022582Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:0",
+      "source": "For system administrators and tools that package the interpreter, we can now recommend placing files in ``__sitecustomize__`` as they used to place ``sitecustomize.py``.",
+      "source_hash": 8871958818149213562,
+      "context_hash": 3082154248560206917,
+      "translation": "시스템 관리자와 인터프리터를 패키징하는 도구에는 이전에 ``sitecustomize.py``\\ 를 배치하던 방식처럼 이제 ``__sitecustomize__``\\ 에 파일을 배치하도록 권장할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:57:50.022582Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:1",
+      "source": "Being more comfortable on that their content won't be overridden by the next person, as they can provide with specific files to handle the logic they want to customize.",
+      "source_hash": 18415792074432002772,
+      "context_hash": 14960706492778682860,
+      "translation": "또한 원하는 사용자 지정 로직을 처리하는 특정 파일을 제공할 수 있으므로, 다음 사용자가 해당 내용을 덮어쓰지 않을 것이라는 점에서 더욱 안심할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022582Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:0",
+      "source": "Library developers should be able to specify a new argument on tools like setuptools that will inject those new files.",
+      "source_hash": 4634269794683134650,
+      "context_hash": 11946987635055335282,
+      "translation": "라이브러리 개발자는 setuptools와 같은 도구에 이러한 새 파일을 주입하는 새 인자를 지정할 수 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022583Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:1",
+      "source": "Something like ``sitecustomize_files=[\"scripts/betterexceptions.py\"]``, which allows them to add those.",
+      "source_hash": 12559677099288244202,
+      "context_hash": 7818170561862803578,
+      "translation": "예를 들어 ``sitecustomize_files=[\"scripts/betterexceptions.py\"]``\\ 와 같이 지정하면 해당 파일을 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022583Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:2",
+      "source": "Should the build backend not support that, they can manually install them as they used to do with ``pth`` files.",
+      "source_hash": 7246909985533956909,
+      "context_hash": 5093773601874003245,
+      "translation": "빌드 백엔드가 이를 지원하지 않는 경우에는 이전에 ``pth`` 파일을 사용하던 것처럼 수동으로 설치할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022583Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:3",
+      "source": "We will recommend them to include the name of the package as part of the file's name.",
+      "source_hash": 12875279575815893095,
+      "context_hash": 6753099677841456128,
+      "translation": "파일 이름의 일부로 패키지 이름을 포함하도록 권장할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:50.022583Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "Backward compatibility",
+      "source_hash": 12158694391736289968,
+      "context_hash": 5400364890389580730,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T18:57:50.022584Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "This PEP adds a deprecation warning on ``sitecustomize.py``, ``usercustomize.py`` and ``pth`` code execution in 3.11, 3.12 and 3.13.",
+      "source_hash": 10968719330487306879,
+      "context_hash": 16920474758520269887,
+      "translation": "이 PEP는 3.11, 3.12 및 3.13에서 ``sitecustomize.py``, ``usercustomize.py`` 및 ``pth`` 코드 실행에 대한 사용 중단 경고를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620122Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:1",
+      "source": "With plans on removing those features by 3.14.",
+      "source_hash": 12225625005143678492,
+      "context_hash": 11458797683473701878,
+      "translation": "3.14까지 해당 기능을 제거할 계획입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620126Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:2",
+      "source": "The migration from those solutions to ``__sitecustomize__`` should ideally be just moving the logic into a different file.",
+      "source_hash": 8881035313056180835,
+      "context_hash": 16303112041044553275,
+      "translation": "이러한 해결책에서 ``__sitecustomize__``\\ 로 마이그레이션하는 작업은 이상적으로 로직을 다른 파일로 옮기는 것에 그쳐야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620128Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:0",
+      "source": "Whilst the existing ``sitecustomize.py`` mechanism was created targeting System Administrators that placed it in a site path, the file could be actually placed anywhere in the path at the time that the interpreter was starting up.",
+      "source_hash": 11396941863116659364,
+      "context_hash": 14233557470828117887,
+      "translation": "기존 ``sitecustomize.py`` 메커니즘은 사이트 경로에 배치하는 시스템 관리자를 대상으로 만들어졌지만, 인터프리터가 시작될 당시에는 실제로 해당 파일을 경로의 어느 위치에나 배치할 수 있었습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:19:19.620128Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:1",
+      "source": "The new mechanism does not allow for users to place ``__sitecustomize__`` directories anywhere in the path, but only in site paths.",
+      "source_hash": 8777293780773283946,
+      "context_hash": 743724517824428920,
+      "translation": "새 메커니즘에서는 사용자가 경로의 어느 위치에나 ``__sitecustomize__`` 디렉터리를 배치할 수 없고, 사이트 경로에만 배치할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620129Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:2",
+      "source": "System administrators can recover a similar behavior to ``sitecustomize.py`` by adding a custom file in ``__sitecustomize__`` which just imports ``sitecustomize`` as a migration path.",
+      "source_hash": 2528532743346972201,
+      "context_hash": 16242284699060777290,
+      "translation": "시스템 관리자는 마이그레이션 경로로 ``__sitecustomize__`` 디렉터리에 ``sitecustomize``\\ 만 임포트하는 사용자 지정 파일을 추가하여 ``sitecustomize.py``\\ 와 유사한 동작을 복원할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620130Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 9067173894679468584,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:19:19.620130Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "An initial implementation that passes the CPython test suite is available for evaluation [#reference-implementation]_.",
+      "source_hash": 17648790834943609264,
+      "context_hash": 15228203209073403115,
+      "translation": "CPython 테스트 모음을 통과하는 초기 구현을 평가용으로 사용할 수 있습니다 [#reference-implementation]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620131Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:2/seg:0",
+      "source": "This implementation is just for the reviewer to play with and check potential issues that this PEP could generate.",
+      "source_hash": 1605769152642259410,
+      "context_hash": 16634671059166911396,
+      "translation": "이 구현은 검토자가 직접 사용해 보고 이 PEP에서 발생할 수 있는 잠재적인 문제를 확인하기 위한 것일 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620132Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 9899688814063917489,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620132Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:0/seg:0",
+      "source": "Do nothing",
+      "source_hash": 7307869118526647196,
+      "context_hash": 10870260527717672567,
+      "translation": "아무것도 하지 않기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620132Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:0",
+      "source": "Whilst the current status \"works\" it presents the issues listed in the motivation.",
+      "source_hash": 204754132116131835,
+      "context_hash": 7682222693769627111,
+      "translation": "현재 상태는 “작동”하지만 동기 부여에서 나열한 문제를 드러냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620132Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:1",
+      "source": "After analyzing the impact of this change, we believe it is worth it, given the enhanced experience it brings.",
+      "source_hash": 18296299855780974991,
+      "context_hash": 5217194067226281014,
+      "translation": "이 변경의 영향을 분석한 결과, 향상된 사용자 경험을 제공하므로 변경할 가치가 있다고 판단합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620133Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:0/seg:0",
+      "source": "Formalize using ``pth`` files",
+      "source_hash": 747187795739980540,
+      "context_hash": 9427674654676088290,
+      "translation": "``pth`` 파일을 사용하여 공식화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620134Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:1/seg:0",
+      "source": "Another option would be to just glorify and document the usage of ``pth`` files to inject code at startup code, but that is a suboptimal experience for users as listed in the motivation.",
+      "source_hash": 10896625860701056848,
+      "context_hash": 7180775297224689242,
+      "translation": "또 다른 방법은 시작 시 코드에 코드를 주입하기 위해 ``pth`` 파일을 사용하는 방식을 단순히 미화하고 문서화하는 것이지만, 동기 부여에서 설명한 것처럼 이는 사용자에게 차선의 경험을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620134Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:0/seg:0",
+      "source": "Making ``__sitecustomize__`` a namespace package",
+      "source_hash": 14673145383969106174,
+      "context_hash": 1882471012390218631,
+      "translation": "``__sitecustomize__``\\ 를 네임스페이스 패키지로 만들기",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:19:19.620135Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:0",
+      "source": "We considered making the directory a namespace package and just import all the modules within it, which allowed searching across all paths in ``sys.path`` at initialization time and provided a way to declare dependencies between files by importing each other.",
+      "source_hash": 10908172938543970213,
+      "context_hash": 2985477551376712535,
+      "translation": "디렉터리를 네임스페이스 패키지로 만들고 그 안의 모든 모듈을 임포트하는 방안을 고려했으며, 이를 통해 초기화 시점에 ``sys.path``\\ 의 모든 경로를 검색하고 서로 임포트하여 파일 간 종속성을 선언할 수 있었습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:19:19.620135Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:1",
+      "source": "This was rejected for multiple reasons:",
+      "source_hash": 4210451123252734168,
+      "context_hash": 13700701557491408401,
+      "translation": "그러나 이 방안은 여러 이유로 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620136Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:2/seg:0",
+      "source": "This was unnecessarily broadening the list of paths where arbitrary files are executed.",
+      "source_hash": 17081755949633795460,
+      "context_hash": 13957926147411631256,
+      "translation": "임의의 파일이 실행되는 경로 목록을 불필요하게 확대하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620136Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:3/seg:0",
+      "source": "The logic brought additional complexity, like what to do if a package were to install an ``__init__.py`` file in one of the locations.",
+      "source_hash": 5293689269250683427,
+      "context_hash": 9865517071840713922,
+      "translation": "한 위치에 패키지가 ``__init__.py`` 파일을 설치하는 경우 어떻게 처리할지와 같은 추가적인 복잡성이 로직에 발생하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620136Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:4/seg:0",
+      "source": "It's cheaper to search for ``__sitecustomize__`` as we are looking for ``pth`` files already in the site paths compared to performing an actual import of a namespace package.",
+      "source_hash": 4215931300245374644,
+      "context_hash": 2101896873058231560,
+      "translation": "실제로 네임스페이스 패키지를 임포트하는 것보다, 사이트 경로에서 이미 ``pth`` 파일을 찾고 있는 방식으로 ``__sitecustomize__``\\ 를 검색하는 편이 비용이 적게 듭니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:19:19.620137Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:0/seg:0",
+      "source": "Support for shutdown customization",
+      "source_hash": 258140525824543289,
+      "context_hash": 4387148023967900377,
+      "translation": "종료 시 사용자 지정 지원",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620137Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:0",
+      "source": "``init.d`` users might be tempted to implement this feature in a way that users could also add code at shutdown, but extra support for that is not needed, as Python users can already do that via ``atexit``.",
+      "source_hash": 1389214565020715157,
+      "context_hash": 5166294976501951724,
+      "translation": "``init.d`` 사용자는 사용자가 종료 시에도 코드를 추가할 수 있는 방식으로 이 기능을 구현하고 싶을 수 있지만, Python 사용자는 이미 ``atexit``\\ 을 통해 이를 수행할 수 있으므로 추가 지원은 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620138Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:0/seg:0",
+      "source": "Using entry_points",
+      "source_hash": 14125418944051623740,
+      "context_hash": 10055967609888935279,
+      "translation": "entry_points 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620138Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:0",
+      "source": "We considered extending the use of entry points to allow specifying files that should be executed at startup but we discarded that solution due to two main reasons.",
+      "source_hash": 8900324424643120072,
+      "context_hash": 15361609333924955432,
+      "translation": "시작 시 실행해야 하는 파일을 지정할 수 있도록 엔트리 포인트 사용을 확장하는 방안을 고려했지만, 두 가지 주요 이유로 해당 해결책을 폐기했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620138Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:1",
+      "source": "The first one being impact on startup time.",
+      "source_hash": 13595082798261452625,
+      "context_hash": 4855273693415182365,
+      "translation": "첫 번째 이유는 시작 시간에 미치는 영향입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620138Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:2",
+      "source": "This approach will require scanning all packages distribution information to just execute a handful of files.",
+      "source_hash": 2742012472268730706,
+      "context_hash": 12047133282608523604,
+      "translation": "이 접근 방식은 소수의 파일만 실행하기 위해 모든 패키지의 배포 정보를 검색해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620139Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:3",
+      "source": "This has an impact on performance even if the user is not using the feature and such impact growths linearly with the number of packages installed in the environment.",
+      "source_hash": 778575000889323715,
+      "context_hash": 13440836615057798198,
+      "translation": "사용자가 이 기능을 사용하지 않더라도 성능에 영향을 미치며, 이러한 영향은 환경에 설치된 패키지 수에 따라 선형적으로 증가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620139Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:4",
+      "source": "The second reason was that the proposed implementation in this PEP offers a single solution for startup customization for packages and system administrators.",
+      "source_hash": 11733571779182861798,
+      "context_hash": 2282487995528254023,
+      "translation": "두 번째 이유는 이 PEP에서 제안하는 구현이 패키지와 시스템 관리자 모두를 위한 시작 시 사용자 지정 단일 해결책을 제공한다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620139Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:5",
+      "source": "Additionally, if the main objective of entry points is to make it easy for libraries to install files at startup, that can still be added and make the build backends just install the files within the ``__sitecustomize__`` directory.",
+      "source_hash": 11894033969508031067,
+      "context_hash": 16025006049931516551,
+      "translation": "또한 엔트리 포인트의 주된 목적이 라이브러리가 시작 시 파일을 쉽게 설치하도록 하는 것이라면, 해당 기능은 여전히 추가할 수 있으며 빌드 백엔드에서 ``__sitecustomize__`` 디렉터리 안에 파일을 설치하도록 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:19:19.620140Z",
+      "issues": []
+    }
+  ]
+}

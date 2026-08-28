@@ -106,10 +106,14 @@ pub async fn translate_with_evaluation_observed(
                 .find(|(i, _)| *i == idx)
                 .map(|(_, s)| s.as_str())
                 .unwrap_or("");
-            let translation = if markup == Markup::Verso {
-                crate::evaluator_format::restore_verso_code_whitespace(source, translation)
-            } else {
-                translation.clone()
+            let translation = match markup {
+                Markup::Verso => {
+                    crate::evaluator_format::restore_verso_code_whitespace(source, translation)
+                }
+                Markup::Rst => {
+                    crate::evaluator_format::repair_rst_boundaries(source, translation)
+                }
+                _ => translation.clone(),
             };
 
             let eval_ctx = EvaluationContext {

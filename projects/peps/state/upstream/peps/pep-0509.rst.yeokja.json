@@ -1,0 +1,1995 @@
+{
+  "version": 1,
+  "source_hash": 9139029416220988848,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Add a private version to dict",
+      "source_hash": 5604341735017907259,
+      "context_hash": 16530898886277989957,
+      "translation": "dict에 비공개 버전 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995701Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 8704240938062231366,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995704Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Add a new private version to the builtin ``dict`` type, incremented at each dictionary creation and at each dictionary change, to implement fast guards on namespaces.",
+      "source_hash": 815178197007113558,
+      "context_hash": 10356062162691928027,
+      "translation": "네임스페이스에 대한 빠른 가드를 구현하기 위해 각 딕셔너리 생성 시와 각 딕셔너리 변경 시마다 증가하는 새로운 비공개 버전을 내장 ``dict`` 타입에 추가합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:42.995704Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 13456103538860769355,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995705Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "In Python, the builtin ``dict`` type is used by many instructions.",
+      "source_hash": 12096085718738519183,
+      "context_hash": 9256456927255880757,
+      "translation": "Python에서는 많은 명령어가 내장 ``dict`` 타입을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995706Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "For example, the ``LOAD_GLOBAL`` instruction looks up a variable in the global namespace, or in the builtins namespace (two dict lookups).",
+      "source_hash": 15090918714221098662,
+      "context_hash": 14064970374242913997,
+      "translation": "예를 들어 ``LOAD_GLOBAL`` 명령어는 전역 네임스페이스 또는 내장 네임스페이스에서 변수를 조회합니다(딕셔너리 조회 2회).",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:05:42.995706Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "Python uses ``dict`` for the builtins namespace, globals namespace, type namespaces, instance namespaces, etc. The local namespace (function namespace) is usually optimized to an array, but it can be a dict too.",
+      "source_hash": 10763030941861800641,
+      "context_hash": 13718829350917272387,
+      "translation": "Python은 내장 네임스페이스, 전역 네임스페이스, 타입 네임스페이스, 인스턴스 네임스페이스 등에 ``dict``\\ 를 사용합니다. 로컬 네임스페이스(함수 네임스페이스)는 일반적으로 배열로 최적화되지만, 딕셔너리일 수도 있습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:05:42.995707Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Python is hard to optimize because almost everything is mutable: builtin functions, function code, global variables, local variables, ... can be modified at runtime.",
+      "source_hash": 15817727537846134721,
+      "context_hash": 3049245068473067054,
+      "translation": "Python은 거의 모든 것이 변경 가능하기 때문에 최적화하기 어렵습니다. 내장 함수, 함수 코드, 전역 변수, 로컬 변수 ...를 런타임에 수정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995708Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "Implementing optimizations respecting the Python semantics requires to detect when \"something changes\": we will call these checks \"guards\".",
+      "source_hash": 6759950324443401318,
+      "context_hash": 2445674965726292450,
+      "translation": "Python 의미론을 준수하는 최적화를 구현하려면 \"무언가 변경될 때\"를 감지해야 합니다. 이러한 검사를 \"가드\"라고 부르겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995708Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "The speedup of optimizations depends on the speed of guard checks.",
+      "source_hash": 10719321887201749055,
+      "context_hash": 99989705005768800,
+      "translation": "최적화의 속도 향상은 가드 검사의 속도에 따라 달라집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995708Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "This PEP proposes to add a private version to dictionaries to implement fast guards on namespaces.",
+      "source_hash": 16879140450010321473,
+      "context_hash": 254720888852357178,
+      "translation": "이 PEP에서는 네임스페이스에 대한 빠른 가드를 구현하기 위해 딕셔너리에 비공개 버전을 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995709Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "Dictionary lookups can be skipped if the version does not change, which is the common case for most namespaces.",
+      "source_hash": 2537782782766940525,
+      "context_hash": 15822094124026151114,
+      "translation": "대부분의 네임스페이스에서 일반적인 경우인 버전이 변경되지 않는 경우에는 딕셔너리 조회를 건너뛸 수 있습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:42.995709Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "The version is globally unique, so checking the version is also enough to verify that the namespace dictionary was not replaced with a new dictionary.",
+      "source_hash": 13729152551849004017,
+      "context_hash": 4422854199402552181,
+      "translation": "버전은 전역적으로 고유하므로, 버전을 확인하는 것만으로도 네임스페이스 딕셔너리가 새 딕셔너리로 교체되지 않았음을 검증하기에 충분합니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스",
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:42.995709Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "When the dictionary version does not change, the performance of a guard does not depend on the number of watched dictionary entries: the complexity is O(1).",
+      "source_hash": 17600311210336322870,
+      "context_hash": 10515275203983170692,
+      "translation": "딕셔너리 버전이 변경되지 않는 경우 가드의 성능은 감시하는 딕셔너리 항목 수에 영향을 받지 않습니다. 복잡도는 O(1)입니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:42.995710Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Example of optimization: copy the value of a global variable to function constants.",
+      "source_hash": 11386801247510559478,
+      "context_hash": 2134645545602093911,
+      "translation": "최적화 예: 전역 변수의 값을 함수 상수로 복사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995711Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "This optimization requires a guard on the global variable to check if it was modified after it was copied.",
+      "source_hash": 6683129009280475678,
+      "context_hash": 4983429457664708548,
+      "translation": "이 최적화에는 전역 변수가 복사된 후 수정되었는지 확인하기 위한 전역 변수 가드가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995711Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:2",
+      "source": "If the global variable is not modified, the function uses the cached copy.",
+      "source_hash": 732725446884127164,
+      "context_hash": 3130508997198644068,
+      "translation": "전역 변수가 수정되지 않으면 함수는 캐시된 복사본을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995711Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:3",
+      "source": "If the global variable is modified, the function uses a regular lookup, and maybe also deoptimizes the function (to remove the overhead of the guard check for next function calls).",
+      "source_hash": 16867509845191104918,
+      "context_hash": 549906656760045716,
+      "translation": "전역 변수가 수정되면 함수는 일반 조회를 사용하며, 다음 함수 호출에서 가드 검사에 따른 오버헤드를 제거하기 위해 함수를 역최적화할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995712Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "See the :pep:`510 -- Specialized functions with guards <510>` for concrete usage of guards to specialize functions and for a more general rationale on Python static optimizers.",
+      "source_hash": 5069257372874678955,
+      "context_hash": 9190682327899273261,
+      "translation": "가드를 사용하여 함수를 특수화하는 구체적인 방법과 Python 정적 최적화 도구에 대한 보다 일반적인 근거는 :pep:`510 -- Specialized functions with guards <510>`\\ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995712Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Guard example",
+      "source_hash": 3515737611266977796,
+      "context_hash": 2708174995262981678,
+      "translation": "가드 예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995712Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Pseudo-code of a fast guard to check if a dictionary entry was modified (created, updated or deleted) using a hypothetical ``dict_get_version(dict)`` function",
+      "source_hash": 8910897250333365902,
+      "context_hash": 8843786120247588112,
+      "translation": "가상의 ``dict_get_version(dict)`` 함수를 사용하여 딕셔너리 항목이 수정되었는지(생성, 갱신 또는 삭제되었는지) 확인하는 빠른 가드의 의사 코드입니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:42.995712Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Usage of the dict version",
+      "source_hash": 1626608762391583660,
+      "context_hash": 16709604697128617316,
+      "translation": "dict 버전 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995713Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Speedup method calls",
+      "source_hash": 5394262084163815473,
+      "context_hash": 13522832569063174686,
+      "translation": "메서드 호출 속도 향상",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995713Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Yury Selivanov wrote a `patch to optimize method calls <https://bugs.python.org/issue26110>`_.",
+      "source_hash": 18042442983988689235,
+      "context_hash": 3202863588671622531,
+      "translation": "Yury Selivanov는 메서드 호출을 최적화하는 `patch to optimize method calls <https://bugs.python.org/issue26110>`_\\ 를 작성했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995714Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "The patch depends on the `\"implement per-opcode cache in ceval\" <https://bugs.python.org/issue26219>`_ patch which requires dictionary versions to invalidate the cache if the globals dictionary or the builtins dictionary has been modified.",
+      "source_hash": 1489232301496153010,
+      "context_hash": 10889377678941718331,
+      "translation": "이 패치는 전역 딕셔너리 또는 내장 딕셔너리가 수정된 경우 캐시를 무효화하기 위해 딕셔너리 버전이 필요한 `\"implement per-opcode cache in ceval\" <https://bugs.python.org/issue26219>`_ 패치에 의존합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:42.995714Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "The cache also requires that the dictionary version is globally unique.",
+      "source_hash": 1672176889792120648,
+      "context_hash": 11475751146593805048,
+      "translation": "또한 캐시는 딕셔너리 버전이 전역적으로 고유할 것을 요구합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:42.995715Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "It is possible to define a function in a namespace and call it in a different namespace, using ``exec()`` with the *globals* parameter for example.",
+      "source_hash": 2612738464392157689,
+      "context_hash": 17868878024989081160,
+      "translation": "예를 들어 *globals* 매개변수를 사용하여 ``exec()``\\ 로 한 네임스페이스에서 함수를 정의하고 다른 네임스페이스에서 호출할 수 있습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:05:42.995716Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:2",
+      "source": "In this case, the globals dictionary was replaced and the cache must also be invalidated.",
+      "source_hash": 3938028302297537012,
+      "context_hash": 5494105439100744141,
+      "translation": "이 경우 전역 딕셔너리가 교체되었으므로 캐시도 무효화해야 합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:42.995716Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Specialized functions using guards",
+      "source_hash": 13345353033280600644,
+      "context_hash": 15804481152624153882,
+      "translation": "가드를 사용하는 특수화된 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995717Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": ":pep:`510` proposes an API to support specialized functions with guards.",
+      "source_hash": 14219247483609923896,
+      "context_hash": 3847316992616922692,
+      "translation": ":pep:`510`\\ 은 가드를 사용하는 특수화된 함수를 지원하는 API를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995717Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "It allows to implement static optimizers for Python without breaking the Python semantics.",
+      "source_hash": 3861003226294932157,
+      "context_hash": 8597862603699140298,
+      "translation": "이를 통해 Python 의미론을 깨뜨리지 않고 Python용 정적 최적화 도구를 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:42.995718Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "The `fatoptimizer <http://fatoptimizer.readthedocs.org/>`_ of the `FAT Python <http://faster-cpython.readthedocs.org/fat_python.html>`_ project is an example of a static Python optimizer.",
+      "source_hash": 14856508310885858198,
+      "context_hash": 1896231870968810611,
+      "translation": "`FAT Python <http://faster-cpython.readthedocs.org/fat_python.html>`_ 프로젝트의 `fatoptimizer <http://fatoptimizer.readthedocs.org/>`_\\ 는 정적 Python 최적화기의 한 예입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371472Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "It implements many optimizations which require guards on namespaces:",
+      "source_hash": 9252696381836726304,
+      "context_hash": 18190325457140660354,
+      "translation": "네임스페이스에 대한 가드가 필요한 많은 최적화를 구현합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371477Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "Call pure builtins: to replace ``len(\"abc\")`` with ``3``, guards on ``builtins.__dict__['len']`` and ``globals()['len']`` are required",
+      "source_hash": 16016259862509548793,
+      "context_hash": 4159611351838217059,
+      "translation": "순수 내장 함수 호출: ``len(\"abc\")``\\ 를 ``3``\\ 으로 대체하려면 ``builtins.__dict__['len']`` 및 ``globals()['len']`` 에 대한 가드가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371477Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "Loop unrolling: to unroll the loop ``for i in range(...): ...``, guards on ``builtins.__dict__['range']`` and ``globals()['range']`` are required",
+      "source_hash": 11917712761413764733,
+      "context_hash": 1879965252604938803,
+      "translation": "루프 언롤링: ``for i in range(...): ...``\\ 루프를 언롤링하려면 ``builtins.__dict__['range']`` 및 ``globals()['range']`` 에 대한 가드가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371478Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "etc.",
+      "source_hash": 7440268256580554578,
+      "context_hash": 11136895023285007622,
+      "translation": "기타.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371478Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Pyjion",
+      "source_hash": 1874576943551750868,
+      "context_hash": 8836217688090666163,
+      "translation": "Pyjion",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371479Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "According of Brett Cannon, one of the two main developers of Pyjion, Pyjion can benefit from dictionary version to implement optimizations.",
+      "source_hash": 7208288545530667877,
+      "context_hash": 3755432131051012636,
+      "translation": "Pyjion의 주요 개발자 두 명 중 한 명인 Brett Cannon에 따르면, Pyjion은 딕셔너리 버전을 활용하여 최적화를 구현할 수 있습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:50.371479Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "`Pyjion <https://github.com/Microsoft/Pyjion>`_ is a JIT compiler for Python based upon CoreCLR (Microsoft .NET Core runtime).",
+      "source_hash": 9845824758811869028,
+      "context_hash": 3797572865074544698,
+      "translation": "`Pyjion <https://github.com/Microsoft/Pyjion>`_\\ 은 CoreCLR(Microsoft .NET Core 런타임)을 기반으로 하는 Python용 JIT 컴파일러입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371481Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Cython",
+      "source_hash": 1455384671391136060,
+      "context_hash": 1957762587040567,
+      "translation": "Cython",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371481Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Cython can benefit from dictionary version to implement optimizations.",
+      "source_hash": 13813674440525347477,
+      "context_hash": 8159093513349049945,
+      "translation": "Cython은 딕셔너리 버전을 활용하여 최적화를 구현할 수 있습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:50.371482Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "`Cython <http://cython.org/>`_ is an optimising static compiler for both the Python programming language and the extended Cython programming language.",
+      "source_hash": 14439585353906727936,
+      "context_hash": 8162666088771015425,
+      "translation": "`Cython <http://cython.org/>`_\\ 은 Python 프로그래밍 언어와 확장된 Cython 프로그래밍 언어 모두를 위한 최적화 정적 컴파일러입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371482Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Unladen Swallow",
+      "source_hash": 15995822506110391358,
+      "context_hash": 5373550246061729240,
+      "translation": "Unladen Swallow",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371483Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Even if dictionary version was not explicitly mentioned, optimizing globals and builtins lookup was part of the Unladen Swallow plan: \"Implement one of the several proposed schemes for speeding lookups of globals and builtins.\" (source: `Unladen Swallow ProjectPlan <https://code.google.com/p/unladen-swallow/wiki/ProjectPlan>`_).",
+      "source_hash": 11065504505278863551,
+      "context_hash": 14069042631438112393,
+      "translation": "딕셔너리 버전이 명시적으로 언급되지는 않았더라도, 전역 변수와 내장 함수 조회를 최적화하는 것은 Unladen Swallow 계획의 일부였습니다: \"전역 변수와 내장 함수의 조회 속도를 높이기 위해 제안된 여러 방식 중 하나를 구현합니다.\" (출처: `Unladen Swallow ProjectPlan <https://code.google.com/p/unladen-swallow/wiki/ProjectPlan>`_).",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:50.371483Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "Unladen Swallow is a fork of CPython 2.6.1 adding a JIT compiler implemented with LLVM.",
+      "source_hash": 12494246459267349995,
+      "context_hash": 358217031452244691,
+      "translation": "Unladen Swallow는 LLVM으로 구현된 JIT 컴파일러를 추가한 CPython 2.6.1의 포크입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371485Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "The project stopped in 2011: `Unladen Swallow Retrospective <http://qinsb.blogspot.com.au/2011/03/unladen-swallow-retrospective.html>`_.",
+      "source_hash": 15712966283468947574,
+      "context_hash": 439368201327976819,
+      "translation": "이 프로젝트는 2011년에 중단되었습니다: `Unladen Swallow Retrospective <http://qinsb.blogspot.com.au/2011/03/unladen-swallow-retrospective.html>`_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371485Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Changes",
+      "source_hash": 16338901047571710273,
+      "context_hash": 17244151203446287803,
+      "translation": "변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371485Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Add a ``ma_version_tag`` field to the ``PyDictObject`` structure with the C type ``PY_UINT64_T``, 64-bit unsigned integer.",
+      "source_hash": 7651013615138677848,
+      "context_hash": 13543148013888990835,
+      "translation": "C 타입 ``PY_UINT64_T``\\ (64비트 부호 없는 정수)를 사용하는 ``ma_version_tag`` 필드를 ``PyDictObject`` 구조체에 추가하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371485Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "Add also a global dictionary version.",
+      "source_hash": 14915195915971101590,
+      "context_hash": 3089775718861302732,
+      "translation": "전역 딕셔너리 버전도 추가하십시오.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:50.371486Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Each time a dictionary is created, the global version is incremented and the dictionary version is initialized to the global version.",
+      "source_hash": 5353249624654360536,
+      "context_hash": 5207966526516263034,
+      "translation": "딕셔너리가 생성될 때마다 전역 버전을 증가시키고 딕셔너리 버전을 전역 버전으로 초기화합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:50.371487Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "Each time the dictionary content is modified, the global version must be incremented and copied to the dictionary version.",
+      "source_hash": 10377341959857251520,
+      "context_hash": 812385750358942040,
+      "translation": "딕셔너리 내용이 수정될 때마다 전역 버전을 증가시키고 그 값을 딕셔너리 버전에 복사해야 합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:50.371488Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:1",
+      "source": "Dictionary methods which can modify its content:",
+      "source_hash": 17448054668233987318,
+      "context_hash": 10577758848374207646,
+      "translation": "내용을 변경할 수 있는 딕셔너리 메서드는 다음과 같습니다:",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:50.371489Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "``clear()``",
+      "source_hash": 12641563761534375830,
+      "context_hash": 4172491666007290052,
+      "translation": "``clear()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371489Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "``pop(key)``",
+      "source_hash": 5608090323868252380,
+      "context_hash": 4805402486455759943,
+      "translation": "``pop(key)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371489Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "``popitem()``",
+      "source_hash": 1040451871990844997,
+      "context_hash": 6905636739222331555,
+      "translation": "``popitem()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371490Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "``setdefault(key, value)``",
+      "source_hash": 10353585080124283042,
+      "context_hash": 6960453596491595744,
+      "translation": "``setdefault(key, value)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371490Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "``__delitem__(key)``",
+      "source_hash": 3206264437748011231,
+      "context_hash": 11995344143450016097,
+      "translation": "``__delitem__(key)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371490Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:9/seg:0",
+      "source": "``__setitem__(key, value)``",
+      "source_hash": 5699329600287444314,
+      "context_hash": 1416669988017119645,
+      "translation": "``__setitem__(key, value)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371491Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:10/seg:0",
+      "source": "``update(...)``",
+      "source_hash": 9899728237523702900,
+      "context_hash": 2483216597588390735,
+      "translation": "``update(...)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371491Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:0",
+      "source": "The choice of increasing or not the version when a dictionary method does not change its content is left to the Python implementation.",
+      "source_hash": 7054612802854200056,
+      "context_hash": 9677981825059410720,
+      "translation": "딕셔너리 메서드가 내용을 변경하지 않을 때 버전을 증가시킬지 여부는 Python 구현에 맡깁니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:50.371491Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:1",
+      "source": "A Python implementation can decide to not increase the version to avoid dictionary lookups in guards.",
+      "source_hash": 3726303917325081003,
+      "context_hash": 1928169549995359452,
+      "translation": "Python 구현은 가드에서 딕셔너리 조회를 피하기 위해 버전을 증가시키지 않도록 결정할 수 있습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:50.371492Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:2",
+      "source": "Examples of cases when dictionary methods don't modify its content:",
+      "source_hash": 8136619271607914932,
+      "context_hash": 18250975047583949790,
+      "translation": "딕셔너리 메서드가 내용을 변경하지 않는 경우의 예는 다음과 같습니다:",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:50.371493Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:12/seg:0",
+      "source": "``clear()`` if the dict is already empty",
+      "source_hash": 14127300090250213678,
+      "context_hash": 1953644761848639233,
+      "translation": "딕셔너리가 이미 비어 있는 경우의 ``clear()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:50.371494Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:13/seg:0",
+      "source": "``pop(key)`` if the key does not exist",
+      "source_hash": 5911821118177828452,
+      "context_hash": 11064852462590756201,
+      "translation": "키가 존재하지 않는 경우 ``pop(key)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675630Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:14/seg:0",
+      "source": "``popitem()`` if the dict is empty",
+      "source_hash": 7002384440803153585,
+      "context_hash": 15477662447947623188,
+      "translation": "딕셔너리가 비어 있는 경우 ``popitem()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675632Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:15/seg:0",
+      "source": "``setdefault(key, value)`` if the key already exists",
+      "source_hash": 18124904330199577598,
+      "context_hash": 7275436170023453384,
+      "translation": "키가 이미 존재하는 경우 ``setdefault(key, value)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675633Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:16/seg:0",
+      "source": "``__delitem__(key)`` if the key does not exist",
+      "source_hash": 7602042773869303808,
+      "context_hash": 9645723337533992681,
+      "translation": "키가 존재하지 않는 경우 ``__delitem__(key)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675633Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:17/seg:0",
+      "source": "``__setitem__(key, value)`` if the new value is identical to the current value",
+      "source_hash": 2712189317846499326,
+      "context_hash": 2795303784752989872,
+      "translation": "새 값이 현재 값과 동일한 경우 ``__setitem__(key, value)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675634Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:18/seg:0",
+      "source": "``update()`` if called without argument or if new values are identical to current values",
+      "source_hash": 16518707376081074645,
+      "context_hash": 4994368596675861117,
+      "translation": "인자 없이 호출되거나 새 값이 현재 값과 동일한 경우 ``update()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675634Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:19/seg:0",
+      "source": "Setting a key to a new value equals to the old value is also considered as an operation modifying the dictionary content.",
+      "source_hash": 369259521958548657,
+      "context_hash": 11105398676998492745,
+      "translation": "키를 기존 값과 동일한 새 값으로 설정하는 것도 딕셔너리 콘텐츠를 수정하는 작업으로 간주합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:43.675634Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:20/seg:0",
+      "source": "Two different empty dictionaries must have a different version to be able to identify a dictionary just by its version.",
+      "source_hash": 15683765255304574026,
+      "context_hash": 1924099462586520284,
+      "translation": "버전만으로 딕셔너리를 식별할 수 있으려면 서로 다른 두 빈 딕셔너리가 서로 다른 버전을 가져야 합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:43.675635Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:20/seg:1",
+      "source": "It allows to verify in a guard that a namespace was not replaced without storing a strong reference to the dictionary.",
+      "source_hash": 10989414100484481759,
+      "context_hash": 9470692395875394903,
+      "translation": "이를 통해 딕셔너리에 대한 강한 참조를 저장하지 않고 네임스페이스가 교체되지 않았는지 가드에서 확인할 수 있습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스",
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:43.675636Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:20/seg:2",
+      "source": "Using a borrowed reference does not work: if the old dictionary is destroyed, it is possible that a new dictionary is allocated at the same memory address.",
+      "source_hash": 4144336624263103026,
+      "context_hash": 13832386125773053303,
+      "translation": "빌린 참조를 사용하는 것은 작동하지 않습니다. 이전 딕셔너리가 소멸되면 새 딕셔너리가 동일한 메모리 주소에 할당될 수 있기 때문입니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:43.675637Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:20/seg:3",
+      "source": "By the way, dictionaries don't support weak references.",
+      "source_hash": 15340732036146281104,
+      "context_hash": 6486818344265530246,
+      "translation": "또한 딕셔너리는 약한 참조를 지원하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675638Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:21/seg:0",
+      "source": "The version increase must be atomic.",
+      "source_hash": 6873055928638153634,
+      "context_hash": 7109498942485705408,
+      "translation": "버전 증가는 원자적이어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675638Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:21/seg:1",
+      "source": "In CPython, the Global Interpreter Lock (GIL) already protects ``dict`` methods to make changes atomic.",
+      "source_hash": 4499378270424458420,
+      "context_hash": 704173023334066869,
+      "translation": "CPython에서는 전역 인터프리터 잠금(GIL)이 이미 ``dict`` 메서드를 보호하여 변경을 원자적으로 수행합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "global interpreter lock": "전역 인터프리터 잠금"
+      },
+      "translated_at": "2026-08-28T19:05:43.675638Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:22/seg:0",
+      "source": "Example using a hypothetical ``dict_get_version(dict)`` function",
+      "source_hash": 13700858597014742505,
+      "context_hash": 5349309696195718939,
+      "translation": "가상의 ``dict_get_version(dict)`` 함수를 사용하는 예입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675639Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:24/seg:0",
+      "source": "The field is called ``ma_version_tag``, rather than ``ma_version``, to suggest to compare it using ``version_tag == old_version_tag``, rather than ``version <= old_version`` which becomes wrong after an integer overflow.",
+      "source_hash": 14840916568043073018,
+      "context_hash": 16928669430075119939,
+      "translation": "이 필드를 ``ma_version``\\ 이 아니라 ``ma_version_tag``\\ 라고 부르는 것은 정수 오버플로 후에는 잘못되게 되는 ``version <= old_version`` 대신 ``version_tag == old_version_tag``\\ 를 사용하여 비교하도록 제안하기 위한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675639Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 4399446926004046196,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675639Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "Since the ``PyDictObject`` structure is not part of the stable ABI and the new dictionary version not exposed at the Python scope, changes are backward compatible.",
+      "source_hash": 15766303319678032884,
+      "context_hash": 6455375476711816482,
+      "translation": "``PyDictObject`` 구조체는 안정 ABI의 일부가 아니며 새 딕셔너리 버전은 Python 범위에 노출되지 않으므로 변경 사항은 하위 호환성을 가집니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:43.675640Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Implementation and Performance",
+      "source_hash": 14552676575870003357,
+      "context_hash": 8598788424123973007,
+      "translation": "구현 및 성능",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675640Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "The `issue #26058: PEP 509: Add ma_version_tag to PyDictObject <https://bugs.python.org/issue26058>`_ contains a patch implementing this PEP.",
+      "source_hash": 1900129675640299897,
+      "context_hash": 5167532744987470971,
+      "translation": "`issue #26058: PEP 509: Add ma_version_tag to PyDictObject <https://bugs.python.org/issue26058>`_\\ 에는 이 PEP를 구현하는 패치가 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675641Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "On pybench and timeit microbenchmarks, the patch does not seem to add any overhead on dictionary operations.",
+      "source_hash": 15763851834124570121,
+      "context_hash": 7492451979426243938,
+      "translation": "pybench 및 timeit 마이크로벤치마크에서 이 패치는 딕셔너리 연산에 어떠한 오버헤드도 추가하지 않는 것으로 보입니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:43.675641Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:1",
+      "source": "For example, the following timeit micro-benchmarks takes 318 nanoseconds before and after the change",
+      "source_hash": 11778076259980359465,
+      "context_hash": 1810609377484438076,
+      "translation": "예를 들어 다음 timeit 마이크로벤치마크는 변경 전후 모두 318나노초가 걸립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675642Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "When the version does not change, ``PyDict_GetItem()`` takes 14.8 ns for a dictionary lookup, whereas a guard check only takes 3.8 ns.",
+      "source_hash": 12774936373370469351,
+      "context_hash": 4160131246104765134,
+      "translation": "버전이 변경되지 않을 때 ``PyDict_GetItem()``\\ 은 딕셔너리 조회에 14.8ns가 걸리는 반면, 가드 검사는 3.8ns만 걸립니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:43.675642Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:1",
+      "source": "Moreover, a guard can watch for multiple keys.",
+      "source_hash": 15053139350472735576,
+      "context_hash": 4920113708223536313,
+      "translation": "또한 가드는 여러 키를 감시할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675643Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:2",
+      "source": "For example, for an optimization using 10 global variables in a function, 10 dictionary lookups costs 148 ns, whereas the guard still only costs 3.8 ns when the version does not change (39x as fast).",
+      "source_hash": 9899638948458802918,
+      "context_hash": 9614531313828137740,
+      "translation": "예를 들어 함수에서 전역 변수 10개를 사용하는 최적화의 경우 딕셔너리 조회 10회에는 148ns가 걸리지만, 버전이 변경되지 않을 때 가드에는 여전히 3.8ns만 걸리므로 39배 빠릅니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:43.675643Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "The `fat module <http://fatoptimizer.readthedocs.org/en/latest/fat.html>`_ implements such guards: ``fat.GuardDict`` is based on the dictionary version.",
+      "source_hash": 13897035154920667313,
+      "context_hash": 18226164646832190533,
+      "translation": "`fat module <http://fatoptimizer.readthedocs.org/en/latest/fat.html>`_\\ 은 이러한 가드를 구현합니다. ``fat.GuardDict``\\ 은 딕셔너리 버전을 기반으로 합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:43.675644Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Integer overflow",
+      "source_hash": 1094910772154381623,
+      "context_hash": 16887113546176140560,
+      "translation": "정수 오버플로",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675644Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "The implementation uses the C type ``PY_UINT64_T`` to store the version: a 64 bits unsigned integer.",
+      "source_hash": 16457927469130176030,
+      "context_hash": 15736312130976263754,
+      "translation": "이 구현은 버전을 저장하는 데 C 형식 ``PY_UINT64_T``\\ 를 사용하며, 이는 64비트 부호 없는 정수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675645Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "The C code uses ``version++``.",
+      "source_hash": 1137503935202766361,
+      "context_hash": 8135925741611226678,
+      "translation": "C 코드는 ``version++``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675645Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:2",
+      "source": "On integer overflow, the version is wrapped to ``0`` (and then continues to be incremented) according to the C standard.",
+      "source_hash": 11931779977691651879,
+      "context_hash": 9112200394467840819,
+      "translation": "정수 오버플로가 발생하면 C 표준에 따라 버전은 ``0``\\ 으로 되돌아간 후 계속 증가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:43.675645Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "After an integer overflow, a guard can succeed whereas the watched dictionary key was modified.",
+      "source_hash": 3988975980727827556,
+      "context_hash": 14419055931219531728,
+      "translation": "정수 오버플로 후에는 감시 중인 딕셔너리 키가 수정되었는데도 가드가 성공할 수 있습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:43.675646Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:1",
+      "source": "The bug only occurs at a guard check if there are exactly ``2 ** 64`` dictionary creations or modifications since the previous guard check.",
+      "source_hash": 10749909774524063030,
+      "context_hash": 12409006596804841367,
+      "translation": "이전 가드 검사 이후 정확히 ``2 ** 64``\\ 회의 딕셔너리 생성 또는 수정이 있었을 때에만 가드 검사에서 버그가 발생합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:43.675646Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "If a dictionary is modified every nanosecond, ``2 ** 64`` modifications takes longer than 584 years.",
+      "source_hash": 13430748194994874256,
+      "context_hash": 14393709823349462464,
+      "translation": "딕셔너리가 나노초마다 수정된다면, ``2 ** 64``\\ 번 수정하는 데 584년보다 오래 걸립니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:52.254265Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:1",
+      "source": "Using a 32-bit version, it only takes 4 seconds.",
+      "source_hash": 13916491889036485705,
+      "context_hash": 10984158045542563398,
+      "translation": "32비트 버전을 사용하면 4초밖에 걸리지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254270Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:2",
+      "source": "That's why a 64-bit unsigned type is also used on 32-bit systems.",
+      "source_hash": 17111460332899840166,
+      "context_hash": 2299178681422700912,
+      "translation": "이것이 32비트 시스템에서도 64비트 부호 없는 타입을 사용하는 이유입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254270Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:3",
+      "source": "A dictionary lookup at the C level takes 14.8 ns.",
+      "source_hash": 7559522360201794445,
+      "context_hash": 12697698691765904027,
+      "translation": "C 수준에서 딕셔너리 조회에는 14.8ns가 걸립니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:52.254271Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:0",
+      "source": "A risk of a bug every 584 years is acceptable.",
+      "source_hash": 4491752996020823444,
+      "context_hash": 12371437153239858542,
+      "translation": "584년에 한 번 버그가 발생할 위험은 허용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254271Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Alternatives",
+      "source_hash": 6705694286064414587,
+      "context_hash": 11347102859100830145,
+      "translation": "대안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254272Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Expose the version at Python level as a read-only __version__ property",
+      "source_hash": 5563825602090120914,
+      "context_hash": 9919429289582224186,
+      "translation": "Python 수준에서 버전을 읽기 전용 __version__ 속성으로 노출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254272Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "The first version of the PEP proposed to expose the dictionary version as a read-only ``__version__`` property at Python level, and also to add the property to ``collections.UserDict`` (since this type must mimic the ``dict`` API).",
+      "source_hash": 16212685706875336342,
+      "context_hash": 10252373764550044625,
+      "translation": "PEP의 첫 번째 버전에서는 Python 수준에서 딕셔너리 버전을 읽기 전용 ``__version__``\\ 속성으로 노출하고, ``collections.UserDict``\\ 에도 이 속성을 추가할 것을 제안했습니다(이 타입은 ``dict``\\ API를 모방해야 하기 때문입니다).",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:52.254272Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "There are multiple issues:",
+      "source_hash": 11668326841485893256,
+      "context_hash": 12099600283642657695,
+      "translation": "여러 문제가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254273Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "To be consistent and avoid bad surprises, the version must be added to all mapping types.",
+      "source_hash": 9422402424805803237,
+      "context_hash": 14584226743416294528,
+      "translation": "일관성을 유지하고 나쁜 예상 밖의 결과를 피하려면 모든 매핑 타입에 버전을 추가해야 합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T19:05:52.254274Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:1",
+      "source": "Implementing a new mapping type would require extra work for no benefit, since the version is only required on the ``dict`` type in practice.",
+      "source_hash": 9128187898156820471,
+      "context_hash": 4398936847810022391,
+      "translation": "새로운 매핑 타입을 구현하려면 추가 작업이 필요하지만 실질적인 이점은 없습니다. 실제로 버전은 ``dict``\\ 타입에만 필요하기 때문입니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T19:05:52.254274Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "All Python implementations would have to implement this new property, it gives more work to other implementations, whereas they may not use the dictionary version at all.",
+      "source_hash": 13060050323424023741,
+      "context_hash": 9437093556703814387,
+      "translation": "모든 Python 구현에서 이 새로운 속성을 구현해야 하므로 다른 구현에 더 많은 작업이 생깁니다. 반면 다른 구현에서는 딕셔너리 버전을 전혀 사용하지 않을 수도 있습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:52.254275Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:0",
+      "source": "Exposing the dictionary version at the Python level can lead the false assumption on performances.",
+      "source_hash": 17524895243686110558,
+      "context_hash": 11862756705772812888,
+      "translation": "딕셔너리 버전을 Python 수준에서 노출하면 성능에 대해 잘못된 가정을 하게 될 수 있습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:52.254276Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:1",
+      "source": "Checking ``dict.__version__`` at the Python level is not faster than a dictionary lookup.",
+      "source_hash": 1157960022336373312,
+      "context_hash": 552835936637301033,
+      "translation": "Python 수준에서 ``dict.__version__``\\ 을 확인하는 것은 딕셔너리 조회보다 빠르지 않습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:52.254276Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:2",
+      "source": "A dictionary lookup in Python has a cost of 48.7 ns and checking the version has a cost of 47.5 ns, the difference is only 1.2 ns (3%)",
+      "source_hash": 16768164988537176409,
+      "context_hash": 15184113802529431776,
+      "translation": "Python에서 딕셔너리 조회에는 48.7ns가 걸리고 버전 확인에는 47.5ns가 걸리므로, 차이는 1.2ns(3%)에 불과합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:52.254277Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:7/seg:0",
+      "source": "The ``__version__`` can be wrapped on integer overflow.",
+      "source_hash": 5021285406543902413,
+      "context_hash": 7332394335726953787,
+      "translation": "``__version__``\\ 은 정수 오버플로 시 순환할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254278Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:7/seg:1",
+      "source": "It is error prone: using ``dict.__version__ <= guard_version`` is wrong, ``dict.__version__ == guard_version`` must be used instead to reduce the risk of bug on integer overflow (even if the integer overflow is unlikely in practice).",
+      "source_hash": 10701260588212852364,
+      "context_hash": 299831708183588234,
+      "translation": "오류가 발생하기 쉽습니다. ``dict.__version__ <= guard_version``\\ 을 사용하는 것은 잘못이며, 정수 오버플로로 인한 버그 위험을 줄이려면 ``dict.__version__ == guard_version``\\ 을 사용해야 합니다(실제로 정수 오버플로가 발생할 가능성은 낮더라도 그렇습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254278Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:8/seg:0",
+      "source": "Mandatory bikeshedding on the property name:",
+      "source_hash": 3591509969519608828,
+      "context_hash": 4249525393063440423,
+      "translation": "속성 이름에 대한 필수적인 지엽적 논의:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254278Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:9/seg:0",
+      "source": "``__cache_token__``: name proposed by Alyssa Coghlan, name coming from `abc.get_cache_token() <https://docs.python.org/3/library/abc.html#abc.get_cache_token>`_.",
+      "source_hash": 5584234652829572085,
+      "context_hash": 20117643187631881,
+      "translation": "``__cache_token__``: Alyssa Coghlan이 제안한 이름이며, `abc.get_cache_token() <https://docs.python.org/3/library/abc.html#abc.get_cache_token>`_\\ 에서 유래한 이름입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254278Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:10/seg:0",
+      "source": "``__version__``",
+      "source_hash": 5912119938391467102,
+      "context_hash": 2164684662796098375,
+      "translation": "``__version__``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254279Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:11/seg:0",
+      "source": "``__version_tag__``",
+      "source_hash": 3339650789038134164,
+      "context_hash": 2681812632104470700,
+      "translation": "``__version_tag__``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254279Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:12/seg:0",
+      "source": "``__timestamp__``",
+      "source_hash": 2897100817778169995,
+      "context_hash": 1409365453490832692,
+      "translation": "``__timestamp__``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254279Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Add a version to each dict entry",
+      "source_hash": 6183651718018139080,
+      "context_hash": 4126830453555345922,
+      "translation": "각 딕셔너리 항목에 버전 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254280Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "A single version per dictionary requires to keep a strong reference to the value which can keep the value alive longer than expected.",
+      "source_hash": 6443206594751296353,
+      "context_hash": 6276821555486483258,
+      "translation": "딕셔너리마다 하나의 버전만 사용하면 값에 대한 강한 참조를 유지해야 하며, 이로 인해 예상보다 오랫동안 값이 살아 있게 될 수 있습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:52.254280Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "If we add also a version per dictionary entry, the guard can only store the entry version (a simple integer) to avoid the strong reference to the value: only strong references to the dictionary and to the key are needed.",
+      "source_hash": 5586962168068319418,
+      "context_hash": 6656664394567315242,
+      "translation": "각 딕셔너리 항목에도 버전을 추가하면, 가드는 값에 대한 강한 참조를 피하기 위해 항목 버전(단순한 정수)만 저장할 수 있습니다. 딕셔너리와 키에 대한 강한 참조만 있으면 됩니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:52.254280Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "Changes: add a ``me_version_tag`` field to the ``PyDictKeyEntry`` structure, the field has the C type ``PY_UINT64_T``.",
+      "source_hash": 6934281382278824513,
+      "context_hash": 13363031582324992373,
+      "translation": "변경 사항: ``PyDictKeyEntry``\\ 구조체에 ``me_version_tag``\\ 필드를 추가하며, 이 필드의 C 타입은 ``PY_UINT64_T``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254281Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:1",
+      "source": "When a key is created or modified, the entry version is set to the dictionary version which is incremented at any change (create, modify, delete).",
+      "source_hash": 6556288385828026776,
+      "context_hash": 9102777008159070112,
+      "translation": "키가 생성되거나 수정되면 항목 버전은 딕셔너리 버전으로 설정되며, 딕셔너리 버전은 변경(생성, 수정, 삭제)이 발생할 때마다 증가합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:52.254281Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "Pseudo-code of a fast guard to check if a dictionary key was modified using hypothetical ``dict_get_version(dict)`` and ``dict_get_entry_version(dict)`` functions",
+      "source_hash": 9984914266445537968,
+      "context_hash": 18104660433114098691,
+      "translation": "가상의 ``dict_get_version(dict)``\\ 및 ``dict_get_entry_version(dict)``\\ 함수를 사용하여 딕셔너리 키가 수정되었는지 확인하는 빠른 가드의 의사 코드",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:52.254282Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:0",
+      "source": "The main drawback of this option is the impact on the memory footprint.",
+      "source_hash": 9213730564043405561,
+      "context_hash": 16466734213149727296,
+      "translation": "이 선택지의 가장 큰 단점은 메모리 사용량에 미치는 영향입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:52.254282Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:1",
+      "source": "It increases the size of each dictionary entry, so the overhead depends on the number of buckets (dictionary entries, used or not used).",
+      "source_hash": 3239665201100289861,
+      "context_hash": 7768452249593588644,
+      "translation": "각 딕셔너리 항목의 크기가 증가하므로 오버헤드는 버킷 수(사용 중이거나 사용되지 않은 딕셔너리 항목 수)에 따라 달라집니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:52.254283Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:2",
+      "source": "For example, it increases the size of each dictionary entry by 8 bytes on 64-bit system.",
+      "source_hash": 312415231547922390,
+      "context_hash": 2594285427512940474,
+      "translation": "예를 들어 64비트 시스템에서는 각 딕셔너리 항목의 크기가 8바이트 증가합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:52.254283Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:6/seg:0",
+      "source": "In Python, the memory footprint matters and the trend is to reduce it.",
+      "source_hash": 12929438797830726451,
+      "context_hash": 11116234999168622494,
+      "translation": "Python에서는 메모리 풋프린트가 중요하며, 이를 줄이는 추세입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153611Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:6/seg:1",
+      "source": "Examples:",
+      "source_hash": 5956079259256418663,
+      "context_hash": 8223838315736082963,
+      "translation": "예시는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153614Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:7/seg:0",
+      "source": ":pep:`393` -- Flexible String Representation",
+      "source_hash": 10748908590999303066,
+      "context_hash": 14504687235665233916,
+      "translation": ":pep:`393` -- 유연한 문자열 표현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153614Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:8/seg:0",
+      "source": ":pep:`412` -- Key-Sharing Dictionary",
+      "source_hash": 13876465364365006495,
+      "context_hash": 13447354663294137742,
+      "translation": ":pep:`412` -- 키 공유 딕셔너리",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:05:49.153615Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Add a new dict subtype",
+      "source_hash": 6785753369604874933,
+      "context_hash": 10106362273515228079,
+      "translation": "새로운 dict 서브타입 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153616Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "Add a new ``verdict`` type, subtype of ``dict``.",
+      "source_hash": 14663416952290605013,
+      "context_hash": 8455434488677474861,
+      "translation": "``dict``\\ 의 서브타입인 새로운 ``verdict`` 타입을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153616Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "When guards are needed, use the ``verdict`` for namespaces (module namespace, type namespace, instance namespace, etc.) instead of ``dict``.",
+      "source_hash": 5818955696261756335,
+      "context_hash": 16805601817574644360,
+      "translation": "가드가 필요한 경우에는 ``dict`` 대신 네임스페이스(모듈 네임스페이스, 타입 네임스페이스, 인스턴스 네임스페이스 등)에 ``verdict``\\ 를 사용합니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:05:49.153617Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "Leave the ``dict`` type unchanged to not add any overhead (CPU, memory footprint) when guards are not used.",
+      "source_hash": 17572727208769703436,
+      "context_hash": 11850804461676432136,
+      "translation": "가드를 사용하지 않을 때 오버헤드(CPU, 메모리 풋프린트)가 추가되지 않도록 ``dict`` 타입은 변경하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153617Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "Technical issue: a lot of C code in the wild, including CPython core, expecting the exact ``dict`` type.",
+      "source_hash": 112725854944043040,
+      "context_hash": 858123582132654701,
+      "translation": "기술적 문제: CPython 코어를 포함하여 실제로 사용되는 많은 C 코드가 정확한 ``dict`` 타입을 기대합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153618Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:1",
+      "source": "Issues:",
+      "source_hash": 11281733938454733710,
+      "context_hash": 11221470378704404699,
+      "translation": "문제:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153618Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:0",
+      "source": "``exec()`` requires a ``dict`` for globals and locals.",
+      "source_hash": 7572960773634101707,
+      "context_hash": 3451051088302922437,
+      "translation": "``exec()``\\ 는 전역 변수와 지역 변수에 ``dict``\\ 를 요구합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153618Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:1",
+      "source": "A lot of code use ``globals={}``.",
+      "source_hash": 14818106592424458217,
+      "context_hash": 5886168654906387057,
+      "translation": "많은 코드가 ``globals={}``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153619Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:2",
+      "source": "It is not possible to cast the ``dict`` to a ``dict`` subtype because the caller expects the ``globals`` parameter to be modified (``dict`` is mutable).",
+      "source_hash": 12761471830881846766,
+      "context_hash": 17602398687712250227,
+      "translation": "호출자는 ``globals`` 매개변수가 수정되기를 기대하므로 ``dict``\\ 를 ``dict`` 서브타입으로 형 변환할 수 없습니다(``dict``\\ 는 변경 가능합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153619Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:0",
+      "source": "C functions call directly ``PyDict_xxx()`` functions, instead of calling ``PyObject_xxx()`` if the object is a ``dict`` subtype",
+      "source_hash": 5322617558279792414,
+      "context_hash": 9533752667099666841,
+      "translation": "객체가 ``dict`` 서브타입인 경우에도 C 함수는 ``PyObject_xxx()``\\ 를 호출하는 대신 ``PyDict_xxx()`` 함수를 직접 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153619Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:6/seg:0",
+      "source": "``PyDict_CheckExact()`` check fails on ``dict`` subtype, whereas some functions require the exact ``dict`` type.",
+      "source_hash": 15783022740179373932,
+      "context_hash": 5434794974627828473,
+      "translation": "``PyDict_CheckExact()`` 검사는 ``dict`` 서브타입에서 실패하지만, 일부 함수는 정확한 ``dict`` 타입을 요구합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153620Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:7/seg:0",
+      "source": "``Python/ceval.c`` does not completely supports dict subtypes for namespaces",
+      "source_hash": 2081935603703915669,
+      "context_hash": 18253037699697608818,
+      "translation": "``Python/ceval.c``\\ 는 네임스페이스에 대한 dict 서브타입을 완전히 지원하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153620Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:8/seg:0",
+      "source": "The ``exec()`` issue is a blocker issue.",
+      "source_hash": 10896593838987963017,
+      "context_hash": 17107805468807901635,
+      "translation": "``exec()`` 문제는 차단 문제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153620Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:9/seg:0",
+      "source": "Other issues:",
+      "source_hash": 14970476626788599671,
+      "context_hash": 14388788479070095799,
+      "translation": "기타 문제:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153620Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:10/seg:0",
+      "source": "The garbage collector has a special code to \"untrack\" ``dict`` instances.",
+      "source_hash": 14395753175347959328,
+      "context_hash": 2344628468528567019,
+      "translation": "가비지 컬렉터에는 ``dict`` 인스턴스의 \"추적을 해제\"하는 특수 코드가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153621Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:10/seg:1",
+      "source": "If a ``dict`` subtype is used for namespaces, the garbage collector can be unable to break some reference cycles.",
+      "source_hash": 8994331091052565583,
+      "context_hash": 5326773729542551909,
+      "translation": "네임스페이스에 ``dict`` 서브타입을 사용하면 가비지 컬렉터가 일부 참조 순환을 끊지 못할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153621Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:11/seg:0",
+      "source": "Some functions have a fast-path for ``dict`` which would not be taken for ``dict`` subtypes, and so it would make Python a little bit slower.",
+      "source_hash": 12287038379702266605,
+      "context_hash": 4877633136408924665,
+      "translation": "일부 함수에는 ``dict``\\ 에 대한 빠른 경로가 있지만 ``dict`` 서브타입에서는 이 경로를 사용하지 못하므로 Python이 조금 느려집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153621Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Prior Art",
+      "source_hash": 13769606215757599510,
+      "context_hash": 16595598807716411639,
+      "translation": "기존 사례",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153622Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Method cache and type version tag",
+      "source_hash": 2681583816975003160,
+      "context_hash": 6724306104482255539,
+      "translation": "메서드 캐시 및 타입 버전 태그",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153622Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "In 2007, Armin Rigo wrote a patch to implement a cache of methods.",
+      "source_hash": 15874595263938646486,
+      "context_hash": 5532770789450338235,
+      "translation": "2007년에 Armin Rigo는 메서드 캐시를 구현하는 패치를 작성했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153622Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "It was merged into Python 2.6.",
+      "source_hash": 5225830086688203590,
+      "context_hash": 18362719910848448369,
+      "translation": "이 패치는 Python 2.6에 병합되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153623Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:2",
+      "source": "The patch adds a \"type attribute cache version tag\" (``tp_version_tag``) and a \"valid version tag\" flag to types (the ``PyTypeObject`` structure).",
+      "source_hash": 13119338141338353227,
+      "context_hash": 690865632705912792,
+      "translation": "이 패치는 타입에 \"타입 속성 캐시 버전 태그\"(``tp_version_tag``)와 \"유효한 버전 태그\" 플래그를 추가합니다(``PyTypeObject`` 구조체).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153623Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "The type version tag is not exposed at the Python level.",
+      "source_hash": 11881918090499296042,
+      "context_hash": 15537894311758426034,
+      "translation": "타입 버전 태그는 Python 수준에 노출되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153623Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "The version tag has the C type ``unsigned int``.",
+      "source_hash": 14532906614016722296,
+      "context_hash": 13196241146977171186,
+      "translation": "버전 태그의 C 타입은 ``unsigned int``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153623Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:1",
+      "source": "The cache is a global hash table of 4096 entries, shared by all types.",
+      "source_hash": 9130617261205779698,
+      "context_hash": 7106012741588962941,
+      "translation": "캐시는 모든 타입이 공유하는 4096개 항목의 전역 해시 테이블입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153624Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:2",
+      "source": "The cache is global to \"make it fast, have a deterministic and low memory footprint, and be easy to invalidate\".",
+      "source_hash": 1327772738058353630,
+      "context_hash": 12268208641875791113,
+      "translation": "캐시는 \"빠르고, 결정적이며 메모리 풋프린트가 작고, 무효화하기 쉽도록\" 전역으로 유지됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153624Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:3",
+      "source": "Each cache entry has a version tag.",
+      "source_hash": 12215859842191436130,
+      "context_hash": 10659067807235688356,
+      "translation": "각 캐시 항목에는 버전 태그가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153624Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:4",
+      "source": "A global version tag is used to create the next version tag, it also has the C type ``unsigned int``.",
+      "source_hash": 6222478361095863977,
+      "context_hash": 10735481804214925511,
+      "translation": "다음 버전 태그를 생성하는 데 전역 버전 태그가 사용되며, 이 태그의 C 타입도 ``unsigned int``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:05:49.153624Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "By default, a type has its \"valid version tag\" flag cleared to indicate that the version tag is invalid.",
+      "source_hash": 17585109192039335484,
+      "context_hash": 172594734454770005,
+      "translation": "기본적으로 타입에는 버전 태그가 유효하지 않음을 나타내도록 \"유효한 버전 태그\" 플래그가 해제되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757248Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:1",
+      "source": "When the first method of the type is cached, the version tag and the \"valid version tag\" flag are set.",
+      "source_hash": 11122114773508542979,
+      "context_hash": 13966451121868523600,
+      "translation": "타입의 첫 번째 메서드가 캐시되면 버전 태그와 \"유효한 버전 태그\" 플래그가 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757252Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:2",
+      "source": "When a type is modified, the \"valid version tag\" flag of the type and its subclasses is cleared.",
+      "source_hash": 6491260893210460645,
+      "context_hash": 2262284643831928509,
+      "translation": "타입이 수정되면 해당 타입과 서브클래스의 \"유효한 버전 태그\" 플래그가 해제됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757252Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:3",
+      "source": "Later, when a cache entry of these types is used, the entry is removed because its version tag is outdated.",
+      "source_hash": 13916789361066258196,
+      "context_hash": 1571266425065862761,
+      "translation": "이후 이러한 타입의 캐시 항목이 사용되면 버전 태그가 오래되었기 때문에 해당 항목이 제거됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757253Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:0",
+      "source": "On integer overflow, the whole cache is cleared and the global version tag is reset to ``0``.",
+      "source_hash": 11405950389554628178,
+      "context_hash": 6968293846280376718,
+      "translation": "정수 오버플로가 발생하면 전체 캐시가 지워지고 전역 버전 태그가 ``0``\\ 으로 재설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757253Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:6/seg:0",
+      "source": "See `Method cache (issue #1685986) <https://bugs.python.org/issue1685986>`_ and `Armin's method cache optimization updated for Python 2.6 (issue #1700288) <https://bugs.python.org/issue1700288>`_.",
+      "source_hash": 2206817873033465025,
+      "context_hash": 13547274153083690778,
+      "translation": "`메서드 캐시 (이슈 #1685986) <https://bugs.python.org/issue1685986>`_ 및 `Python 2.6용 Armin의 메서드 캐시 최적화 업데이트 (이슈 #1700288) <https://bugs.python.org/issue1700288>`_\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757253Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Globals / builtins cache",
+      "source_hash": 12054333061937984102,
+      "context_hash": 15951991404899138787,
+      "translation": "전역 변수 / 내장 함수 캐시",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757254Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "In 2010, Antoine Pitrou proposed a `Globals / builtins cache (issue #10401) <http://bugs.python.org/issue10401>`_ which adds a private ``ma_version`` field to the ``PyDictObject`` structure (``dict`` type), the field has the C type ``Py_ssize_t``.",
+      "source_hash": 10279770669715604588,
+      "context_hash": 5144923305721221798,
+      "translation": "2010년에 Antoine Pitrou는 ``PyDictObject`` 구조체(``dict`` 타입)에 비공개 ``ma_version`` 필드를 추가하는 `전역 변수 / 내장 함수 캐시 (이슈 #10401) <http://bugs.python.org/issue10401>`_\\ 를 제안했으며, 이 필드의 C 타입은 ``Py_ssize_t``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757254Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:0",
+      "source": "The patch adds a \"global and builtin cache\" to functions and frames, and changes ``LOAD_GLOBAL`` and ``STORE_GLOBAL`` instructions to use the cache.",
+      "source_hash": 3747983173007368868,
+      "context_hash": 15288072991949423660,
+      "translation": "이 패치는 함수와 프레임에 \"전역 및 내장 캐시\"를 추가하고, ``LOAD_GLOBAL`` 및 ``STORE_GLOBAL`` 명령어가 캐시를 사용하도록 변경합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757254Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:0",
+      "source": "The change on the ``PyDictObject`` structure is very similar to this PEP.",
+      "source_hash": 14653641090959161562,
+      "context_hash": 13936223504324953683,
+      "translation": "``PyDictObject`` 구조체의 변경 사항은 이 PEP와 매우 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757255Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Cached globals+builtins lookup",
+      "source_hash": 1864316799406088114,
+      "context_hash": 14911922790672198300,
+      "translation": "캐시된 전역 변수+내장 함수 조회",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757255Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "In 2006, Andrea Griffini proposed a patch implementing a `Cached globals+builtins lookup optimization <https://bugs.python.org/issue1616125>`_.",
+      "source_hash": 10361954498278248762,
+      "context_hash": 4413500807266570078,
+      "translation": "2006년에 Andrea Griffini는 `캐시된 전역 변수+내장 함수 조회 최적화 <https://bugs.python.org/issue1616125>`_\\ 를 구현하는 패치를 제안했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757255Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:1",
+      "source": "The patch adds a private ``timestamp`` field to the ``PyDictObject`` structure (``dict`` type), the field has the C type ``size_t``.",
+      "source_hash": 8684687009698589441,
+      "context_hash": 17240027758683544080,
+      "translation": "이 패치는 ``PyDictObject`` 구조체(``dict`` 타입)에 비공개 ``timestamp`` 필드를 추가하며, 이 필드의 C 타입은 ``size_t``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757256Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "Thread on python-dev: `About dictionary lookup caching <https://mail.python.org/pipermail/python-dev/2006-December/070348.html>`_ (December 2006).",
+      "source_hash": 9618556179936974676,
+      "context_hash": 13127476288340878859,
+      "translation": "python-dev의 스레드: `딕셔너리 조회 캐싱에 관하여 <https://mail.python.org/pipermail/python-dev/2006-December/070348.html>`_ (2006년 12월).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757256Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Guard against changing dict during iteration",
+      "source_hash": 16105397176274406361,
+      "context_hash": 7523629126491174869,
+      "translation": "반복 중 딕셔너리 변경 방지",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757256Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "In 2013, Serhiy Storchaka proposed `Guard against changing dict during iteration (issue #19332) <https://bugs.python.org/issue19332>`_ which adds a ``ma_count`` field to the ``PyDictObject`` structure (``dict`` type), the field has the C type ``size_t``.",
+      "source_hash": 11296849471532301857,
+      "context_hash": 5507966023151151945,
+      "translation": "2013년에 Serhiy Storchaka는 ``PyDictObject`` 구조체(``dict`` 타입)에 ``ma_count`` 필드를 추가하는 `반복 중 딕셔너리 변경 방지 (이슈 #19332) <https://bugs.python.org/issue19332>`_\\ 를 제안했으며, 이 필드의 C 타입은 ``size_t``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757257Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:1",
+      "source": "This field is incremented when the dictionary is modified.",
+      "source_hash": 12662108443572498802,
+      "context_hash": 17544265919643954572,
+      "translation": "딕셔너리가 수정되면 이 필드가 증가합니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:20:23.757257Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "PySizer",
+      "source_hash": 16099940878211709888,
+      "context_hash": 10597982018661915115,
+      "translation": "PySizer",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757258Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "`PySizer <http://pysizer.8325.org/>`_: a memory profiler for Python, Google Summer of Code 2005 project by Nick Smallbone.",
+      "source_hash": 5638384552657411011,
+      "context_hash": 15432104754864061064,
+      "translation": "`PySizer <http://pysizer.8325.org/>`_: Python용 메모리 프로파일러이자 Nick Smallbone의 2005년 Google Summer of Code 프로젝트입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757258Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:0",
+      "source": "This project has a patch for CPython 2.4 which adds ``key_time`` and ``value_time`` fields to dictionary entries.",
+      "source_hash": 18257424366354502897,
+      "context_hash": 11911303450148179043,
+      "translation": "이 프로젝트에는 딕셔너리 항목에 ``key_time`` 및 ``value_time`` 필드를 추가하는 CPython 2.4용 패치가 있습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:20:23.757259Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:1",
+      "source": "It uses a global process-wide counter for dictionaries, incremented each time that a dictionary is modified.",
+      "source_hash": 6244835988752885363,
+      "context_hash": 15047910519376157012,
+      "translation": "이 패치는 딕셔너리용 프로세스 전체 전역 카운터를 사용하며, 딕셔너리가 수정될 때마다 카운터를 증가시킵니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:20:23.757260Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:2",
+      "source": "The times are used to decide when child objects first appeared in their parent objects.",
+      "source_hash": 14874590613352423141,
+      "context_hash": 16107615372447883524,
+      "translation": "이 시간 값은 자식 객체가 부모 객체에 처음 나타난 시점을 결정하는 데 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757260Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "Discussion",
+      "source_hash": 14315283418082301837,
+      "context_hash": 11181595955655835933,
+      "translation": "토론",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757261Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "Thread on the mailing lists:",
+      "source_hash": 4153639827115639959,
+      "context_hash": 17471463926542418566,
+      "translation": "메일링 리스트의 스레드:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757261Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:0",
+      "source": "python-dev: `Updated PEP 509 <https://mail.python.org/pipermail/python-dev/2016-April/144250.html>`_",
+      "source_hash": 11872557581053874581,
+      "context_hash": 7034862147529198227,
+      "translation": "python-dev: `업데이트된 PEP 509 <https://mail.python.org/pipermail/python-dev/2016-April/144250.html>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757261Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:0",
+      "source": "python-dev: `RFC: PEP 509: Add a private version to dict <https://mail.python.org/pipermail/python-dev/2016-April/144137.html>`_",
+      "source_hash": 11257336812285647708,
+      "context_hash": 10163349740250953780,
+      "translation": "python-dev: `RFC: PEP 509: dict에 비공개 버전 추가 <https://mail.python.org/pipermail/python-dev/2016-April/144137.html>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757262Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:0",
+      "source": "python-dev: `PEP 509: Add a private version to dict <https://mail.python.org/pipermail/python-dev/2016-January/142685.html>`_ (January 2016)",
+      "source_hash": 13346806518126165642,
+      "context_hash": 14897158097515409164,
+      "translation": "python-dev: `PEP 509: dict에 비공개 버전 추가 <https://mail.python.org/pipermail/python-dev/2016-January/142685.html>`_ (2016년 1월)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757262Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:5/seg:0",
+      "source": "python-ideas: `RFC: PEP: Add dict.__version__ <https://mail.python.org/pipermail/python-ideas/2016-January/037702.html>`_ (January 2016)",
+      "source_hash": 12711617223454049891,
+      "context_hash": 6949327691287650212,
+      "translation": "python-ideas: `RFC: PEP: dict.__version__ 추가 <https://mail.python.org/pipermail/python-ideas/2016-January/037702.html>`_ (2016년 1월)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757262Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Acceptance",
+      "source_hash": 5102257346729130978,
+      "context_hash": 2700281417383473945,
+      "translation": "승인",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757262Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "The PEP was `accepted on 2016-09-07 by Guido van Rossum <https://mail.python.org/pipermail/python-dev/2016-September/146298.html>`_.",
+      "source_hash": 11866890074390156656,
+      "context_hash": 1750090091731427950,
+      "translation": "이 PEP는 `2016-09-07에 Guido van Rossum에 의해 수락됨 <https://mail.python.org/pipermail/python-dev/2016-September/146298.html>`_\\ 에 의해 수락되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757263Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:1",
+      "source": "The PEP implementation has since been committed to the repository.",
+      "source_hash": 1000030660926566745,
+      "context_hash": 6494108906079556715,
+      "translation": "이후 PEP 구현이 저장소에 커밋되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:23.757263Z",
+      "issues": []
+    }
+  ]
+}

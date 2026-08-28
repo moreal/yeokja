@@ -1,0 +1,894 @@
+{
+  "version": 1,
+  "source_hash": 12877974008140586509,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Managing global context via 'with' blocks in generators and coroutines",
+      "source_hash": 7141536469232760308,
+      "context_hash": 1452394787500673388,
+      "translation": "제너레이터와 코루틴에서 'with' 블록을 통한 전역 컨텍스트 관리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735423Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "PEP Withdrawal",
+      "source_hash": 100271571744256071,
+      "context_hash": 9469756102378160253,
+      "translation": "PEP 철회",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735428Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Withdrawn in favor of :pep:`567`.",
+      "source_hash": 1581720845483217603,
+      "context_hash": 15340658697064373820,
+      "translation": "이 문서는 :pep:`567`\\ 로 대체하기 위해 철회되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:57:17.467955Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 14860790530117257653,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735430Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "While we generally try to avoid global state when possible, there nonetheless exist a number of situations where it is agreed to be the best approach.",
+      "source_hash": 1851612463802331013,
+      "context_hash": 175269847216048319,
+      "translation": "가능한 경우 일반적으로 전역 상태를 피하려고 하지만, 그럼에도 전역 상태가 최선의 접근 방식이라고 합의된 상황이 여러 가지 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735430Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "In Python, a standard pattern for handling such cases is to store the global state in global or thread-local storage, and then use ``with`` blocks to limit modifications of this global state to a single dynamic scope.",
+      "source_hash": 4806413983863240770,
+      "context_hash": 14699474922614803185,
+      "translation": "Python에서는 이러한 경우를 처리하는 표준 패턴으로 전역 상태를 전역 또는 스레드 로컬 저장소에 저장한 다음, ``with`` 블록을 사용하여 이 전역 상태의 수정을 단일 동적 스코프로 제한합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735431Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "Examples where this pattern is used include the standard library's ``warnings.catch_warnings`` and ``decimal.localcontext``, NumPy's ``numpy.errstate`` (which exposes the error-handling settings provided by the IEEE 754 floating point standard), and the handling of logging context or HTTP request context in many server application frameworks.",
+      "source_hash": 9157597490455462571,
+      "context_hash": 8368938928859662276,
+      "translation": "이 패턴이 사용되는 예로는 표준 라이브러리의 ``warnings.catch_warnings`` 및 ``decimal.localcontext``, NumPy의 ``numpy.errstate``\\ (IEEE 754 부동 소수점 표준에서 제공하는 오류 처리 설정을 노출함), 그리고 여러 서버 애플리케이션 프레임워크에서 로깅 컨텍스트 또는 HTTP 요청 컨텍스트를 처리하는 방식이 있습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:07:24.735432Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "However, there is currently no ergonomic way to manage such local changes to global state when writing a generator or coroutine.",
+      "source_hash": 846463517865103617,
+      "context_hash": 17876543730507952405,
+      "translation": "그러나 현재는 제너레이터나 코루틴을 작성할 때 이러한 전역 상태의 로컬 변경을 편리하게 관리할 방법이 없습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터",
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T19:07:24.735434Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "For example, this code",
+      "source_hash": 13670412663882644136,
+      "context_hash": 2525353619580959188,
+      "translation": "예를 들어 다음 코드는",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735435Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "may or may not successfully catch warnings raised by ``g()``, and may or may not inadvertently swallow warnings triggered elsewhere in the code.",
+      "source_hash": 17456935395907289172,
+      "context_hash": 13163103892980090264,
+      "translation": "``g()``\\ 가 발생시킨 경고를 성공적으로 포착할 수도 있고 그렇지 않을 수도 있으며, 코드의 다른 부분에서 발생한 경고를 의도치 않게 삼킬 수도 있고 그렇지 않을 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735435Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "The context manager, which was intended to apply only to ``f`` and its callees, ends up having a dynamic scope that encompasses arbitrary and unpredictable parts of its call\\ **ers**.",
+      "source_hash": 2498542582338859917,
+      "context_hash": 6019941336431629221,
+      "translation": "``f``\\ 와 그 피호출자에게만 적용되도록 의도된 컨텍스트 관리자가 결국 호출\\ **자**\\ 의 임의적이고 예측할 수 없는 부분까지 포괄하는 동적 스코프를 갖게 됩니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:07:24.735436Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "This problem becomes particularly acute when writing asynchronous code, where essentially all functions become coroutines.",
+      "source_hash": 14847587897882186417,
+      "context_hash": 5416595981918398402,
+      "translation": "이 문제는 사실상 모든 함수가 코루틴이 되는 비동기 코드를 작성할 때 특히 심각해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735437Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "Here, we propose to solve this problem by notifying context managers whenever execution is suspended or resumed within their scope, allowing them to restrict their effects appropriately.",
+      "source_hash": 16922339006224286072,
+      "context_hash": 4121396097705864930,
+      "translation": "여기서는 실행이 해당 스코프 내에서 일시 중단되거나 재개될 때마다 컨텍스트 관리자에게 알림으로써 컨텍스트 관리자가 그 효과를 적절히 제한할 수 있도록 하여 이 문제를 해결할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735437Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 7395496206998887536,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735438Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Two new, optional, methods are added to the context manager protocol: ``__suspend__`` and ``__resume__``.",
+      "source_hash": 16254457377847981289,
+      "context_hash": 4608009837360671740,
+      "translation": "컨텍스트 관리자 프로토콜에 새로운 선택적 메서드 두 개가 추가됩니다: ``__suspend__`` 및 ``__resume__``.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자",
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T19:07:24.735438Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "If present, these methods will be called whenever a frame's execution is suspended or resumed from within the context of the ``with`` block.",
+      "source_hash": 657451814387555010,
+      "context_hash": 16676505522051739177,
+      "translation": "이 메서드가 존재하면 ``with`` 블록의 컨텍스트 내에서 프레임의 실행이 일시 중단되거나 재개될 때마다 호출됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735439Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "More formally, consider the following code",
+      "source_hash": 12612177683354095029,
+      "context_hash": 1710522640167289189,
+      "translation": "더 형식적으로 다음 코드를 살펴보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735439Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "Currently this is equivalent to the following code (copied from :pep:`343`)",
+      "source_hash": 18419336069451061503,
+      "context_hash": 71294136777468894,
+      "translation": "현재 이는 다음 코드와 동등합니다(:pep:`343`\\ 에서 복사함).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735440Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "This PEP proposes to modify ``with`` block handling to instead become",
+      "source_hash": 15578559224423317150,
+      "context_hash": 9149945774747568842,
+      "translation": "이 PEP에서는 대신 ``with`` 블록 처리를 다음과 같이 변경할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735440Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "Analogous suspend/resume calls are also wrapped around the ``yield`` points embedded inside the ``yield from``, ``await``, ``async with``, and ``async for`` constructs.",
+      "source_hash": 13691158357986630422,
+      "context_hash": 3389828834454302367,
+      "translation": "유사한 일시 중단/재개 호출은 ``yield from``, ``await``, ``async with`` 및 ``async for`` 구문 내부에 포함된 ``yield`` 지점 주위에도 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735441Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Nested blocks",
+      "source_hash": 17734931305367688868,
+      "context_hash": 10470925440972175047,
+      "translation": "중첩 블록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735441Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Given this code",
+      "source_hash": 8277250660112142226,
+      "context_hash": 15970902813640426756,
+      "translation": "다음 코드가 주어졌다고 하겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735441Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "then we perform the following operations in the following sequence",
+      "source_hash": 10876403289503928549,
+      "context_hash": 13403440989028644571,
+      "translation": "그러면 다음 순서로 다음 작업을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735442Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "Note that this ensures that the following is a valid refactoring",
+      "source_hash": 12761504315463557431,
+      "context_hash": 1746616781075595671,
+      "translation": "이는 다음과 같은 리팩터링이 유효함을 보장한다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735442Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "Similarly, ``with`` statements with multiple context managers suspend from right to left, and resume from left to right.",
+      "source_hash": 6368140499003475974,
+      "context_hash": 17415779376530117313,
+      "translation": "마찬가지로 여러 컨텍스트 관리자가 있는 ``with`` 문은 오른쪽에서 왼쪽으로 일시 중단되고, 왼쪽에서 오른쪽으로 재개됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735442Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Other changes",
+      "source_hash": 8418557852136189826,
+      "context_hash": 18274062538852819045,
+      "translation": "기타 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735442Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Appropriate ``__suspend__`` and ``__resume__`` methods are added to ``warnings.catch_warnings`` and ``decimal.localcontext``.",
+      "source_hash": 7709029511298470029,
+      "context_hash": 7598345756008249539,
+      "translation": "``warnings.catch_warnings`` 및 ``decimal.localcontext``\\ 에 적절한 ``__suspend__`` 및 ``__resume__`` 메서드가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735443Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 9303830013802910327,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735443Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "In the abstract, we gave an example of plausible but incorrect code",
+      "source_hash": 11144121189152987393,
+      "context_hash": 14732032481577874473,
+      "translation": "앞서 그럴듯하지만 잘못된 코드의 예를 추상적으로 제시했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735443Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "To make this correct in current Python, we need to instead write something like",
+      "source_hash": 7296756589864028436,
+      "context_hash": 2193110835163083452,
+      "translation": "현재 Python에서 이를 올바르게 만들려면 대신 다음과 비슷하게 작성해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735444Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "OTOH, if this PEP is accepted then the original code will become correct as-is.",
+      "source_hash": 11012644016873363453,
+      "context_hash": 16881741463188873575,
+      "translation": "반면 이 PEP가 수용되면 원래 코드는 수정 없이 올바르게 동작하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735444Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:1",
+      "source": "Or if this isn't convincing, then here's another example of broken code; fixing it requires even greater gyrations, and these are left as an exercise for the reader",
+      "source_hash": 3647774564593574498,
+      "context_hash": 10602242962685667661,
+      "translation": "또는 이것이 설득력 있게 느껴지지 않는다면, 다음은 망가진 코드의 또 다른 예입니다. 이를 수정하려면 훨씬 더 복잡한 작업이 필요하며, 그 방법은 독자가 직접 생각해 볼 문제로 남겨 둡니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:24.735444Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "And notice that this last example isn't artificial at all -- this is exactly how you write a test that an async/await-using coroutine correctly raises a warning.",
+      "source_hash": 14894399660038537223,
+      "context_hash": 8937351069872082365,
+      "translation": "그리고 이 마지막 예제가 전혀 인위적인 것이 아니라는 점에 주목하십시오. 이는 async/await를 사용하는 코루틴이 경고를 올바르게 발생시키는지 테스트를 작성하는 정확한 방법입니다.",
+      "glossary_snapshot": {
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T18:09:02.053526Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:1",
+      "source": "Similar issues arise for pretty much any use of ``warnings.catch_warnings``, ``decimal.localcontext``, or ``numpy.errstate`` in async/await-using code.",
+      "source_hash": 6487194213103045449,
+      "context_hash": 1870581687415957763,
+      "translation": "async/await를 사용하는 코드에서 ``warnings.catch_warnings``\\ , ``decimal.localcontext``\\ 또는 ``numpy.errstate``\\ 를 사용하는 거의 모든 경우에도 유사한 문제가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053530Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:2",
+      "source": "So there's clearly a real problem to solve here, and the growing prominence of async code makes it increasingly urgent.",
+      "source_hash": 17935486152012150464,
+      "context_hash": 12002487963793401255,
+      "translation": "따라서 여기에는 해결해야 할 실제 문제가 분명히 존재하며, 비동기 코드의 중요성이 커지면서 이 문제는 점점 더 시급해지고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053530Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Alternative approaches",
+      "source_hash": 11604509632038004793,
+      "context_hash": 3129148284049275477,
+      "translation": "대안적 접근법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053530Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The main alternative that has been proposed is to create some kind of \"task-local storage\", analogous to \"thread-local storage\" [#yury-task-local-proposal]_.",
+      "source_hash": 6028710199235749972,
+      "context_hash": 13717504660141477976,
+      "translation": "제안된 주요 대안은 \"스레드 로컬 저장소\"와 유사한 일종의 \"태스크 로컬 저장소\"를 만드는 것입니다 [#yury-task-local-proposal]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053531Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "In essence, the idea would be that the event loop would take care to allocate a new \"task namespace\" for each task it schedules, and provide an API to at any given time fetch the namespace corresponding to the currently executing task.",
+      "source_hash": 5886301282334983352,
+      "context_hash": 3268881957699318178,
+      "translation": "본질적으로 이벤트 루프가 자신이 스케줄링하는 각 태스크에 대해 새로운 \"태스크 네임스페이스\"를 할당하고, 언제든 현재 실행 중인 태스크에 해당하는 네임스페이스를 가져오는 API를 제공한다는 아이디어입니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:09:02.053531Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:2",
+      "source": "While there are many details to be worked out [#task-local-challenges]_, the basic idea seems doable, and it is an especially natural way to handle the kind of global context that arises at the top-level of async application frameworks (e.g., setting up context objects in a web framework).",
+      "source_hash": 1090153447060684230,
+      "context_hash": 16388434928201878445,
+      "translation": "해결해야 할 세부 사항은 많지만 [#task-local-challenges]_, 기본 아이디어는 구현 가능해 보이며, 비동기 애플리케이션 프레임워크의 최상위 수준에서 발생하는 전역 컨텍스트의 유형을 처리하는 특히 자연스러운 방법입니다(예를 들어 웹 프레임워크에서 컨텍스트 객체를 설정하는 경우).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053532Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:3",
+      "source": "But it also has a number of flaws:",
+      "source_hash": 4368471989186647564,
+      "context_hash": 3889922313523213880,
+      "translation": "그러나 여기에는 여러 가지 결함도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053532Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "It only solves the problem of managing global state for coroutines that ``yield`` back to an asynchronous event loop.",
+      "source_hash": 16296889799806080654,
+      "context_hash": 9531006462121974723,
+      "translation": "이는 ``yield``\\ 를 비동기 이벤트 루프로 되돌리는 코루틴의 전역 상태 관리 문제만 해결합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053532Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "But there actually isn't anything about this problem that's specific to asyncio -- as shown in the examples above, simple generators run into exactly the same issue.",
+      "source_hash": 5067001735082044234,
+      "context_hash": 5383758290543498682,
+      "translation": "그러나 실제로 이 문제는 asyncio에만 특수한 것이 아닙니다. 위의 예에서 보인 것처럼 단순한 제너레이터도 정확히 동일한 문제에 부딪힙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053533Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "It creates an unnecessary coupling between event loops and code that needs to manage global state.",
+      "source_hash": 15838996427209968564,
+      "context_hash": 9466697904433966193,
+      "translation": "이는 이벤트 루프와 전역 상태를 관리해야 하는 코드 사이에 불필요한 결합을 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053533Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "Obviously an async web framework needs to interact with some event loop API anyway, so it's not a big deal in that case.",
+      "source_hash": 10975695020281029871,
+      "context_hash": 5550003665282826594,
+      "translation": "물론 비동기 웹 프레임워크는 어차피 어떤 이벤트 루프 API와 상호작용해야 하므로, 이 경우에는 큰 문제가 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053533Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:2",
+      "source": "But it's weird that ``warnings`` or ``decimal`` or NumPy should have to call into an async library's API to access their internal state when they themselves involve no async code.",
+      "source_hash": 17572907663682642727,
+      "context_hash": 17950614029948507490,
+      "translation": "그러나 ``warnings``\\ 나 ``decimal``\\ 또는 NumPy가 자신들은 비동기 코드를 전혀 포함하지 않는데도 내부 상태에 액세스하기 위해 비동기 라이브러리의 API를 호출해야 한다는 것은 이상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053533Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:3",
+      "source": "Worse, since there are multiple event loop APIs in common use, it isn't clear how to choose which to integrate with.  (This could be somewhat mitigated by CPython providing a standard API for creating and switching \"task-local domains\" that asyncio, Twisted, tornado, etc. could then work with.)",
+      "source_hash": 13951708836168420998,
+      "context_hash": 5770324187182366183,
+      "translation": "더 나쁜 점은 일반적으로 사용되는 이벤트 루프 API가 여러 개이므로 어느 API와 통합할지 선택하는 방법이 명확하지 않다는 것입니다. (CPython이 \"태스크 로컬 도메인\"을 생성하고 전환하기 위한 표준 API를 제공하여 asyncio, Twisted, tornado 등이 이를 사용할 수 있게 한다면 이 문제를 어느 정도 완화할 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053534Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "It's not at all clear that this can be made acceptably fast.",
+      "source_hash": 1119208414999916314,
+      "context_hash": 4926350715027968251,
+      "translation": "이것을 허용 가능한 속도로 만들 수 있을지는 전혀 명확하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053534Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "NumPy has to check the floating point error settings on every single arithmetic operation.",
+      "source_hash": 5647685296181436531,
+      "context_hash": 9051603868893636279,
+      "translation": "NumPy는 모든 산술 연산마다 부동 소수점 오류 설정을 확인해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053534Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:2",
+      "source": "Checking a piece of data in thread-local storage is absurdly quick, because modern platforms have put massive resources into optimizing this case (e.g. dedicating a CPU register for this purpose); calling a method on an event loop to fetch a handle to a namespace and then doing lookup in that namespace is much slower.",
+      "source_hash": 7983775060638668224,
+      "context_hash": 16824145800067660341,
+      "translation": "스레드 로컬 저장소에서 데이터 하나를 확인하는 것은 터무니없이 빠릅니다. 현대 플랫폼이 이 경우를 최적화하는 데 막대한 자원을 투입했기 때문입니다(예를 들어 이 목적을 위해 CPU 레지스터를 전용으로 할당합니다). 반면 이벤트 루프에서 메서드를 호출하여 네임스페이스에 대한 핸들을 가져온 다음 해당 네임스페이스에서 조회하는 것은 훨씬 느립니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:09:02.053534Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "More importantly, this extra cost would be paid on *every* access to the global data, even for programs which are not otherwise using an event loop at all.",
+      "source_hash": 7698923688803152148,
+      "context_hash": 16505186725265884845,
+      "translation": "더 중요한 점은 이 추가 비용이 전역 데이터에 액세스할 때마다 *모든* 경우에 발생한다는 것입니다. 이는 이벤트 루프를 전혀 사용하지 않는 프로그램에서도 마찬가지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053535Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:1",
+      "source": "This PEP's proposal, by contrast, only affects code that actually mixes ``with`` blocks and ``yield`` statements, meaning that the users who experience the costs are the same users who also reap the benefits.",
+      "source_hash": 5588497201353748331,
+      "context_hash": 17844010260563103312,
+      "translation": "이 PEP의 제안은 이와 대조적으로 실제로 ``with`` 블록과 ``yield`` 문을 함께 사용하는 코드에만 영향을 줍니다. 즉, 비용을 부담하는 사용자는 혜택도 얻는 사용자와 동일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053535Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "On the other hand, such tight integration between task context and the event loop does potentially allow other features that are beyond the scope of the current proposal.",
+      "source_hash": 7459226416205268279,
+      "context_hash": 4034843385680866332,
+      "translation": "반면 태스크 컨텍스트와 이벤트 루프를 이렇게 긴밀하게 통합하면 현재 제안의 범위를 벗어나는 다른 기능을 잠재적으로 허용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053536Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:1",
+      "source": "For example, an event loop could note which task namespace was in effect when a task called ``call_soon``, and arrange that the callback when run would have access to the same task namespace.",
+      "source_hash": 300591408929145566,
+      "context_hash": 15941109106550460373,
+      "translation": "예를 들어 이벤트 루프는 태스크가 ``call_soon``\\ 을 호출했을 때 어떤 태스크 네임스페이스가 적용되고 있었는지 기록하고, 콜백이 실행될 때 동일한 태스크 네임스페이스에 액세스할 수 있도록 할 수 있습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T18:09:02.053536Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:2",
+      "source": "Whether this is useful, or even well-defined in the case of cross-thread calls (what does it mean to have task-local storage accessed from two threads simultaneously?), is left as a puzzle for event loop implementors to ponder -- nothing in this proposal rules out such enhancements as well.",
+      "source_hash": 13734276951791516907,
+      "context_hash": 5728814806642420717,
+      "translation": "이것이 유용한지, 또는 스레드 간 호출의 경우에 잘 정의되는지(태스크 로컬 저장소에 두 스레드가 동시에 액세스한다는 것은 무엇을 의미합니까?)는 이벤트 루프 구현자가 숙고해야 할 과제로 남겨 둡니다. 이 제안의 어떤 내용도 이러한 개선 사항을 배제하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053536Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:3",
+      "source": "It does seem though that such features would be useful primarily for state that already has a tight integration with the event loop -- while we might want a request id to be preserved across ``call_soon``, most people would not expect",
+      "source_hash": 3440362202232373358,
+      "context_hash": 16594494487798833775,
+      "translation": "하지만 이러한 기능은 이미 이벤트 루프와 긴밀하게 통합된 상태에 주로 유용할 것으로 보입니다. ``call_soon``\\ 을 가로질러 요청 ID를 보존하고 싶을 수는 있지만, 대부분의 사람은",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053537Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "to result in ``f`` being run with warnings disabled, which would be the result if ``call_soon`` preserved global context in general.",
+      "source_hash": 12705547646711921841,
+      "context_hash": 4589766765355323276,
+      "translation": "그 결과 ``f``\\ 가 경고가 비활성화된 상태로 실행되는 것을 기대하지 않을 것입니다. 이는 ``call_soon``\\ 이 일반적으로 전역 컨텍스트를 보존할 경우 발생할 결과입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053537Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:1",
+      "source": "It's also unclear how this would even work given that the warnings context manager ``__exit__`` would be called before ``f``.",
+      "source_hash": 8177660814782745836,
+      "context_hash": 15807597120088657484,
+      "translation": "또한 ``f``\\ 보다 먼저 경고 컨텍스트 관리자 ``__exit__``\\ 가 호출된다는 점을 고려하면 이것이 어떻게 작동할 수 있는지도 명확하지 않습니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T18:09:02.053537Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:9/seg:0",
+      "source": "So this PEP takes the position that ``__suspend__``\\/``__resume__`` and \"task-local storage\" are two complementary tools that are both useful in different circumstances.",
+      "source_hash": 4901002766297270538,
+      "context_hash": 17146417300536044385,
+      "translation": "따라서 이 PEP는 ``__suspend__``\\/``__resume__``\\ 와 \"태스크 로컬 저장소\"가 서로 다른 상황에서 모두 유용한 상호 보완적 도구라는 입장을 취합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053538Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Backwards compatibility",
+      "source_hash": 15284458774507067265,
+      "context_hash": 16731017556858550730,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053538Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Because ``__suspend__`` and ``__resume__`` are optional and default to no-ops, all existing context managers continue to work exactly as before.",
+      "source_hash": 8057641031639010294,
+      "context_hash": 12530615143729648405,
+      "translation": "``__suspend__``\\ 와 ``__resume__``\\ 는 선택 사항이며 기본값이 아무 작업도 하지 않는 것이므로, 기존의 모든 컨텍스트 관리자는 이전과 정확히 동일하게 계속 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053538Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Speed-wise, this proposal adds additional overhead when entering a ``with`` block (where we must now check for the additional methods; failed attribute lookup in CPython is rather slow, since it involves allocating an ``AttributeError``), and additional overhead at suspension points.",
+      "source_hash": 5734264762227601060,
+      "context_hash": 14457376875545122776,
+      "translation": "속도 측면에서 이 제안은 ``with`` 블록에 진입할 때(이제 추가 메서드를 확인해야 하며, CPython에서 실패한 속성 조회는 ``AttributeError``\\ 를 할당해야 하므로 상당히 느립니다)와 일시 중단 지점에서 추가 오버헤드를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053538Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "Since the position of ``with`` blocks and suspension points is known statically, the compiler can straightforwardly optimize away this overhead in all cases except where one actually has a ``yield`` inside a ``with``.",
+      "source_hash": 8776344955492142272,
+      "context_hash": 4883781339769177545,
+      "translation": "``with`` 블록과 일시 중단 지점의 위치는 정적으로 알려져 있으므로, 컴파일러는 실제로 ``with`` 내부에 ``yield``\\ 가 있는 경우를 제외한 모든 경우에 이 오버헤드를 간단히 제거하도록 최적화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053538Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:2",
+      "source": "Furthermore, because we only do attribute checks for ``__suspend__`` and ``__resume__`` once at the start of a ``with`` block, when these attributes are undefined then the per-yield overhead can be optimized down to a single C-level ``if (frame->needs_suspend_resume_calls) { ... }``.",
+      "source_hash": 1704020678059406898,
+      "context_hash": 9532038967134082689,
+      "translation": "또한 ``with`` 블록 시작 시 ``__suspend__``\\ 와 ``__resume__``\\ 에 대한 속성 확인을 한 번만 수행하므로, 이러한 속성이 정의되지 않은 경우 yield마다 발생하는 오버헤드를 단일 C 수준의 ``if (frame->needs_suspend_resume_calls) { ... }``\\ 로 최적화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053539Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:3",
+      "source": "Therefore, we expect the overall overhead to be negligible.",
+      "source_hash": 9470659477127154435,
+      "context_hash": 18379898491960847524,
+      "translation": "따라서 전체 오버헤드는 무시할 수 있을 정도로 작을 것으로 예상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:02.053539Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Interaction with PEP 492",
+      "source_hash": 5620388898424211878,
+      "context_hash": 13726206391570722489,
+      "translation": "PEP 492와의 상호작용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:46.932925Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": ":pep:`492` added new asynchronous context managers, which are like regular context managers, but instead of having regular methods ``__enter__`` and ``__exit__`` they have coroutine methods ``__aenter__`` and ``__aexit__``.",
+      "source_hash": 1395546523131719732,
+      "context_hash": 8799259798388641457,
+      "translation": ":pep:`492`\\ 는 새로운 비동기 컨텍스트 관리자를 추가했는데, 이는 일반 컨텍스트 관리자와 비슷하지만 일반 메서드인 ``__enter__``\\ 와 ``__exit__`` 대신 코루틴 메서드인 ``__aenter__``\\ 와 ``__aexit__``\\ 를 가집니다.",
+      "glossary_snapshot": {
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T17:32:46.932929Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "Following this pattern, one might expect this proposal to add ``__asuspend__`` and ``__aresume__`` coroutine methods.",
+      "source_hash": 10030135076854979799,
+      "context_hash": 9542591668958009335,
+      "translation": "이 패턴을 따르면, 이 제안이 ``__asuspend__``\\ 와 ``__aresume__`` 코루틴 메서드를 추가할 것으로 예상할 수 있습니다.",
+      "glossary_snapshot": {
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T17:32:46.932932Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "But this doesn't make much sense, since the whole point is that ``__suspend__`` should be called before yielding our thread of execution and allowing other code to run.",
+      "source_hash": 12089013814390981599,
+      "context_hash": 3725247451335435544,
+      "translation": "하지만 이는 그다지 말이 되지 않는데, 핵심은 ``__suspend__``\\ 가 우리의 실행 스레드를 양보하고 다른 코드가 실행되도록 허용하기 전에 호출되어야 한다는 것이기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:46.932933Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:2",
+      "source": "The only thing we accomplish by making ``__asuspend__`` a coroutine is to make it possible for ``__asuspend__`` itself to yield.",
+      "source_hash": 13673539087749567604,
+      "context_hash": 2237645125836764802,
+      "translation": "``__asuspend__``\\ 를 코루틴으로 만듦으로써 얻는 유일한 것은 ``__asuspend__`` 자신이 양보할 수 있게 되는 것뿐입니다.",
+      "glossary_snapshot": {
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T17:32:46.932933Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:3",
+      "source": "So either we need to recursively call ``__asuspend__`` from inside ``__asuspend__``, or else we need to give up and allow these yields to happen without calling the suspend callback; either way it defeats the whole point.",
+      "source_hash": 18171906153000374358,
+      "context_hash": 15210206710538724016,
+      "translation": "따라서 ``__asuspend__`` 내부에서 ``__asuspend__``\\ 를 재귀적으로 호출해야 하거나, 아니면 포기하고 suspend 콜백을 호출하지 않은 채 이러한 양보가 일어나도록 허용해야 합니다. 어느 쪽이든 핵심을 무산시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:46.932934Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "Well, with one exception: one possible pattern for coroutine code is to call ``yield`` in order to communicate with the coroutine runner, but without actually suspending their execution (i.e., the coroutine might know that the coroutine runner will resume them immediately after processing the ``yield``\\ ed message).",
+      "source_hash": 9162219093139608375,
+      "context_hash": 17789970793591948582,
+      "translation": "다만 한 가지 예외가 있는데, 코루틴 코드에서 가능한 한 패턴은 코루틴 실행기와 통신하기 위해 ``yield``\\ 를 호출하되 실제로는 실행을 정지하지 않는 것입니다(즉, 코루틴은 코루틴 실행기가 ``yield``\\ 된 메시지를 처리한 직후 자신을 즉시 재개할 것임을 알고 있을 수 있습니다).",
+      "glossary_snapshot": {
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T17:32:46.932934Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:1",
+      "source": "An example of this is the ``curio.timeout_after`` async context manager, which yields a special ``set_timeout`` message to the curio kernel, and then the kernel immediately (synchronously) resumes the coroutine which sent the message.",
+      "source_hash": 3769692169155171303,
+      "context_hash": 9718154871954033449,
+      "translation": "이에 대한 예시는 ``curio.timeout_after`` 비동기 컨텍스트 관리자인데, 이는 curio 커널에 특별한 ``set_timeout`` 메시지를 양보하고, 그러면 커널이 즉시(동기적으로) 그 메시지를 보낸 코루틴을 재개합니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자",
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T17:32:46.932935Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:2",
+      "source": "And from the user point of view, this timeout value acts just like the kinds of global variables that motivated this PEP.",
+      "source_hash": 17721046766798677393,
+      "context_hash": 7589210677394466144,
+      "translation": "그리고 사용자 관점에서 보면, 이 타임아웃 값은 이 PEP의 동기가 된 그런 종류의 전역 변수처럼 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:46.932937Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:3",
+      "source": "But, there is a crucal difference: this kind of async context manager is, by definition, tightly integrated with the coroutine runner.",
+      "source_hash": 16015978154179278439,
+      "context_hash": 9555183849860173208,
+      "translation": "하지만 결정적인 차이가 있는데, 이런 종류의 비동기 컨텍스트 관리자는 정의상 코루틴 실행기와 긴밀하게 통합되어 있다는 것입니다.",
+      "glossary_snapshot": {
+        "coroutine": "코루틴",
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T17:32:46.932937Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:4",
+      "source": "So, the coroutine runner can take over responsibility for keeping track of which timeouts apply to which coroutines without any need for this PEP at all (and this is indeed how curio.timeout_after works).",
+      "source_hash": 3132889152084728451,
+      "context_hash": 9005024279441992164,
+      "translation": "따라서 코루틴 실행기는 이 PEP가 전혀 필요 없이 어떤 타임아웃이 어떤 코루틴에 적용되는지 추적하는 책임을 떠맡을 수 있습니다(그리고 실제로 curio.timeout_after는 이런 방식으로 동작합니다).",
+      "glossary_snapshot": {
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T17:32:46.932938Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "That leaves two reasonable approaches to handling async context managers:",
+      "source_hash": 15975177913694540116,
+      "context_hash": 7282966962112653800,
+      "translation": "이렇게 되면 비동기 컨텍스트 관리자를 처리하는 합리적인 두 가지 접근법이 남습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:46.932939Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "Add plain ``__suspend__`` and ``__resume__`` methods.",
+      "source_hash": 7839382880617559942,
+      "context_hash": 14905386288057922641,
+      "translation": "일반 ``__suspend__``\\ 와 ``__resume__`` 메서드를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:46.932940Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "Leave async context managers alone for now until we have more experience with them.",
+      "source_hash": 9838282808865301516,
+      "context_hash": 13004063131086193487,
+      "translation": "경험이 더 쌓일 때까지 당분간 비동기 컨텍스트 관리자는 그대로 둡니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:46.932940Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "Either seems plausible, so out of laziness / `YAGNI <http://martinfowler.com/bliki/Yagni.html>`_ this PEP tentatively proposes to stick with option (2).",
+      "source_hash": 14419042718072723511,
+      "context_hash": 5322975239397796271,
+      "translation": "둘 다 그럴듯해 보이므로, 게으름 / `YAGNI <http://martinfowler.com/bliki/Yagni.html>`_\\ 를 이유로 이 PEP는 잠정적으로 옵션 (2)를 고수할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:46.932941Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 7795457653711016306,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:46.932941Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "https://groups.google.com/forum/#!topic/python-tulip/zix5HQxtElg",
+      "source_hash": 9367804968128051380,
+      "context_hash": 17761568121229523660,
+      "translation": "https://groups.google.com/forum/#!topic/python-tulip/zix5HQxtElg",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:46.932942Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "https://github.com/python/asyncio/issues/165",
+      "source_hash": 2115521548705662589,
+      "context_hash": 5700687731656754126,
+      "translation": "https://github.com/python/asyncio/issues/165",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:46.932942Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "For example, we would have to decide",
+      "source_hash": 18224070567655184699,
+      "context_hash": 18326592450102623186,
+      "translation": "예를 들어, 다음 사항을 결정해야 할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:46.932942Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "whether there is a single task-local namespace shared by all users (in which case we need a way for multiple third-party libraries to adjudicate access to this namespace), or else if there are multiple task-local namespaces, then we need some mechanism for each library to arrange for their task-local namespaces to be created and destroyed at appropriate moments.",
+      "source_hash": 17233778915241367381,
+      "context_hash": 14825368364826873447,
+      "translation": "모든 사용자가 공유하는 단일 태스크 로컬 네임스페이스가 있는지(이 경우 여러 서드파티 라이브러리가 이 네임스페이스에 대한 접근을 조정할 방법이 필요합니다), 아니면 여러 개의 태스크 로컬 네임스페이스가 있는지(이 경우 각 라이브러리가 적절한 시점에 자신의 태스크 로컬 네임스페이스를 생성하고 소멸시킬 수 있는 어떤 메커니즘이 필요합니다) 여부입니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T17:32:46.932943Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:1",
+      "source": "The preliminary patch linked from the github issue above doesn't seem to provide any mechanism for such lifecycle management.",
+      "source_hash": 651844158115568041,
+      "context_hash": 13799027344966768276,
+      "translation": "위 github 이슈에 링크된 초기 패치는 이러한 생명주기 관리를 위한 어떤 메커니즘도 제공하지 않는 것으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:46.932944Z",
+      "issues": []
+    }
+  ]
+}

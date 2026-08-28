@@ -1,0 +1,660 @@
+{
+  "version": 1,
+  "source_hash": 8920972992874101277,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Enabling certificate verification by default for stdlib http clients",
+      "source_hash": 11550860242475912043,
+      "context_hash": 16530898886277989957,
+      "translation": "표준 라이브러리 HTTP 클라이언트의 인증서 검증 기본 활성화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575726Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 8762511719729358815,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575729Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Currently when a standard library http client (the ``urllib``, ``urllib2``, ``http``, and ``httplib`` modules) encounters an ``https://`` URL it will wrap the network HTTP traffic in a TLS stream, as is necessary to communicate with such a server.",
+      "source_hash": 17766970210404807942,
+      "context_hash": 9777496029092336264,
+      "translation": "현재 표준 라이브러리 HTTP 클라이언트(``urllib``, ``urllib2``, ``http``, ``httplib`` 모듈)가 ``https://`` URL을 만나면 이러한 서버와 통신하는 데 필요한 대로 네트워크 HTTP 트래픽을 TLS 스트림으로 래핑합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:45:36.575730Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "However, during the TLS handshake it will not actually check that the server has an X509 certificate is signed by a CA in any trust root, nor will it verify that the Common Name (or Subject Alternate Name) on the presented certificate matches the requested host.",
+      "source_hash": 12650172069915297298,
+      "context_hash": 13337728888658568848,
+      "translation": "그러나 TLS 핸드셰이크 중에는 서버가 어떤 신뢰 루트에 있는 CA가 서명한 X509 인증서를 보유하는지 실제로 확인하지 않으며, 제시된 인증서의 Common Name(또는 Subject Alternate Name)이 요청된 호스트와 일치하는지도 검증하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575731Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "The failure to do these checks means that anyone with a privileged network position is able to trivially execute a man in the middle attack against a Python application using either of these HTTP clients, and change traffic at will.",
+      "source_hash": 10529384019062354097,
+      "context_hash": 11976232925922898044,
+      "translation": "이러한 검사를 수행하지 않으면 네트워크상 특권적 위치에 있는 누구나 이 HTTP 클라이언트 중 하나를 사용하는 Python 애플리케이션을 대상으로 중간자 공격을 손쉽게 실행하고 트래픽을 마음대로 변경할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575731Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "This PEP proposes to enable verification of X509 certificate signatures, as well as hostname verification for Python's HTTP clients by default, subject to opt-out on a per-call basis.",
+      "source_hash": 39172022104630562,
+      "context_hash": 3240105424876632861,
+      "translation": "이 PEP는 호출별 옵트아웃을 허용하는 조건으로 Python HTTP 클라이언트에서 X509 인증서 서명 검증과 호스트 이름 검증을 기본적으로 활성화할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575732Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:1",
+      "source": "This change would be applied to Python 2.7, Python 3.4, and Python 3.5.",
+      "source_hash": 9260549705121105981,
+      "context_hash": 8295982334333130742,
+      "translation": "이 변경 사항은 Python 2.7, Python 3.4 및 Python 3.5에 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575732Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 3235931220233530903,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575732Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The \"S\" in \"HTTPS\" stands for secure.",
+      "source_hash": 7592850845464510207,
+      "context_hash": 4738033901933540101,
+      "translation": "\"HTTPS\"의 \"S\"는 secure를 의미합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575733Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "When Python's users type \"HTTPS\" they are expecting a secure connection, and Python should adhere to a reasonable standard of care in delivering this.",
+      "source_hash": 9551662051111371167,
+      "context_hash": 12562783570493338070,
+      "translation": "Python 사용자가 \"HTTPS\"를 입력할 때는 보안 연결을 기대하므로, Python은 이를 제공할 때 합리적인 주의 기준을 준수해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575733Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "Currently we are failing at this, and in doing so, APIs which appear simple are misleading users.",
+      "source_hash": 2973952583787377297,
+      "context_hash": 7608644153044884161,
+      "translation": "현재 Python은 이 기준을 충족하지 못하고 있으며, 그 결과 단순해 보이는 API가 사용자를 오도하고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575733Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "When asked, many Python users state that they were not aware that Python failed to perform these validations, and are shocked.",
+      "source_hash": 4551859752249678301,
+      "context_hash": 11172890947045990780,
+      "translation": "질문을 받으면 많은 Python 사용자가 Python이 이러한 검증을 수행하지 못한다는 사실을 알지 못했다고 말하며, 이에 충격을 받습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575734Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "The popularity of ``requests`` (which enables these checks by default) demonstrates that these checks are not overly burdensome in any way, and the fact that it is widely recommended as a major security improvement over the standard library clients demonstrates that many expect a higher standard for \"security by default\" from their tools.",
+      "source_hash": 16725608275727935453,
+      "context_hash": 6567875861804242311,
+      "translation": "``requests``\\ 의 인기는 (기본적으로 이러한 검사를 활성화하는) 이러한 검사가 어떤 면에서도 지나치게 부담스럽지 않다는 것을 보여 주며, 표준 라이브러리 클라이언트보다 보안을 크게 향상하는 방법으로 널리 권장된다는 사실은 많은 사용자가 도구에서 \"security by default\"에 대한 더 높은 기준을 기대한다는 것을 보여 줍니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T20:00:25.415309Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "The failure of various applications to note Python's negligence in this matter is a source of *regular* CVE assignment [#]_ [#]_ [#]_ [#]_ [#]_ [#]_ [#]_ [#]_ [#]_ [#]_ [#]_.",
+      "source_hash": 4584634243663006704,
+      "context_hash": 10372195761484588704,
+      "translation": "여러 애플리케이션이 이 문제에 대한 Python의 태만을 인지하지 못한 결과 *정기적인* CVE 할당이 발생하고 있습니다 [#]_ [#]_ [#]_ [#]_ [#]_ [#]_ [#]_ [#]_ [#]_ [#]_ [#]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575735Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-4340",
+      "source_hash": 8113209400885858231,
+      "context_hash": 4568301425708292989,
+      "translation": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-4340",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575736Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-3533",
+      "source_hash": 2238023904601916963,
+      "context_hash": 1156557509574973311,
+      "translation": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-3533",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575736Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-5822",
+      "source_hash": 4100204390890511603,
+      "context_hash": 2749470589821061984,
+      "translation": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-5822",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575736Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-5825",
+      "source_hash": 17692083958349818537,
+      "context_hash": 17453511695383345296,
+      "translation": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-5825",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575736Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-1909",
+      "source_hash": 13789651830021769497,
+      "context_hash": 17469856705260212358,
+      "translation": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-1909",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575737Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-2037",
+      "source_hash": 13602705464253299666,
+      "context_hash": 7377477852775244781,
+      "translation": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-2037",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575737Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:0",
+      "source": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-2073",
+      "source_hash": 13335885770415610295,
+      "context_hash": 14720245804695906431,
+      "translation": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-2073",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575737Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:0",
+      "source": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-2191",
+      "source_hash": 3785549592920572936,
+      "context_hash": 8898604274683025980,
+      "translation": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-2191",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575737Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:0",
+      "source": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-4111",
+      "source_hash": 12003876388885019581,
+      "context_hash": 818834329546176050,
+      "translation": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-4111",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575738Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:14/seg:0",
+      "source": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-6396",
+      "source_hash": 16259547048206758642,
+      "context_hash": 1020312166469446548,
+      "translation": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-6396",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575738Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:15/seg:0",
+      "source": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-6444",
+      "source_hash": 3364299378122348312,
+      "context_hash": 10391993089925446702,
+      "translation": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-6444",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575738Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Technical Details",
+      "source_hash": 16862285305306631796,
+      "context_hash": 9628012755089543625,
+      "translation": "기술 세부 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575738Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Python would use the system provided certificate database on all platforms.",
+      "source_hash": 17486217641017579286,
+      "context_hash": 12460552189011082684,
+      "translation": "Python은 모든 플랫폼에서 시스템이 제공하는 인증서 데이터베이스를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575739Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "Failure to locate such a database would be an error, and users would need to explicitly specify a location to fix it.",
+      "source_hash": 3317405573689669058,
+      "context_hash": 4181461769843566462,
+      "translation": "이러한 데이터베이스를 찾지 못하면 오류가 발생하며, 사용자는 이를 해결하기 위해 위치를 명시적으로 지정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575739Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "This will be achieved by adding a new ``ssl._create_default_https_context`` function, which is the same as ``ssl.create_default_context``.",
+      "source_hash": 14870800845326542407,
+      "context_hash": 7116427001526378614,
+      "translation": "이는 ``ssl._create_default_https_context``\\ 라는 새 함수를 추가하여 구현하며, 이 함수는 ``ssl.create_default_context``\\ 와 동일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575739Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "``http.client`` can then replace its usage of ``ssl._create_stdlib_context`` with the ``ssl._create_default_https_context``.",
+      "source_hash": 305029839939627405,
+      "context_hash": 3753307840317571358,
+      "translation": "그러면 ``http.client``\\ 는 ``ssl._create_stdlib_context``\\ 의 사용을 ``ssl._create_default_https_context``\\ 로 바꿀 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575740Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "Additionally ``ssl._create_stdlib_context`` is renamed ``ssl._create_unverified_context`` (an alias is kept around for backwards compatibility reasons).",
+      "source_hash": 3623770375158239739,
+      "context_hash": 12648660054682773789,
+      "translation": "또한 ``ssl._create_stdlib_context``\\ 은 ``ssl._create_unverified_context``\\ 로 이름이 변경됩니다(하위 호환성을 위해 별칭은 계속 유지됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575740Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Trust database",
+      "source_hash": 3953708918459891373,
+      "context_hash": 9154170606419528690,
+      "translation": "신뢰 데이터베이스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:36.575740Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "This PEP proposes using the system-provided certificate database.",
+      "source_hash": 13675602689465446589,
+      "context_hash": 10989492753405464992,
+      "translation": "이 PEP는 시스템에서 제공하는 인증서 데이터베이스를 사용할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697311Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "Previous discussions have suggested bundling Mozilla's certificate database and using that by default.",
+      "source_hash": 11569331546963444581,
+      "context_hash": 9253163729952432425,
+      "translation": "이전 논의에서는 Mozilla의 인증서 데이터베이스를 번들로 포함하고 기본적으로 사용하자는 제안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697315Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "This was decided against for several reasons:",
+      "source_hash": 2798534482651696920,
+      "context_hash": 8321690065956581084,
+      "translation": "다음과 같은 여러 이유로 이에 반대하기로 결정했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697315Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Using the platform trust database imposes a lower maintenance burden on the Python developers -- shipping our own trust database would require doing a release every time a certificate was revoked.",
+      "source_hash": 4169114541646718729,
+      "context_hash": 17689084006711900745,
+      "translation": "플랫폼 신뢰 데이터베이스를 사용하면 Python 개발자의 유지 관리 부담이 줄어듭니다. 자체 신뢰 데이터베이스를 제공하면 인증서가 폐기될 때마다 릴리스를 해야 하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697315Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Linux vendors, and other downstreams, would unbundle the Mozilla certificates, resulting in a more fragmented set of behaviors.",
+      "source_hash": 9184662626278799441,
+      "context_hash": 11531284259109444622,
+      "translation": "Linux 공급업체와 기타 다운스트림은 Mozilla 인증서를 번들에서 제외할 것이며, 그 결과 동작이 더욱 파편화될 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697316Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "Using the platform stores makes it easier to handle situations such as corporate internal CAs.",
+      "source_hash": 12141757108761520712,
+      "context_hash": 3948091217707103892,
+      "translation": "플랫폼 저장소를 사용하면 기업 내부 CA와 같은 상황을 더 쉽게 처리할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697316Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "OpenSSL also has a pair of environment variables, ``SSL_CERT_DIR`` and ``SSL_CERT_FILE`` which can be used to point Python at a different certificate database.",
+      "source_hash": 1474827074500482553,
+      "context_hash": 5871582527201729381,
+      "translation": "OpenSSL에는 Python이 다른 인증서 데이터베이스를 가리키도록 설정하는 데 사용할 수 있는 환경 변수 쌍 ``SSL_CERT_DIR`` 및 ``SSL_CERT_FILE``\\ 도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697317Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Backwards compatibility",
+      "source_hash": 15284458774507067265,
+      "context_hash": 14266147180326229965,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697317Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "This change will have the appearance of causing some HTTPS connections to \"break\", because they will now raise an Exception during handshake.",
+      "source_hash": 4268394202362989297,
+      "context_hash": 5135757411655114961,
+      "translation": "이 변경으로 인해 일부 HTTPS 연결이 \"중단\"되는 것처럼 보일 수 있습니다. 이제 핸드셰이크 중에 예외가 발생하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697317Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "This is misleading however, in fact these connections are presently failing silently, an HTTPS URL indicates an expectation of confidentiality and authentication.",
+      "source_hash": 4853896182727269071,
+      "context_hash": 1489209359596429271,
+      "translation": "그러나 이는 오해의 소지가 있습니다. 실제로 이러한 연결은 현재 조용히 실패하고 있으며, HTTPS URL은 기밀성과 인증에 대한 기대를 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697318Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "The fact that Python does not actually verify that the user's request has been made is a bug, further: \"Errors should never pass silently.\"",
+      "source_hash": 14918374408785656654,
+      "context_hash": 11079268505581264159,
+      "translation": "Python이 사용자의 요청이 실제로 이루어졌는지 검증하지 않는다는 사실은 버그이며, 더 나아가 \"오류가 조용히 전달되어서는 안 됩니다.\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697318Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "Nevertheless, users who have a need to access servers with self-signed or incorrect certificates would be able to do so by providing a context with custom trust roots or which disables validation (documentation should strongly recommend the former where possible).",
+      "source_hash": 3164019954677678167,
+      "context_hash": 8797406210603673738,
+      "translation": "그럼에도 불구하고 자체 서명되었거나 잘못된 인증서를 사용하는 서버에 액세스해야 하는 사용자는 사용자 지정 신뢰 루트를 포함하거나 검증을 비활성화하는 컨텍스트를 제공하여 액세스할 수 있습니다(가능한 경우 전자를 강력히 권장하도록 문서화해야 합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697318Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "Users will also be able to add necessary certificates to system trust stores in order to trust them globally.",
+      "source_hash": 7553796929565305609,
+      "context_hash": 7090284029475682471,
+      "translation": "사용자는 필요한 인증서를 시스템 신뢰 저장소에 추가하여 시스템 전역에서 해당 인증서를 신뢰하도록 할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697318Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "Twisted's 14.0 release made this same change, and it has been met with almost no opposition.",
+      "source_hash": 11465949093036888743,
+      "context_hash": 6425973457607482248,
+      "translation": "Twisted의 14.0 릴리스에서도 동일한 변경이 이루어졌으며, 거의 아무런 반대에도 부딪히지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697319Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Opting out",
+      "source_hash": 9305061660731095405,
+      "context_hash": 2732227806622540515,
+      "translation": "선택적 제외",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697319Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "For users who wish to opt out of certificate verification on a single connection, they can achieve this by providing the ``context`` argument to ``urllib.urlopen``",
+      "source_hash": 4986550065777107434,
+      "context_hash": 3886186478568201800,
+      "translation": "단일 연결에서 인증서 검증을 제외하려는 사용자는 ``urllib.urlopen``\\ 에 ``context`` 인자를 제공하면 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697319Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "It is also possible, **though highly discouraged**, to globally disable verification by monkeypatching the ``ssl`` module in versions of Python that implement this PEP",
+      "source_hash": 18373527095863290746,
+      "context_hash": 8433534355345594052,
+      "translation": "Python의 이 PEP 구현 버전에서는 **매우 권장하지 않지만**, ``ssl`` 모듈을 몽키 패치하여 검증을 전역적으로 비활성화할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697320Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "This guidance is aimed primarily at system administrators that wish to adopt newer versions of Python that implement this PEP in legacy environments that do not yet support certificate verification on HTTPS connections.",
+      "source_hash": 6920877479567149890,
+      "context_hash": 12485920781201819938,
+      "translation": "이 지침은 HTTPS 연결에서 아직 인증서 검증을 지원하지 않는 레거시 환경에 이 PEP를 구현한 최신 버전의 Python을 도입하려는 시스템 관리자들을 주된 대상으로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697320Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:1",
+      "source": "For example, an administrator may opt out by adding the monkeypatch above to ``sitecustomize.py`` in their Standard Operating Environment for Python.",
+      "source_hash": 16686427490650362046,
+      "context_hash": 14724764019349841206,
+      "translation": "예를 들어 관리자는 Python의 표준 운영 환경에 있는 ``sitecustomize.py``\\ 에 위의 몽키 패치를 추가하여 선택적으로 제외할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697320Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:2",
+      "source": "Applications and libraries SHOULD NOT be making this change process wide (except perhaps in response to a system administrator controlled configuration setting).",
+      "source_hash": 15121015084055564672,
+      "context_hash": 1203166086882840109,
+      "translation": "애플리케이션과 라이브러리는 프로세스 전체에 걸쳐 이 변경을 적용해서는 안 됩니다(SYSTEM 관리자가 제어하는 구성 설정에 대한 응답인 경우는 예외일 수 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697320Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "Particularly security sensitive applications should always provide an explicit application defined SSL context rather than relying on the default behaviour of the underlying Python implementation.",
+      "source_hash": 16276614209469969400,
+      "context_hash": 4351569245371311375,
+      "translation": "특히 보안에 민감한 애플리케이션은 기본 Python 구현의 동작에 의존하지 말고 항상 애플리케이션에서 명시적으로 정의한 SSL 컨텍스트를 제공해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697321Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Other protocols",
+      "source_hash": 5188812127840012152,
+      "context_hash": 13616616741535285007,
+      "translation": "기타 프로토콜",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697321Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "This PEP only proposes requiring this level of validation for HTTP clients, not for other protocols such as SMTP.",
+      "source_hash": 18118641763358976539,
+      "context_hash": 15842883244864317439,
+      "translation": "이 PEP는 SMTP와 같은 다른 프로토콜이 아니라 HTTP 클라이언트에 대해서만 이 수준의 검증을 요구할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697321Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "This is because while a high percentage of HTTPS servers have correct certificates, as a result of the validation performed by browsers, for other protocols self-signed or otherwise incorrect certificates are far more common.",
+      "source_hash": 15964332466351679009,
+      "context_hash": 15820631884216106717,
+      "translation": "브라우저에서 검증을 수행한 결과 높은 비율의 HTTPS 서버가 올바른 인증서를 보유하고 있는 반면, 다른 프로토콜에서는 자체 서명되었거나 그 밖의 이유로 잘못된 인증서가 훨씬 더 흔하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697322Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "Note that for SMTP at least, this appears to be changing and should be reviewed for a potential similar PEP in the future:",
+      "source_hash": 439108673042415690,
+      "context_hash": 16997499020944656879,
+      "translation": "적어도 SMTP의 경우 이러한 상황이 변하고 있는 것으로 보이므로, 향후 유사한 PEP의 가능성을 검토해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697322Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "https://www.facebook.com/notes/protect-the-graph/the-current-state-of-smtp-starttls-deployment/1453015901605223",
+      "source_hash": 14048038950206925206,
+      "context_hash": 400829055741036546,
+      "translation": "https://www.facebook.com/notes/protect-the-graph/the-current-state-of-smtp-starttls-deployment/1453015901605223",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697322Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "https://www.facebook.com/notes/protect-the-graph/massive-growth-in-smtp-starttls-deployment/1491049534468526",
+      "source_hash": 12842755233763295989,
+      "context_hash": 4060460329531731560,
+      "translation": "https://www.facebook.com/notes/protect-the-graph/massive-growth-in-smtp-starttls-deployment/1491049534468526",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697323Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Python Versions",
+      "source_hash": 319501331689746681,
+      "context_hash": 10011361374548947521,
+      "translation": "Python 버전",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697323Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "This PEP describes changes that will occur on both the 3.4.x, 3.5 and 2.7.X branches.",
+      "source_hash": 7007545321138249910,
+      "context_hash": 8980556998706588725,
+      "translation": "이 PEP는 3.4.x, 3.5 및 2.7.X 브랜치 모두에서 발생할 변경 사항을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697323Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "For 2.7.X this will require backporting the ``context`` (``SSLContext``) argument to ``httplib``, in addition to the features already backported in :pep:`466`.",
+      "source_hash": 9199653512890505556,
+      "context_hash": 10080942170365332771,
+      "translation": "2.7.X에서는 이미 :pep:`466`\\ 에서 백포팅된 기능에 더해 ``context`` (``SSLContext``) 인자를 ``httplib``\\ 에 백포팅해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697323Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 416938590474431810,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697324Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "**LANDED**: `Issue 22366 <http://bugs.python.org/issue22366>`_ adds the ``context`` argument to ``urlib.request.urlopen``.",
+      "source_hash": 16088413725700054553,
+      "context_hash": 3527442322581783792,
+      "translation": "**LANDED**: `Issue 22366 <http://bugs.python.org/issue22366>`_\\ 는 ``urlib.request.urlopen``\\ 에 ``context`` 인자를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:53.697324Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "`Issue 22417 <http://bugs.python.org/issue22417>`_ implements the substance of this PEP.",
+      "source_hash": 1241763550755802415,
+      "context_hash": 1921511632495032697,
+      "translation": "`Issue 22417 <http://bugs.python.org/issue22417>`_\\ 은 이 PEP의 본질을 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:39.270565Z",
+      "issues": []
+    }
+  ]
+}

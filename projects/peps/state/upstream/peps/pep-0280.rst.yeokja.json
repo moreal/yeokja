@@ -1,0 +1,1018 @@
+{
+  "version": 1,
+  "source_hash": 13174193769132014105,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Optimizing access to globals",
+      "source_hash": 3493706164443500093,
+      "context_hash": 16818398799333343924,
+      "translation": "전역 변수 접근 최적화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964448Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Deferral",
+      "source_hash": 16355012257331579984,
+      "context_hash": 11813211520111691583,
+      "translation": "보류",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964451Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "While this PEP is a nice idea, no-one has yet emerged to do the work of hashing out the differences between this PEP, :pep:`266` and :pep:`267`.",
+      "source_hash": 6667930985811638746,
+      "context_hash": 9475952326332470226,
+      "translation": "이 PEP는 좋은 아이디어이지만, 이 PEP와 :pep:`266`, :pep:`267` 사이의 차이점을 정리하는 작업을 맡아 나선 사람이 아직 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964451Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "Hence, it is being deferred.",
+      "source_hash": 5010031413157178454,
+      "context_hash": 13043317402623609186,
+      "translation": "따라서 이 PEP는 보류됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964451Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 6433161284943683643,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964452Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "This PEP describes yet another approach to optimizing access to module globals, providing an alternative to :pep:`266` (Optimizing Global Variable/Attribute Access by Skip Montanaro) and :pep:`267` (Optimized Access to Module Namespaces by Jeremy Hylton).",
+      "source_hash": 18097828548602818197,
+      "context_hash": 6023934325010021188,
+      "translation": "이 PEP는 모듈 전역 변수 접근을 최적화하는 또 다른 접근 방식을 설명하며, :pep:`266`\\ (Skip Montanaro의 전역 변수/속성 접근 최적화)과 :pep:`267`\\ (Jeremy Hylton의 모듈 네임스페이스 접근 최적화)에 대한 대안을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964452Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "The expectation is that eventually one approach will be picked and implemented; possibly multiple approaches will be prototyped first.",
+      "source_hash": 537401453149761355,
+      "context_hash": 4692534261240213736,
+      "translation": "궁극적으로는 여러 접근 방식 중 하나가 선택되어 구현될 것으로 예상되며, 경우에 따라서는 여러 접근 방식이 먼저 시제품으로 제작될 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964452Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Description",
+      "source_hash": 1758583599421982602,
+      "context_hash": 17170948916040095943,
+      "translation": "설명",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964452Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "(Note: Jason Orendorff writes: \"\"\"I implemented this once, long ago, for Python 1.5-ish, I believe.",
+      "source_hash": 15481399950653072950,
+      "context_hash": 18160681445010626100,
+      "translation": "(참고: Jason Orendorff는 다음과 같이 적었습니다: \"\"\"저는 이것을 오래 전, 아마 Python 1.5쯤 되는 버전에서 한 번 구현해 본 적이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964452Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "I got it to the point where it was only 15% slower than ordinary Python, then abandoned it. ;) In my implementation, \"cells\" were real first-class objects, and \"celldict\" was a copy-and-hack version of dictionary.",
+      "source_hash": 17215341436627778840,
+      "context_hash": 4542958037679207853,
+      "translation": "일반 Python보다 15%만 느린 수준까지 만들었다가 그 뒤 포기했습니다. ;) 제 구현에서 \"cell\"은 진짜 일급(first-class) 객체였고, \"celldict\"는 딕셔너리를 복사해서 손댄 버전이었습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T17:34:53.964453Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "I forget how the rest worked.\"\"\"  Reference: https://mail.python.org/pipermail/python-dev/2002-February/019876.html)",
+      "source_hash": 5897059148930843016,
+      "context_hash": 7861492004611745847,
+      "translation": "나머지가 어떻게 동작했는지는 기억나지 않습니다.\"\"\"  참조: https://mail.python.org/pipermail/python-dev/2002-February/019876.html)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964453Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Let a cell be a really simple Python object, containing a pointer to a Python object and a pointer to a cell.",
+      "source_hash": 2176213470095034272,
+      "context_hash": 8161692086197983419,
+      "translation": "cell을, Python 객체를 가리키는 포인터 하나와 cell을 가리키는 포인터 하나를 담은 아주 단순한 Python 객체라고 합시다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964454Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "Both pointers may be ``NULL``.",
+      "source_hash": 7420386135094220364,
+      "context_hash": 18230932904257325102,
+      "translation": "두 포인터는 모두 ``NULL``\\ 일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964454Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "A Python implementation could be",
+      "source_hash": 3220168961266815207,
+      "context_hash": 13922802347605114063,
+      "translation": "Python 구현은 다음과 같을 수 있습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964454Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "The cellptr attribute is used for chaining cells together for searching built-ins; this will be explained later.",
+      "source_hash": 5864270050484515156,
+      "context_hash": 1808275958772786634,
+      "translation": "cellptr 속성은 내장 객체(built-ins)를 검색하기 위해 cell들을 서로 연결하는 데 사용되며, 이는 뒤에서 설명됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964454Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "Let a celldict be a mapping from strings (the names of a module's globals) to objects (the values of those globals), implemented using a dict of cells.",
+      "source_hash": 15625206237013743719,
+      "context_hash": 4075738526802359188,
+      "translation": "celldict를, 문자열(모듈 전역 변수의 이름)에서 객체(그 전역 변수의 값)로의 매핑을, cell들의 딕셔너리를 이용해 구현한 것이라고 합시다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T17:34:53.964454Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "A Python implementation could be",
+      "source_hash": 3220168961266815207,
+      "context_hash": 14723571374093073067,
+      "translation": "Python 구현은 다음과 같을 수 있습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964455Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "It is possible that a cell exists corresponding to a given key, but the cell's objptr is ``NULL``; let's call such a cell empty.",
+      "source_hash": 16816239937836600259,
+      "context_hash": 476713117900814446,
+      "translation": "어떤 키에 해당하는 cell이 존재하지만 그 cell의 objptr이 ``NULL``\\ 인 경우가 있을 수 있는데, 이러한 cell을 비어 있는(empty) cell이라고 부르겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964455Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:1",
+      "source": "When the celldict is used as a mapping, it is as if empty cells don't exist.",
+      "source_hash": 13164796055595246791,
+      "context_hash": 14472640969714212671,
+      "translation": "celldict가 매핑으로 사용될 때는 마치 비어 있는 cell이 존재하지 않는 것처럼 취급됩니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T17:34:53.964455Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:2",
+      "source": "However, once added, a cell is never deleted from a celldict, and it is possible to get at empty cells using the ``getcell()`` method.",
+      "source_hash": 9540158472277641394,
+      "context_hash": 6470255617597729337,
+      "translation": "하지만 일단 추가된 cell은 celldict에서 결코 삭제되지 않으며, ``getcell()`` 메서드를 사용하면 비어 있는 cell에도 접근할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964456Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "The celldict implementation never uses the cellptr attribute of cells.",
+      "source_hash": 6077851978768981228,
+      "context_hash": 8131254126497621770,
+      "translation": "celldict 구현은 cell의 cellptr 속성을 전혀 사용하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964456Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "We change the module implementation to use a celldict for its ``__dict__``.",
+      "source_hash": 970590767082939521,
+      "context_hash": 4252239800910990161,
+      "translation": "모듈 구현을 변경하여 ``__dict__``\\ 에 celldict를 사용하도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964457Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:1",
+      "source": "The module's getattr, setattr and delattr operations now map to getitem, setitem and delitem on the celldict.",
+      "source_hash": 101266338948797192,
+      "context_hash": 13879199137287811799,
+      "translation": "모듈의 getattr, setattr, delattr 연산은 이제 celldict의 getitem, setitem, delitem 연산에 대응됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964457Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:2",
+      "source": "The type of ``<module>.__dict__`` and ``globals()`` is probably the only backwards incompatibility.",
+      "source_hash": 9985738659916760038,
+      "context_hash": 3349020722915686781,
+      "translation": "``<module>.__dict__``\\ 와 ``globals()``\\ 의 타입이 아마 유일한 하위 호환성 문제일 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964458Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:0",
+      "source": "When a module is initialized, its ``__builtins__`` is initialized from the ``__builtin__`` module's ``__dict__``, which is itself a celldict.",
+      "source_hash": 4839287612520752691,
+      "context_hash": 2477402715348920776,
+      "translation": "모듈이 초기화될 때, 해당 모듈의 ``__builtins__``\\ 는 ``__builtin__`` 모듈의 ``__dict__``\\ 로부터 초기화되며, 이는 그 자체로 celldict입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964458Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:1",
+      "source": "For each cell in ``__builtins__``, the new module's ``__dict__`` adds a cell with a ``NULL`` objptr, whose cellptr points to the corresponding cell of ``__builtins__``.",
+      "source_hash": 16588525975501981255,
+      "context_hash": 11277537123710679700,
+      "translation": "``__builtins__``\\ 안의 각 cell에 대해, 새 모듈의 ``__dict__``\\ 는 objptr이 ``NULL``\\ 이고 cellptr이 ``__builtins__``\\ 의 해당 cell을 가리키는 cell을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964458Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:10/seg:2",
+      "source": "Python pseudo-code (ignoring rexec)",
+      "source_hash": 18229392832846766727,
+      "context_hash": 4686937234594144447,
+      "translation": "Python 의사 코드(rexec는 무시함)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964458Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:12/seg:0",
+      "source": "The compiler generates ``LOAD_GLOBAL_CELL <i>`` (and ``STORE_GLOBAL_CELL <i>`` etc.) opcodes for references to globals, where ``<i>`` is a small index with meaning only within one code object like the const index in ``LOAD_CONST``.",
+      "source_hash": 3731721256060435932,
+      "context_hash": 7590573555637570346,
+      "translation": "컴파일러는 전역 변수 참조에 대해 ``LOAD_GLOBAL_CELL <i>``\\ (및 ``STORE_GLOBAL_CELL <i>`` 등) 옵코드를 생성하는데, 여기서 ``<i>``\\ 는 ``LOAD_CONST``\\ 의 const 인덱스처럼 하나의 코드 객체 안에서만 의미를 갖는 작은 인덱스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964458Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:12/seg:1",
+      "source": "The code object has a new tuple, ``co_globals``, giving the names of the globals referenced by the code indexed by ``<i>``.",
+      "source_hash": 7897360387468132324,
+      "context_hash": 3566125159057788242,
+      "translation": "코드 객체는 ``co_globals``\\ 라는 새로운 튜플을 가지며, 이는 ``<i>``\\ 로 인덱싱되는 코드가 참조하는 전역 변수들의 이름을 담고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964459Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:12/seg:2",
+      "source": "No new analysis is required to be able to do this.",
+      "source_hash": 17273566004191179908,
+      "context_hash": 263214477949134995,
+      "translation": "이를 수행하기 위해 새로운 분석은 전혀 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:53.964459Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:0",
+      "source": "When a function object is created from a code object and a celldict, the function object creates an array of cell pointers by asking the celldict for cells corresponding to the names in the code object's ``co_globals``.",
+      "source_hash": 4061474130419784513,
+      "context_hash": 4960475363599639055,
+      "translation": "code object와 celldict로부터 함수 객체가 생성될 때, 함수 객체는 코드 객체의 ``co_globals``\\ 에 있는 이름들에 대응하는 셀을 celldict에 요청하여 셀 포인터 배열을 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150053Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:1",
+      "source": "If the celldict doesn't already have a cell for a particular name, it creates and an empty one.",
+      "source_hash": 5645078339600646775,
+      "context_hash": 708632617896957541,
+      "translation": "celldict에 특정 이름에 대한 셀이 아직 없으면, 빈 셀을 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150057Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:2",
+      "source": "This array of cell pointers is stored on the function object as ``func_cells``.",
+      "source_hash": 17380354524401423629,
+      "context_hash": 3736821012155365719,
+      "translation": "이 셀 포인터 배열은 함수 객체에 ``func_cells``\\ 로 저장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150058Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:13/seg:3",
+      "source": "When a function object is created from a regular dict instead of a celldict, ``func_cells`` is a ``NULL`` pointer.",
+      "source_hash": 10455490826120439352,
+      "context_hash": 14698291291665580297,
+      "translation": "celldict 대신 일반 딕셔너리로부터 함수 객체가 생성되면, ``func_cells``\\ 는 ``NULL`` 포인터입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150058Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:14/seg:0",
+      "source": "When the VM executes a ``LOAD_GLOBAL_CELL <i>`` instruction, it gets cell number ``<i>`` from ``func_cells``.",
+      "source_hash": 16506592980601836001,
+      "context_hash": 1167971904136207043,
+      "translation": "VM이 ``LOAD_GLOBAL_CELL <i>`` 명령어를 실행하면, ``func_cells``\\ 에서 셀 번호 ``<i>``\\ 를 가져옵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150058Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:14/seg:1",
+      "source": "It then looks in the cell's ``PyObject`` pointer, and if not ``NULL``, that's the global value.",
+      "source_hash": 9723395616230855325,
+      "context_hash": 14756635360967659977,
+      "translation": "그런 다음 셀의 ``PyObject`` 포인터를 확인하며, ``NULL``\\ 이 아니면 그것이 전역 값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150058Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:14/seg:2",
+      "source": "If it is ``NULL``, it follows the cell's cell pointer to the next cell, if it is not ``NULL``, and looks in the ``PyObject`` pointer in that cell.",
+      "source_hash": 13402527406587869556,
+      "context_hash": 17149145143804430333,
+      "translation": "``NULL``\\ 이면, 셀의 셀 포인터를 따라 다음 셀로 이동하며(``NULL``\\ 이 아닌 경우), 그 셀의 ``PyObject`` 포인터를 확인합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150059Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:14/seg:3",
+      "source": "If that's also ``NULL``, or if there is no second cell, ``NameError`` is raised.  (It could follow the chain of cell pointers until a ``NULL`` cell pointer is found; but I have no use for this.)  Similar for ``STORE_GLOBAL_CELL <i>``, except it doesn't follow the cell pointer chain -- it always stores in the first cell.",
+      "source_hash": 16365499479743909112,
+      "context_hash": 3043349344156180457,
+      "translation": "그것마저도 ``NULL``\\ 이거나 두 번째 셀이 없으면, ``NameError``\\ 가 발생합니다. (``NULL`` 셀 포인터를 찾을 때까지 셀 포인터 체인을 따라갈 수도 있지만, 저는 이것을 쓸 일이 없습니다.) ``STORE_GLOBAL_CELL <i>``\\ 도 비슷하지만, 셀 포인터 체인을 따라가지 않고 항상 첫 번째 셀에 저장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150059Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:0",
+      "source": "There are fallbacks in the VM for the case where the function's globals aren't a celldict, and hence ``func_cells`` is ``NULL``.",
+      "source_hash": 12559946438706361337,
+      "context_hash": 16552995472148946982,
+      "translation": "함수의 전역이 celldict가 아니어서 ``func_cells``\\ 가 ``NULL``\\ 인 경우를 위한 폴백이 VM에 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150059Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:15/seg:1",
+      "source": "In that case, the code object's ``co_globals`` is indexed with ``<i>`` to find the name of the corresponding global and this name is used to index the function's globals dict.",
+      "source_hash": 18379088926141309640,
+      "context_hash": 16445655100303704534,
+      "translation": "이 경우, 코드 객체의 ``co_globals``\\ 를 ``<i>``\\ 로 인덱싱하여 해당 전역의 이름을 찾고, 이 이름을 사용해 함수의 전역 딕셔너리를 인덱싱합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150059Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Additional Ideas",
+      "source_hash": 9440270986633261760,
+      "context_hash": 6205029510343450211,
+      "translation": "추가 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150060Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Never make ``func_cell`` a ``NULL`` pointer; instead, make up an array of empty cells, so that ``LOAD_GLOBAL_CELL`` can index ``func_cells`` without a ``NULL`` check.",
+      "source_hash": 14658202994565221229,
+      "context_hash": 7654021437661129690,
+      "translation": "``func_cell``\\ 을 절대 ``NULL`` 포인터로 만들지 말고, 대신 빈 셀들의 배열을 만들어 ``LOAD_GLOBAL_CELL``\\ 이 ``NULL`` 검사 없이 ``func_cells``\\ 를 인덱싱할 수 있게 하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150060Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Make ``c.cellptr`` equal to c when a cell is created, so that ``LOAD_GLOBAL_CELL`` can always dereference ``c.cellptr`` without a ``NULL`` check.",
+      "source_hash": 14721617689277005768,
+      "context_hash": 5467203177269946232,
+      "translation": "셀이 생성될 때 ``c.cellptr``\\ 을 c와 같도록 만들어, ``LOAD_GLOBAL_CELL``\\ 이 ``NULL`` 검사 없이 항상 ``c.cellptr``\\ 을 역참조할 수 있게 하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150060Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "With these two additional ideas added, here's Python pseudo-code for ``LOAD_GLOBAL_CELL``",
+      "source_hash": 12186414218560032985,
+      "context_hash": 12666232660627864621,
+      "translation": "이 두 가지 추가 아이디어를 더하면, ``LOAD_GLOBAL_CELL``\\ 에 대한 Python 의사코드는 다음과 같습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150061Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "Be more aggressive:  put the actual values of builtins into module dicts, not just pointers to cells containing the actual values.",
+      "source_hash": 2886775422256016396,
+      "context_hash": 10902974397059609720,
+      "translation": "더 적극적으로 하십시오. 빌트인의 실제 값을 담은 셀에 대한 포인터가 아니라, 빌트인의 실제 값 자체를 모듈 딕셔너리에 넣으십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150061Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "There are two points to this:  (1) Simplify and speed access, which is the most common operation.  (2) Support faithful emulation of extreme existing corner cases.",
+      "source_hash": 10491916295178883234,
+      "context_hash": 15911512765930604745,
+      "translation": "여기에는 두 가지 요점이 있습니다. (1) 가장 흔한 연산인 접근을 단순화하고 빠르게 합니다. (2) 극단적인 기존 코너 케이스의 충실한 에뮬레이션을 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150061Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "WRT  #2, the set of builtins in the scheme above is captured at the time a module dict is first created.",
+      "source_hash": 8466701172847960928,
+      "context_hash": 14289883494070500830,
+      "translation": "두 번째 요점과 관련하여, 위 방식에서 빌트인의 집합은 모듈 딕셔너리가 처음 생성되는 시점에 캡처됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150061Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:1",
+      "source": "Mutations to the set of builtin names following that don't get reflected in the module dicts.",
+      "source_hash": 11837478327754507257,
+      "context_hash": 6663153333293202020,
+      "translation": "그 이후 빌트인 이름 집합에 대한 변경은 모듈 딕셔너리에 반영되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150062Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:2",
+      "source": "Example: consider files ``main.py`` and ``cheater.py``",
+      "source_hash": 17209581025411254237,
+      "context_hash": 13161329208591660602,
+      "translation": "예시: ``main.py``\\ 와 ``cheater.py`` 파일을 생각해 보십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150062Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "If ``main.py`` is run under Python 2.2 (or before), 666 is printed.",
+      "source_hash": 8724185803940793536,
+      "context_hash": 14463116769458661665,
+      "translation": "``main.py``\\ 를 Python 2.2(또는 그 이전 버전)에서 실행하면 666이 출력됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150062Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:1",
+      "source": "But under the proposal, ``__builtin__.pachinko`` doesn't exist at the time main's ``__dict__`` is initialized.",
+      "source_hash": 13914065864897531965,
+      "context_hash": 17773214827632342892,
+      "translation": "그러나 이 제안 하에서는, main의 ``__dict__``\\ 가 초기화되는 시점에 ``__builtin__.pachinko``\\ 는 존재하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150062Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:2",
+      "source": "When the function object for f is created, ``main.__dict__`` grows a pachinko cell mapping to two ``NULLs``.",
+      "source_hash": 12035088665329622012,
+      "context_hash": 16783758352300901799,
+      "translation": "f에 대한 함수 객체가 생성될 때, ``main.__dict__``\\ 에는 두 개의 ``NULL``\\ 로 매핑되는 pachinko 셀이 추가됩니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T17:31:53.150063Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:3",
+      "source": "When ``cheat()`` is called, ``__builtin__.__dict__`` grows a pachinko cell too, but ``main.__dict__`` doesn't know-- and will never know --about that.",
+      "source_hash": 7812489181307895184,
+      "context_hash": 17945482026372195438,
+      "translation": "``cheat()``\\ 가 호출되면, ``__builtin__.__dict__``\\ 에도 pachinko 셀이 추가되지만, ``main.__dict__``\\ 는 그것을 알지 못하며 -- 앞으로도 절대 알지 못할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150064Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:4",
+      "source": "When f's return stmt references pachinko, in will still find the double-NULLs in ``main.__dict__``'s ``pachinko`` cell, and so raise ``NameError``.",
+      "source_hash": 3625943601634135077,
+      "context_hash": 6640593333039948715,
+      "translation": "f의 return 문이 pachinko를 참조할 때, ``main.__dict__``\\ 의 ``pachinko`` 셀에서 여전히 이중 NULL을 발견하게 되고, 그에 따라 ``NameError``\\ 가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150064Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "A similar (in cause) break in compatibility can occur if a module global foo is del'ed, but a builtin foo was created prior to that but after the module dict was first created.",
+      "source_hash": 2894583524071218934,
+      "context_hash": 8366838816877326248,
+      "translation": "모듈 전역 foo가 del되었지만, 모듈 딕셔너리가 처음 생성된 이후이면서 그 이전에 빌트인 foo가 생성된 경우에도, (원인은 다르지만) 비슷한 호환성 붕괴가 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150065Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:1",
+      "source": "Then the builtin foo becomes visible in the module under 2.2 and before, but remains invisible under the proposal.",
+      "source_hash": 17556977609512912645,
+      "context_hash": 2596625595059728705,
+      "translation": "그러면 2.2 및 그 이전 버전에서는 빌트인 foo가 모듈에서 보이지만, 이 제안 하에서는 계속 보이지 않게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150065Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "Mutating builtins is extremely rare (most programs never mutate the builtins, and it's hard to imagine a plausible use for frequent mutation of the builtins -- I've never seen or heard of one), so it doesn't matter how expensive mutating the builtins becomes.",
+      "source_hash": 8554026330853303010,
+      "context_hash": 10105856509606652394,
+      "translation": "빌트인을 변경하는 일은 극히 드물기 때문에(대부분의 프로그램은 빌트인을 절대 변경하지 않으며, 빌트인을 자주 변경하는 그럴듯한 용도를 상상하기도 어렵습니다 -- 저는 그런 경우를 본 적도 들은 적도 없습니다), 빌트인 변경 비용이 얼마나 커지든 상관없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150065Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:1",
+      "source": "OTOH, referencing globals and builtins is very common.",
+      "source_hash": 15765750144055999625,
+      "context_hash": 14986629812885887894,
+      "translation": "반면, 전역과 빌트인을 참조하는 것은 매우 흔합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150065Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:2",
+      "source": "Combining those observations suggests a more aggressive caching of builtins in module globals, speeding access at the expense of making mutations of the builtins (potentially much) more expensive to keep the caches in synch.",
+      "source_hash": 5825901246540810739,
+      "context_hash": 9353193146825991386,
+      "translation": "이러한 관찰들을 종합하면, 모듈 전역에서 빌트인을 더 적극적으로 캐싱하여 접근을 빠르게 하는 대신, 캐시를 동기화 상태로 유지하기 위해 빌트인 변경 비용을 (상당히) 더 비싸게 만드는 방안이 제시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150066Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:0",
+      "source": "Much of the scheme above remains the same, and most of the rest is just a little different.",
+      "source_hash": 1178173697886081585,
+      "context_hash": 8080718634596520278,
+      "translation": "위 방식의 대부분은 그대로 유지되며, 나머지 대부분도 약간만 다를 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150066Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:1",
+      "source": "A cell changes to",
+      "source_hash": 15644738843480120420,
+      "context_hash": 11122470292705907171,
+      "translation": "셀은 다음과 같이 바뀝니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:53.150066Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:0",
+      "source": "and a celldict maps strings to this version of cells.  ``builtinflag`` is true when and only when objptr contains a value obtained from the builtins; in other words, it's true when and only when a cell is acting as a cached value.",
+      "source_hash": 4241848586680846059,
+      "context_hash": 11978367253128998252,
+      "translation": "그리고 celldict는 문자열을 이 버전의 셀로 매핑합니다. ``builtinflag``\\ 는 objptr이 내장 객체(builtins)로부터 얻은 값을 포함하고 있을 때만, 그리고 오직 그럴 때만 참입니다. 다시 말해, 셀이 캐시된 값으로서 동작하고 있을 때만, 그리고 오직 그럴 때만 참입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362451Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:1",
+      "source": "When ``builtinflag`` is false, objptr is the value of a module global (possibly ``NULL``).  celldict changes to",
+      "source_hash": 10400563438800481146,
+      "context_hash": 4042260284463288014,
+      "translation": "``builtinflag``\\ 가 거짓일 때, objptr은 모듈 전역 변수의 값입니다(``NULL``\\ 일 수도 있습니다). celldict는 다음과 같이 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362460Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:16/seg:0",
+      "source": "The speed benefit comes from simplifying ``LOAD_GLOBAL_CELL``, which I expect is executed more frequently than all other namespace operations combined",
+      "source_hash": 2627850454317924580,
+      "context_hash": 16954994908759941291,
+      "translation": "속도상의 이점은 ``LOAD_GLOBAL_CELL``\\ 을 단순화한 데서 비롯되는데, 이는 다른 모든 네임스페이스 연산을 합친 것보다 더 자주 실행될 것으로 예상됩니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T17:29:12.362461Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:0",
+      "source": "That is, accessing builtins and accessing module globals are equally fast.",
+      "source_hash": 15339122323968853082,
+      "context_hash": 15566143524907241554,
+      "translation": "즉, 내장 객체(builtins) 접근과 모듈 전역 변수 접근이 똑같이 빠릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362466Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:1",
+      "source": "For module globals, a NULL-pointer test+branch is saved.",
+      "source_hash": 15919375182623533887,
+      "context_hash": 16664251624904980137,
+      "translation": "모듈 전역 변수의 경우, NULL 포인터 검사+분기 하나가 절약됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362467Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:18/seg:2",
+      "source": "For builtins, an additional pointer chase is also saved.",
+      "source_hash": 3679337072032311520,
+      "context_hash": 8777310413672497445,
+      "translation": "내장 객체(builtins)의 경우, 추가적인 포인터 추적 하나도 절약됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362467Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:19/seg:0",
+      "source": "The other part needed to make this fly is expensive, propagating mutations of builtins into the module dicts that were initialized from the builtins.",
+      "source_hash": 1229743603436438190,
+      "context_hash": 18243869944774586394,
+      "translation": "이를 실현하는 데 필요한 나머지 부분은 비용이 큰데, 바로 내장 객체(builtins)의 변경 사항을 내장 객체로부터 초기화된 모듈 딕셔너리들로 전파하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362468Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:19/seg:1",
+      "source": "This is much like, in 2.2, propagating changes in new-style base classes to their descendants:  the builtins need to maintain a list of weakrefs to the modules (or module dicts) initialized from the builtin's dict.",
+      "source_hash": 13731202726815787472,
+      "context_hash": 3972205245374635738,
+      "translation": "이는 2.2 버전에서 새 스타일 베이스 클래스의 변경 사항을 그 자식들에게 전파하는 것과 매우 유사합니다. 즉, 내장 객체(builtins)는 자신의 딕셔너리로부터 초기화된 모듈들(또는 모듈 딕셔너리들)에 대한 약한 참조(weakref) 목록을 유지해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362469Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:19/seg:2",
+      "source": "Given a mutation to the builtin dict (adding a new key, changing the value associated with an existing key, or deleting a key), traverse the list of module dicts and make corresponding mutations to them.",
+      "source_hash": 16472988259762888346,
+      "context_hash": 9178742442128729304,
+      "translation": "내장 객체(builtins) 딕셔너리에 변경(새 키 추가, 기존 키에 연결된 값 변경, 또는 키 삭제)이 가해지면, 모듈 딕셔너리 목록을 순회하며 그에 대응하는 변경을 가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362469Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:19/seg:3",
+      "source": "This is straightforward; for example, if a key is deleted from builtins, execute ``reflect_bltin_del`` in each module",
+      "source_hash": 17166448898798784579,
+      "context_hash": 18356827122429831731,
+      "translation": "이는 간단합니다. 예를 들어, 내장 객체(builtins)에서 키가 삭제되면 각 모듈에서 ``reflect_bltin_del``\\ 을 실행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362470Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:21/seg:0",
+      "source": "Note that ``c.builtinflag`` protects from us erroneously deleting a module global of the same name.",
+      "source_hash": 9972243947640200283,
+      "context_hash": 6646916267460128233,
+      "translation": "``c.builtinflag``\\ 는 동일한 이름의 모듈 전역 변수를 우리가 잘못 삭제하는 것을 막아준다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362471Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:21/seg:1",
+      "source": "Adding a new (key, value) builtin pair is similar",
+      "source_hash": 11964324902164352816,
+      "context_hash": 311171401460002783,
+      "translation": "새로운 (키, 값) 내장 객체(builtin) 쌍을 추가하는 것도 비슷합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362471Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:23/seg:0",
+      "source": "Changing the value of an existing builtin",
+      "source_hash": 17239457523480171526,
+      "context_hash": 624851804512581902,
+      "translation": "기존 내장 객체(builtin)의 값을 변경하는 경우",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362472Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "FAQs",
+      "source_hash": 8755026069301155453,
+      "context_hash": 6968705172481244873,
+      "translation": "자주 묻는 질문",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362473Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Q: Will it still be possible to:",
+      "source_hash": 17545385876873428640,
+      "context_hash": 3452719861851888439,
+      "translation": "질문: 다음이 여전히 가능할까요?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362474Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "install new builtins in the ``__builtin__`` namespace and have",
+      "source_hash": 3669399170174309672,
+      "context_hash": 700323795040083107,
+      "translation": "``__builtin__`` 네임스페이스에 새 내장 객체(builtins)를 설치하여",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T17:29:12.362475Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "them available in all already loaded modules right away ?",
+      "source_hash": 950314903002014206,
+      "context_hash": 15998543154586569650,
+      "translation": "이미 로드된 모든 모듈에서 즉시 사용할 수 있도록 하는 것",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362477Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "override builtins (e.g. ``open()``) with my own copies",
+      "source_hash": 8714363816302192121,
+      "context_hash": 18389853881806027288,
+      "translation": "내장 객체(builtins)(예: ``open()``)를 저만의 사본으로 오버라이드하되",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362477Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "(e.g. to increase security) in a way that makes these new copies override the previous ones in all modules ?",
+      "source_hash": 8853976405388495009,
+      "context_hash": 9366529514283965801,
+      "translation": "(예를 들어 보안을 강화하기 위해) 이 새 사본이 모든 모듈에서 이전 것을 오버라이드하도록 만드는 것",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362478Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "A: Yes, this is the whole point of this design.",
+      "source_hash": 9812619218659401564,
+      "context_hash": 17710755723045121049,
+      "translation": "답변: 예, 이것이 바로 이 설계의 전체 요점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362479Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:1",
+      "source": "In the original approach, when ``LOAD_GLOBAL_CELL`` finds a ``NULL`` in the second cell, it should go back to see if the ``__builtins__`` dict has been modified (the pseudo code doesn't have this yet).",
+      "source_hash": 14867032601458440838,
+      "context_hash": 1425560449534031793,
+      "translation": "원래의 접근 방식에서는, ``LOAD_GLOBAL_CELL``\\ 이 두 번째 셀에서 ``NULL``\\ 을 발견하면 ``__builtins__`` 딕셔너리가 수정되었는지 다시 확인해야 합니다(의사 코드에는 아직 이것이 반영되어 있지 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362480Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:2",
+      "source": "Tim's \"more aggressive\" alternative also takes care of this.",
+      "source_hash": 5980531042382466446,
+      "context_hash": 14427102098929777876,
+      "translation": "Tim의 \"더 공격적인\" 대안 역시 이를 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362480Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "Q: How does the new scheme get along with the restricted execution model?",
+      "source_hash": 15875945883716906919,
+      "context_hash": 2004382278464716833,
+      "translation": "질문: 새로운 방식은 제한된 실행 모델과 어떻게 어울리나요?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362481Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "A: It is intended to support that fully.",
+      "source_hash": 4439890710475254729,
+      "context_hash": 5887134108682195046,
+      "translation": "답변: 이를 완전히 지원하도록 의도되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362482Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "Q: What happens when a global is deleted?",
+      "source_hash": 7443534224209269366,
+      "context_hash": 16670987464915427153,
+      "translation": "질문: 전역 변수가 삭제되면 어떤 일이 일어나나요?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362482Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "A: The module's celldict would have a cell with a ``NULL`` objptr for that key.",
+      "source_hash": 9502580876453230755,
+      "context_hash": 15687504792132734041,
+      "translation": "답변: 해당 모듈의 celldict는 그 키에 대해 objptr이 ``NULL``\\ 인 셀을 가지게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362483Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:1",
+      "source": "This is true in both variations, but the \"aggressive\" variation goes on to see whether this unmasks a builtin of the same name, and if so copies its value (just a pointer-copy of the ultimate ``PyObject*``) into the cell's objptr and sets the cell's ``builtinflag`` to true.",
+      "source_hash": 3638309239474949822,
+      "context_hash": 18133502219192371134,
+      "translation": "이는 두 변형 모두에서 참이지만, \"공격적인\" 변형에서는 더 나아가 이것이 동일한 이름의 내장 객체(builtin)를 드러내는지 확인하고, 만약 그렇다면 그 값(최종적인 ``PyObject*``\\ 의 단순한 포인터 복사)을 셀의 objptr에 복사하고 셀의 ``builtinflag``\\ 를 참으로 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362484Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "Q: What would the C code for ``LOAD_GLOBAL_CELL`` look like?",
+      "source_hash": 3743586245200619234,
+      "context_hash": 5694370832314010363,
+      "translation": "질문: ``LOAD_GLOBAL_CELL``\\ 의 C 코드는 어떤 모습일까요?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362485Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "A: The first version, with the first two bullets under \"Additional ideas\" incorporated, could look like this",
+      "source_hash": 14977249971884444967,
+      "context_hash": 3912571932974031303,
+      "translation": "답변: \"추가 아이디어\" 아래 첫 두 항목을 반영한 첫 번째 버전은 다음과 같은 모습일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362485Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "We could even write it like this (idea courtesy of Ka-Ping Yee)",
+      "source_hash": 16538511420865417585,
+      "context_hash": 5581867605090416094,
+      "translation": "이렇게 작성할 수도 있습니다(Ka-Ping Yee의 아이디어 제공에 감사드립니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362486Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:0",
+      "source": "In modern CPU architectures, this reduces the number of branches taken for built-ins, which might be a really good thing, while any decent memory cache should realize that ``cell->cellptr`` is the same as cell for regular globals and hence this should be very fast in that case too.",
+      "source_hash": 15622586178473600353,
+      "context_hash": 10908682654297639517,
+      "translation": "현대 CPU 아키텍처에서는, 이것이 내장 객체(builtins)에 대해 취해지는 분기의 수를 줄여주는데, 이는 정말 좋은 일일 수 있습니다. 반면 어지간히 괜찮은 메모리 캐시라면 일반 전역 변수의 경우 ``cell->cellptr``\\ 이 cell과 동일하다는 것을 알아차릴 것이므로, 이 경우에도 매우 빠를 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362486Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:0",
+      "source": "For the aggressive variant",
+      "source_hash": 7610922651322022265,
+      "context_hash": 7326567731205059097,
+      "translation": "공격적인 변형의 경우",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:12.362487Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:19/seg:0",
+      "source": "Q: What happens in the module's top-level code where there is presumably no ``func_cells`` array?",
+      "source_hash": 14182410400096168442,
+      "context_hash": 1421592529205047554,
+      "translation": "Q: ``func_cells`` 배열이 아마 없을 모듈의 최상위 코드에서는 어떤 일이 일어납니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:06.777154Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:20/seg:0",
+      "source": "A: We could do some code analysis and create a ``func_cells`` array, or we could use ``LOAD_NAME`` which should use ``PyMapping_GetItem`` on the globals dict.",
+      "source_hash": 7806859545778045465,
+      "context_hash": 1665157185786660895,
+      "translation": "A: 코드 분석을 좀 수행하여 ``func_cells`` 배열을 만들 수도 있고, 전역 딕셔너리에 대해 ``PyMapping_GetItem``\\ 을 사용해야 할 ``LOAD_NAME``\\ 을 사용할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:06.777158Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Graphics",
+      "source_hash": 3502655741666231665,
+      "context_hash": 14419164508090546791,
+      "translation": "그래픽",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:06.777159Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Ka-Ping Yee supplied a drawing of the state of things after \"import spam\", where ``spam.py`` contains",
+      "source_hash": 15091821946951606755,
+      "context_hash": 13065895501967961883,
+      "translation": "Ka-Ping Yee는 \"import spam\" 이후 상태를 그린 그림을 제공했는데, 여기서 ``spam.py``\\ 는 다음을 포함합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:06.777159Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "The drawing is at http://web.lfw.org/repo/cells.gif; a larger version is at http://lfw.org/repo/cells-big.gif; the source is at http://lfw.org/repo/cells.ai.",
+      "source_hash": 4296521594504812879,
+      "context_hash": 14212509823311650983,
+      "translation": "그림은 http://web.lfw.org/repo/cells.gif 에 있으며, 더 큰 버전은 http://lfw.org/repo/cells-big.gif 에, 원본은 http://lfw.org/repo/cells.ai 에 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:06.777160Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Comparison",
+      "source_hash": 3987172722077030787,
+      "context_hash": 9199837919382870746,
+      "translation": "비교",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:06.777160Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "XXX Here, a comparison of the three approaches could be added.",
+      "source_hash": 14972800207170581887,
+      "context_hash": 743521960971357741,
+      "translation": "XXX 여기에 세 가지 접근 방식의 비교를 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:06.777161Z",
+      "issues": []
+    }
+  ]
+}

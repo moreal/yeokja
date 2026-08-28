@@ -1,0 +1,1594 @@
+{
+  "version": 1,
+  "source_hash": 12944251241921826027,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Python Runtime Audit Hooks",
+      "source_hash": 11191625592661928593,
+      "context_hash": 16530898886277989957,
+      "translation": "파이썬 런타임 감사 훅",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858825Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 7819323025446905677,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858828Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP describes additions to the Python API and specific behaviors for the CPython implementation that make actions taken by the Python runtime visible to auditing tools.",
+      "source_hash": 2041070036312367120,
+      "context_hash": 14527819164461915837,
+      "translation": "이 PEP는 파이썬 런타임이 수행하는 동작을 감사 도구에서 확인할 수 있도록 하는 파이썬 API의 추가 사항과 CPython 구현의 구체적인 동작을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858828Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "Visibility into these actions provides opportunities for test frameworks, logging frameworks, and security tools to monitor and optionally limit actions taken by the runtime.",
+      "source_hash": 14520085037717952148,
+      "context_hash": 7882296330025033905,
+      "translation": "이러한 동작을 확인할 수 있으면 테스트 프레임워크, 로깅 프레임워크 및 보안 도구에서 런타임이 수행하는 동작을 모니터링하고 필요에 따라 제한할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858828Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "This PEP proposes adding two APIs to provide insights into a running Python application: one for arbitrary events, and another specific to the module import system.",
+      "source_hash": 10531173476075156320,
+      "context_hash": 16836128037405790772,
+      "translation": "이 PEP는 실행 중인 파이썬 애플리케이션에 대한 정보를 제공하는 두 가지 API의 추가를 제안합니다. 하나는 임의의 이벤트를 위한 것이고, 다른 하나는 모듈 임포트 시스템에 특화된 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858828Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "The APIs are intended to be available in all Python implementations, though the specific messages and values used are unspecified here to allow implementations the freedom to determine how best to provide information to their users.",
+      "source_hash": 1474438406496318351,
+      "context_hash": 14990991983665012751,
+      "translation": "이 API들은 모든 파이썬 구현에서 사용할 수 있도록 하는 것이 목적이지만, 구현에서 사용자에게 정보를 가장 잘 제공할 방법을 자유롭게 결정할 수 있도록 여기서는 사용되는 구체적인 메시지와 값을 지정하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858828Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:2",
+      "source": "Some examples likely to be used in CPython are provided for explanatory purposes.",
+      "source_hash": 13517695945545553519,
+      "context_hash": 16482058778254175030,
+      "translation": "CPython에서 사용될 가능성이 높은 몇 가지 예를 설명을 위해 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858829Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "See :pep:`551` for discussion and recommendations on enhancing the security of a Python runtime making use of these auditing APIs.",
+      "source_hash": 9892455419338882402,
+      "context_hash": 6851478601008390869,
+      "translation": "이러한 감사 API를 활용하는 파이썬 런타임의 보안 강화에 관한 논의와 권고 사항은 :pep:`551`\\ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858829Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Background",
+      "source_hash": 14089390735911585672,
+      "context_hash": 11807031587693255764,
+      "translation": "배경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858829Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Python provides access to a wide range of low-level functionality on many common operating systems.",
+      "source_hash": 3520670925599904142,
+      "context_hash": 2088694454744388079,
+      "translation": "파이썬은 많은 일반 운영 체제에서 광범위한 저수준 기능에 접근할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858829Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "While this is incredibly useful for \"write-once, run-anywhere\" scripting, it also makes monitoring of software written in Python difficult.",
+      "source_hash": 17575153877218350955,
+      "context_hash": 17388879200140965063,
+      "translation": "이는 \"한 번 작성하여 어디서나 실행\"하는 스크립팅에 매우 유용하지만, 파이썬으로 작성된 소프트웨어를 모니터링하기는 어렵게 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858830Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "Because Python uses native system APIs directly, existing monitoring tools either suffer from limited context or auditing bypass.",
+      "source_hash": 3749743339946555717,
+      "context_hash": 6829541652600546028,
+      "translation": "파이썬은 네이티브 시스템 API를 직접 사용하므로 기존 모니터링 도구는 컨텍스트가 제한되거나 감사 우회가 발생하는 문제를 겪습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858830Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Limited context occurs when system monitoring can report that an action occurred, but cannot explain the sequence of events leading to it.",
+      "source_hash": 2957730525460155842,
+      "context_hash": 1338135283366937590,
+      "translation": "시스템 모니터링에서 동작이 발생했다는 사실은 보고할 수 있지만, 그 동작을 유발한 사건의 순서를 설명할 수 없을 때 컨텍스트가 제한됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858830Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "For example, network monitoring at the OS level may be able to report \"listening started on port 5678\", but may not be able to provide the process ID, command line, parent process, or the local state in the program at the point that triggered the action.",
+      "source_hash": 799813779566285817,
+      "context_hash": 17232903467386883901,
+      "translation": "예를 들어 OS 수준의 네트워크 모니터링은 \"포트 5678에서 수신 대기가 시작됨\"을 보고할 수 있지만, 동작을 유발한 시점의 프로세스 ID, 명령줄, 부모 프로세스 또는 프로그램의 로컬 상태를 제공하지 못할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858830Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "Firewall controls to prevent such an action are similarly limited, typically to process names or some global state such as the current user, and in any case rarely provide a useful log file correlated with other application messages.",
+      "source_hash": 5111595216789779890,
+      "context_hash": 10946362204357063066,
+      "translation": "이러한 동작을 방지하기 위한 방화벽 제어 역시 비슷하게 제한되어 있으며, 일반적으로 프로세스 이름이나 현재 사용자와 같은 일부 전역 상태만을 대상으로 하고, 어떤 경우에도 다른 애플리케이션 메시지와 연관 지을 수 있는 유용한 로그 파일을 제공하는 경우는 드뭅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858830Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Auditing bypass can occur when the typical system tool used for an action would ordinarily report its use, but accessing the APIs via Python do not trigger this.",
+      "source_hash": 16980814568388604,
+      "context_hash": 741858840176975770,
+      "translation": "동작에 사용되는 일반적인 시스템 도구라면 통상 그 사용을 보고했겠지만, 파이썬을 통해 API에 접근하면 이를 트리거하지 않는 경우 감사 우회가 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858831Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "For example, invoking \"curl\" to make HTTP requests may be specifically monitored in an audited system, but Python's \"urlretrieve\" function is not.",
+      "source_hash": 15588813799352159833,
+      "context_hash": 2323466826485043991,
+      "translation": "예를 들어 감사 대상 시스템에서 HTTP 요청을 수행하기 위해 \"curl\"을 호출하는 것은 특별히 모니터링될 수 있지만, 파이썬의 \"urlretrieve\" 함수는 그렇지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858831Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "Within a long-running Python application, particularly one that processes user-provided information such as a web app, there is a risk of unexpected behavior.",
+      "source_hash": 15535488185018389393,
+      "context_hash": 5781271637808559239,
+      "translation": "장시간 실행되는 파이썬 애플리케이션, 특히 웹 앱처럼 사용자가 제공한 정보를 처리하는 애플리케이션에서는 예기치 않은 동작이 발생할 위험이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858831Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "This may be due to bugs in the code, or deliberately induced by a malicious user.",
+      "source_hash": 2326495247148357306,
+      "context_hash": 390749788965036806,
+      "translation": "이는 코드의 버그 때문일 수도 있고 악의적인 사용자가 의도적으로 유발한 것일 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858832Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "In both cases, normal application logging may be bypassed resulting in no indication that anything out of the ordinary has occurred.",
+      "source_hash": 5851623625127876220,
+      "context_hash": 9584727554183400065,
+      "translation": "두 경우 모두 정상적인 애플리케이션 로깅이 우회되어 비정상적인 일이 발생했다는 어떠한 표시도 남지 않을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858832Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "Additionally, and somewhat unique to Python, it is very easy to affect the code that is run in an application by manipulating either the import system's search path or placing files earlier on the path than intended.",
+      "source_hash": 10138323239045606399,
+      "context_hash": 1912543621932039598,
+      "translation": "또한 파이썬에서는 다소 고유한 특성으로, 임포트 시스템의 검색 경로를 조작하거나 의도한 것보다 앞에 파일을 배치하여 애플리케이션에서 실행되는 코드를 매우 쉽게 바꿀 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858832Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "This is often seen when developers create a script with the same name as the module they intend to use - for example, a ``random.py`` file that attempts to import the standard library ``random`` module.",
+      "source_hash": 7469310018539727458,
+      "context_hash": 5978444380246501126,
+      "translation": "개발자가 사용하려는 모듈과 같은 이름의 스크립트를 만들 때 이러한 일이 자주 발생합니다. 예를 들어 표준 라이브러리 ``random`` 모듈을 임포트하려는 ``random.py`` 파일이 있습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:11:28.858832Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "This is not sandboxing, as this proposal does not attempt to prevent malicious behavior (though it enables some new options to do so).",
+      "source_hash": 3319050535234587781,
+      "context_hash": 15877974258667217075,
+      "translation": "이 제안은 악의적인 동작을 방지하려고 시도하지 않으므로(그렇게 할 수 있는 몇 가지 새로운 선택지는 제공하지만) 이는 샌드박싱이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858833Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "See the `Why Not A Sandbox`_ section below for further discussion.",
+      "source_hash": 2518497271486279672,
+      "context_hash": 12594633380364472586,
+      "translation": "더 자세한 논의는 아래의 `Why Not A Sandbox`_ 섹션을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858833Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Overview of Changes",
+      "source_hash": 4193575026602201731,
+      "context_hash": 16422397720627502752,
+      "translation": "변경 사항 개요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858833Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "The aim of these changes is to enable both application developers and system administrators to integrate Python into their existing monitoring systems without dictating how those systems look or behave.",
+      "source_hash": 3226636233685241629,
+      "context_hash": 6165976933225699957,
+      "translation": "이러한 변경의 목표는 애플리케이션 개발자와 시스템 관리자가 기존 모니터링 시스템의 형태나 동작 방식을 규정하지 않고도 파이썬을 해당 시스템에 통합할 수 있게 하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858833Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "We propose two API changes to enable this: an Audit Hook and Verified Open Hook.",
+      "source_hash": 15604440138762690474,
+      "context_hash": 169002742512999435,
+      "translation": "이를 가능하게 하기 위해 두 가지 API 변경을 제안합니다. 감사 훅과 검증된 열기 훅입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858834Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "Both are available from Python and native code, allowing applications and frameworks written in pure Python code to take advantage of the extra messages, while also allowing embedders or system administrators to deploy builds of Python where auditing is always enabled.",
+      "source_hash": 3155236886122760523,
+      "context_hash": 12859772235768703297,
+      "translation": "두 훅 모두 파이썬과 네이티브 코드에서 사용할 수 있으므로, 순수 파이썬 코드로 작성된 애플리케이션과 프레임워크는 추가 메시지를 활용할 수 있고, 임베더나 시스템 관리자는 감사가 항상 활성화된 파이썬 빌드를 배포할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858834Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Only CPython is bound to provide the native APIs as described here.",
+      "source_hash": 4558582074517211113,
+      "context_hash": 18115701613064687819,
+      "translation": "여기에서 설명하는 네이티브 API를 제공해야 하는 구현은 CPython뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858834Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "Other implementations should provide the pure Python APIs, and may provide native versions as appropriate for their underlying runtimes.",
+      "source_hash": 14629183843599004880,
+      "context_hash": 8455089809091129526,
+      "translation": "다른 구현은 순수 파이썬 API를 제공해야 하며, 기반 런타임에 적절한 경우 네이티브 버전을 제공할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858834Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:2",
+      "source": "Auditing events are likewise considered implementation specific, but are bound by normal feature compatibility guarantees.",
+      "source_hash": 16299855117246972436,
+      "context_hash": 9977681398885166527,
+      "translation": "감사 이벤트 역시 구현별로 다르게 간주되지만, 일반적인 기능 호환성 보장이 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858835Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Audit Hook",
+      "source_hash": 17623020653343081759,
+      "context_hash": 16128581882334995223,
+      "translation": "감사 훅",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:28.858835Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "In order to observe actions taken by the runtime (on behalf of the caller), an API is required to raise messages from within certain operations.",
+      "source_hash": 13411085297192436412,
+      "context_hash": 15524496661161896011,
+      "translation": "호출자를 대신하여 런타임이 수행하는 작업을 관찰하려면, 특정 작업 내부에서 메시지를 발생시키는 API가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052020Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "These operations are typically deep within the Python runtime or standard library, such as dynamic code compilation, module imports, DNS resolution, or use of certain modules such as ``ctypes``.",
+      "source_hash": 13427927508728279788,
+      "context_hash": 2184487933744460440,
+      "translation": "이러한 작업은 일반적으로 Python 런타임 또는 표준 라이브러리의 깊은 내부에서 수행되며, 동적 코드 컴파일, 모듈 임포트, DNS 확인 또는 ``ctypes``\\ 와 같은 특정 모듈의 사용 등이 이에 해당합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:11:08.052024Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "The following new C APIs allow embedders and CPython implementors to send and receive audit hook messages",
+      "source_hash": 1357334792713512529,
+      "context_hash": 7280587767369189222,
+      "translation": "다음의 새로운 C API를 사용하면 임베더와 CPython 구현자가 감사 훅 메시지를 보내고 받을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052025Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "The new Python APIs for receiving and raising audit hooks are",
+      "source_hash": 4754725505045076159,
+      "context_hash": 1565557999064400333,
+      "translation": "감사 훅을 수신하고 발생시키기 위한 새로운 Python API는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052026Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "Hooks are added by calling ``PySys_AddAuditHook()`` from C at any time, including before ``Py_Initialize()``, or by calling ``sys.addaudithook()`` from Python code.",
+      "source_hash": 10978115046922385630,
+      "context_hash": 17620940261655717755,
+      "translation": "훅은 언제든지 C에서 ``PySys_AddAuditHook()``\\ 을 호출하여 추가할 수 있으며, ``Py_Initialize()``\\ 를 호출하기 전에도 가능합니다. 또는 Python 코드에서 ``sys.addaudithook()``\\ 을 호출하여 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052026Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:1",
+      "source": "Hooks cannot be removed or replaced.",
+      "source_hash": 4984562517198528077,
+      "context_hash": 6195656121325531390,
+      "translation": "훅은 제거하거나 교체할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052026Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:2",
+      "source": "For CPython, hooks added from C are global, while hooks added from Python are only for the current interpreter.",
+      "source_hash": 8325966799159067778,
+      "context_hash": 17194614949752989083,
+      "translation": "CPython의 경우 C에서 추가한 훅은 전역인 반면, Python에서 추가한 훅은 현재 인터프리터에만 적용됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:11:08.052027Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:3",
+      "source": "Global hooks are executed before interpreter hooks.",
+      "source_hash": 13078255713535859822,
+      "context_hash": 4957090819317244910,
+      "translation": "전역 훅은 인터프리터 훅보다 먼저 실행됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:11:08.052029Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "When events of interest are occurring, code can either call ``PySys_Audit()`` from C (while the GIL is held) or ``sys.audit()``.",
+      "source_hash": 15043951277974091499,
+      "context_hash": 9226551489865798101,
+      "translation": "관심 있는 이벤트가 발생할 때 코드는 C에서 GIL을 보유한 상태로 ``PySys_Audit()``\\ 를 호출하거나 ``sys.audit()``\\ 를 호출할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052030Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:1",
+      "source": "The string argument is the name of the event, and the tuple contains arguments.",
+      "source_hash": 9896592482573912622,
+      "context_hash": 12179657166604947668,
+      "translation": "문자열 인자는 이벤트의 이름이고, 튜플에는 인자가 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052030Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:2",
+      "source": "A given event name should have a fixed schema for arguments, which should be considered a public API (for each x.y version release), and thus should only change between feature releases with updated documentation.",
+      "source_hash": 5926040601966862794,
+      "context_hash": 6299534459557014161,
+      "translation": "주어진 이벤트 이름은 인자에 대해 고정된 스키마를 가져야 하며, 이는 (각 x.y 버전 릴리스에 대한) 공개 API로 간주되어야 합니다. 따라서 업데이트된 문서와 함께 기능 릴리스 사이에서만 변경해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052030Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:3",
+      "source": "To minimize overhead and simplify handling in native code hook implementations, named arguments are not supported.",
+      "source_hash": 1389022825899993988,
+      "context_hash": 2210544453799255895,
+      "translation": "오버헤드를 최소화하고 네이티브 코드 훅 구현에서의 처리를 단순화하기 위해 명명된 인자는 지원하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052031Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "For maximum compatibility, events using the same name as an event in the reference interpreter CPython should make every attempt to use compatible arguments.",
+      "source_hash": 3552477319348497158,
+      "context_hash": 15760500552857663951,
+      "translation": "최대한의 호환성을 위해, 참조 인터프리터 CPython의 이벤트와 동일한 이름을 사용하는 이벤트는 호환 가능한 인자를 사용하도록 모든 노력을 기울여야 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:11:08.052031Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:1",
+      "source": "Including the name or an abbreviation of the implementation in implementation-specific event names will also help prevent collisions.",
+      "source_hash": 2629749928901526230,
+      "context_hash": 11446190367526710020,
+      "translation": "구현별 이벤트 이름에 구현의 이름 또는 약어를 포함하면 충돌을 방지하는 데에도 도움이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052032Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:2",
+      "source": "For example, a ``pypy.jit_invoked`` event is clearly distinguished from an ``ipy.jit_invoked`` event.",
+      "source_hash": 801703427621760296,
+      "context_hash": 8473284532736516488,
+      "translation": "예를 들어 ``pypy.jit_invoked`` 이벤트는 ``ipy.jit_invoked`` 이벤트와 명확히 구별됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052032Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:3",
+      "source": "Events raised from Python modules should include their module or package name in the event name.",
+      "source_hash": 3072467259167262855,
+      "context_hash": 6897617796950305564,
+      "translation": "Python 모듈에서 발생시키는 이벤트는 이벤트 이름에 해당 모듈 또는 패키지 이름을 포함해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052032Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "While event names may be arbitrary UTF-8 strings, for consistency across implementations it is recommended to use valid Python dotted names and avoid encoding specific details in the name.",
+      "source_hash": 18238195043211007761,
+      "context_hash": 5279495265073026893,
+      "translation": "이벤트 이름은 임의의 UTF-8 문자열일 수 있지만, 구현 간 일관성을 위해 유효한 Python 점 표기 이름을 사용하고 이름에 특정 세부 정보를 인코딩하지 않는 것이 좋습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052033Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:1",
+      "source": "For example, an ``import`` event with the module name ``spam`` as an argument is preferable to a ``spam module imported`` event with no arguments.",
+      "source_hash": 15277787067256424460,
+      "context_hash": 1418821195648111739,
+      "translation": "예를 들어 모듈 이름 ``spam``\\ 을 인자로 갖는 ``import`` 이벤트가 인자 없이 발생하는 ``spam module imported`` 이벤트보다 바람직합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052033Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:2",
+      "source": "Avoid using embedded null characters or you may upset those who implement hooks using C.",
+      "source_hash": 4279106727278986169,
+      "context_hash": 17361583287176979223,
+      "translation": "내장 널 문자를 사용하지 마십시오. C를 사용하여 훅을 구현하는 사람들에게 문제가 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052033Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "When an event is audited, each hook is called in the order it was added (as much as is possible), passing the event name and arguments.",
+      "source_hash": 17446801038680158904,
+      "context_hash": 15647248325020865227,
+      "translation": "이벤트가 감사될 때 각 훅은 가능한 한 추가된 순서대로 호출되며, 이벤트 이름과 인자가 전달됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052033Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:1",
+      "source": "If any hook returns with an exception set, later hooks are ignored and *in general* the Python runtime should terminate - exceptions from hooks are not intended to be handled or treated as expected occurrences.",
+      "source_hash": 6868074455173483061,
+      "context_hash": 7674500022408387710,
+      "translation": "어떤 훅이 예외가 설정된 상태로 반환하면 이후의 훅은 무시되며, *일반적으로* Python 런타임이 종료되어야 합니다. 훅에서 발생한 예외는 처리되거나 예상된 발생으로 취급되도록 의도된 것이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052033Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:2",
+      "source": "This allows hook implementations to decide how to respond to any particular event.",
+      "source_hash": 6831786961287611348,
+      "context_hash": 9398232184750355453,
+      "translation": "이를 통해 훅 구현은 특정 이벤트에 어떻게 응답할지 결정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052034Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:3",
+      "source": "The typical responses will be to log the event, abort the operation with an exception, or to immediately terminate the process with an operating system exit call.",
+      "source_hash": 15599978951323737356,
+      "context_hash": 966066524584353493,
+      "translation": "일반적인 응답은 이벤트를 기록하거나, 예외와 함께 작업을 중단하거나, 운영 체제의 종료 호출을 사용하여 프로세스를 즉시 종료하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052034Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "When an event is audited but no hooks have been set, the ``audit()`` function should impose minimal overhead.",
+      "source_hash": 350652177508898994,
+      "context_hash": 4201664585351904789,
+      "translation": "이벤트가 감사되었지만 설정된 훅이 없는 경우 ``audit()``\\ 함수는 최소한의 오버헤드만 발생시켜야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052034Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:1",
+      "source": "Ideally, each argument is a reference to existing data rather than a value calculated just for the auditing call.",
+      "source_hash": 17002193661981694649,
+      "context_hash": 10489766541623496673,
+      "translation": "이상적으로 각 인자는 감사 호출만을 위해 계산된 값이 아니라 기존 데이터에 대한 참조여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052034Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:0",
+      "source": "As hooks may be Python objects, they need to be freed during interpreter or runtime finalization.",
+      "source_hash": 2738429269639577032,
+      "context_hash": 12858674697734786527,
+      "translation": "훅은 Python 객체일 수 있으므로 인터프리터 또는 런타임 종료 처리 중에 해제해야 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:11:08.052035Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:1",
+      "source": "These should not be triggered at any other time, and should raise an event hook to ensure that any unexpected calls are observed.",
+      "source_hash": 15930306459622635443,
+      "context_hash": 5544441550781121535,
+      "translation": "이러한 작업은 다른 어떤 시점에도 트리거되어서는 안 되며, 예상하지 못한 호출이 관찰되도록 이벤트 훅을 발생시켜야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052036Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:0",
+      "source": "Below in `Suggested Audit Hook Locations`_, we recommend some important operations that should raise audit events.",
+      "source_hash": 14435121552888103933,
+      "context_hash": 4675082612180848881,
+      "translation": "아래의 `Suggested Audit Hook Locations`_\\ 에서는 감사 이벤트를 발생시켜야 하는 몇 가지 중요한 작업을 권장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052036Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:1",
+      "source": "In general, events should be raised at the lowest possible level.",
+      "source_hash": 11405168766124619880,
+      "context_hash": 3495614081324399843,
+      "translation": "일반적으로 이벤트는 가능한 가장 낮은 수준에서 발생시켜야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052036Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:2",
+      "source": "Given the choice between raising an event from Python code or native code, raising from native code should be preferred.",
+      "source_hash": 2835763253354981020,
+      "context_hash": 17527654541325095616,
+      "translation": "Python 코드에서 이벤트를 발생시킬지 네이티브 코드에서 발생시킬지 선택할 수 있다면, 네이티브 코드에서 발생시키는 것을 우선해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052036Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:0",
+      "source": "Python implementations should document which operations will raise audit events, along with the event schema.",
+      "source_hash": 18286347374033349273,
+      "context_hash": 10579617607404431255,
+      "translation": "Python 구현은 감사 이벤트를 발생시키는 작업과 이벤트 스키마를 문서화해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052037Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:1",
+      "source": "It is intentional that ``sys.addaudithook(print)`` is a trivial way to display all messages.",
+      "source_hash": 17929172243743497157,
+      "context_hash": 16320760632388439240,
+      "translation": "``sys.addaudithook(print)``\\ 이 모든 메시지를 표시하는 간단한 방법이 되도록 의도되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:08.052037Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Verified Open Hook",
+      "source_hash": 7239842722868225375,
+      "context_hash": 7390473810026780997,
+      "translation": "검증된 오픈 훅",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956641Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Most operating systems have a mechanism to distinguish between files that can be executed and those that can not.",
+      "source_hash": 1174999375842636393,
+      "context_hash": 11442600034834059744,
+      "translation": "대부분의 운영 체제에는 실행할 수 있는 파일과 실행할 수 없는 파일을 구분하는 메커니즘이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956646Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "For example, this may be an execute bit in the permissions field, a verified hash of the file contents to detect potential code tampering, or file system path restrictions.",
+      "source_hash": 11933543665759806083,
+      "context_hash": 17853015477452237328,
+      "translation": "예를 들어 권한 필드의 실행 비트, 잠재적인 코드 변조를 감지하기 위한 파일 내용의 검증된 해시 또는 파일 시스템 경로 제한일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956647Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "These are an important security mechanism for ensuring that only code that has been approved for a given environment is executed.",
+      "source_hash": 2872036908746349083,
+      "context_hash": 2042084902348665998,
+      "translation": "이는 특정 환경에 승인된 코드만 실행되도록 보장하는 중요한 보안 메커니즘입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956647Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Most kernels offer ways to restrict or audit binaries loaded and executed by the kernel.",
+      "source_hash": 14735206456669767447,
+      "context_hash": 10567515081866365931,
+      "translation": "대부분의 커널은 커널에 로드되고 실행되는 바이너리를 제한하거나 감사하는 방법을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956648Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "File types owned by Python appear as regular data and these features do not apply.",
+      "source_hash": 3820902384042834833,
+      "context_hash": 5207864487951371417,
+      "translation": "Python이 소유하는 파일 형식은 일반 데이터로 나타나므로 이러한 기능이 적용되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956648Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:2",
+      "source": "This open hook allows Python embedders to integrate with operating system support when launching scripts or importing Python code.",
+      "source_hash": 10847859819737603085,
+      "context_hash": 15995314716159252727,
+      "translation": "이 오픈 훅을 사용하면 Python 임베더가 스크립트를 시작하거나 Python 코드를 가져올 때 운영 체제 지원을 통합할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956648Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "The new public C API for the verified open hook is",
+      "source_hash": 12764370929810801896,
+      "context_hash": 920251743398921111,
+      "translation": "검증된 오픈 훅을 위한 새로운 공개 C API는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956649Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "The new public Python API for the verified open hook is",
+      "source_hash": 5205871859621134344,
+      "context_hash": 12625799316608705879,
+      "translation": "검증된 오픈 훅을 위한 새로운 공개 Python API는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956649Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "The ``io.open_code()`` function is a drop-in replacement for ``open(abspath(str(pathlike)), 'rb')``.",
+      "source_hash": 17971510548646094128,
+      "context_hash": 13884894639392557706,
+      "translation": "``io.open_code()`` 함수는 ``open(abspath(str(pathlike)), 'rb')``\\ 의 즉시 교체 가능한 대체 함수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956650Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:1",
+      "source": "Its default behaviour is to open a file for raw, binary access.",
+      "source_hash": 12390577329750815571,
+      "context_hash": 9206728091129654569,
+      "translation": "기본 동작은 원시 바이너리 액세스를 위해 파일을 여는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956650Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:2",
+      "source": "To change the behaviour a new handler should be set.",
+      "source_hash": 5434656661424089133,
+      "context_hash": 15983521964401630057,
+      "translation": "동작을 변경하려면 새 핸들러를 설정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956650Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:3",
+      "source": "Handler functions only accept ``str`` arguments.",
+      "source_hash": 9640432352338604313,
+      "context_hash": 8213830805847513779,
+      "translation": "핸들러 함수는 ``str`` 인자만 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956651Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:4",
+      "source": "The C API ``PyFile_OpenCode`` function assumes UTF-8 encoding.",
+      "source_hash": 9225296140744719588,
+      "context_hash": 1240594854853427640,
+      "translation": "C API의 ``PyFile_OpenCode`` 함수는 UTF-8 인코딩을 가정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956651Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:5",
+      "source": "Paths must be absolute, and it is the responsibility of the caller to ensure the full path is correctly resolved.",
+      "source_hash": 3392877665458419334,
+      "context_hash": 11576982536775096475,
+      "translation": "경로는 절대 경로여야 하며, 전체 경로가 올바르게 해석되도록 보장할 책임은 호출자에게 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956652Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "A custom handler may be set by calling ``PyFile_SetOpenCodeHook()`` from C at any time, including before ``Py_Initialize()``.",
+      "source_hash": 12197252784354377822,
+      "context_hash": 4845593516785651467,
+      "translation": "C에서 언제든지, ``Py_Initialize()``\\ 를 호출하기 전에도 ``PyFile_SetOpenCodeHook()``\\ 을 호출하여 사용자 지정 핸들러를 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956652Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:1",
+      "source": "However, if a hook has already been set then the call will fail.",
+      "source_hash": 5507860827074634386,
+      "context_hash": 4662787494910307181,
+      "translation": "그러나 훅이 이미 설정되어 있으면 호출이 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956652Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:2",
+      "source": "When ``open_code()`` is called with a hook set, the hook will be passed the path and its return value will be returned directly.",
+      "source_hash": 14599746576725815342,
+      "context_hash": 17031895292128040328,
+      "translation": "훅이 설정된 상태에서 ``open_code()``\\ 를 호출하면 훅에 경로가 전달되고 그 반환값이 직접 반환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956652Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:3",
+      "source": "The returned object should be an open file-like object that supports reading raw bytes.",
+      "source_hash": 10599837868251753482,
+      "context_hash": 10342498692048023007,
+      "translation": "반환되는 객체는 원시 바이트 읽기를 지원하는 열린 파일과 유사한 객체여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956653Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:4",
+      "source": "This is explicitly intended to allow a ``BytesIO`` instance if the open handler has already read the entire file into memory.",
+      "source_hash": 9018373693759386620,
+      "context_hash": 2376831975228934085,
+      "translation": "오픈 핸들러가 파일 전체를 이미 메모리로 읽은 경우 ``BytesIO`` 인스턴스를 사용할 수 있도록 명시적으로 설계되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956653Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "Note that these hooks can import and call the ``_io.open()`` function on CPython without triggering themselves.",
+      "source_hash": 16444565262508002390,
+      "context_hash": 14949318380194200530,
+      "translation": "이러한 훅은 CPython에서 자체적으로 트리거되지 않고 ``_io.open()``\\ 함수를 가져와 호출할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956653Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:1",
+      "source": "They can also use ``_io.BytesIO`` to return a compatible result using an in-memory buffer.",
+      "source_hash": 6528931596482704219,
+      "context_hash": 14783932594157881346,
+      "translation": "또한 메모리 내 버퍼를 사용하여 호환되는 결과를 반환하도록 ``_io.BytesIO``\\ 를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956654Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "If the hook determines that the file should not be loaded, it should raise an exception of its choice, as well as performing any other logging.",
+      "source_hash": 12216993091682718222,
+      "context_hash": 11771082927535559196,
+      "translation": "훅이 파일을 로드해서는 안 된다고 판단하면, 다른 로깅을 수행하는 것과 함께 원하는 예외를 발생시켜야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956654Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "All import and execution functionality involving code from a file will be changed to use ``open_code()`` unconditionally.",
+      "source_hash": 265812614986328624,
+      "context_hash": 10762747439262793065,
+      "translation": "파일의 코드와 관련된 모든 가져오기 및 실행 기능은 무조건 ``open_code()``\\ 를 사용하도록 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956654Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:1",
+      "source": "It is important to note that calls to ``compile()``, ``exec()`` and ``eval()`` do not go through this function - an audit hook that includes the code from these calls is the best opportunity to validate code that is read from the file.",
+      "source_hash": 5096816198113998090,
+      "context_hash": 13752229520108151987,
+      "translation": "``compile()``, ``exec()`` 및 ``eval()``\\ 을 호출해도 이 함수를 거치지 않는다는 점에 유의해야 합니다. 이러한 호출에서 가져온 코드를 포함하는 감사 훅이 파일에서 읽은 코드를 검증할 가장 좋은 기회입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956655Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:2",
+      "source": "Given the current decoupling between import and execution in Python, most imported code will go through both ``open_code()`` and the log hook for ``compile``, and so care should be taken to avoid repeating verification steps.",
+      "source_hash": 8853207696185359413,
+      "context_hash": 10145814572770488732,
+      "translation": "현재 Python에서는 가져오기와 실행이 분리되어 있으므로, 가져온 코드 대부분은 ``open_code()``\\ 와 ``compile``\\ 에 대한 로그 훅을 모두 거치게 되며, 따라서 검증 단계를 반복하지 않도록 주의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956655Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "File accesses that are not intentionally planning to execute code are not expected to use this function.",
+      "source_hash": 478399745691021323,
+      "context_hash": 13821095160772434625,
+      "translation": "의도적으로 코드를 실행할 계획이 없는 파일 액세스에는 이 함수를 사용하지 않을 것으로 예상됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956655Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:1",
+      "source": "This includes loading pickles, XML or YAML files, where code execution is generally considered malicious rather than intentional.",
+      "source_hash": 10526583515956804982,
+      "context_hash": 7703359842292154821,
+      "translation": "여기에는 피클, XML 또는 YAML 파일의 로드가 포함되며, 이러한 경우 코드 실행은 일반적으로 의도적인 것이 아니라 악의적인 것으로 간주됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956656Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:2",
+      "source": "These operations should provide their own auditing events, preferably distinguishing between normal functionality (for example, ``Unpickler.load``) and code execution (``Unpickler.find_class``).",
+      "source_hash": 2658122745579269185,
+      "context_hash": 1312919448816564923,
+      "translation": "이러한 작업은 자체 감사 이벤트를 제공해야 하며, 일반 기능(예: ``Unpickler.load``)과 코드 실행(예: ``Unpickler.find_class``)을 구분하는 것이 바람직합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:05.956656Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "A few examples: if the file type normally requires an execute bit (on POSIX) or would warn when marked as having been downloaded from the internet (on Windows), it should probably use ``open_code()`` rather than plain ``open()``.",
+      "source_hash": 2509627310647207251,
+      "context_hash": 9877534925454908465,
+      "translation": "몇 가지 예를 들면, 파일 형식이 일반적으로 실행 비트를 요구하거나(POSIX에서), 인터넷에서 다운로드된 것으로 표시되면 경고를 표시하는 경우(Windows에서), 일반적인 ``open()``\\ 대신 ``open_code()``\\ 를 사용하는 것이 좋습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802842Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:1",
+      "source": "Opening ZIP files using the ``ZipFile`` class should use ``open()``, while opening them via ``zipimport`` should use ``open_code()`` to signal the correct intent.",
+      "source_hash": 1432842013375197551,
+      "context_hash": 14680484721878423072,
+      "translation": "``ZipFile`` 클래스 를 사용하여 ZIP 파일을 여는 경우에는 ``open()``\\ 을 사용해야 하며, ``zipimport``\\ 를 통해 열 때는 올바른 의도를 나타내도록 ``open_code()``\\ 를 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802847Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:2",
+      "source": "Code that uses the wrong function for a particular context may bypass the hook, which in CPython and the standard library should be considered a bug.",
+      "source_hash": 8778158739969232409,
+      "context_hash": 9758401335204083811,
+      "translation": "특정 컨텍스트에 잘못된 함수를 사용하는 코드는 후크를 우회할 수 있으며, 이는 CPython과 표준 라이브러리에서 버그로 간주해야 합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:11:47.802847Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:3",
+      "source": "Using a combination of ``open_code`` hooks and auditing hooks is necessary to trace all executed sources in the presence of arbitrary code.",
+      "source_hash": 6225833765851360525,
+      "context_hash": 3153722973733021821,
+      "translation": "임의의 코드가 존재하는 상황에서 실행되는 모든 소스를 추적하려면 ``open_code`` 후크와 감사 후크를 조합하여 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802849Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "There is no Python API provided for changing the open hook.",
+      "source_hash": 5686363643686412890,
+      "context_hash": 15181870667071397910,
+      "translation": "오픈 후크를 변경하기 위한 Python API는 제공되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802849Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:1",
+      "source": "To modify import behavior from Python code, use the existing functionality provided by ``importlib``.",
+      "source_hash": 17339160064208135230,
+      "context_hash": 9705143880542240849,
+      "translation": "Python 코드에서 임포트 동작을 수정하려면 ``importlib``\\ 에서 제공하는 기존 기능을 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802849Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "API Availability",
+      "source_hash": 8032753740061819789,
+      "context_hash": 14018082720706599945,
+      "translation": "API 가용성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802850Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "While all the functions added here are considered public and stable API, the behavior of the functions is implementation specific.",
+      "source_hash": 6640523657033654881,
+      "context_hash": 3436062519681570458,
+      "translation": "여기에 추가된 모든 함수는 공개되고 안정적인 API로 간주되지만, 함수의 동작은 구현에 따라 다릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802850Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "Most descriptions here refer to the CPython implementation, and while other implementations should provide the functions, there is no requirement that they behave the same.",
+      "source_hash": 3078497812578681769,
+      "context_hash": 12803243270538362325,
+      "translation": "대부분의 설명은 CPython 구현을 가리키며, 다른 구현도 해당 함수를 제공해야 하지만 동일하게 동작해야 할 의무는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802850Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "For example, ``sys.addaudithook()`` and ``sys.audit()`` should exist but may do nothing.",
+      "source_hash": 14644841023270105754,
+      "context_hash": 3083538173716867353,
+      "translation": "예를 들어, ``sys.addaudithook()``\\ 와 ``sys.audit()``\\ 는 존재해야 하지만 아무 작업도 하지 않을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802851Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "This allows code to make calls to ``sys.audit()`` without having to test for existence, but it should not assume that its call will have any effect. (Including existence tests in security-critical code allows another vector to bypass auditing, so it is preferable that the function always exist.)",
+      "source_hash": 11652957367234431836,
+      "context_hash": 4626021140774977281,
+      "translation": "이를 통해 코드는 존재 여부를 확인하지 않고도 ``sys.audit()``\\ 를 호출할 수 있지만, 해당 호출이 어떤 효과라도 낼 것이라고 가정해서는 안 됩니다. (보안이 중요한 코드에 존재 여부 확인을 포함하면 감사를 우회할 또 다른 경로가 생기므로, 해당 함수는 항상 존재하는 것이 바람직합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802851Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "``io.open_code(path)`` should at a minimum always return ``_io.open(path, 'rb')``.",
+      "source_hash": 530375824138526444,
+      "context_hash": 12467931638423028819,
+      "translation": "``io.open_code(path)``\\ 는 최소한 항상 ``_io.open(path, 'rb')``\\ 를 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802851Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "Code using the function should make no further assumptions about what may occur, and implementations other than CPython are not required to let developers override the behavior of this function with a hook.",
+      "source_hash": 10347248979896457199,
+      "context_hash": 5907869279927825822,
+      "translation": "이 함수를 사용하는 코드는 발생할 수 있는 일에 대해 더 이상의 가정을 해서는 안 되며, CPython 이외의 구현은 개발자가 후크를 사용하여 이 함수의 동작을 재정의하도록 허용할 필요가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802851Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Suggested Audit Hook Locations",
+      "source_hash": 8862710991460797924,
+      "context_hash": 9171016406546327126,
+      "translation": "권장되는 감사 후크 위치",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802852Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The locations and parameters in calls to ``sys.audit()`` or ``PySys_Audit()`` are to be determined by individual Python implementations.",
+      "source_hash": 12661322901020773758,
+      "context_hash": 10620217478457152451,
+      "translation": "``sys.audit()`` 또는 ``PySys_Audit()`` 호출에서의 위치와 매개변수는 개별 Python 구현에서 결정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802852Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "This is to allow maximum freedom for implementations to expose the operations that are most relevant to their platform, and to avoid or ignore potentially expensive or noisy events.",
+      "source_hash": 14242859114511330294,
+      "context_hash": 6057699976038374697,
+      "translation": "이를 통해 구현이 해당 플랫폼과 가장 관련성이 높은 연산을 공개할 수 있는 최대한의 자유를 허용하고, 잠재적으로 비용이 많이 들거나 지나치게 많은 이벤트를 피하거나 무시할 수 있게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802852Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "Table 1 acts as both suggestions of operations that should trigger audit events on all implementations, and examples of event schemas.",
+      "source_hash": 14931278014179992996,
+      "context_hash": 4662763891032216658,
+      "translation": "표 1은 모든 구현에서 감사 이벤트를 트리거해야 하는 연산에 대한 제안인 동시에 이벤트 스키마의 예시로도 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802853Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Table 2 provides further examples that are not required, but are likely to be available in CPython.",
+      "source_hash": 1297553489856989905,
+      "context_hash": 6216234107812369687,
+      "translation": "표 2는 필수는 아니지만 CPython에서 제공될 가능성이 높은 추가 예시를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802853Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "Refer to the documentation associated with your version of Python to see which operations provide audit events.",
+      "source_hash": 9188305781410104977,
+      "context_hash": 13149673022648443811,
+      "translation": "어떤 연산이 감사 이벤트를 제공하는지는 사용 중인 Python 버전에 해당하는 문서를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802853Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Performance Impact",
+      "source_hash": 973191060228717559,
+      "context_hash": 1518664935145677531,
+      "translation": "성능 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802853Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The important performance impact is the case where events are being raised but there are no hooks attached.",
+      "source_hash": 18219406895381297233,
+      "context_hash": 6306449011559688047,
+      "translation": "중요한 성능 영향은 이벤트가 발생하지만 연결된 후크가 없는 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802854Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "This is the unavoidable case - once a developer has added audit hooks they have explicitly chosen to trade performance for functionality.",
+      "source_hash": 13537557502826135519,
+      "context_hash": 1052021187038049839,
+      "translation": "이는 피할 수 없는 경우입니다. 개발자가 감사 후크를 추가하면 성능을 기능과 맞바꾸기로 명시적으로 선택한 것이기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802854Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "Performance impact with hooks added are not of interest here, since this is opt-in functionality.",
+      "source_hash": 12913052206053826667,
+      "context_hash": 1354055047508099561,
+      "translation": "여기서는 후크가 추가된 경우의 성능 영향은 관심 대상이 아닙니다. 이는 옵트인 기능이기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802854Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Analysis using the Python Performance Benchmark Suite [1]_ shows no significant impact, with the vast majority of benchmarks showing between 1.05x faster to 1.05x slower.",
+      "source_hash": 17817613761004318909,
+      "context_hash": 12362659430688607494,
+      "translation": "Python 성능 벤치마크 모음 [1]_\\ 을 사용한 분석에서는 유의미한 영향이 나타나지 않았으며, 대부분의 벤치마크가 1.05배 빨라지거나 1.05배 느려지는 범위에 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802854Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "In our opinion, the performance impact of the set of auditing points described in this PEP is negligible.",
+      "source_hash": 17139178995103151444,
+      "context_hash": 18339963490065435772,
+      "translation": "이 PEP에서 설명하는 감사 지점 집합의 성능 영향은 무시할 수 있는 수준이라고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802855Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 3662882500984658758,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802855Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Separate module for audit hooks",
+      "source_hash": 11133032103090016135,
+      "context_hash": 5725588577853124659,
+      "translation": "감사 후크를 위한 별도 모듈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802856Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The proposal is to add a new module for audit hooks, hypothetically ``audit``.",
+      "source_hash": 10790395973218507431,
+      "context_hash": 15015774874328488862,
+      "translation": "제안은 가칭 ``audit``\\ 이라는 감사 후크용 새 모듈을 추가하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802856Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "This would separate the API and implementation from the ``sys`` module, and allow naming the C functions ``PyAudit_AddHook`` and ``PyAudit_Audit`` rather than the current variations.",
+      "source_hash": 15691198650490241646,
+      "context_hash": 12811836362454978826,
+      "translation": "이렇게 하면 API와 구현이 ``sys`` 모듈에서 분리되고, 현재의 변형된 이름 대신 C 함수의 이름을 ``PyAudit_AddHook`` 및 ``PyAudit_Audit``\\ 으로 지정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802856Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Any such module would need to be a built-in module that is guaranteed to always be present.",
+      "source_hash": 10476971001060879489,
+      "context_hash": 12163652883947322813,
+      "translation": "이러한 모듈은 항상 존재한다고 보장되는 내장 모듈이어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:11:47.802856Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:1",
+      "source": "The nature of these hooks is that they must be callable without condition, as any conditional imports or calls provide opportunities to intercept and suppress or modify events.",
+      "source_hash": 11434937931614605446,
+      "context_hash": 8867962810647279359,
+      "translation": "이러한 훅은 조건 없이 호출 가능 객체여야 합니다. 조건부 가져오기나 호출은 이벤트를 가로채 억제하거나 수정할 기회를 제공하기 때문입니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:49:26.374896Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "Given it is one of the most core modules, the ``sys`` module is somewhat protected against module shadowing attacks.",
+      "source_hash": 42494414334195982,
+      "context_hash": 3853199055793658087,
+      "translation": "가장 핵심적인 모듈 중 하나이므로, ``sys`` 모듈은 모듈 섀도잉 공격으로부터 어느 정도 보호됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674560Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:1",
+      "source": "Replacing ``sys`` with a sufficiently functional module that the application can still run is a much more complicated task than replacing a module with only one function of interest.",
+      "source_hash": 3893476061943237507,
+      "context_hash": 15333115563436686410,
+      "translation": "애플리케이션이 계속 실행될 수 있을 만큼 충분히 기능적인 모듈로 ``sys``\\ 를 교체하는 작업은 관심 있는 함수 하나만 포함한 모듈을 교체하는 것보다 훨씬 복잡합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674564Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:2",
+      "source": "An attacker that has the ability to shadow the ``sys`` module is already capable of running arbitrary code from files, whereas an ``audit`` module could be replaced with a single line in a ``.pth`` file anywhere on the search path",
+      "source_hash": 6873790412940955880,
+      "context_hash": 14332211770175121642,
+      "translation": "``sys`` 모듈을 섀도잉할 수 있는 공격자는 이미 파일에서 임의의 코드를 실행할 수 있는 능력을 갖추고 있는 반면, ``audit`` 모듈은 검색 경로 어디에든 있는 ``.pth`` 파일에 한 줄만 추가하여 교체할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674565Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "Multiple layers of protection already exist for monkey patching attacks against either ``sys`` or ``audit``, but assignments or insertions to ``sys.modules`` are not audited.",
+      "source_hash": 11298453032125038675,
+      "context_hash": 1599294644073493517,
+      "translation": "``sys`` 또는 ``audit``\\ 에 대한 몽키 패칭 공격에는 이미 여러 보호 계층이 존재하지만, ``sys.modules``\\ 에 대한 할당이나 삽입은 감사되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674565Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "This idea is rejected because it makes it trivial to suppress all calls to ``audit``.",
+      "source_hash": 13775247752652465263,
+      "context_hash": 6928515309005882923,
+      "translation": "이 아이디어는 ``audit``\\ 에 대한 모든 호출을 쉽게 억제할 수 있으므로 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674566Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Flag in sys.flags to indicate \"audited\" mode",
+      "source_hash": 12459338581272647311,
+      "context_hash": 3116544809666192542,
+      "translation": "sys.flags에 \"감사됨\" 모드를 나타내는 플래그",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674566Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "The proposal is to add a value in ``sys.flags`` to indicate when Python is running in a \"secure\" or \"audited\" mode.",
+      "source_hash": 4461028764637381300,
+      "context_hash": 6058147126250425884,
+      "translation": "Python이 \"보안\" 또는 \"감사됨\" 모드로 실행 중인 시점을 나타내도록 ``sys.flags``\\ 에 값을 추가하자는 제안입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674566Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "This would allow applications to detect when some features are enabled or when hooks have been added and modify their behaviour appropriately.",
+      "source_hash": 1159940370114844722,
+      "context_hash": 11067083384577549961,
+      "translation": "이를 통해 애플리케이션은 일부 기능이 활성화되었거나 후크가 추가된 시점을 감지하고 그에 맞게 동작을 변경할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674566Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "Currently, we are not aware of any legitimate reasons for a program to behave differently in the presence of audit hooks.",
+      "source_hash": 12275352504321926586,
+      "context_hash": 7913821809109524139,
+      "translation": "현재 감사 후크가 존재할 때 프로그램이 다르게 동작해야 할 정당한 이유는 알지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674567Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "Both application-level APIs ``sys.audit`` and ``io.open_code`` are always present and functional, regardless of whether the regular ``python`` entry point or some alternative entry point is used.",
+      "source_hash": 9240592734297341191,
+      "context_hash": 5908057656004975177,
+      "translation": "일반적인 ``python`` 진입점을 사용하는지 또는 일부 대체 진입점을 사용하는지와 관계없이 애플리케이션 수준 API인 ``sys.audit``\\ 와 ``io.open_code``\\ 는 항상 존재하며 정상적으로 작동합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674567Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:1",
+      "source": "Callers cannot determine whether any hooks have been added (except by performing side-channel analysis), nor do they need to.",
+      "source_hash": 6336204156635539529,
+      "context_hash": 5976815198212464854,
+      "translation": "호출자는 후크가 추가되었는지 확인할 수 없으며(부채널 분석을 수행하는 경우는 제외합니다), 확인할 필요도 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674567Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:2",
+      "source": "The calls should be fast enough that callers do not need to avoid them, and the program is responsible for ensuring that any added hooks are fast enough to not affect application performance.",
+      "source_hash": 18050314854244639411,
+      "context_hash": 6344627809232508305,
+      "translation": "호출은 호출자가 이를 피할 필요가 없을 정도로 충분히 빨라야 하며, 프로그램은 추가된 후크가 애플리케이션 성능에 영향을 주지 않을 만큼 빠르도록 보장할 책임이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674568Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "The argument that this is \"security by obscurity\" is valid, but irrelevant.",
+      "source_hash": 14874793608174774747,
+      "context_hash": 18432539089492279837,
+      "translation": "이것이 \"모호성을 통한 보안\"이라는 주장은 타당하지만 무관합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674568Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:1",
+      "source": "Security by obscurity is only an issue when there are no other protective mechanisms; obscurity as the first step in avoiding attack is strongly recommended (see `this article <https://danielmiessler.com/p/security-by-obscurity/>`_ for discussion).",
+      "source_hash": 14284272575299011002,
+      "context_hash": 12078320942159250883,
+      "translation": "모호성을 통한 보안은 다른 보호 메커니즘이 없을 때에만 문제가 되며, 공격을 피하기 위한 첫 단계로 모호성을 사용하는 것은 강력히 권장됩니다(논의는 `this article <https://danielmiessler.com/p/security-by-obscurity/>`_\\ 에서 확인하십시오).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674568Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "This idea is rejected because there are no appropriate reasons for an application to change its behaviour based on whether these APIs are in use.",
+      "source_hash": 5359982623381739429,
+      "context_hash": 17631912129909258446,
+      "translation": "이러한 API가 사용 중인지 여부에 따라 애플리케이션이 동작을 변경해야 할 적절한 이유가 없으므로 이 아이디어는 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674569Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Why Not A Sandbox",
+      "source_hash": 9269848770579565012,
+      "context_hash": 13616778188003833518,
+      "translation": "샌드박스를 사용하지 않는 이유",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674569Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "Sandboxing CPython has been attempted many times in the past, and each past attempt has failed.",
+      "source_hash": 14242337649590026902,
+      "context_hash": 13681867107692725795,
+      "translation": "CPython의 샌드박싱은 과거에 여러 차례 시도되었지만, 시도할 때마다 실패했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674569Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "Fundamentally, the problem is that certain functionality has to be restricted when executing the sandboxed code, but otherwise needs to be available for normal operation of Python.",
+      "source_hash": 7515556790010838050,
+      "context_hash": 14449794764526503878,
+      "translation": "본질적으로 문제는 샌드박스 처리된 코드를 실행할 때 특정 기능을 제한해야 하지만, 그 외에는 Python의 정상적인 작동에 사용할 수 있어야 한다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674570Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:2",
+      "source": "For example, completely removing the ability to compile strings into bytecode also breaks the ability to import modules from source code, and if it is not completely removed then there are too many ways to get access to that functionality indirectly.",
+      "source_hash": 590115410398613795,
+      "context_hash": 17960597000654221454,
+      "translation": "예를 들어 문자열을 바이트코드로 컴파일하는 기능을 완전히 제거하면 소스 코드에서 모듈을 가져오는 기능도 중단되며, 완전히 제거하지 않으면 간접적으로 해당 기능에 접근할 수 있는 방법이 너무 많습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:17:32.674570Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:3",
+      "source": "There is not yet any feasible way to generically determine whether a given operation is \"safe\" or not.",
+      "source_hash": 16134797180120398084,
+      "context_hash": 8799269908752977671,
+      "translation": "주어진 연산이 \"안전한지\" 여부를 일반적으로 판단할 수 있는 실행 가능한 방법은 아직 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674571Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:4",
+      "source": "Further information and references available at [2]_.",
+      "source_hash": 12334102263762543688,
+      "context_hash": 199779593368057357,
+      "translation": "추가 정보와 참조 문헌은 [2]_\\ 에서 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674571Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "This proposal does not attempt to restrict functionality, but simply exposes the fact that the functionality is being used.",
+      "source_hash": 6824014799635395357,
+      "context_hash": 17842199619732959766,
+      "translation": "이 제안은 기능을 제한하려는 것이 아니라, 단순히 해당 기능이 사용되고 있다는 사실을 드러냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674571Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:1",
+      "source": "Particularly for intrusion scenarios, detection is significantly more important than early prevention (as early prevention will generally drive attackers to use an alternate, less-detectable, approach).",
+      "source_hash": 2219931712049356118,
+      "context_hash": 2892781371293616710,
+      "translation": "특히 침입 상황에서는 조기 방지보다 탐지가 훨씬 중요합니다(조기 방지는 일반적으로 공격자가 대체적이고 탐지하기 어려운 접근 방식을 사용하도록 유도하기 때문입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674571Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:2",
+      "source": "The availability of audit hooks alone does not change the attack surface of Python in any way, but they enable defenders to integrate Python into their environment in ways that are currently not possible.",
+      "source_hash": 583320401117097388,
+      "context_hash": 12968624624238838582,
+      "translation": "감사 후크를 사용할 수 있다는 사실만으로는 Python의 공격 표면이 어떤 방식으로든 변경되지 않지만, 이를 통해 방어자는 현재는 불가능한 방식으로 Python을 자신의 환경에 통합할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:32.674572Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "Since audit hooks have the ability to safely prevent an operation occurring, this feature does enable the ability to provide some level of sandboxing.",
+      "source_hash": 8553992796238122389,
+      "context_hash": 4533210189368108469,
+      "translation": "감사 훅(audit hook)은 작업 발생을 안전하게 방지할 수 있는 능력을 갖추고 있으므로, 이 기능은 어느 정도 수준의 샌드박싱을 제공할 수 있는 능력을 실제로 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:21:41.812895Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:1",
+      "source": "In most cases, however, the intention is to enable logging rather than creating a sandbox.",
+      "source_hash": 8761889522440560253,
+      "context_hash": 10203464813620706774,
+      "translation": "하지만 대부분의 경우, 그 의도는 샌드박스를 만드는 것이 아니라 로깅을 가능하게 하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:21:41.812899Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Relationship to PEP 551",
+      "source_hash": 6356786140471178760,
+      "context_hash": 3174045664725063763,
+      "translation": "PEP 551과의 관계",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:21:41.812899Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "This API was originally presented as part of :pep:`551` Security Transparency in the Python Runtime.",
+      "source_hash": 5992163378157967983,
+      "context_hash": 2262747893557468715,
+      "translation": "이 API는 원래 :pep:`551` Python 런타임에서의 보안 투명성(Security Transparency in the Python Runtime)의 일부로 제시되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:21:41.812899Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "For simpler review purposes, and due to the broader applicability of these APIs beyond security, the API design is now presented separately.",
+      "source_hash": 16881035477031006419,
+      "context_hash": 7170917747273577754,
+      "translation": "더 간단한 검토를 위해, 그리고 이 API들이 보안을 넘어 더 폭넓게 적용될 수 있다는 점 때문에, 이제 API 설계는 별도로 제시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:21:41.812899Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": ":pep:`551` is an informational PEP discussing how to integrate Python into a secure or audited environment.",
+      "source_hash": 4834183441143529282,
+      "context_hash": 14432306195201321331,
+      "translation": ":pep:`551`\\ 은 Python을 보안 또는 감사된 환경에 통합하는 방법을 논의하는 정보 제공용 PEP입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:21:41.812900Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 14653933721788327607,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:21:41.812900Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Python Performance Benchmark Suite `<https://github.com/python/pyperformance>`_",
+      "source_hash": 6136032682983666015,
+      "context_hash": 3754011054177786249,
+      "translation": "Python 성능 벤치마크 스위트 `<https://github.com/python/pyperformance>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:21:41.812900Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "Python Security model - Sandbox `<https://python-security.readthedocs.io/security.html#sandbox>`_",
+      "source_hash": 12605321161253898903,
+      "context_hash": 15287718151081788367,
+      "translation": "Python 보안 모델 - 샌드박스 `<https://python-security.readthedocs.io/security.html#sandbox>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:21:41.812901Z",
+      "issues": []
+    }
+  ]
+}

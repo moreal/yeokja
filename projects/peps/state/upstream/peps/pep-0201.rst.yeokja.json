@@ -1,0 +1,868 @@
+{
+  "version": 1,
+  "source_hash": 12607803507837785575,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Lockstep Iteration",
+      "source_hash": 4737938492051722383,
+      "context_hash": 17276621436332105427,
+      "translation": "록스텝 반복",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140123Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Introduction",
+      "source_hash": 17143975622463353612,
+      "context_hash": 12800646931902516976,
+      "translation": "서론",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140126Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP describes the 'lockstep iteration' proposal.",
+      "source_hash": 15618820331047004645,
+      "context_hash": 14035294294303968875,
+      "translation": "이 PEP는 ‘록스텝 반복’ 제안을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140126Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This PEP tracks the status and ownership of this feature, slated for introduction in Python 2.0.",
+      "source_hash": 16914466917144535271,
+      "context_hash": 17651696481421749451,
+      "translation": "이 PEP는 Python 2.0에 도입될 예정인 이 기능의 상태와 소유권을 추적합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140127Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "It contains a description of the feature and outlines changes necessary to support the feature.",
+      "source_hash": 6736488263934394763,
+      "context_hash": 7665472358493500734,
+      "translation": "이 문서에는 기능에 대한 설명과 해당 기능을 지원하는 데 필요한 변경 사항의 개요가 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140127Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:3",
+      "source": "This PEP summarizes discussions held in mailing list forums, and provides URLs for further information, where appropriate.",
+      "source_hash": 998884137517050332,
+      "context_hash": 14298788139953983542,
+      "translation": "이 PEP는 메일링 리스트 포럼에서 진행된 논의를 요약하고, 적절한 경우 추가 정보를 위한 URL을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140127Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:4",
+      "source": "The CVS revision history of this file contains the definitive historical record.",
+      "source_hash": 9798816372147080188,
+      "context_hash": 8901245202462424501,
+      "translation": "이 파일의 CVS 개정 이력에는 확정적인 역사 기록이 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140128Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 11728116964893552544,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140128Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Standard for-loops in Python iterate over every element in a sequence until the sequence is exhausted [1]_.",
+      "source_hash": 13425544707334167905,
+      "context_hash": 9985775634776556084,
+      "translation": "Python의 표준 for 루프는 시퀀스가 모두 소진될 때까지 시퀀스의 모든 요소를 반복 처리합니다 [1]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140128Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "However, for-loops iterate over only a single sequence, and it is often desirable to loop over more than one sequence in a lock-step fashion.",
+      "source_hash": 16657854485761705072,
+      "context_hash": 11356336141179350551,
+      "translation": "그러나 for 루프는 하나의 시퀀스만 반복 처리하므로, 둘 이상의 시퀀스를 록스텝 방식으로 반복 처리하는 것이 바람직한 경우가 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140128Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "In other words, in a way such that the i-th iteration through the loop returns an object containing the i-th element from each sequence.",
+      "source_hash": 6192952455878945694,
+      "context_hash": 515398931393633262,
+      "translation": "다시 말해, 루프를 i번째 반복할 때 각 시퀀스의 i번째 요소를 포함하는 객체를 반환하는 방식입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140129Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "The common idioms used to accomplish this are unintuitive.",
+      "source_hash": 940885216865229492,
+      "context_hash": 2945678354187368663,
+      "translation": "이를 수행하는 데 사용되는 일반적인 관용구는 직관적이지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140129Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "This PEP proposes a standard way of performing such iterations by introducing a new builtin function called ``zip``.",
+      "source_hash": 886595943704904623,
+      "context_hash": 17067871757237588489,
+      "translation": "이 PEP는 ``zip``\\ 이라는 새로운 내장 함수를 도입하여 이러한 반복을 수행하는 표준 방법을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140129Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "While the primary motivation for zip() comes from lock-step iteration, by implementing zip() as a built-in function, it has additional utility in contexts other than for-loops.",
+      "source_hash": 17333960612106755934,
+      "context_hash": 5546316777255567267,
+      "translation": "zip()의 주된 동기는 록스텝 반복에서 비롯되지만, zip()을 내장 함수로 구현하면 for 루프 이외의 컨텍스트에서도 추가적인 유용성을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140129Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Lockstep For-Loops",
+      "source_hash": 18126362022680609257,
+      "context_hash": 7023444533399256258,
+      "translation": "록스텝 For 루프",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140130Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Lockstep for-loops are non-nested iterations over two or more sequences, such that at each pass through the loop, one element from each sequence is taken to compose the target.",
+      "source_hash": 18338607740472010231,
+      "context_hash": 5245721794228044350,
+      "translation": "록스텝 for 루프는 두 개 이상의 시퀀스를 대상으로 하는 비중첩 반복으로, 루프를 한 번 통과할 때마다 각 시퀀스에서 하나의 요소를 가져와 대상을 구성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140130Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "This behavior can already be accomplished in Python through the use of the map() built-in function",
+      "source_hash": 8906988179829263157,
+      "context_hash": 16892336000833846915,
+      "translation": "이 동작은 이미 Python에서 map() 내장 함수를 사용하여 수행할 수 있습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140130Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "The for-loop simply iterates over this list as normal.",
+      "source_hash": 15893888258476752763,
+      "context_hash": 8119236550744304387,
+      "translation": "for 루프는 이 목록을 평소처럼 단순히 반복 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140130Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "While the map() idiom is a common one in Python, it has several disadvantages:",
+      "source_hash": 12016945547633776608,
+      "context_hash": 16923879147298116265,
+      "translation": "map() 관용구는 Python에서 흔히 사용되지만, 몇 가지 단점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140131Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "It is non-obvious to programmers without a functional programming background.",
+      "source_hash": 999250858491098024,
+      "context_hash": 1892672255818986927,
+      "translation": "함수형 프로그래밍 배경이 없는 프로그래머에게는 명확하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140131Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "The use of the magic ``None`` first argument is non-obvious.",
+      "source_hash": 17749838058446679121,
+      "context_hash": 7527389648171675338,
+      "translation": "마법의 ``None``\\ 을 첫 번째 인자로 사용하는 것이 명확하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140131Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "It has arbitrary, often unintended, and inflexible semantics when the lists are not of the same length: the shorter sequences are padded with ``None``",
+      "source_hash": 787552035778420076,
+      "context_hash": 672798221225326542,
+      "translation": "목록의 길이가 같지 않을 때 임의적이고, 의도하지 않은 경우가 많으며, 유연하지 않은 의미를 가집니다. 더 짧은 시퀀스는 ``None``\\ 으로 채워집니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140132Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:0",
+      "source": "For these reasons, several proposals were floated in the Python 2.0 beta time frame for syntactic support of lockstep for-loops.",
+      "source_hash": 14784384556272103799,
+      "context_hash": 233639409125701872,
+      "translation": "이러한 이유로 Python 2.0 베타 기간에는 록스텝 for 루프를 구문적으로 지원하기 위한 여러 제안이 제시되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140132Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:9/seg:1",
+      "source": "Here are two suggestions",
+      "source_hash": 18142064412411731044,
+      "context_hash": 10888118548477914885,
+      "translation": "다음 두 가지 제안입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140132Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:12/seg:0",
+      "source": "Neither of these forms would work, since they both already mean something in Python and changing the meanings would break existing code.",
+      "source_hash": 4811266250064040583,
+      "context_hash": 15058187287488788019,
+      "translation": "이 두 형식은 모두 Python에서 이미 다른 의미를 가지므로 작동하지 않으며, 그 의미를 변경하면 기존 코드가 손상됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140132Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:12/seg:1",
+      "source": "All other suggestions for new syntax suffered the same problem, or were in conflict with other another proposed feature called 'list comprehensions' (see :pep:`202`).",
+      "source_hash": 10815698200776890919,
+      "context_hash": 6082607389226545288,
+      "translation": "새 구문에 대한 다른 모든 제안도 같은 문제를 겪었거나, ‘리스트 컴프리헨션’이라는 또 다른 제안 기능과 충돌했습니다(:pep:`202` 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140133Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "The Proposed Solution",
+      "source_hash": 12633837218156876285,
+      "context_hash": 2267507065362542767,
+      "translation": "제안된 해결책",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140133Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "The proposed solution is to introduce a new built-in sequence generator function, available in the ``__builtin__`` module.",
+      "source_hash": 7819249886225478829,
+      "context_hash": 11169443400960282031,
+      "translation": "제안된 해결책은 ``__builtin__`` 모듈에서 사용할 수 있는 새로운 내장 시퀀스 제너레이터 함수를 도입하는 것입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:03:30.140133Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "This function is to be called ``zip`` and has the following signature",
+      "source_hash": 10427165830385170250,
+      "context_hash": 1496937953888552440,
+      "translation": "이 함수의 이름은 ``zip``\\ 이며 다음 시그니처를 가집니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140134Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "``zip()`` takes one or more sequences and weaves their elements together, just as ``map(None, ...)`` does with sequences of equal length.",
+      "source_hash": 4812380312701648664,
+      "context_hash": 8567320011673643945,
+      "translation": "``zip()``\\ 은 하나 이상의 시퀀스를 받아 요소들을 서로 엮습니다. 이는 같은 길이의 시퀀스에 대해 ``map(None, ...)``\\ 이 수행하는 작업과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140134Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "The weaving stops when the shortest sequence is exhausted.",
+      "source_hash": 3009931625057053684,
+      "context_hash": 5030561894425769103,
+      "translation": "가장 짧은 시퀀스가 소진되면 엮기가 중지됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140134Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Return Value",
+      "source_hash": 11250374318503248624,
+      "context_hash": 4724299974763383226,
+      "translation": "반환 값",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:03:30.140134Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "``zip()`` returns a real Python list, the same way ``map()`` does.",
+      "source_hash": 13469597283444827239,
+      "context_hash": 15152926513367676925,
+      "translation": "``zip()``\\ 은 ``map()``\\ 과 같은 방식으로 실제 Python 리스트를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083022Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Examples",
+      "source_hash": 2926230321239078022,
+      "context_hash": 11179452602221866277,
+      "translation": "예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083026Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Here are some examples, based on the reference implementation below",
+      "source_hash": 86593033068540025,
+      "context_hash": 7621383816213602321,
+      "translation": "다음은 아래의 참조 구현을 기반으로 한 몇 가지 예제입니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:01:04.083026Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "Note that when the sequences are of the same length, ``zip()`` is reversible",
+      "source_hash": 3740730720726273770,
+      "context_hash": 17922811258014781222,
+      "translation": "시퀀스의 길이가 같을 때 ``zip()``\\ 은 되돌릴 수 있다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083028Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "It is not possible to reverse zip this way when the sequences are not all the same length.",
+      "source_hash": 697064284451469157,
+      "context_hash": 1300151473057591769,
+      "translation": "시퀀스의 길이가 모두 같지 않으면 이런 방식으로 zip을 되돌릴 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083028Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 4261235225572655363,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:01:04.083028Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Here is a reference implementation, in Python of the zip() built-in function.",
+      "source_hash": 17186854187129641656,
+      "context_hash": 2375282915519019800,
+      "translation": "다음은 Python으로 작성한 zip() 내장 함수의 참조 구현입니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:01:04.083029Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "This will be replaced with a C implementation after final approval",
+      "source_hash": 12839557082276470119,
+      "context_hash": 3710274612806784982,
+      "translation": "최종 승인이 이루어진 후 C 구현으로 대체됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083029Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "BDFL Pronouncements",
+      "source_hash": 7229067426830476985,
+      "context_hash": 2433626033136565713,
+      "translation": "BDFL의 선언",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083029Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Note: the BDFL refers to Guido van Rossum, Python's Benevolent Dictator For Life.",
+      "source_hash": 12335682554941387731,
+      "context_hash": 5216218969796898825,
+      "translation": "참고: BDFL은 Guido van Rossum, 즉 Python의 ‘평생 자비로운 독재자’를 가리킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083030Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "The function's name.",
+      "source_hash": 11714421499265469811,
+      "context_hash": 2983891275908993085,
+      "translation": "함수의 이름입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083030Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "An earlier version of this PEP included an open issue listing 20+ proposed alternative names to ``zip()``.",
+      "source_hash": 1015599271443071939,
+      "context_hash": 13119863269047674350,
+      "translation": "이 PEP의 이전 버전에는 ``zip()``\\ 의 제안된 대체 이름을 20개 넘게 나열한 미해결 문제가 포함되어 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083030Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:2",
+      "source": "In the face of no overwhelmingly better choice, the BDFL strongly prefers ``zip()`` due to its Haskell [2]_ heritage.",
+      "source_hash": 540084963094123014,
+      "context_hash": 15371172217228997935,
+      "translation": "압도적으로 더 나은 선택지가 없는 상황에서 BDFL은 Haskell [2]_\\ 의 계보 때문에 ``zip()``\\ 을 강력히 선호합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083030Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:3",
+      "source": "See version 1.7 of this PEP for the list of alternatives.",
+      "source_hash": 1816355437678759657,
+      "context_hash": 478957152604772814,
+      "translation": "대체 이름 목록은 이 PEP의 버전 1.7을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083030Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "``zip()`` shall be a built-in function.",
+      "source_hash": 1978241884079845437,
+      "context_hash": 13219070674358244611,
+      "translation": "``zip()``\\ 은 내장 함수여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083031Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "Optional padding.",
+      "source_hash": 11213973093510321171,
+      "context_hash": 8598292204066843683,
+      "translation": "선택적 패딩입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083031Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:1",
+      "source": "An earlier version of this PEP proposed an optional ``pad`` keyword argument, which would be used when the argument sequences were not the same length.",
+      "source_hash": 5734195411994067702,
+      "context_hash": 11901158607151536694,
+      "translation": "이 PEP의 이전 버전에서는 인자 시퀀스의 길이가 같지 않을 때 사용할 선택적인 ``pad`` 키워드 인자를 제안했습니다.",
+      "glossary_snapshot": {
+        "keyword argument": "키워드 인자"
+      },
+      "translated_at": "2026-08-28T18:01:04.083032Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:2",
+      "source": "This is similar behavior to the ``map(None, ...)`` semantics except that the user would be able to specify pad object.",
+      "source_hash": 16930338785306337042,
+      "context_hash": 9235775165148591277,
+      "translation": "사용자가 pad 객체를 지정할 수 있다는 점을 제외하면 ``map(None, ...)``\\ 의 의미와 유사한 동작입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083032Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:3",
+      "source": "This has been rejected by the BDFL in favor of always truncating to the shortest sequence, because of the KISS principle.",
+      "source_hash": 6829960260860543113,
+      "context_hash": 8716322470551341955,
+      "translation": "KISS 원칙에 따라 가장 짧은 시퀀스에 맞춰 항상 잘라 내는 방안이 선호되었으므로 BDFL은 이를 거부했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083032Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:4",
+      "source": "If there's a true need, it is easier to add later.",
+      "source_hash": 11912026933897401461,
+      "context_hash": 15741834490508044338,
+      "translation": "실제로 필요하다면 나중에 추가하는 편이 더 쉽습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083032Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:5",
+      "source": "If it is not needed, it would still be impossible to delete it in the future.",
+      "source_hash": 15433609320252502865,
+      "context_hash": 13273152601146045037,
+      "translation": "필요하지 않다면 나중에 삭제하는 것조차 여전히 불가능할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083033Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "Lazy evaluation.",
+      "source_hash": 18396861543017720699,
+      "context_hash": 12964288277217198106,
+      "translation": "지연 평가입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083033Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:1",
+      "source": "An earlier version of this PEP proposed that ``zip()`` return a built-in object that performed lazy evaluation using ``__getitem__()`` protocol.",
+      "source_hash": 984569808572948866,
+      "context_hash": 15725794259623762273,
+      "translation": "이 PEP의 이전 버전에서는 ``__getitem__()``\\ 프로토콜을 사용하여 지연 평가를 수행하는 내장 객체를 ``zip()``\\ 이 반환하도록 제안했습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:01:04.083033Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:2",
+      "source": "This has been strongly rejected by the BDFL in favor of returning a real Python list.",
+      "source_hash": 17379396468597636880,
+      "context_hash": 17799764843072496534,
+      "translation": "BDFL은 실제 Python 리스트를 반환하는 방안을 선호하여 이를 강력히 거부했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083034Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:3",
+      "source": "If lazy evaluation is desired in the future, the BDFL suggests an ``xzip()`` function be added.",
+      "source_hash": 5823029572079560216,
+      "context_hash": 9126068822988100360,
+      "translation": "향후 지연 평가가 필요해지면 BDFL은 ``xzip()``\\ 함수를 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083034Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "``zip()`` with no arguments.  the BDFL strongly prefers this raise a TypeError exception.",
+      "source_hash": 12978584355589516818,
+      "context_hash": 12966193964264727451,
+      "translation": "인수가 없는 ``zip()``\\ 입니다. BDFL은 이것이 TypeError 예외를 발생시키기를 강력히 선호합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083034Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "``zip()`` with one argument.  the BDFL strongly prefers that this return a list of 1-tuples.",
+      "source_hash": 14134010732507137727,
+      "context_hash": 14347410811723814247,
+      "translation": "인수가 하나인 ``zip()``\\ 입니다. BDFL은 이것이 1-튜플로 이루어진 리스트를 반환하기를 강력히 선호합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083034Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:0",
+      "source": "Inner and outer container control.",
+      "source_hash": 14665469117075647162,
+      "context_hash": 13761360939464712798,
+      "translation": "내부 및 외부 컨테이너 제어입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083034Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:1",
+      "source": "An earlier version of this PEP contains a rather lengthy discussion on a feature that some people wanted, namely the ability to control what the inner and outer container types were (they are tuples and list respectively in this version of the PEP).",
+      "source_hash": 8642595219784573592,
+      "context_hash": 10954554690616019898,
+      "translation": "이 PEP의 이전 버전에는 일부 사람들이 원했던 기능, 즉 내부 및 외부 컨테이너 유형을 제어하는 기능에 대한 상당히 긴 논의가 포함되어 있었습니다(이 PEP 버전에서는 각각 튜플과 리스트입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083035Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:2",
+      "source": "Given the simplified API and implementation, this elaboration is rejected.",
+      "source_hash": 11783444680657400111,
+      "context_hash": 16999036952419176403,
+      "translation": "API와 구현이 단순화되었으므로 이 내용은 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083035Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:3",
+      "source": "For a more detailed analysis, see version 1.7 of this PEP.",
+      "source_hash": 7451496476502781247,
+      "context_hash": 18263960518556103000,
+      "translation": "더 자세한 분석은 이 PEP의 버전 1.7을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083035Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Subsequent Change to ``zip()``",
+      "source_hash": 16176448907920256843,
+      "context_hash": 15239792053034869901,
+      "translation": "``zip()``\\ 에 대한 후속 변경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:01:04.083035Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "In Python 2.4, zip() with no arguments was modified to return an empty list rather than raising a TypeError exception.",
+      "source_hash": 12904611314060925719,
+      "context_hash": 15746737928181678502,
+      "translation": "Python 2.4에서 인자 없이 호출된 zip()은 TypeError 예외를 일으키는 대신 빈 리스트를 반환하도록 수정되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617720Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "The rationale for the original behavior was that the absence of arguments was thought to indicate a programming error.",
+      "source_hash": 5519621915290297224,
+      "context_hash": 7934337222016595169,
+      "translation": "원래 동작의 근거는 인자가 없는 것이 프로그래밍 오류를 나타낸다고 여겨졌기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617725Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "However, that thinking did not anticipate the use of zip() with the ``*`` operator for unpacking variable length argument lists.",
+      "source_hash": 12012201646233896269,
+      "context_hash": 1303175317975578280,
+      "translation": "하지만 그런 생각은 가변 길이 인자 목록의 언패킹을 위해 ``*`` 연산자와 함께 zip()을 사용하는 경우를 예상하지 못했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617726Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:3",
+      "source": "For example, the inverse of zip could be defined as:  ``unzip = lambda s: zip(*s)``.",
+      "source_hash": 6827655712208026757,
+      "context_hash": 7745983375364387694,
+      "translation": "예를 들어, zip의 역함수는 다음과 같이 정의할 수 있습니다: ``unzip = lambda s: zip(*s)``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617727Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:4",
+      "source": "That transformation also defines a matrix transpose or an equivalent row/column swap for tables defined as lists of tuples.",
+      "source_hash": 5525568578059461430,
+      "context_hash": 2532618457847349787,
+      "translation": "이 변환은 튜플 리스트로 정의된 테이블에 대해 행렬 전치나 이와 동등한 행/열 교환도 정의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617727Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:5",
+      "source": "The latter transformation is commonly used when reading data files with records as rows and fields as columns.",
+      "source_hash": 13486525904510528708,
+      "context_hash": 1932904930138417424,
+      "translation": "후자의 변환은 레코드를 행으로, 필드를 열로 하는 데이터 파일을 읽을 때 흔히 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617728Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:6",
+      "source": "For example, the code",
+      "source_hash": 2331218308340575109,
+      "context_hash": 16501379101901380775,
+      "translation": "예를 들어, 다음 코드는",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617728Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "rearranges columnar data so that each field is collected into individual tuples for straightforward looping and summarization",
+      "source_hash": 18301572695189508378,
+      "context_hash": 9230445580006047454,
+      "translation": "열 단위 데이터를 재배열하여 각 필드를 개별 튜플로 모음으로써 간단한 순회와 집계를 할 수 있게 합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617728Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "Using ``zip(*args)`` is more easily coded if ``zip(*[])`` is handled as an allowable case rather than an exception.",
+      "source_hash": 11911026433206084899,
+      "context_hash": 4548791904483180230,
+      "translation": "``zip(*[])``\\ 를 예외가 아니라 허용 가능한 경우로 처리하면 ``zip(*args)``\\ 를 사용하는 코드를 더 쉽게 작성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617728Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:1",
+      "source": "This is especially helpful when data is either built up from or recursed down to a null case with no records.",
+      "source_hash": 18171974583458341414,
+      "context_hash": 14420931905258967171,
+      "translation": "이는 데이터가 레코드 없는 null 케이스로부터 구축되거나 그 케이스로 재귀적으로 축소될 때 특히 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617729Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "Seeing this possibility, the BDFL agreed (with some misgivings) to have the behavior changed for Py2.4.",
+      "source_hash": 14143492501266996641,
+      "context_hash": 17570076719642500458,
+      "translation": "이러한 가능성을 보고, BDFL은 (다소 걱정하면서도) Py2.4에서 이 동작을 변경하는 데 동의했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617729Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Other Changes",
+      "source_hash": 7150102475041773264,
+      "context_hash": 2283072804983839697,
+      "translation": "기타 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617729Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The ``xzip()`` function discussed above was implemented in Py2.3 in the ``itertools`` module as ``itertools.izip()``.",
+      "source_hash": 18154252925880944007,
+      "context_hash": 6692156692336878354,
+      "translation": "위에서 설명한 ``xzip()`` 함수는 Py2.3의 ``itertools`` 모듈에 ``itertools.izip()``\\ 로 구현되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617729Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "This function provides lazy behavior, consuming single elements and producing a single tuple on each pass.",
+      "source_hash": 18387516623372431151,
+      "context_hash": 18115097570444538678,
+      "translation": "이 함수는 지연 동작을 제공하여, 한 번에 하나의 요소를 소비하고 한 번의 패스마다 하나의 튜플을 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617730Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "The \"just-in-time\" style saves memory and runs faster than its list based counterpart, ``zip()``.",
+      "source_hash": 4875058219554283413,
+      "context_hash": 14847799250430404086,
+      "translation": "이 \"즉시(just-in-time)\" 방식은 메모리를 절약하고, 리스트 기반의 대응물인 ``zip()``\\ 보다 더 빠르게 실행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:42.617730Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "The ``itertools`` module also added ``itertools.repeat()`` and ``itertools.chain()``.",
+      "source_hash": 7296391447121345797,
+      "context_hash": 15454431273900560845,
+      "translation": "``itertools`` 모듈에는 ``itertools.repeat()``\\ 와 ``itertools.chain()``\\ 도 추가되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:29.518418Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:1",
+      "source": "These tools can be used together to pad sequences with ``None`` (to match the behavior of ``map(None, seqn)``)",
+      "source_hash": 12114133121062635765,
+      "context_hash": 4539265066047836032,
+      "translation": "이 도구들은 함께 사용하여 시퀀스를 ``None``\\ 으로 채울 수 있습니다(``map(None, seqn)``\\ 의 동작과 일치시키기 위함입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:29.518420Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 6834914122731876749,
+      "translation": "참고 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:29.518421Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "http://docs.python.org/reference/compound_stmts.html#for",
+      "source_hash": 3354226361556833305,
+      "context_hash": 7775745750260706170,
+      "translation": "http://docs.python.org/reference/compound_stmts.html#for",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:29.518421Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "http://www.haskell.org/onlinereport/standard-prelude.html#$vzip",
+      "source_hash": 10200634871468464951,
+      "context_hash": 2213020672617170753,
+      "translation": "http://www.haskell.org/onlinereport/standard-prelude.html#$vzip",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:29.518421Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "Greg Wilson's questionnaire on proposed syntax to some CS grad students http://www.python.org/pipermail/python-dev/2000-July/013139.html",
+      "source_hash": 7663141453554963497,
+      "context_hash": 3601766430014478592,
+      "translation": "몇몇 CS 대학원생을 대상으로 한 Greg Wilson의 제안된 문법에 관한 설문 조사 http://www.python.org/pipermail/python-dev/2000-July/013139.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:29.518421Z",
+      "issues": []
+    }
+  ]
+}

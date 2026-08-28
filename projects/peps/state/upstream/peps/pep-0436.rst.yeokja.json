@@ -1,0 +1,2934 @@
+{
+  "version": 1,
+  "source_hash": 9322384496843035926,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "The Argument Clinic DSL",
+      "source_hash": 12631932241125750992,
+      "context_hash": 16530898886277989957,
+      "translation": "Argument Clinic DSL",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972150Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 15807596398898325664,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972153Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This document proposes \"Argument Clinic\", a DSL to facilitate argument processing for built-in functions in the implementation of CPython.",
+      "source_hash": 4984320141767589877,
+      "context_hash": 16338824506835516472,
+      "translation": "이 문서는 CPython 구현에서 내장 함수의 인자 처리를 용이하게 하기 위한 DSL인 \"Argument Clinic\"을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972153Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale and Goals",
+      "source_hash": 105921402822607761,
+      "context_hash": 6886864206160362289,
+      "translation": "근거 및 목표",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972153Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The primary implementation of Python, \"CPython\", is written in a mixture of Python and C.",
+      "source_hash": 7716767512240026744,
+      "context_hash": 10593716718958369658,
+      "translation": "Python의 주요 구현체인 \"CPython\"은 Python과 C를 혼합하여 작성되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972154Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "One implementation detail of CPython is what are called \"built-in\" functions -- functions available to Python programs but written in C.",
+      "source_hash": 9577779026732402237,
+      "context_hash": 9634453850084911901,
+      "translation": "CPython의 구현에는 \"내장\" 함수라고 부르는 함수가 있습니다. 이러한 함수는 Python 프로그램에서 사용할 수 있지만 C로 작성되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972154Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "When a Python program calls a built-in function and passes in arguments, those arguments must be translated from Python values into C values.",
+      "source_hash": 7611131030111461161,
+      "context_hash": 17069761554824182055,
+      "translation": "Python 프로그램이 내장 함수를 호출하고 인자를 전달하면, 해당 인자를 Python 값에서 C 값으로 변환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972154Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:3",
+      "source": "This process is called \"parsing arguments\".",
+      "source_hash": 11643668335001242183,
+      "context_hash": 4987740149212113719,
+      "translation": "이 과정을 \"인자 구문 분석\"이라고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972154Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "As of CPython 3.3, builtin functions nearly always parse their arguments with one of two functions: the original ``PyArg_ParseTuple()``, [1]_ and the more modern ``PyArg_ParseTupleAndKeywords()``. [2]_ The former only handles positional parameters; the latter also accommodates keyword and keyword-only parameters, and is preferred for new code.",
+      "source_hash": 16228234846210544974,
+      "context_hash": 4644443817577351587,
+      "translation": "CPython 3.3부터 내장 함수는 거의 항상 다음 두 함수 중 하나를 사용하여 인자를 구문 분석합니다. 원래의 ``PyArg_ParseTuple()``, [1]_ 그리고 더 현대적인 ``PyArg_ParseTupleAndKeywords()``\\ 입니다. [2]_ 전자는 위치 매개변수만 처리하고, 후자는 키워드 매개변수와 키워드 전용 매개변수도 지원하며 새 코드에 선호됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972155Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "With either function, the caller specifies the translation for parsing arguments in a \"format string\": [3]_ each parameter corresponds to a \"format unit\", a short character sequence telling the parsing function what Python types to accept and how to translate them into the appropriate C value for that parameter.",
+      "source_hash": 1763926964150490187,
+      "context_hash": 7912780845822668008,
+      "translation": "어느 함수를 사용하든 호출자는 \"형식 문자열\"을 통해 인자 구문 분석을 위한 변환을 지정합니다. [3]_ 각 매개변수는 \"형식 단위\"에 대응하며, 형식 단위는 구문 분석 함수에 어떤 Python 형식을 허용하고 해당 매개변수에 적합한 C 값으로 어떻게 변환할지를 알려 주는 짧은 문자 시퀀스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972155Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "``PyArg_ParseTuple()`` was reasonable when it was first conceived.",
+      "source_hash": 15648293919391118943,
+      "context_hash": 13036614061562903113,
+      "translation": "``PyArg_ParseTuple()``\\ 은 처음 고안되었을 때는 합리적이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972155Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "There were only a dozen or so of these \"format units\"; each one was distinct, and easy to understand and remember.",
+      "source_hash": 2176762824484302062,
+      "context_hash": 13771015670119559234,
+      "translation": "당시에는 이러한 \"형식 단위\"가 열두 개 정도뿐이었으며, 각각 서로 구별되었고 이해하고 기억하기 쉬웠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972155Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "But over the years the ``PyArg_Parse`` interface has been extended in numerous ways.",
+      "source_hash": 15568926985962910227,
+      "context_hash": 6476765697347834363,
+      "translation": "그러나 수년에 걸쳐 ``PyArg_Parse`` 인터페이스는 여러 방식으로 확장되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972155Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:3",
+      "source": "The modern API is complex, to the point that it is somewhat painful to use.",
+      "source_hash": 3597806984306124238,
+      "context_hash": 12658208815556691193,
+      "translation": "현대적인 API는 복잡하여 사용하기가 다소 고통스러울 정도입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972156Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:4",
+      "source": "Consider:",
+      "source_hash": 4492811767923585497,
+      "context_hash": 17324292118508519468,
+      "translation": "다음을 살펴보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972156Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "There are now forty different \"format units\"; a few are even three characters long.",
+      "source_hash": 6950431622555838273,
+      "context_hash": 1993150275594447309,
+      "translation": "이제 서로 다른 \"형식 단위\"가 마흔 개나 되며, 그중 일부는 길이가 세 문자에 이릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972156Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "This makes it difficult for the programmer to understand what the format string says--or even perhaps to parse it--without constantly cross-indexing it with the documentation.",
+      "source_hash": 13368992716150682399,
+      "context_hash": 1813564434417832583,
+      "translation": "이 때문에 프로그래머는 문서를 계속 대조하지 않고서는 형식 문자열이 무엇을 의미하는지, 심지어 형식 문자열을 해석할 수 있는지조차 이해하기 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972156Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "There are also six meta-format units that may be buried in the format string.  (They are: ``\"()|$:;\"``.)",
+      "source_hash": 6225355846259126739,
+      "context_hash": 6803306702131625326,
+      "translation": "형식 문자열 안에 묻혀 있을 수 있는 메타 형식 단위도 여섯 개나 있습니다. (다음과 같습니다: ``\"()|$:;\"``.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972157Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "The more format units are added, the less likely it is the implementer can pick an easy-to-use mnemonic for the format unit, because the character of choice is probably already in use.",
+      "source_hash": 8829374964003099179,
+      "context_hash": 13449912238576961560,
+      "translation": "형식 단위가 추가될수록 구현자는 해당 형식 단위에 사용하기 쉬운 니모닉을 선택하기 어려워집니다. 선택하려는 문자가 이미 사용 중일 가능성이 높기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972157Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:1",
+      "source": "In other words, the more format units we have, the more obtuse the format units become.",
+      "source_hash": 18368980511018538634,
+      "context_hash": 2902486444830271602,
+      "translation": "다시 말해, 형식 단위가 많아질수록 형식 단위는 더욱 난해해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972157Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "Several format units are nearly identical to others, having only subtle differences.",
+      "source_hash": 6006792155467557092,
+      "context_hash": 5622439942763301400,
+      "translation": "여러 형식 단위는 미묘한 차이만 있을 뿐 다른 형식 단위와 거의 동일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972157Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:1",
+      "source": "This makes understanding the exact semantics of the format string even harder, and can make it difficult to figure out exactly which format unit you want.",
+      "source_hash": 5486134105661273616,
+      "context_hash": 11157516573613753972,
+      "translation": "이 때문에 형식 문자열의 정확한 의미를 이해하기가 더욱 어려워지고, 정확히 어떤 형식 단위를 원하는지 알아내기도 어려워질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972158Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "The docstring is specified as a static C string, making it mildly bothersome to read and edit since it must obey C string quoting rules.",
+      "source_hash": 6812677014938435343,
+      "context_hash": 6847169413721504401,
+      "translation": "독스트링은 정적인 C 문자열로 지정되므로 C 문자열 인용 규칙을 따라야 하며, 이 때문에 읽고 편집하기가 약간 번거롭습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972158Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "When adding a new parameter to a function using ``PyArg_ParseTupleAndKeywords()``, it's necessary to touch six different places in the code: [4]_",
+      "source_hash": 7844435344881049366,
+      "context_hash": 18391478962542494447,
+      "translation": "``PyArg_ParseTupleAndKeywords()``\\ 를 사용하는 함수에 새 매개변수를 추가할 때는 코드에서 서로 다른 여섯 곳을 수정해야 합니다. [4]_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972158Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:0",
+      "source": "Declaring the variable to store the argument.",
+      "source_hash": 17991371970190540042,
+      "context_hash": 13701564548132651948,
+      "translation": "인자를 저장할 변수를 선언합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972158Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:0",
+      "source": "Passing in a pointer to that variable in the correct spot in ``PyArg_ParseTupleAndKeywords()``, also passing in any \"length\" or \"converter\" arguments in the correct order.",
+      "source_hash": 2706371108228207940,
+      "context_hash": 18207977891340386577,
+      "translation": "``PyArg_ParseTupleAndKeywords()``\\ 에서 해당 변수에 대한 포인터를 올바른 위치에 전달하고, \"길이\" 또는 \"변환기\" 인자가 있다면 올바른 순서로 함께 전달합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972159Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:0",
+      "source": "Adding the name of the argument in the correct spot of the \"keywords\" array passed in to ``PyArg_ParseTupleAndKeywords()``.",
+      "source_hash": 13768531171359213875,
+      "context_hash": 8654687958227297935,
+      "translation": "``PyArg_ParseTupleAndKeywords()``\\ 에 전달되는 \"키워드\" 배열의 올바른 위치에 인자 이름을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972159Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:14/seg:0",
+      "source": "Adding the format unit to the correct spot in the format string.",
+      "source_hash": 3819778503743165407,
+      "context_hash": 10636378161115010852,
+      "translation": "형식 문자열의 올바른 위치에 형식 단위를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972159Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:15/seg:0",
+      "source": "Adding the parameter to the prototype in the docstring.",
+      "source_hash": 6851164436073702939,
+      "context_hash": 1308766005032298131,
+      "translation": "독스트링의 프로토타입에 매개변수를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972159Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:16/seg:0",
+      "source": "Documenting the parameter in the docstring.",
+      "source_hash": 3046325034247721361,
+      "context_hash": 16138249064439125366,
+      "translation": "독스트링에 매개변수를 문서화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972159Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:17/seg:0",
+      "source": "There is currently no mechanism for builtin functions to provide their \"signature\" information (see ``inspect.getfullargspec`` and ``inspect.Signature``).",
+      "source_hash": 6454133000314603271,
+      "context_hash": 9732268934784885278,
+      "translation": "현재 내장 함수가 자신의 \"시그니처\" 정보를 제공할 수 있는 메커니즘은 없습니다(``inspect.getfullargspec`` 및 ``inspect.Signature`` 참조).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972160Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:17/seg:1",
+      "source": "Adding this information using a mechanism similar to the existing ``PyArg_Parse`` functions would require repeating ourselves yet again.",
+      "source_hash": 10598818462740691957,
+      "context_hash": 9154840540226392687,
+      "translation": "기존 ``PyArg_Parse`` 함수와 유사한 메커니즘을 사용하여 이 정보를 추가하려면 또다시 같은 내용을 반복해서 작성해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:00.972160Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:18/seg:0",
+      "source": "The goal of Argument Clinic is to replace this API with a mechanism inheriting none of these downsides:",
+      "source_hash": 507850285435105573,
+      "context_hash": 18040926477703056318,
+      "translation": "이 API를 이러한 단점이 전혀 없는 메커니즘으로 대체하는 것이 Argument Clinic의 목표입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324374Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:19/seg:0",
+      "source": "You need specify each parameter only once.",
+      "source_hash": 11438970394846381761,
+      "context_hash": 5902677910313740377,
+      "translation": "각 매개변수를 한 번만 지정하면 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324378Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:20/seg:0",
+      "source": "All information about a parameter is kept together in one place.",
+      "source_hash": 15295717614117021488,
+      "context_hash": 4528517336970967071,
+      "translation": "매개변수에 관한 모든 정보가 한곳에 함께 유지됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324378Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:21/seg:0",
+      "source": "For each parameter, you specify a conversion function; Argument Clinic handles the translation from Python value into C value for you.",
+      "source_hash": 4553811934942746759,
+      "context_hash": 3519463962772749838,
+      "translation": "각 매개변수에 대해 변환 함수를 지정하면 Argument Clinic이 Python 값에서 C 값으로의 변환을 대신 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324379Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:22/seg:0",
+      "source": "Argument Clinic also allows for fine-tuning of argument processing behavior with parameterized conversion functions.",
+      "source_hash": 2677588110172200146,
+      "context_hash": 9941565625337526143,
+      "translation": "Argument Clinic은 매개변수화된 변환 함수를 사용하여 인자 처리 동작을 세밀하게 조정할 수도 있게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324379Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:23/seg:0",
+      "source": "Docstrings are written in plain text.",
+      "source_hash": 9078601893142282391,
+      "context_hash": 13668941015943534854,
+      "translation": "독스트링은 일반 텍스트로 작성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324379Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:23/seg:1",
+      "source": "Function docstrings are required; per-parameter docstrings are encouraged.",
+      "source_hash": 6467815011959099746,
+      "context_hash": 2772693776433999772,
+      "translation": "함수 독스트링은 필수이며, 매개변수별 독스트링을 작성하는 것이 권장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324380Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:24/seg:0",
+      "source": "From this, Argument Clinic generates for you all the mundane, repetitious code and data structures CPython needs internally.",
+      "source_hash": 2286702946652117673,
+      "context_hash": 13090213786418264355,
+      "translation": "이를 바탕으로 Argument Clinic은 CPython이 내부적으로 필요로 하는 모든 단조롭고 반복적인 코드와 데이터 구조를 대신 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324380Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:24/seg:1",
+      "source": "Once you've specified the interface, the next step is simply to write your implementation using native C types.",
+      "source_hash": 17468675927529002143,
+      "context_hash": 5190187984200964386,
+      "translation": "인터페이스를 지정한 다음 단계는 네이티브 C 타입을 사용하여 구현을 작성하는 것뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324380Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:24/seg:2",
+      "source": "Every detail of argument parsing is handled for you.",
+      "source_hash": 3348703666125250353,
+      "context_hash": 14909052922669702531,
+      "translation": "인자 구문의 모든 세부 사항은 대신 처리됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324380Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:25/seg:0",
+      "source": "Argument Clinic is implemented as a preprocessor.",
+      "source_hash": 9723041761500797549,
+      "context_hash": 11189423472016164380,
+      "translation": "Argument Clinic은 전처리기로 구현됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324381Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:25/seg:1",
+      "source": "It draws inspiration for its workflow directly from [Cog]_ by Ned Batchelder.",
+      "source_hash": 872152470279339646,
+      "context_hash": 4771292718465701244,
+      "translation": "Argument Clinic은 Ned Batchelder가 만든 [Cog]_\\ 로부터 워크플로에 대한 영감을 직접 얻었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324381Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:25/seg:2",
+      "source": "To use Clinic, add a block comment to your C source code beginning and ending with special text strings, then run Clinic on the file.",
+      "source_hash": 1954487824870867062,
+      "context_hash": 3957730827836513154,
+      "translation": "Clinic을 사용하려면 특수한 텍스트 문자열로 시작하고 끝나는 블록 주석을 C 소스 코드에 추가한 다음, 파일에서 Clinic을 실행하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324381Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:25/seg:3",
+      "source": "Clinic will find the block comment, process the contents, and write the output back into your C source file directly after the comment.",
+      "source_hash": 14990739822685656333,
+      "context_hash": 10120232080181074852,
+      "translation": "Clinic은 블록 주석을 찾아 그 내용을 처리한 후, 주석 바로 다음에 출력을 C 소스 파일에 다시 작성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324382Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:25/seg:4",
+      "source": "The intent is that Clinic's output becomes part of your source code; it's checked in to revision control, and distributed with source packages.",
+      "source_hash": 5598923485790123366,
+      "context_hash": 15401960556756643873,
+      "translation": "Clinic의 출력이 소스 코드의 일부가 되도록 하는 것이 의도이며, 이는 버전 관리에 커밋되고 소스 패키지와 함께 배포됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324382Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:25/seg:5",
+      "source": "This means that Python will still ship ready-to-build.",
+      "source_hash": 7832032244291344092,
+      "context_hash": 7031602496788768953,
+      "translation": "이는 Python이 계속해서 바로 빌드할 수 있는 상태로 제공된다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324382Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:25/seg:6",
+      "source": "It does complicate development slightly; in order to add a new function, or modify the arguments or documentation of an existing function using Clinic, you'll need a working Python 3 interpreter.",
+      "source_hash": 6785477387096557511,
+      "context_hash": 8874191333317714998,
+      "translation": "개발이 약간 복잡해집니다. Clinic을 사용하여 새 함수를 추가하거나 기존 함수의 인자 또는 문서를 수정하려면 작동하는 Python 3 인터프리터가 필요합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:22:07.324382Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:26/seg:0",
+      "source": "Future goals of Argument Clinic include:",
+      "source_hash": 17021932075314866262,
+      "context_hash": 4170177120743771667,
+      "translation": "Argument Clinic의 향후 목표는 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324384Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:27/seg:0",
+      "source": "providing signature information for builtins,",
+      "source_hash": 12532145322835495118,
+      "context_hash": 3451713433229724825,
+      "translation": "내장 함수에 대한 시그니처 정보를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324384Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:28/seg:0",
+      "source": "enabling alternative implementations of Python to create automated library compatibility tests, and",
+      "source_hash": 13123566879334018929,
+      "context_hash": 15298927832388631896,
+      "translation": "Python의 대체 구현이 자동화된 라이브러리 호환성 테스트를 만들 수 있게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324384Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:29/seg:0",
+      "source": "speeding up argument parsing with improvements to the generated code.",
+      "source_hash": 3037283051946163749,
+      "context_hash": 14346784785141374251,
+      "translation": "생성된 코드를 개선하여 인자 구문 분석 속도를 높입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324384Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "DSL Syntax Summary",
+      "source_hash": 4161275592349921506,
+      "context_hash": 5590416242442060830,
+      "translation": "DSL 구문 요약",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324385Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "The Argument Clinic DSL is specified as a comment embedded in a C file, as follows.",
+      "source_hash": 18292634861574556534,
+      "context_hash": 14531442350592394836,
+      "translation": "Argument Clinic DSL은 다음과 같이 C 파일에 삽입된 주석으로 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324385Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "The \"Example\" column on the right shows you sample input to the Argument Clinic DSL, and the \"Section\" column on the left specifies what each line represents in turn.",
+      "source_hash": 6373311885284728543,
+      "context_hash": 2369645236878296498,
+      "translation": "오른쪽의 \"Example\" 열에는 Argument Clinic DSL의 샘플 입력이 표시되고, 왼쪽의 \"Section\" 열에는 각 줄이 차례로 나타내는 내용이 지정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324385Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Argument Clinic's DSL syntax mirrors the Python ``def`` statement, lending it some familiarity to Python core developers.",
+      "source_hash": 11391432880754038934,
+      "context_hash": 4632557854595109387,
+      "translation": "Argument Clinic의 DSL 구문은 Python의 ``def`` 문을 본떠서 만들었으므로 Python 핵심 개발자에게 어느 정도 익숙합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324385Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "To give some flavor of the proposed DSL syntax, here are some sample Clinic code blocks.",
+      "source_hash": 10761745773443628589,
+      "context_hash": 10893104726026034677,
+      "translation": "제안된 DSL 구문의 형태를 보여 드리기 위해 몇 가지 Clinic 코드 블록 예를 여기 제시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324385Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:1",
+      "source": "This first block reflects the normally preferred style, including blank lines between parameters and per-argument docstrings.",
+      "source_hash": 10503499083440524152,
+      "context_hash": 8454150515228076641,
+      "translation": "이 첫 번째 블록은 매개변수 사이의 빈 줄과 인자별 독스트링을 포함하여 일반적으로 선호되는 스타일을 반영합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324386Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:2",
+      "source": "It also includes a user-defined converter (``path_t``) created locally",
+      "source_hash": 3401713677313826964,
+      "context_hash": 3793821938749745355,
+      "translation": "또한 로컬에서 생성된 사용자 정의 변환기(``path_t``)도 포함합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324386Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "This second example shows a minimal Clinic code block, omitting all parameter docstrings and non-significant blank lines",
+      "source_hash": 11946305342045708479,
+      "context_hash": 2363336029729235108,
+      "translation": "이 두 번째 예는 모든 매개변수 독스트링과 중요하지 않은 빈 줄을 생략한 최소한의 Clinic 코드 블록을 보여 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324386Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "This final example shows a Clinic code block handling groups of optional parameters, including parameters on the left",
+      "source_hash": 8553044519049130044,
+      "context_hash": 13810592265091916577,
+      "translation": "이 마지막 예는 왼쪽의 매개변수를 포함하여 선택적 매개변수 그룹을 처리하는 Clinic 코드 블록을 보여 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324386Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "General Behavior Of the Argument Clinic DSL",
+      "source_hash": 11562465867081534491,
+      "context_hash": 6316023143287593453,
+      "translation": "Argument Clinic DSL의 일반적인 동작",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:07.324387Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "All lines support ``#`` as a line comment delimiter *except* docstrings.",
+      "source_hash": 5361844961527167746,
+      "context_hash": 17027172423385150006,
+      "translation": "모든 줄은 docstrings를 *제외하고* ``#``\\ 을 줄 주석 구분자로 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169632Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "Blank lines are always ignored.",
+      "source_hash": 11069483014874235548,
+      "context_hash": 348170051857057988,
+      "translation": "빈 줄은 항상 무시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169638Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Like Python itself, leading whitespace is significant in the Argument Clinic DSL.",
+      "source_hash": 17933706391219411676,
+      "context_hash": 16081042418556508833,
+      "translation": "Python 자체와 마찬가지로, Argument Clinic DSL에서는 앞쪽 공백이 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169638Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "The first line of the \"function\" section is the function declaration.",
+      "source_hash": 5466686322208319501,
+      "context_hash": 11966120854175875498,
+      "translation": "\"function\" 섹션의 첫 번째 줄은 함수 선언입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169638Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "Indented lines below the function declaration declare parameters, one per line; lines below those that are indented even further are per-parameter docstrings.",
+      "source_hash": 10108741004114953321,
+      "context_hash": 16155476576369831581,
+      "translation": "함수 선언 아래의 들여쓰기된 줄은 한 줄에 하나씩 매개변수를 선언하며, 그보다 더 깊게 들여쓰기된 줄은 매개변수별 docstring입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169639Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:3",
+      "source": "Finally, the first line dedented back to column 0 end parameter declarations and start the function docstring.",
+      "source_hash": 15069473245339133609,
+      "context_hash": 2277804981578841340,
+      "translation": "마지막으로 열 0까지 들여쓰기가 되돌아간 첫 번째 줄에서 매개변수 선언이 끝나고 함수 docstring이 시작됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169640Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Parameter docstrings are optional; function docstrings are not.",
+      "source_hash": 5191965340390786003,
+      "context_hash": 11485235023670795961,
+      "translation": "매개변수 docstring은 선택 사항이지만 함수 docstring은 필수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169640Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "Functions that specify no arguments may simply specify the function declaration followed by the docstring.",
+      "source_hash": 803049897592082467,
+      "context_hash": 6690897687466154764,
+      "translation": "인자를 지정하지 않는 함수는 함수 선언 다음에 docstring만 지정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169641Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Module and Class Declarations",
+      "source_hash": 15177054509035661253,
+      "context_hash": 7731725007848582872,
+      "translation": "모듈 및 클래스 선언",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169641Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "When a C file implements a module or class, this should be declared to Clinic.",
+      "source_hash": 7680430188449476301,
+      "context_hash": 13112900967966701579,
+      "translation": "C 파일이 모듈이나 클래스를 구현하는 경우 이를 Clinic에 선언해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169641Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "The syntax is simple",
+      "source_hash": 887293477546777689,
+      "context_hash": 170718187834603769,
+      "translation": "구문은 간단합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169641Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "or",
+      "source_hash": 9137788149709652217,
+      "context_hash": 136532424958880121,
+      "translation": "또는",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169642Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "(Note that these are not actually special syntax; they are implemented as `Directives`_.)",
+      "source_hash": 17483689940797547838,
+      "context_hash": 10364188481413466869,
+      "translation": "(이것들은 실제로 특수 구문이 아니라 `Directives`_\\ 로 구현됩니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169642Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "The module name or class name should always be the full dotted path from the top-level module.",
+      "source_hash": 3403984503845340622,
+      "context_hash": 169464623426819764,
+      "translation": "모듈 이름이나 클래스 이름은 항상 최상위 모듈부터 시작하는 전체 점 표기 경로여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169643Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:1",
+      "source": "Nested modules and classes are supported.",
+      "source_hash": 1809460993356508784,
+      "context_hash": 2203358263902562948,
+      "translation": "중첩된 모듈과 클래스가 지원됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169643Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Function Declaration",
+      "source_hash": 10694843567538490799,
+      "context_hash": 18348880173505941795,
+      "translation": "함수 선언",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169643Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The full form of the function declaration is as follows",
+      "source_hash": 6513359754291285810,
+      "context_hash": 7797045818121271430,
+      "translation": "함수 선언의 전체 형식은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169644Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "The dotted name should be the full name of the function, starting with the highest-level package (e.g. \"os.stat\" or \"curses.window.addch\").",
+      "source_hash": 9767975705657020690,
+      "context_hash": 8579333067770006818,
+      "translation": "점 표기 이름은 최상위 패키지부터 시작하는 함수의 전체 이름이어야 합니다(예: \"os.stat\" 또는 \"curses.window.addch\").",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169644Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "The \"as legal_c_id\" syntax is optional.",
+      "source_hash": 16031120755226665595,
+      "context_hash": 5309968408024426903,
+      "translation": "\"as legal_c_id\" 구문은 선택 사항입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169644Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:1",
+      "source": "Argument Clinic uses the name of the function to create the names of the generated C functions.",
+      "source_hash": 3413081416088639894,
+      "context_hash": 16476702305986286354,
+      "translation": "Argument Clinic은 함수 이름을 사용하여 생성되는 C 함수의 이름을 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169645Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:2",
+      "source": "In some circumstances, the generated name may collide with other global names in the C program's namespace.",
+      "source_hash": 6906290701107778291,
+      "context_hash": 7435280964003719657,
+      "translation": "일부 상황에서는 생성된 이름이 C 프로그램의 네임스페이스에 있는 다른 전역 이름과 충돌할 수 있습니다.",
+      "glossary_snapshot": {
+        "namespace": "네임스페이스"
+      },
+      "translated_at": "2026-08-28T19:21:58.169645Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:3",
+      "source": "The \"as legal_c_id\" syntax allows you to override the generated name with your own; substitute \"legal_c_id\" with any legal C identifier.",
+      "source_hash": 8835794831456004268,
+      "context_hash": 1546809542892571500,
+      "translation": "\"as legal_c_id\" 구문을 사용하면 생성된 이름을 사용자가 지정한 이름으로 재정의할 수 있습니다. \"legal_c_id\"를 적법한 C 식별자로 바꾸십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169647Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:4",
+      "source": "If skipped, the \"as\" keyword must also be omitted.",
+      "source_hash": 2745664057696755005,
+      "context_hash": 16814869525623079815,
+      "translation": "생략하는 경우 \"as\" 키워드도 생략해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169647Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "The return annotation is also optional.",
+      "source_hash": 18349212111194929782,
+      "context_hash": 6668086008439949921,
+      "translation": "반환 어노테이션도 선택 사항입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169647Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:1",
+      "source": "If skipped, the arrow (\"``->``\") must also be omitted.",
+      "source_hash": 4846718573311904287,
+      "context_hash": 12668434259633653054,
+      "translation": "생략하는 경우 화살표(\"``->``\")도 생략해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169648Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:2",
+      "source": "If specified, the value for the return annotation must be compatible with ``ast.literal_eval``, and it is interpreted as a *return converter*.",
+      "source_hash": 10723641514132955458,
+      "context_hash": 17510865719210813866,
+      "translation": "지정하는 경우 반환 어노테이션의 값은 ``ast.literal_eval``\\ 과 호환되어야 하며, *return converter*\\ 로 해석됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169648Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Parameter Declaration",
+      "source_hash": 14122358478776803780,
+      "context_hash": 6800549804326910693,
+      "translation": "매개변수 선언",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169648Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The full form of the parameter declaration line as follows",
+      "source_hash": 2569868135711921016,
+      "context_hash": 9515230426243139859,
+      "translation": "매개변수 선언 줄의 전체 형식은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169649Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "The \"name\" must be a legal C identifier.",
+      "source_hash": 838130816775204800,
+      "context_hash": 7613379576950035408,
+      "translation": "\"name\"은 적법한 C 식별자여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169649Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "Whitespace is permitted between the name and the colon (though this is not the preferred style).",
+      "source_hash": 11307083358033963116,
+      "context_hash": 17101952634923799421,
+      "translation": "이름과 콜론 사이에는 공백을 사용할 수 있습니다(다만 권장되는 스타일은 아닙니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169649Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:2",
+      "source": "Whitespace is permitted (and encouraged) between the colon and the converter.",
+      "source_hash": 13299490268893051070,
+      "context_hash": 10531276543878807346,
+      "translation": "콜론과 변환기 사이에는 공백을 사용할 수 있으며, 공백을 사용하는 것이 권장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.169651Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "The \"converter\" is the name of one of the \"converter functions\" registered with Argument Clinic.",
+      "source_hash": 3432007799513670899,
+      "context_hash": 6253207067210533603,
+      "translation": "\"converter\"는 Argument Clinic에 등록된 \"converter functions\" 중 하나의 이름입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471441Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "Clinic will ship with a number of built-in converters; new converters can also be added dynamically.",
+      "source_hash": 11726070035221544620,
+      "context_hash": 4949237458627982430,
+      "translation": "Clinic에는 여러 내장 변환기가 함께 제공되며, 새 변환기도 동적으로 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471446Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:2",
+      "source": "In choosing a converter, you are automatically constraining what Python types are permitted on the input, and specifying what type the output variable (or variables) will be.",
+      "source_hash": 2151971280072471706,
+      "context_hash": 14041171891863384900,
+      "translation": "변환기를 선택하면 입력에 허용되는 Python 타입을 자동으로 제한하고, 출력 변수(또는 변수들)의 타입을 지정하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471447Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:3",
+      "source": "Although many of the converters will resemble the names of C types or perhaps Python types, the name of a converter may be any legal Python identifier.",
+      "source_hash": 8898222769048662705,
+      "context_hash": 7212323500830297479,
+      "translation": "많은 변환기의 이름이 C 타입이나 Python 타입의 이름과 비슷하지만, 변환기의 이름은 유효한 Python 식별자라면 무엇이든 될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471447Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "If the converter is followed by parentheses, these parentheses enclose parameter to the conversion function.",
+      "source_hash": 4854031213235615348,
+      "context_hash": 15348724148464882697,
+      "translation": "변환기 뒤에 괄호가 오면, 이 괄호는 변환 함수에 대한 매개변수를 묶습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471448Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:1",
+      "source": "The syntax mirrors providing arguments a Python function call: the parameter must always be named, as if they were \"keyword-only parameters\", and the values provided for the parameters will syntactically resemble Python literal values.",
+      "source_hash": 8173724018486062049,
+      "context_hash": 6993112789350031198,
+      "translation": "이 구문은 Python 함수 호출에 인자를 제공하는 방식과 유사합니다. 매개변수는 항상 이름을 지정해야 하며, 마치 \"keyword-only parameters\"인 것처럼 작성해야 하고, 매개변수에 제공하는 값은 구문상 Python 리터럴 값과 유사해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471448Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:2",
+      "source": "These parameters are always optional, permitting all conversion functions to be called without any parameters.",
+      "source_hash": 7187482243832676030,
+      "context_hash": 13661937568560255975,
+      "translation": "이러한 매개변수는 항상 선택 사항이므로 모든 변환 함수를 매개변수 없이 호출할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471449Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:3",
+      "source": "In this case, you may also omit the parentheses entirely; this is always equivalent to specifying empty parentheses.",
+      "source_hash": 6942229509819970498,
+      "context_hash": 14125786403142489920,
+      "translation": "이 경우 괄호를 완전히 생략할 수도 있으며, 이는 항상 빈 괄호를 지정하는 것과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471449Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:4",
+      "source": "The values supplied for these parameters must be compatible with ``ast.literal_eval``.",
+      "source_hash": 6918687573428854550,
+      "context_hash": 11319387870501789451,
+      "translation": "이러한 매개변수에 제공하는 값은 ``ast.literal_eval``\\ 과 호환되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471450Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "The \"default\" is a Python literal value.",
+      "source_hash": 2832550762624345420,
+      "context_hash": 9926134926239972340,
+      "translation": "\"default\"는 Python 리터럴 값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471450Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:1",
+      "source": "Default values are optional; if not specified you must omit the equals sign too.",
+      "source_hash": 4289979740854139117,
+      "context_hash": 4442898107317508930,
+      "translation": "기본값은 선택 사항이며, 지정하지 않을 경우 등호도 생략해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471450Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:2",
+      "source": "Parameters which don't have a default are implicitly required.",
+      "source_hash": 17183765284233996924,
+      "context_hash": 10511918785941010812,
+      "translation": "기본값이 없는 매개변수는 암시적으로 필수 항목입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471451Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:3",
+      "source": "The default value is dynamically assigned, \"live\" in the generated C code, and although it's specified as a Python value, it's translated into a native C value in the generated C code.",
+      "source_hash": 3479893170007959362,
+      "context_hash": 15684561961328666010,
+      "translation": "기본값은 생성된 C 코드에 동적으로 할당되어 \"live\" 상태로 존재하며, Python 값으로 지정되지만 생성된 C 코드에서는 네이티브 C 값으로 변환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471451Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:4",
+      "source": "Few default values are permitted, owing to this manual translation step.",
+      "source_hash": 14181745730882608820,
+      "context_hash": 4406798177842996395,
+      "translation": "이러한 수동 변환 단계 때문에 허용되는 기본값은 많지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471452Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "If this were a Python function declaration, a parameter declaration would be delimited by either a trailing comma or an ending parenthesis.",
+      "source_hash": 3975485080738010990,
+      "context_hash": 10632353551583108585,
+      "translation": "이것이 Python 함수 선언이라면, 매개변수 선언은 뒤따르는 쉼표나 닫는 괄호로 구분될 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471452Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:1",
+      "source": "However, Argument Clinic uses neither; parameter declarations are delimited by a newline.",
+      "source_hash": 13131462680211789880,
+      "context_hash": 7071251514304280489,
+      "translation": "그러나 Argument Clinic은 둘 다 사용하지 않으며, 매개변수 선언은 줄 바꿈으로 구분됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471452Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:2",
+      "source": "A trailing comma or right parenthesis is not permitted.",
+      "source_hash": 6570253600512675832,
+      "context_hash": 2505632856834392911,
+      "translation": "뒤따르는 쉼표나 닫는 괄호는 허용되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471452Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "The first parameter declaration establishes the indent for all parameter declarations in a particular Clinic code block.",
+      "source_hash": 16066048285837287800,
+      "context_hash": 1996105617619024851,
+      "translation": "첫 번째 매개변수 선언이 특정 Clinic 코드 블록의 모든 매개변수 선언에 대한 들여쓰기 수준을 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471453Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:1",
+      "source": "All subsequent parameters must be indented to the same level.",
+      "source_hash": 6988737645067714180,
+      "context_hash": 15012355946002803990,
+      "translation": "이후의 모든 매개변수는 동일한 수준으로 들여써야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471453Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Legacy Converters",
+      "source_hash": 9923556038762275310,
+      "context_hash": 10497031134991826999,
+      "translation": "레거시 변환기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471454Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "For convenience's sake in converting existing code to Argument Clinic, Clinic provides a set of legacy converters that match ``PyArg_ParseTuple`` format units.",
+      "source_hash": 9497044361297682437,
+      "context_hash": 1602139634081271342,
+      "translation": "기존 코드를 Argument Clinic으로 변환하는 편의를 위해 Clinic은 ``PyArg_ParseTuple`` 형식 단위와 일치하는 레거시 변환기 집합을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471454Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "They are specified as a C string containing the format unit.",
+      "source_hash": 455402877238035426,
+      "context_hash": 7155634518771830452,
+      "translation": "이 변환기는 형식 단위를 포함하는 C 문자열로 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471454Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "For example, to specify a parameter \"foo\" as taking a Python \"int\" and emitting a C int, you could specify",
+      "source_hash": 3169656265926651777,
+      "context_hash": 3330691878141198729,
+      "translation": "예를 들어, 매개변수 \"foo\"가 Python \"int\"를 받고 C int를 출력하도록 지정하려면 다음과 같이 지정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471455Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "(To more closely resemble a C string, these must always use double quotes.)",
+      "source_hash": 12325550630070861797,
+      "context_hash": 14910650052490315459,
+      "translation": "(C 문자열과 더 유사하게 보이도록 하려면 항상 큰따옴표를 사용해야 합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471455Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "Although these resemble ``PyArg_ParseTuple`` format units, no guarantee is made that the implementation will call a ``PyArg_Parse`` function for parsing.",
+      "source_hash": 11504704218684524971,
+      "context_hash": 8835830702925438430,
+      "translation": "이것들은 ``PyArg_ParseTuple`` 형식 단위와 유사하지만, 구문 분석을 위해 구현에서 ``PyArg_Parse`` 함수를 호출한다는 보장은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471455Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "This syntax does not support parameters.",
+      "source_hash": 12639884398131323583,
+      "context_hash": 9563097530148633718,
+      "translation": "이 구문은 매개변수를 지원하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471456Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:1",
+      "source": "Therefore, it doesn't support any of the format units that require input parameters (``\"O!\", \"O&\", \"es\", \"es#\", \"et\", \"et#\"``).",
+      "source_hash": 14819185436470620142,
+      "context_hash": 17888613630207556499,
+      "translation": "따라서 입력 매개변수가 필요한 형식 단위(``\"O!\", \"O&\", \"es\", \"es#\", \"et\", \"et#\"``)는 지원하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471456Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:2",
+      "source": "Parameters requiring one of these conversions cannot use the legacy syntax.  (You may still, however, supply a default value.)",
+      "source_hash": 10547323055526318531,
+      "context_hash": 15984272242242445374,
+      "translation": "이러한 변환 중 하나가 필요한 매개변수에는 레거시 구문을 사용할 수 없습니다. (그래도 기본값은 제공할 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471456Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Parameter Docstrings",
+      "source_hash": 6206180383273022151,
+      "context_hash": 1862299357296718963,
+      "translation": "매개변수 독스트링",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471456Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "All lines that appear below and are indented further than a parameter declaration are the docstring for that parameter.",
+      "source_hash": 16876641870022313815,
+      "context_hash": 13089929779736131178,
+      "translation": "아래에 나타나며 매개변수 선언보다 더 많이 들여쓴 모든 줄은 해당 매개변수의 독스트링입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471457Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "All such lines are \"dedented\" until the first line is flush left.",
+      "source_hash": 10011642126233825308,
+      "context_hash": 3441706295380679878,
+      "translation": "이러한 모든 줄은 첫 번째 줄이 왼쪽 끝에 맞춰질 때까지 \"dedented\"됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471457Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Special Syntax For Parameter Lines",
+      "source_hash": 2706401759814116002,
+      "context_hash": 6985000589838315573,
+      "translation": "매개변수 줄의 특수 구문",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:21:58.471457Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "There are four special symbols that may be used in the parameter section.",
+      "source_hash": 7719052435048834148,
+      "context_hash": 18212220558917449199,
+      "translation": "매개변수 섹션에서 사용할 수 있는 특수 기호는 네 가지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740605Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "Each of these must appear on a line by itself, indented to the same level as parameter declarations.",
+      "source_hash": 4263438163332329899,
+      "context_hash": 17307217232698135936,
+      "translation": "이러한 기호는 각각 한 줄에 단독으로 나타나야 하며, 매개변수 선언과 같은 수준으로 들여쓰기해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740608Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "The four symbols are:",
+      "source_hash": 1013418229450958484,
+      "context_hash": 17068713932645800492,
+      "translation": "네 기호는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740608Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "Establishes that all subsequent parameters are keyword-only.",
+      "source_hash": 2301748598319007905,
+      "context_hash": 13303994089059905561,
+      "translation": "이후의 모든 매개변수가 키워드 전용임을 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740609Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "Establishes the start of an optional \"group\" of parameters.",
+      "source_hash": 12871917987369699239,
+      "context_hash": 8423809004506427805,
+      "translation": "선택적 “그룹”의 시작을 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740609Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:1",
+      "source": "Note that \"groups\" may nest inside other \"groups\".",
+      "source_hash": 10415205241390781188,
+      "context_hash": 15769637366380892193,
+      "translation": "“그룹”은 다른 “그룹” 안에 중첩될 수 있다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740609Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:2",
+      "source": "See `Functions With Positional-Only Parameters`_ below.",
+      "source_hash": 12417361854471669666,
+      "context_hash": 16811926504985723748,
+      "translation": "아래의 `Functions With Positional-Only Parameters`_\\ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:46:31.529727Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:3",
+      "source": "Note that currently ``[`` is only legal for use in functions where *all* parameters are marked positional-only, see ``/`` below.",
+      "source_hash": 8500826130176587260,
+      "context_hash": 15226564402642777340,
+      "translation": "현재 ``[``\\ 는 *모든* 매개변수가 위치 전용으로 표시된 함수에서만 사용할 수 있다는 점에 유의하십시오. 아래의 ``/``\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740610Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "Ends an optional \"group\" of parameters.",
+      "source_hash": 11243845096237615574,
+      "context_hash": 10717593607794090164,
+      "translation": "선택적 “그룹”의 끝을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740611Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "Establishes that all the *proceeding* arguments are positional-only.",
+      "source_hash": 15759336329251930254,
+      "context_hash": 9830924254012613873,
+      "translation": "이후의 모든 *인자*\\ 가 위치 전용임을 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740611Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:1",
+      "source": "For now, Argument Clinic does not support functions with both positional-only and non-positional-only arguments.",
+      "source_hash": 5575689122507799553,
+      "context_hash": 14640513752164106231,
+      "translation": "현재 Argument Clinic은 위치 전용 인자와 위치 전용이 아닌 인자를 모두 사용하는 함수를 지원하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740611Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:2",
+      "source": "Therefore: if ``/`` is specified for a function, it must currently always be after the *last* parameter.",
+      "source_hash": 18165172060244102095,
+      "context_hash": 15443653878149068702,
+      "translation": "따라서 함수에 ``/``\\ 가 지정된 경우, 현재는 항상 *마지막* 매개변수 뒤에 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740612Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:3",
+      "source": "Also, Argument Clinic does not currently support default values for positional-only parameters.",
+      "source_hash": 6217492105727446157,
+      "context_hash": 15404298094159503861,
+      "translation": "또한 Argument Clinic은 현재 위치 전용 매개변수의 기본값을 지원하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740612Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "(The semantics of ``/`` follow a syntax for positional-only parameters in Python once proposed by Guido. [5]_ )",
+      "source_hash": 17715486601932323693,
+      "context_hash": 8849648516170854493,
+      "translation": "(``/``\\ 의 의미는 Guido가 한때 제안한 Python의 위치 전용 매개변수 구문을 따릅니다. [5]_ )",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740612Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Function Docstring",
+      "source_hash": 13666817909782269547,
+      "context_hash": 13031308256527402349,
+      "translation": "함수 독스트링",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740613Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "The first line with no leading whitespace after the function declaration is the first line of the function docstring.",
+      "source_hash": 14872033745044932609,
+      "context_hash": 13077454224223180516,
+      "translation": "함수 선언 뒤에 선행 공백이 없는 첫 번째 줄이 함수 독스트링의 첫 번째 줄입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740613Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "All subsequent lines of the Clinic block are considered part of the docstring, and their leading whitespace is preserved.",
+      "source_hash": 979178714725193037,
+      "context_hash": 17724581451203712340,
+      "translation": "Clinic 블록의 이후 모든 줄은 독스트링의 일부로 간주되며, 해당 줄의 선행 공백은 보존됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740613Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "If the string ``{parameters}`` appears on a line by itself inside the function docstring, Argument Clinic will insert a list of all parameters that have docstrings, each such parameter followed by its docstring.",
+      "source_hash": 10741147120870421236,
+      "context_hash": 9862322837546285305,
+      "translation": "함수 독스트링 내부에서 ``{parameters}``\\ 이 한 줄에 단독으로 나타나면, Argument Clinic은 독스트링이 있는 모든 매개변수의 목록을 삽입하며, 각 매개변수 뒤에 해당 독스트링을 배치합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740613Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "The name of the parameter is on a line by itself; the docstring starts on a subsequent line, and all lines of the docstring are indented by two spaces.  (Parameters with no per-parameter docstring are suppressed.)  The entire list is indented by the leading whitespace that appeared before the ``{parameters}`` token.",
+      "source_hash": 9721575464739090470,
+      "context_hash": 6680675064424899371,
+      "translation": "매개변수 이름은 한 줄에 단독으로 표시되고, 독스트링은 다음 줄에서 시작하며, 독스트링의 모든 줄은 두 칸 들여쓰기됩니다. (매개변수별 독스트링이 없는 매개변수는 제외됩니다.) 전체 목록은 ``{parameters}`` 토큰 앞에 있던 선행 공백만큼 들여쓰기됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740614Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "If the string ``{parameters}`` doesn't appear in the docstring, Argument Clinic will append one to the end of the docstring, inserting a blank line above it if the docstring does not end with a blank line, and with the parameter list at column 0.",
+      "source_hash": 11968644709693022073,
+      "context_hash": 142684947341141112,
+      "translation": "독스트링에 ``{parameters}``\\ 가 나타나지 않으면 Argument Clinic은 독스트링 끝에 이를 추가하며, 독스트링이 빈 줄로 끝나지 않는 경우 그 위에 빈 줄을 삽입하고, 매개변수 목록은 열 0에 배치합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740614Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Converters",
+      "source_hash": 17591285236129710183,
+      "context_hash": 10374947789538329890,
+      "translation": "변환기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740614Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "Argument Clinic contains a pre-initialized registry of converter functions.",
+      "source_hash": 5859694423107966873,
+      "context_hash": 8107697415034854198,
+      "translation": "Argument Clinic에는 미리 초기화된 변환기 함수 레지스트리가 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740614Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "Example converter functions:",
+      "source_hash": 14472151372663862719,
+      "context_hash": 6035531252796658631,
+      "translation": "변환기 함수의 예는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740615Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "``int``",
+      "source_hash": 14555405346182345096,
+      "context_hash": 6210022137622762524,
+      "translation": "``int``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740615Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "Accepts a Python object implementing ``__int__``; emits a C ``int``.",
+      "source_hash": 7298907536970758514,
+      "context_hash": 11806629029541125708,
+      "translation": "``__int__``\\ 를 구현하는 Python 객체를 받아 C ``int``\\ 를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740615Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "``byte``",
+      "source_hash": 17257103339012638296,
+      "context_hash": 3366964004393695299,
+      "translation": "``byte``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740615Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "Accepts a Python int; emits an ``unsigned char``.",
+      "source_hash": 7104218079653048316,
+      "context_hash": 6602104944542871276,
+      "translation": "Python int를 받아 ``unsigned char``\\ 를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740615Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:1",
+      "source": "The integer must be in the range [0, 256).",
+      "source_hash": 10936074655159265511,
+      "context_hash": 965363073125908879,
+      "translation": "정수는 [0, 256) 범위에 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740615Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:0",
+      "source": "``str``",
+      "source_hash": 3053199291252759134,
+      "context_hash": 644453436118209598,
+      "translation": "``str``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740616Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:7/seg:0",
+      "source": "Accepts a Python str object; emits a C ``char *``.",
+      "source_hash": 11657856536136657884,
+      "context_hash": 2483005699541213585,
+      "translation": "Python str 객체를 받아 C ``char *``\\ 를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740616Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:7/seg:1",
+      "source": "Automatically encodes the string using the ``ascii`` codec.",
+      "source_hash": 375557424569720381,
+      "context_hash": 12025815018289411901,
+      "translation": "문자열을 ``ascii`` 코덱을 사용하여 자동으로 인코딩합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740616Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:8/seg:0",
+      "source": "``PyObject``",
+      "source_hash": 9629003858764839908,
+      "context_hash": 14832222045369062805,
+      "translation": "``PyObject``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:02.740616Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:9/seg:0",
+      "source": "Accepts any object; emits a C ``PyObject *`` without any conversion.",
+      "source_hash": 6526640709002509815,
+      "context_hash": 15653327054278356547,
+      "translation": "모든 객체를 허용하며, 변환 없이 C ``PyObject *``\\ 를 출력합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758360Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:10/seg:0",
+      "source": "All converters accept the following parameters:",
+      "source_hash": 8767657975614887206,
+      "context_hash": 13147113273453512353,
+      "translation": "모든 변환기는 다음 매개변수를 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758363Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:11/seg:0",
+      "source": "``doc_default``",
+      "source_hash": 15690610388318796891,
+      "context_hash": 17030445352082570957,
+      "translation": "``doc_default``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758363Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:12/seg:0",
+      "source": "The Python value to use in place of the parameter's actual default in Python contexts.",
+      "source_hash": 13263854548535907118,
+      "context_hash": 14480433450945594730,
+      "translation": "Python 컨텍스트에서 매개변수의 실제 기본값 대신 사용할 Python 값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758363Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:12/seg:1",
+      "source": "In other words: when specified, this value will be used for the parameter's default in the docstring, and in the ``Signature``.  (TBD alternative semantics: If the string is a valid Python expression which can be rendered into a Python value using ``eval()``, then the result of ``eval()`` on it will be used as the default in the ``Signature``.)  Ignored if there is no default.",
+      "source_hash": 404303974232599318,
+      "context_hash": 12454352380934843016,
+      "translation": "즉, 지정하면 이 값이 문서 문자열과 ``Signature``\\ 에서 매개변수의 기본값으로 사용됩니다. (TBD 대체 의미: 문자열이 유효한 Python 표현식이며 ``eval()``\\ 을 사용하여 Python 값으로 렌더링할 수 있다면, 해당 문자열에 ``eval()``\\ 을 적용한 결과가 ``Signature``\\ 의 기본값으로 사용됩니다.) 기본값이 없으면 무시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758364Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:13/seg:0",
+      "source": "``required``",
+      "source_hash": 4392264047822525010,
+      "context_hash": 7857950724534164760,
+      "translation": "``required``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758364Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:14/seg:0",
+      "source": "Normally any parameter that has a default value is automatically optional.",
+      "source_hash": 9996144715169345177,
+      "context_hash": 15625469233464753908,
+      "translation": "일반적으로 기본값이 있는 모든 매개변수는 자동으로 선택 사항이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758364Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:14/seg:1",
+      "source": "A parameter that has \"required\" set will be considered required (non-optional) even if it has a default value.",
+      "source_hash": 5299000628389905978,
+      "context_hash": 10530441529883743619,
+      "translation": "\"required\"가 설정된 매개변수는 기본값이 있더라도 필수(선택 사항이 아님)로 간주됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758365Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:14/seg:2",
+      "source": "The generated documentation will also not show any default value.",
+      "source_hash": 8087448113515508708,
+      "context_hash": 12707410883348483069,
+      "translation": "생성된 문서에도 기본값이 표시되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758365Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:15/seg:0",
+      "source": "Additionally, converters may accept one or more of these optional parameters, on an individual basis:",
+      "source_hash": 7757251915641662935,
+      "context_hash": 132082670152042865,
+      "translation": "또한 변환기는 다음 선택적 매개변수 중 하나 이상을 개별적으로 허용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758365Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:16/seg:0",
+      "source": "``annotation``",
+      "source_hash": 13960041792485330820,
+      "context_hash": 1867268296765259481,
+      "translation": "``annotation``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758365Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:17/seg:0",
+      "source": "Explicitly specifies the per-parameter annotation for this parameter.",
+      "source_hash": 197640382686622334,
+      "context_hash": 876703670104752992,
+      "translation": "이 매개변수에 대한 매개변수별 어노테이션을 명시적으로 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758366Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:17/seg:1",
+      "source": "Normally it's the responsibility of the conversion function to generate the annotation (if any).",
+      "source_hash": 15066156116577777308,
+      "context_hash": 17043505537875346912,
+      "translation": "일반적으로 어노테이션이 있는 경우 이를 생성하는 책임은 변환 함수에 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758366Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:18/seg:0",
+      "source": "``bitwise``",
+      "source_hash": 18279575240755506370,
+      "context_hash": 7886585414499548991,
+      "translation": "``bitwise``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758366Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:19/seg:0",
+      "source": "For converters that accept unsigned integers.",
+      "source_hash": 10802823335619455014,
+      "context_hash": 17933752080944569714,
+      "translation": "부호 없는 정수를 허용하는 변환기에 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758366Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:19/seg:1",
+      "source": "If the Python integer passed in is signed, copy the bits directly even if it is negative.",
+      "source_hash": 15743220367140308772,
+      "context_hash": 11694471684229997433,
+      "translation": "전달된 Python 정수가 부호 있는 경우 음수라도 비트를 직접 복사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758367Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:20/seg:0",
+      "source": "``encoding``",
+      "source_hash": 9223095880643490004,
+      "context_hash": 11407941728591789555,
+      "translation": "``encoding``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758367Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:21/seg:0",
+      "source": "For converters that accept str.",
+      "source_hash": 5339651574159361394,
+      "context_hash": 6753434812186396239,
+      "translation": "str을 허용하는 변환기에 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758367Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:21/seg:1",
+      "source": "Encoding to use when encoding a Unicode string to a ``char *``.",
+      "source_hash": 448904563300815354,
+      "context_hash": 9788761282817688147,
+      "translation": "유니코드 문자열을 ``char *``\\ 로 인코딩할 때 사용할 인코딩입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758367Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:22/seg:0",
+      "source": "``immutable``",
+      "source_hash": 18136468326399952591,
+      "context_hash": 6689490531685280801,
+      "translation": "``immutable``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758367Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:23/seg:0",
+      "source": "Only accept immutable values.",
+      "source_hash": 18053900500879351531,
+      "context_hash": 15745890943752785728,
+      "translation": "불변 값만 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758368Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:24/seg:0",
+      "source": "``length``",
+      "source_hash": 13236821470298402725,
+      "context_hash": 7002931673940694756,
+      "translation": "``length``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758368Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:25/seg:0",
+      "source": "For converters that accept iterable types.",
+      "source_hash": 15827109087479172097,
+      "context_hash": 8382326497770448242,
+      "translation": "이터러블 유형을 허용하는 변환기에 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758368Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:25/seg:1",
+      "source": "Requests that the converter also emit the length of the iterable, passed in to the ``_impl`` function in a ``Py_ssize_t`` variable; its name will be this parameter's name appended with \"``_length``\".",
+      "source_hash": 5929822442681353501,
+      "context_hash": 12541084204891041745,
+      "translation": "변환기가 이터러블의 길이도 출력하도록 요청합니다. 길이는 ``_impl``\\ 함수에 ``Py_ssize_t`` 변수로 전달되며, 그 이름은 이 매개변수의 이름에 \"``_length``\"를 덧붙인 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758368Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:26/seg:0",
+      "source": "``nullable``",
+      "source_hash": 917198445495869285,
+      "context_hash": 7080471628509347786,
+      "translation": "``nullable``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758369Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:27/seg:0",
+      "source": "This converter normally does not accept ``None``, but in this case it should.",
+      "source_hash": 12995228072341013377,
+      "context_hash": 17410294600988227036,
+      "translation": "이 변환기는 일반적으로 ``None``\\ 을 허용하지 않지만, 이 경우에는 허용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758369Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:27/seg:1",
+      "source": "If ``None`` is supplied on the Python side, the equivalent C argument will be ``NULL``.  (The ``_impl`` argument emitted by this converter will presumably be a pointer type.)",
+      "source_hash": 14461446965189736639,
+      "context_hash": 18403779119912381504,
+      "translation": "Python 측에서 ``None``\\ 이 제공되면 이에 상응하는 C 인자는 ``NULL``\\ 이 됩니다. 이 변환기가 출력하는 ``_impl``\\ 인자는 아마도 포인터 유형일 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758369Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:28/seg:0",
+      "source": "``types``",
+      "source_hash": 2304660264047698058,
+      "context_hash": 1193625468298350116,
+      "translation": "``types``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758369Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:29/seg:0",
+      "source": "A list of strings representing acceptable Python types for this object.",
+      "source_hash": 16219148915811377050,
+      "context_hash": 2217585753815317628,
+      "translation": "이 객체에 허용되는 Python 유형을 나타내는 문자열 목록입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758369Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:29/seg:1",
+      "source": "There are also four strings which represent Python protocols:",
+      "source_hash": 3046877950056576080,
+      "context_hash": 13063160601136519950,
+      "translation": "또한 Python 프로토콜을 나타내는 네 개의 문자열이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758370Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:30/seg:0",
+      "source": "\"buffer\"",
+      "source_hash": 16190225044832421295,
+      "context_hash": 1619040797608838827,
+      "translation": "\"buffer\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:06.758370Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:31/seg:0",
+      "source": "\"mapping\"",
+      "source_hash": 3251335783531031450,
+      "context_hash": 7490431612679696322,
+      "translation": "\"매핑\"",
+      "glossary_snapshot": {
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T19:46:31.529730Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:32/seg:0",
+      "source": "\"number\"",
+      "source_hash": 14971603540107163274,
+      "context_hash": 5144401288535946675,
+      "translation": "숫자",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445875Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:33/seg:0",
+      "source": "\"sequence\"",
+      "source_hash": 6541251586516223380,
+      "context_hash": 6713606768897237585,
+      "translation": "시퀀스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445879Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:34/seg:0",
+      "source": "``zeroes``",
+      "source_hash": 9185947241969306474,
+      "context_hash": 7072071968787964768,
+      "translation": "``널 문자``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445879Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:35/seg:0",
+      "source": "For converters that accept string types.",
+      "source_hash": 239862475501200464,
+      "context_hash": 1657734014486213615,
+      "translation": "문자열 형식을 허용하는 변환기의 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445879Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:35/seg:1",
+      "source": "The converted value should be allowed to have embedded zeroes.",
+      "source_hash": 5966144945069567715,
+      "context_hash": 5419907494136653036,
+      "translation": "변환된 값에는 삽입된 널 문자가 포함될 수 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445880Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Return Converters",
+      "source_hash": 8167023955314244468,
+      "context_hash": 1198674775250442816,
+      "translation": "반환 변환기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445880Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "A *return converter* conceptually performs the inverse operation of a converter: it converts a native C value into its equivalent Python value.",
+      "source_hash": 7470257821119092846,
+      "context_hash": 3303156776903866891,
+      "translation": "*반환 변환기*\\ 는 개념적으로 변환기의 역연산을 수행합니다. 즉, 네이티브 C 값을 이에 상응하는 Python 값으로 변환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445880Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Directives",
+      "source_hash": 17235699675333931,
+      "context_hash": 1433653890950599117,
+      "translation": "지시문",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445881Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Argument Clinic also permits \"directives\" in Clinic code blocks.",
+      "source_hash": 3380277869916086501,
+      "context_hash": 8145286822170808514,
+      "translation": "Argument Clinic은 Clinic 코드 블록에서 \"지시문\"도 사용할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445881Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "Directives are similar to *pragmas* in C; they are statements that modify Argument Clinic's behavior.",
+      "source_hash": 8035144959170160454,
+      "context_hash": 1120133239022751380,
+      "translation": "지시문은 C의 *프라그마*\\ 와 유사하며, Argument Clinic의 동작을 수정하는 문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445881Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "The format of a directive is as follows",
+      "source_hash": 17373882120171916575,
+      "context_hash": 1595866514288788742,
+      "translation": "지시문의 형식은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445882Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "Directives only take positional arguments.",
+      "source_hash": 8742901142404078904,
+      "context_hash": 4243798700692813040,
+      "translation": "지시문은 위치 인자만 받습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445882Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:0",
+      "source": "A Clinic code block must contain either one or more directives, or a function declaration.",
+      "source_hash": 3762869368068940418,
+      "context_hash": 12310158162512669475,
+      "translation": "Clinic 코드 블록에는 하나 이상의 지시문이나 함수 선언 중 하나가 포함되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445882Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:1",
+      "source": "It may contain both, in which case all directives must come before the function declaration.",
+      "source_hash": 153190346115857835,
+      "context_hash": 9989596367788434129,
+      "translation": "둘 다 포함할 수도 있으며, 이 경우 모든 지시문은 함수 선언 앞에 와야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445882Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:0",
+      "source": "Internally directives map directly to Python callables.",
+      "source_hash": 7556635443087551292,
+      "context_hash": 14767658631634348180,
+      "translation": "지시문은 내부적으로 Python 호출 가능 객체에 직접 매핑됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445882Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:1",
+      "source": "The directive's arguments are passed directly to the callable as positional arguments of type ``str()``.",
+      "source_hash": 4221853991986152137,
+      "context_hash": 1785672114350950729,
+      "translation": "지시문의 인자는 ``str()``\\ 형식의 위치 인자로 호출 가능 객체에 직접 전달됩니다.",
+      "glossary_snapshot": {
+        "callable": "호출 가능 객체"
+      },
+      "translated_at": "2026-08-28T19:22:05.445883Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:0",
+      "source": "Example possible directives include the production, suppression, or redirection of Clinic output.",
+      "source_hash": 9580956497774865995,
+      "context_hash": 1946053536556586637,
+      "translation": "가능한 지시문의 예로는 Clinic 출력의 생성, 억제 또는 리디렉션이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445884Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:1",
+      "source": "Also, the \"module\" and \"class\" keywords are implemented as directives in the prototype.",
+      "source_hash": 9250515446029791711,
+      "context_hash": 15563706107640664730,
+      "translation": "또한 프로토타입에서는 \"module\" 및 \"class\" 키워드가 지시문으로 구현되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445884Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Python Code",
+      "source_hash": 16751574691289099130,
+      "context_hash": 7003066418913871227,
+      "translation": "Python 코드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445884Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Argument Clinic also permits embedding Python code inside C files, which is executed in-place when Argument Clinic processes the file.",
+      "source_hash": 5897030968911184645,
+      "context_hash": 12247649700914690811,
+      "translation": "Argument Clinic은 C 파일 안에 Python 코드를 삽입할 수도 있으며, Argument Clinic이 파일을 처리할 때 해당 코드를 제자리에서 실행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445884Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "Embedded code looks like this",
+      "source_hash": 6570051655315867776,
+      "context_hash": 1903419912576826017,
+      "translation": "삽입된 코드는 다음과 같은 형태입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445884Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "The ``\"/* Hello world! */\"`` line above was generated by running the Python code in the preceding comment.",
+      "source_hash": 6189687650062584356,
+      "context_hash": 11151467640340836788,
+      "translation": "위의 ``\"/* Hello world! */\"`` 행은 앞의 주석에 있는 Python 코드를 실행하여 생성되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445885Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "Any Python code is valid.",
+      "source_hash": 4069941961705834261,
+      "context_hash": 9059323915467600281,
+      "translation": "모든 Python 코드를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445885Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:1",
+      "source": "Python code sections in Argument Clinic can also be used to directly interact with Clinic; see `Argument Clinic Programmatic Interfaces`_.",
+      "source_hash": 16063925709968955812,
+      "context_hash": 3969825130003525496,
+      "translation": "Argument Clinic의 Python 코드 섹션을 사용하여 Clinic과 직접 상호 작용할 수도 있습니다. `Argument Clinic Programmatic Interfaces`_\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445885Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Output",
+      "source_hash": 18158795255602651411,
+      "context_hash": 9618103444916143874,
+      "translation": "출력",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445885Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "Argument Clinic writes its output inline in the C file, immediately after the section of Clinic code.",
+      "source_hash": 2844499038772556974,
+      "context_hash": 15594958632862579562,
+      "translation": "Argument Clinic은 C 파일에 출력 결과를 인라인으로 기록하며, Clinic 코드 섹션 바로 뒤에 기록합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445886Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "For \"python\" sections, the output is everything printed using ``builtins.print``.",
+      "source_hash": 6706994959262202918,
+      "context_hash": 1189181803788439576,
+      "translation": "\"python\" 섹션의 경우 출력은 ``builtins.print``\\ 를 사용하여 출력된 모든 내용입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445886Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:2",
+      "source": "For \"clinic\" sections, the output is valid C code, including:",
+      "source_hash": 15492795453965694467,
+      "context_hash": 6727521953747636285,
+      "translation": "\"clinic\" 섹션의 경우 출력은 다음을 포함하는 유효한 C 코드입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445886Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "a ``#define`` providing the correct ``methoddef`` structure for the function",
+      "source_hash": 15048508996604819615,
+      "context_hash": 16104302408637182713,
+      "translation": "함수에 올바른 ``methoddef`` 구조를 제공하는 ``#define``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445886Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "a prototype for the \"impl\" function -- this is what you'll write to implement this function",
+      "source_hash": 3084051437281975137,
+      "context_hash": 17723662466584891082,
+      "translation": "\"impl\" 함수의 프로토타입 -- 이 함수의 구현을 위해 작성할 부분입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445887Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:4/seg:0",
+      "source": "a function that handles all argument processing, which calls your \"impl\" function",
+      "source_hash": 15353592039016174984,
+      "context_hash": 2482782202097367049,
+      "translation": "모든 인자 처리를 담당하고 사용자의 \"impl\" 함수를 호출하는 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445887Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:0",
+      "source": "the definition line of the \"impl\" function",
+      "source_hash": 2534886819306618638,
+      "context_hash": 18125598094646606912,
+      "translation": "\"impl\" 함수의 정의 행",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:22:05.445887Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:6/seg:0",
+      "source": "and a comment indicating the end of output.",
+      "source_hash": 17049468160678898345,
+      "context_hash": 13938488942226149777,
+      "translation": "그리고 출력의 끝을 나타내는 주석입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780119Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:7/seg:0",
+      "source": "The intention is that you write the body of your impl function immediately after the output -- as in, you write a left-curly-brace immediately after the end-of-output comment and implement builtin in the body there. (It's a bit strange at first, but oddly convenient.)",
+      "source_hash": 1726515162094565374,
+      "context_hash": 12917104007840309679,
+      "translation": "출력 직후에 impl 함수의 본문을 작성한다는 뜻입니다. 즉, 출력 끝 주석 바로 뒤에 왼쪽 중괄호를 작성하고 그 안에서 builtin을 구현합니다. 처음에는 조금 이상하지만, 묘하게 편리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780123Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:8/seg:0",
+      "source": "Argument Clinic will define the parameters of the impl function for you.",
+      "source_hash": 6609987298920900458,
+      "context_hash": 2995007128529196727,
+      "translation": "Argument Clinic이 impl 함수의 매개변수를 대신 정의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780123Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:8/seg:1",
+      "source": "The function will take the \"self\" parameter passed in originally, all the parameters you define, and possibly some extra generated parameters (\"length\" parameters; also \"group\" parameters, see next section).",
+      "source_hash": 2915041985030679295,
+      "context_hash": 1725633552503171661,
+      "translation": "이 함수는 원래 전달된 \"self\" 매개변수와 사용자가 정의한 모든 매개변수, 그리고 추가로 생성될 수 있는 매개변수(“length” 매개변수 및 다음 절에서 설명할 “group” 매개변수)를 받습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780123Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:9/seg:0",
+      "source": "Argument Clinic also writes a checksum for the output section.",
+      "source_hash": 17963982949769176605,
+      "context_hash": 2365731854149041847,
+      "translation": "Argument Clinic은 출력 섹션의 체크섬도 작성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780124Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:9/seg:1",
+      "source": "This is a valuable safety feature: if you modify the output by hand, Clinic will notice that the checksum doesn't match, and will refuse to overwrite the file.  (You can force Clinic to overwrite with the \"``-f``\" command-line argument; Clinic will also ignore the checksums when using the \"``-o``\" command-line argument.)",
+      "source_hash": 18201350811017563974,
+      "context_hash": 16782366265385724379,
+      "translation": "이는 중요한 안전 기능입니다. 출력을 수동으로 수정하면 Clinic이 체크섬이 일치하지 않음을 감지하고 파일을 덮어쓰지 않습니다. (``-f`` 명령줄 인자를 사용하면 Clinic이 강제로 덮어쓰도록 할 수 있으며, ``-o`` 명령줄 인자를 사용하면 Clinic은 체크섬도 무시합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780124Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:10/seg:0",
+      "source": "Finally, Argument Clinic can also emit the boilerplate definition of the PyMethodDef array for the defined classes and modules.",
+      "source_hash": 13154150203027811888,
+      "context_hash": 17379040102500621392,
+      "translation": "마지막으로 Argument Clinic은 정의된 클래스와 모듈의 PyMethodDef 배열에 대한 상용구 정의도 출력할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780124Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Functions With Positional-Only Parameters",
+      "source_hash": 7772724168313929591,
+      "context_hash": 10770714202807570615,
+      "translation": "위치 전용 매개변수를 사용하는 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780125Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "A significant fraction of Python builtins implemented in C use the older positional-only API for processing arguments (``PyArg_ParseTuple()``).",
+      "source_hash": 1658328408669375172,
+      "context_hash": 10693002034878297455,
+      "translation": "C로 구현된 Python 내장 함수 중 상당수는 인자를 처리할 때 이전의 위치 전용 API(``PyArg_ParseTuple()``\\ 를)를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780125Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "In some instances, these builtins parse their arguments differently based on how many arguments were passed in.",
+      "source_hash": 2217123433324053050,
+      "context_hash": 5351782384393226745,
+      "translation": "일부 경우 이러한 내장 함수는 전달된 인자의 개수에 따라 인자를 서로 다르게 구문 분석합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780125Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:2",
+      "source": "This can provide some bewildering flexibility: there may be groups of optional parameters, which must either all be specified or none specified.",
+      "source_hash": 9566511000270542210,
+      "context_hash": 11898671055751687224,
+      "translation": "이로 인해 매우 당혹스러울 정도의 유연성이 제공될 수 있습니다. 즉, 선택적 매개변수 그룹이 있을 수 있으며, 이 그룹은 모두 지정하거나 하나도 지정하지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780126Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:3",
+      "source": "And occasionally these groups are on the *left!* (A representative example: ``curses.window.addch()``.)",
+      "source_hash": 6293257416167894091,
+      "context_hash": 13063432261871332130,
+      "translation": "그리고 때로는 이러한 그룹이 *왼쪽에* 있습니다! (대표적인 예로 ``curses.window.addch()``\\ 가 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780126Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "Argument Clinic supports these legacy use-cases by allowing you to specify parameters in groups.",
+      "source_hash": 984828536820115665,
+      "context_hash": 604994691756349328,
+      "translation": "Argument Clinic은 매개변수를 그룹으로 지정할 수 있도록 하여 이러한 레거시 사용 사례를 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780126Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:1",
+      "source": "Each optional group of parameters is marked with square brackets.",
+      "source_hash": 14146803029569079167,
+      "context_hash": 6124024579638976854,
+      "translation": "각 선택적 매개변수 그룹은 대괄호로 표시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780126Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:2",
+      "source": "Note that these groups are permitted on the right *or left* of any required parameters!",
+      "source_hash": 3949093601697149188,
+      "context_hash": 12896842346084525612,
+      "translation": "이러한 그룹은 필수 매개변수의 오른쪽이나 *왼쪽* 어디에든 올 수 있다는 점에 유의하십시오!",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780127Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "The impl function generated by Clinic will add an extra parameter for every group, \"``int group_{left|right}_<x>``\", where x is a monotonically increasing number assigned to each group as it builds away from the required arguments.",
+      "source_hash": 7077640544961067004,
+      "context_hash": 9247733714543272223,
+      "translation": "Clinic이 생성하는 impl 함수에는 각 그룹마다 추가 매개변수가 하나씩 추가됩니다. 이 매개변수는 \"``int group_{left|right}_<x>``\" 형식이며, 여기서 x는 필수 인자에서 멀어지는 방향으로 그룹을 생성하면서 각 그룹에 할당되는 단조 증가 번호입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780127Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:1",
+      "source": "This argument will be nonzero if the group was specified on this call, and zero if it was not.",
+      "source_hash": 12898546097227137024,
+      "context_hash": 7162459631867867286,
+      "translation": "이 인자는 이번 호출에서 해당 그룹이 지정되었으면 0이 아닌 값이고, 지정되지 않았으면 0입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780127Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:0",
+      "source": "Note that when operating in this mode, you cannot specify default arguments.",
+      "source_hash": 8570804470473667713,
+      "context_hash": 6329629168195216310,
+      "translation": "이 모드로 동작할 때는 기본 인자를 지정할 수 없다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780127Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:0",
+      "source": "Also, note that it's possible to specify a set of groups to a function such that there are several valid mappings from the number of arguments to a valid set of groups.",
+      "source_hash": 3869319557426510350,
+      "context_hash": 17647316536775094115,
+      "translation": "또한 함수에 그룹 집합을 지정할 때 인자 개수에서 유효한 그룹 집합으로의 매핑이 여러 개 가능하도록 만들 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780128Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:1",
+      "source": "If this happens, Clinic will abort with an error message.",
+      "source_hash": 14139646394113213220,
+      "context_hash": 14199240949412110885,
+      "translation": "이러한 경우 Clinic은 오류 메시지와 함께 중단합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780128Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:2",
+      "source": "This should not be a problem, as positional-only operation is only intended for legacy use cases, and all the legacy functions using this quirky behavior have unambiguous mappings.",
+      "source_hash": 18058220309302609291,
+      "context_hash": 11879984726097564824,
+      "translation": "이는 문제가 되지 않아야 합니다. 위치 전용 동작은 레거시 사용 사례만을 위한 것이며, 이러한 특이한 동작을 사용하는 모든 레거시 함수는 모호하지 않은 매핑을 갖기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780128Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Current Status",
+      "source_hash": 12408446984293052836,
+      "context_hash": 759068252078384731,
+      "translation": "현재 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780129Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "As of this writing, there is a working prototype implementation of Argument Clinic available online (though the syntax may be out of date as you read this). [6]_ The prototype generates code using the existing ``PyArg_Parse`` APIs.",
+      "source_hash": 7636430623359208110,
+      "context_hash": 13152167451358523561,
+      "translation": "이 글을 작성하는 시점에는 Argument Clinic의 작동하는 프로토타입 구현을 온라인에서 사용할 수 있습니다(다만 이 글을 읽을 때는 구문이 오래되었을 수 있습니다). [6]_ 프로토타입은 기존 ``PyArg_Parse`` API를 사용하여 코드를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780129Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:1",
+      "source": "It supports translating to all current format units except the mysterious ``\"w*\"``.",
+      "source_hash": 2152434079276594750,
+      "context_hash": 3655594865182516116,
+      "translation": "이 프로토타입은 수수께끼 같은 ``\"w*\"``\\ 를 제외한 현재의 모든 형식 단위로의 변환을 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780129Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:2",
+      "source": "Sample functions using Argument Clinic exercise all major features, including positional-only argument parsing.",
+      "source_hash": 1748535457783498306,
+      "context_hash": 7853119190106636097,
+      "translation": "Argument Clinic을 사용하는 샘플 함수는 위치 전용 인자 구문 분석을 비롯한 모든 주요 기능을 시험합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780129Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Argument Clinic Programmatic Interfaces",
+      "source_hash": 17668204351123541853,
+      "context_hash": 13835082375507673932,
+      "translation": "Argument Clinic 프로그래밍 인터페이스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780130Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "The prototype also currently provides an experimental extension mechanism, allowing adding support for new types on-the-fly.",
+      "source_hash": 16538477626857561338,
+      "context_hash": 11599522196468404499,
+      "translation": "또한 이 프로토타입은 현재 새로운 형식에 대한 지원을 즉석에서 추가할 수 있는 실험적 확장 메커니즘을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780130Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "See ``Modules/posixmodule.c`` in the prototype for an example of its use.",
+      "source_hash": 5040477824240378748,
+      "context_hash": 8611482814979891148,
+      "translation": "사용 예는 프로토타입의 ``Modules/posixmodule.c``\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780130Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "In the future, Argument Clinic is expected to be automatable enough to allow querying, modification, or outright new construction of function declarations through Python code.",
+      "source_hash": 17136590745138136829,
+      "context_hash": 16388707548802294194,
+      "translation": "향후에는 Python 코드를 통해 함수 선언을 조회하거나 수정하거나 완전히 새로 생성할 수 있을 정도로 Argument Clinic을 자동화할 수 있을 것으로 예상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780130Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:1",
+      "source": "It may even permit dynamically adding your own custom DSL!",
+      "source_hash": 5115488796226609856,
+      "context_hash": 2382368105301270292,
+      "translation": "심지어 사용자가 직접 만든 DSL을 동적으로 추가할 수도 있을 것입니다!",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780131Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Notes / TBD",
+      "source_hash": 1664841965725511991,
+      "context_hash": 10140756278733154902,
+      "translation": "참고 / TBD",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:39.780131Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "The API for supplying inspect.Signature metadata for builtins is currently under discussion.",
+      "source_hash": 7250905146703875127,
+      "context_hash": 9776969768461322355,
+      "translation": "빌트인에 대한 inspect.Signature 메타데이터를 제공하기 위한 API는 현재 논의 중입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383947Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:1",
+      "source": "Argument Clinic will add support for the prototype when it becomes viable.",
+      "source_hash": 6728021447845160025,
+      "context_hash": 11072674642875810939,
+      "translation": "Argument Clinic은 프로토타입이 실현 가능해지면 이를 지원할 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383952Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:0",
+      "source": "Alyssa Coghlan suggests that we a) only support at most one left-optional group per function, and b) in the face of ambiguity, prefer the left group over the right group.",
+      "source_hash": 3149076462376040862,
+      "context_hash": 15124102409797514071,
+      "translation": "Alyssa Coghlan은 a) 함수당 왼쪽-선택적 그룹을 최대 하나만 지원하고, b) 모호성이 있는 경우 오른쪽 그룹보다 왼쪽 그룹을 우선시할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383953Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:1",
+      "source": "This would solve all our existing use cases including range().",
+      "source_hash": 2490001210508166545,
+      "context_hash": 15239854500101396813,
+      "translation": "이는 range()를 포함한 기존의 모든 사용 사례를 해결할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383953Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:0",
+      "source": "Optimally we'd want Argument Clinic run automatically as part of the normal Python build process.",
+      "source_hash": 17739978254205826481,
+      "context_hash": 8703520650259702321,
+      "translation": "최적의 경우, Argument Clinic이 일반적인 Python 빌드 프로세스의 일부로 자동 실행되기를 원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383954Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:1",
+      "source": "But this presents a bootstrapping problem; if you don't have a system Python 3, you need a Python 3 executable to build Python 3.",
+      "source_hash": 15027151515928896978,
+      "context_hash": 15171532830150261211,
+      "translation": "하지만 이는 부트스트래핑 문제를 야기합니다: 시스템에 Python 3가 없다면, Python 3를 빌드하기 위해 Python 3 실행 파일이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383955Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:2",
+      "source": "I'm sure this is a solvable problem, but I don't know what the best solution might be.  (Supporting this will also require a parallel solution for Windows.)",
+      "source_hash": 5081884242395692427,
+      "context_hash": 7737027498755555163,
+      "translation": "이는 분명 해결 가능한 문제라고 생각하지만, 최선의 해결책이 무엇일지는 모르겠습니다. (이를 지원하려면 Windows용 병행 솔루션도 필요할 것입니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383955Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:4/seg:0",
+      "source": "On a related note: inspect.Signature has no way of representing blocks of arguments, like the left-optional block of ``y`` and ``x`` for ``curses.window.addch``.",
+      "source_hash": 14134874072707024326,
+      "context_hash": 15125716398725859607,
+      "translation": "관련하여, inspect.Signature에는 ``curses.window.addch``\\ 의 ``y``\\ 와 ``x``\\ 의 왼쪽-선택적 블록과 같은 인자 블록을 표현할 방법이 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383956Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:4/seg:1",
+      "source": "How far are we going to go in supporting this admittedly aberrant parameter paradigm?",
+      "source_hash": 8535645640931504003,
+      "context_hash": 17414902159552136070,
+      "translation": "이 명백히 변칙적인 매개변수 패러다임을 지원하는 데 있어 우리는 어디까지 나아갈 것입니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383956Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:5/seg:0",
+      "source": "During the PyCon US 2013 Language Summit, there was discussion of having Argument Clinic also generate the actual documentation (in ReST, processed by Sphinx) for the function.",
+      "source_hash": 2978754995308399359,
+      "context_hash": 69684786694580883,
+      "translation": "PyCon US 2013 Language Summit 동안, Argument Clinic이 함수에 대한 실제 문서(ReST 형식으로 작성되어 Sphinx로 처리됨)도 생성하도록 하자는 논의가 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383957Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:5/seg:1",
+      "source": "The logistics of this are TBD, but it would require that the docstrings be written in ReST, and require that Python ship a ReST -> ascii converter.",
+      "source_hash": 7355562909027997038,
+      "context_hash": 16472223049045886955,
+      "translation": "이에 대한 구체적인 방식은 아직 정해지지 않았지만, docstring이 ReST로 작성되어야 하고 Python이 ReST -> ascii 변환기를 함께 제공해야 할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383957Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:5/seg:2",
+      "source": "It would be best to come to a decision about this before we begin any large-scale conversion of the CPython source tree to using Clinic.",
+      "source_hash": 10742235517892375214,
+      "context_hash": 4235341897923558332,
+      "translation": "CPython 소스 트리를 Clinic을 사용하도록 대규모로 전환하기 전에 이에 대한 결정을 내리는 것이 가장 좋을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383957Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:6/seg:0",
+      "source": "Guido proposed having the \"function docstring\" be hand-written inline, in the middle of the output, something like this:",
+      "source_hash": 6004136192961429258,
+      "context_hash": 9834306848399108513,
+      "translation": "Guido는 \"함수 docstring\"을 출력 중간에 직접 손으로 작성하는 방식을 다음과 같이 제안했습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383958Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:8/seg:0",
+      "source": "I tried it this way and don't like it -- I think it's clumsy.",
+      "source_hash": 6985812319051867101,
+      "context_hash": 13579677444685887244,
+      "translation": "이 방식을 시도해 보았지만 마음에 들지 않습니다 -- 다소 어설프다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383958Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:8/seg:1",
+      "source": "I prefer that everything you write goes in one place, rather than having an island of hand-edited stuff in the middle of the DSL output.",
+      "source_hash": 4538991637355524203,
+      "context_hash": 9630478483660545555,
+      "translation": "DSL 출력 중간에 수동으로 편집한 부분이 섬처럼 존재하는 것보다는, 작성하는 모든 것이 한 곳에 모이는 편을 선호합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383958Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:9/seg:0",
+      "source": "Argument Clinic does not support automatic tuple unpacking (the \"``(OOO)``\" style format string for ``PyArg_ParseTuple()``.)",
+      "source_hash": 1230759425935785583,
+      "context_hash": 240837172384698738,
+      "translation": "Argument Clinic은 자동 튜플 언패킹(``PyArg_ParseTuple()``\\ 을 위한 \"``(OOO)``\" 스타일 형식 문자열)을 지원하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:34:22.383959Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:10/seg:0",
+      "source": "Argument Clinic removes some dynamism / flexibility.",
+      "source_hash": 1918441875639260337,
+      "context_hash": 1345878941507489771,
+      "translation": "Argument Clinic은 동적 특성/유연성을 일부 제거합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667852Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:10/seg:1",
+      "source": "With ``PyArg_ParseTuple()`` one could theoretically pass in different encodings at runtime for the \"``es``\"/\"``et``\" format units.",
+      "source_hash": 4158305739350229138,
+      "context_hash": 7898211604694336261,
+      "translation": "``PyArg_ParseTuple()``\\ 을 사용하면 이론적으로 \"``es``\"/\"``et``\" 형식 단위에 대해 런타임에 서로 다른 인코딩을 전달할 수 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667854Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:10/seg:2",
+      "source": "AFAICT CPython doesn't do this itself, however it's possible external users might  do this.  (Trivia: there are no uses of \"``es``\" exercised by regrtest, and all the uses of \"``et``\" exercised are in socketmodule.c, except for one in _ssl.c.",
+      "source_hash": 1370446836910927319,
+      "context_hash": 16346969497251459204,
+      "translation": "제가 아는 한 CPython 자체는 이렇게 하지 않지만, 외부 사용자가 이렇게 할 가능성은 있습니다. (여담: regrtest에서 실행되는 \"``es``\"의 사용례는 없으며, 실행되는 \"``et``\"의 사용례는 모두 socketmodule.c에 있고 _ssl.c에 있는 것 하나만 예외입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667855Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:10/seg:3",
+      "source": "They're all static, specifying the encoding ``\"idna\"``.)",
+      "source_hash": 12112971298857355643,
+      "context_hash": 12791769564642673116,
+      "translation": "이들은 모두 정적이며, 인코딩 ``\"idna\"``\\ 를 지정합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667855Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Acknowledgements",
+      "source_hash": 16326275492144793040,
+      "context_hash": 4229838029862361470,
+      "translation": "감사의 말",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667855Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "The PEP author wishes to thank Ned Batchelder for permission to shamelessly rip off his clever design for Cog--\"my favorite tool that I've never gotten to use\".",
+      "source_hash": 2605296413856794607,
+      "context_hash": 3930928101469799608,
+      "translation": "PEP 작성자는 Cog―\"제가 한 번도 써 본 적 없는 가장 좋아하는 도구\"―에 대한 그의 영리한 설계를 뻔뻔하게 베낄 수 있도록 허락해 준 Ned Batchelder에게 감사드립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667856Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:1",
+      "source": "Thanks also to everyone who provided feedback on the [bugtracker issue] and on python-dev.",
+      "source_hash": 3466558952396468285,
+      "context_hash": 5180148720176226581,
+      "translation": "[bugtracker issue]\\ 와 python-dev에서 피드백을 준 모든 분들께도 감사드립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667856Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:2",
+      "source": "Special thanks to Alyssa (Nick) Coghlan and Guido van Rossum for a rousing two-hour in-person deep dive on the topic at PyCon US 2013.",
+      "source_hash": 4466925057919325077,
+      "context_hash": 17354570089587495101,
+      "translation": "2013년 PyCon US에서 이 주제에 대해 두 시간 동안 열띤 대면 토론을 나눠 준 Alyssa(Nick) Coghlan과 Guido van Rossum에게 특별히 감사드립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667857Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 17123965123471735251,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667857Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "``Cog``:",
+      "source_hash": 4396567881656010704,
+      "context_hash": 17094005153044640481,
+      "translation": "``Cog``:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667858Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:0",
+      "source": "http://nedbatchelder.com/code/cog/",
+      "source_hash": 16024748958024637657,
+      "context_hash": 6753393277545202861,
+      "translation": "http://nedbatchelder.com/code/cog/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667858Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:0",
+      "source": "``PyArg_ParseTuple()``:",
+      "source_hash": 650621160948890438,
+      "context_hash": 16505378096700739452,
+      "translation": "``PyArg_ParseTuple()``:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667858Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:4/seg:0",
+      "source": "http://docs.python.org/3/c-api/arg.html#PyArg_ParseTuple",
+      "source_hash": 9589876111458778324,
+      "context_hash": 4308499373029990770,
+      "translation": "http://docs.python.org/3/c-api/arg.html#PyArg_ParseTuple",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667859Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:5/seg:0",
+      "source": "``PyArg_ParseTupleAndKeywords()``:",
+      "source_hash": 16867659705154378335,
+      "context_hash": 3941648370216191310,
+      "translation": "``PyArg_ParseTupleAndKeywords()``:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667859Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:6/seg:0",
+      "source": "http://docs.python.org/3/c-api/arg.html#PyArg_ParseTupleAndKeywords",
+      "source_hash": 5848006363706195249,
+      "context_hash": 11568514860488772245,
+      "translation": "http://docs.python.org/3/c-api/arg.html#PyArg_ParseTupleAndKeywords",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667859Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:7/seg:0",
+      "source": "``PyArg_`` format units:",
+      "source_hash": 18389753501808406380,
+      "context_hash": 6459197538505416809,
+      "translation": "``PyArg_`` 형식 단위:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:34.667860Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:8/seg:0",
+      "source": "http://docs.python.org/3/c-api/arg.html#strings-and-buffers",
+      "source_hash": 14651799173400237330,
+      "context_hash": 2855357629862039276,
+      "translation": "http://docs.python.org/3/c-api/arg.html#strings-and-buffers",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:16.138046Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:9/seg:0",
+      "source": "Keyword parameters for extension functions:",
+      "source_hash": 9396422972472139634,
+      "context_hash": 9518704932531092465,
+      "translation": "확장 함수를 위한 키워드 매개변수:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:16.138049Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:10/seg:0",
+      "source": "http://docs.python.org/3/extending/extending.html#keyword-parameters-for-extension-functions",
+      "source_hash": 1696792768733481413,
+      "context_hash": 4676824573226053547,
+      "translation": "http://docs.python.org/3/extending/extending.html#keyword-parameters-for-extension-functions",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:16.138050Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:11/seg:0",
+      "source": "Guido van Rossum, posting to python-ideas, March 2012:",
+      "source_hash": 15019111495963663566,
+      "context_hash": 8170564572384181018,
+      "translation": "Guido van Rossum, python-ideas에 게시, 2012년 3월:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:16.138050Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:12/seg:0",
+      "source": "https://mail.python.org/pipermail/python-ideas/2012-March/014364.html and https://mail.python.org/pipermail/python-ideas/2012-March/014378.html and https://mail.python.org/pipermail/python-ideas/2012-March/014417.html",
+      "source_hash": 15305954774519933133,
+      "context_hash": 9853700337198365210,
+      "translation": "https://mail.python.org/pipermail/python-ideas/2012-March/014364.html 및 https://mail.python.org/pipermail/python-ideas/2012-March/014378.html 및 https://mail.python.org/pipermail/python-ideas/2012-March/014417.html",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:16.138051Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:13/seg:0",
+      "source": "Argument Clinic prototype:",
+      "source_hash": 4932488231712545413,
+      "context_hash": 2125414444800402641,
+      "translation": "Argument Clinic 프로토타입:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:16.138051Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:14/seg:0",
+      "source": "https://bitbucket.org/larry/python-clinic/",
+      "source_hash": 7140244476606725440,
+      "context_hash": 13068370104758158278,
+      "translation": "https://bitbucket.org/larry/python-clinic/",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:19:16.138052Z",
+      "issues": []
+    }
+  ]
+}

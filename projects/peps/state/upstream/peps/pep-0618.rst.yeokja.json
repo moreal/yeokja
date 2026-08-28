@@ -1,0 +1,1276 @@
+{
+  "version": 1,
+  "source_hash": 10245472287327981086,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Add Optional Length-Checking To zip",
+      "source_hash": 11933545025429281702,
+      "context_hash": 16530898886277989957,
+      "translation": "zip에 선택적 길이 검사 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856396Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 10517716512566216487,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856401Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes adding an optional ``strict`` boolean keyword parameter to the built-in ``zip``.",
+      "source_hash": 114532398639742251,
+      "context_hash": 11028282966105626122,
+      "translation": "이 PEP는 내장 ``zip``\\ 에 선택적인 ``strict`` 불리언 키워드 매개변수를 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856401Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "When enabled, a ``ValueError`` is raised if one of the arguments is exhausted before the others.",
+      "source_hash": 14446465141151786426,
+      "context_hash": 17620775680125324840,
+      "translation": "활성화하면 인자 중 하나가 다른 인자보다 먼저 소진될 때 ``ValueError``\\ 가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856402Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 17289078753072009365,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856402Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "It is clear from the author's personal experience and a `survey of the standard library <examples_>`_ that much (if not most) ``zip`` usage involves iterables that *must* be of equal length.",
+      "source_hash": 7663841798324494774,
+      "context_hash": 15674423785500384582,
+      "translation": "저자의 개인적인 경험과 표준 라이브러리에 대한 `survey of the standard library <examples_>`_\\ 를 통해, 많은(대부분은 아니더라도) ``zip`` 사용이 길이가 *반드시* 같은 이터러블을 포함한다는 사실이 분명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:49:31.590100Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Sometimes this invariant is proven true from the context of the surrounding code, but often the data being zipped is passed from the caller, sourced separately, or generated in some fashion.",
+      "source_hash": 11250852838588699179,
+      "context_hash": 11002966067056738353,
+      "translation": "때로는 주변 코드의 맥락을 통해 이 불변 조건이 참임을 입증할 수 있지만, 흔히 zip으로 묶을 데이터는 호출자에게서 전달되거나, 별도로 가져오거나, 어떤 방식으로든 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856405Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "In any of these cases, the default behavior of ``zip`` means that faulty refactoring or logic errors could easily result in silently losing data.",
+      "source_hash": 6744159422883320305,
+      "context_hash": 15472547957527813091,
+      "translation": "이러한 경우 ``zip``\\ 의 기본 동작으로 인해 잘못된 리팩터링이나 논리 오류가 데이터를 아무런 알림 없이 쉽게 잃게 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856405Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:3",
+      "source": "These bugs are not only difficult to diagnose, but difficult to even detect at all.",
+      "source_hash": 7366259034505348033,
+      "context_hash": 14645905841762419234,
+      "translation": "이러한 버그는 진단하기 어려울 뿐만 아니라, 애초에 발견하기조차 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856406Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "It is easy to come up with simple cases where this could be a problem.",
+      "source_hash": 8061578038861767178,
+      "context_hash": 5475626793664205641,
+      "translation": "이것이 문제가 될 수 있는 간단한 사례를 쉽게 생각해 낼 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856407Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "For example, the following code may work fine when ``items`` is a sequence, but silently start producing shortened, mismatched results if ``items`` is refactored by the caller to be a consumable iterator",
+      "source_hash": 951690150699206353,
+      "context_hash": 2692041198481944956,
+      "translation": "예를 들어 ``items``\\ 가 시퀀스일 때는 다음 코드가 정상적으로 작동할 수 있지만, 호출자가 ``items``\\ 를 소비 가능한 이터레이터로 리팩터링하면 아무런 알림 없이 짧고 서로 맞지 않는 결과를 생성하기 시작할 수 있습니다",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:32:49.856407Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "There are several other ways in which ``zip`` is commonly used.",
+      "source_hash": 18271332556349794685,
+      "context_hash": 245688085486267604,
+      "translation": "``zip``\\ 이 일반적으로 사용되는 다른 방식도 여러 가지 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856409Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "Idiomatic tricks are especially susceptible, because they are often employed by users who lack a complete understanding of how the code works.",
+      "source_hash": 6130620173985950783,
+      "context_hash": 2438768694554071032,
+      "translation": "관용적인 기법은 특히 취약한데, 코드가 어떻게 작동하는지 완전히 이해하지 못한 사용자가 이를 사용하는 경우가 많기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856409Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "One example is unpacking into ``zip`` to lazily \"unzip\" or \"transpose\" nested iterables",
+      "source_hash": 8728960379073166762,
+      "context_hash": 11870949948908250775,
+      "translation": "한 가지 예는 중첩된 이터러블을 느리게 \"압축 해제\"하거나 \"전치\"하기 위해 ``zip``\\ 에 언패킹을 적용하는 것입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856410Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Another is \"chunking\" data into equal-sized groups",
+      "source_hash": 4407889436616090187,
+      "context_hash": 3859231049845540912,
+      "translation": "또 다른 예는 데이터를 같은 크기의 그룹으로 \"청크화\"하는 것입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856410Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "In the first case, non-rectangular data is usually a logic error.",
+      "source_hash": 13214506499997226759,
+      "context_hash": 13945634669892239295,
+      "translation": "첫 번째 경우에는 직사각형이 아닌 데이터가 대개 논리 오류입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856410Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:1",
+      "source": "In the second case, data with a length that is not a multiple of ``n`` is often an error as well.",
+      "source_hash": 15462040758395053675,
+      "context_hash": 2626672746027574070,
+      "translation": "두 번째 경우에도 길이가 ``n``\\ 의 배수가 아닌 데이터는 흔히 오류입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856411Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:2",
+      "source": "However, both of these idioms will silently omit the tail-end items of malformed input.",
+      "source_hash": 508849546200644884,
+      "context_hash": 12872538122532357725,
+      "translation": "그러나 이 두 관용구는 모두 잘못된 입력의 끝부분 항목을 아무런 알림 없이 생략합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856411Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "Perhaps most convincingly, the use of ``zip`` in the standard-library ``ast`` module created a bug in ``literal_eval`` which `silently dropped parts of malformed nodes <https://bugs.python.org/issue40355>`_",
+      "source_hash": 1867973656046621228,
+      "context_hash": 12767181921491691100,
+      "translation": "아마도 가장 설득력 있는 사례로, 표준 라이브러리의 ``ast`` 모듈에서 ``zip``\\ 을 사용한 결과 ``literal_eval`` 함수에 `silently dropped parts of malformed nodes <https://bugs.python.org/issue40355>`_\\ 하는 버그가 발생했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:49:31.590110Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:11/seg:0",
+      "source": "In fact, the author has `counted dozens of other call sites <examples_>`_ in Python's standard library and tooling where it would be appropriate to enable this new feature immediately.",
+      "source_hash": 6368591453725023963,
+      "context_hash": 16977591721910888732,
+      "translation": "실제로 작성자는 Python의 표준 라이브러리와 도구에서 이 새로운 기능을 즉시 활성화하는 것이 적절한 다른 호출 지점을 수십 개 `세었습니다 <examples_>`_\\ .",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:32:49.856412Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 4651822234251058358,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856413Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Some critics assert that constant boolean switches are a \"code-smell\", or go against Python's design philosophy.",
+      "source_hash": 5091167766902103252,
+      "context_hash": 6362698668369433510,
+      "translation": "일부 비평가들은 상수 불리언 스위치가 \"코드 냄새\"이거나 Python의 설계 철학에 어긋난다고 주장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856413Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "However, Python currently contains several examples of boolean keyword parameters on built-in functions which are typically called with compile-time constants:",
+      "source_hash": 9580582268378609329,
+      "context_hash": 12485220814119066193,
+      "translation": "그러나 Python에는 현재 일반적으로 컴파일 시 상수로 호출되는 불리언 키워드 매개변수를 내장 함수에 사용하는 사례가 여러 가지 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856413Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "``compile(..., dont_inherit=True)``",
+      "source_hash": 12614209799070184128,
+      "context_hash": 12231753319128128838,
+      "translation": "``compile(..., dont_inherit=True)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856414Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "``open(..., closefd=False)``",
+      "source_hash": 9554016188766636975,
+      "context_hash": 5325678543685497956,
+      "translation": "``open(..., closefd=False)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856414Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "``print(..., flush=True)``",
+      "source_hash": 8001218152475897500,
+      "context_hash": 7094049731261159422,
+      "translation": "``print(..., flush=True)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856414Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "``sorted(..., reverse=True)``",
+      "source_hash": 8983997742428078938,
+      "context_hash": 16606532405804984526,
+      "translation": "``sorted(..., reverse=True)``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856414Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "Many more exist in the standard library.",
+      "source_hash": 3268254207833075192,
+      "context_hash": 4911341014390202380,
+      "translation": "표준 라이브러리에는 이 밖에도 훨씬 많은 사례가 있습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:32:49.856415Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "The idea and name for this new parameter were `originally proposed <https://mail.python.org/archives/list/python-ideas@python.org/message/6GFUADSQ5JTF7W7OGWF7XF2NH2XUTUQM>`_ by Ram Rachum.",
+      "source_hash": 13475088308315791857,
+      "context_hash": 10098049598167495093,
+      "translation": "이 새로운 매개변수에 대한 아이디어와 이름은 Ram Rachum이 `처음 제안했습니다 <https://mail.python.org/archives/list/python-ideas@python.org/message/6GFUADSQ5JTF7W7OGWF7XF2NH2XUTUQM>`_\\ .",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856415Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:1",
+      "source": "The thread received over 100 replies, with the alternative \"equal\" receiving a similar amount of support.",
+      "source_hash": 8903500652327468264,
+      "context_hash": 14146229299465908217,
+      "translation": "이 스레드에는 100개가 넘는 답변이 달렸으며, 대안인 \"equal\"도 비슷한 수준의 지지를 받았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856415Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "The author does not have a strong preference between the two choices, though \"equal equals\" *is* a bit awkward in prose.",
+      "source_hash": 8767917499200051659,
+      "context_hash": 9314873838549526855,
+      "translation": "작성자는 두 선택지 중 어느 쪽도 강하게 선호하지 않지만, \"equal equals\"는 글에서 *약간 어색합니다*.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856416Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:1",
+      "source": "It may also (wrongly) imply some notion of \"equality\" between the zipped items",
+      "source_hash": 14514333098810814352,
+      "context_hash": 9290323257789996602,
+      "translation": "또한 zip으로 묶인 항목들 사이의 \"동등성\" 개념을 (잘못) 암시할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:49.856416Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 16649881736496624384,
+      "translation": "명세",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655197Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "When the built-in ``zip`` is called with the keyword-only argument ``strict=True``, the resulting iterator will raise a ``ValueError`` if the arguments are exhausted at differing lengths.",
+      "source_hash": 3031156157925320503,
+      "context_hash": 12035298820711424505,
+      "translation": "내장 ``zip``\\ 을 키워드 전용 인자 ``strict=True``\\ 와 함께 호출하면, 인자들이 서로 다른 길이로 소진될 경우 결과 이터레이터가 ``ValueError``\\ 를 발생시킵니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:32:47.655200Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "This error will occur at the point when iteration would normally stop today.",
+      "source_hash": 12967381072115269487,
+      "context_hash": 15166784656453298871,
+      "translation": "이 오류는 현재 반복이 정상적으로 중지되는 지점에서 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655201Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Backward Compatibility",
+      "source_hash": 3447041900669616890,
+      "context_hash": 2770699117385818449,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T18:32:47.655201Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "This change is fully backward-compatible.  ``zip`` currently takes no keyword arguments, and the \"non-strict\" default behavior when ``strict`` is omitted remains unchanged.",
+      "source_hash": 184388848241570000,
+      "context_hash": 7465272706241844928,
+      "translation": "이 변경 사항은 완전히 하위 호환됩니다. ``zip``\\ 은 현재 키워드 인자를 받지 않으며, ``strict``\\ 를 생략했을 때의 \"non-strict\" 기본 동작도 변경되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655202Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 1225304574308207985,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:32:47.655203Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The author has drafted a `C implementation <https://github.com/python/cpython/pull/20921>`_.",
+      "source_hash": 13349589664931421782,
+      "context_hash": 12994713626563367880,
+      "translation": "작성자는 `C 구현 <https://github.com/python/cpython/pull/20921>`_\\ 을 작성했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655203Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "An approximate Python translation is",
+      "source_hash": 16239547904513633466,
+      "context_hash": 6872386692070752508,
+      "translation": "대략적인 Python 번역은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655204Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 8767564587933571301,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655204Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Add ``itertools.zip_strict``",
+      "source_hash": 1956835139188297576,
+      "context_hash": 7688987712035140198,
+      "translation": "``itertools.zip_strict`` 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655204Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "This is the alternative with the most support on the Python-Ideas mailing list, so it deserves to be discussed in some detail here.",
+      "source_hash": 15747092491820786709,
+      "context_hash": 1422988743334509672,
+      "translation": "이는 Python-Ideas 메일링 리스트에서 가장 많은 지지를 받은 대안이므로, 여기에서 어느 정도 자세히 논의할 가치가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655204Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "It does not have any disqualifying flaws, and could work well enough as a substitute if this PEP is rejected.",
+      "source_hash": 15517709415973268393,
+      "context_hash": 1156344445119154427,
+      "translation": "이 방식에는 배제할 만한 결함이 없으며, 이 PEP가 거부되더라도 대체 수단으로 충분히 잘 작동할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655205Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "With that in mind, this section aims to outline why adding an optional parameter to ``zip`` is a smaller change that ultimately does a better job of solving the problems motivating this PEP.",
+      "source_hash": 34825749964323012,
+      "context_hash": 9760884775843105819,
+      "translation": "이러한 점을 염두에 두고, 이 절에서는 ``zip``\\ 에 선택적 매개변수를 추가하는 것이 더 작은 변경이며 궁극적으로 이 PEP의 동기가 된 문제를 더 잘 해결하는 이유를 설명하고자 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655205Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "Precedent",
+      "source_hash": 17003444644030933895,
+      "context_hash": 9376958531822352528,
+      "translation": "선례",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655205Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:0",
+      "source": "It seems that a great deal of the motivation driving this alternative is that ``zip_longest`` already exists in ``itertools``.",
+      "source_hash": 7986187978473846951,
+      "context_hash": 13713419436915614780,
+      "translation": "이 대안을 이끄는 동기의 상당 부분은 ``zip_longest``\\ 가 이미 ``itertools``\\ 에 존재한다는 점에서 비롯된 것으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655205Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:4/seg:1",
+      "source": "However, ``zip_longest`` is in many ways a much more complicated, specialized utility: it takes on the responsibility of filling in missing values, a job neither of the other variants needs to concern themselves with.",
+      "source_hash": 5584492886708754379,
+      "context_hash": 235677415337038803,
+      "translation": "그러나 ``zip_longest``\\ 는 여러 면에서 훨씬 더 복잡하고 특수화된 유틸리티입니다. 누락된 값을 채우는 책임을 맡는데, 다른 두 변형은 어느 것도 신경 쓸 필요가 없는 작업입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655206Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "If both ``zip`` and ``zip_longest`` lived alongside each other in ``itertools`` or as builtins, then adding ``zip_strict`` in the same location would indeed be a much stronger argument.",
+      "source_hash": 7207879713429463748,
+      "context_hash": 13736690659369225429,
+      "translation": "``zip``\\ 과 ``zip_longest``\\ 가 모두 ``itertools``\\ 에서 또는 내장 함수로 나란히 존재한다면, 같은 위치에 ``zip_strict``\\ 를 추가하자는 주장은 실제로 훨씬 더 강력해질 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655206Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:1",
+      "source": "However, the new \"strict\" variant is conceptually *much* closer to ``zip`` in interface and behavior than ``zip_longest``, while still not meeting the high bar of being its own builtin.",
+      "source_hash": 15717951985819821043,
+      "context_hash": 10020221356766120987,
+      "translation": "그러나 새로운 \"strict\" 변형은 자체 내장 함수가 되기 위한 높은 기준을 충족하지 않으면서도, 인터페이스와 동작 면에서 ``zip_longest``\\ 보다 ``zip``\\ 에 *much* 더 가깝습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655206Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:2",
+      "source": "Given this situation, it seems most natural for ``zip`` to grow this new option in-place.",
+      "source_hash": 13709285447189188118,
+      "context_hash": 14516068548169105909,
+      "translation": "이러한 상황에서는 ``zip``\\ 이 이 새로운 옵션을 기존 위치에서 확장하는 것이 가장 자연스러워 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655206Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:6/seg:0",
+      "source": "Usability",
+      "source_hash": 5767267015208588199,
+      "context_hash": 14449797052609618452,
+      "translation": "사용 편의성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655207Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "If ``zip`` is capable of preventing this class of bug, it becomes much simpler for users to enable the check at call sites with this property.",
+      "source_hash": 9157355466305278183,
+      "context_hash": 7450453862374235270,
+      "translation": "``zip``\\ 이 이러한 종류의 버그를 방지할 수 있다면, 사용자는 이 기능을 사용하여 호출 지점에서 검사를 활성화하기가 훨씬 간단해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655207Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:1",
+      "source": "Compare this with importing a drop-in replacement for a built-in utility, which feels somewhat heavy just to check a tricky condition that should \"always\" be true.",
+      "source_hash": 161095761641189344,
+      "context_hash": 16243702748514241930,
+      "translation": "이를 내장 유틸리티를 그대로 대체하는 것을 가져오는 경우와 비교해 보십시오. \"항상\" 참이어야 하는 까다로운 조건을 검사하기에는 다소 과한 느낌이 듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655207Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:0",
+      "source": "Some have also argued that a new function buried in the standard library is somehow more \"discoverable\" than a keyword parameter on the built-in itself.",
+      "source_hash": 962798959719111432,
+      "context_hash": 14518746317615782438,
+      "translation": "일부는 표준 라이브러리에 묻혀 있는 새로운 함수가 내장 함수 자체의 키워드 매개변수보다 어떻게든 더 \"발견하기 쉽다\"고 주장하기도 했습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:32:47.655207Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:1",
+      "source": "The author does not agree with this assessment.",
+      "source_hash": 5621854460513861942,
+      "context_hash": 12180860353285674978,
+      "translation": "작성자는 이 평가에 동의하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655208Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:9/seg:0",
+      "source": "Maintenance Cost",
+      "source_hash": 18187667654345016185,
+      "context_hash": 7119485150871371503,
+      "translation": "유지 관리 비용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655208Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:0",
+      "source": "While implementation should only be a secondary concern when making usability improvements, it is important to recognize that adding a new utility is significantly more complicated than modifying an existing one.",
+      "source_hash": 6450813528556694011,
+      "context_hash": 11935049399918050599,
+      "translation": "사용 편의성을 개선할 때 구현은 부차적인 고려 사항에 불과해야 하지만, 새로운 유틸리티를 추가하는 일이 기존 유틸리티를 수정하는 것보다 훨씬 더 복잡하다는 점을 인식하는 것이 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655208Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:1",
+      "source": "The CPython implementation accompanying this PEP is simple and has no measurable performance impact on default ``zip`` behavior, while adding an entirely new utility to ``itertools`` would require either:",
+      "source_hash": 12084707866804352173,
+      "context_hash": 3149163038031812362,
+      "translation": "이 PEP에 포함된 CPython 구현은 단순하며 기본 ``zip``\\ 의 동작에 측정 가능한 성능 영향을 주지 않지만, ``itertools``\\ 에 완전히 새로운 유틸리티를 추가하려면 다음 중 하나가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655209Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:11/seg:0",
+      "source": "Duplicating much of the existing ``zip`` logic, as ``zip_longest`` already does.",
+      "source_hash": 5958152281254225372,
+      "context_hash": 12854925932658854410,
+      "translation": "``zip_longest``\\ 가 이미 하는 것처럼 기존 ``zip``\\ 로직의 상당 부분을 복제합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655209Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:12/seg:0",
+      "source": "Significantly refactoring either ``zip``, ``zip_longest``, or both to share a common or inherited implementation (which may impact performance).",
+      "source_hash": 13156807332020302972,
+      "context_hash": 10864607852052170356,
+      "translation": "공통 구현 또는 상속된 구현을 공유하도록 ``zip``\\ , ``zip_longest``\\ 또는 둘 다를 크게 리팩터링합니다(성능에 영향을 줄 수 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655209Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Add Several \"Modes\" To Switch Between",
+      "source_hash": 2439396143764719993,
+      "context_hash": 14925662954682687655,
+      "translation": "전환할 수 있는 여러 \"모드\" 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655210Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "This option only makes more sense than a binary flag if we anticipate having three or more modes.",
+      "source_hash": 7255078573014459768,
+      "context_hash": 15565536648039486874,
+      "translation": "세 가지 이상의 모드를 사용할 것으로 예상하는 경우에만 이 옵션이 이진 플래그보다 더 합리적입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655210Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "The \"obvious\" three choices for these enumerated or constant modes would be \"shortest\" (the current ``zip`` behavior), \"strict\" (the proposed behavior), and \"longest\" (the ``itertools.zip_longest`` behavior).",
+      "source_hash": 9625193156174564354,
+      "context_hash": 9425604671870406482,
+      "translation": "이러한 열거형 또는 상수 모드에서 \"명백한\" 세 가지 선택지는 \"shortest\"(현재 ``zip``\\ 의 동작), \"strict\"(제안된 동작), \"longest\"(``itertools.zip_longest``\\ 의 동작)일 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:47.655210Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "However, it doesn't seem like adding behaviors other than the current default and the proposed \"strict\" mode is worth the additional complexity.",
+      "source_hash": 10299969633276783377,
+      "context_hash": 2974925374994236851,
+      "translation": "그러나 현재 기본 동작과 제안된 \"strict\" 모드 이외의 동작을 추가하는 것은 추가적인 복잡성을 감수할 만큼 가치가 있어 보이지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575792Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "The clearest candidate, \"longest\", would require a new ``fillvalue`` parameter (which is meaningless for both other modes).",
+      "source_hash": 16203319601597327630,
+      "context_hash": 13488125516015043379,
+      "translation": "가장 명확한 후보인 \"longest\"는 새로운 ``fillvalue`` 매개변수를 필요로 합니다(다른 두 모드에서는 의미가 없습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575795Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:2",
+      "source": "This mode is also already handled perfectly by ``itertools.zip_longest``, and adding it would create two ways of doing the same thing.",
+      "source_hash": 17977447937815508262,
+      "context_hash": 7620322277850403273,
+      "translation": "이 모드는 이미 ``itertools.zip_longest``\\ 로 완벽하게 처리할 수 있으며, 이를 추가하면 같은 작업을 수행하는 두 가지 방법이 생깁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575796Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:3",
+      "source": "It's not clear which would be the \"obvious\" choice: the ``mode`` parameter on the built-in ``zip``, or the long-lived namesake utility in ``itertools``.",
+      "source_hash": 13518707549458018158,
+      "context_hash": 14563932072811974509,
+      "translation": "무엇이 \"분명한\" 선택인지 명확하지 않습니다. 내장 ``zip``\\ 의 ``mode`` 매개변수인지, 아니면 ``itertools``\\ 에 오랫동안 존재해 온 동명의 유틸리티인지 알 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575796Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Add A Method Or Alternate Constructor To The ``zip`` Type",
+      "source_hash": 3268726961339748519,
+      "context_hash": 14443727885042489227,
+      "translation": "``zip`` 타입에 메서드 또는 대체 생성자 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575797Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Consider the following two options, which have both been proposed",
+      "source_hash": 18439424546734718102,
+      "context_hash": 17302218636558999922,
+      "translation": "다음 두 가지 옵션을 고려하십시오. 두 옵션 모두 이미 제안된 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575797Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "It's not obvious which one will succeed, or how the other will fail.",
+      "source_hash": 11407828785606937326,
+      "context_hash": 13593436775169300239,
+      "translation": "어느 쪽이 성공하고 다른 쪽이 어떻게 실패할지는 명확하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575797Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:1",
+      "source": "If ``zip.strict`` is implemented as a method, ``zm`` will succeed, but ``zd`` will fail in one of several confusing ways:",
+      "source_hash": 4069664301146952341,
+      "context_hash": 3359107774370775769,
+      "translation": "``zip.strict``\\ 를 메서드로 구현하면 ``zm``\\ 은 성공하지만, ``zd``\\ 는 다음과 같이 여러 혼란스러운 방식 중 하나로 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575798Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "Yield results that aren't wrapped in a tuple (if ``iters`` contains just one item, a ``zip`` iterator).",
+      "source_hash": 3514532961727653783,
+      "context_hash": 15035877155739734943,
+      "translation": "튜플로 감싸지 않은 결과를 산출합니다(``iters``\\ 에 항목이 하나만 포함된 경우에는 ``zip`` 이터레이터입니다).",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:32:39.575798Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "Raise a ``TypeError`` for an incorrect argument type (if ``iters`` contains just one item, not a ``zip`` iterator).",
+      "source_hash": 3899213666999914232,
+      "context_hash": 8477012693782293189,
+      "translation": "인자 유형이 잘못되면 ``TypeError``\\ 를 발생시킵니다(``iters``\\ 에 항목이 하나만 포함된 경우에는 ``zip`` 이터레이터가 아닙니다).",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:32:39.575800Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "Raise a ``TypeError`` for an incorrect number of arguments (otherwise).",
+      "source_hash": 11096328466447134163,
+      "context_hash": 10896205712676437156,
+      "translation": "인자 개수가 잘못되면 ``TypeError``\\ 를 발생시킵니다(그 외의 경우).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575800Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "If ``zip.strict`` is implemented as a ``classmethod`` or ``staticmethod``, ``zd`` will succeed, and ``zm`` will silently yield nothing (which is the problem we are trying to avoid in the first place).",
+      "source_hash": 17969368502649089076,
+      "context_hash": 11035322399215054648,
+      "translation": "``zip.strict``\\ 를 ``classmethod`` 또는 ``staticmethod``\\ 로 구현하면 ``zd``\\ 는 성공하고 ``zm``\\ 은 아무것도 산출하지 않은 채 조용히 종료됩니다(바로 이것이 애초에 피하려는 문제입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575801Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "This proposal is further complicated by the fact that CPython's actual ``zip`` type is currently an undocumented implementation detail.",
+      "source_hash": 9233198396100099990,
+      "context_hash": 12676572817366736441,
+      "translation": "CPython의 실제 ``zip``\\ 타입이 현재 문서화되지 않은 구현 세부 사항이라는 사실 때문에 이 제안은 더욱 복잡해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575801Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:1",
+      "source": "This means that choosing one of the above behaviors will effectively \"lock in\" the current implementation (or at least require it to be emulated) going forward.",
+      "source_hash": 10770024977324416472,
+      "context_hash": 9866744792675415256,
+      "translation": "이는 위 동작 중 하나를 선택하면 사실상 현재 구현을 앞으로 \"고정\"하게 된다는 의미입니다(또는 적어도 현재 구현을 에뮬레이션해야 합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575801Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Change The Default Behavior Of ``zip``",
+      "source_hash": 14071241035274344565,
+      "context_hash": 13267069402603931047,
+      "translation": "``zip``\\ 의 기본 동작 변경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575802Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "There is nothing \"wrong\" with the default behavior of ``zip``, since there are many cases where it is indeed the correct way to handle unequally-sized inputs.",
+      "source_hash": 8289912896342794982,
+      "context_hash": 17966402972513591273,
+      "translation": "``zip``\\ 의 기본 동작에는 \"잘못된\" 점이 없습니다. 크기가 서로 다른 입력을 처리하는 올바른 방법인 경우가 많기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575802Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "It's extremely useful, for example, when dealing with infinite iterators.",
+      "source_hash": 16627910474301241735,
+      "context_hash": 4517154687282849897,
+      "translation": "예를 들어 무한 이터레이터를 다룰 때 매우 유용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575802Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "``itertools.zip_longest`` already exists to service those cases where the \"extra\" tail-end data is still needed.",
+      "source_hash": 17434493174692788405,
+      "context_hash": 2600365923680487919,
+      "translation": "\"추가\" 꼬리 데이터가 여전히 필요한 경우를 처리하기 위해 이미 ``itertools.zip_longest``\\ 가 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575802Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Accept A Callback To Handle Remaining Items",
+      "source_hash": 6243356694567593449,
+      "context_hash": 9076429870562699912,
+      "translation": "남은 항목을 처리할 콜백 허용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575803Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "While able to do basically anything a user could need, this solution makes handling the more common cases (like rejecting mismatched lengths) unnecessarily complicated and non-obvious.",
+      "source_hash": 7398594744558722302,
+      "context_hash": 12476594405290007015,
+      "translation": "사용자가 필요로 할 수 있는 거의 모든 작업을 수행할 수 있지만, 이 해결책은 길이가 일치하지 않는 경우를 거부하는 것과 같은 더 일반적인 사례의 처리를 불필요하게 복잡하고 불분명하게 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575803Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Raise An ``AssertionError``",
+      "source_hash": 7436535442027073172,
+      "context_hash": 2384958631083599633,
+      "translation": "``AssertionError``\\ 발생",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575803Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "There are no built-in functions or types that raise an ``AssertionError`` as part of their API.",
+      "source_hash": 13724780836307485937,
+      "context_hash": 3565555631436080930,
+      "translation": "API의 일부로 ``AssertionError``\\ 를 발생시키는 내장 함수나 타입은 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575804Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "Further, the `official documentation <https://docs.python.org/3.9/library/exceptions.html?highlight=assertionerror#AssertionError>`_ simply reads (in its entirety):",
+      "source_hash": 10324995895998496796,
+      "context_hash": 8907605712507671543,
+      "translation": "또한 `공식 문서 <https://docs.python.org/3.9/library/exceptions.html?highlight=assertionerror#AssertionError>`_\\ 는 전체 내용이 다음과 같이 간단히 적혀 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575804Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "Raised when an ``assert`` statement fails.",
+      "source_hash": 1151869159162002060,
+      "context_hash": 11646938649477078274,
+      "translation": "``assert``\\ 문이 실패할 때 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575804Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "Since this feature has nothing to do with Python's ``assert`` statement, raising an ``AssertionError`` here would be inappropriate.",
+      "source_hash": 4977202205652590154,
+      "context_hash": 6529687080514097984,
+      "translation": "이 기능은 Python의 ``assert``\\ 문과 아무런 관련이 없으므로 여기서 ``AssertionError``\\ 를 발생시키는 것은 부적절합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575804Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:1",
+      "source": "Users desiring a check that is disabled in optimized mode (like an ``assert`` statement) can use ``strict=__debug__`` instead.",
+      "source_hash": 5975565905099241485,
+      "context_hash": 6398418517965808146,
+      "translation": "최적화 모드에서 비활성화되는 검사(``assert``\\ 문과 같은)를 원하는 사용자는 대신 ``strict=__debug__``\\ 를 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575805Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Add A Similar Feature to ``map``",
+      "source_hash": 10449649084745981063,
+      "context_hash": 11351682206553951978,
+      "translation": "``map``\\ 에 유사한 기능 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575805Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "This PEP does not propose any changes to ``map``, since the use of ``map`` with multiple iterable arguments is quite rare.",
+      "source_hash": 6294722931298980451,
+      "context_hash": 10997057360540878112,
+      "translation": "이 PEP에서는 ``map``\\ 에 대한 변경을 제안하지 않습니다. 여러 이터러블 인자와 함께 ``map``\\ 을 사용하는 경우가 매우 드물기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575805Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "However, this PEP's ruling shall serve as precedent such a future discussion (should it occur).",
+      "source_hash": 8738397826467148638,
+      "context_hash": 2567754627573650287,
+      "translation": "그러나 이 PEP의 결정은 향후 이러한 논의가 이루어질 경우를 위한 선례로 사용될 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575805Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "If rejected, the feature is realistically not worth pursuing.",
+      "source_hash": 15700215509186730808,
+      "context_hash": 3656475782974502423,
+      "translation": "거부된다면 이 기능은 현실적으로 더 추진할 가치가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575806Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:1",
+      "source": "If accepted, such a change to ``map`` should not require its own PEP (though, like all enhancements, its usefulness should be carefully considered).",
+      "source_hash": 9676486887735108213,
+      "context_hash": 10151648413995806067,
+      "translation": "수락된다면 ``map``\\ 에 대한 이러한 변경에는 자체 PEP가 필요하지 않습니다(모든 개선 사항과 마찬가지로 그 유용성은 신중하게 고려해야 하지만 그렇습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575806Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:2",
+      "source": "For consistency, it should follow same API and semantics debated here for ``zip``.",
+      "source_hash": 4771582030582156021,
+      "context_hash": 7934508148382689841,
+      "translation": "일관성을 위해 ``zip``\\ 에 대해 여기서 논의한 것과 동일한 API와 의미론을 따라야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:32:39.575806Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Do Nothing",
+      "source_hash": 6343454086523970392,
+      "context_hash": 7752044570409909829,
+      "translation": "아무것도 하지 않기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:44.287241Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "This option is perhaps the least attractive.",
+      "source_hash": 2840547685961153218,
+      "context_hash": 15867181591195270127,
+      "translation": "이 선택지는 아마도 가장 매력적이지 않은 선택지입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:44.287245Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "Silently truncated data is a particularly nasty class of bug, and hand-writing a robust solution that gets this right `isn't trivial <https://stackoverflow.com/questions/32954486/zip-iterators-asserting-for-equal-length-in-python>`_.",
+      "source_hash": 1928351762594723059,
+      "context_hash": 5074243096130338562,
+      "translation": "묵시적으로 잘린 데이터는 특히 골치 아픈 버그 유형이며, 이를 올바르게 처리하는 견고한 해결책을 손으로 직접 작성하는 일은 `간단하지 않습니다 <https://stackoverflow.com/questions/32954486/zip-iterators-asserting-for-equal-length-in-python>`_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:44.287245Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:1",
+      "source": "The real-world motivating examples from Python's own standard library are evidence that it's *very* easy to fall into the sort of trap that this feature aims to avoid.",
+      "source_hash": 13389573765027368890,
+      "context_hash": 13437865972261202270,
+      "translation": "Python 자체의 표준 라이브러리에서 얻은 실제 동기 부여 사례는 이 기능이 피하려는 유형의 함정에 빠지기가 *매우* 쉽다는 증거입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:16:44.287245Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 7121711287802559003,
+      "translation": "참고 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:44.287246Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Examples",
+      "source_hash": 2926230321239078022,
+      "context_hash": 13913776522904174000,
+      "translation": "예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:44.287247Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/_pydecimal.py#L3394",
+      "source_hash": 12290685746736921904,
+      "context_hash": 15043289584879930783,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/_pydecimal.py#L3394",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:44.287247Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/_pydecimal.py#L3418",
+      "source_hash": 850287932033319145,
+      "context_hash": 3980556647688678434,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/_pydecimal.py#L3418",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:44.287247Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/_pydecimal.py#L3435",
+      "source_hash": 15353076084399398846,
+      "context_hash": 2836479278881881730,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/_pydecimal.py#L3435",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:44.287247Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/ast.py#L94-L95",
+      "source_hash": 524584321189013293,
+      "context_hash": 2234716266822309116,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/ast.py#L94-L95",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:44.287248Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/ast.py#L1184",
+      "source_hash": 16548193939101239469,
+      "context_hash": 13778894451364896722,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/ast.py#L1184",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:44.287248Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:6/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/ast.py#L1275",
+      "source_hash": 10123190430729875490,
+      "context_hash": 6059743672504405633,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/ast.py#L1275",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:44.287248Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:7/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/ast.py#L1363",
+      "source_hash": 10240445216757854526,
+      "context_hash": 11231466313844047526,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/ast.py#L1363",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:16:44.287248Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:8/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/ast.py#L1391",
+      "source_hash": 18354836568952191684,
+      "context_hash": 8878023458455156543,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/ast.py#L1391",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503514Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:9/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/copy.py#L217",
+      "source_hash": 17739524190235842194,
+      "context_hash": 8797992032055630163,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/copy.py#L217",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503518Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:10/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/csv.py#L142",
+      "source_hash": 5973105099176965742,
+      "context_hash": 4218253257392137280,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/csv.py#L142",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503518Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:11/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/dis.py#L462",
+      "source_hash": 7205592211227447436,
+      "context_hash": 10012906735828609068,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/dis.py#L462",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503519Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:12/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/filecmp.py#L142",
+      "source_hash": 2602636628026658900,
+      "context_hash": 15596401848986298758,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/filecmp.py#L142",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503519Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:13/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/filecmp.py#L143",
+      "source_hash": 14707275670326198264,
+      "context_hash": 16203887245327702104,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/filecmp.py#L143",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503519Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:14/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/inspect.py#L1440",
+      "source_hash": 16090215504719843257,
+      "context_hash": 17932300161361876610,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/inspect.py#L1440",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503520Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:15/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/inspect.py#L2095",
+      "source_hash": 3875725507461199118,
+      "context_hash": 11685191720682966685,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/inspect.py#L2095",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503520Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:16/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/os.py#L510",
+      "source_hash": 10290996990926872151,
+      "context_hash": 18145483645696187061,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/os.py#L510",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503521Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:17/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/plistlib.py#L577",
+      "source_hash": 8116256163145692200,
+      "context_hash": 13416718799872468068,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/plistlib.py#L577",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503521Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:18/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/tarfile.py#L1317",
+      "source_hash": 7902357497276285072,
+      "context_hash": 4691883681222196247,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/tarfile.py#L1317",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503521Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:19/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/tarfile.py#L1323",
+      "source_hash": 4684302287067976288,
+      "context_hash": 9022849462079921430,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/tarfile.py#L1323",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503521Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:20/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/tarfile.py#L1339",
+      "source_hash": 11186476999296918553,
+      "context_hash": 447073580841671455,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/tarfile.py#L1339",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503522Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:21/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/turtle.py#L3015",
+      "source_hash": 7592514937019169419,
+      "context_hash": 9077492427963364118,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/turtle.py#L3015",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503522Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:22/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/turtle.py#L3071",
+      "source_hash": 6418007820090742104,
+      "context_hash": 15356851260363657658,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/turtle.py#L3071",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503522Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:23/seg:0",
+      "source": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/turtle.py#L3901",
+      "source_hash": 14172925246801163081,
+      "context_hash": 3448368052539063186,
+      "translation": "https://github.com/python/cpython/blob/27c0d9b54abaa4112d5a317b8aa78b39ad60a808/Lib/turtle.py#L3901",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:24:00.503522Z",
+      "issues": []
+    }
+  ]
+}

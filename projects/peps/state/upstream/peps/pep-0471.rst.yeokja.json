@@ -1,0 +1,1853 @@
+{
+  "version": 1,
+  "source_hash": 7409946631896814125,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "os.scandir() function -- a better and faster directory iterator",
+      "source_hash": 16346890587883425223,
+      "context_hash": 16530898886277989957,
+      "translation": "os.scandir() 함수 -- 더 나은 고속 디렉터리 이터레이터",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:44:57.516519Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 1642535962526804615,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516522Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes including a new directory iteration function, ``os.scandir()``, in the standard library.",
+      "source_hash": 7005869052111744839,
+      "context_hash": 8685081485791315683,
+      "translation": "이 PEP에서는 표준 라이브러리에 새로운 디렉터리 반복 함수인 ``os.scandir()``\\ 를 포함할 것을 제안합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:44:57.516523Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This new function adds useful functionality and increases the speed of ``os.walk()`` by 2-20 times (depending on the platform and file system) by avoiding calls to ``os.stat()`` in most cases.",
+      "source_hash": 15352070922927068931,
+      "context_hash": 7443506189174120162,
+      "translation": "이 새로운 함수는 유용한 기능을 추가하며, 대부분의 경우 ``os.stat()``\\ 호출을 피함으로써 ``os.walk()``\\ 의 속도를 2~20배 향상합니다(플랫폼과 파일 시스템에 따라 다름).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516523Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 3981612345370386586,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516523Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Python's built-in ``os.walk()`` is significantly slower than it needs to be, because -- in addition to calling ``os.listdir()`` on each directory -- it executes the ``stat()`` system call or ``GetFileAttributes()`` on each file to determine whether the entry is a directory or not.",
+      "source_hash": 18264703279831172305,
+      "context_hash": 11248209568885033704,
+      "translation": "Python에 내장된 ``os.walk()``\\ 는 각 디렉터리에서 ``os.listdir()``\\ 를 호출하는 것 외에도 각 파일에서 ``stat()``\\ 시스템 호출 또는 ``GetFileAttributes()``\\ 를 실행하여 해당 항목이 디렉터리인지 여부를 확인하기 때문에, 필요한 것보다 상당히 느립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516524Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "But the underlying system calls -- ``FindFirstFile`` / ``FindNextFile`` on Windows and ``readdir`` on POSIX systems -- already tell you whether the files returned are directories or not, so no further system calls are needed.",
+      "source_hash": 7900363414831366823,
+      "context_hash": 18137174651641901757,
+      "translation": "그러나 기본 시스템 호출인 Windows의 ``FindFirstFile`` / ``FindNextFile`` 및 POSIX 시스템의 ``readdir``\\ 는 이미 반환된 파일이 디렉터리인지 여부를 알려 주므로 추가 시스템 호출이 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516524Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "Further, the Windows system calls return all the information for a ``stat_result`` object on the directory entry, such as file size and last modification time.",
+      "source_hash": 14585109521428647969,
+      "context_hash": 16233291343549146778,
+      "translation": "또한 Windows 시스템 호출은 파일 크기와 최종 수정 시간 등 디렉터리 항목에 대한 ``stat_result``\\ 객체의 모든 정보를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516524Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "In short, you can reduce the number of system calls required for a tree function like ``os.walk()`` from approximately 2N to N, where N is the total number of files and directories in the tree. (And because directory trees are usually wider than they are deep, it's often much better than this.)",
+      "source_hash": 2046710107026751285,
+      "context_hash": 7505257269394483895,
+      "translation": "간단히 말해, 트리의 전체 파일 및 디렉터리 수를 N이라고 할 때 ``os.walk()``\\ 와 같은 트리 함수에 필요한 시스템 호출 수를 대략 2N에서 N으로 줄일 수 있습니다. (그리고 디렉터리 트리는 일반적으로 깊이보다 너비가 더 크므로 실제로는 이보다 훨씬 더 나은 경우가 많습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516525Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "In practice, removing all those extra system calls makes ``os.walk()`` about **8-9 times as fast on Windows**, and about **2-3 times as fast on POSIX systems**.",
+      "source_hash": 16168862469910583577,
+      "context_hash": 3235536721167079641,
+      "translation": "실제로 이러한 추가 시스템 호출을 모두 제거하면 ``os.walk()``\\ 는 **Windows에서 약 8~9배 빠르고**, **POSIX 시스템에서 약 2~3배 빠릅니다**.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516525Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "So we're not talking about micro-optimizations.",
+      "source_hash": 1403389396276327828,
+      "context_hash": 4842881212250386228,
+      "translation": "따라서 여기서 말하는 것은 마이크로 최적화가 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516525Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "See more `benchmarks here`_.",
+      "source_hash": 9907154969632029307,
+      "context_hash": 2818807053578403708,
+      "translation": "`benchmarks here`_\\ 에서 더 자세한 벤치마크를 확인하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516525Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "Somewhat relatedly, many people (see Python `Issue 11406`_) are also keen on a version of ``os.listdir()`` that yields filenames as it iterates instead of returning them as one big list.",
+      "source_hash": 15161729772130811116,
+      "context_hash": 15647361083916030728,
+      "translation": "이와 다소 관련하여, 많은 사람(Python의 `Issue 11406`_\\ 을 참조)도 한꺼번에 하나의 큰 목록으로 반환하는 대신 반복하면서 파일 이름을 생성하는 ``os.listdir()``\\ 의 버전을 원하고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516526Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "This improves memory efficiency for iterating very large directories.",
+      "source_hash": 12242210583719316076,
+      "context_hash": 10768418878900197567,
+      "translation": "이는 매우 큰 디렉터리를 반복할 때 메모리 효율을 향상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516526Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "So, as well as providing a ``scandir()`` iterator function for calling directly, Python's existing ``os.walk()`` function can be sped up a huge amount.",
+      "source_hash": 17240769097087142635,
+      "context_hash": 15158590356791094031,
+      "translation": "따라서 직접 호출할 수 있는 ``scandir()``\\ 이터레이터 함수를 제공하는 것뿐만 아니라, Python의 기존 ``os.walk()``\\ 함수도 매우 크게 빠르게 만들 수 있습니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:44:57.516526Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 15455544699857935737,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516527Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "The implementation of this proposal was written by Ben Hoyt (initial version) and Tim Golden (who helped a lot with the C extension module).",
+      "source_hash": 7564466112780303949,
+      "context_hash": 5340366830452008476,
+      "translation": "이 제안의 구현은 Ben Hoyt(초기 버전)와 Tim Golden(C 확장 모듈을 크게 지원)이 작성했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516527Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "It lives on GitHub at `benhoyt/scandir`_. (The implementation may lag behind the updates to this PEP a little.)",
+      "source_hash": 5810279216940228703,
+      "context_hash": 9438571099215157411,
+      "translation": "이 구현은 GitHub의 `benhoyt/scandir`_\\ 에 있습니다. (구현이 이 PEP의 업데이트를 약간 늦게 따라갈 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516528Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Note that this module has been used and tested (see \"Use in the wild\" section in this PEP), so it's more than a proof-of-concept.",
+      "source_hash": 14083032224361664362,
+      "context_hash": 1679387133596190657,
+      "translation": "이 모듈은 사용 및 테스트되었으므로(이 PEP의 \"Use in the wild\" 절 참조), 개념 증명 이상의 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516528Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "However, it is marked as beta software and is not extensively battle-tested.",
+      "source_hash": 9961052767404480430,
+      "context_hash": 17555475802933262757,
+      "translation": "그러나 베타 소프트웨어로 표시되어 있으며 광범위한 실전 테스트를 거치지는 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516528Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "It will need some cleanup and more thorough testing before going into the standard library, as well as integration into ``posixmodule.c``.",
+      "source_hash": 5421832570949303293,
+      "context_hash": 13632961114066468847,
+      "translation": "표준 라이브러리에 포함되기 전에 일부 정리와 더 철저한 테스트가 필요하며, ``posixmodule.c``\\ 와의 통합도 필요합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:44:57.516528Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Specifics of proposal",
+      "source_hash": 18290582405758771011,
+      "context_hash": 8986839660902038917,
+      "translation": "제안의 세부 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516529Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "os.scandir()",
+      "source_hash": 849178825493562309,
+      "context_hash": 14201249023710540180,
+      "translation": "os.scandir()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516529Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Specifically, this PEP proposes adding a single function to the ``os`` module in the standard library, ``scandir``, that takes a single, optional string as its argument",
+      "source_hash": 13376826613343012423,
+      "context_hash": 18121138501479558730,
+      "translation": "구체적으로 이 PEP에서는 표준 라이브러리의 ``os`` 모듈에 단일 함수인 ``scandir``\\ 를 추가하고, 이 함수가 인수로 선택적 문자열 하나를 받도록 할 것을 제안합니다",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:44:57.516529Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "Like ``listdir``, ``scandir`` calls the operating system's directory iteration system calls to get the names of the files in the given ``path``, but it's different from ``listdir`` in two ways:",
+      "source_hash": 16561631522141694890,
+      "context_hash": 7080598590553804559,
+      "translation": "``listdir``\\ 와 마찬가지로 ``scandir``\\ 는 운영 체제의 디렉터리 반복 시스템 호출을 사용하여 지정된 ``path``\\ 에 있는 파일의 이름을 가져오지만, 다음 두 가지 점에서 ``listdir``\\ 와 다릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516530Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "Instead of returning bare filename strings, it returns lightweight ``DirEntry`` objects that hold the filename string and provide simple methods that allow access to the additional data the operating system may have returned.",
+      "source_hash": 12183539008079161910,
+      "context_hash": 4011971465939980506,
+      "translation": "단순한 파일 이름 문자열을 반환하는 대신, 파일 이름 문자열을 보유하고 운영 체제가 반환했을 수 있는 추가 데이터에 액세스할 수 있는 간단한 메서드를 제공하는 가벼운 ``DirEntry``\\ 객체를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516530Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "It returns a generator instead of a list, so that ``scandir`` acts as a true iterator instead of returning the full list immediately.",
+      "source_hash": 7227512378958385592,
+      "context_hash": 9069718907785727913,
+      "translation": "목록 대신 제너레이터를 반환하므로 ``scandir``\\ 는 전체 목록을 즉시 반환하는 대신 진정한 이터레이터로 동작합니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터",
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:44:57.516530Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "``scandir()`` yields a ``DirEntry`` object for each file and sub-directory in ``path``.",
+      "source_hash": 13654129115160933431,
+      "context_hash": 11880918412216096775,
+      "translation": "``scandir()``\\ 는 ``path``\\ 에 있는 각 파일과 하위 디렉터리에 대해 ``DirEntry``\\ 객체를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516531Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:1",
+      "source": "Just like ``listdir``, the ``'.'`` and ``'..'`` pseudo-directories are skipped, and the entries are yielded in system-dependent order.",
+      "source_hash": 13673854262974003780,
+      "context_hash": 10154423135705243125,
+      "translation": "``listdir``\\ 와 마찬가지로 ``'.'``\\ 및 ``'..'``\\ 의사 디렉터리는 건너뛰며, 항목은 시스템에 따라 결정되는 순서로 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516531Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:2",
+      "source": "Each ``DirEntry`` object has the following attributes and methods:",
+      "source_hash": 6704365391842352243,
+      "context_hash": 6767943824355324930,
+      "translation": "각 ``DirEntry``\\ 객체에는 다음과 같은 속성과 메서드가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516531Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:7/seg:0",
+      "source": "``name``: the entry's filename, relative to the scandir ``path`` argument (corresponds to the return values of ``os.listdir``)",
+      "source_hash": 14908979866461475270,
+      "context_hash": 6720561961218487723,
+      "translation": "``name``: scandir의 ``path`` 인수에 상대적인 항목의 파일 이름입니다(``os.listdir``\\ 의 반환 값에 해당합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516532Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "``path``: the entry's full path name (not necessarily an absolute path) -- the equivalent of ``os.path.join(scandir_path, entry.name)``",
+      "source_hash": 4726864271615541258,
+      "context_hash": 7639490204077086427,
+      "translation": "``path``: 항목의 전체 경로 이름(반드시 절대 경로일 필요는 없음) -- ``os.path.join(scandir_path, entry.name)``\\ 과 동일합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:44:57.516532Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "``inode()``: return the inode number of the entry.",
+      "source_hash": 13344256494733914692,
+      "context_hash": 12687884097399569156,
+      "translation": "``inode()``: 항목의 inode 번호를 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999792Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:1",
+      "source": "The result is cached on the ``DirEntry`` object, use ``os.stat(entry.path, follow_symlinks=False).st_ino`` to fetch up-to-date information.",
+      "source_hash": 9958424711138816940,
+      "context_hash": 2692598483816909632,
+      "translation": "결과는 ``DirEntry`` 객체에 캐시되며, 최신 정보를 가져오려면 ``os.stat(entry.path, follow_symlinks=False).st_ino``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999796Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:2",
+      "source": "On Unix, no system call is required.",
+      "source_hash": 5255221382975995523,
+      "context_hash": 15343818875054985339,
+      "translation": "Unix에서는 시스템 호출이 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999796Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:10/seg:0",
+      "source": "``is_dir(*, follow_symlinks=True)``: similar to ``pathlib.Path.is_dir()``, but the return value is cached on the ``DirEntry`` object; doesn't require a system call in most cases; don't follow symbolic links if ``follow_symlinks`` is False",
+      "source_hash": 11069183981492174249,
+      "context_hash": 3876607030921991620,
+      "translation": "``is_dir(*, follow_symlinks=True)``: ``pathlib.Path.is_dir()``\\ 와 유사하지만 반환값이 ``DirEntry`` 객체에 캐시되며, 대부분의 경우 시스템 호출이 필요하지 않습니다. ``follow_symlinks``\\ 가 False이면 심볼릭 링크를 따라가지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999796Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "``is_file(*, follow_symlinks=True)``: similar to ``pathlib.Path.is_file()``, but the return value is cached on the ``DirEntry`` object; doesn't require a system call in most cases; don't follow symbolic links if ``follow_symlinks`` is False",
+      "source_hash": 10555526722700433150,
+      "context_hash": 14092286607179375261,
+      "translation": "``is_file(*, follow_symlinks=True)``: ``pathlib.Path.is_file()``\\ 과 유사하지만 반환값이 ``DirEntry`` 객체에 캐시되며, 대부분의 경우 시스템 호출이 필요하지 않습니다. ``follow_symlinks``\\ 가 False이면 심볼릭 링크를 따라가지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999797Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:12/seg:0",
+      "source": "``is_symlink()``: similar to ``pathlib.Path.is_symlink()``, but the return value is cached on the ``DirEntry`` object; doesn't require a system call in most cases",
+      "source_hash": 7268173741978481751,
+      "context_hash": 9802465008090006306,
+      "translation": "``is_symlink()``: ``pathlib.Path.is_symlink()``\\ 과 유사하지만 반환값이 ``DirEntry`` 객체에 캐시되며, 대부분의 경우 시스템 호출이 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999797Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "``stat(*, follow_symlinks=True)``: like ``os.stat()``, but the return value is cached on the ``DirEntry`` object; does not require a system call on Windows (except for symlinks); don't follow symbolic links (like ``os.lstat()``) if ``follow_symlinks`` is False",
+      "source_hash": 13725422984202243786,
+      "context_hash": 18147981769223213184,
+      "translation": "``stat(*, follow_symlinks=True)``: ``os.stat()``\\ 과 같지만 반환값이 ``DirEntry`` 객체에 캐시되며, Windows에서는 심볼릭 링크를 제외하면 시스템 호출이 필요하지 않습니다. ``follow_symlinks``\\ 가 False이면 ``os.lstat()``\\ 처럼 심볼릭 링크를 따라가지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999797Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:14/seg:0",
+      "source": "All *methods* may perform system calls in some cases and therefore possibly raise ``OSError`` -- see the \"Notes on exception handling\" section for more details.",
+      "source_hash": 4766963936469141209,
+      "context_hash": 3795387184078070753,
+      "translation": "모든 *메서드*\\ 는 경우에 따라 시스템 호출을 수행할 수 있으므로 ``OSError``\\ 를 발생시킬 수 있습니다. 자세한 내용은 \"예외 처리 관련 참고 사항\" 절을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999797Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "The ``DirEntry`` attribute and method names were chosen to be the same as those in the new ``pathlib`` module where possible, for consistency.",
+      "source_hash": 6267766964630784620,
+      "context_hash": 6861949825015721056,
+      "translation": "일관성을 위해 가능한 경우 ``DirEntry`` 속성 및 메서드 이름을 새 ``pathlib`` 모듈의 이름과 동일하게 선택했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999798Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:1",
+      "source": "The only difference in functionality is that the ``DirEntry`` methods cache their values on the entry object after the first call.",
+      "source_hash": 4759129458953111802,
+      "context_hash": 16915669114710671262,
+      "translation": "기능상의 유일한 차이점은 ``DirEntry`` 메서드가 처음 호출된 후 항목 객체에 값을 캐시한다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999798Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:0",
+      "source": "Like the other functions in the ``os`` module, ``scandir()`` accepts either a bytes or str object for the ``path`` parameter, and returns the ``DirEntry.name`` and ``DirEntry.path`` attributes with the same type as ``path``.",
+      "source_hash": 14702784037258362968,
+      "context_hash": 181851123921721283,
+      "translation": "``os`` 모듈의 다른 함수와 마찬가지로 ``scandir()``\\ 은 ``path`` 매개변수에 bytes 객체나 str 객체를 사용할 수 있으며, ``DirEntry.name`` 및 ``DirEntry.path`` 속성을 ``path``\\ 와 동일한 형식으로 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999798Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:16/seg:1",
+      "source": "However, it is *strongly recommended* to use the str type, as this ensures cross-platform support for Unicode filenames. (On Windows, bytes filenames have been deprecated since Python 3.3).",
+      "source_hash": 11722448389001986710,
+      "context_hash": 3587258601426676756,
+      "translation": "그러나 유니코드 파일 이름에 대한 플랫폼 간 지원을 보장하므로 str 형식을 사용할 것을 *강력히 권장*\\ 합니다. (Windows에서는 bytes 파일 이름이 Python 3.3부터 더 이상 사용되지 않습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999799Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "os.walk()",
+      "source_hash": 3239827242304603950,
+      "context_hash": 14625924158560864221,
+      "translation": "os.walk()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999799Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "As part of this proposal, ``os.walk()`` will also be modified to use ``scandir()`` rather than ``listdir()`` and ``os.path.isdir()``.",
+      "source_hash": 14374779385196646552,
+      "context_hash": 6951423324657971663,
+      "translation": "이 제안의 일환으로 ``os.walk()``\\ 도 ``listdir()`` 및 ``os.path.isdir()`` 대신 ``scandir()``\\ 을 사용하도록 수정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999799Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "This will increase the speed of ``os.walk()`` very significantly (as mentioned above, by 2-20 times, depending on the system).",
+      "source_hash": 903685719929299989,
+      "context_hash": 5206269875202302112,
+      "translation": "이렇게 하면 시스템에 따라 ``os.walk()``\\ 의 속도가 매우 크게 향상됩니다(위에서 언급했듯이 2~20배).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999799Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Examples",
+      "source_hash": 2926230321239078022,
+      "context_hash": 18100360607629837232,
+      "translation": "예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999800Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "First, a very simple example of ``scandir()`` showing use of the ``DirEntry.name`` attribute and the ``DirEntry.is_dir()`` method",
+      "source_hash": 9339293794645274241,
+      "context_hash": 14565975936031308119,
+      "translation": "먼저 ``DirEntry.name`` 속성과 ``DirEntry.is_dir()`` 메서드의 사용을 보여 주는 매우 간단한 ``scandir()`` 예제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999800Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "This ``subdirs()`` function will be significantly faster with scandir than ``os.listdir()`` and ``os.path.isdir()`` on both Windows and POSIX systems, especially on medium-sized or large directories.",
+      "source_hash": 11750131822342329565,
+      "context_hash": 9512596126969128892,
+      "translation": "이 ``subdirs()`` 함수는 Windows와 POSIX 시스템 모두에서 ``os.listdir()`` 및 ``os.path.isdir()``\\ 보다 훨씬 빠르며, 특히 중간 크기 이상의 디렉터리에서 그렇습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999800Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "Or, for getting the total size of files in a directory tree, showing use of the ``DirEntry.stat()`` method and ``DirEntry.path`` attribute",
+      "source_hash": 14706181508807145907,
+      "context_hash": 15989913042234067538,
+      "translation": "또는 디렉터리 트리 내 파일의 전체 크기를 구하면서 ``DirEntry.stat()`` 메서드와 ``DirEntry.path`` 속성의 사용을 보여 주는 예제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999801Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "This also shows the use of the ``follow_symlinks`` parameter to ``is_dir()`` -- in a recursive function like this, we probably don't want to follow links. (To properly follow links in a recursive function like this we'd want special handling for the case where following a symlink leads to a recursive loop.)",
+      "source_hash": 10157354819050535441,
+      "context_hash": 14826667117009048636,
+      "translation": "또한 이 예제는 ``is_dir()``\\ 의 ``follow_symlinks`` 매개변수 사용법을 보여 줍니다. 이와 같은 재귀 함수에서는 링크를 따라가지 않는 편이 좋습니다. (이와 같은 재귀 함수에서 링크를 제대로 따라가려면 심볼릭 링크를 따라간 결과 재귀 루프가 발생하는 경우를 특별히 처리해야 합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999801Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "Note that ``get_tree_size()`` will get a huge speed boost on Windows, because no extra stat call are needed, but on POSIX systems the size information is not returned by the directory iteration functions, so this function won't gain anything there.",
+      "source_hash": 14415082091327405632,
+      "context_hash": 6582384944851146110,
+      "translation": "``get_tree_size()``\\ 는 Windows에서 크게 빨라집니다. 추가 stat 호출이 필요하지 않기 때문입니다. 그러나 POSIX 시스템에서는 디렉터리 반복 함수가 크기 정보를 반환하지 않으므로 이 함수는 그곳에서 아무런 이점도 얻지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999801Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Notes on caching",
+      "source_hash": 2063738580312755699,
+      "context_hash": 9029872112496449114,
+      "translation": "캐싱 관련 참고 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999801Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The ``DirEntry`` objects are relatively dumb -- the ``name`` and ``path`` attributes are obviously always cached, and the ``is_X`` and ``stat`` methods cache their values (immediately on Windows via ``FindNextFile``, and on first use on POSIX systems via a ``stat`` system call) and never refetch from the system.",
+      "source_hash": 13026724452251064036,
+      "context_hash": 18186819962011924067,
+      "translation": "``DirEntry`` 객체는 비교적 단순합니다. ``name`` 및 ``path`` 속성은 항상 캐시되는 것이 분명하며, ``is_X`` 및 ``stat`` 메서드는 값을 캐시하고(Windows에서는 ``FindNextFile``\\ 을 통해 즉시 캐시하며, POSIX 시스템에서는 처음 사용할 때 ``stat`` 시스템 호출을 통해 캐시함) 시스템에서 다시 가져오지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999802Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "For this reason, ``DirEntry`` objects are intended to be used and thrown away after iteration, not stored in long-lived data structured and the methods called again and again.",
+      "source_hash": 374289032931112687,
+      "context_hash": 12640206881471793261,
+      "translation": "이러한 이유로 ``DirEntry`` 객체는 반복 작업 후 사용하고 버리도록 설계되었으며, 오래 유지되는 자료 구조에 저장한 뒤 메서드를 반복해서 호출하도록 설계된 것이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999802Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "If developers want \"refresh\" behaviour (for example, for watching a file's size change), they can simply use ``pathlib.Path`` objects, or call the regular ``os.stat()`` or ``os.path.getsize()`` functions which get fresh data from the operating system every call.",
+      "source_hash": 15571247773562011294,
+      "context_hash": 16168419342865504435,
+      "translation": "개발자가 \"새로 고침\" 동작을 원한다면(예를 들어 파일 크기 변화를 감시하려는 경우), ``pathlib.Path`` 객체를 사용하거나 호출할 때마다 운영 체제에서 최신 데이터를 가져오는 일반적인 ``os.stat()`` 또는 ``os.path.getsize()`` 함수를 호출하면 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999802Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Notes on exception handling",
+      "source_hash": 12950414964725139261,
+      "context_hash": 15296705029578100367,
+      "translation": "예외 처리 관련 참고 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999803Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "``DirEntry.is_X()`` and ``DirEntry.stat()`` are explicitly methods rather than attributes or properties, to make it clear that they may not be cheap operations (although they often are), and they may do a system call.",
+      "source_hash": 10526732576687750173,
+      "context_hash": 1990512131731585199,
+      "translation": "``DirEntry.is_X()`` 및 ``DirEntry.stat()``\\ 은 속성이나 프로퍼티가 아니라 명시적으로 메서드입니다. 이는 해당 작업이 저렴하지 않을 수 있고(실제로는 저렴한 경우가 많지만) 시스템 호출을 수행할 수 있음을 분명히 하기 위한 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999803Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "As a result, these methods may raise ``OSError``.",
+      "source_hash": 13829579540006590051,
+      "context_hash": 323028852082962578,
+      "translation": "따라서 이러한 메서드는 ``OSError``\\ 를 발생시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999803Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "For example, ``DirEntry.stat()`` will always make a system call on POSIX-based systems, and the ``DirEntry.is_X()`` methods will make a ``stat()`` system call on such systems if ``readdir()`` does not support ``d_type`` or returns a ``d_type`` with a value of ``DT_UNKNOWN``, which can occur under certain conditions or on certain file systems.",
+      "source_hash": 1609857719619295309,
+      "context_hash": 18268343179978217473,
+      "translation": "예를 들어 POSIX 기반 시스템에서는 ``DirEntry.stat()``\\ 이 항상 시스템 호출을 수행하며, ``readdir()``\\ 이 ``d_type``\\ 을 지원하지 않거나 특정 조건 또는 특정 파일 시스템에서 발생할 수 있는 ``DT_UNKNOWN`` 값을 가진 ``d_type``\\ 을 반환하는 경우 해당 시스템의 ``DirEntry.is_X()`` 메서드는 ``stat()`` 시스템 호출을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999804Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "Often this does not matter -- for example, ``os.walk()`` as defined in the standard library only catches errors around the ``listdir()`` calls.",
+      "source_hash": 3004625051642313607,
+      "context_hash": 5099610015300392288,
+      "translation": "이는 대개 문제가 되지 않습니다. 예를 들어 표준 라이브러리에 정의된 ``os.walk()``\\ 은 ``listdir()`` 호출 주변의 오류만 포착합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:45:02.999804Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "Also, because the exception-raising behaviour of the ``DirEntry.is_X`` methods matches that of ``pathlib`` -- which only raises ``OSError`` in the case of permissions or other fatal errors, but returns False if the path doesn't exist or is a broken symlink -- it's often not necessary to catch errors around the ``is_X()`` calls.",
+      "source_hash": 17139450293322689856,
+      "context_hash": 7742103783372688072,
+      "translation": "또한, ``DirEntry.is_X`` 메서드의 예외 발생 동작은 ``pathlib``\\ 의 동작과 일치하므로 -- 권한 또는 기타 치명적인 오류가 발생한 경우에만 ``OSError``\\ 를 발생시키고, 경로가 존재하지 않거나 끊어진 심볼릭 링크인 경우에는 False를 반환하므로 -- ``is_X()`` 호출 주변에서 오류를 잡을 필요가 없는 경우가 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:59:34.284252Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "However, when a user requires fine-grained error handling, it may be desirable to catch ``OSError`` around all method calls and handle as appropriate.",
+      "source_hash": 5208820709836044352,
+      "context_hash": 763514055777616288,
+      "translation": "그러나 사용자가 세밀한 오류 처리를 필요로 하는 경우에는 모든 메서드 호출 주변에서 ``OSError``\\ 를 포착하고 적절히 처리하는 것이 바람직할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:02.999805Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "For example, below is a version of the ``get_tree_size()`` example shown above, but with fine-grained error handling added",
+      "source_hash": 532463616037663807,
+      "context_hash": 16141552513352103531,
+      "translation": "예를 들어, 아래에는 위에서 보인 ``get_tree_size()`` 예제에 세밀한 오류 처리를 추가한 버전이 나와 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223919Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Support",
+      "source_hash": 8279312071152581284,
+      "context_hash": 7855255274045338010,
+      "translation": "지원",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223924Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "The scandir module on GitHub has been forked and used quite a bit (see \"Use in the wild\" in this PEP), but there's also been a fair bit of direct support for a scandir-like function from core developers and others on the python-dev and python-ideas mailing lists.",
+      "source_hash": 9932761603011433735,
+      "context_hash": 2530503607446597634,
+      "translation": "GitHub의 scandir 모듈은 포크되어 상당히 많이 사용되었지만(이 PEP의 \"실제 사용 사례\"를 참조하십시오), python-dev 및 python-ideas 메일링 리스트의 핵심 개발자와 다른 사람들로부터 scandir와 유사한 함수에 대한 직접적인 지원도 상당히 많았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223924Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "A sampling:",
+      "source_hash": 15327772291966546556,
+      "context_hash": 13675223694368270386,
+      "translation": "몇 가지 예를 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223925Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:2/seg:0",
+      "source": "**python-dev**: a good number of +1's and very few negatives for scandir and :pep:`471` on `this June 2014 python-dev thread <https://mail.python.org/pipermail/python-dev/2014-June/135217.html>`_",
+      "source_hash": 18358527120855125893,
+      "context_hash": 2753752889522929814,
+      "translation": "**python-dev**: `2014년 6월의 이 python-dev 스레드 <https://mail.python.org/pipermail/python-dev/2014-June/135217.html>`_\\ 에서 scandir 및 :pep:`471`\\ 에 대한 찬성 의견은 상당히 많았고 반대 의견은 매우 적었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223926Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "**Alyssa Coghlan**, a core Python developer: \"I've had the local Red Hat release engineering team express their displeasure at having to stat every file in a network mounted directory tree for info that is present in the dirent structure, so a definite +1 to os.scandir from me, so long as it makes that info available.\" [`source1 <http://bugs.python.org/issue11406>`_]",
+      "source_hash": 4525116449109541411,
+      "context_hash": 9721233441370698753,
+      "translation": "**Alyssa Coghlan**, 핵심 Python 개발자: \"네트워크에 마운트된 디렉터리 트리에서 dirent 구조체에 이미 존재하는 정보를 얻기 위해 모든 파일에 stat을 수행해야 하는 것에 대해 현지 Red Hat 릴리스 엔지니어링 팀이 불만을 표시하는 것을 보았습니다. 따라서 해당 정보를 사용할 수 있게 해 주기만 한다면 저는 os.scandir에 확실히 찬성합니다.\" [`source1 <http://bugs.python.org/issue11406>`_]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223926Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "**Tim Golden**, a core Python developer, supports scandir enough to have spent time refactoring and significantly improving scandir's C extension module. [`source2 <https://github.com/tjguk/scandir>`_]",
+      "source_hash": 15295333848003273842,
+      "context_hash": 16159808721955809105,
+      "translation": "**Tim Golden**, 핵심 Python 개발자는 scandir을 충분히 지지하여 scandir의 C 확장 모듈을 리팩터링하고 크게 개선하는 데 시간을 투자했습니다. [`source2 <https://github.com/tjguk/scandir>`_]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223926Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "**Christian Heimes**, a core Python developer: \"+1 for something like yielddir()\" [`source3 <https://mail.python.org/pipermail/python-ideas/2012-November/017772.html>`_] and \"Indeed!",
+      "source_hash": 12860379394084879099,
+      "context_hash": 2134321095714751287,
+      "translation": "**Christian Heimes**, 핵심 Python 개발자: \"yielddir() 같은 것에 찬성합니다.\" [`source3 <https://mail.python.org/pipermail/python-ideas/2012-November/017772.html>`_] 그리고 \"맞습니다! 제가 코드베이스에서 직접 만든 우회책을 제거할 수 있도록 이 기능이 3.4에 포함되기를 바랍니다.\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223927Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:1",
+      "source": "I'd like to see the feature in 3.4 so I can remove my own hack from our code base.\" [`source4 <http://bugs.python.org/issue11406>`_]",
+      "source_hash": 12769549964829238945,
+      "context_hash": 3488232066392534483,
+      "translation": "\"3.4에서 이 기능을 볼 수 있어서 제가 코드베이스에서 직접 만든 해킹을 제거할 수 있으면 좋겠습니다.\" [`source4 <http://bugs.python.org/issue11406>`_]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:59:34.284255Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "**Gregory P.",
+      "source_hash": 15303155138048874416,
+      "context_hash": 1752951891354502072,
+      "translation": "**Gregory P.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223928Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:1",
+      "source": "Smith**, a core Python developer: \"As 3.4beta1 happens tonight, this isn't going to make 3.4 so i'm bumping this to 3.5.",
+      "source_hash": 11700208287372529543,
+      "context_hash": 5560691897984383107,
+      "translation": "Smith**, 핵심 Python 개발자: \"오늘 밤 3.4beta1이 나오므로 이것은 3.4에 포함되지 않을 예정이며, 따라서 3.5로 미루겠습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223928Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:2",
+      "source": "I really like the proposed design outlined above.\" [`source5 <http://bugs.python.org/issue11406>`_]",
+      "source_hash": 6504286280513094203,
+      "context_hash": 5226450093818617483,
+      "translation": "위에서 설명한 제안된 설계가 정말 마음에 듭니다.\" [`source5 <http://bugs.python.org/issue11406>`_]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223929Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "**Guido van Rossum** on the possibility of adding scandir to Python 3.5 (as it was too late for 3.4): \"The ship has likewise sailed for adding scandir() (whether to os or pathlib).",
+      "source_hash": 1244822583083604050,
+      "context_hash": 6048350422587556965,
+      "translation": "**Guido van Rossum**\\ 은 scandir을 Python 3.5에 추가할 가능성에 대해(3.4에는 너무 늦었으므로) 다음과 같이 말했습니다. \"os에 추가하든 pathlib에 추가하든 scandir()을 추가할 기회는 이미 지나갔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223929Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:1",
+      "source": "By all means experiment and get it ready for consideration for 3.5, but I don't want to add it to 3.4.\" [`source6 <https://mail.python.org/pipermail/python-dev/2013-November/130583.html>`_]",
+      "source_hash": 1289618528153030903,
+      "context_hash": 17668683007576312207,
+      "translation": "물론 실험하여 3.5에 검토할 수 있도록 준비하십시오. 하지만 3.4에 추가하고 싶지는 않습니다.\" [`source6 <https://mail.python.org/pipermail/python-dev/2013-November/130583.html>`_]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223930Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "Support for this PEP itself (meta-support?) was given by Alyssa (Nick) Coghlan on python-dev: \"A PEP reviewing all this for 3.5 and proposing a specific os.scandir API would be a good thing.\" [`source7 <https://mail.python.org/pipermail/python-dev/2013-November/130588.html>`_]",
+      "source_hash": 17222110433093618635,
+      "context_hash": 10945598279294692068,
+      "translation": "이 PEP 자체에 대한 지원(메타 지원?)은 Alyssa (Nick) Coghlan이 python-dev에서 다음과 같이 제시했습니다. \"이 모든 내용을 3.5용으로 검토하고 구체적인 os.scandir API를 제안하는 PEP가 있다면 좋겠습니다.\" [`source7 <https://mail.python.org/pipermail/python-dev/2013-November/130588.html>`_]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223930Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Use in the wild",
+      "source_hash": 220934053569832309,
+      "context_hash": 6838956079149882347,
+      "translation": "실제 사용 사례",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223930Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "To date, the ``scandir`` implementation is definitely useful, but has been clearly marked \"beta\", so it's uncertain how much use of it there is in the wild.",
+      "source_hash": 1764923768703383988,
+      "context_hash": 7472645103364359190,
+      "translation": "현재 ``scandir`` 구현은 분명히 유용하지만 \"베타\"로 명확히 표시되어 있으므로 실제 환경에서 얼마나 사용되고 있는지는 확실하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223931Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "Ben Hoyt has had several reports from people using it.",
+      "source_hash": 3565282610105288293,
+      "context_hash": 4247714855133207964,
+      "translation": "Ben Hoyt는 이를 사용하는 사람들로부터 여러 보고를 받았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223931Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:2",
+      "source": "For example:",
+      "source_hash": 4114854479619665730,
+      "context_hash": 594367116624202783,
+      "translation": "예를 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223931Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "Chris F: \"I am processing some pretty large directories and was half expecting to have to modify getdents.",
+      "source_hash": 12144069939300872198,
+      "context_hash": 14733414013225822985,
+      "translation": "Chris F: \"상당히 큰 디렉터리를 처리하고 있으며 getdents를 수정해야 할 것이라고 반쯤 예상하고 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223932Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "So thanks for saving me the effort.\" [via personal email]",
+      "source_hash": 5112517971055775135,
+      "context_hash": 15401676850863328090,
+      "translation": "그러한 수고를 덜어 주셔서 감사합니다.\" [개인 이메일을 통해]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223932Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "bschollnick: \"I wanted to let you know about this, since I am using Scandir as a building block for this code.",
+      "source_hash": 7655908248221985110,
+      "context_hash": 18427402472478165431,
+      "translation": "bschollnick: \"이 코드에서 Scandir을 구성 요소로 사용하고 있으므로 이에 대해 알려 드리고 싶었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223932Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:1",
+      "source": "Here's a good example of scandir making a radical performance improvement over os.listdir.\" [`source8 <https://github.com/benhoyt/scandir/issues/19>`_]",
+      "source_hash": 14582926607656829671,
+      "context_hash": 16747206527172219120,
+      "translation": "scandir이 os.listdir에 비해 성능을 획기적으로 개선한 좋은 예가 여기 있습니다.\" [`source8 <https://github.com/benhoyt/scandir/issues/19>`_]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223932Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "Avram L: \"I'm testing our scandir for a project I'm working on.",
+      "source_hash": 15956578340435042623,
+      "context_hash": 13848503938815701134,
+      "translation": "Avram L: \"현재 진행 중인 프로젝트에서 scandir을 테스트하고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223933Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:1",
+      "source": "Seems pretty solid, so first thing, just want to say nice work!\" [via personal email]",
+      "source_hash": 1141570089900978175,
+      "context_hash": 13150075529198360151,
+      "translation": "상당히 안정적인 것 같으므로, 우선 훌륭한 작업에 감사하다고 말씀드리고 싶습니다!\" [개인 이메일을 통해]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223933Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "Matt Z: \"I used scandir to dump the contents of a network dir in under 15 seconds. 13 root dirs, 60,000 files in the structure.",
+      "source_hash": 948573831972613451,
+      "context_hash": 18064098262865879010,
+      "translation": "Matt Z: \"scandir을 사용하여 네트워크 디렉터리의 내용을 15초 이내에 덤프했습니다. 루트 디렉터리 13개와 구조 내 파일 60,000개였습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223933Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:1",
+      "source": "This will replace some old VBA code embedded in a spreadsheet that was taking 15-20 minutes to do the exact same thing.\" [via personal email]",
+      "source_hash": 1403088802480206249,
+      "context_hash": 6751995712928421091,
+      "translation": "이 기능은 정확히 같은 작업을 수행하는 데 15~20분이 걸리던 스프레드시트에 포함된 오래된 VBA 코드를 대체하게 될 것입니다.\" [개인 이메일을 통해]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223933Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "Others have `requested a PyPI package`_ for it, which has been created.",
+      "source_hash": 16494767857760477920,
+      "context_hash": 6985374374529542355,
+      "translation": "다른 사람들도 이를 위해 `requested a PyPI package`_\\ 를 요청했으며, 해당 패키지가 생성되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:59:34.284256Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:1",
+      "source": "See `PyPI package`_.",
+      "source_hash": 9669599630461420724,
+      "context_hash": 12322974745409227394,
+      "translation": "`PyPI package`_\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:59:34.284257Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "GitHub stats don't mean too much, but scandir does have several watchers, issues, forks, etc. Here's the run-down as of the stats as of July 7, 2014:",
+      "source_hash": 6606030883968273261,
+      "context_hash": 15727319774067249525,
+      "translation": "GitHub 통계가 큰 의미를 갖는 것은 아니지만, scandir에는 여러 명의 감시자와 이슈, 포크 등이 있습니다. 다음은 2014년 7월 7일 기준 통계를 바탕으로 한 현황입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223934Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:0",
+      "source": "Watchers: 17",
+      "source_hash": 12252527174949498197,
+      "context_hash": 8569993537691440398,
+      "translation": "감시자: 17명",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223934Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:9/seg:0",
+      "source": "Stars: 57",
+      "source_hash": 12002786488000437268,
+      "context_hash": 195343786131052462,
+      "translation": "별표: 57개",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:00.223935Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:10/seg:0",
+      "source": "Forks: 20",
+      "source_hash": 18342082330023521700,
+      "context_hash": 7020033367010229363,
+      "translation": "포크: 20",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691244Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:11/seg:0",
+      "source": "Issues: 4 open, 26 closed",
+      "source_hash": 4678339712038453560,
+      "context_hash": 7334902027982126945,
+      "translation": "이슈: 열린 4개, 닫힌 26개",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691246Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:12/seg:0",
+      "source": "Also, because this PEP will increase the speed of ``os.walk()`` significantly, there are thousands of developers and scripts, and a lot of production code, that would benefit from it.",
+      "source_hash": 6985775898947044193,
+      "context_hash": 7952349665608234470,
+      "translation": "또한 이 PEP는 ``os.walk()``\\ 의 속도를 크게 향상시키므로, 수천 명의 개발자와 스크립트, 그리고 많은 프로덕션 코드가 이를 통해 이점을 얻습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691247Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:12/seg:1",
+      "source": "For example, on GitHub, there are almost as many uses of ``os.walk`` (194,000) as there are of ``os.mkdir`` (230,000).",
+      "source_hash": 15802448262149313964,
+      "context_hash": 1939033845936680745,
+      "translation": "예를 들어 GitHub에는 ``os.walk``\\ 의 사용 사례가 ``os.mkdir``\\ 의 사용 사례(230,000개)와 거의 같은 수(194,000개)만큼 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691247Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Rejected ideas",
+      "source_hash": 1257763793238798310,
+      "context_hash": 18255906757349789583,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691247Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Naming",
+      "source_hash": 2665270351651321507,
+      "context_hash": 2538281971848050158,
+      "translation": "이름 지정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691247Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "The only other real contender for this function's name was ``iterdir()``.",
+      "source_hash": 16099771552977965106,
+      "context_hash": 3947259647794155928,
+      "translation": "이 함수의 이름에 대한 유일한 다른 유력한 후보는 ``iterdir()``\\ 였습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691247Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "However, ``iterX()`` functions in Python (mostly found in Python 2) tend to be simple iterator equivalents of their non-iterator counterparts.",
+      "source_hash": 9650448356769933011,
+      "context_hash": 8376617811631712010,
+      "translation": "그러나 Python의 ``iterX()`` 함수(주로 Python 2에서 발견됨)는 대응하는 비 이터레이터 함수의 단순한 이터레이터 버전인 경우가 많습니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:45:11.691248Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:2",
+      "source": "For example, ``dict.iterkeys()`` is just an iterator version of ``dict.keys()``, but the objects returned are identical.",
+      "source_hash": 14795624317479166943,
+      "context_hash": 8576062394628408744,
+      "translation": "예를 들어 ``dict.iterkeys()``\\ 는 단지 ``dict.keys()``\\ 의 이터레이터 버전이지만, 반환되는 객체는 동일합니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:45:11.691248Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:3",
+      "source": "In ``scandir()``'s case, however, the return values are quite different objects (``DirEntry`` objects vs filename strings), so this should probably be reflected by a difference in name -- hence ``scandir()``.",
+      "source_hash": 13037914320219629916,
+      "context_hash": 12216286691751940201,
+      "translation": "그러나 ``scandir()``\\ 의 경우 반환 값은 상당히 다른 객체(``DirEntry`` 객체와 파일 이름 문자열)입니다. 따라서 이는 이름의 차이로 반영되어야 할 것이며, 그래서 ``scandir()``\\ 이 되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691249Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "See some `relevant discussion on python-dev <https://mail.python.org/pipermail/python-dev/2014-June/135228.html>`_.",
+      "source_hash": 2951827082250895947,
+      "context_hash": 9422801741088684731,
+      "translation": "`python-dev의 관련 논의 <https://mail.python.org/pipermail/python-dev/2014-June/135228.html>`_\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691249Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Wildcard support",
+      "source_hash": 12993136630800154007,
+      "context_hash": 17917050213332560883,
+      "translation": "와일드카드 지원",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691249Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "``FindFirstFile``/``FindNextFile`` on Windows support passing a \"wildcard\" like ``*.jpg``, so at first folks (this PEP's author included) felt it would be a good idea to include a ``windows_wildcard`` keyword argument to the ``scandir`` function so users could pass this in.",
+      "source_hash": 15974079484012469907,
+      "context_hash": 6168622321220770633,
+      "translation": "Windows의 ``FindFirstFile``/``FindNextFile``\\ 은 ``*.jpg`` 같은 \"와일드카드\" 전달을 지원하므로, 처음에는 (이 PEP의 작성자를 포함한) 사람들이 사용자가 이를 전달할 수 있도록 ``scandir``\\ 함수에 ``windows_wildcard``\\ 키워드 인자를 포함하는 것이 좋겠다고 생각했습니다.",
+      "glossary_snapshot": {
+        "keyword argument": "키워드 인자"
+      },
+      "translated_at": "2026-08-28T18:45:11.691249Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "However, on further thought and discussion it was decided that this would be bad idea, *unless it could be made cross-platform* (a ``pattern`` keyword argument or similar).",
+      "source_hash": 11995249020735301707,
+      "context_hash": 12529343649749732946,
+      "translation": "그러나 더 깊이 생각하고 논의한 결과, *플랫폼 간에 구현할 수 있는 경우가 아니라면* (``pattern`` 키워드 인자 또는 이와 유사한 방식) 이는 좋지 않은 생각이라고 결정했습니다.",
+      "glossary_snapshot": {
+        "keyword argument": "키워드 인자"
+      },
+      "translated_at": "2026-08-28T18:45:11.691250Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:1",
+      "source": "This seems easy enough at first -- just use the OS wildcard support on Windows, and something like ``fnmatch`` or ``re`` afterwards on POSIX-based systems.",
+      "source_hash": 9261230973276321585,
+      "context_hash": 14506606699139496024,
+      "translation": "처음에는 충분히 쉬워 보입니다. Windows에서는 OS의 와일드카드 지원을 사용하고, POSIX 기반 시스템에서는 그 후에 ``fnmatch``\\ 나 ``re``\\ 같은 것을 사용하면 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691251Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "Unfortunately the exact Windows wildcard matching rules aren't really documented anywhere by Microsoft, and they're quite quirky (see this `blog post <http://blogs.msdn.com/b/oldnewthing/archive/2007/12/17/6785519.aspx>`_), meaning it's very problematic to emulate using ``fnmatch`` or regexes.",
+      "source_hash": 1350962479963965080,
+      "context_hash": 4557043286959364293,
+      "translation": "안타깝게도 정확한 Windows 와일드카드 일치 규칙은 Microsoft가 어디에도 제대로 문서화하지 않았으며 매우 특이합니다(이 `블로그 게시물 <http://blogs.msdn.com/b/oldnewthing/archive/2007/12/17/6785519.aspx>`_ 참조). 따라서 ``fnmatch``\\ 나 정규식을 사용해 이를 에뮬레이트하는 것은 매우 문제가 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691251Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "So the consensus was that Windows wildcard support was a bad idea.",
+      "source_hash": 5230124810269776604,
+      "context_hash": 1281376522633803717,
+      "translation": "따라서 합의된 결론은 Windows 와일드카드 지원이 좋지 않은 아이디어라는 것이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691251Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:1",
+      "source": "It would be possible to add at a later date if there's a cross-platform way to achieve it, but not for the initial version.",
+      "source_hash": 4977698363228214580,
+      "context_hash": 1337737275669069381,
+      "translation": "플랫폼 간에 이를 구현할 방법이 있다면 나중에 추가할 수는 있지만, 초기 버전에는 포함하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691252Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:0",
+      "source": "Read more on the `this Nov 2012 python-ideas thread <https://mail.python.org/pipermail/python-ideas/2012-November/017770.html>`_ and this `June 2014 python-dev thread on PEP 471 <https://mail.python.org/pipermail/python-dev/2014-June/135217.html>`_.",
+      "source_hash": 16083687885041625561,
+      "context_hash": 2707224945537779132,
+      "translation": "`이 2012년 11월 python-ideas 스레드 <https://mail.python.org/pipermail/python-ideas/2012-November/017770.html>`_\\ 와 `PEP 471에 관한 2014년 6월 python-dev 스레드 <https://mail.python.org/pipermail/python-dev/2014-June/135217.html>`_\\ 에서 더 자세히 알아보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691252Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Methods not following symlinks by default",
+      "source_hash": 1701718310891366108,
+      "context_hash": 8619283833424253722,
+      "translation": "기본적으로 심볼릭 링크를 따르지 않는 메서드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691252Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "There was much debate on python-dev (see messages in `this thread <https://mail.python.org/pipermail/python-dev/2014-July/135485.html>`_) over whether the ``DirEntry`` methods should follow symbolic links or not (when the ``is_X()`` methods had no ``follow_symlinks`` parameter).",
+      "source_hash": 8969467232451693466,
+      "context_hash": 14059569939454314502,
+      "translation": "``DirEntry`` 메서드가 심볼릭 링크를 따라야 하는지 여부(``is_X()`` 메서드에 ``follow_symlinks`` 매개변수가 없는 경우)를 두고 python-dev에서 많은 논쟁이 있었습니다(`이 스레드 <https://mail.python.org/pipermail/python-dev/2014-July/135485.html>`_\\ 의 메시지를 참조하십시오).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691252Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "Initially they did not (see previous versions of this PEP and the scandir.py module), but Victor Stinner made a pretty compelling case on python-dev that following symlinks by default is a better idea, because:",
+      "source_hash": 8618615095898428010,
+      "context_hash": 258520279382737432,
+      "translation": "처음에는 심볼릭 링크를 따르지 않았지만(이 PEP의 이전 버전과 scandir.py 모듈 참조), Victor Stinner는 python-dev에서 기본적으로 심볼릭 링크를 따르는 것이 더 낫다는 매우 설득력 있는 주장을 펼쳤습니다. 그 이유는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691253Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "following links is usually what you want (in 92% of cases in the standard library, functions using ``os.listdir()`` and ``os.path.isdir()`` do follow symlinks)",
+      "source_hash": 5028932633657823334,
+      "context_hash": 2662207628878881132,
+      "translation": "링크를 따르는 것이 일반적으로 원하는 동작입니다(표준 라이브러리에서 ``os.listdir()``\\ 과 ``os.path.isdir()``\\ 을 사용하는 함수의 92%가 심볼릭 링크를 따릅니다).",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:45:11.691253Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "that's the precedent set by the similar functions ``os.path.isdir()`` and ``pathlib.Path.is_dir()``, so to do otherwise would be confusing",
+      "source_hash": 11213559518415662329,
+      "context_hash": 6664889171929374142,
+      "translation": "이는 유사한 함수인 ``os.path.isdir()``\\ 과 ``pathlib.Path.is_dir()``\\ 이 정립한 선례이므로, 다르게 동작하면 혼란을 일으킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691253Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:0",
+      "source": "with the non-link-following approach, if you wanted to follow links you'd have to say something like ``if (entry.is_symlink() and os.path.isdir(entry.path)) or entry.is_dir()``, which is clumsy",
+      "source_hash": 13130410313900283110,
+      "context_hash": 7392549817630653597,
+      "translation": "링크를 따르지 않는 접근 방식을 사용하면 링크를 따르고 싶을 때 ``if (entry.is_symlink() and os.path.isdir(entry.path)) or entry.is_dir()``\\ 와 같이 작성해야 하므로 번거롭습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691253Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:6/seg:0",
+      "source": "As a case in point that shows the non-symlink-following version is error prone, this PEP's author had a bug caused by getting this exact test wrong in his initial implementation of ``scandir.walk()`` in scandir.py (see `Issue #4 here <https://github.com/benhoyt/scandir/issues/4>`_).",
+      "source_hash": 15614446839829657902,
+      "context_hash": 4382660807433555909,
+      "translation": "심볼릭 링크를 따르지 않는 버전이 오류가 발생하기 쉽다는 것을 보여 주는 사례로, 이 PEP의 작성자는 scandir.py에서 ``scandir.walk()``\\ 을 처음 구현할 때 바로 이 테스트를 잘못 작성하여 버그를 만들었습니다(여기 `Issue #4 <https://github.com/benhoyt/scandir/issues/4>`_\\ 를 참조하십시오).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691254Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:7/seg:0",
+      "source": "In the end there was not total agreement that the methods should follow symlinks, but there was basic consensus among the most involved participants, and this PEP's author believes that the above case is strong enough to warrant following symlinks by default.",
+      "source_hash": 10337341972418080507,
+      "context_hash": 3121470650687045163,
+      "translation": "결국 메서드가 심볼릭 링크를 따라야 한다는 데 완전한 합의가 있었던 것은 아니지만, 가장 깊이 관여한 참가자들 사이에는 기본적인 합의가 있었으며, 이 PEP의 작성자는 위 사례가 기본적으로 심볼릭 링크를 따르는 것을 정당화할 만큼 충분히 강력하다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691254Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:8/seg:0",
+      "source": "In addition, it's straightforward to call the relevant methods with ``follow_symlinks=False`` if the other behaviour is desired.",
+      "source_hash": 9218531077702997732,
+      "context_hash": 18227538287557738696,
+      "translation": "또한 다른 동작을 원한다면 관련 메서드를 ``follow_symlinks=False``\\ 로 호출하는 것은 간단합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691254Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "DirEntry attributes being properties",
+      "source_hash": 5135146050242574480,
+      "context_hash": 16397410090293477921,
+      "translation": "프로퍼티인 DirEntry 속성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691254Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "In some ways it would be nicer for the ``DirEntry`` ``is_X()`` and ``stat()`` to be properties instead of methods, to indicate they're very cheap or free.",
+      "source_hash": 2511196275496468731,
+      "context_hash": 1900239715556445808,
+      "translation": "어떤 면에서는 ``DirEntry``\\ 의 ``is_X()``\\ 와 ``stat()``\\ 를 메서드가 아니라 프로퍼티로 만드는 편이 더 좋을 수 있습니다. 이를 통해 해당 연산이 매우 저렴하거나 비용이 없음을 나타낼 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691254Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "However, this isn't quite the case, as ``stat()`` will require an OS call on POSIX-based systems but not on Windows.",
+      "source_hash": 18356765432100899540,
+      "context_hash": 175351416397952371,
+      "translation": "그러나 실제로는 완전히 그렇지 않습니다. POSIX 기반 시스템에서는 ``stat()``\\ 에 OS 호출이 필요하지만 Windows에서는 필요하지 않기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691255Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:2",
+      "source": "Even ``is_dir()`` and friends may perform an OS call on POSIX-based systems if the ``dirent.d_type`` value is ``DT_UNKNOWN`` (on certain file systems).",
+      "source_hash": 17275730018719290717,
+      "context_hash": 855311807405204267,
+      "translation": "``is_dir()``\\ 와 그와 유사한 메서드도 일부 파일 시스템에서 ``dirent.d_type`` 값이 ``DT_UNKNOWN``\\ 인 경우 POSIX 기반 시스템에서 OS 호출을 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:45:11.691255Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "Also, people would expect the attribute access ``entry.is_dir`` to only ever raise ``AttributeError``, not ``OSError`` in the case it makes a system call under the covers.",
+      "source_hash": 18207281836455502504,
+      "context_hash": 12594439374829991745,
+      "translation": "또한, 사용자는 ``entry.is_dir``\\ 속성 접근이 시스템 호출을 내부적으로 수행하는 경우에도 ``OSError``\\ 가 아니라 오직 ``AttributeError``\\ 만 발생시키기를 기대합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407321Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:1",
+      "source": "Calling code would have to have a ``try``/``except`` around what looks like a simple attribute access, and so it's much better to make them *methods*.",
+      "source_hash": 18282338893057574323,
+      "context_hash": 10739210922285636437,
+      "translation": "호출하는 코드는 단순한 속성 접근처럼 보이는 부분을 ``try``/``except``\\ 로 감싸야 하므로, 이를 *메서드*\\ 로 만드는 것이 훨씬 낫습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407325Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "See `this May 2013 python-dev thread <https://mail.python.org/pipermail/python-dev/2013-May/126184.html>`_ where this PEP author makes this case and there's agreement from a core developers.",
+      "source_hash": 4099546807602331984,
+      "context_hash": 11800971878014487302,
+      "translation": "`this May 2013 python-dev thread <https://mail.python.org/pipermail/python-dev/2013-May/126184.html>`_\\ 를 참조하십시오. 여기에서 이 PEP의 작성자가 이러한 주장을 제시했으며 핵심 개발자들의 동의가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407325Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "DirEntry fields being \"static\" attribute-only objects",
+      "source_hash": 6173937649049629597,
+      "context_hash": 6467576145857655024,
+      "translation": "\"정적\" 속성 전용 객체인 DirEntry 필드입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407326Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "In `this July 2014 python-dev message <https://mail.python.org/pipermail/python-dev/2014-July/135303.html>`_, Paul Moore suggested a solution that was a \"thin wrapper round the OS feature\", where the ``DirEntry`` object had only static attributes: ``name``, ``path``, and ``is_X``, with the ``st_X`` attributes only present on Windows.",
+      "source_hash": 8794994266194904708,
+      "context_hash": 3327345968236289814,
+      "translation": "`this July 2014 python-dev message <https://mail.python.org/pipermail/python-dev/2014-July/135303.html>`_\\ 에서 Paul Moore는 \"운영 체제 기능을 얇게 감싼 래퍼\"인 해결책을 제안했습니다. 여기서 ``DirEntry``\\ 객체에는 정적 속성인 ``name``, ``path``, ``is_X``\\ 만 있었고, ``st_X`` 속성은 Windows에서만 존재했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407326Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "The idea was to use this simpler, lower-level function as a building block for higher-level functions.",
+      "source_hash": 6656168332614184803,
+      "context_hash": 1386002561733323002,
+      "translation": "더 단순한 저수준 함수를 고수준 함수의 구성 요소로 사용하자는 아이디어였습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407326Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "At first there was general agreement that simplifying in this way was a good thing.",
+      "source_hash": 421034229654598872,
+      "context_hash": 3879335424975710414,
+      "translation": "처음에는 이러한 방식으로 단순화하는 것이 좋은 일이라는 데 전반적인 동의가 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407327Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:1",
+      "source": "However, there were two problems with this approach.",
+      "source_hash": 16660850489821627111,
+      "context_hash": 3646116084742573995,
+      "translation": "그러나 이 접근 방식에는 두 가지 문제가 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407327Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:2",
+      "source": "First, the assumption is the ``is_dir`` and similar attributes are always present on POSIX, which isn't the case (if ``d_type`` is not present or is ``DT_UNKNOWN``).",
+      "source_hash": 1964315758833554491,
+      "context_hash": 14448101995111245764,
+      "translation": "첫째, ``is_dir``\\ 및 이와 유사한 속성이 POSIX에서 항상 존재한다는 가정인데, ``d_type``\\ 이 없거나 ``DT_UNKNOWN``\\ 인 경우에는 그렇지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407327Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:3",
+      "source": "Second, it's a much harder-to-use API in practice, as even the ``is_dir`` attributes aren't always present on POSIX, and would need to be tested with ``hasattr()`` and then ``os.stat()`` called if they weren't present.",
+      "source_hash": 7433934046215327606,
+      "context_hash": 15045264005538158285,
+      "translation": "둘째, 실제로는 훨씬 사용하기 어려운 API입니다. POSIX에서는 ``is_dir``\\ 속성조차 항상 존재하지 않으므로 ``hasattr()``\\ 로 테스트한 다음, 해당 속성이 없으면 ``os.stat()``\\ 을 호출해야 하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407328Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "See `this July 2014 python-dev response <https://mail.python.org/pipermail/python-dev/2014-July/135312.html>`_ from this PEP's author detailing why this option is a non-ideal solution, and the subsequent reply from Paul Moore voicing agreement.",
+      "source_hash": 12711427196622413767,
+      "context_hash": 4554576512428637333,
+      "translation": "`this July 2014 python-dev response <https://mail.python.org/pipermail/python-dev/2014-July/135312.html>`_\\ 에서 이 PEP의 작성자는 이 선택지가 이상적이지 않은 해결책인 이유를 자세히 설명했으며, 이어진 Paul Moore의 답변에서도 동의의 뜻을 밝혔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407328Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "DirEntry fields being static with an ensure_lstat option",
+      "source_hash": 16287123404170820117,
+      "context_hash": 9592096762310537781,
+      "translation": "ensure_lstat 옵션을 사용하며 정적인 DirEntry 필드입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407328Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Another seemingly simpler and attractive option was suggested by Alyssa Coghlan in this `June 2014 python-dev message <https://mail.python.org/pipermail/python-dev/2014-June/135261.html>`_: make ``DirEntry.is_X`` and ``DirEntry.lstat_result`` properties, and populate ``DirEntry.lstat_result`` at iteration time, but only if the new argument ``ensure_lstat=True`` was specified on the ``scandir()`` call.",
+      "source_hash": 6406904833223299923,
+      "context_hash": 17816212521954064136,
+      "translation": "Alyssa Coghlan은 이 `June 2014 python-dev message <https://mail.python.org/pipermail/python-dev/2014-June/135261.html>`_\\ 에서 또 다른, 겉보기에는 더 단순하고 매력적인 선택지를 제안했습니다. ``DirEntry.is_X``\\ 와 ``DirEntry.lstat_result``\\ 를 속성으로 만들고, 반복 시점에 ``DirEntry.lstat_result``\\ 를 채우되, ``scandir()``\\ 호출에서 새 인자 ``ensure_lstat=True``\\ 가 지정된 경우에만 그렇게 하자는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407328Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "This does have the advantage over the above in that you can easily get the stat result from ``scandir()`` if you need it.",
+      "source_hash": 7712246572801404242,
+      "context_hash": 9270629072142197502,
+      "translation": "이 방식은 필요한 경우 ``scandir()``\\ 에서 stat 결과를 쉽게 얻을 수 있다는 점에서 앞선 방식보다 유리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407329Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:1",
+      "source": "However, it has the serious disadvantage that fine-grained error handling is messy, because ``stat()`` will be called (and hence potentially raise ``OSError``) during iteration, leading to a rather ugly, hand-made iteration loop",
+      "source_hash": 4663407894376065352,
+      "context_hash": 15504631036796557395,
+      "translation": "그러나 세밀한 오류 처리가 번거로워진다는 심각한 단점이 있습니다. 반복 중에 ``stat()``\\ 이 호출되어 그 결과 ``OSError``\\ 가 발생할 가능성이 있으므로, 상당히 보기 좋지 않은 수작업 반복 루프가 만들어지기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407329Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "Or it means that ``scandir()`` would have to accept an ``onerror`` argument -- a function to call when ``stat()`` errors occur during iteration.",
+      "source_hash": 3025976011486247309,
+      "context_hash": 11064922770472910082,
+      "translation": "또는 이는 ``scandir()``\\ 이 반복 중 ``stat()``\\ 오류가 발생할 때 호출할 함수인 ``onerror``\\ 인자를 받아들여야 한다는 뜻입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407329Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:1",
+      "source": "This seems to this PEP's author neither as direct nor as Pythonic as ``try``/``except`` around a ``DirEntry.stat()`` call.",
+      "source_hash": 7782250287565585850,
+      "context_hash": 12952031816780933400,
+      "translation": "이 PEP의 작성자에게 이러한 방식은 ``DirEntry.stat()``\\ 호출을 ``try``/``except``\\ 로 감싸는 것만큼 직접적이지도, 파이썬답지도 않아 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407329Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "Another drawback is that ``os.scandir()`` is written to make code faster.",
+      "source_hash": 18355706475596406747,
+      "context_hash": 12042473816522419499,
+      "translation": "또 다른 단점은 ``os.scandir()``\\ 이 코드를 더 빠르게 실행하도록 작성되었다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407330Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:1",
+      "source": "Always calling ``os.lstat()`` on POSIX would not bring any speedup.",
+      "source_hash": 14142947300296130170,
+      "context_hash": 17155244128192888915,
+      "translation": "POSIX에서 항상 ``os.lstat()``\\ 을 호출해도 속도 향상은 얻을 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407330Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:2",
+      "source": "In most cases, you don't need the full ``stat_result`` object -- the ``is_X()`` methods are enough and this information is already known.",
+      "source_hash": 3434102650323941381,
+      "context_hash": 2211883099907431141,
+      "translation": "대부분의 경우 전체 ``stat_result``\\ 객체는 필요하지 않습니다. ``is_X()``\\ 메서드만으로 충분하며 이 정보는 이미 알려져 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407330Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:0",
+      "source": "See `Ben Hoyt's July 2014 reply <https://mail.python.org/pipermail/python-dev/2014-July/135312.html>`_ to the discussion summarizing this and detailing why he thinks the original :pep:`471` proposal is \"the right one\" after all.",
+      "source_hash": 16299737584527059563,
+      "context_hash": 17370332960070888631,
+      "translation": "논의를 요약하고 원래의 :pep:`471`\\ 제안이 결국 \"올바른 것\"이라고 생각하는 이유를 자세히 설명한 `Ben Hoyt's July 2014 reply <https://mail.python.org/pipermail/python-dev/2014-July/135312.html>`_\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407331Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Return values being (name, stat_result) two-tuples",
+      "source_hash": 7107037875184779442,
+      "context_hash": 15089745358080885308,
+      "translation": "(name, stat_result) 두-튜플인 반환 값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407331Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "Initially this PEP's author proposed this concept as a function called ``iterdir_stat()`` which yielded two-tuples of (name, stat_result).",
+      "source_hash": 4846246113812248812,
+      "context_hash": 14973380264680633492,
+      "translation": "처음에 이 PEP의 작성자는 이 개념을 ``iterdir_stat()``\\ 이라는 함수로 제안했으며, 이 함수는 (name, stat_result)의 두-튜플을 생성했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407331Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "This does have the advantage that there are no new types introduced.",
+      "source_hash": 14870432324313136387,
+      "context_hash": 2715860704463718021,
+      "translation": "이 방식은 새로운 형식을 도입하지 않는다는 장점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407331Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:2",
+      "source": "However, the ``stat_result`` is only partially filled on POSIX-based systems (most fields set to ``None`` and other quirks), so they're not really ``stat_result`` objects at all, and this would have to be thoroughly documented as different from ``os.stat()``.",
+      "source_hash": 1293750359931300183,
+      "context_hash": 5285463062989770203,
+      "translation": "그러나 POSIX 기반 시스템에서는 ``stat_result``\\ 가 부분적으로만 채워집니다. 대부분의 필드가 ``None``\\ 으로 설정되고 그 밖에도 여러 특이한 동작이 있으므로, 실제로는 ``stat_result``\\ 객체가 전혀 아니며 ``os.stat()``\\ 과 다르다는 점을 철저히 문서화해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407332Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "Also, Python has good support for proper objects with attributes and methods, which makes for a saner and simpler API than two-tuples.",
+      "source_hash": 4471913775226449893,
+      "context_hash": 1441140787018981392,
+      "translation": "또한 Python은 속성과 메서드를 갖춘 적절한 객체를 잘 지원하므로, 두-튜플보다 더 합리적이고 단순한 API를 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407332Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:1",
+      "source": "It also makes the ``DirEntry`` objects more extensible and future-proof as operating systems add functionality and we want to include this in ``DirEntry``.",
+      "source_hash": 3424936016141243542,
+      "context_hash": 10764064575209068702,
+      "translation": "운영 체제에 기능이 추가되고 이를 ``DirEntry``\\ 에 포함하려 할 때, ``DirEntry``\\ 객체를 더욱 확장하기 쉽고 미래에도 사용할 수 있게 해 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407332Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "See also some previous discussion:",
+      "source_hash": 10589395686483964714,
+      "context_hash": 18408314603151342421,
+      "translation": "이전 논의도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407333Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "`May 2013 python-dev thread <https://mail.python.org/pipermail/python-dev/2013-May/126148.html>`_ where Alyssa Coghlan makes the original case for a ``DirEntry``-style object.",
+      "source_hash": 16242260605265205186,
+      "context_hash": 18416781523683937059,
+      "translation": "Alyssa Coghlan이 ``DirEntry``\\ 스타일 객체를 처음 제안한 `May 2013 python-dev thread <https://mail.python.org/pipermail/python-dev/2013-May/126148.html>`_\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407333Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:0",
+      "source": "`June 2014 python-dev thread <https://mail.python.org/pipermail/python-dev/2014-June/135244.html>`_ where Alyssa Coghlan makes (another) good case against the two-tuple approach.",
+      "source_hash": 8370473820330373189,
+      "context_hash": 16661462878814216038,
+      "translation": "Alyssa Coghlan이 두-튜플 접근 방식에 반대하는 또 다른 좋은 주장을 제시한 `June 2014 python-dev thread <https://mail.python.org/pipermail/python-dev/2014-June/135244.html>`_\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407334Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Return values being overloaded stat_result objects",
+      "source_hash": 16565269512701915218,
+      "context_hash": 4118261060844186006,
+      "translation": "오버로드된 stat_result 객체인 반환 값입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:08:30.407334Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "Another alternative discussed was making the return values to be overloaded ``stat_result`` objects with ``name`` and ``path`` attributes.",
+      "source_hash": 11740910557023445945,
+      "context_hash": 8368879706628168620,
+      "translation": "논의된 또 다른 대안은 반환값을 ``name``\\ 과 ``path`` 속성을 가진 오버로드된 ``stat_result`` 객체로 만드는 것이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624161Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:1",
+      "source": "However, apart from this being a strange (and strained!) kind of overloading, this has the same problems mentioned above -- most of the ``stat_result`` information is not fetched by ``readdir()`` on POSIX systems, only (part of) the ``st_mode`` value.",
+      "source_hash": 16828919253362854257,
+      "context_hash": 15489691444414308641,
+      "translation": "하지만 이것이 이상한(그리고 억지스러운!) 오버로딩이라는 점은 차치하더라도, 위에서 언급한 것과 같은 문제가 있습니다. POSIX 시스템에서 ``readdir()``\\ 은 ``stat_result`` 정보 대부분을 가져오지 않으며, ``st_mode`` 값(의 일부)만 가져옵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624166Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "Return values being pathlib.Path objects",
+      "source_hash": 8448864623363258015,
+      "context_hash": 14133445059534132734,
+      "translation": "반환값을 pathlib.Path 객체로 만들기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624167Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "With Antoine Pitrou's new standard library ``pathlib`` module, it at first seems like a great idea for ``scandir()`` to return instances of ``pathlib.Path``.",
+      "source_hash": 14362874735396580856,
+      "context_hash": 17504928631309766837,
+      "translation": "Antoine Pitrou의 새로운 표준 라이브러리 ``pathlib`` 모듈이 있으니, ``scandir()``\\ 이 ``pathlib.Path``\\ 의 인스턴스를 반환하도록 하는 것이 처음에는 훌륭한 아이디어처럼 보입니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T17:31:59.624168Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:1",
+      "source": "However, ``pathlib.Path``'s ``is_X()`` and ``stat()`` functions are explicitly not cached, whereas ``scandir`` has to cache them by design, because it's (often) returning values from the original directory iteration system call.",
+      "source_hash": 2037202080941563361,
+      "context_hash": 9964542162133671750,
+      "translation": "하지만 ``pathlib.Path``\\ 의 ``is_X()``\\ 와 ``stat()`` 함수는 명시적으로 캐시되지 않는 반면, ``scandir``\\ 은 설계상 이들을 캐시해야 합니다. 원본 디렉터리 순회 시스템 호출에서 나온 값을 (흔히) 반환하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624171Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "And if the ``pathlib.Path`` instances returned by ``scandir`` cached stat values, but the ordinary ``pathlib.Path`` objects explicitly don't, that would be more than a little confusing.",
+      "source_hash": 13391972603686100467,
+      "context_hash": 8803377650708929980,
+      "translation": "또한 ``scandir``\\ 이 반환하는 ``pathlib.Path`` 인스턴스는 stat 값을 캐시하는데 일반적인 ``pathlib.Path`` 객체는 명시적으로 그렇지 않다면, 이는 적잖이 혼란스러울 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624172Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "Guido van Rossum explicitly rejected ``pathlib.Path`` caching stat in the context of scandir `here <https://mail.python.org/pipermail/python-dev/2013-November/130583.html>`_, making ``pathlib.Path`` objects a bad choice for scandir return values.",
+      "source_hash": 8141543908960948337,
+      "context_hash": 16477349192942128250,
+      "translation": "Guido van Rossum은 scandir의 맥락에서 ``pathlib.Path``\\ 가 stat을 캐시하는 것을 `여기 <https://mail.python.org/pipermail/python-dev/2013-November/130583.html>`_\\ 서 명시적으로 거부했으며, 이로 인해 ``pathlib.Path`` 객체는 scandir 반환값으로 나쁜 선택이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624172Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Possible improvements",
+      "source_hash": 5396679864026872595,
+      "context_hash": 415433309138635952,
+      "translation": "가능한 개선 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624172Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "There are many possible improvements one could make to scandir, but here is a short list of some this PEP's author has in mind:",
+      "source_hash": 11393210926469459382,
+      "context_hash": 16441719846788003869,
+      "translation": "scandir에 가할 수 있는 가능한 개선 사항은 많지만, 이 PEP의 저자가 염두에 두고 있는 몇 가지를 간략히 나열하면 다음과 같습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624173Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:0",
+      "source": "scandir could potentially be further sped up by calling ``readdir`` / ``FindNextFile`` say 50 times per ``Py_BEGIN_ALLOW_THREADS`` block so that it stays in the C extension module for longer, and may be somewhat faster as a result.",
+      "source_hash": 5335475221946055817,
+      "context_hash": 6023147226273861577,
+      "translation": "scandir는 ``Py_BEGIN_ALLOW_THREADS`` 블록당 ``readdir``\\ / ``FindNextFile``\\ 을 이를테면 50회씩 호출하여 C 확장 모듈에 더 오래 머무르게 함으로써 더욱 빨라질 가능성이 있으며, 그 결과 다소 더 빨라질 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624173Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:2/seg:1",
+      "source": "This approach hasn't been tested, but was suggested by on Issue 11406 by Antoine Pitrou. [`source9 <http://bugs.python.org/msg130125>`_]",
+      "source_hash": 7924284865922826192,
+      "context_hash": 10013629749598296332,
+      "translation": "이 방식은 아직 테스트되지 않았지만, Issue 11406에서 Antoine Pitrou가 제안한 것입니다. [`source9 <http://bugs.python.org/msg130125>`_]",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624174Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:0",
+      "source": "scandir could use a free list to avoid the cost of memory allocation for each iteration -- a short free list of 10 or maybe even 1 may help.",
+      "source_hash": 12034036969518926761,
+      "context_hash": 11851255066765721577,
+      "translation": "scandir는 반복마다 드는 메모리 할당 비용을 피하기 위해 프리 리스트를 사용할 수 있습니다. 10개, 어쩌면 1개짜리의 짧은 프리 리스트만으로도 도움이 될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624174Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:1",
+      "source": "Suggested by Victor Stinner on a `python-dev thread on June 27`_.",
+      "source_hash": 2721700398605637789,
+      "context_hash": 7216306791194862318,
+      "translation": "Victor Stinner가 `python-dev thread on June 27`_\\ 에서 제안했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624175Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "Previous discussion",
+      "source_hash": 15089701361253071258,
+      "context_hash": 9859982049484102535,
+      "translation": "이전 논의",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624175Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "`Original November 2012 thread Ben Hoyt started on python-ideas <https://mail.python.org/pipermail/python-ideas/2012-November/017770.html>`_ about speeding up ``os.walk()``",
+      "source_hash": 18344790002651319887,
+      "context_hash": 7675310585345192155,
+      "translation": "``os.walk()``\\ 의 속도 향상에 관해 Ben Hoyt가 python-ideas에서 시작한 `2012년 11월 최초 스레드 <https://mail.python.org/pipermail/python-ideas/2012-November/017770.html>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624175Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:0",
+      "source": "Python `Issue 11406`_, which includes the original proposal for a scandir-like function",
+      "source_hash": 913530863641828946,
+      "context_hash": 7161385123211198922,
+      "translation": "scandir와 유사한 함수에 대한 최초 제안이 담긴 Python `Issue 11406`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624176Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:3/seg:0",
+      "source": "`Further May 2013 thread Ben Hoyt started on python-dev <https://mail.python.org/pipermail/python-dev/2013-May/126119.html>`_ that refined the ``scandir()`` API, including Alyssa Coghlan's suggestion of scandir yielding ``DirEntry``-like objects",
+      "source_hash": 8973165625877310091,
+      "context_hash": 3063847503589596938,
+      "translation": "``scandir()`` API를 다듬은, Ben Hoyt가 python-dev에서 시작한 `2013년 5월 후속 스레드 <https://mail.python.org/pipermail/python-dev/2013-May/126119.html>`_. scandir가 ``DirEntry``\\ 와 유사한 객체를 산출하도록 하자는 Alyssa Coghlan의 제안을 포함합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624176Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:4/seg:0",
+      "source": "`November 2013 thread Ben Hoyt started on python-dev <https://mail.python.org/pipermail/python-dev/2013-November/130572.html>`_ to discuss the interaction between scandir and the new ``pathlib`` module",
+      "source_hash": 8904415541715909641,
+      "context_hash": 10510962815820555107,
+      "translation": "scandir와 새로운 ``pathlib`` 모듈 간의 상호작용을 논의하기 위해 Ben Hoyt가 python-dev에서 시작한 `2013년 11월 스레드 <https://mail.python.org/pipermail/python-dev/2013-November/130572.html>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624176Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:5/seg:0",
+      "source": "`June 2014 thread Ben Hoyt started on python-dev <https://mail.python.org/pipermail/python-dev/2014-June/135215.html>`_ to discuss the first version of this PEP, with extensive discussion about the API",
+      "source_hash": 14451977577333684999,
+      "context_hash": 17968914960123111576,
+      "translation": "이 PEP의 첫 번째 버전을 논의하기 위해 Ben Hoyt가 python-dev에서 시작한 `2014년 6월 스레드 <https://mail.python.org/pipermail/python-dev/2014-June/135215.html>`_. API에 관한 광범위한 논의를 포함합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624177Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:6/seg:0",
+      "source": "`First July 2014 thread Ben Hoyt started on python-dev <https://mail.python.org/pipermail/python-dev/2014-July/135377.html>`_ to discuss his updates to :pep:`471`",
+      "source_hash": 4312692618487502463,
+      "context_hash": 14070372861246032827,
+      "translation": "`Ben Hoyt가 python-dev에서 시작한 2014년 7월의 첫 번째 스레드 <https://mail.python.org/pipermail/python-dev/2014-July/135377.html>`_ 에서 :pep:`471`\\ 에 대한 그의 업데이트를 논의했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624178Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:7/seg:0",
+      "source": "`Second July 2014 thread Ben Hoyt started on python-dev <https://mail.python.org/pipermail/python-dev/2014-July/135485.html>`_ to discuss the remaining decisions needed to finalize :pep:`471`, specifically whether the ``DirEntry`` methods should follow symlinks by default",
+      "source_hash": 16203500786371159343,
+      "context_hash": 296086319665963741,
+      "translation": "`Ben Hoyt가 python-dev에서 시작한 2014년 7월의 두 번째 스레드 <https://mail.python.org/pipermail/python-dev/2014-July/135485.html>`_ 에서 :pep:`471`\\ 을 마무리하는 데 필요한 나머지 결정 사항, 특히 ``DirEntry`` 메서드가 기본적으로 심볼릭 링크를 따라가야 하는지를 논의했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624178Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:8/seg:0",
+      "source": "`Question on StackOverflow <http://stackoverflow.com/questions/2485719/very-quickly-getting-total-size-of-folder>`_ about why ``os.walk()`` is slow and pointers on how to fix it (this inspired the author of this PEP early on)",
+      "source_hash": 5776853269204270114,
+      "context_hash": 1351755986413438289,
+      "translation": "``os.walk()``\\ 가 느린 이유와 이를 해결하는 방법에 대한 힌트를 제공하는 `StackOverflow의 질문 <http://stackoverflow.com/questions/2485719/very-quickly-getting-total-size-of-folder>`_\\ (이 PEP 저자가 초기에 영감을 받은 질문입니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624178Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:9/seg:0",
+      "source": "`BetterWalk <https://github.com/benhoyt/betterwalk>`_, this PEP's author's previous attempt at this, on which the scandir code is based",
+      "source_hash": 2580065894096404120,
+      "context_hash": 15524142708112213538,
+      "translation": "scandir 코드의 바탕이 된, 이 PEP의 저자가 이전에 시도했던 `BetterWalk <https://github.com/benhoyt/betterwalk>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:31:59.624179Z",
+      "issues": []
+    }
+  ]
+}

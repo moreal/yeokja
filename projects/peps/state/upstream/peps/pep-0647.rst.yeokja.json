@@ -1,0 +1,863 @@
+{
+  "version": 1,
+  "source_hash": 13636043784202369285,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "User-Defined Type Guards",
+      "source_hash": 13074597790884569309,
+      "context_hash": 6431076920802532649,
+      "translation": "사용자 정의 타입 가드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325753Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:1/seg:0",
+      "source": ":py:data:`typing.TypeGuard`",
+      "source_hash": 1341549455187950391,
+      "context_hash": 12320869157244170706,
+      "translation": ":py:data:`typing.TypeGuard`",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325759Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 17979595500106672055,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325759Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP specifies a way for programs to influence conditional type narrowing employed by a type checker based on runtime checks.",
+      "source_hash": 12103675627744728715,
+      "context_hash": 214227753139738897,
+      "translation": "이 PEP는 런타임 검사에 기반하여 타입 검사기가 수행하는 조건부 타입 좁히기에 프로그램이 영향을 미칠 수 있는 방법을 명시합니다.",
+      "glossary_snapshot": {
+        "type checker": "타입 검사기"
+      },
+      "translated_at": "2026-08-28T18:57:47.325760Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 9379317234305048287,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325762Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Static type checkers commonly employ a technique called \"type narrowing\" to determine a more precise type of an expression within a program's code flow.",
+      "source_hash": 17301402909350287279,
+      "context_hash": 5520519867864791592,
+      "translation": "정적 타입 검사기는 일반적으로 프로그램의 코드 흐름 내 표현식의 더 정확한 타입을 결정하기 위해 \"타입 좁히기\"라는 기법을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325762Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "When type narrowing is applied within a block of code based on a conditional code flow statement (such as ``if`` and ``while`` statements), the conditional expression is sometimes referred to as a \"type guard\".",
+      "source_hash": 10177388048785125058,
+      "context_hash": 347196648701467044,
+      "translation": "조건부 코드 흐름 문(예: ``if`` 및 ``while`` 문)에 기반하여 코드 블록 내에서 타입 좁히기가 적용될 때, 조건식은 때때로 \"타입 가드\"라고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325763Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "Python type checkers typically support various forms of type guards expressions.",
+      "source_hash": 17152611723405796366,
+      "context_hash": 15785607973560828737,
+      "translation": "Python 타입 검사기는 일반적으로 다양한 형태의 타입 가드 표현식을 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325763Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "There are cases where type narrowing cannot be applied based on static information only.",
+      "source_hash": 7785601184955112214,
+      "context_hash": 251432683282919170,
+      "translation": "정적 정보만을 기반으로 타입 좁히기를 적용할 수 없는 경우가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325763Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "Consider the following example:",
+      "source_hash": 10982286192607435096,
+      "context_hash": 10179007990561709295,
+      "translation": "다음 예를 고려하십시오:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325764Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "This code is correct, but a type checker will report a type error because the value ``val`` passed to the ``join`` method is understood to be of type ``List[object]``.",
+      "source_hash": 12367027100059418915,
+      "context_hash": 14736470840951203161,
+      "translation": "이 코드는 올바르지만, ``join`` 메서드에 전달된 ``val``\\ 값이 ``List[object]`` 타입으로 이해되므로 타입 검사기는 타입 오류를 보고합니다.",
+      "glossary_snapshot": {
+        "type checker": "타입 검사기"
+      },
+      "translated_at": "2026-08-28T18:57:47.325764Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "The type checker does not have enough information to statically verify that the type of ``val`` is ``List[str]`` at this point.",
+      "source_hash": 17724887418421806686,
+      "context_hash": 6437686546491376534,
+      "translation": "이 시점에서 타입 검사기에는 ``val``\\ 의 타입이 ``List[str]`` 타입인지 정적으로 확인할 충분한 정보가 없습니다.",
+      "glossary_snapshot": {
+        "type checker": "타입 검사기"
+      },
+      "translated_at": "2026-08-28T18:57:47.325765Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "This PEP introduces a way for a function like ``is_str_list`` to be defined as a \"user-defined type guard\".",
+      "source_hash": 14841945194874030637,
+      "context_hash": 8928768866400258632,
+      "translation": "이 PEP는 ``is_str_list``\\ 와 같은 함수를 \"사용자 정의 타입 가드\"로 정의하는 방법을 도입합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325765Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "This allows code to extend the type guards that are supported by type checkers.",
+      "source_hash": 4824624401469375310,
+      "context_hash": 5958831063253434850,
+      "translation": "이를 통해 코드에서 타입 검사기가 지원하는 타입 가드를 확장할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325766Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "Using this new mechanism, the ``is_str_list`` function in the above example would be modified slightly.",
+      "source_hash": 1829631852280706802,
+      "context_hash": 3845477755462912778,
+      "translation": "이 새로운 메커니즘을 사용하면 위 예제의 ``is_str_list`` 함수가 약간 수정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325766Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:1",
+      "source": "Its return type would be changed from ``bool`` to ``TypeGuard[List[str]]``.",
+      "source_hash": 2226254362900774668,
+      "context_hash": 8840603488421632802,
+      "translation": "반환 타입이 ``bool``\\ 에서 ``TypeGuard[List[str]]``\\ 로 변경됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325766Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:2",
+      "source": "This promises not merely that the return value is boolean, but that a true indicates the input to the function was of the specified type.",
+      "source_hash": 1766381112166710131,
+      "context_hash": 4336180127512409977,
+      "translation": "이는 반환 값이 불리언이라는 것뿐 아니라, true가 함수에 입력된 값이 지정된 타입이었다는 것을 나타낸다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325768Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:9/seg:0",
+      "source": "User-defined type guards can also be used to determine whether a dictionary conforms to the type requirements of a TypedDict.",
+      "source_hash": 1059183479744782019,
+      "context_hash": 9188787774243795970,
+      "translation": "사용자 정의 타입 가드를 사용하여 딕셔너리가 TypedDict의 타입 요구 사항을 따르는지도 확인할 수 있습니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T18:57:47.325769Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 6497325478791876940,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325770Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "TypeGuard Type",
+      "source_hash": 8017900358191931789,
+      "context_hash": 10339047346122378848,
+      "translation": "TypeGuard 타입",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325770Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "This PEP introduces the symbol ``TypeGuard`` exported from the ``typing`` module. ``TypeGuard`` is a special form that accepts a single type argument.",
+      "source_hash": 2507397838025789906,
+      "context_hash": 11839249144807362410,
+      "translation": "이 PEP는 ``typing`` 모듈에서 내보내는 기호 ``TypeGuard``\\ 를 도입합니다. ``TypeGuard``\\ 는 단일 타입 인자를 받는 특수 형식입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325770Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "It is used to annotate the return type of a user-defined type guard function.",
+      "source_hash": 6913703796599341267,
+      "context_hash": 2141552110133886500,
+      "translation": "이는 사용자 정의 타입 가드 함수의 반환 타입에 어노테이션을 지정하는 데 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325770Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "Return statements within a type guard function should return bool values, and type checkers should verify that all return paths return a bool.",
+      "source_hash": 8470545766898054014,
+      "context_hash": 12084056501341681148,
+      "translation": "타입 가드 함수 내부의 return 문은 bool 값을 반환해야 하며, 타입 검사기는 모든 반환 경로가 bool을 반환하는지 확인해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:51:08.547474Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "In all other respects, TypeGuard is a distinct type from bool.",
+      "source_hash": 12727923373873924220,
+      "context_hash": 2782037937635479061,
+      "translation": "그 밖의 모든 측면에서 TypeGuard는 bool과 구별되는 타입입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325772Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "It is not a subtype of bool.",
+      "source_hash": 9888966208720852364,
+      "context_hash": 17731120870483880124,
+      "translation": "이는 bool의 서브타입이 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325772Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "Therefore, ``Callable[..., TypeGuard[int]]`` is not assignable to ``Callable[..., bool]``.",
+      "source_hash": 14377559057430076722,
+      "context_hash": 11458180678590532262,
+      "translation": "따라서 ``Callable[..., TypeGuard[int]]``\\ 는 ``Callable[..., bool]``\\ 에 할당할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325772Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "When ``TypeGuard`` is used to annotate the return type of a function or method that accepts at least one parameter, that function or method is treated by type checkers as a user-defined type guard.",
+      "source_hash": 4965222092450726067,
+      "context_hash": 7507241906118087496,
+      "translation": "``TypeGuard``\\ 를 하나 이상의 매개변수를 받는 함수 또는 메서드의 반환 타입에 어노테이션으로 사용할 경우, 타입 검사기는 해당 함수 또는 메서드를 사용자 정의 타입 가드로 취급합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325773Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:1",
+      "source": "The type argument provided for ``TypeGuard`` indicates the type that has been validated by the function.",
+      "source_hash": 1683319308197761852,
+      "context_hash": 692244281761127129,
+      "translation": "``TypeGuard``\\ 에 제공된 타입 인자는 함수가 검증한 타입을 나타냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325773Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "User-defined type guards can be generic functions, as shown in this example:",
+      "source_hash": 240036686777862815,
+      "context_hash": 10669587707788573993,
+      "translation": "이 예에서 보듯이 사용자 정의 타입 가드는 제네릭 함수일 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325773Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "Type checkers should assume that type narrowing should be applied to the expression that is passed as the first positional argument to a user-defined type guard.",
+      "source_hash": 18203134185048884650,
+      "context_hash": 8905221119697467791,
+      "translation": "타입 검사기는 사용자 정의 타입 가드에 첫 번째 위치 인자로 전달되는 표현식에 타입 좁히기를 적용해야 한다고 가정해야 합니다.",
+      "glossary_snapshot": {
+        "positional argument": "위치 인자"
+      },
+      "translated_at": "2026-08-28T18:57:47.325774Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:1",
+      "source": "If the type guard function accepts more than one argument, no type narrowing is applied to those additional argument expressions.",
+      "source_hash": 10855431289213623350,
+      "context_hash": 13869374555717695952,
+      "translation": "타입 가드 함수가 둘 이상의 인자를 받는 경우, 추가 인자 표현식에는 타입 좁히기가 적용되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:47.325774Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "If a type guard function is implemented as an instance method or class method, the first positional argument maps to the second parameter (after \"self\" or \"cls\").",
+      "source_hash": 9748062420140301115,
+      "context_hash": 14677635140001240544,
+      "translation": "타입 가드 함수가 인스턴스 메서드 또는 클래스 메서드로 구현된 경우, 첫 번째 위치 인자는 \"self\" 또는 \"cls\" 다음의 두 번째 매개변수에 대응합니다.",
+      "glossary_snapshot": {
+        "positional argument": "위치 인자"
+      },
+      "translated_at": "2026-08-28T19:51:08.547479Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "Here are some examples of user-defined type guard functions that accept more than one argument:",
+      "source_hash": 13090147503588614698,
+      "context_hash": 1158620040286177823,
+      "translation": "다음은 둘 이상의 인자를 받는 사용자 정의 타입 가드 함수의 몇 가지 예입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521338Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "The return type of a user-defined type guard function will normally refer to a type that is strictly \"narrower\" than the type of the first argument (that is, it's a more specific type that can be assigned to the more general type).",
+      "source_hash": 4186399082429308511,
+      "context_hash": 17091763163598238302,
+      "translation": "사용자 정의 타입 가드 함수의 반환 타입은 일반적으로 첫 번째 인자의 타입보다 엄격하게 \"더 좁은\" 타입을 가리킵니다(즉, 더 일반적인 타입에 할당할 수 있는 더 구체적인 타입입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521345Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:1",
+      "source": "However, it is not required that the return type be strictly narrower.",
+      "source_hash": 10044716995035884409,
+      "context_hash": 2944634212021216287,
+      "translation": "그러나 반환 타입이 반드시 엄격하게 더 좁아야 하는 것은 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521345Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:2",
+      "source": "This allows for cases like the example above where ``List[str]`` is not assignable to ``List[object]``.",
+      "source_hash": 11023009573396131543,
+      "context_hash": 11643260088441306133,
+      "translation": "이를 통해 위의 예에서 ``List[str]``\\ 을 ``List[object]``\\ 에 할당할 수 없는 경우와 같은 상황을 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521346Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "When a conditional statement includes a call to a user-defined type guard function, and that function returns true, the expression passed as the first positional argument to the type guard function should be assumed by a static type checker to take on the type specified in the TypeGuard return type, unless and until it is further narrowed within the conditional code block.",
+      "source_hash": 3836306606113748368,
+      "context_hash": 5587918772316200104,
+      "translation": "조건문에 사용자 정의 타입 가드 함수 호출이 포함되고 해당 함수가 참을 반환하는 경우, 정적 타입 검사기는 타입 가드 함수에 첫 번째 위치 인자로 전달된 표현식이 TypeGuard 반환 타입에 지정된 타입을 갖는 것으로 간주해야 합니다. 조건부 코드 블록 내에서 추가로 좁혀지지 않는 한 그렇습니다.",
+      "glossary_snapshot": {
+        "positional argument": "위치 인자",
+        "type checker": "타입 검사기"
+      },
+      "translated_at": "2026-08-28T18:57:59.521346Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:0",
+      "source": "Some built-in type guards provide narrowing for both positive and negative tests (in both the ``if`` and ``else`` clauses).",
+      "source_hash": 15956459986025840563,
+      "context_hash": 667300995964409531,
+      "translation": "일부 내장 타입 가드는 양성 테스트와 음성 테스트 모두에서(``if`` 절과 ``else`` 절 모두에서) 좁히기를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521349Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:1",
+      "source": "For example, consider the type guard for an expression of the form ``x is None``.",
+      "source_hash": 17890336121404517153,
+      "context_hash": 3946435807364953640,
+      "translation": "예를 들어 ``x is None``\\ 형식의 표현식에 대한 타입 가드를 생각해 보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521349Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:2",
+      "source": "If ``x`` has a type that is a union of None and some other type, it will be narrowed to ``None`` in the positive case and the other type in the negative case.",
+      "source_hash": 13065937651528325318,
+      "context_hash": 5070710407293483732,
+      "translation": "``x``\\ 의 타입이 None과 다른 어떤 타입의 합집합인 경우, 양성 상황에서는 ``None``\\ 으로, 음성 상황에서는 다른 타입으로 좁혀집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521349Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:3",
+      "source": "User-defined type guards apply narrowing only in the positive case (the ``if`` clause).",
+      "source_hash": 3954822145008084181,
+      "context_hash": 8003050707765180842,
+      "translation": "사용자 정의 타입 가드는 양성 상황(``if`` 절)에서만 좁히기를 적용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521350Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:4",
+      "source": "The type is not narrowed in the negative case.",
+      "source_hash": 8251583253660418118,
+      "context_hash": 8242954860867062669,
+      "translation": "음성 상황에서는 타입이 좁혀지지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521350Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 18019194355431242440,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521351Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Existing code that does not use this new functionality will be unaffected.",
+      "source_hash": 17217453258027594018,
+      "context_hash": 13859614559142199862,
+      "translation": "이 새로운 기능을 사용하지 않는 기존 코드는 영향을 받지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521351Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Notably, code which uses annotations in a manner incompatible with the stdlib typing library should simply not import TypeGuard.",
+      "source_hash": 15549952212854313323,
+      "context_hash": 13161915407446346497,
+      "translation": "특히 표준 라이브러리 typing 라이브러리와 호환되지 않는 방식으로 어노테이션을 사용하는 코드는 단순히 TypeGuard를 임포트하지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521351Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 17264567973176389387,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:57:59.521351Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The Pyright type checker supports the behavior described in this PEP.",
+      "source_hash": 10353967020723969990,
+      "context_hash": 683053942396023572,
+      "translation": "Pyright 타입 검사기는 이 PEP에서 설명하는 동작을 지원합니다.",
+      "glossary_snapshot": {
+        "type checker": "타입 검사기"
+      },
+      "translated_at": "2026-08-28T18:57:59.521352Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 6812766565255426783,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521353Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Decorator Syntax",
+      "source_hash": 15678409562841303668,
+      "context_hash": 2114439970520189449,
+      "translation": "데코레이터 구문",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T18:57:59.521353Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The use of a decorator was considered for defining type guards.",
+      "source_hash": 15957878912974330741,
+      "context_hash": 13124478491229082305,
+      "translation": "타입 가드를 정의하기 위해 데코레이터를 사용하는 방안이 고려되었습니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T18:57:59.521354Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "The decorator approach is inferior because it requires runtime evaluation of the type, precluding forward references.",
+      "source_hash": 3754247598814761519,
+      "context_hash": 2601762027781117335,
+      "translation": "데코레이터 방식은 타입을 런타임에 평가해야 하므로 순방향 참조를 사용할 수 없다는 점에서 열등합니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T18:57:59.521354Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:1",
+      "source": "The proposed approach was also deemed to be easier to understand and simpler to implement.",
+      "source_hash": 5344289647890207854,
+      "context_hash": 9411732255948185701,
+      "translation": "또한 제안된 방식이 이해하기 더 쉽고 구현하기 더 간단한 것으로 판단되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521355Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Enforcing Strict Narrowing",
+      "source_hash": 15798996676030422797,
+      "context_hash": 4312582345484241055,
+      "translation": "엄격한 좁히기 적용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521355Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Strict type narrowing enforcement (requiring that the type specified in the TypeGuard type argument is a narrower form of the type specified for the first parameter) was considered, but this eliminates valuable use cases for this functionality.",
+      "source_hash": 11391689978678507825,
+      "context_hash": 1101523393056610313,
+      "translation": "엄격한 타입 좁히기 적용(TypeGuard 타입 인자에 지정된 타입이 첫 번째 매개변수에 지정된 타입보다 더 좁은 형태여야 한다는 요구 사항)이 고려되었지만, 이는 이 기능의 유용한 사용 사례를 없앱니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521355Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "For instance, the ``is_str_list`` example above would be considered invalid because ``List[str]`` is not a subtype of ``List[object]`` because of invariance rules.",
+      "source_hash": 5921819461571393076,
+      "context_hash": 2345272187692844889,
+      "translation": "예를 들어 위의 ``is_str_list``\\ 예는 불변성 규칙 때문에 ``List[str]``\\ 이 ``List[object]``\\ 의 서브타입이 아니므로 유효하지 않은 것으로 간주됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521356Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "One variation that was considered was to require a strict narrowing requirement by default but allow the type guard function to specify some flag to indicate that it is not following this requirement.",
+      "source_hash": 12130426505438320691,
+      "context_hash": 16536660209956608664,
+      "translation": "고려된 한 가지 변형은 기본적으로 엄격한 좁히기 요구 사항을 적용하되, 타입 가드 함수가 이 요구 사항을 따르지 않음을 나타내는 플래그를 지정할 수 있도록 하는 것이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521356Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "This was rejected because it was deemed cumbersome and unnecessary.",
+      "source_hash": 13162533002636692575,
+      "context_hash": 6715298688911600479,
+      "translation": "이는 번거롭고 불필요한 것으로 판단되어 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521356Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "Another consideration was to define some less-strict check that ensures that there is some overlap between the value type and the narrowed type specified in the TypeGuard.",
+      "source_hash": 4364454572883434058,
+      "context_hash": 2074254965743769655,
+      "translation": "또 다른 고려 사항은 값 타입과 TypeGuard에 지정된 좁혀진 타입 사이에 어느 정도 겹치는 부분이 있음을 보장하는 덜 엄격한 검사를 정의하는 것이었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521357Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:1",
+      "source": "The problem with this proposal is that the rules for type compatibility are already very complex when considering unions, protocols, type variables, generics, etc. Defining a variant of these rules that relaxes some of these constraints just for the purpose of this feature would require that we articulate all of the subtle ways in which the rules differ and under what specific circumstances the constrains are relaxed.",
+      "source_hash": 5085078741143801302,
+      "context_hash": 6592360641630372883,
+      "translation": "이 제안의 문제는 합집합, 프로토콜, 타입 변수, 제네릭 등을 고려할 때 타입 호환성 규칙이 이미 매우 복잡하다는 점입니다. 이 기능만을 위해 이러한 제약 중 일부를 완화하는 이 규칙의 변형을 정의하려면 규칙이 달라지는 모든 미묘한 방식과 제약이 완화되는 구체적인 상황을 명확히 기술해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521357Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:2",
+      "source": "For this reason, it was decided to omit all checks.",
+      "source_hash": 9410183822124680167,
+      "context_hash": 8221380103124295393,
+      "translation": "이러한 이유로 모든 검사를 생략하기로 결정되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521357Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "It was noted that without enforcing strict narrowing, it would be possible to break type safety.",
+      "source_hash": 4330648608735954346,
+      "context_hash": 1101137446091987151,
+      "translation": "엄격한 좁히기를 적용하지 않으면 타입 안전성을 깨뜨릴 수 있다는 점이 지적되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521358Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:1",
+      "source": "A poorly-written type guard function could produce unsafe or even nonsensical results.",
+      "source_hash": 15889835379828186320,
+      "context_hash": 6407935597999816,
+      "translation": "잘못 작성된 타입 가드 함수는 안전하지 않거나 심지어 무의미한 결과를 생성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521358Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:2",
+      "source": "For example:",
+      "source_hash": 4114854479619665730,
+      "context_hash": 15588989286948062746,
+      "translation": "예를 들면:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:57:59.521358Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "However, there are many ways a determined or uninformed developer can subvert type safety -- most commonly by using ``cast`` or ``Any``.",
+      "source_hash": 2342870616579709447,
+      "context_hash": 14896315729433799732,
+      "translation": "그러나 결연하거나 지식이 부족한 개발자가 타입 안전성을 무력화할 방법은 많으며, 가장 흔한 방법은 ``cast``\\ 또는 ``Any``\\ 를 사용하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420768Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:1",
+      "source": "If a Python developer takes the time to learn about and implement user-defined type guards within their code, it is safe to assume that they are interested in type safety and will not write their type guard functions in a way that will undermine type safety or produce nonsensical results.",
+      "source_hash": 2147655005793842103,
+      "context_hash": 10768491711186717792,
+      "translation": "Python 개발자가 자신의 코드에서 사용자 정의 타입 가드에 대해 학습하고 이를 구현하는 데 시간을 들인다면, 해당 개발자는 타입 안전성에 관심이 있으며 타입 안전성을 훼손하거나 무의미한 결과를 생성하는 방식으로 타입 가드 함수를 작성하지 않을 것이라고 보는 것이 안전합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420772Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Conditionally Applying TypeGuard Type",
+      "source_hash": 13075815540729033241,
+      "context_hash": 4586613708767061463,
+      "translation": "TypeGuard 타입의 조건부 적용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420772Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "It was suggested that the expression passed as the first argument to a type guard function should retain its existing type if the type of the expression was a proper subtype of the type specified in the TypeGuard return type.",
+      "source_hash": 1026072447143003169,
+      "context_hash": 12578048591510971748,
+      "translation": "타입 가드 함수에 첫 번째 인자로 전달되는 표현식의 타입이 TypeGuard 반환 타입에 지정된 타입의 진정한 서브타입인 경우, 해당 표현식이 기존 타입을 유지해야 한다는 제안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420773Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "For example, if the type guard function is ``def f(value: object) -> TypeGuard[float]`` and the expression passed to this function is of type ``int``, it would retain the ``int`` type rather than take on the ``float`` type indicated by the TypeGuard return type.",
+      "source_hash": 6361763462049790599,
+      "context_hash": 7336971036896179859,
+      "translation": "예를 들어 타입 가드 함수가 ``def f(value: object) -> TypeGuard[float]``\\ 이고 이 함수에 전달되는 표현식의 타입이 ``int``\\ 인 경우, TypeGuard 반환 타입이 나타내는 ``float``\\ 타입을 취하는 대신 ``int``\\ 타입을 유지하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420773Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "This proposal was rejected because it added complexity, inconsistency, and opened up additional questions about the proper behavior if the type of the expression was of composite types like unions or type variables with multiple constraints.",
+      "source_hash": 1367176190705946445,
+      "context_hash": 18169847036779777957,
+      "translation": "이 제안은 복잡성과 불일치를 추가하고, 표현식의 타입이 유니온이나 여러 제약 조건이 있는 타입 변수와 같은 복합 타입인 경우의 올바른 동작에 관한 추가 질문을 제기했기 때문에 거부되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420774Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:3",
+      "source": "It was decided that the added complexity and inconsistency was not justified given that it would provide little or no added value.",
+      "source_hash": 7352264364643320987,
+      "context_hash": 15214858586541872649,
+      "translation": "추가된 복잡성과 불일치가 거의 또는 전혀 부가 가치를 제공하지 않는다는 점을 고려할 때 정당화되지 않는다고 결정되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420774Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Narrowing of Arbitrary Parameters",
+      "source_hash": 11407151639626616386,
+      "context_hash": 2267398425064483289,
+      "translation": "임의 매개변수의 좁히기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420775Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "TypeScript's formulation of user-defined type guards allows for any input parameter to be used as the value tested for narrowing.",
+      "source_hash": 2375276102523590619,
+      "context_hash": 12413243339233789163,
+      "translation": "TypeScript의 사용자 정의 타입 가드 형식에서는 모든 입력 매개변수를 좁히기를 위해 검사되는 값으로 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420775Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "The TypeScript language authors could not recall any real-world examples in TypeScript where the parameter being tested was not the first parameter.",
+      "source_hash": 13171631624397731135,
+      "context_hash": 6175690243047729597,
+      "translation": "TypeScript 언어 작성자들은 검사되는 매개변수가 첫 번째 매개변수가 아닌 TypeScript의 실제 사례를 기억하지 못했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420775Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:2",
+      "source": "For this reason, it was decided unnecessary to burden the Python implementation of user-defined type guards with additional complexity to support a contrived use case.",
+      "source_hash": 7987671200050324387,
+      "context_hash": 9063786844661251951,
+      "translation": "이러한 이유로, 고안된 사용 사례를 지원하기 위해 Python의 사용자 정의 타입 가드 구현에 추가적인 복잡성을 부담시킬 필요는 없다고 결정되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420776Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:3",
+      "source": "If such use cases are identified in the future, there are ways the TypeGuard mechanism could be extended.",
+      "source_hash": 12884183259170963313,
+      "context_hash": 9896649805532944137,
+      "translation": "이러한 사용 사례가 향후 식별된다면 TypeGuard 메커니즘을 확장할 방법이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420776Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:4",
+      "source": "This could involve the use of keyword indexing, as proposed in :pep:`637`.",
+      "source_hash": 13277645721146100590,
+      "context_hash": 3730458867177525091,
+      "translation": "여기에는 :pep:`637`\\ 에서 제안된 것처럼 키워드 인덱싱을 사용하는 방법이 포함될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420777Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Narrowing of Implicit \"self\" and \"cls\" Parameters",
+      "source_hash": 9074425271142185029,
+      "context_hash": 1503360908346827505,
+      "translation": "암시적 \"self\" 및 \"cls\" 매개변수의 좁히기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420777Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "The proposal states that the first positional argument is assumed to be the value that is tested for narrowing.",
+      "source_hash": 13322027863273949828,
+      "context_hash": 10493858591117681784,
+      "translation": "이 제안에서는 첫 번째 위치 인자가 좁히기를 위해 검사되는 값이라고 가정합니다.",
+      "glossary_snapshot": {
+        "positional argument": "위치 인자"
+      },
+      "translated_at": "2026-08-28T18:17:59.420777Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "If the type guard function is implemented as an instance or class method, an implicit ``self`` or ``cls`` argument will also be passed to the function.",
+      "source_hash": 5566869354085680238,
+      "context_hash": 12323284895429755299,
+      "translation": "타입 가드 함수가 인스턴스 메서드 또는 클래스 메서드로 구현되면 암시적인 ``self``\\ 또는 ``cls``\\ 인자도 함수에 전달됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420779Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:2",
+      "source": "A concern was raised that there may be cases where it is desired to apply the narrowing logic on ``self`` and ``cls``.",
+      "source_hash": 7306053812713504166,
+      "context_hash": 7548605556409176430,
+      "translation": "``self``\\ 및 ``cls``\\ 에 좁히기 로직을 적용하려는 경우가 있을 수 있다는 우려가 제기되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420779Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:3",
+      "source": "This is an unusual use case, and accommodating it would significantly complicate the implementation of user-defined type guards.",
+      "source_hash": 14656416841920775775,
+      "context_hash": 5194850800729294768,
+      "translation": "이는 일반적이지 않은 사용 사례이며, 이를 지원하면 사용자 정의 타입 가드의 구현이 상당히 복잡해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420781Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:4",
+      "source": "It was therefore decided that no special provision would be made for it.",
+      "source_hash": 14734087818124601037,
+      "context_hash": 5655767222923810198,
+      "translation": "따라서 이를 위한 특별한 지원은 제공하지 않기로 결정되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420781Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:5",
+      "source": "If narrowing of ``self`` or ``cls`` is required, the value can be passed as an explicit argument to a type guard function.",
+      "source_hash": 4771880457486932331,
+      "context_hash": 7940601053756611795,
+      "translation": "``self``\\ 또는 ``cls``\\ 의 좁히기가 필요한 경우 해당 값을 타입 가드 함수에 명시적 인자로 전달할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:17:59.420781Z",
+      "issues": []
+    }
+  ]
+}

@@ -1,0 +1,498 @@
+{
+  "version": 1,
+  "source_hash": 2476102667361610055,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Type checking Annotated metadata",
+      "source_hash": 7815506930927059975,
+      "context_hash": 16530898886277989957,
+      "translation": "Annotated 메타데이터 타입 검사",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780218Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 12279627568512092057,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780222Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes a mechanism for type checking metadata that uses the :py:data:`typing.Annotated` type.",
+      "source_hash": 12068119226477688257,
+      "context_hash": 14608566861591142250,
+      "translation": "이 PEP는 :py:data:`typing.Annotated` 타입을 사용하는 메타데이터 타입 검사 메커니즘을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780222Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "Metadata objects that implement the new ``__supports_annotated_base__`` protocol will be type checked by static type checkers to ensure that the metadata is valid for the given type.",
+      "source_hash": 14419366894123654253,
+      "context_hash": 10010575527849228047,
+      "translation": "새로운 ``__supports_annotated_base__`` 프로토콜을 구현하는 메타데이터 객체는 해당 타입에 대해 메타데이터가 유효한지 확인하기 위해 정적 타입 검사기로 타입 검사를 수행합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:50:12.780222Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 905127204908387546,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780223Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": ":pep:`593` introduced ``Annotated`` as a way to attach runtime metadata to types.",
+      "source_hash": 17593234718398001373,
+      "context_hash": 8795381727136267597,
+      "translation": ":pep:`593`\\ 은 타입에 런타임 메타데이터를 첨부하는 방법으로 ``Annotated``\\ 를 도입했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780224Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "In general, the metadata is not meant for static type checkers, but even so, it is often useful to be able to check that the metadata makes sense for the given type.",
+      "source_hash": 147042516316372054,
+      "context_hash": 6359014839366557,
+      "translation": "일반적으로 메타데이터는 정적 타입 검사기를 위한 것이 아니지만, 그렇더라도 주어진 타입에 메타데이터가 적합한지 확인할 수 있으면 유용한 경우가 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780224Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Take the first example in :pep:`593`, which uses ``Annotated`` to attach serialization information to a field",
+      "source_hash": 7717904972530425816,
+      "context_hash": 391033704725357445,
+      "translation": "필드에 직렬화 정보를 첨부하기 위해 ``Annotated``\\ 를 사용하는 :pep:`593`\\ 의 첫 번째 예를 살펴보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780224Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "Here, the ``struct2.ctype(\"<10s\")`` metadata is meant to be used by a serialization library to serialize the field.",
+      "source_hash": 16284446957678321108,
+      "context_hash": 7152919666300745827,
+      "translation": "여기서 ``struct2.ctype(\"<10s\")`` 메타데이터는 직렬화 라이브러리가 필드를 직렬화하는 데 사용하도록 의도되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780225Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "Such libraries can only serialize a subset of types: it would not make sense to write, for example, ``Annotated[list[str], struct2.ctype(\"<10s\")]``.",
+      "source_hash": 7907715560428166681,
+      "context_hash": 12008490757309645772,
+      "translation": "이러한 라이브러리는 타입의 일부만 직렬화할 수 있으므로, 예를 들어 ``Annotated[list[str], struct2.ctype(\"<10s\")]``\\ 와 같이 작성하는 것은 의미가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780225Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "Yet the type system provides no way to enforce this.",
+      "source_hash": 7849319563557829867,
+      "context_hash": 18318998185582687124,
+      "translation": "그러나 타입 시스템에는 이를 강제할 방법이 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780225Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:3",
+      "source": "The metadata are completely ignored by type checkers.",
+      "source_hash": 10262070622672767386,
+      "context_hash": 17076188749317121168,
+      "translation": "타입 검사기는 메타데이터를 완전히 무시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780225Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "This use case comes up in libraries like :pypi:`pydantic` and :pypi:`msgspec`, which use ``Annotated`` to attach validation and conversion information to fields or :pypi:`fastapi`, which uses ``Annotated`` to mark parameters as extracted from headers, query strings or dependency injection.",
+      "source_hash": 15285791323639971768,
+      "context_hash": 10621472178646573958,
+      "translation": "이러한 사용 사례는 :pypi:`pydantic`\\ 및 :pypi:`msgspec`\\ 와 같은 라이브러리에서 나타납니다. 이 라이브러리들은 필드에 유효성 검사 및 변환 정보를 첨부하기 위해 ``Annotated``\\ 를 사용하며, :pypi:`fastapi`\\ 는 헤더, 쿼리 문자열 또는 의존성 주입에서 추출된 매개변수를 표시하기 위해 ``Annotated``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780226Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 6128881203706487671,
+      "translation": "명세",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780226Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "This PEP introduces a protocol that can be used by static and runtime type checkers to validate the consistency between ``Annotated`` metadata and a given type.",
+      "source_hash": 9879235289737042514,
+      "context_hash": 14279312673156750831,
+      "translation": "이 PEP는 정적 및 런타임 타입 검사기가 ``Annotated`` 메타데이터와 주어진 타입 간의 일관성을 검증하는 데 사용할 수 있는 프로토콜을 도입합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:50:12.780226Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "Objects that implement this protocol have an attribute called ``__supports_annotated_base__`` that specifies whether the metadata is valid for a given type",
+      "source_hash": 11357932920359897423,
+      "context_hash": 10606003598753269990,
+      "translation": "이 프로토콜을 구현하는 객체에는 ``__supports_annotated_base__``\\ 라는 속성이 있으며, 이 속성은 주어진 타입에 대해 메타데이터가 유효한지를 지정합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:50:12.780227Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "The attribute may also be marked as a ``ClassVar`` to avoid interaction with dataclasses",
+      "source_hash": 8119474427429186385,
+      "context_hash": 6488458839659893413,
+      "translation": "데이터클래스와의 상호 작용을 방지하기 위해 이 속성을 ``ClassVar``\\ 로 표시할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780228Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "When a static type checker encounters a type expression of the form ``Annotated[T, M1, M2, ...]``, it should enforce that for each metadata element in ``M1, M2, ...``, one of the following is true:",
+      "source_hash": 13026456471426799116,
+      "context_hash": 8908848606180625886,
+      "translation": "정적 타입 검사기가 ``Annotated[T, M1, M2, ...]`` 형태의 타입 표현식을 만나면, ``M1, M2, ...``\\ 의 각 메타데이터 요소에 대해 다음 중 하나가 성립하는지 강제해야 합니다.",
+      "glossary_snapshot": {
+        "type checker": "타입 검사기"
+      },
+      "translated_at": "2026-08-28T18:50:12.780228Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "The metadata element evaluates to an object that does not have a ``__supports_annotated_base__`` attribute; or",
+      "source_hash": 235089940965838974,
+      "context_hash": 11866514266589878943,
+      "translation": "메타데이터 요소가 ``__supports_annotated_base__`` 속성이 없는 객체로 평가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780228Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "The metadata element evaluates to an object ``M`` that has a ``__supports_annotated_base__`` attribute; and ``T`` is assignable to the type of ``M.__supports_annotated_base__``.",
+      "source_hash": 10903235163403190726,
+      "context_hash": 3389366747258464985,
+      "translation": "메타데이터 요소가 ``__supports_annotated_base__`` 속성을 가진 객체 ``M``\\ 으로 평가되며, ``T``\\ 가 ``M.__supports_annotated_base__``\\ 의 타입에 할당 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780229Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "To support generic ``Gt`` metadata, one might write",
+      "source_hash": 16491421119315176099,
+      "context_hash": 2826280147661245050,
+      "translation": "제네릭 ``Gt`` 메타데이터를 지원하려면 다음과 같이 작성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780229Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 6197898127318734775,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780230Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Metadata that does not implement the protocol will be considered valid for all types, so no breaking changes are introduced for existing code.",
+      "source_hash": 4897218514066823575,
+      "context_hash": 2400531860954077704,
+      "translation": "프로토콜을 구현하지 않는 메타데이터는 모든 타입에 대해 유효한 것으로 간주되므로 기존 코드에 호환성을 깨뜨리는 변경 사항은 도입되지 않습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:50:12.780230Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "The new checks only apply to metadata objects that explicitly implement the protocol specified by this PEP.",
+      "source_hash": 5895684462206797950,
+      "context_hash": 13091624087439696092,
+      "translation": "새로운 검사는 이 PEP에서 지정한 프로토콜을 명시적으로 구현하는 메타데이터 객체에만 적용됩니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:50:12.780231Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 235207851861210570,
+      "translation": "보안 관련 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780232Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "None.",
+      "source_hash": 17233843776622986688,
+      "context_hash": 4685212823500510940,
+      "translation": "없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780232Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 3448860407845646577,
+      "translation": "교육 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780232Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "This protocol is intended mostly for libraries that provide ``Annotated`` metadata; end users of those libraries are unlikely to need to implement the protocol themselves.",
+      "source_hash": 17548872500668405215,
+      "context_hash": 2310447088087354611,
+      "translation": "이 프로토콜은 주로 ``Annotated`` 메타데이터를 제공하는 라이브러리를 위한 것이며, 해당 라이브러리의 최종 사용자가 직접 프로토콜을 구현해야 할 가능성은 낮습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:50:12.780233Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "The protocol should be mentioned in the documentation for :py:data:`typing.Annotated` and in the typing specification.",
+      "source_hash": 1366299431515748111,
+      "context_hash": 10385673813732042677,
+      "translation": "이 프로토콜은 :py:data:`typing.Annotated`\\ 의 문서와 타이핑 명세에서 언급해야 합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:50:12.780233Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 9773120502834452237,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:50:12.780234Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "None yet.",
+      "source_hash": 7602520794979836626,
+      "context_hash": 5605652357006350272,
+      "translation": "아직 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780235Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Rejected ideas",
+      "source_hash": 1257763793238798310,
+      "context_hash": 394637771215183987,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:50:12.780235Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Introducing a type variable instead of a generic class",
+      "source_hash": 8692938792849856573,
+      "context_hash": 10166417295607720230,
+      "translation": "제네릭 클래스 대신 타입 변수 도입",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:49.221804Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "We considered using a special type variable, ``AnnotatedT = TypeVar(\"AnnotatedT\")``, to represent the type ``T`` of the inner type in ``Annotated``; metadata would be type checked against this type variable.",
+      "source_hash": 5673859335090009680,
+      "context_hash": 4123620958347837770,
+      "translation": "특수 타입 변수 ``AnnotatedT = TypeVar(\"AnnotatedT\")``\\ 를 사용하여 ``Annotated``\\ 의 내부 타입인 타입 ``T``\\ 를 나타내는 방안을 고려했습니다. 메타데이터는 이 타입 변수를 기준으로 타입 검사를 받게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:49.221809Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "However, this would require using the old type variable syntax (before :pep:`695`), which is now a discouraged feature.",
+      "source_hash": 9471104788237986448,
+      "context_hash": 4591262820088559966,
+      "translation": "그러나 이렇게 하려면 현재는 권장되지 않는 기능인 기존 타입 변수 구문(:pep:`695` 이전)을 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:49.221809Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "In addition, this would use type variables in an unusual way that does not fit well with the rest of the type system.",
+      "source_hash": 16917162882143531232,
+      "context_hash": 5612581995134392102,
+      "translation": "또한 이는 나머지 타입 시스템과 잘 맞지 않는 특이한 방식으로 타입 변수를 사용하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:49.221810Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Introducing a new type to ``typing.py`` that all metadata objects should subclass",
+      "source_hash": 5677932280668193802,
+      "context_hash": 4126392500184048420,
+      "translation": "모든 메타데이터 객체가 상속해야 하는 새로운 타입을 ``typing.py``\\ 에 도입",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:49.221810Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "A previous version of this PEP suggested adding a new generic base class, ``TypedMetadata[U]``, that metadata objects would subclass.",
+      "source_hash": 17113630359475549522,
+      "context_hash": 8227050808145461878,
+      "translation": "이 PEP의 이전 버전에서는 메타데이터 객체가 상속하는 새로운 제네릭 베이스 클래스 ``TypedMetadata[U]``\\ 를 추가하자고 제안했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:49.221810Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "If a metadata object is a subclass of ``TypedMetadata[U]``, then type checkers would check that the annotation's base type is assignable to ``U``.",
+      "source_hash": 3898484836033911484,
+      "context_hash": 15679237118889092830,
+      "translation": "메타데이터 객체가 ``TypedMetadata[U]``\\ 의 서브클래스라면, 타입 검사기는 어노테이션의 기본 타입을 ``U``\\ 에 할당할 수 있는지 검사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:49.221811Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "However, this mechanism does not integrate as well with the rest of the language; Python does not generally use marker base classes.",
+      "source_hash": 3489813197281937705,
+      "context_hash": 16376806314531577809,
+      "translation": "그러나 이 메커니즘은 언어의 나머지 부분과 잘 통합되지 않습니다. Python은 일반적으로 마커 베이스 클래스를 사용하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:49.221811Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:3",
+      "source": "In addition, it provides less flexibility than the current proposal: it would not allow overloads, and it would require metadata objects to add a new base class, which may make their runtime implementation more complex.",
+      "source_hash": 1948703129326811029,
+      "context_hash": 12723603024230738575,
+      "translation": "또한 현재 제안보다 유연성이 떨어집니다. 오버로드를 허용하지 않으며, 메타데이터 객체가 새로운 베이스 클래스를 추가해야 하므로 런타임 구현이 더 복잡해질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:49.221811Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Using a method instead of an attribute for ``__supports_annotated_base__``",
+      "source_hash": 2616482276216097781,
+      "context_hash": 11135605908086479720,
+      "translation": "``__supports_annotated_base__``\\ 에 속성 대신 메서드 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:49.221812Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "We considered using a method instead of an attribute for the protocol, so that this method can be used at runtime to check the validity of the metadata and to support overloads or returning boolean literals.",
+      "source_hash": 9291981803831509574,
+      "context_hash": 15776002428422036928,
+      "translation": "프로토콜에 속성 대신 메서드를 사용하는 방안을 고려했습니다. 이렇게 하면 이 메서드를 런타임에 사용하여 메타데이터의 유효성을 검사하고, 오버로드를 지원하거나 불리언 리터럴을 반환할 수 있습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:15:49.221812Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "However, using a method adds boilerplate to the implementation and the value of the runtime use cases or more complex scenarios involving overloads and returning boolean literals was not clear.",
+      "source_hash": 11992046303094684647,
+      "context_hash": 15757608286118139744,
+      "translation": "그러나 메서드를 사용하면 구현에 상용구 코드가 추가되며, 런타임 사용 사례의 가치나 오버로드 및 불리언 리터럴 반환과 관련된 더 복잡한 시나리오의 가치가 명확하지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:49.221814Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Acknowledgments",
+      "source_hash": 10274568925451722959,
+      "context_hash": 2512174263200672681,
+      "translation": "감사의 말",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:49.221814Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "We thank Eric Traut for suggesting the idea of using a protocol and implementing provisional support in Pyright.",
+      "source_hash": 15427721576566271586,
+      "context_hash": 13795538996179426670,
+      "translation": "프로토콜을 사용하고 Pyright에서 잠정적 지원을 구현하자는 아이디어를 제안해 주신 Eric Traut에게 감사드립니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:15:49.221814Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "Thank you to Jelle Zijlstra for sponsoring this PEP.",
+      "source_hash": 2396686502677882946,
+      "context_hash": 9049906226127697650,
+      "translation": "이 PEP를 후원해 주신 Jelle Zijlstra에게 감사드립니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:15:49.221815Z",
+      "issues": []
+    }
+  ]
+}

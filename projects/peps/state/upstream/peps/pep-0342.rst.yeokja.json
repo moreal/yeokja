@@ -1,0 +1,1625 @@
+{
+  "version": 1,
+  "source_hash": 17574795278431569890,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Coroutines via Enhanced Generators",
+      "source_hash": 15028101909367556104,
+      "context_hash": 17276621436332105427,
+      "translation": "향상된 제너레이터를 통한 코루틴",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920823Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Introduction",
+      "source_hash": 17143975622463353612,
+      "context_hash": 12259814062755264329,
+      "translation": "서론",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920826Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes some enhancements to the API and syntax of generators, to make them usable as simple coroutines.",
+      "source_hash": 928711533926061734,
+      "context_hash": 10824717500542500969,
+      "translation": "이 PEP는 제너레이터의 API와 구문을 일부 개선하여 간단한 코루틴으로 사용할 수 있도록 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920826Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "It is basically a combination of ideas from these two PEPs, which may be considered redundant if this PEP is accepted:",
+      "source_hash": 8940534151549274050,
+      "context_hash": 2732324177328544050,
+      "translation": "기본적으로 다음 두 PEP의 아이디어를 결합한 것이며, 이 PEP가 채택되면 중복된 것으로 간주될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920826Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": ":pep:`288`, Generators Attributes and Exceptions.",
+      "source_hash": 4807360921101570845,
+      "context_hash": 9732276053532017023,
+      "translation": ":pep:`288`, 제너레이터 속성과 예외입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920827Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "The current PEP covers its second half, generator exceptions (in fact the ``throw()`` method name was taken from :pep:`288`).  :pep:`342` replaces generator attributes, however, with a concept from an earlier revision of :pep:`288`, the *yield expression*.",
+      "source_hash": 2045737853815573213,
+      "context_hash": 14572350218843376089,
+      "translation": "현재 PEP는 그 두 번째 부분인 제너레이터 예외를 다룹니다(실제로 ``throw()`` 메서드 이름은 :pep:`288`\\ 에서 가져왔습니다). 그러나 :pep:`342`\\ 는 제너레이터 속성을 :pep:`288`\\ 의 이전 개정판에 있던 개념인 *yield 표현식*\\ 으로 대체합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:11.920827Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": ":pep:`325`, Resource-Release Support for Generators.  :pep:`342` ties up a few loose ends in the :pep:`325` spec, to make it suitable for actual implementation.",
+      "source_hash": 6083153811988175403,
+      "context_hash": 331530357966385088,
+      "translation": ":pep:`325`, 제너레이터의 리소스 해제 지원입니다. :pep:`342`\\ 는 :pep:`325` 사양의 몇 가지 미해결 사항을 정리하여 실제 구현에 적합하도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920828Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 18303740939935950198,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920828Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Coroutines are a natural way of expressing many algorithms, such as simulations, games, asynchronous I/O, and other forms of event-driven programming or co-operative multitasking.",
+      "source_hash": 5808797577447206830,
+      "context_hash": 16865808585949359227,
+      "translation": "코루틴은 시뮬레이션, 게임, 비동기 I/O 및 기타 이벤트 기반 프로그래밍이나 협력적 멀티태스킹과 같은 여러 알고리즘을 표현하는 자연스러운 방법입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920828Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "Python's generator functions are almost coroutines -- but not quite -- in that they allow pausing execution to produce a value, but do not provide for values or exceptions to be passed in when execution resumes.",
+      "source_hash": 16530529261168340605,
+      "context_hash": 13841790185262486055,
+      "translation": "Python의 제너레이터 함수는 값을 생성하기 위해 실행을 일시 중지할 수 있다는 점에서 거의 코루틴에 가깝지만, 실행이 재개될 때 값이나 예외를 전달할 방법은 제공하지 않습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:11.920829Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "They also do not allow execution to be paused within the ``try`` portion of ``try/finally`` blocks, and therefore make it difficult for an aborted coroutine to clean up after itself.",
+      "source_hash": 2019224528155780539,
+      "context_hash": 7731636917429823982,
+      "translation": "또한 ``try/finally`` 블록의 ``try`` 부분 안에서는 실행을 일시 중지할 수 없으므로, 중단된 코루틴이 스스로 정리 작업을 수행하기 어렵습니다.",
+      "glossary_snapshot": {
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T19:35:11.920829Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Also, generators cannot yield control while other functions are executing, unless those functions are themselves expressed as generators, and the outer generator is written to yield in response to values yielded by the inner generator.",
+      "source_hash": 362832866825703837,
+      "context_hash": 18365486975140938503,
+      "translation": "또한 다른 함수가 실행 중일 때 제너레이터는 제어권을 양보할 수 없습니다. 해당 함수 자체가 제너레이터로 표현되고, 바깥 제너레이터가 안쪽 제너레이터가 양보한 값에 응답하여 값을 양보하도록 작성된 경우는 예외입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:11.920830Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "This complicates the implementation of even relatively simple use cases like asynchronous communications, because calling any functions either requires the generator to *block* (i.e. be unable to yield control), or else a lot of boilerplate looping code must be added around every needed function call.",
+      "source_hash": 11446142785121846258,
+      "context_hash": 16979135518851986395,
+      "translation": "이 때문에 비동기 통신과 같이 비교적 단순한 사용 사례조차 구현하기가 복잡해집니다. 함수를 호출하려면 제너레이터가 *블록*\\ 되어 제어권을 양보할 수 없게 되거나, 필요한 모든 함수 호출 주위에 많은 반복문 보일러플레이트 코드를 추가해야 하기 때문입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:11.920830Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "However, if it were possible to pass values or exceptions *into* a generator at the point where it was suspended, a simple co-routine scheduler or *trampoline function* would let coroutines *call* each other without blocking -- a tremendous boon for asynchronous applications.",
+      "source_hash": 10505542275409735133,
+      "context_hash": 4153950493684586459,
+      "translation": "그러나 제너레이터가 일시 중지된 지점에서 제너레이터 안으로 값이나 예외를 *전달*\\ 할 수 있다면, 간단한 코루틴 스케줄러 또는 *트램펄린 함수*\\ 를 통해 코루틴이 블록 없이 서로를 *호출*\\ 할 수 있게 됩니다. 이는 비동기 애플리케이션에 엄청난 이점이 됩니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:11.920831Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "Such applications could then write co-routines to do non-blocking socket I/O by yielding control to an I/O scheduler until data has been sent or becomes available.",
+      "source_hash": 16020412481173762368,
+      "context_hash": 10563235846636802465,
+      "translation": "그러면 이러한 애플리케이션은 데이터가 전송되거나 사용 가능해질 때까지 I/O 스케줄러에 제어권을 양보하여 비블로킹 소켓 I/O를 수행하는 코루틴을 작성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920831Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:2",
+      "source": "Meanwhile, code that performs the I/O would simply do something like this",
+      "source_hash": 9352942571196661970,
+      "context_hash": 17853988159803180976,
+      "translation": "한편 I/O를 수행하는 코드는 단순히 다음과 같이 작성하면 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920832Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "in order to pause execution until the ``nonblocking_read()`` coroutine produced a value.",
+      "source_hash": 5011588277045707428,
+      "context_hash": 13733038269998295404,
+      "translation": "``nonblocking_read()`` 코루틴이 값을 생성할 때까지 실행을 일시 중지하려면 다음과 같이 합니다.",
+      "glossary_snapshot": {
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T19:35:11.920832Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "In other words, with a few relatively minor enhancements to the language and to the implementation of the generator-iterator type, Python will be able to support performing asynchronous operations without needing to write the entire application as a series of callbacks, and without requiring the use of resource-intensive threads for programs that need hundreds or even thousands of co-operatively multitasking pseudothreads.",
+      "source_hash": 4747253882205377745,
+      "context_hash": 11096385899879286500,
+      "translation": "즉, 언어와 제너레이터-이터레이터 형식의 구현을 약간만 개선하면 Python은 전체 애플리케이션을 콜백 시퀀스로 작성하지 않고도 비동기 작업을 수행할 수 있으며, 수백 또는 수천 개의 협력적 멀티태스킹 의사 스레드가 필요한 프로그램에서 리소스를 많이 사용하는 스레드를 사용하지 않아도 됩니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터",
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:11.920832Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "Thus, these enhancements will give standard Python many of the benefits of the Stackless Python fork, without requiring any significant modification to the CPython core or its APIs.",
+      "source_hash": 14970219141678117028,
+      "context_hash": 6396631256381867219,
+      "translation": "따라서 이러한 개선을 통해 표준 Python은 CPython 코어 또는 해당 API를 크게 수정하지 않고도 Stackless Python 포크의 여러 이점을 얻을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920833Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:2",
+      "source": "In addition, these enhancements should be readily implementable by any Python implementation (such as Jython) that already supports generators.",
+      "source_hash": 49720144284578316,
+      "context_hash": 17914814070384727381,
+      "translation": "또한 이러한 개선은 이미 제너레이터를 지원하는 모든 Python 구현(예: Jython)에서 쉽게 구현할 수 있어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920833Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Specification Summary",
+      "source_hash": 245557675788804158,
+      "context_hash": 2836612115637288349,
+      "translation": "사양 요약",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920833Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "By adding a few simple methods to the generator-iterator type, and with two minor syntax adjustments, Python developers will be able to use generator functions to implement co-routines and other forms of co-operative multitasking.",
+      "source_hash": 9994169476992355489,
+      "context_hash": 17879081496803507240,
+      "translation": "제너레이터-이터레이터 형식에 몇 가지 간단한 메서드를 추가하고 구문을 조금만 조정하면, Python 개발자는 제너레이터 함수를 사용하여 코루틴과 기타 형태의 협력적 멀티태스킹을 구현할 수 있습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터",
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:35:11.920834Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "These methods and adjustments are:",
+      "source_hash": 1825428435256588865,
+      "context_hash": 6332149248220500983,
+      "translation": "이러한 메서드와 조정 사항은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920835Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Redefine ``yield`` to be an expression, rather than a statement.",
+      "source_hash": 9218883484181159607,
+      "context_hash": 4266402630958602310,
+      "translation": "``yield``\\ 를 문장이 아니라 표현식으로 재정의합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920835Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "The current yield statement would become a yield expression whose value is thrown away.",
+      "source_hash": 15572548272946131606,
+      "context_hash": 13109393816821692905,
+      "translation": "현재의 yield 문은 그 값이 버려지는 yield 표현식이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:11.920835Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "A yield expression's value is ``None`` whenever the generator is resumed by a normal ``next()`` call.",
+      "source_hash": 179155547428644142,
+      "context_hash": 7203095871743841734,
+      "translation": "제너레이터가 일반적인 ``next()`` 호출로 재개될 때 yield 표현식의 값은 항상 ``None``\\ 입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:11.920835Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Add a new ``send()`` method for generator-iterators, which resumes the generator and *sends* a value that becomes the result of the current yield-expression.",
+      "source_hash": 2596060890465364524,
+      "context_hash": 10532539125035183750,
+      "translation": "제너레이터-이터레이터에 새로운 ``send()`` 메서드를 추가합니다. 이 메서드는 제너레이터를 재개하고 현재 yield 표현식의 결과가 되는 값을 *전송*\\ 합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:11.920836Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "The ``send()`` method returns the next value yielded by the generator, or raises ``StopIteration`` if the generator exits without yielding another value.",
+      "source_hash": 12900033954947879225,
+      "context_hash": 4036636727294724001,
+      "translation": "``send()`` 메서드는 제너레이터가 양보한 다음 값을 반환하거나, 제너레이터가 다른 값을 양보하지 않고 종료되면 ``StopIteration``\\ 을 발생시킵니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:11.920837Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "Add a new ``throw()`` method for generator-iterators, which raises an exception at the point where the generator was paused, and which returns the next value yielded by the generator, raising ``StopIteration`` if the generator exits without yielding another value.  (If the generator does not catch the passed-in exception, or raises a different exception, then that exception propagates to the caller.)",
+      "source_hash": 5382918879802978814,
+      "context_hash": 5601863550037626611,
+      "translation": "제너레이터-이터레이터에 새로운 ``throw()`` 메서드를 추가합니다. 이 메서드는 제너레이터가 일시 중지된 지점에서 예외를 발생시키고, 제너레이터가 양보한 다음 값을 반환하거나 다른 값을 양보하지 않고 종료되면 ``StopIteration``\\ 을 발생시킵니다. (제너레이터가 전달된 예외를 포착하지 않거나 다른 예외를 발생시키면 해당 예외가 호출자에게 전파됩니다.)",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:11.920837Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "Add a ``close()`` method for generator-iterators, which raises ``GeneratorExit`` at the point where the generator was paused.",
+      "source_hash": 2438360288974670479,
+      "context_hash": 12950735592716437197,
+      "translation": "제너레이터-이터레이터에 제너레이터가 일시 중지된 지점에서 ``GeneratorExit``\\ 를 발생시키는 ``close()`` 메서드를 추가합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278755Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "If the generator then raises ``StopIteration`` (by exiting normally, or due to already being closed) or ``GeneratorExit`` (by not catching the exception), ``close()`` returns to its caller.",
+      "source_hash": 15931343390847394852,
+      "context_hash": 12357754094942423059,
+      "translation": "그 후 제너레이터가 ``StopIteration``\\ (정상적으로 종료하거나 이미 닫혀 있기 때문) 또는 ``GeneratorExit``\\ (예외를 잡지 않기 때문)를 발생시키면 ``close()``\\ 는 호출자에게 반환됩니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278760Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:2",
+      "source": "If the generator yields a value, a ``RuntimeError`` is raised.",
+      "source_hash": 1214531792853773688,
+      "context_hash": 5936616188326759035,
+      "translation": "제너레이터가 값을 산출하면 ``RuntimeError``\\ 가 발생합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278761Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:3",
+      "source": "If the generator raises any other exception, it is propagated to the caller. ``close()`` does nothing if the generator has already exited due to an exception or normal exit.",
+      "source_hash": 14023565332930130700,
+      "context_hash": 4745382803103367961,
+      "translation": "제너레이터가 다른 예외를 발생시키면 호출자에게 전파됩니다. 제너레이터가 예외 또는 정상적인 종료로 이미 종료된 경우 ``close()``\\ 는 아무 작업도 수행하지 않습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278762Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "Add support to ensure that ``close()`` is called when a generator iterator is garbage-collected.",
+      "source_hash": 3696507408257747492,
+      "context_hash": 15924280204037761667,
+      "translation": "제너레이터 이터레이터가 가비지 컬렉션될 때 ``close()``\\ 가 호출되도록 지원을 추가합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터",
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278762Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "Allow ``yield`` to be used in ``try/finally`` blocks, since garbage collection or an explicit ``close()`` call would now allow the ``finally`` clause to execute.",
+      "source_hash": 6969585941250992243,
+      "context_hash": 531751869015480567,
+      "translation": "가비지 컬렉션 또는 명시적인 ``close()``\\ 호출로 이제 ``finally`` 절을 실행할 수 있으므로 ``try/finally`` 블록에서 ``yield``\\ 를 사용할 수 있도록 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278763Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:8/seg:0",
+      "source": "A prototype patch implementing all of these changes against the current Python CVS HEAD is available as SourceForge patch #1223381 (https://bugs.python.org/issue1223381).",
+      "source_hash": 8554801102955541195,
+      "context_hash": 810495646614173880,
+      "translation": "현재 Python CVS HEAD를 대상으로 이러한 모든 변경 사항을 구현한 프로토타입 패치를 SourceForge 패치 #1223381(https://bugs.python.org/issue1223381)로 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278763Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Specification: Sending Values into Generators",
+      "source_hash": 9850330717238235045,
+      "context_hash": 11630689663963021144,
+      "translation": "사양: 제너레이터로 값 보내기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278764Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "New generator method: ``send(value)``",
+      "source_hash": 11499148872517078730,
+      "context_hash": 12078921974884841210,
+      "translation": "새로운 제너레이터 메서드: ``send(value)``",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278764Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "A new method for generator-iterators is proposed, called ``send()``.",
+      "source_hash": 16931229509790060953,
+      "context_hash": 8116095781722977026,
+      "translation": "제너레이터-이터레이터를 위한 ``send()``\\ 라는 새 메서드를 제안합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278765Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "It takes exactly one argument, which is the value that should be *sent in* to the generator.",
+      "source_hash": 6714703343117959032,
+      "context_hash": 284842657639090056,
+      "translation": "이 메서드는 제너레이터에 *보내질* 값인 인수를 정확히 하나 받습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278766Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "Calling ``send(None)`` is exactly equivalent to calling a generator's ``next()`` method.",
+      "source_hash": 518064201910394464,
+      "context_hash": 16195410894353905074,
+      "translation": "``send(None)``\\ 를 호출하는 것은 제너레이터의 ``next()`` 메서드를 호출하는 것과 정확히 같습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278766Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:3",
+      "source": "Calling ``send()`` with any other value is the same, except that the value produced by the generator's current yield expression will be different.",
+      "source_hash": 1965146979158222573,
+      "context_hash": 10292145630796620897,
+      "translation": "``send()``\\ 를 다른 값과 함께 호출하는 것도 동일하지만, 제너레이터의 현재 yield 표현식이 생성하는 값은 달라집니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278767Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Because generator-iterators begin execution at the top of the generator's function body, there is no yield expression to receive a value when the generator has just been created.",
+      "source_hash": 11661991248479063918,
+      "context_hash": 12787419327189060696,
+      "translation": "제너레이터-이터레이터는 제너레이터 함수 본문의 맨 앞에서 실행을 시작하므로, 제너레이터가 막 생성된 시점에는 값을 받을 yield 표현식이 없습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278767Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "Therefore, calling ``send()`` with a non-``None`` argument is prohibited when the generator iterator has just started, and a ``TypeError`` is raised if this occurs (presumably due to a logic error of some kind).",
+      "source_hash": 5573118130377730208,
+      "context_hash": 1193003680517475591,
+      "translation": "따라서 제너레이터 이터레이터가 막 시작된 상태에서는 ``None``\\ 이 아닌 인수와 함께 ``send()``\\ 를 호출할 수 없으며, 그렇게 하면 (아마도 어떤 종류의 논리 오류 때문이겠지만) ``TypeError``\\ 가 발생합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터",
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278768Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:2",
+      "source": "Thus, before you can communicate with a coroutine you must first call ``next()`` or ``send(None)`` to advance its execution to the first yield expression.",
+      "source_hash": 10921888840232958234,
+      "context_hash": 17718852232589247689,
+      "translation": "그러므로 코루틴과 통신하려면 먼저 ``next()``\\ 를 호출하거나 ``send(None)``\\ 을 호출하여 실행을 첫 번째 yield 표현식까지 진행해야 합니다.",
+      "glossary_snapshot": {
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T19:35:10.278768Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "As with the ``next()`` method, the ``send()`` method returns the next value yielded by the generator-iterator, or raises ``StopIteration`` if the generator exits normally, or has already exited.",
+      "source_hash": 15000725818419688108,
+      "context_hash": 12046280015595432534,
+      "translation": "``next()`` 메서드와 마찬가지로 ``send()`` 메서드는 제너레이터-이터레이터가 산출하는 다음 값을 반환하며, 제너레이터가 정상적으로 종료되었거나 이미 종료된 경우에는 ``StopIteration``\\ 을 발생시킵니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터",
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278769Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "If the generator raises an uncaught exception, it is propagated to ``send()``'s caller.",
+      "source_hash": 4551079075023694480,
+      "context_hash": 1910754519948825585,
+      "translation": "제너레이터가 잡히지 않은 예외를 발생시키면 해당 예외가 ``send()``\\ 의 호출자에게 전파됩니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:10.278769Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "New syntax: Yield Expressions",
+      "source_hash": 9763600739763468068,
+      "context_hash": 193278552293940136,
+      "translation": "새로운 구문: Yield 표현식",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278770Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "The yield-statement will be allowed to be used on the right-hand side of an assignment; in that case it is referred to as yield-expression.",
+      "source_hash": 9208440560842489955,
+      "context_hash": 2574939003198394614,
+      "translation": "yield 문을 대입문의 오른쪽에서 사용할 수 있도록 허용하며, 이 경우 이를 yield 표현식이라고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278770Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "The value of this yield-expression is ``None`` unless ``send()`` was called with a non-``None`` argument; see below.",
+      "source_hash": 14361312694410111268,
+      "context_hash": 16066141432052784708,
+      "translation": "이 yield 표현식의 값은 ``send()``\\ 가 ``None``\\ 이 아닌 인수와 함께 호출되지 않는 한 ``None``\\ 입니다. 아래를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278770Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "A yield-expression must always be parenthesized except when it occurs at the top-level expression on the right-hand side of an assignment.",
+      "source_hash": 7078021616125316816,
+      "context_hash": 10742469452764237785,
+      "translation": "yield 표현식은 대입문의 오른쪽에 있는 최상위 표현식으로 나타나는 경우를 제외하고는 항상 괄호로 묶어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278771Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "So",
+      "source_hash": 15289696233108105181,
+      "context_hash": 310427866154373842,
+      "translation": "따라서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278771Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "are all legal, but",
+      "source_hash": 6343315956576621472,
+      "context_hash": 12081220327783355729,
+      "translation": "모두 올바르지만,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278771Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "are all illegal.  (Some of the edge cases are motivated by the current legality of ``yield 12, 42``.)",
+      "source_hash": 13255452850541801933,
+      "context_hash": 3627662475370994596,
+      "translation": "모두 올바르지 않습니다. (일부 경계 사례는 현재 ``yield 12, 42``\\ 가 허용된다는 점에서 비롯됩니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278772Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "Note that a yield-statement or yield-expression without an expression is now legal.",
+      "source_hash": 17527122106099161043,
+      "context_hash": 7159625573403811745,
+      "translation": "표현식 없이 사용하는 yield 문 또는 yield 표현식도 이제 허용된다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278772Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:1",
+      "source": "This makes sense: when the information flow in the ``next()`` call is reversed, it should be possible to yield without passing an explicit value (``yield`` is of course equivalent to ``yield None``).",
+      "source_hash": 4163759721938574092,
+      "context_hash": 4887447030254453704,
+      "translation": "이는 타당합니다. ``next()`` 호출에서 정보 흐름이 반전되면 명시적인 값을 전달하지 않고도 값을 산출할 수 있어야 하기 때문입니다(``yield``\\ 는 물론 ``yield None``\\ 과 같습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278772Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "When ``send(value)`` is called, the yield-expression that it resumes will return the passed-in value.",
+      "source_hash": 17180647839683006783,
+      "context_hash": 15065533425372016058,
+      "translation": "``send(value)``\\ 를 호출하면, 해당 호출로 재개되는 yield 표현식이 전달된 값을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278772Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:1",
+      "source": "When ``next()`` is called, the resumed yield-expression will return ``None``.",
+      "source_hash": 2172393014783232421,
+      "context_hash": 16948170166978741983,
+      "translation": "``next()``\\ 를 호출하면 재개된 yield 표현식이 ``None``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278772Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:2",
+      "source": "If the yield-expression is a yield-statement, this returned value is ignored, similar to ignoring the value returned by a function call used as a statement.",
+      "source_hash": 1188397523354130759,
+      "context_hash": 17679210743571324443,
+      "translation": "yield 표현식이 yield 문인 경우 이 반환된 값은 무시되며, 이는 문으로 사용된 함수 호출이 반환하는 값을 무시하는 것과 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278773Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "In effect, a yield-expression is like an inverted function call; the argument to yield is in fact returned (yielded) from the currently executing function, and the *return value* of yield is the argument passed in via ``send()``.",
+      "source_hash": 15584129103776172417,
+      "context_hash": 6136760961012325811,
+      "translation": "사실상 yield 표현식은 반전된 함수 호출과 같습니다. yield에 대한 인수는 실제로 현재 실행 중인 함수에서 반환(산출)되며, *반환 값*\\ 은 ``send()``\\ 를 통해 전달된 인수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:10.278773Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:0",
+      "source": "Note: the syntactic extensions to yield make its use very similar to that in Ruby.",
+      "source_hash": 2027967876779821731,
+      "context_hash": 14445361415328246313,
+      "translation": "참고: yield에 대한 구문 확장으로 인해 그 사용법이 Ruby에서의 사용법과 매우 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737007Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:1",
+      "source": "This is intentional.",
+      "source_hash": 2914642601719082030,
+      "context_hash": 4511810802596963272,
+      "translation": "이는 의도된 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737012Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:2",
+      "source": "Do note that in Python the block passes a value to the generator using ``send(EXPR)`` rather than ``return EXPR``, and the underlying mechanism whereby control is passed between the generator and the block is completely different.",
+      "source_hash": 15110904804951922702,
+      "context_hash": 16875716710718545873,
+      "translation": "Python에서는 블록이 ``return EXPR``\\ 이 아니라 ``send(EXPR)``\\ 를 사용하여 제너레이터에 값을 전달하며, 제너레이터와 블록 사이에서 제어가 전달되는 기본 메커니즘은 완전히 다르다는 점에 유의하십시오.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:13.737012Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:3",
+      "source": "Blocks in Python are not compiled into thunks; rather, ``yield`` suspends execution of the generator's frame.",
+      "source_hash": 4921375371591320320,
+      "context_hash": 16876331288122025007,
+      "translation": "Python의 블록은 썽크로 컴파일되지 않습니다. 대신 ``yield``\\ 가 제너레이터 프레임의 실행을 일시 중단합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:13.737014Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:10/seg:4",
+      "source": "Some edge cases work differently; in Python, you cannot save the block for later use, and you cannot test whether there is a block or not. (XXX - this stuff about blocks seems out of place now, perhaps Guido can edit to clarify.)",
+      "source_hash": 5933279213976063891,
+      "context_hash": 3058165255960436818,
+      "translation": "일부 예외적인 경우에는 다르게 작동합니다. Python에서는 나중에 사용하기 위해 블록을 저장할 수 없으며, 블록이 있는지 여부를 검사할 수도 없습니다. (XXX - 이제 블록에 관한 이 내용은 문맥에 맞지 않는 것 같습니다. 아마 Guido가 명확하게 수정할 수 있을 것입니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737015Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Specification: Exceptions and Cleanup",
+      "source_hash": 11606306857067155993,
+      "context_hash": 7393218645942740780,
+      "translation": "사양: 예외 및 정리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737015Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Let a generator object be the iterator produced by calling a generator function.",
+      "source_hash": 8591756830905513311,
+      "context_hash": 3999105882976540945,
+      "translation": "제너레이터 함수를 호출하여 생성되는 이터레이터를 제너레이터 객체라고 합니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터",
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:13.737015Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "Below, *g* always refers to a generator object.",
+      "source_hash": 18180084728619095154,
+      "context_hash": 10797165873202360132,
+      "translation": "아래에서 *g*\\ 는 항상 제너레이터 객체를 가리킵니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:13.737016Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "New syntax: ``yield`` allowed inside ``try-finally``",
+      "source_hash": 10900343352440311959,
+      "context_hash": 631632538544909549,
+      "translation": "새로운 구문: ``try-finally`` 내부에서 ``yield`` 허용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737017Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The syntax for generator functions is extended to allow a yield-statement inside a ``try-finally`` statement.",
+      "source_hash": 15674266514646742490,
+      "context_hash": 14662639720340043851,
+      "translation": "제너레이터 함수의 구문이 확장되어 ``try-finally`` 문 내부에 yield 문을 사용할 수 있습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:13.737017Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "New generator method: ``throw(type, value=None, traceback=None)``",
+      "source_hash": 15391431473287550731,
+      "context_hash": 4001467668931506830,
+      "translation": "새로운 제너레이터 메서드: ``throw(type, value=None, traceback=None)``",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:13.737024Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "``g.throw(type, value, traceback)`` causes the specified exception to be thrown at the point where the generator *g* is currently suspended (i.e. at a yield-statement, or at the start of its function body if ``next()`` has not been called yet).",
+      "source_hash": 8940524820878045230,
+      "context_hash": 5113161293785876070,
+      "translation": "``g.throw(type, value, traceback)``\\ 은 제너레이터 *g*\\ 가 현재 일시 중단된 지점, 즉 yield 문에서 또는 아직 ``next()``\\ 가 호출되지 않았다면 함수 본문의 시작 지점에서 지정된 예외를 발생시킵니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:13.737025Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "If the generator catches the exception and yields another value, that is the return value of ``g.throw()``.",
+      "source_hash": 15349480612819510842,
+      "context_hash": 17184060039325009009,
+      "translation": "제너레이터가 예외를 포착하고 다른 값을 yield하면 그것이 ``g.throw()``\\ 의 반환 값입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:13.737026Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "If it doesn't catch the exception, the ``throw()`` appears to raise the same exception passed it (it *falls through*).",
+      "source_hash": 13226341258552103940,
+      "context_hash": 6002875533753516380,
+      "translation": "제너레이터가 예외를 포착하지 않으면 ``throw()``\\ 는 전달받은 동일한 예외를 발생시키는 것처럼 동작합니다(예외가 *그대로 전파됩니다*).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737026Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:3",
+      "source": "If the generator raises another exception (this includes the ``StopIteration`` produced when it returns) that exception is raised by the ``throw()`` call.",
+      "source_hash": 13534566200860552011,
+      "context_hash": 9518579860167501498,
+      "translation": "제너레이터가 다른 예외를 발생시키면(여기에는 제너레이터가 반환할 때 생성되는 ``StopIteration``\\ 도 포함됩니다) 해당 예외가 ``throw()`` 호출에 의해 발생합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:13.737027Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:4",
+      "source": "In summary, ``throw()`` behaves like ``next()`` or ``send()``, except it raises an exception at the suspension point.",
+      "source_hash": 13559809685232702051,
+      "context_hash": 7834699079243823238,
+      "translation": "요약하면 ``throw()``\\ 는 일시 중단 지점에서 예외를 발생시킨다는 점을 제외하면 ``next()`` 또는 ``send()``\\ 처럼 동작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737027Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:5",
+      "source": "If the generator is already in the closed state, ``throw()`` just raises the exception it was passed without executing any of the generator's code.",
+      "source_hash": 13701903150188817726,
+      "context_hash": 13447039866691393233,
+      "translation": "제너레이터가 이미 닫힌 상태라면 ``throw()``\\ 는 제너레이터 코드 중 어떤 것도 실행하지 않고 전달받은 예외를 그대로 발생시킵니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:13.737027Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "The effect of raising the exception is exactly as if the statement",
+      "source_hash": 18063398907251246179,
+      "context_hash": 11390954441535829777,
+      "translation": "예외를 발생시킨 효과는 다음 문이",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737028Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "was executed at the suspension point.",
+      "source_hash": 15768865013014922084,
+      "context_hash": 4120697311963616057,
+      "translation": "일시 중단 지점에서 실행된 것과 정확히 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737028Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:1",
+      "source": "The type argument must not be ``None``, and the type and value must be compatible.",
+      "source_hash": 5407253728265141310,
+      "context_hash": 7922607346874268457,
+      "translation": "type 인자는 ``None``\\ 이어서는 안 되며, type과 value는 호환되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737029Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:2",
+      "source": "If the value is not an instance of the type, a new exception instance is created using the value, following the same rules that the ``raise`` statement uses to create an exception instance.",
+      "source_hash": 5647288330918137212,
+      "context_hash": 4593258535061974666,
+      "translation": "value가 type의 인스턴스가 아니면 ``raise`` 문이 예외 인스턴스를 생성할 때 사용하는 것과 동일한 규칙에 따라 value를 사용하여 새 예외 인스턴스가 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737029Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:3",
+      "source": "The traceback, if supplied, must be a valid Python traceback object, or a ``TypeError`` occurs.",
+      "source_hash": 17192890521045374472,
+      "context_hash": 7490874762086515822,
+      "translation": "traceback이 제공되는 경우 유효한 Python traceback 객체여야 하며, 그렇지 않으면 ``TypeError``\\ 가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737029Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "Note: The name of the ``throw()`` method was selected for several reasons. ``Raise`` is a keyword and so cannot be used as a method name.",
+      "source_hash": 2439949235852408582,
+      "context_hash": 490356166973158487,
+      "translation": "참고: ``throw()`` 메서드의 이름은 여러 이유로 선택되었습니다. ``Raise``\\ 는 키워드이므로 메서드 이름으로 사용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737030Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:1",
+      "source": "Unlike ``raise`` (which immediately raises an exception from the current execution point), ``throw()`` first resumes the generator, and only then raises the exception.",
+      "source_hash": 4877215538125171845,
+      "context_hash": 3673056193091025946,
+      "translation": "현재 실행 지점에서 즉시 예외를 발생시키는 ``raise``\\ 와 달리 ``throw()``\\ 는 먼저 제너레이터를 재개한 다음에야 예외를 발생시킵니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:13.737030Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:2",
+      "source": "The word *throw* is suggestive of putting the exception in another location, and is already associated with exceptions in other languages.",
+      "source_hash": 10488977270161088653,
+      "context_hash": 16046819936945920085,
+      "translation": "*throw*\\ 라는 단어는 예외를 다른 위치에 넣는다는 의미를 암시하며, 이미 다른 언어에서 예외와 관련되어 사용되고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737031Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "Alternative method names were considered: ``resolve()``, ``signal()``, ``genraise()``, ``raiseinto()``, and ``flush()``.",
+      "source_hash": 5321279802487906169,
+      "context_hash": 366119788095338751,
+      "translation": "대체 메서드 이름으로 ``resolve()``, ``signal()``, ``genraise()``, ``raiseinto()``, ``flush()``\\ 가 검토되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737031Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:1",
+      "source": "None of these seem to fit as well as ``throw()``.",
+      "source_hash": 6908680500450109438,
+      "context_hash": 4558033895890823543,
+      "translation": "이 중 어느 것도 ``throw()``\\ 만큼 적합해 보이지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737031Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "New standard exception: ``GeneratorExit``",
+      "source_hash": 7018990842011318273,
+      "context_hash": 15512749720677906213,
+      "translation": "새로운 표준 예외: ``GeneratorExit``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737031Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "A new standard exception is defined, ``GeneratorExit``, inheriting from ``Exception``.",
+      "source_hash": 2155395962253558971,
+      "context_hash": 5310607858886998762,
+      "translation": "``GeneratorExit``\\ 라는 새로운 표준 예외가 정의되며, ``Exception``\\ 을 상속합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737032Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "A generator should handle this by re-raising it (or just not catching it) or by raising ``StopIteration``.",
+      "source_hash": 9720458918887422814,
+      "context_hash": 10507759652442160426,
+      "translation": "제너레이터는 이를 다시 발생시키거나(또는 단순히 포착하지 않거나) ``StopIteration``\\ 을 발생시켜 처리해야 합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:13.737032Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "New generator method: ``close()``",
+      "source_hash": 11427749559686966738,
+      "context_hash": 13120688587752572957,
+      "translation": "새로운 제너레이터 메서드: ``close()``",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:35:13.737032Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "``g.close()`` is defined by the following pseudo-code",
+      "source_hash": 1513877831670961790,
+      "context_hash": 6757565136364068373,
+      "translation": "``g.close()``\\ 는 다음 의사 코드로 정의됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:35:13.737033Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "New generator method: __del__()",
+      "source_hash": 2267093646250247283,
+      "context_hash": 9216243543158781064,
+      "translation": "새 제너레이터 메서드: __del__()",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130011Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "``g.__del__()`` is a wrapper for ``g.close()``.",
+      "source_hash": 8323973807033065782,
+      "context_hash": 11626571542838813958,
+      "translation": "``g.__del__()``\\ 은 ``g.close()``\\ 의 래퍼입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130018Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "This will be called when the generator object is garbage-collected (in CPython, this is when its reference count goes to zero).",
+      "source_hash": 1799179568625629139,
+      "context_hash": 13951036470168847212,
+      "translation": "제너레이터 객체가 가비지 컬렉션될 때 호출됩니다(CPython에서는 참조 횟수가 0이 될 때입니다).",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130019Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:2",
+      "source": "If ``close()`` raises an exception, a traceback for the exception is printed to ``sys.stderr`` and further ignored; it is not propagated back to the place that triggered the garbage collection.",
+      "source_hash": 14515266838596162575,
+      "context_hash": 5577374879150595655,
+      "translation": "``close()``\\ 가 예외를 발생시키면 해당 예외의 트레이스백이 ``sys.stderr``\\ 에 출력된 후 무시되며, 가비지 컬렉션을 유발한 위치로 전파되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130020Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:3",
+      "source": "This is consistent with the handling of exceptions in ``__del__()`` methods on class instances.",
+      "source_hash": 16585934360508797699,
+      "context_hash": 4456259538462538056,
+      "translation": "이는 클래스 인스턴스의 ``__del__()`` 메서드에서 예외를 처리하는 방식과 일관됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130021Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "If the generator object participates in a cycle, ``g.__del__()`` may not be called.",
+      "source_hash": 828938160178904144,
+      "context_hash": 12281191244329590852,
+      "translation": "제너레이터 객체가 순환에 참여하면 ``g.__del__()``\\ 이 호출되지 않을 수 있습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130021Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:1",
+      "source": "This is the behavior of CPython's current garbage collector.",
+      "source_hash": 2133586719718471591,
+      "context_hash": 11233906477598195999,
+      "translation": "이것은 현재 CPython 가비지 컬렉터의 동작입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130022Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:2",
+      "source": "The reason for the restriction is that the GC code needs to *break* a cycle at an arbitrary point in order to collect it, and from then on no Python code should be allowed to see the objects that formed the cycle, as they may be in an invalid state.",
+      "source_hash": 3656199793794340048,
+      "context_hash": 16088609630427202085,
+      "translation": "이러한 제한이 있는 이유는 GC 코드가 순환을 수집하려면 임의의 지점에서 순환을 *끊어야*\\ 하며, 그 이후에는 해당 순환을 구성하던 객체가 유효하지 않은 상태일 수 있으므로 어떤 Python 코드도 이를 볼 수 없어야 하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130023Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:3",
+      "source": "Objects *hanging off* a cycle are not subject to this restriction.",
+      "source_hash": 9835908414795306659,
+      "context_hash": 326562001789044175,
+      "translation": "순환에 *매달려 있는* 객체에는 이러한 제한이 적용되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130023Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "Note that it is unlikely to see a generator object participate in a cycle in practice.",
+      "source_hash": 15131283356466957872,
+      "context_hash": 3757854363487325075,
+      "translation": "실제로 제너레이터 객체가 순환에 참여하는 경우는 드물다는 점에 유의하십시오.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130023Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:1",
+      "source": "However, storing a generator object in a global variable creates a cycle via the generator frame's ``f_globals`` pointer.",
+      "source_hash": 10234980745001473057,
+      "context_hash": 11723752623071812773,
+      "translation": "그러나 제너레이터 객체를 전역 변수에 저장하면 제너레이터 프레임의 ``f_globals`` 포인터를 통해 순환이 생성됩니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130024Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:2",
+      "source": "Another way to create a cycle would be to store a reference to the generator object in a data structure that is passed to the generator as an argument (e.g., if an object has a method that's a generator, and keeps a reference to a running iterator created by that method).",
+      "source_hash": 3208866793158501501,
+      "context_hash": 14345894360039619979,
+      "translation": "순환을 생성하는 또 다른 방법은 제너레이터에 인자로 전달되는 데이터 구조에 제너레이터 객체에 대한 참조를 저장하는 것입니다(예를 들어, 어떤 객체에 제너레이터인 메서드가 있고 해당 메서드가 생성한 실행 중인 이터레이터에 대한 참조를 유지하는 경우입니다).",
+      "glossary_snapshot": {
+        "iterator": "이터레이터",
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130026Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:3",
+      "source": "Neither of these cases are very likely given the typical patterns of generator use.",
+      "source_hash": 17495219134032314655,
+      "context_hash": 857563558837671051,
+      "translation": "제너레이터를 사용하는 일반적인 패턴을 고려하면 이 두 경우 모두 발생할 가능성은 매우 낮습니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130027Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "Also, in the CPython implementation of this PEP, the frame object used by the generator should be released whenever its execution is terminated due to an error or normal exit.",
+      "source_hash": 10835352384963696307,
+      "context_hash": 14802417459714063001,
+      "translation": "또한 이 PEP의 CPython 구현에서는 오류 또는 정상 종료로 인해 제너레이터의 실행이 종료될 때마다 제너레이터가 사용하는 프레임 객체를 해제해야 합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130028Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:1",
+      "source": "This will ensure that generators that cannot be resumed do not remain part of an uncollectable reference cycle.",
+      "source_hash": 14498521992516116378,
+      "context_hash": 2164288859175477238,
+      "translation": "이렇게 하면 재개할 수 없는 제너레이터가 수집할 수 없는 참조 순환의 일부로 남지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130029Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:2",
+      "source": "This allows other code to potentially use ``close()`` in a ``try/finally`` or ``with`` block (per :pep:`343`) to ensure that a given generator is properly finalized.",
+      "source_hash": 9814115365148191430,
+      "context_hash": 557903397533548855,
+      "translation": "이를 통해 다른 코드에서 ``close()``\\ 를 ``try/finally`` 또는 ``with`` 블록에서 잠재적으로 사용하여 주어진 제너레이터가 적절히 종료되도록 할 수 있습니다(:pep:`343`\\ 에 따름).",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130030Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Optional Extensions",
+      "source_hash": 3331128874386554133,
+      "context_hash": 8041657223129928667,
+      "translation": "선택적 확장 기능",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130030Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "The Extended ``continue`` Statement",
+      "source_hash": 9644083015721456373,
+      "context_hash": 3611508387915985165,
+      "translation": "확장된 ``continue`` 문",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130031Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "An earlier draft of this PEP proposed a new ``continue EXPR`` syntax for use in for-loops (carried over from :pep:`340`), that would pass the value of *EXPR* into the iterator being looped over.",
+      "source_hash": 311319508783868077,
+      "context_hash": 2779688095311509288,
+      "translation": "이 PEP의 이전 초안에서는 for 루프에서 사용할 새로운 ``continue EXPR`` 구문을 제안했으며(:pep:`340`\\ 에서 가져옴), 이를 통해 *EXPR*\\ 의 값을 반복 중인 이터레이터에 전달하도록 했습니다.",
+      "glossary_snapshot": {
+        "iterator": "이터레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130031Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "This feature has been withdrawn for the time being, because the scope of this PEP has been narrowed to focus only on passing values into generator-iterators, and not other kinds of iterators.",
+      "source_hash": 559491571979602207,
+      "context_hash": 14833045027537679054,
+      "translation": "이 기능은 당분간 철회되었습니다. 이 PEP의 범위가 제너레이터-이터레이터에 값을 전달하는 데만 초점을 맞추도록 좁혀졌으며, 다른 종류의 이터레이터는 대상으로 하지 않기 때문입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130032Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:2",
+      "source": "It was also felt by some on the Python-Dev list that adding new syntax for this particular feature would be premature at best.",
+      "source_hash": 7118009700092840784,
+      "context_hash": 9610509552792966303,
+      "translation": "또한 Python-Dev 목록의 일부 사람들은 이 특정 기능을 위해 새 구문을 추가하는 것이 기껏해야 시기상조라고 생각했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130033Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Open Issues",
+      "source_hash": 15188361361114285070,
+      "context_hash": 11884776058917379005,
+      "translation": "미해결 문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130033Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Discussion on python-dev has revealed some open issues.",
+      "source_hash": 7632232886792540529,
+      "context_hash": 6282399249896845406,
+      "translation": "python-dev에서의 논의를 통해 몇 가지 미해결 문제가 드러났습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130033Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "I list them here, with my preferred resolution and its motivation.",
+      "source_hash": 6373908412004678145,
+      "context_hash": 18268555081229691044,
+      "translation": "여기에서는 제가 선호하는 해결 방안과 그 동기를 함께 나열합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130034Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:2",
+      "source": "The PEP as currently written reflects this preferred resolution.",
+      "source_hash": 3736279114881335126,
+      "context_hash": 17560642482010024568,
+      "translation": "현재 작성된 PEP에는 이러한 선호하는 해결 방안이 반영되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130034Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "What exception should be raised by ``close()`` when the generator yields another value as a response to the ``GeneratorExit`` exception?",
+      "source_hash": 7368788240777962246,
+      "context_hash": 1734845445144189023,
+      "translation": "제너레이터가 ``GeneratorExit`` 예외에 대한 응답으로 또 다른 값을 산출할 때 ``close()``\\ 는 어떤 예외를 발생시켜야 합니까?",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130034Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "I originally chose ``TypeError`` because it represents gross misbehavior of the generator function, which should be fixed by changing the code.",
+      "source_hash": 15731896090972504581,
+      "context_hash": 5721639773586096257,
+      "translation": "저는 처음에 ``TypeError``\\ 를 선택했습니다. 이는 제너레이터 함수의 심각한 오작동을 나타내며, 코드를 변경하여 수정해야 하기 때문입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130035Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:1",
+      "source": "But the ``with_template`` decorator class in :pep:`343` uses ``RuntimeError`` for similar offenses.",
+      "source_hash": 9266342390728466008,
+      "context_hash": 16575893600186358062,
+      "translation": "그러나 :pep:`343`\\ 의 ``with_template`` 데코레이터 클래스는 유사한 위반에 ``RuntimeError``\\ 를 사용합니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T18:22:17.130036Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:2",
+      "source": "Arguably they should all use the same exception.",
+      "source_hash": 12814484274124556640,
+      "context_hash": 13831784629524676556,
+      "translation": "타당하게 말하면 모두 동일한 예외를 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130036Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:3",
+      "source": "I'd rather not introduce a new exception class just for this purpose, since it's not an exception that I want people to catch: I want it to turn into a traceback which is seen by the programmer who then fixes the code.",
+      "source_hash": 9137319222267396921,
+      "context_hash": 1021241110414424283,
+      "translation": "저는 이 목적만을 위한 새 예외 클래스를 도입하고 싶지는 않습니다. 사람들이 잡기를 원하는 예외가 아니기 때문입니다. 이 예외가 프로그래머에게 보이는 트레이스백으로 변환되어 프로그래머가 코드를 수정하기를 원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130037Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:4",
+      "source": "So now I believe they should both raise ``RuntimeError``.",
+      "source_hash": 11097553016999077740,
+      "context_hash": 4077282228245793586,
+      "translation": "따라서 이제 두 경우 모두 ``RuntimeError``\\ 를 발생시켜야 한다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130037Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:5",
+      "source": "There are some precedents for that: it's raised by the core Python code in situations where endless recursion is detected, and for uninitialized objects (and for a variety of miscellaneous conditions).",
+      "source_hash": 1898479296460610249,
+      "context_hash": 845477515759807338,
+      "translation": "여기에는 몇 가지 선례가 있습니다. 무한 재귀가 감지되는 상황과 초기화되지 않은 객체, 그리고 다양한 기타 조건에서 핵심 Python 코드가 이를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:17.130037Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "Oren Tirosh has proposed renaming the ``send()`` method to ``feed()``, for compatibility with the *consumer interface* (see http://effbot.org/zone/consumer.htm for the specification.)",
+      "source_hash": 10745148114187292589,
+      "context_hash": 1191749079416602151,
+      "translation": "Oren Tirosh는 *consumer interface*\\ 와의 호환성을 위해 ``send()`` 메서드의 이름을 ``feed()``\\ 로 바꿀 것을 제안했습니다(자세한 명세는 http://effbot.org/zone/consumer.htm 을 참고하십시오).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:01.449276Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:0",
+      "source": "However, looking more closely at the consumer interface, it seems that the desired semantics for ``feed()`` are different than for ``send()``, because ``send()`` can't be meaningfully called on a just-started generator.",
+      "source_hash": 7790447219360055754,
+      "context_hash": 6145852732385967810,
+      "translation": "하지만 consumer interface를 더 자세히 살펴보면, ``feed()``\\ 에 원하는 의미가 ``send()``\\ 와는 다른 것으로 보이는데, 이는 ``send()``\\ 는 막 시작된 제너레이터에서 의미 있게 호출될 수 없기 때문입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T17:29:01.449280Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:1",
+      "source": "Also, the consumer interface as currently defined doesn't include handling for ``StopIteration``.",
+      "source_hash": 16918229213186919530,
+      "context_hash": 14624857316263238221,
+      "translation": "또한, 현재 정의된 consumer interface는 ``StopIteration``\\ 에 대한 처리를 포함하고 있지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:01.449283Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:6/seg:0",
+      "source": "Therefore, it seems like it would probably be more useful to create a simple decorator that wraps a generator function to make it conform to the consumer interface.",
+      "source_hash": 222394095727797434,
+      "context_hash": 9756163772534212840,
+      "translation": "따라서, 제너레이터 함수를 감싸서 consumer interface를 따르도록 만드는 간단한 데코레이터를 만드는 것이 아마 더 유용할 것으로 보입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터",
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T17:29:01.449283Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:6/seg:1",
+      "source": "For example, it could *warm up* the generator with an initial ``next()`` call, trap StopIteration, and perhaps even provide ``reset()`` by re-invoking the generator function.",
+      "source_hash": 3135581085068040530,
+      "context_hash": 13913063653925868819,
+      "translation": "예를 들어, 초기 ``next()`` 호출로 제너레이터를 *워밍업*\\ 하고, StopIteration을 잡아내며, 어쩌면 제너레이터 함수를 다시 호출하여 ``reset()``\\ 까지 제공할 수 있을 것입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T17:29:01.449284Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Examples",
+      "source_hash": 2926230321239078022,
+      "context_hash": 10741907138424905717,
+      "translation": "예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:01.449284Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "A simple *consumer* decorator that makes a generator function automatically advance to its first yield point when initially called",
+      "source_hash": 5537580274390063312,
+      "context_hash": 11013623270899079599,
+      "translation": "제너레이터 함수가 처음 호출될 때 자동으로 첫 번째 yield 지점까지 진행하도록 만드는 간단한 *consumer* 데코레이터",
+      "glossary_snapshot": {
+        "generator": "제너레이터",
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T17:29:01.449285Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "An example of using the *consumer* decorator to create a *reverse generator* that receives images and creates thumbnail pages, sending them on to another consumer.",
+      "source_hash": 13484608702071725815,
+      "context_hash": 11357384219472582557,
+      "translation": "이미지를 받아 섬네일 페이지를 만들고 이를 다른 consumer에 전달하는 *역방향 제너레이터*\\ 를 생성하기 위해 *consumer* 데코레이터를 사용하는 예제입니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터",
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T17:29:01.449285Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:1",
+      "source": "Functions like this can be chained together to form efficient processing pipelines of *consumers* that each can have complex internal state",
+      "source_hash": 11787979856475926265,
+      "context_hash": 6709047093083239663,
+      "translation": "이와 같은 함수들은 서로 연결되어, 각각 복잡한 내부 상태를 가질 수 있는 *consumer*\\ 들의 효율적인 처리 파이프라인을 형성할 수 있습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:29:01.449286Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:0",
+      "source": "A simple co-routine scheduler or *trampoline* that lets coroutines *call* other coroutines by yielding the coroutine they wish to invoke.",
+      "source_hash": 17035036055513023953,
+      "context_hash": 5353187031607097805,
+      "translation": "코루틴이 호출하고자 하는 코루틴을 yield함으로써 다른 코루틴을 *호출*\\ 할 수 있게 하는 간단한 코루틴 스케줄러, 즉 *트램폴린*\\ 입니다.",
+      "glossary_snapshot": {
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T17:17:15.171137Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:1",
+      "source": "Any non-generator value yielded by a coroutine is returned to the coroutine that *called* the one yielding the value.",
+      "source_hash": 14061191464946818714,
+      "context_hash": 6168157122473895443,
+      "translation": "코루틴이 yield한, 제너레이터가 아닌 값은 그 값을 yield한 코루틴을 *호출*\\ 한 코루틴에게 반환됩니다.",
+      "glossary_snapshot": {
+        "coroutine": "코루틴",
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T17:17:15.171143Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:2",
+      "source": "Similarly, if a coroutine raises an exception, the exception is propagated to its *caller*.",
+      "source_hash": 14639642701888263484,
+      "context_hash": 12338515081529701156,
+      "translation": "마찬가지로 코루틴이 예외를 발생시키면 그 예외는 *호출자*\\ 에게 전파됩니다.",
+      "glossary_snapshot": {
+        "coroutine": "코루틴"
+      },
+      "translated_at": "2026-08-28T17:17:15.171145Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:3",
+      "source": "In effect, this example emulates simple tasklets as are used in Stackless Python, as long as you use a yield expression to invoke routines that would otherwise *block*.",
+      "source_hash": 14207624551598795219,
+      "context_hash": 5532001985965274582,
+      "translation": "사실상 이 예제는, 그렇지 않았다면 *블로킹*\\ 되었을 루틴을 호출하기 위해 yield 표현식을 사용하는 한, Stackless Python에서 사용되는 것과 같은 간단한 태스크릿(tasklet)을 흉내 냅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:17:15.171146Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:5/seg:4",
+      "source": "This is only a very simple example, and far more sophisticated schedulers are possible.  (For example, the existing GTasklet framework for Python (http://www.gnome.org/~gjc/gtasklet/gtasklets.html) and the peak.events framework (http://peak.telecommunity.com/) already implement similar scheduling capabilities, but must currently use awkward workarounds for the inability to pass values or exceptions into generators.)",
+      "source_hash": 2059642582941642287,
+      "context_hash": 5952565995410978373,
+      "translation": "이것은 아주 간단한 예시일 뿐이며, 훨씬 더 정교한 스케줄러도 가능합니다. (예를 들어 기존의 Python용 GTasklet 프레임워크(http://www.gnome.org/~gjc/gtasklet/gtasklets.html)와 peak.events 프레임워크(http://peak.telecommunity.com/)는 이미 유사한 스케줄링 기능을 구현하고 있지만, 제너레이터에 값이나 예외를 전달할 수 없다는 문제 때문에 현재는 어색한 우회 방법을 사용해야 합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:17:15.171146Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:7/seg:0",
+      "source": "A simple *echo* server, and code to run it using a trampoline (presumes the existence of ``nonblocking_read``, ``nonblocking_write``, and other I/O coroutines, that e.g. raise ``ConnectionLost`` if the connection is closed)",
+      "source_hash": 14301058315908568777,
+      "context_hash": 5826722438999416295,
+      "translation": "간단한 *에코* 서버와, 트램폴린을 사용해 이를 실행하는 코드입니다(연결이 끊기면 예를 들어 ``ConnectionLost``\\ 를 발생시키는 ``nonblocking_read``, ``nonblocking_write`` 및 그 밖의 I/O 코루틴이 존재한다고 가정합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:17:15.171147Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 15524051449761939786,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T17:17:15.171147Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "A prototype patch implementing all of the features described in this PEP is available as SourceForge patch #1223381 (https://bugs.python.org/issue1223381).",
+      "source_hash": 392992353861842742,
+      "context_hash": 13024517809906662299,
+      "translation": "이 PEP에 설명된 모든 기능을 구현한 프로토타입 패치는 SourceForge 패치 #1223381(https://bugs.python.org/issue1223381)로 제공됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:17:15.171148Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "This patch was committed to CVS 01-02 August 2005.",
+      "source_hash": 16013018564538670184,
+      "context_hash": 5999635661920748558,
+      "translation": "이 패치는 2005년 8월 1일~2일에 CVS에 커밋되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:17:15.171148Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Acknowledgements",
+      "source_hash": 16326275492144793040,
+      "context_hash": 5272232705019420234,
+      "translation": "감사의 말",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:17:15.171148Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Raymond Hettinger (:pep:`288`) and Samuele Pedroni (:pep:`325`) first formally proposed the ideas of communicating values or exceptions into generators, and the ability to *close* generators.",
+      "source_hash": 3301830752915261282,
+      "context_hash": 3709117251839109620,
+      "translation": "Raymond Hettinger(:pep:`288`)와 Samuele Pedroni(:pep:`325`)는 제너레이터에 값이나 예외를 전달하는 아이디어와, 제너레이터를 *닫는* 기능을 처음으로 공식 제안했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:17:15.171149Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:1",
+      "source": "Timothy Delaney suggested the title of this PEP, and Steven Bethard helped edit a previous version.",
+      "source_hash": 1196110613624956683,
+      "context_hash": 13329526581371815734,
+      "translation": "Timothy Delaney는 이 PEP의 제목을 제안했으며, Steven Bethard는 이전 버전의 편집을 도왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:17:15.171149Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:2",
+      "source": "See also the Acknowledgements section of :pep:`340`.",
+      "source_hash": 3564101199541624930,
+      "context_hash": 13406711292623520715,
+      "translation": "또한 :pep:`340`\\ 의 감사의 글 절도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:49:34.980821Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 18401283038164198566,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:17:15.171151Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "TBD.",
+      "source_hash": 14563612459391118919,
+      "context_hash": 17234654785806853987,
+      "translation": "TBD.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:17:15.171151Z",
+      "issues": []
+    }
+  ]
+}

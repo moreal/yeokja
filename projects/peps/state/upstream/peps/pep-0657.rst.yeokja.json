@@ -1,0 +1,1327 @@
+{
+  "version": 1,
+  "source_hash": 14765249929386332908,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Include Fine Grained Error Locations in Tracebacks",
+      "source_hash": 1833530213447255545,
+      "context_hash": 16530898886277989957,
+      "translation": "트레이스백에 세밀한 오류 위치 포함하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848599Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 3391063444491466476,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848603Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes adding a mapping from each bytecode instruction to the start and end column offsets of the line that generated them as well as the end line number.",
+      "source_hash": 8138823277598049950,
+      "context_hash": 14817870095833379692,
+      "translation": "이 PEP는 각 바이트코드 명령어를 해당 명령어를 생성한 줄의 시작 및 끝 열 오프셋과 끝 줄 번호에 매핑하는 기능을 추가할 것을 제안합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드",
+        "mapping": "매핑"
+      },
+      "translated_at": "2026-08-28T18:12:11.848604Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This data will be used to improve tracebacks displayed by the CPython interpreter in order to improve the debugging experience.",
+      "source_hash": 128781768699357553,
+      "context_hash": 12659370179521673094,
+      "translation": "이 데이터는 디버깅 경험을 개선하기 위해 CPython 인터프리터가 표시하는 트레이스백을 개선하는 데 사용됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:12:11.848605Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "The PEP also proposes adding APIs that allow other tools (such as coverage analysis tools, profilers, tracers, debuggers) to consume this information from code objects.",
+      "source_hash": 13898704347561677467,
+      "context_hash": 9994345243825229859,
+      "translation": "또한 이 PEP는 다른 도구(예: 커버리지 분석 도구, 프로파일러, 트레이서, 디버거)가 코드 객체에서 이 정보를 사용할 수 있도록 하는 API를 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848606Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 11255189424637452890,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848606Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The primary motivation for this PEP is to improve the feedback presented about the location of errors to aid with debugging.",
+      "source_hash": 15581630963036626662,
+      "context_hash": 15441880633554231700,
+      "translation": "이 PEP의 주된 동기는 디버깅을 지원하기 위해 오류 위치에 관해 제공되는 피드백을 개선하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848606Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Python currently keeps a mapping of bytecode to line numbers from compilation.",
+      "source_hash": 9514248616789184743,
+      "context_hash": 8730169062130622515,
+      "translation": "Python은 현재 컴파일 과정에서 바이트코드를 줄 번호에 매핑하여 보관합니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:12:11.848607Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "The interpreter uses this mapping to point to the source line associated with an error.",
+      "source_hash": 8551047339708715617,
+      "context_hash": 8314252494256360030,
+      "translation": "인터프리터는 이 매핑을 사용하여 오류와 연관된 소스 줄을 가리킵니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:12:11.848608Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "While this line-level granularity for instructions is useful, a single line of Python code can compile into dozens of bytecode operations making it hard to track which part of the line caused the error.",
+      "source_hash": 9507522303251854036,
+      "context_hash": 17393199439385005798,
+      "translation": "명령어에 대한 이러한 줄 수준 세분성은 유용하지만, Python 코드 한 줄이 수십 개의 바이트코드 연산으로 컴파일될 수 있으므로 해당 줄의 어느 부분에서 오류가 발생했는지 추적하기 어렵습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:12:11.848609Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Consider the following line of Python code",
+      "source_hash": 11228816155254572068,
+      "context_hash": 7642919346744273637,
+      "translation": "다음 Python 코드 줄을 살펴보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848610Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "If any of the values in the dictionaries are ``None``, the error shown is",
+      "source_hash": 13915916706069691188,
+      "context_hash": 8206862505897938726,
+      "translation": "딕셔너리의 값 중 하나라도 ``None``\\ 이면 표시되는 오류는 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848610Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "From the traceback, it is impossible to determine which one of the dictionaries had the ``None`` element that caused the error.",
+      "source_hash": 14325857198731910437,
+      "context_hash": 1260205119988299365,
+      "translation": "트레이스백만으로는 오류를 일으킨 ``None``\\ 요소가 어느 딕셔너리에 있었는지 확인할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848610Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:1",
+      "source": "Users often have to attach a debugger or split up their expression to track down the problem.",
+      "source_hash": 3894329499161530405,
+      "context_hash": 14123478308041630023,
+      "translation": "사용자는 문제를 추적하기 위해 디버거를 연결하거나 식을 분할해야 하는 경우가 많습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848610Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "However, if the interpreter had a mapping of bytecode to column offsets as well as line numbers, it could helpfully display",
+      "source_hash": 10201743207093740152,
+      "context_hash": 16608587758546458411,
+      "translation": "그러나 인터프리터가 줄 번호뿐만 아니라 바이트코드를 열 오프셋에도 매핑했다면 다음과 같이 유용하게 표시할 수 있습니다.",
+      "glossary_snapshot": {
+        "mapping": "매핑",
+        "interpreter": "인터프리터",
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:12:11.848611Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "indicating to the user that the object ``x['a']['b']`` must have been ``None``.",
+      "source_hash": 15842045383149589012,
+      "context_hash": 13740630637720381633,
+      "translation": "이는 사용자에게 객체 ``x['a']['b']``\\ 가 ``None``\\ 이어야 함을 알려 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848611Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:1",
+      "source": "This highlighting will occur for every frame in the traceback.",
+      "source_hash": 17753360899160561265,
+      "context_hash": 11135793432607420352,
+      "translation": "이러한 강조 표시는 트레이스백의 모든 프레임에서 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848612Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:2",
+      "source": "For instance, if a similar error is part of a complex function call chain, the traceback would display the code associated to the current instruction in every frame",
+      "source_hash": 14969574182521336591,
+      "context_hash": 10441886781952512480,
+      "translation": "예를 들어 유사한 오류가 복잡한 함수 호출 체인의 일부인 경우, 트레이스백은 각 프레임에서 현재 명령어와 연관된 코드를 표시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848612Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:12/seg:0",
+      "source": "This problem presents itself in the following situations.",
+      "source_hash": 15353479960413779107,
+      "context_hash": 5365241016702808,
+      "translation": "이 문제는 다음과 같은 상황에서 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848612Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:0",
+      "source": "When passing down multiple objects to function calls while accessing the same attribute in them.",
+      "source_hash": 7961335914309174970,
+      "context_hash": 7938185227515819717,
+      "translation": "여러 객체를 함수 호출에 전달하면서 해당 객체에서 동일한 속성에 접근하는 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848613Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:13/seg:1",
+      "source": "For instance, this error",
+      "source_hash": 10163556028654561371,
+      "context_hash": 2228763823659248628,
+      "translation": "예를 들어 다음 오류가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848613Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:15/seg:0",
+      "source": "With the improvements in this PEP this would show",
+      "source_hash": 7561956163566255081,
+      "context_hash": 3407136432225923750,
+      "translation": "이 PEP의 개선 사항을 적용하면 다음과 같이 표시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848613Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:17/seg:0",
+      "source": "When dealing with lines with complex mathematical expressions, especially with libraries such as numpy where arithmetic operations can fail based on the arguments.",
+      "source_hash": 2255986131475085461,
+      "context_hash": 6430287667389957745,
+      "translation": "복잡한 수학 표현식이 포함된 줄을 처리하는 경우이며, 특히 인자에 따라 산술 연산이 실패할 수 있는 numpy와 같은 라이브러리를 사용할 때 그렇습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848613Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:17/seg:1",
+      "source": "For example:",
+      "source_hash": 4114854479619665730,
+      "context_hash": 15294000996398078507,
+      "translation": "예를 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848614Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:19/seg:0",
+      "source": "There is no clear indication as to which operation failed, was it the addition on the left, the right or the matrix multiplication in the middle?",
+      "source_hash": 16196382517804228224,
+      "context_hash": 14531494272878454653,
+      "translation": "어느 연산이 실패했는지 명확히 알 수 없습니다. 왼쪽의 덧셈인지, 오른쪽의 덧셈인지, 아니면 가운데의 행렬 곱셈인지 알 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848614Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:19/seg:1",
+      "source": "With this PEP the new error message would look like",
+      "source_hash": 8283207339783967213,
+      "context_hash": 17769469221191117723,
+      "translation": "이 PEP를 적용하면 새로운 오류 메시지는 다음과 같이 표시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848615Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:21/seg:0",
+      "source": "Giving a much clearer and easier to debug error message.",
+      "source_hash": 10921842452448503870,
+      "context_hash": 14933754358911253351,
+      "translation": "훨씬 더 명확하고 디버깅하기 쉬운 오류 메시지를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848615Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:22/seg:0",
+      "source": "Debugging aside, this extra information would also be useful for code coverage tools, enabling them to measure expression-level coverage instead of just line-level coverage.",
+      "source_hash": 3816477872630469371,
+      "context_hash": 16816216011214121437,
+      "translation": "디버깅 외에도 이 추가 정보는 코드 커버리지 도구에 유용하며, 줄 수준 커버리지만 측정하는 대신 식 수준 커버리지를 측정할 수 있게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848615Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:22/seg:1",
+      "source": "For instance, given the following line:",
+      "source_hash": 1197237453003926624,
+      "context_hash": 5884849081420051124,
+      "translation": "예를 들어 다음 줄이 주어졌을 때입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848615Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:24/seg:0",
+      "source": "coverage, profile or state analysis tools will highlight the full line in both branches, making it impossible to differentiate what branch was taken.",
+      "source_hash": 16157839294833847970,
+      "context_hash": 6921486893298450587,
+      "translation": "coverage, profile 또는 상태 분석 도구는 두 분기에서 전체 줄을 강조 표시하므로 어느 분기가 실행되었는지 구분할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848616Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:24/seg:1",
+      "source": "This is a known problem in pycoverage_.",
+      "source_hash": 4070747072453123009,
+      "context_hash": 1964120968826299333,
+      "translation": "이는 pycoverage_에서 알려진 문제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:11.848616Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:25/seg:0",
+      "source": "Similar efforts to this PEP have taken place in other languages such as Java in the form of JEP358_. ``NullPointerExceptions`` in Java were similarly nebulous when it came to lines with complicated expressions.",
+      "source_hash": 515348191896728277,
+      "context_hash": 9177663233790621906,
+      "translation": "이 PEP와 유사한 노력은 JEP358_의 형태로 Java와 같은 다른 언어에서도 이루어졌습니다. Java의 ``NullPointerExceptions``\\ 도 복잡한 표현식이 포함된 줄에서는 마찬가지로 모호했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109900Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:25/seg:1",
+      "source": "A ``NullPointerException`` would provide very little aid in finding the root cause of an error.",
+      "source_hash": 3685855609372680946,
+      "context_hash": 1076525470188643143,
+      "translation": "``NullPointerException``\\ 은 오류의 근본 원인을 찾는 데 거의 도움이 되지 않았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109903Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:25/seg:2",
+      "source": "The implementation for JEP358 is fairly complex, requiring walking back through the bytecode by using a control flow graph analyzer and decompilation techniques to recover the source code that led to the null pointer.",
+      "source_hash": 8477654841880680995,
+      "context_hash": 3663124488690111864,
+      "translation": "JEP358의 구현은 상당히 복잡하며, 제어 흐름 그래프 분석기와 디컴파일 기법을 사용하여 바이트코드를 역추적하고 null 포인터로 이어진 소스 코드를 복원해야 합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:12:25.109903Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:25/seg:3",
+      "source": "Although the complexity of this solution is high and requires maintenance for the decompiler every time Java bytecode is changed, this improvement was deemed to be worth it for the extra information provided for *just one exception type*.",
+      "source_hash": 682071652411131089,
+      "context_hash": 2370385842688530128,
+      "translation": "이 해결책의 복잡성은 높고 Java 바이트코드가 변경될 때마다 디컴파일러를 유지 관리해야 하지만, *단 하나의 예외 유형*\\ 에 제공되는 추가 정보 때문에 이 개선은 가치가 있다고 판단되었습니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T19:56:12.860411Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 5099837147571582233,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109906Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "In order to identify the range of source code being executed when exceptions are raised, this proposal requires adding new data for every bytecode instruction.",
+      "source_hash": 12746448390349110396,
+      "context_hash": 10327403690189385304,
+      "translation": "예외가 발생했을 때 실행 중인 소스 코드의 범위를 식별하려면, 이 제안에서는 모든 바이트코드 명령어에 새로운 데이터를 추가해야 합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:12:25.109906Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "This will have an impact on the size of ``pyc`` files on disk and the size of code objects in memory.",
+      "source_hash": 796030662028948460,
+      "context_hash": 4062837376095654107,
+      "translation": "이는 디스크에 저장되는 ``pyc`` 파일의 크기와 메모리에 저장되는 코드 객체의 크기에 영향을 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109906Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "The authors of this proposal have chosen the data types in a way that tries to minimize this impact.",
+      "source_hash": 9330016730629341911,
+      "context_hash": 12089767803377787742,
+      "translation": "이 제안의 작성자들은 이러한 영향을 최소화하도록 노력하는 방식으로 데이터 유형을 선택했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109907Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:3",
+      "source": "The proposed overhead is storing two ``uint8_t`` (one for the start offset and one for the end offset) and the end line information for every bytecode instruction (in the same encoded fashion as the start line is stored currently).",
+      "source_hash": 3771109319328191634,
+      "context_hash": 7799782995131828590,
+      "translation": "제안된 오버헤드는 각 바이트코드 명령어에 대해 두 개의 ``uint8_t``\\ (시작 오프셋용 하나와 끝 오프셋용 하나)와 끝 줄 정보를 저장하는 것입니다(현재 시작 줄을 저장하는 것과 동일한 인코딩 방식).",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:12:25.109907Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "As an illustrative example to gauge the impact of this change, we have calculated that including the start and end offsets will increase the size of the standard library’s pyc files by 22% (6MB) from 28.4MB to 34.7MB.",
+      "source_hash": 3427392664544982700,
+      "context_hash": 13929565132315606695,
+      "translation": "이 변경의 영향을 가늠하기 위한 예시로, 시작 오프셋과 끝 오프셋을 포함하면 표준 라이브러리의 pyc 파일 크기가 28.4MB에서 34.7MB로 22%(6MB) 증가한다는 계산 결과를 얻었습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:12:25.109908Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "The overhead in memory usage will be the same (assuming the *full standard library* is loaded into the same program).",
+      "source_hash": 5822379994863888117,
+      "context_hash": 14750853304881155999,
+      "translation": "메모리 사용량의 오버헤드도 동일합니다(*전체 표준 라이브러리*\\ 가 동일한 프로그램에 로드된다고 가정하면).",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:56:12.860414Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "We believe that this is a very acceptable number since the order of magnitude of the overhead is very small, especially considering the storage size and memory capabilities of modern computers.",
+      "source_hash": 12385245294566644611,
+      "context_hash": 13951992880596191588,
+      "translation": "특히 현대 컴퓨터의 저장 공간과 메모리 용량을 고려하면 오버헤드의 규모가 매우 작으므로, 이 수치는 매우 수용할 만한 수준이라고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109909Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:3",
+      "source": "Additionally, in general the memory size of a Python program is not dominated by code objects.",
+      "source_hash": 3559011104701317718,
+      "context_hash": 76262246536654347,
+      "translation": "또한 일반적으로 Python 프로그램의 메모리 크기는 코드 객체가 지배하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109909Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:4",
+      "source": "To check this assumption we have executed the test suite of several popular PyPI projects (including NumPy, pytest, Django and Cython) as well as several applications (Black, pylint, mypy executed over either mypy or the standard library) and we found that code objects represent normally 3-6% of the average memory size of the program.",
+      "source_hash": 14644276042737395907,
+      "context_hash": 3230968905719366621,
+      "translation": "이 가정을 확인하기 위해 여러 인기 있는 PyPI 프로젝트(NumPy, pytest, Django, Cython 포함)의 테스트 모음과 여러 애플리케이션(Black, pylint, mypy 자체 또는 표준 라이브러리에서 실행한 mypy)을 실행했으며, 코드 객체가 프로그램의 평균 메모리 크기에서 일반적으로 3~6%를 차지한다는 사실을 확인했습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:12:25.109909Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "We understand that the extra cost of this information may not be acceptable for some users, so we propose an opt-out mechanism which will cause generated code objects to not have the extra information while also allowing pyc files to not include the extra information.",
+      "source_hash": 11234007395624865802,
+      "context_hash": 14535410503519332996,
+      "translation": "일부 사용자에게는 이 정보로 인한 추가 비용이 허용되지 않을 수 있음을 이해하므로, 생성된 코드 객체에 추가 정보가 포함되지 않도록 하면서 pyc 파일에도 추가 정보가 포함되지 않게 하는 옵트아웃 메커니즘을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109910Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 9900184660820245739,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109910Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "In order to have enough information to correctly resolve the location within a given line where an error was raised, a map linking bytecode instructions to column offsets (start and end offset) and end line numbers is needed.",
+      "source_hash": 18377172528937929168,
+      "context_hash": 1852909978763360223,
+      "translation": "오류가 발생한 주어진 줄 내의 위치를 정확하게 확인하는 데 충분한 정보를 얻으려면, 바이트코드 명령어를 열 오프셋(시작 및 끝 오프셋) 및 끝 줄 번호에 연결하는 매핑이 필요합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:12:25.109911Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "This is similar in fashion to how line numbers are currently linked to bytecode instructions.",
+      "source_hash": 6123018701744172098,
+      "context_hash": 15806400194255798254,
+      "translation": "이는 현재 줄 번호를 바이트코드 명령어에 연결하는 방식과 유사합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:12:25.109912Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "The following changes will be performed as part of the implementation of this PEP:",
+      "source_hash": 13185375458586420793,
+      "context_hash": 16122307948403901776,
+      "translation": "이 PEP의 구현 과정에서 다음과 같은 변경이 수행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109913Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "The offset information will be exposed to Python via a new attribute in the code object class called ``co_positions`` that will return a sequence of four-element tuples containing the full location of every instruction (including start line, end line, start column offset and end column offset) or ``None`` if the code object was created without the offset information.",
+      "source_hash": 11527768659234923346,
+      "context_hash": 6313984605391261980,
+      "translation": "오프셋 정보는 ``co_positions``\\ 라는 코드 객체 클래스의 새 속성을 통해 Python에 노출되며, 이 속성은 모든 명령어의 전체 위치(시작 줄, 끝 줄, 시작 열 오프셋 및 끝 열 오프셋 포함)를 담은 네 요소 튜플의 시퀀스를 반환하거나, 오프셋 정보 없이 코드 객체가 생성된 경우 ``None``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109913Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "One new C-API function:",
+      "source_hash": 11798523087407847890,
+      "context_hash": 1696335580963986501,
+      "translation": "새로운 C-API 함수 하나:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109914Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "will be added so the end line, the start column offsets and the end column offset can be obtained given the index of a bytecode instruction.",
+      "source_hash": 14177100438908465183,
+      "context_hash": 8133235062033646031,
+      "translation": "바이트코드 명령어의 인덱스를 지정하여 끝 줄, 시작 열 오프셋 및 끝 열 오프셋을 얻을 수 있도록 추가됩니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:12:25.109914Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:1",
+      "source": "This function will set the values to 0 if the information is not available.",
+      "source_hash": 6968182995013992070,
+      "context_hash": 16598229682880303082,
+      "translation": "이 함수는 정보를 사용할 수 없는 경우 값을 0으로 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109915Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "The internal storage, compression and encoding of the information is left as an implementation detail and can be changed at any point as long as the public API remains unchanged.",
+      "source_hash": 15114999038612672053,
+      "context_hash": 210017904027192958,
+      "translation": "정보의 내부 저장, 압축 및 인코딩은 구현 세부 사항으로 남겨 두며, 공개 API가 변경되지 않는 한 언제든지 변경할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109915Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Offset semantics",
+      "source_hash": 1923153449014322160,
+      "context_hash": 18106663718950614278,
+      "translation": "오프셋 의미론",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109915Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "These offsets are propagated by the compiler from the ones stored currently in all AST nodes.",
+      "source_hash": 3531732491143898870,
+      "context_hash": 7750191165005776232,
+      "translation": "이러한 오프셋은 현재 모든 AST 노드에 저장된 오프셋으로부터 컴파일러에 의해 전달됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109916Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "The output of the public APIs (``co_positions`` and ``PyCode_Addr2Location``) that deal with these attributes use 0-indexed offsets (just like the AST nodes), but the underlying implementation is free to represent the actual data in whatever form they choose to be most efficient.",
+      "source_hash": 13924173807900197499,
+      "context_hash": 17302175208856082325,
+      "translation": "이러한 속성을 다루는 공개 API(``co_positions`` 및 ``PyCode_Addr2Location``)의 출력은 AST 노드와 마찬가지로 0부터 인덱싱된 오프셋을 사용하지만, 기반 구현은 실제 데이터를 가장 효율적이라고 선택한 어떤 형식으로든 표현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109916Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "The error code regarding information not available is ``None`` for the ``co_positions()`` API, and ``-1`` for the ``PyCode_Addr2Location`` API.",
+      "source_hash": 10368746380453226775,
+      "context_hash": 3189323730804050881,
+      "translation": "정보를 사용할 수 없음을 나타내는 오류 코드는 ``co_positions()`` API에서는 ``None``\\ 이며, ``PyCode_Addr2Location`` API에서는 ``-1``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109916Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:3",
+      "source": "The availability of the information highly depends on whether the offsets fall under the range, as well as the runtime flags for the interpreter configuration.",
+      "source_hash": 17750277951175483960,
+      "context_hash": 13001534109975542555,
+      "translation": "정보의 사용 가능성은 오프셋이 범위 내에 들어오는지 여부와 인터프리터 구성의 런타임 플래그에 크게 좌우됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:12:25.109917Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "The AST nodes use ``int`` types to store these values.",
+      "source_hash": 7782355255093124250,
+      "context_hash": 609174540226473187,
+      "translation": "AST 노드는 이러한 값을 저장하는 데 ``int`` 유형을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109918Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "The current implementation, however, utilizes ``uint8_t`` types as an implementation detail to minimize storage impact.",
+      "source_hash": 15293275650134947999,
+      "context_hash": 12316388938950492344,
+      "translation": "그러나 현재 구현은 저장 공간에 미치는 영향을 최소화하기 위한 구현 세부 사항으로 ``uint8_t`` 유형을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109918Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:2",
+      "source": "This decision allows offsets to go from 0 to 255, while offsets bigger than these values will be treated as missing (returning ``-1`` on the ``PyCode_Addr2Location`` and ``None`` API in the ``co_positions()`` API).",
+      "source_hash": 13732774469080646883,
+      "context_hash": 13753962443772187493,
+      "translation": "이 결정에 따라 오프셋은 0부터 255까지 사용할 수 있으며, 이보다 큰 오프셋은 누락된 것으로 처리됩니다(``PyCode_Addr2Location``\\ 에서는 ``-1``\\ 을 반환하고 ``co_positions()`` API에서는 ``None``\\ 을 반환합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:25.109918Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "As specified previously, the underlying storage of the offsets should be considered an implementation detail, as the public APIs to obtain this values will return either C ``int`` types or Python ``int`` objects, which allows to implement better compression/encoding in the future if bigger ranges would need to be supported.",
+      "source_hash": 14495321040119440053,
+      "context_hash": 14965363367036854394,
+      "translation": "앞서 명시한 바와 같이, 오프셋의 기반 저장 방식은 구현 세부 사항으로 간주해야 합니다. 값을 가져오는 공개 API는 C ``int`` 형식 또는 Python ``int`` 객체를 반환하므로, 향후 더 큰 범위를 지원해야 하는 경우 더 나은 압축/인코딩을 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581482Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "This PEP proposes to start with this simpler version and defer improvements to future work.",
+      "source_hash": 17657826130401952702,
+      "context_hash": 17235244067381321386,
+      "translation": "이 PEP는 이보다 간단한 버전으로 시작하고 개선 사항은 향후 작업으로 미룰 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581486Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Displaying tracebacks",
+      "source_hash": 13604612362493366466,
+      "context_hash": 3727416210385997719,
+      "translation": "트레이스백 표시",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581486Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "When displaying tracebacks, the default exception hook will be modified to query this information from the code objects and use it to display a sequence of carets for every displayed line in the traceback if the information is available.",
+      "source_hash": 11183317741800617049,
+      "context_hash": 6591631222819047580,
+      "translation": "트레이스백을 표시할 때 기본 예외 훅은 코드 객체에서 이 정보를 조회하도록 수정되며, 정보가 제공되는 경우 트레이스백에 표시되는 각 줄에 캐럿 시퀀스를 표시하는 데 이 정보를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581487Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "For instance",
+      "source_hash": 9854383253263738841,
+      "context_hash": 18223092200151615568,
+      "translation": "예를 들어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581487Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "When displaying tracebacks, instruction offsets will be taken from the traceback objects.",
+      "source_hash": 11896270243946091097,
+      "context_hash": 4236775984023594058,
+      "translation": "트레이스백을 표시할 때 명령어 오프셋은 트레이스백 객체에서 가져옵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581488Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "This makes highlighting exceptions that are re-raised work naturally without the need to store the new information in the stack.",
+      "source_hash": 8848902082813173233,
+      "context_hash": 10238046902789933122,
+      "translation": "따라서 새 정보를 스택에 저장할 필요 없이 다시 발생한 예외를 자연스럽게 강조 표시할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581488Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:2",
+      "source": "For example, for this code",
+      "source_hash": 3599634806364002785,
+      "context_hash": 15775869407613981843,
+      "translation": "예를 들어 다음 코드의 경우",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581489Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "The printed traceback would look like this",
+      "source_hash": 6759002694701390412,
+      "context_hash": 10151931209630802627,
+      "translation": "출력되는 트레이스백은 다음과 같이 표시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581489Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "While this code",
+      "source_hash": 11860359007457220899,
+      "context_hash": 16474835418268129139,
+      "translation": "반면 다음 코드는",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581489Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "Will be displayed as",
+      "source_hash": 6405303235495183653,
+      "context_hash": 15767501139576454382,
+      "translation": "다음과 같이 표시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581489Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:11/seg:0",
+      "source": "Maintaining the current behavior, only a single line will be displayed in tracebacks.",
+      "source_hash": 12147146673420002720,
+      "context_hash": 18242959013460745546,
+      "translation": "현재 동작을 유지하면서 트레이스백에는 한 줄만 표시됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581490Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:11/seg:1",
+      "source": "For instructions that span multiple lines (the end offset and the start offset belong to different lines), the end line number must be inspected to know if the end offset applies to the same line as the starting offset.",
+      "source_hash": 12513683275053976747,
+      "context_hash": 9980125704431160405,
+      "translation": "여러 줄에 걸쳐 있는 명령어의 경우(끝 오프셋과 시작 오프셋이 서로 다른 줄에 속하는 경우), 끝 오프셋이 시작 오프셋과 같은 줄에 적용되는지 확인하려면 끝 줄 번호를 검사해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581490Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Opt-out mechanism",
+      "source_hash": 11557194285217949659,
+      "context_hash": 11938661393125749673,
+      "translation": "옵트아웃 메커니즘",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581491Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "To offer an opt-out mechanism for those users that care about the storage and memory overhead and to allow third party tools and other programs that are currently parsing tracebacks to catch up the following methods will be provided to deactivate this feature:",
+      "source_hash": 7557871333878081697,
+      "context_hash": 4240574275230193789,
+      "translation": "저장 공간과 메모리 오버헤드를 중요하게 여기며 현재 트레이스백을 구문 분석하는 서드파티 도구 및 기타 프로그램이 대응할 수 있도록 하려는 사용자를 위해, 이 기능을 비활성화하는 다음 방법이 제공됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581491Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "A new environment variable: ``PYTHONNODEBUGRANGES``.",
+      "source_hash": 5009638810772421355,
+      "context_hash": 17374174767625436210,
+      "translation": "새 환경 변수: ``PYTHONNODEBUGRANGES``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581491Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "A new command line option for the dev mode: ``python -Xno_debug_ranges``.",
+      "source_hash": 4891129292604034490,
+      "context_hash": 15354281054127645580,
+      "translation": "개발 모드를 위한 새 명령줄 옵션: ``python -Xno_debug_ranges``.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581492Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "If any of these methods are used, the Python compiler will **not** populate code objects with the new information (``None`` will be used instead) and any unmarshalled code objects that contain the extra information will have it stripped away and replaced with ``None``).",
+      "source_hash": 12776828146814321462,
+      "context_hash": 18100170483332227178,
+      "translation": "이러한 방법 중 어느 것이라도 사용하면 Python 컴파일러는 새 정보로 코드 객체를 **채우지 않으며** (대신 ``None``\\ 이 사용됩니다), 추가 정보를 포함하는 마셜 해제된 코드 객체에서는 해당 정보가 제거되고 ``None``\\ 으로 대체됩니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:56:12.860415Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "Additionally, the traceback machinery will not show the extended location information even if the information was present.",
+      "source_hash": 9314071253449276200,
+      "context_hash": 14617072012770882798,
+      "translation": "또한 정보가 존재하더라도 트레이스백 처리 기능은 확장된 위치 정보를 표시하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581493Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:2",
+      "source": "This method allows users to:",
+      "source_hash": 18048468801246921425,
+      "context_hash": 15857604909140292699,
+      "translation": "이 방법을 사용하면 다음을 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581493Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "Create smaller ``pyc`` files by using one of the two methods when said files are created.",
+      "source_hash": 3750909727269783480,
+      "context_hash": 11446133482434123250,
+      "translation": "해당 파일을 생성할 때 두 방법 중 하나를 사용하여 더 작은 ``pyc`` 파일을 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581494Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "Don't load the extra information from ``pyc`` files if those were created with the extra information in the first place.",
+      "source_hash": 13265816121686564100,
+      "context_hash": 18347481681659596156,
+      "translation": "처음부터 추가 정보와 함께 생성된 ``pyc`` 파일에서 추가 정보를 로드하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581494Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "Deactivate the extra information when displaying tracebacks (the caret characters indicating the location of the error).",
+      "source_hash": 7003495476825070113,
+      "context_hash": 14129253277823065790,
+      "translation": "트레이스백을 표시할 때 오류 위치를 나타내는 캐럿 문자를 비롯한 추가 정보를 비활성화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581494Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:0",
+      "source": "Doing this has a **very small** performance hit as the interpreter state needs to be fetched when code objects are created to look up the configuration.",
+      "source_hash": 17436165202718303612,
+      "context_hash": 12177429791795871143,
+      "translation": "이렇게 해도 성능 저하는 **매우 작습니다**. 코드 객체가 생성될 때 구성을 조회하려면 인터프리터 상태를 가져와야 하기 때문입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:12:18.581495Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:8/seg:1",
+      "source": "Creating code objects is not a performance sensitive operation so this should not be a concern.",
+      "source_hash": 14650304027491103987,
+      "context_hash": 9543427377238891017,
+      "translation": "코드 객체 생성은 성능에 민감한 작업이 아니므로 이는 문제가 되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581496Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 7599945595612789024,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581496Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "The change is fully backwards compatible.",
+      "source_hash": 17897868348251980399,
+      "context_hash": 9373132551832121378,
+      "translation": "이 변경 사항은 완전히 하위 호환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581497Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 8318589935546141768,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:12:18.581497Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "A reference implementation can be found in the implementation_ fork.",
+      "source_hash": 6407399662877249999,
+      "context_hash": 683053942396023572,
+      "translation": "참조 구현은 implementation_ 포크에서 확인할 수 있습니다.",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T18:12:18.581498Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 16122180756384990225,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581498Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Use a single caret instead of a range",
+      "source_hash": 6353060403491154005,
+      "context_hash": 3889127096882148945,
+      "translation": "범위 대신 단일 캐럿 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:18.581499Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "It has been proposed to use a single caret instead of highlighting the full range when reporting errors as a way to simplify the feature.",
+      "source_hash": 9755195350088595165,
+      "context_hash": 18303625168253991509,
+      "translation": "기능을 단순화하기 위한 방법으로 오류를 보고할 때 전체 범위를 강조 표시하는 대신 단일 캐럿을 사용하자는 제안이 있었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459953Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:1",
+      "source": "We have decided to not go this route for the following reasons:",
+      "source_hash": 1553567304511725240,
+      "context_hash": 4978719273986525218,
+      "translation": "다음과 같은 이유로 이 방식을 택하지 않기로 했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459956Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "Deriving the location of the caret is not straightforward using the current layout of the AST.",
+      "source_hash": 6240551471418121330,
+      "context_hash": 1139440050555038575,
+      "translation": "현재 AST의 배치로는 캐럿의 위치를 도출하는 일이 간단하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459957Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "This is because the AST nodes only record the start and end line numbers as well as the start and end column offsets.",
+      "source_hash": 15231942497253469361,
+      "context_hash": 10702627449961603531,
+      "translation": "AST 노드는 시작 및 끝 줄 번호와 시작 및 끝 열 오프셋만 기록하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459957Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:2",
+      "source": "As the AST nodes do not preserve the original tokens (by design) deriving the exact location of some tokens is not possible without extra re-parsing.",
+      "source_hash": 10786277412134278409,
+      "context_hash": 13367174069729249668,
+      "translation": "AST 노드는 (의도적으로) 원래 토큰을 보존하지 않으므로, 일부 토큰의 정확한 위치를 도출하려면 추가로 다시 구문 분석해야 하며, 그렇지 않으면 불가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459957Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:3",
+      "source": "For instance, currently binary operators have nodes for the operands but the type of the operator is stored in an enumeration so its location cannot be derived from the node (this is just an example of how this problem manifest, and not the only one).",
+      "source_hash": 6170636246572140788,
+      "context_hash": 9478833086599622672,
+      "translation": "예를 들어 현재 이항 연산자에는 피연산자에 대한 노드가 있지만 연산자의 유형은 열거형에 저장되므로 해당 위치를 노드에서 도출할 수 없습니다(이는 이 문제가 나타나는 방식의 한 예일 뿐이며 유일한 예는 아닙니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459958Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "Deriving the ranges from AST nodes greatly simplifies the implementation and reduces a lot the maintenance cost and the possibilities of errors.",
+      "source_hash": 10665350772710343223,
+      "context_hash": 11680550298565228668,
+      "translation": "AST 노드에서 범위를 도출하면 구현이 크게 단순해지고 유지 관리 비용과 오류가 발생할 가능성이 많이 줄어듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459958Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:1",
+      "source": "This is because using the ranges is always possible to do generically for any AST node, while any other custom information would need to be extracted differently from different types of nodes.",
+      "source_hash": 17984118971250793554,
+      "context_hash": 8821368657184108161,
+      "translation": "범위를 사용하면 모든 AST 노드에 대해 항상 일반적인 방식으로 처리할 수 있지만, 다른 사용자 지정 정보는 서로 다른 노드 유형마다 서로 다른 방식으로 추출해야 하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459958Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:2",
+      "source": "Given how error-prone getting the locations manually was when this used to be a manual process when generating the AST, we believe that a generic solution is a very important property to pursue.",
+      "source_hash": 10980987480976086626,
+      "context_hash": 6647122024850295767,
+      "translation": "AST를 생성할 때 위치를 수동으로 가져오는 작업이 수동 프로세스였던 시절에 얼마나 오류가 발생하기 쉬웠는지를 고려하면, 일반적인 해결책은 우리가 추구해야 할 매우 중요한 특성이라고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459959Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "Storing the information to highlight a single caret will be very limiting for tools such as coverage tools and profilers as well as for tools like IPython and IDEs that want to make use of this new feature.",
+      "source_hash": 2881477207601751925,
+      "context_hash": 16689507301068429183,
+      "translation": "단일 캐럿을 강조 표시하는 정보를 저장하는 것은 커버리지 도구와 프로파일러뿐 아니라 이 새로운 기능을 활용하려는 IPython 및 IDE와 같은 도구에도 매우 큰 제약이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459959Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:1",
+      "source": "As `this message <https://discuss.python.org/t/pep-657-include-fine-grained-error-locations-in-tracebacks/8629/2?u=pablogsal>`_ from the author of \"friendly-traceback\" mentions, the reason is that without the full range (including end lines) these tools will find very difficult to highlight correctly the relevant source code.",
+      "source_hash": 5238048416494990516,
+      "context_hash": 8558187480525760466,
+      "translation": "\"friendly-traceback\"의 저자가 작성한 `이 메시지 <https://discuss.python.org/t/pep-657-include-fine-grained-error-locations-in-tracebacks/8629/2?u=pablogsal>`_\\ 에서 언급하듯이, 그 이유는 전체 범위(끝 줄 포함)가 없으면 이러한 도구가 관련 소스 코드를 올바르게 강조하기가 매우 어렵기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:08:16.023776Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:2",
+      "source": "For instance, for this code",
+      "source_hash": 17317809968910830557,
+      "context_hash": 10172059159732744181,
+      "translation": "예를 들어 다음 코드의 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459959Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "tools (such as coverage reporters) want to be able to highlight the totality of the call that is covered by the executed bytecode (let's say ``foo(a,b,c)``) and not just a single character.",
+      "source_hash": 6957422120741045689,
+      "context_hash": 1950400911253070336,
+      "translation": "도구(예: 커버리지 보고 도구)는 단일 문자만이 아니라 실행된 바이트코드가 포함하는 호출 전체(가령 ``foo(a,b,c)``)를 강조 표시할 수 있어야 합니다.",
+      "glossary_snapshot": {
+        "bytecode": "바이트코드"
+      },
+      "translated_at": "2026-08-28T18:12:50.459960Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:1",
+      "source": "Even if is technically possible to re-parse and re-tokenize the source code to re-construct the information, it is not possible to do this reliably and would result in a much worse user experience.",
+      "source_hash": 12000460955013940951,
+      "context_hash": 16728314055264002389,
+      "translation": "소스 코드를 다시 구문 분석하고 다시 토큰화하여 정보를 재구성하는 것이 기술적으로 가능하더라도, 이를 안정적으로 수행할 수 없으며 사용자 경험이 훨씬 나빠집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459961Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "Many users have reported that a single caret is much harder to read than a full range, and this motivated using ranges to highlight syntax errors, which was very well received.",
+      "source_hash": 2456450463222591432,
+      "context_hash": 12492885953803687000,
+      "translation": "많은 사용자가 단일 캐럿은 전체 범위보다 읽기가 훨씬 어렵다고 보고했으며, 이로 인해 구문 오류를 강조 표시할 때 범위를 사용하게 되었고 이는 매우 좋은 반응을 얻었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459962Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:1",
+      "source": "Additionally, it has been noted that users with vision problems can identify the ranges much easily than a single caret character, which we believe is a great advantage of using ranges.",
+      "source_hash": 13585184511031121211,
+      "context_hash": 16948692691108080043,
+      "translation": "또한 시각에 문제가 있는 사용자는 단일 캐럿 문자보다 범위를 훨씬 쉽게 식별할 수 있다는 점이 지적되었으며, 이는 범위 사용의 큰 장점이라고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459962Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Have a configure flag to opt out",
+      "source_hash": 693482833884597813,
+      "context_hash": 5215647815130278510,
+      "translation": "선택 해제를 위한 configure 플래그를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459962Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "Having a configure flag to opt out of the overhead even when executing Python in non-optimized mode may sound desirable, but it may cause problems when reading pyc files that were created with a version of the interpreter that was not compiled with the flag activated.",
+      "source_hash": 3254604445554959644,
+      "context_hash": 5708026958730871004,
+      "translation": "Python을 비최적화 모드로 실행할 때에도 오버헤드를 선택적으로 해제할 수 있는 configure 플래그를 두는 것이 바람직해 보일 수 있지만, 플래그가 활성화된 상태로 컴파일되지 않은 인터프리터 버전으로 생성된 pyc 파일을 읽을 때 문제가 발생할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:12:50.459962Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "This can lead to crashes that would be very difficult to debug for regular users and will make different pyc files incompatible between each other.",
+      "source_hash": 3953194077310109646,
+      "context_hash": 13570156484892160788,
+      "translation": "이로 인해 일반 사용자가 디버깅하기 매우 어려운 충돌이 발생할 수 있으며, 서로 다른 pyc 파일이 서로 호환되지 않게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459963Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:2",
+      "source": "As this pyc could be shipped as part of libraries or applications without the original source, it is also not always possible to force recompilation of said pyc files.",
+      "source_hash": 14318397681634738475,
+      "context_hash": 16249649777468406203,
+      "translation": "이러한 pyc 파일은 원본 소스 없이 라이브러리나 애플리케이션의 일부로 제공될 수 있으므로, 해당 pyc 파일을 강제로 다시 컴파일하는 것이 항상 가능한 것도 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459963Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:3",
+      "source": "For these reasons we have decided to use the -O flag to opt-out of this behaviour.",
+      "source_hash": 10941914519546245388,
+      "context_hash": 640003383923890583,
+      "translation": "이러한 이유로 이 동작을 선택 해제하려면 -O 플래그를 사용하기로 했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459964Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Lazy loading of column information",
+      "source_hash": 3600731195747370161,
+      "context_hash": 10951633730449982150,
+      "translation": "열 정보의 지연 로딩",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459964Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "One potential solution to reduce the memory usage of this feature is to not load the column information from the pyc file when code is imported.",
+      "source_hash": 18337678948084868369,
+      "context_hash": 10682131911480666115,
+      "translation": "이 기능의 메모리 사용량을 줄이는 한 가지 방법은 코드를 가져올 때 pyc 파일에서 열 정보를 로드하지 않는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459964Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "Only if an uncaught exception bubbles up or if a call to the C-API functions is made will the column information be loaded from the pyc file.",
+      "source_hash": 13912759077866042938,
+      "context_hash": 6052405922473229228,
+      "translation": "처리되지 않은 예외가 전파되거나 C-API 함수 호출이 이루어진 경우에만 pyc 파일에서 열 정보를 로드합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459964Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:2",
+      "source": "This is similar to how we only read source lines to display them in the traceback when an exception bubbles up.",
+      "source_hash": 6868340673288257990,
+      "context_hash": 3512519825305392869,
+      "translation": "이는 예외가 전파될 때 트레이스백에 표시할 소스 줄만 읽는 방식과 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459965Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:3",
+      "source": "While this would indeed lower memory usage, it also results in a far more complex implementation requiring changes to the importing machinery to selectively ignore a part of the code object.",
+      "source_hash": 10879456653615686539,
+      "context_hash": 17062227883157361309,
+      "translation": "이렇게 하면 실제로 메모리 사용량은 줄어들지만, 코드 객체의 일부를 선택적으로 무시하도록 가져오기 메커니즘을 변경해야 하므로 구현이 훨씬 더 복잡해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459965Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:4",
+      "source": "We consider this an interesting avenue to explore but ultimately we think is out of the scope for this particular PEP.",
+      "source_hash": 5311222487379334414,
+      "context_hash": 1301983638522477109,
+      "translation": "이를 흥미로운 탐구 방향이라고 생각하지만, 궁극적으로는 이 특정 PEP의 범위를 벗어난다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459965Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:5",
+      "source": "It also means that column information will not be available if the user is not using pyc files or for code objects created dynamically at runtime.",
+      "source_hash": 4215423524106528207,
+      "context_hash": 14197240625828149118,
+      "translation": "또한 사용자가 pyc 파일을 사용하지 않거나 런타임에 동적으로 생성된 코드 객체인 경우에는 열 정보를 사용할 수 없다는 의미이기도 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459966Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Implement compression",
+      "source_hash": 15160401263487319362,
+      "context_hash": 16365691688890272908,
+      "translation": "압축을 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459966Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Although it would be possible to implement some form of compression over the pyc files and the new data in code objects, we believe that this is out of the scope of this proposal due to its larger impact (in the case of pyc files) and the fact that we expect column offsets to not compress well due to the lack of patterns in them (in case of the new data in code objects).",
+      "source_hash": 173532644708089227,
+      "context_hash": 12289500201150191014,
+      "translation": "pyc 파일과 코드 객체의 새로운 데이터에 어떤 형태로든 압축을 구현하는 것은 가능하겠지만, pyc 파일의 경우 영향이 더 크고 코드 객체의 새로운 데이터의 경우 열 오프셋에 패턴이 부족하여 압축이 잘 되지 않을 것으로 예상되므로, 이는 이 제안의 범위를 벗어난다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459966Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Acknowledgments",
+      "source_hash": 10274568925451722959,
+      "context_hash": 6193200888319360688,
+      "translation": "감사의 말",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:12:50.459966Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Thanks to Carl Friedrich Bolz-Tereick for showing an initial prototype of this idea for the Pypy interpreter and for the helpful discussion.",
+      "source_hash": 11152573846300700006,
+      "context_hash": 572340145511686456,
+      "translation": "이 아이디어의 초기 프로토타입을 Pypy 인터프리터에 보여 주고 유익한 논의를 해 주신 Carl Friedrich Bolz-Tereick에게 감사드립니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:12:50.459966Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 13699519746051790292,
+      "translation": "참조 자료",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:35.613493Z",
+      "issues": []
+    }
+  ]
+}

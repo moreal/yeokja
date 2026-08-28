@@ -1,0 +1,1658 @@
+{
+  "version": 1,
+  "source_hash": 5065966265407285427,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Make os.urandom() blocking on Linux",
+      "source_hash": 3092577934264742443,
+      "context_hash": 16530898886277989957,
+      "translation": "Linux에서 os.urandom()을 블로킹하도록 변경합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184083Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 18091689352356426525,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184086Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Modify ``os.urandom()`` to block on Linux 3.17 and newer until the OS urandom is initialized to increase the security.",
+      "source_hash": 15905612027250813550,
+      "context_hash": 12901638036218569398,
+      "translation": "보안을 강화하기 위해 ``os.urandom()``\\ 을 Linux 3.17 이상에서 OS의 urandom이 초기화될 때까지 블로킹하도록 수정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184086Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "Add also a new ``os.getrandom()`` function (for Linux and Solaris) to be able to choose how to handle when ``os.urandom()`` is going to block on Linux.",
+      "source_hash": 5192397314811324875,
+      "context_hash": 13944484366465559845,
+      "translation": "또한 Linux에서 ``os.urandom()``\\ 이 블로킹될 때 처리 방법을 선택할 수 있도록 Linux 및 Solaris용 새 ``os.getrandom()`` 함수를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184086Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "The bug",
+      "source_hash": 7512982873364237791,
+      "context_hash": 14029867496654673244,
+      "translation": "버그",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184087Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Original bug",
+      "source_hash": 8575120875867985382,
+      "context_hash": 10135145274048238064,
+      "translation": "원래의 버그",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184087Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Python 3.5.0 was enhanced to use the new ``getrandom()`` syscall introduced in Linux 3.17 and Solaris 11.3.",
+      "source_hash": 2391959778675470734,
+      "context_hash": 1042519825110892838,
+      "translation": "Python 3.5.0은 Linux 3.17 및 Solaris 11.3에 도입된 새로운 ``getrandom()`` 시스템 호출을 사용하도록 개선되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184087Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "The problem is that users started to complain that Python 3.5 blocks at startup on Linux in virtual machines and embedded devices: see issues `#25420 <http://bugs.python.org/issue25420>`_ and `#26839 <http://bugs.python.org/issue26839>`_.",
+      "source_hash": 6152213518356026840,
+      "context_hash": 13299745078590006714,
+      "translation": "문제는 사용자가 가상 머신과 임베디드 장치의 Linux에서 Python 3.5가 시작 시 블로킹된다고 불평하기 시작했다는 것입니다. 다음 이슈를 참조하십시오: `#25420 <http://bugs.python.org/issue25420>`_ 및 `#26839 <http://bugs.python.org/issue26839>`_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184087Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "On Linux, ``getrandom(0)`` blocks until the kernel initialized urandom with 128 bits of entropy.",
+      "source_hash": 7564287601876734597,
+      "context_hash": 2466980207835176270,
+      "translation": "Linux에서 ``getrandom(0)``\\ 은 커널이 128비트의 엔트로피로 urandom을 초기화할 때까지 블로킹됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184088Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "The issue #25420 describes a Linux build platform blocking at ``import random``.",
+      "source_hash": 11891341584543698806,
+      "context_hash": 4506973141384145587,
+      "translation": "이슈 #25420은 ``import random``\\ 에서 블로킹되는 Linux 빌드 플랫폼을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184088Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "The issue #26839 describes a short Python script used to compute a MD5 hash, systemd-cron, script called very early in the init process.",
+      "source_hash": 14308217438542962789,
+      "context_hash": 18094901778102259890,
+      "translation": "이슈 #26839는 MD5 해시를 계산하는 데 사용되는 짧은 Python 스크립트인 systemd-cron이 초기화 과정의 매우 이른 시점에 호출되는 스크립트임을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184088Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:3",
+      "source": "The system initialization blocks on this script which blocks on ``getrandom(0)`` to initialize Python.",
+      "source_hash": 6693591450325191254,
+      "context_hash": 16373996911965122035,
+      "translation": "시스템 초기화는 Python을 초기화하기 위해 ``getrandom(0)``\\ 에서 블로킹되는 이 스크립트에서 함께 블로킹됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184088Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "The Python initialization requires random bytes to implement a counter-measure against the hash denial-of-service (hash DoS), see:",
+      "source_hash": 9598665641981319267,
+      "context_hash": 14223410783991384253,
+      "translation": "Python 초기화는 해시 서비스 거부 공격(hash DoS)에 대한 대응책을 구현하기 위해 임의의 바이트를 필요로 합니다. 다음을 참조하십시오:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184089Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "`Issue #13703: Hash collision security issue <http://bugs.python.org/issue13703>`_",
+      "source_hash": 10924984139581321631,
+      "context_hash": 3751333919738256189,
+      "translation": "`이슈 #13703: 해시 충돌 보안 문제 <http://bugs.python.org/issue13703>`_",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184089Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": ":pep:`PEP 456: Secure and interchangeable hash algorithm <456>`",
+      "source_hash": 6567024901721428608,
+      "context_hash": 9710973510174609498,
+      "translation": ":pep:`PEP 456: 안전하고 상호 교환 가능한 해시 알고리즘 <456>`",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184089Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "Importing the ``random`` module creates an instance of ``random.Random``: ``random._inst``.",
+      "source_hash": 17486708732993492574,
+      "context_hash": 7833438326727686208,
+      "translation": "``random`` 모듈을 임포트하면 ``random.Random``\\ 의 인스턴스인 ``random._inst``\\ 가 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184089Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:1",
+      "source": "On Python 3.5, random.Random constructor reads 2500 bytes from ``os.urandom()`` to seed a Mersenne Twister RNG (random number generator).",
+      "source_hash": 8035682995284474450,
+      "context_hash": 13674309721618325874,
+      "translation": "Python 3.5에서는 random.Random 생성자가 ``os.urandom()``\\ 에서 2500바이트를 읽어 Mersenne Twister RNG(난수 제너레이터)의 시드로 사용합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-28T19:46:23.836488Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "Other platforms may be affected by this bug, but in practice, only Linux systems use Python scripts to initialize the system.",
+      "source_hash": 11340395422195702614,
+      "context_hash": 7444989699381190857,
+      "translation": "다른 플랫폼도 이 버그의 영향을 받을 수 있지만, 실제로 시스템을 초기화하는 데 Python 스크립트를 사용하는 시스템은 Linux뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184090Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Status in Python 3.5.2",
+      "source_hash": 11254772696827345428,
+      "context_hash": 17051768866123892280,
+      "translation": "Python 3.5.2에서의 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184091Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "Python 3.5.2 behaves like Python 2.7 and Python 3.4.",
+      "source_hash": 9937838065860501979,
+      "context_hash": 12456666560884918397,
+      "translation": "Python 3.5.2는 Python 2.7 및 Python 3.4와 동일하게 동작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184091Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "If the system urandom is not initialized, the startup does not block, but ``os.urandom()`` can return low-quality entropy (even it is not easily guessable).",
+      "source_hash": 16358291165362214658,
+      "context_hash": 7282831391406201128,
+      "translation": "시스템 urandom이 초기화되지 않은 경우 시작 시 블로킹되지 않지만, ``os.urandom()``\\ 은 품질이 낮은 엔트로피를 반환할 수 있습니다(쉽게 추측할 수 없더라도 그렇습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184091Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Use Cases",
+      "source_hash": 10841861973158336362,
+      "context_hash": 2574095678643906881,
+      "translation": "사용 사례",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184091Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "The following use cases are used to help to choose the right compromise between security and practicability.",
+      "source_hash": 15342295127328491161,
+      "context_hash": 5453200228913797328,
+      "translation": "다음 사용 사례는 보안성과 실용성 사이에서 적절한 절충안을 선택하는 데 도움이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184092Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Use Case 1: init script",
+      "source_hash": 9331337348728286619,
+      "context_hash": 3833721549208662058,
+      "translation": "사용 사례 1: 초기화 스크립트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184092Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "Use a Python 3 script to initialize the system, like systemd-cron.",
+      "source_hash": 7604781624318364527,
+      "context_hash": 11964839323197191936,
+      "translation": "systemd-cron과 같은 Python 3 스크립트를 사용하여 시스템을 초기화합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184092Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "If the script blocks, the system initialize is stuck too.",
+      "source_hash": 12795530901275234768,
+      "context_hash": 17539838458248733354,
+      "translation": "스크립트가 블로킹되면 시스템 초기화도 중단됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184092Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:2",
+      "source": "The issue #26839 is a good example of this use case.",
+      "source_hash": 14262426882096852063,
+      "context_hash": 14711700707999535665,
+      "translation": "이슈 #26839는 이 사용 사례의 좋은 예입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184093Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "Use case 1.1: No secret needed",
+      "source_hash": 12346831743033431067,
+      "context_hash": 9184145448832342914,
+      "translation": "사용 사례 1.1: 비밀이 필요하지 않음",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184093Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "If the init script doesn't have to generate any secure secret, this use case is already handled correctly in Python 3.5.2: Python startup doesn't block on system urandom anymore.",
+      "source_hash": 4855219822736567223,
+      "context_hash": 10688535986532512949,
+      "translation": "초기화 스크립트가 안전한 비밀을 생성할 필요가 없다면, 이 사용 사례는 Python 3.5.2에서 이미 올바르게 처리됩니다. Python 시작 시 더 이상 시스템 urandom에서 블로킹되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184093Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "Use case 1.2: Secure secret required",
+      "source_hash": 752956391217684755,
+      "context_hash": 14284760506024886733,
+      "translation": "사용 사례 1.2: 안전한 비밀이 필요함",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184093Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "If the init script has to generate a secure secret, there is no safe solution.",
+      "source_hash": 7579377182421747607,
+      "context_hash": 15689548613492976918,
+      "translation": "초기화 스크립트가 안전한 비밀을 생성해야 한다면 안전한 해결책이 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184094Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:6/seg:0",
+      "source": "Falling back to weak entropy is not acceptable, it would reduce the security of the program.",
+      "source_hash": 12877582239021033984,
+      "context_hash": 1310669830790348346,
+      "translation": "약한 엔트로피로 대체하는 것은 허용되지 않으며, 그렇게 하면 프로그램의 보안이 저하됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:55.184094Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:0",
+      "source": "Python cannot produce itself secure entropy, it can only wait until system urandom is initialized.",
+      "source_hash": 3595730123883838486,
+      "context_hash": 5656919996791688686,
+      "translation": "Python은 자체적으로 안전한 엔트로피를 생성할 수 없으며, 시스템 urandom이 초기화될 때까지 기다릴 수밖에 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820539Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:7/seg:1",
+      "source": "But in this use case, the whole system initialization is blocked by this script, so the system fails to boot.",
+      "source_hash": 9643698775578822380,
+      "context_hash": 14436357950939114449,
+      "translation": "그러나 이 사용 사례에서는 이 스크립트가 전체 시스템 초기화를 차단하므로 시스템이 부팅되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820544Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:0",
+      "source": "The real answer is that the system initialization must not be blocked by such script.",
+      "source_hash": 8657082217722708461,
+      "context_hash": 12072058113400979459,
+      "translation": "진정한 해답은 이러한 스크립트가 시스템 초기화를 차단해서는 안 된다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820545Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:8/seg:1",
+      "source": "It is ok to start the script very early at system initialization, but the script may blocked a few seconds until it is able to generate the secret.",
+      "source_hash": 11328437056904724638,
+      "context_hash": 3036258513668129665,
+      "translation": "시스템 초기화 과정에서 스크립트를 매우 일찍 시작하는 것은 괜찮지만, 스크립트는 비밀을 생성할 수 있을 때까지 몇 초 동안 차단될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820545Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:9/seg:0",
+      "source": "Reminder: in some cases, the initialization of the system urandom never occurs and so programs waiting for system urandom blocks forever.",
+      "source_hash": 18013559441324757963,
+      "context_hash": 5420665321680233629,
+      "translation": "참고로, 경우에 따라 시스템 urandom의 초기화가 결코 발생하지 않으므로 시스템 urandom을 기다리는 프로그램이 영원히 차단됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820546Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Use Case 2: Web server",
+      "source_hash": 15253616211244286838,
+      "context_hash": 14993023093528716317,
+      "translation": "사용 사례 2: 웹 서버",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820546Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Run a Python 3 web server serving web pages using HTTP and HTTPS protocols.",
+      "source_hash": 8675726510519308347,
+      "context_hash": 11234126997451777578,
+      "translation": "HTTP 및 HTTPS 프로토콜을 사용하여 웹 페이지를 제공하는 Python 3 웹 서버를 실행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820546Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "The server is started as soon as possible.",
+      "source_hash": 2932998024397986324,
+      "context_hash": 10270230550637360134,
+      "translation": "서버는 가능한 한 빨리 시작됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820547Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "The first target of the hash DoS attack was web server: it's important that the hash secret cannot be easily guessed by an attacker.",
+      "source_hash": 17410329079616075079,
+      "context_hash": 13596928770116966847,
+      "translation": "해시 DoS 공격의 첫 번째 대상은 웹 서버였습니다. 공격자가 해시 비밀을 쉽게 추측할 수 없도록 하는 것이 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820547Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "If serving a web page needs a secret to create a cookie, create an encryption key, ..., the secret must be created with good entropy: again, it must be hard to guess the secret.",
+      "source_hash": 9505977734035154977,
+      "context_hash": 9475995451132796038,
+      "translation": "웹 페이지를 제공하려면 쿠키를 생성하거나 암호화 키를 생성하는 등의 작업에 비밀이 필요한 경우, 해당 비밀은 충분히 좋은 엔트로피를 사용하여 생성해야 합니다. 다시 말해, 비밀을 추측하기 어려워야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820548Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "A web server requires security.",
+      "source_hash": 15164772969974241263,
+      "context_hash": 12098065196656165021,
+      "translation": "웹 서버에는 보안이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820548Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:1",
+      "source": "If a choice must be made between security and running the server with weak entropy, security is more important.",
+      "source_hash": 7442769631016147032,
+      "context_hash": 14430468064573069322,
+      "translation": "보안과 낮은 엔트로피로 서버를 실행하는 것 중 하나를 선택해야 한다면 보안이 더 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820549Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:2",
+      "source": "If there is no good entropy: the server must block or fail with an error.",
+      "source_hash": 4735649205961586799,
+      "context_hash": 86859624099610183,
+      "translation": "충분히 좋은 엔트로피가 없다면 서버는 차단되거나 오류와 함께 실패해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820549Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "The question is if it makes sense to start a web server on a host before system urandom is initialized.",
+      "source_hash": 3036605558941883953,
+      "context_hash": 9733776811614433482,
+      "translation": "시스템 urandom이 초기화되기 전에 호스트에서 웹 서버를 시작하는 것이 의미가 있는지에 대한 질문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820549Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "The issues #25420 and #26839 are restricted to the Python startup, not to generate a secret before the system urandom is initialized.",
+      "source_hash": 17017419873181179827,
+      "context_hash": 13825542399676596446,
+      "translation": "이슈 #25420과 #26839는 시스템 urandom이 초기화되기 전에 비밀을 생성하는 것이 아니라 Python 시작 과정에만 국한됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820549Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Fix system urandom",
+      "source_hash": 16736922988404025801,
+      "context_hash": 7076994645276200667,
+      "translation": "시스템 urandom 수정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820550Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Load entropy from disk at boot",
+      "source_hash": 1205100849262267570,
+      "context_hash": 12101540971774851448,
+      "translation": "부팅 시 디스크에서 엔트로피 로드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820550Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Collecting entropy can take up to several minutes.",
+      "source_hash": 16886151545019659471,
+      "context_hash": 17989467196352597414,
+      "translation": "엔트로피를 수집하는 데 최대 몇 분이 걸릴 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820550Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "To accelerate the system initialization, operating systems store entropy on disk at shutdown, and then reload entropy from disk at the boot.",
+      "source_hash": 18112024187380457484,
+      "context_hash": 10054547856290425218,
+      "translation": "시스템 초기화를 가속하기 위해 운영 체제는 종료 시 엔트로피를 디스크에 저장한 다음 부팅 시 디스크에서 엔트로피를 다시 로드합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820551Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "If a system collects enough entropy at least once, the system urandom will be initialized quickly, as soon as the entropy is reloaded from disk.",
+      "source_hash": 2262089301952784729,
+      "context_hash": 8492996322508932193,
+      "translation": "시스템이 한 번이라도 충분한 엔트로피를 수집하면, 디스크에서 엔트로피를 다시 로드하는 즉시 시스템 urandom이 빠르게 초기화됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820551Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Virtual machines",
+      "source_hash": 10966350112373976119,
+      "context_hash": 1337763359762293057,
+      "translation": "가상 머신",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820551Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Virtual machines don't have a direct access to the hardware and so have less sources of entropy than bare metal.",
+      "source_hash": 13400614465980326763,
+      "context_hash": 4468161845769968182,
+      "translation": "가상 머신은 하드웨어에 직접 액세스할 수 없으므로 베어 메탈보다 엔트로피의 원천이 적습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820552Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "A solution is to add a `virtio-rng device <https://fedoraproject.org/wiki/Features/Virtio_RNG>`_ to pass entropy from the host to the virtual machine.",
+      "source_hash": 8394656852555749507,
+      "context_hash": 10794382057410162405,
+      "translation": "한 가지 해결책은 호스트에서 가상 머신으로 엔트로피를 전달하도록 `virtio-rng device <https://fedoraproject.org/wiki/Features/Virtio_RNG>`_\\ 를 추가하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820552Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Embedded devices",
+      "source_hash": 12375593982174000148,
+      "context_hash": 14012171035635782150,
+      "translation": "임베디드 장치",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820552Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "A solution for embedded devices is to plug an hardware RNG.",
+      "source_hash": 1102306839717529594,
+      "context_hash": 5027919243992438795,
+      "translation": "임베디드 장치의 한 가지 해결책은 하드웨어 RNG를 연결하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820553Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "For example, Raspberry Pi have an hardware RNG but it's not used by default.",
+      "source_hash": 10820401028980421513,
+      "context_hash": 5214588251406587143,
+      "translation": "예를 들어 Raspberry Pi에는 하드웨어 RNG가 있지만 기본적으로 사용되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820553Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "See: `Hardware RNG on Raspberry Pi <http://fios.sector16.net/hardware-rng-on-raspberry-pi/>`_.",
+      "source_hash": 18009183228229418310,
+      "context_hash": 3950936522122649924,
+      "translation": "`Hardware RNG on Raspberry Pi <http://fios.sector16.net/hardware-rng-on-raspberry-pi/>`_\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820553Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Denial-of-service when reading random",
+      "source_hash": 6645629816045758205,
+      "context_hash": 727303190599317378,
+      "translation": "난수를 읽을 때의 서비스 거부",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820553Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Don't use /dev/random but /dev/urandom",
+      "source_hash": 6335950334132460312,
+      "context_hash": 14178964834370571949,
+      "translation": "/dev/random이 아니라 /dev/urandom을 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.820554Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "The ``/dev/random`` device should only used for very specific use cases.",
+      "source_hash": 810475302389933816,
+      "context_hash": 11552143417527197280,
+      "translation": "``/dev/random`` 장치는 매우 특정한 사용 사례에서만 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456576Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:1",
+      "source": "Reading from ``/dev/random`` on Linux is likely to block.",
+      "source_hash": 4752434915038595889,
+      "context_hash": 2956371705378857481,
+      "translation": "Linux에서 ``/dev/random``\\ 을 읽으면 블로킹될 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456579Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:2",
+      "source": "Users don't like when an application blocks longer than 5 seconds to generate a secret.",
+      "source_hash": 418052123893060623,
+      "context_hash": 1421939767893902264,
+      "translation": "애플리케이션이 비밀값을 생성하기 위해 5초보다 오래 블로킹되는 것을 사용자는 좋아하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456580Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:3",
+      "source": "It is only expected for specific cases like generating explicitly an encryption key.",
+      "source_hash": 7655278422408189005,
+      "context_hash": 13964133321583003017,
+      "translation": "암호화 키를 명시적으로 생성하는 경우와 같은 특정 사례에서만 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456580Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "When the system has no available entropy, choosing between blocking until entropy is available or falling back on lower quality entropy is a matter of compromise between security and practicability.",
+      "source_hash": 11012152323730330066,
+      "context_hash": 12138434160941958061,
+      "translation": "시스템에 사용 가능한 엔트로피가 없을 때 엔트로피를 사용할 수 있을 때까지 블로킹할지, 아니면 품질이 낮은 엔트로피로 대체할지를 선택하는 것은 보안과 실용성 사이에서 절충해야 하는 문제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456580Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:1",
+      "source": "The choice depends on the use case.",
+      "source_hash": 12279197734378373505,
+      "context_hash": 7102775935321513415,
+      "translation": "선택은 사용 사례에 따라 달라집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456581Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "On Linux, ``/dev/urandom`` is secure, it should be used instead of ``/dev/random``.",
+      "source_hash": 472347859260229342,
+      "context_hash": 16977873236096636248,
+      "translation": "Linux에서 ``/dev/urandom``\\ 은 안전하므로 ``/dev/random`` 대신 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456581Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:1",
+      "source": "See `Myths about /dev/urandom <http://www.2uo.de/myths-about-urandom/>`_ by Thomas Hühn: \"Fact: /dev/urandom is the preferred source of cryptographic randomness on UNIX-like systems\"",
+      "source_hash": 14259538165283692235,
+      "context_hash": 17460261781699348331,
+      "translation": "Thomas Hühn의 `Myths about /dev/urandom <http://www.2uo.de/myths-about-urandom/>`_\\ 을 참조하십시오: \"사실: /dev/urandom은 UNIX 계열 시스템에서 암호학적 무작위성의 권장 소스입니다.\"",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456582Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "getrandom(size, 0) can block forever on Linux",
+      "source_hash": 1164237530237470985,
+      "context_hash": 5150668328873889350,
+      "translation": "Linux에서 getrandom(size, 0)은 영원히 블로킹될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456582Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "The origin of the Python issue #26839 is the `Debian bug report #822431 <https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=822431>`_: in fact, ``getrandom(size, 0)`` blocks forever on the virtual machine.",
+      "source_hash": 15725104871599073479,
+      "context_hash": 17240508680700714947,
+      "translation": "Python 이슈 #26839의 기원은 `Debian bug report #822431 <https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=822431>`_\\ 입니다. 실제로 가상 머신에서 ``getrandom(size, 0)``\\ 이 영원히 블로킹됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456582Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:1",
+      "source": "The system succeeded to boot because systemd killed the blocked process after 90 seconds.",
+      "source_hash": 3412619932525800572,
+      "context_hash": 17123392919403622522,
+      "translation": "systemd가 90초 후 블로킹된 프로세스를 종료했기 때문에 시스템이 부팅에 성공했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456583Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "Solutions like `Load entropy from disk at boot`_ reduces the risk of this bug.",
+      "source_hash": 8603003628201208485,
+      "context_hash": 2883085689669000199,
+      "translation": "`Load entropy from disk at boot`_\\ 과 같은 해결책은 이 버그의 위험을 줄입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456583Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 5582598833456034526,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456583Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "On Linux, reading the ``/dev/urandom`` can return \"weak\" entropy before urandom is fully initialized, before the kernel collected 128 bits of entropy.",
+      "source_hash": 11592132030011956369,
+      "context_hash": 16798754745843185166,
+      "translation": "Linux에서 ``/dev/urandom``\\ 을 읽으면 urandom이 완전히 초기화되기 전, 즉 커널이 128비트의 엔트로피를 수집하기 전에 \"약한\" 엔트로피가 반환될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456584Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:1",
+      "source": "Linux 3.17 adds a new ``getrandom()`` syscall which allows to block until urandom is initialized.",
+      "source_hash": 18307663406663791238,
+      "context_hash": 8366565623506016479,
+      "translation": "Linux 3.17에는 urandom이 초기화될 때까지 블로킹할 수 있는 새로운 ``getrandom()`` 시스템 호출이 추가되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456584Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "On Python 3.5.2, os.urandom() uses the ``getrandom(size, GRND_NONBLOCK)``, but falls back on reading the non-blocking ``/dev/urandom`` if ``getrandom(size, GRND_NONBLOCK)`` fails with ``EAGAIN``.",
+      "source_hash": 3183027438535534325,
+      "context_hash": 7533731806324535996,
+      "translation": "Python 3.5.2에서 os.urandom()은 ``getrandom(size, GRND_NONBLOCK)``\\ 을 사용하지만, ``getrandom(size, GRND_NONBLOCK)``\\ 이 ``EAGAIN``\\ 과 함께 실패하면 블로킹되지 않는 ``/dev/urandom``\\ 을 읽는 방식으로 대체합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456584Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "Security experts promotes ``os.urandom()`` to generate cryptographic keys because it is implemented with a `Cryptographically secure pseudo-random number generator (CSPRNG) <https://en.wikipedia.org/wiki/Cryptographically_secure_pseudorandom_number_generator>`_.",
+      "source_hash": 8484116255488914434,
+      "context_hash": 2169579615572706913,
+      "translation": "보안 전문가들은 `Cryptographically secure pseudo-random number generator (CSPRNG) <https://en.wikipedia.org/wiki/Cryptographically_secure_pseudorandom_number_generator>`_\\ 로 구현되어 있기 때문에 암호화 키를 생성하는 데 ``os.urandom()``\\ 을 사용할 것을 권장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456584Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:1",
+      "source": "By the way, ``os.urandom()`` is preferred over ``ssl.RAND_bytes()`` for different reasons.",
+      "source_hash": 6526945864561163978,
+      "context_hash": 5742030276549872134,
+      "translation": "또한 여러 가지 이유로 ``os.urandom()``\\ 이 ``ssl.RAND_bytes()``\\ 보다 선호됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456585Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:4/seg:0",
+      "source": "This PEP proposes to modify os.urandom() to use ``getrandom()`` in blocking mode to not return weak entropy, but also ensure that Python will not block at startup.",
+      "source_hash": 2560303256279284366,
+      "context_hash": 6232805905102461650,
+      "translation": "이 PEP는 약한 엔트로피를 반환하지 않도록 os.urandom()이 블로킹 모드에서 ``getrandom()``\\ 을 사용하게 수정하면서도 Python이 시작 시 블로킹되지 않도록 보장할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456585Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Changes",
+      "source_hash": 16338901047571710273,
+      "context_hash": 8414953624143868058,
+      "translation": "변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456585Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Make os.urandom() blocking on Linux",
+      "source_hash": 3092577934264742443,
+      "context_hash": 17868221742114932337,
+      "translation": "Linux에서 os.urandom()을 블로킹 방식으로 만들기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456586Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "All changes described in this section are specific to the Linux platform.",
+      "source_hash": 7153175711108373558,
+      "context_hash": 12069805407263319559,
+      "translation": "이 절에서 설명하는 모든 변경 사항은 Linux 플랫폼에만 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456586Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "Changes:",
+      "source_hash": 3457834337086102016,
+      "context_hash": 13024986636378405371,
+      "translation": "변경 사항:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456586Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "Modify os.urandom() to block until system urandom is initialized: ``os.urandom()`` (C function ``_PyOS_URandom()``) is modified to always call ``getrandom(size, 0)`` (blocking mode) on Linux and Solaris.",
+      "source_hash": 1491172162072837993,
+      "context_hash": 18430675103539115899,
+      "translation": "시스템 urandom이 초기화될 때까지 os.urandom()을 블로킹하도록 수정합니다: ``os.urandom()`` (C 함수 ``_PyOS_URandom()``)이 Linux와 Solaris에서 항상 ``getrandom(size, 0)`` (블로킹 모드)을 호출하도록 수정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456587Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:4/seg:0",
+      "source": "Add a new private ``_PyOS_URandom_Nonblocking()`` function: try to call ``getrandom(size, GRND_NONBLOCK)`` on Linux and Solaris, but falls back on reading ``/dev/urandom`` if it fails with ``EAGAIN``.",
+      "source_hash": 15418428109256579269,
+      "context_hash": 13762056541280649148,
+      "translation": "새로운 비공개 ``_PyOS_URandom_Nonblocking()`` 함수를 추가합니다: Linux와 Solaris에서 ``getrandom(size, GRND_NONBLOCK)`` 호출을 시도하지만, ``EAGAIN``\\ 과 함께 실패하면 ``/dev/urandom``\\ 을 읽는 방식으로 대체합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456587Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:5/seg:0",
+      "source": "Initialize hash secret from non-blocking system urandom: ``_PyRandom_Init()`` is modified to call ``_PyOS_URandom_Nonblocking()``.",
+      "source_hash": 2799488218315406363,
+      "context_hash": 8977107457689210735,
+      "translation": "블로킹되지 않는 시스템 urandom에서 해시 비밀값을 초기화합니다: ``_PyRandom_Init()``\\ 이 ``_PyOS_URandom_Nonblocking()``\\ 을 호출하도록 수정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456587Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:6/seg:0",
+      "source": "``random.Random`` constructor now uses non-blocking system urandom: it is modified to use internally the new ``_PyOS_URandom_Nonblocking()`` function to seed the RNG.",
+      "source_hash": 13617066053904205816,
+      "context_hash": 966000110225534213,
+      "translation": "이제 ``random.Random`` 생성자는 블로킹되지 않는 시스템 urandom을 사용합니다. RNG의 시드 설정에 새 ``_PyOS_URandom_Nonblocking()`` 함수를 내부적으로 사용하도록 수정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456587Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Add a new os.getrandom() function",
+      "source_hash": 1390378343566091512,
+      "context_hash": 9484563315177629898,
+      "translation": "새로운 os.getrandom() 함수를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456588Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "A new ``os.getrandom(size, flags=0)`` function is added: use ``getrandom()`` syscall on Linux and ``getrandom()`` C function on Solaris.",
+      "source_hash": 6648419182023476648,
+      "context_hash": 8143820258459620939,
+      "translation": "새로운 ``os.getrandom(size, flags=0)`` 함수가 추가됩니다. Linux에서는 ``getrandom()`` 시스템 호출을, Solaris에서는 ``getrandom()`` C 함수를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456588Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "The function comes with 2 new flags:",
+      "source_hash": 13194003409319575597,
+      "context_hash": 8601210030250701860,
+      "translation": "이 함수에는 새로운 플래그 2개가 제공됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456588Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "``os.GRND_RANDOM``: read bytes from ``/dev/random`` rather than reading ``/dev/urandom``",
+      "source_hash": 8920146190880824908,
+      "context_hash": 8008826722389634504,
+      "translation": "``os.GRND_RANDOM``: ``/dev/urandom``\\ 을 읽는 대신 ``/dev/random``\\ 에서 바이트를 읽습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456589Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "``os.GRND_NONBLOCK``: raise a BlockingIOError if ``os.getrandom()`` would block",
+      "source_hash": 17324796470805480745,
+      "context_hash": 10429731949110899380,
+      "translation": "``os.GRND_NONBLOCK``: ``os.getrandom()``\\ 이 블로킹될 경우 BlockingIOError를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:46.456589Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "The ``os.getrandom()`` is a thin wrapper on the ``getrandom()`` syscall/C function and so inherit of its behaviour.",
+      "source_hash": 6783860793566592474,
+      "context_hash": 3017750192408796509,
+      "translation": "``os.getrandom()``\\ 은 ``getrandom()`` 시스템 호출/C 함수의 얇은 래퍼이므로 해당 동작을 그대로 상속합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998776Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:1",
+      "source": "For example, on Linux, it can return less bytes than requested if the syscall is interrupted by a signal.",
+      "source_hash": 15410705506114097387,
+      "context_hash": 10071383050357260070,
+      "translation": "예를 들어 Linux에서는 시스템 호출이 시그널에 의해 중단되면 요청한 바이트 수보다 적은 바이트를 반환할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998780Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Examples using os.getrandom()",
+      "source_hash": 2884302170271650388,
+      "context_hash": 312737202412503954,
+      "translation": "os.getrandom()을 사용하는 예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998780Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Best-effort RNG",
+      "source_hash": 4509050106990545517,
+      "context_hash": 1838496507554859746,
+      "translation": "최선 노력 RNG",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998781Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "Example of a portable non-blocking RNG function: try to get random bytes from the OS urandom, or fallback on the random module.",
+      "source_hash": 6618217456444535953,
+      "context_hash": 3005730864390302510,
+      "translation": "이식 가능한 비블로킹 RNG 함수의 예제입니다. OS urandom에서 무작위 바이트를 가져오고, 실패하면 random 모듈로 대체합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998781Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:0",
+      "source": "This function *can* block in theory on a platform where ``os.getrandom()`` is not available but ``os.urandom()`` can block.",
+      "source_hash": 7886468630574217235,
+      "context_hash": 17882864811800362925,
+      "translation": "``os.getrandom()``\\ 을 사용할 수 없지만 ``os.urandom()``\\ 은 차단될 수 있는 플랫폼에서는 이 함수가 이론적으로 *차단될* 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:46:23.836492Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "wait_for_system_rng()",
+      "source_hash": 6286666213271135585,
+      "context_hash": 15933373225050426638,
+      "translation": "wait_for_system_rng()",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998782Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "Example of function waiting *timeout* seconds until the OS urandom is initialized on Linux or Solaris",
+      "source_hash": 1371782096510217079,
+      "context_hash": 16721506229971090861,
+      "translation": "Linux 또는 Solaris에서 OS urandom이 초기화될 때까지 *timeout*\\ 초 동안 대기하는 함수의 예제입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998783Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "This function is *not* portable.",
+      "source_hash": 7079370729672904909,
+      "context_hash": 14718081800353149899,
+      "translation": "이 함수는 *이식 가능하지 않습니다*.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998783Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:1",
+      "source": "For example, ``os.urandom()`` can block on FreeBSD in theory, at the early stage of the system initialization.",
+      "source_hash": 50706135088848625,
+      "context_hash": 12065857498468878940,
+      "translation": "예를 들어 시스템 초기화 초기 단계의 FreeBSD에서는 ``os.urandom()``\\ 이 이론적으로 블로킹될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998783Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Create a best-effort RNG",
+      "source_hash": 11069427746422176518,
+      "context_hash": 9054977683473046999,
+      "translation": "최선 노력 RNG 생성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998784Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "Simpler example to create a non-blocking RNG on Linux: choose between ``Random.SystemRandom`` and ``Random.Random`` depending if ``getrandom(size)`` would block.",
+      "source_hash": 8159505354062911033,
+      "context_hash": 3792044156882203396,
+      "translation": "Linux에서 비블로킹 RNG를 생성하는 더 간단한 예제입니다. ``getrandom(size)``\\ 가 블로킹될지 여부에 따라 ``Random.SystemRandom``\\ 과 ``Random.Random`` 중 하나를 선택합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998784Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:0",
+      "source": "This function is *not* portable.",
+      "source_hash": 7079370729672904909,
+      "context_hash": 12843927419233282154,
+      "translation": "이 함수는 *이식 가능하지 않습니다*.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998784Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:3/seg:1",
+      "source": "For example, ``random.SystemRandom`` can block on FreeBSD in theory, at the early stage of the system initialization.",
+      "source_hash": 1633754443278113060,
+      "context_hash": 1439142760780631367,
+      "translation": "예를 들어 시스템 초기화 초기 단계의 FreeBSD에서는 ``random.SystemRandom``\\ 이 이론적으로 블로킹될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998784Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "Alternative",
+      "source_hash": 17095885588443661121,
+      "context_hash": 5883314543495245768,
+      "translation": "대안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998785Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "Leave os.urandom() unchanged, add os.getrandom()",
+      "source_hash": 18345892491651316178,
+      "context_hash": 8882294453290170929,
+      "translation": "os.urandom()은 변경하지 않고 os.getrandom()을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998785Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "os.urandom() remains unchanged: never block, but it can return weak entropy if system urandom is not initialized yet.",
+      "source_hash": 12174068337730902861,
+      "context_hash": 5699863839803476079,
+      "translation": "os.urandom()은 변경되지 않습니다. 절대 블로킹되지 않지만 시스템 urandom이 아직 초기화되지 않은 경우 약한 엔트로피를 반환할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998786Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:0",
+      "source": "Only add the new ``os.getrandom()`` function (wrapper to the ``getrandom()`` syscall/C function).",
+      "source_hash": 5259191770824225783,
+      "context_hash": 2382697906663826016,
+      "translation": "새로운 ``os.getrandom()``\\ 함수만 추가합니다(``getrandom()`` 시스템 호출/C 함수의 래퍼입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998786Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:0",
+      "source": "The ``secrets.token_bytes()`` function should be used to write portable code.",
+      "source_hash": 16300633729964308650,
+      "context_hash": 8982148040815681434,
+      "translation": "이식 가능한 코드를 작성하려면 ``secrets.token_bytes()``\\ 함수를 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998786Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:0",
+      "source": "The problem with this change is that it expects that users understand well security and know well each platforms.",
+      "source_hash": 11535872121934339495,
+      "context_hash": 13578289671509638598,
+      "translation": "이 변경의 문제는 사용자가 보안을 잘 이해하고 각 플랫폼을 잘 알고 있어야 한다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998786Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:1",
+      "source": "Python has the tradition of hiding \"implementation details\".",
+      "source_hash": 1205360889743494056,
+      "context_hash": 3317961138388287510,
+      "translation": "Python에는 “구현 세부 사항”을 숨기는 전통이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998787Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:2",
+      "source": "For example, ``os.urandom()`` is not a thin wrapper to the ``/dev/urandom`` device: it uses ``CryptGenRandom()`` on Windows, it uses ``getentropy()`` on OpenBSD, it tries ``getrandom()`` on Linux and Solaris or falls back on reading ``/dev/urandom``.",
+      "source_hash": 8533554068871846775,
+      "context_hash": 3226693878229401381,
+      "translation": "예를 들어 ``os.urandom()``\\ 은 ``/dev/urandom`` 장치의 얇은 래퍼가 아닙니다. Windows에서는 ``CryptGenRandom()``\\ 을 사용하고, OpenBSD에서는 ``getentropy()``\\ 를 사용하며, Linux와 Solaris에서는 ``getrandom()``\\ 을 시도하거나 ``/dev/urandom``\\ 을 읽는 방식으로 대체합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998787Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:3",
+      "source": "Python already uses the best available system RNG depending on the platform.",
+      "source_hash": 1499900580751817305,
+      "context_hash": 5184460527289051520,
+      "translation": "Python은 이미 플랫폼에 따라 사용 가능한 최상의 시스템 RNG를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998787Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:5/seg:0",
+      "source": "This PEP does not change the API:",
+      "source_hash": 15959793258639443722,
+      "context_hash": 11383754186443870171,
+      "translation": "이 PEP는 API를 변경하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998787Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:6/seg:0",
+      "source": "``os.urandom()``, ``random.SystemRandom`` and ``secrets`` for security",
+      "source_hash": 12842061205797014202,
+      "context_hash": 14879120274800526821,
+      "translation": "보안을 위해 ``os.urandom()``, ``random.SystemRandom`` 및 ``secrets``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998788Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:7/seg:0",
+      "source": "``random`` module (except ``random.SystemRandom``) for all other usages",
+      "source_hash": 12761261948428975971,
+      "context_hash": 6832581015367784238,
+      "translation": "그 밖의 모든 용도에는 ``random`` 모듈(``random.SystemRandom``\\ 제외)을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998788Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Raise BlockingIOError in os.urandom()",
+      "source_hash": 9422068409763684435,
+      "context_hash": 11829375006531626913,
+      "translation": "os.urandom()에서 BlockingIOError 발생",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998788Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "Proposition",
+      "source_hash": 10172954104684447689,
+      "context_hash": 10659721903385125434,
+      "translation": "제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998788Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:2/seg:0",
+      "source": ":pep:`PEP 522: Allow BlockingIOError in security sensitive APIs on Linux <522>`.",
+      "source_hash": 17482607531232696856,
+      "context_hash": 1036502901086841253,
+      "translation": ":pep:`PEP 522: Linux에서 보안에 민감한 API에 BlockingIOError 허용 <522>`\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998789Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:3/seg:0",
+      "source": "Python should not decide for the developer how to handle `The bug`_: raising immediately a ``BlockingIOError`` if ``os.urandom()`` is going to block allows developers to choose how to handle this case:",
+      "source_hash": 17774031117579942106,
+      "context_hash": 16537893293605446300,
+      "translation": "Python은 개발자를 대신하여 `The bug`_ 를 처리하는 방법을 결정해서는 안 됩니다. ``os.urandom()``\\ 이 블로킹될 경우 즉시 ``BlockingIOError``\\ 를 발생시키면 개발자가 이 상황을 처리할 방법을 선택할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998789Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:4/seg:0",
+      "source": "catch the exception and falls back to a non-secure entropy source: read ``/dev/urandom`` on Linux, use the Python ``random`` module (which is not secure at all), use time, use process identifier, etc.",
+      "source_hash": 11019817849490628139,
+      "context_hash": 15829370838620850561,
+      "translation": "예외를 포착하고 보안되지 않은 엔트로피 소스로 대체합니다. Linux에서는 ``/dev/urandom``\\ 을 읽고, 전혀 안전하지 않은 Python ``random`` 모듈을 사용하며, 시간을 사용하거나 프로세스 식별자를 사용하는 등의 방법이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998789Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:5/seg:0",
+      "source": "don't catch the error, the whole program fails with this fatal exception",
+      "source_hash": 3186137237966440349,
+      "context_hash": 12043808542826920736,
+      "translation": "오류를 포착하지 않으면 전체 프로그램이 이 치명적인 예외와 함께 실패합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:07:38.998790Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:6/seg:0",
+      "source": "More generally, the exception helps to notify when sometimes goes wrong.",
+      "source_hash": 5171269126330398218,
+      "context_hash": 18425237627566283791,
+      "translation": "보다 일반적으로, 이 예외는 무언가 잘못되었을 때 이를 알리는 데 도움이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961076Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:6/seg:1",
+      "source": "The application can emit a warning when it starts to wait for ``os.urandom()``.",
+      "source_hash": 11148962811216108336,
+      "context_hash": 10022456819633599197,
+      "translation": "애플리케이션은 ``os.urandom()``\\ 을 기다리기 시작할 때 경고를 발생시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961079Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:7/seg:0",
+      "source": "Criticism",
+      "source_hash": 1441371223535607791,
+      "context_hash": 16139165300940995885,
+      "translation": "비판",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961079Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:8/seg:0",
+      "source": "For the use case 2 (web server), falling back on non-secure entropy is not acceptable.",
+      "source_hash": 17480671355918104021,
+      "context_hash": 1925703495248189291,
+      "translation": "사용 사례 2(웹 서버)의 경우, 보안되지 않은 엔트로피로 대체하는 것은 허용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961080Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:8/seg:1",
+      "source": "The application must handle ``BlockingIOError``: poll ``os.urandom()`` until it completes.",
+      "source_hash": 8207261415344790592,
+      "context_hash": 7603136340115738005,
+      "translation": "애플리케이션은 ``BlockingIOError``\\ 를 처리해야 합니다. 완료될 때까지 ``os.urandom()``\\ 을 폴링해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961080Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:8/seg:2",
+      "source": "Example",
+      "source_hash": 1513857641461741027,
+      "context_hash": 13287237529758300175,
+      "translation": "예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961080Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:10/seg:0",
+      "source": "For correctness, all applications which must generate a secure secret must be modified to handle ``BlockingIOError`` even if `The bug`_ is unlikely.",
+      "source_hash": 10966893174480073720,
+      "context_hash": 13996614616892139195,
+      "translation": "정확성을 위해, 보안 비밀을 생성해야 하는 모든 애플리케이션은 `The bug`_\\ 가 발생할 가능성이 낮더라도 ``BlockingIOError``\\ 를 처리하도록 수정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961081Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:11/seg:0",
+      "source": "The case of applications using ``os.urandom()`` but don't really require security is not well defined.",
+      "source_hash": 15494371077600571751,
+      "context_hash": 1152383623522627543,
+      "translation": "``os.urandom()``\\ 을 사용하지만 실제로 보안을 필요로 하지 않는 애플리케이션의 경우는 명확히 정의되어 있지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961081Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:11/seg:1",
+      "source": "Maybe these applications should not use ``os.urandom()`` at the first place, but always the non-blocking ``random`` module.",
+      "source_hash": 2939130328874150948,
+      "context_hash": 10122240985159394521,
+      "translation": "어쩌면 이러한 애플리케이션은 애초에 ``os.urandom()``\\ 을 사용하지 말고, 항상 블로킹되지 않는 ``random`` 모듈을 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961081Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:11/seg:2",
+      "source": "If ``os.urandom()`` is used for security, we are back to the use case 2 described above: `Use Case 2: Web server`_.",
+      "source_hash": 18183554597566659694,
+      "context_hash": 16240911947121311534,
+      "translation": "보안을 위해 ``os.urandom()``\\ 을 사용한다면, 위에서 설명한 사용 사례 2인 `Use Case 2: Web server`_\\ 로 돌아갑니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961082Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:11/seg:3",
+      "source": "If a developer doesn't want to drop ``os.urandom()``, the code should be modified.",
+      "source_hash": 13671874898365593825,
+      "context_hash": 8699210454985704405,
+      "translation": "개발자가 ``os.urandom()``\\ 을 제거하고 싶지 않다면 코드를 수정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961082Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:11/seg:4",
+      "source": "Example",
+      "source_hash": 1513857641461741027,
+      "context_hash": 17799351986622973393,
+      "translation": "예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961082Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:13/seg:0",
+      "source": "The question is if `The bug`_ is common enough to require that so many applications have to be modified.",
+      "source_hash": 5660656405890751572,
+      "context_hash": 8858098403610439381,
+      "translation": "문제는 `The bug`_\\ 가 많은 애플리케이션을 수정해야 할 만큼 흔한지 여부입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961083Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:14/seg:0",
+      "source": "Another simpler choice is to refuse to start before the system urandom is initialized",
+      "source_hash": 2263947447192949382,
+      "context_hash": 9718983882866590013,
+      "translation": "또 다른 더 간단한 선택지는 시스템 urandom이 초기화되기 전에는 시작을 거부하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961083Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:16/seg:0",
+      "source": "Compared to Python 2.7, Python 3.4 and Python 3.5.2 where os.urandom() never blocks nor raise an exception on Linux, such behaviour change can be seen as a major regression.",
+      "source_hash": 16604462440881084343,
+      "context_hash": 8861733880860341268,
+      "translation": "Linux에서 os.urandom()이 차단되지도 않고 예외를 발생시키지도 않았던 Python 2.7, Python 3.4 및 Python 3.5.2와 비교하면, 이러한 동작 변경은 중대한 회귀로 볼 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961083Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:0/seg:0",
+      "source": "Add an optional block parameter to os.urandom()",
+      "source_hash": 13767656190231260563,
+      "context_hash": 8350677347148108763,
+      "translation": "os.urandom()에 선택적 block 매개변수 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961085Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:0",
+      "source": "See the `issue #27250: Add os.urandom_block() <http://bugs.python.org/issue27250>`_.",
+      "source_hash": 7136029988475401024,
+      "context_hash": 18387869060586193168,
+      "translation": "`issue #27250: Add os.urandom_block() <http://bugs.python.org/issue27250>`_\\ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961085Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:0",
+      "source": "Add an optional block parameter to os.urandom().",
+      "source_hash": 12729176558133480661,
+      "context_hash": 10446283331918579815,
+      "translation": "os.urandom()에 선택적 block 매개변수를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961086Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:1",
+      "source": "The default value may be ``True`` (block by default) or ``False`` (non-blocking).",
+      "source_hash": 2616181152307818159,
+      "context_hash": 10588535046536349646,
+      "translation": "기본값은 ``True``\\ (기본적으로 차단) 또는 ``False``\\ (블로킹되지 않음)일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961086Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:3/seg:0",
+      "source": "The first technical issue is to implement ``os.urandom(block=False)`` on all platforms.",
+      "source_hash": 6641754749581461393,
+      "context_hash": 6259630613598638397,
+      "translation": "첫 번째 기술적 문제는 모든 플랫폼에서 ``os.urandom(block=False)``\\ 를 구현하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961086Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:3/seg:1",
+      "source": "Only Linux 3.17 (and newer) and Solaris 11.3 (and newer) have a well defined non-blocking API (``getrandom(size, GRND_NONBLOCK)``).",
+      "source_hash": 8518598236811007260,
+      "context_hash": 14251321806690634123,
+      "translation": "잘 정의된 블로킹되지 않는 API(``getrandom(size, GRND_NONBLOCK)``)를 제공하는 것은 Linux 3.17(및 이후 버전)과 Solaris 11.3(및 이후 버전)뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961086Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:4/seg:0",
+      "source": "As `Raise BlockingIOError in os.urandom()`_, it doesn't seem worth it to make the API more complex for a theoretical (or at least very rare) use case.",
+      "source_hash": 13099254247719989463,
+      "context_hash": 13910655925178897454,
+      "translation": "`Raise BlockingIOError in os.urandom()`_\\ 의 경우, 이론적인 사용 사례(또는 적어도 매우 드문 사용 사례) 때문에 API를 더 복잡하게 만드는 것은 가치가 있어 보이지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961087Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:5/seg:0",
+      "source": "As `Leave os.urandom() unchanged, add os.getrandom()`_, the problem is that it makes the API more complex and so more error-prone.",
+      "source_hash": 7318151945224106981,
+      "context_hash": 11316165253536304020,
+      "translation": "`Leave os.urandom() unchanged, add os.getrandom()`_\\ 의 경우, 문제는 API가 더 복잡해져 오류가 발생하기 쉬워진다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961087Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:0/seg:0",
+      "source": "Acceptance",
+      "source_hash": 5102257346729130978,
+      "context_hash": 9350869563934269397,
+      "translation": "승인",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961087Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:0",
+      "source": "The PEP was `accepted on 2016-08-08 by Guido van Rossum <https://mail.python.org/pipermail/security-sig/2016-August/000101.html>`_.",
+      "source_hash": 1054681452079175973,
+      "context_hash": 14506836474273508430,
+      "translation": "이 PEP는 `accepted on 2016-08-08 by Guido van Rossum <https://mail.python.org/pipermail/security-sig/2016-August/000101.html>`_\\ 되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961087Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:0/seg:0",
+      "source": "Annexes",
+      "source_hash": 17655041263892084046,
+      "context_hash": 12092853057009153936,
+      "translation": "부록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961088Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:0/seg:0",
+      "source": "Operating system random functions",
+      "source_hash": 2000066265880519203,
+      "context_hash": 3547163234581188601,
+      "translation": "운영 체제 난수 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961088Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:0",
+      "source": "``os.urandom()`` uses the following functions:",
+      "source_hash": 16595041429616605455,
+      "context_hash": 5423967797260089324,
+      "translation": "``os.urandom()``\\ 은 다음 함수를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961088Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:2/seg:0",
+      "source": "`OpenBSD: getentropy() <http://man.openbsd.org/OpenBSD-current/man2/getentropy.2>`_ (OpenBSD 5.6)",
+      "source_hash": 565447779845995654,
+      "context_hash": 5503542538339277378,
+      "translation": "`OpenBSD: getentropy() <http://man.openbsd.org/OpenBSD-current/man2/getentropy.2>`_ (OpenBSD 5.6)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961089Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:3/seg:0",
+      "source": "`Linux: getrandom() <http://man7.org/linux/man-pages/man2/getrandom.2.html>`_ (Linux 3.17) -- see also `A system call for random numbers: getrandom() <https://lwn.net/Articles/606141/>`_",
+      "source_hash": 7077747926663350892,
+      "context_hash": 11953862998703673058,
+      "translation": "`Linux: getrandom() <http://man7.org/linux/man-pages/man2/getrandom.2.html>`_ (Linux 3.17) -- `A system call for random numbers: getrandom() <https://lwn.net/Articles/606141/>`_\\ 도 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961089Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:4/seg:0",
+      "source": "Solaris: `getentropy() <https://docs.oracle.com/cd/E53394_01/html/E54765/getentropy-2.html#scrolltoc>`_, `getrandom() <https://docs.oracle.com/cd/E53394_01/html/E54765/getrandom-2.html>`_ (both need Solaris 11.3)",
+      "source_hash": 3717966521334262037,
+      "context_hash": 4053298875455975107,
+      "translation": "Solaris: `getentropy() <https://docs.oracle.com/cd/E53394_01/html/E54765/getentropy-2.html#scrolltoc>`_, `getrandom() <https://docs.oracle.com/cd/E53394_01/html/E54765/getrandom-2.html>`_ (둘 다 Solaris 11.3이 필요합니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961089Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:5/seg:0",
+      "source": "UNIX, BSD: /dev/urandom, /dev/random",
+      "source_hash": 11353252394990659217,
+      "context_hash": 2148436839272572298,
+      "translation": "UNIX, BSD: /dev/urandom, /dev/random",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:09:00.961090Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:6/seg:0",
+      "source": "Windows: `CryptGenRandom() <https://msdn.microsoft.com/en-us/library/windows/desktop/aa379942%28v=vs.85%29.aspx>`_ (Windows XP)",
+      "source_hash": 1589476355836007400,
+      "context_hash": 13379287560776522643,
+      "translation": "Windows: `CryptGenRandom() <https://msdn.microsoft.com/en-us/library/windows/desktop/aa379942%28v=vs.85%29.aspx>`_ (Windows XP)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:42.506926Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:7/seg:0",
+      "source": "On Linux, commands to get the status of ``/dev/random`` (results are number of bytes)",
+      "source_hash": 18205434712592132092,
+      "context_hash": 7734354506992740906,
+      "translation": "리눅스에서 ``/dev/random``\\ 의 상태를 얻는 명령 (결과는 바이트 수)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:42.506929Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:0/seg:0",
+      "source": "Why using os.urandom()?",
+      "source_hash": 12712529119250412049,
+      "context_hash": 1017609538055559165,
+      "translation": "os.urandom()을 사용하는 이유는 무엇입니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:42.506930Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:0",
+      "source": "Since ``os.urandom()`` is implemented in the kernel, it doesn't have issues of user-space RNG.",
+      "source_hash": 5485770557230154410,
+      "context_hash": 13005385666148297505,
+      "translation": "``os.urandom()``\\ 은 커널에서 구현되어 있으므로 사용자 공간 RNG의 문제가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:42.506930Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:1",
+      "source": "For example, it is much harder to get its state.",
+      "source_hash": 2724851828464234363,
+      "context_hash": 6720773432257947326,
+      "translation": "예를 들어, 그 상태를 알아내기가 훨씬 더 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:42.506930Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:2",
+      "source": "It is usually built on a CSPRNG, so even if its state is \"stolen\", it is hard to compute previously generated numbers.",
+      "source_hash": 2580175459213511142,
+      "context_hash": 2431226115559573694,
+      "translation": "일반적으로 CSPRNG를 기반으로 구축되므로, 상태가 \"도난\"당하더라도 이전에 생성된 숫자를 계산하기 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:42.506931Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:3",
+      "source": "The kernel has a good knowledge of entropy sources and feed regularly the entropy pool.",
+      "source_hash": 8263887359758014429,
+      "context_hash": 7884725034821252385,
+      "translation": "커널은 엔트로피 소스에 대해 잘 알고 있으며 엔트로피 풀을 정기적으로 채웁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:42.506931Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:2/seg:0",
+      "source": "That's also why ``os.urandom()`` is preferred over ``ssl.RAND_bytes()``.",
+      "source_hash": 14860291445143796251,
+      "context_hash": 4042982342182816428,
+      "translation": "이것이 바로 ``os.urandom()``\\ 이 ``ssl.RAND_bytes()``\\ 보다 선호되는 이유이기도 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:32:42.506931Z",
+      "issues": []
+    }
+  ]
+}

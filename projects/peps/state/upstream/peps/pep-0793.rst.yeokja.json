@@ -1,0 +1,2490 @@
+{
+  "version": 1,
+  "source_hash": 10251529951200090591,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "PyModExport: A new entry point for C extension modules",
+      "source_hash": 13633394861883986312,
+      "context_hash": 16530898886277989957,
+      "translation": "PyModExport: C 확장 모듈을 위한 새로운 진입점",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982372Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 6108541238294056439,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982375Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "In this PEP, we propose a new entry point for C extension modules, by which one can define a module using an array of ``PyModuleDef_Slot`` structures without an enclosing ``PyModuleDef`` structure.",
+      "source_hash": 13437576286226958688,
+      "context_hash": 17264611023824783576,
+      "translation": "이 PEP에서는 바깥쪽의 ``PyModuleDef`` 구조체 없이 ``PyModuleDef_Slot`` 구조체 배열을 사용하여 모듈을 정의할 수 있는 C 확장 모듈용 새로운 진입점을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982375Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "This allows extension authors to avoid using a statically allocated ``PyObject``, lifting the most common obstacle to making one compiled library file usable with both regular and free-threaded builds of CPython.",
+      "source_hash": 12957408451129299657,
+      "context_hash": 14517467535466126596,
+      "translation": "이를 통해 확장 모듈 작성자는 정적으로 할당된 ``PyObject``\\ 를 사용하지 않아도 되며, 하나의 컴파일된 라이브러리 파일을 CPython의 일반 빌드와 자유 스레드 빌드 모두에서 사용할 수 있게 만드는 데 가장 일반적인 장애물을 제거합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982376Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "To make this viable, we also specify new module slot IDs to replace ``PyModuleDef``'s fields, and to allow adding a *token* similar to the ``Py_tp_token`` used for type objects.",
+      "source_hash": 1784822337304317471,
+      "context_hash": 5055864627315315479,
+      "translation": "이를 실현하기 위해 ``PyModuleDef``\\ 의 필드를 대체하는 새로운 모듈 슬롯 ID와 타입 객체에 사용되는 ``Py_tp_token``\\ 과 유사한 *토큰*\\ 을 추가할 수 있도록 하는 방법도 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982376Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "We also add an API for defining modules from slots dynamically.",
+      "source_hash": 14444762321591025627,
+      "context_hash": 10057586849357487121,
+      "translation": "또한 슬롯에서 동적으로 모듈을 정의하는 API를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982376Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:4/seg:0",
+      "source": "The existing API (``PyInit_*``) is soft-deprecated. (That is: it will continue to work without warnings, and it'll be fully documented and supported, but we plan to not add any new features to it.)",
+      "source_hash": 9355286277268811591,
+      "context_hash": 616698077602594646,
+      "translation": "기존 API(``PyInit_*``)는 소프트 폐기되었습니다. (즉, 경고 없이 계속 작동하며 완전히 문서화되고 지원되지만, 여기에 새로운 기능을 추가할 계획은 없습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982376Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Background & Motivation",
+      "source_hash": 16166060904089286863,
+      "context_hash": 4055702685536312010,
+      "translation": "배경 및 동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982377Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "The memory layout of Python objects differs between regular and free-threading builds.",
+      "source_hash": 17842417599427826967,
+      "context_hash": 4841635354732699991,
+      "translation": "Python 객체의 메모리 레이아웃은 일반 빌드와 자유 스레드 빌드 사이에서 다릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982377Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "So, an ABI that supports both regular and free-threading builds cannot include the current ``PyObject`` memory layout.",
+      "source_hash": 2767354595491521788,
+      "context_hash": 16615227454351606728,
+      "translation": "따라서 일반 빌드와 자유 스레드 빌드를 모두 지원하는 ABI에는 현재 ``PyObject`` 메모리 레이아웃을 포함할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982377Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "To stay compatible with existing ABI (and API), it cannot support statically allocated Python objects.",
+      "source_hash": 7763343778300471297,
+      "context_hash": 12941414236190630002,
+      "translation": "기존 ABI 및 API와의 호환성을 유지하려면 정적으로 할당된 Python 객체를 지원할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982377Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "There is one type of object that is needed in most extension modules and is allocated statically in virtually all cases: the ``PyModuleDef`` returned from the module export hooks (that is, ``PyInit_*`` functions).",
+      "source_hash": 10068231195512659414,
+      "context_hash": 7731818344308779558,
+      "translation": "대부분의 확장 모듈에 필요하며 사실상 모든 경우에 정적으로 할당되는 객체 유형이 하나 있습니다. 바로 모듈 내보내기 훅(즉, ``PyInit_*`` 함수)이 반환하는 ``PyModuleDef``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982377Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Module export hooks (``PyInit_*`` functions) can return two kinds of objects:",
+      "source_hash": 7872707397761753244,
+      "context_hash": 3907062987864986504,
+      "translation": "모듈 내보내기 훅(``PyInit_*`` 함수)은 두 종류의 객체를 반환할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982378Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "A fully initialized module object (for so-called *single-phase initialization*).",
+      "source_hash": 7702202622380990121,
+      "context_hash": 7444121488558892968,
+      "translation": "완전히 초기화된 모듈 객체입니다(이른바 *단일 단계 초기화*).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982378Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "This was the only option in 3.4 and below.",
+      "source_hash": 11163741838505598842,
+      "context_hash": 13945129125279516482,
+      "translation": "이는 3.4 이하에서 유일한 선택지였습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982378Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "Modules created this way have surprising (but backwards-compatible) behaviour around multiple interpreters or repeated loading. (Specifically, the *contents* of such a module's ``__dict__`` are shared across all instances of the module object.)",
+      "source_hash": 9653128499950024967,
+      "context_hash": 2977829452647730409,
+      "translation": "이러한 방식으로 생성된 모듈은 여러 인터프리터 또는 반복 로딩과 관련하여 놀라운(하지만 하위 호환성을 유지하는) 동작을 보입니다. (구체적으로는 이러한 모듈의 ``__dict__``\\ 의 *내용*\\ 이 모듈 객체의 모든 인스턴스 사이에서 공유됩니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982378Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "The module returned is typically created using the ``PyModule_Create`` function, which requires a statically allocated (or at least long-lived) ``PyModuleDef`` struct.",
+      "source_hash": 8296506245731745209,
+      "context_hash": 14447106249229005506,
+      "translation": "반환되는 모듈은 일반적으로 ``PyModule_Create`` 함수로 생성되며, 이 함수에는 정적으로 할당된(또는 적어도 수명이 긴) ``PyModuleDef`` 구조체가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982379Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "It is possible to bypass this using the lower-level ``PyModule_New*`` API.",
+      "source_hash": 6751599113111216891,
+      "context_hash": 3399694886744494885,
+      "translation": "더 낮은 수준의 ``PyModule_New*`` API를 사용하여 이를 우회할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982379Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "This avoids the need for ``PyModuleDef``, but offers much less functionality.",
+      "source_hash": 8718451793562758913,
+      "context_hash": 16650602002873608585,
+      "translation": "이렇게 하면 ``PyModuleDef``\\ 가 필요하지 않지만 기능은 훨씬 적습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982379Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "A ``PyModuleDef`` object containing a description of how to create a module object.",
+      "source_hash": 8676025098408284803,
+      "context_hash": 602262316796603973,
+      "translation": "모듈 객체를 생성하는 방법에 대한 설명을 포함하는 ``PyModuleDef`` 객체입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982380Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:1",
+      "source": "This option, *multi-phase initialization*, was introduced in :pep:`489`; see its motivation for why it exists.",
+      "source_hash": 2128659779602251493,
+      "context_hash": 14783843212811682966,
+      "translation": "이 옵션인 *다단계 초기화*\\ 는 :pep:`489`\\ 에서 도입되었습니다. 이것이 존재하는 이유는 해당 PEP의 동기를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982380Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "The interpreter cannot distinguish between these cases before the export hook is called.",
+      "source_hash": 11236100340764215307,
+      "context_hash": 18261662453512200500,
+      "translation": "인터프리터는 내보내기 훅이 호출되기 전에는 이러한 경우를 구분할 수 없습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:18:38.982380Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "The interpreter switch",
+      "source_hash": 14490850440327886535,
+      "context_hash": 3592423631147227403,
+      "translation": "인터프리터 전환",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:18:38.982381Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Python 3.12 added a way for modules to mark whether they may be loaded in a subinterpreter: the ``Py_mod_multiple_interpreters`` slot.",
+      "source_hash": 3474217875250623866,
+      "context_hash": 1204357847053548615,
+      "translation": "Python 3.12에서는 모듈이 하위 인터프리터에서 로드될 수 있는지 표시하는 방법인 ``Py_mod_multiple_interpreters`` 슬롯이 추가되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982381Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "Setting it to the “not supported” value signals that an extension can only be loaded in the main interpreter.",
+      "source_hash": 6022544046135076902,
+      "context_hash": 16063581111798726758,
+      "translation": "이를 “지원되지 않음” 값으로 설정하면 해당 확장은 주 인터프리터에서만 로드될 수 있음을 나타냅니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:18:38.982381Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "Unfortunately, Python can only get this information by *calling* the module export hook.",
+      "source_hash": 12605784815360635675,
+      "context_hash": 8910103568730838143,
+      "translation": "안타깝게도 Python은 모듈 내보내기 훅을 *호출하는 방식으로만* 이 정보를 얻을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982382Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "For single-phase modules, that creates the module object and runs arbitrary initialization code.",
+      "source_hash": 928798371178584362,
+      "context_hash": 6390802354934560024,
+      "translation": "단일 단계 모듈의 경우 이 과정에서 모듈 객체가 생성되고 임의의 초기화 코드가 실행됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982382Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "For modules that set ``Py_mod_multiple_interpreters`` to “not supported”, this initialization needs to happen in the main interpreter.",
+      "source_hash": 629101666319804727,
+      "context_hash": 3071875539877660010,
+      "translation": "``Py_mod_multiple_interpreters``\\ 를 “지원되지 않음”으로 설정하는 모듈의 경우 이 초기화는 주 인터프리터에서 수행되어야 합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:18:38.982382Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "To make this work, if a new module is loaded in a sub-interpreter, Python temporarily switches to the main interpreter, calls the export hook there, and then either switches back and redoes the import, or fails.",
+      "source_hash": 9303436033823382445,
+      "context_hash": 4519224650649090798,
+      "translation": "이를 작동시키기 위해 새 모듈이 하위 인터프리터에서 로드되면 Python은 일시적으로 주 인터프리터로 전환하여 그곳에서 내보내기 훅을 호출한 다음, 다시 전환하여 임포트를 다시 수행하거나 실패합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:18:38.982383Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "This unnecessary and fragile extra work highlights the underlying design issue: Python has no way to get information about an extension before the extension can, potentially, fully initialize itself.",
+      "source_hash": 8617279474646220209,
+      "context_hash": 5908298424156105182,
+      "translation": "이러한 불필요하고 취약한 추가 작업은 근본적인 설계 문제를 부각합니다. Python에는 확장이 잠재적으로 스스로를 완전히 초기화하기 전에 해당 확장에 대한 정보를 얻을 방법이 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982384Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 3786210259422656807,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982384Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "For avoiding the module export hook requiring a statically allocated ``PyObject*``, two options come to mind:",
+      "source_hash": 884229218523430103,
+      "context_hash": 8378710658699229709,
+      "translation": "모듈 내보내기 훅에 정적으로 할당된 ``PyObject*``\\ 가 필요하지 않게 하는 방법으로 두 가지 선택지가 떠오릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:38.982384Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Returning a *dynamically* allocated object, whose ownership is transferred to the interpreter.",
+      "source_hash": 14887182850059901047,
+      "context_hash": 739564993580868536,
+      "translation": "*동적으로* 할당된 객체를 반환하며, 소유권은 인터프리터로 이전됩니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:18:34.303930Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:1",
+      "source": "This stucture could be very similar to the existing ``PyModuleDef``, since it needs to contain the same data.",
+      "source_hash": 17319480224464926602,
+      "context_hash": 13919743824744670464,
+      "translation": "이 구조체는 동일한 데이터를 포함해야 하므로 기존의 ``PyModuleDef``\\ 와 매우 유사할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303934Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:2",
+      "source": "Unlike the existing ``PyModuleDef``, this one would need to be reference-counted so that it both outlives “its” module and does not leak.",
+      "source_hash": 15642254359716939927,
+      "context_hash": 16549271666243179688,
+      "translation": "기존의 ``PyModuleDef``\\ 와 달리, 이 구조체는 해당 모듈보다 오래 존재하면서도 누수되지 않도록 참조 카운트가 관리되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303935Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "Adding a new export hook, which does not return a ``PyObject*``.",
+      "source_hash": 4735048415013339762,
+      "context_hash": 17496143539532114130,
+      "translation": "``PyObject*``\\ 를 반환하지 않는 새로운 내보내기 후크를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303935Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "This was considered already for Python 3.5 in :pep:`489`, but rejected:",
+      "source_hash": 14089588587341552427,
+      "context_hash": 6863768148332417368,
+      "translation": "이는 Python 3.5에서 이미 :pep:`489`\\ 에서 검토되었지만 거부되었습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303935Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:5/seg:0",
+      "source": "Keeping only the PyInit hook name, even if it’s not entirely appropriate for exporting a definition, yielded a much simpler solution.",
+      "source_hash": 2367561513675071982,
+      "context_hash": 842200697967919236,
+      "translation": "정의를 내보내는 데 완전히 적합하지 않더라도 PyInit 후크 이름만 유지하는 것이 훨씬 더 간단한 해결책을 제공했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303936Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "Alas, after a decade of fixing the implications of this choice, the solution is no longer simple.",
+      "source_hash": 15220448606117315591,
+      "context_hash": 12199765950042316710,
+      "translation": "아쉽게도 이 선택의 영향을 해결하는 데 10년이 걸린 후, 해결책은 더 이상 간단하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303936Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "A new hook will also allow Python to avoid the second issue mentioned in Motivation -- the interpreter switch.",
+      "source_hash": 4191941724597051234,
+      "context_hash": 17070562732308645871,
+      "translation": "새로운 후크를 사용하면 Python이 Motivation에서 언급된 두 번째 문제인 인터프리터 전환도 피할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:18:34.303936Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:1",
+      "source": "Effectivelly, it will add a new phase to multi-phase initialization, in which Python can check whether the module is compatible.",
+      "source_hash": 662811965975113502,
+      "context_hash": 9173966696320230536,
+      "translation": "실제로 이는 다단계 초기화에 새로운 단계를 추가하여, Python이 모듈이 호환되는지 확인할 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303937Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Using slots without a wrapper struct",
+      "source_hash": 13480639114360265792,
+      "context_hash": 8578010689976220133,
+      "translation": "래퍼 구조체 없이 슬롯 사용하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303937Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "The existing ``PyModuleDef`` is a struct with some fixed fields and a “slots” array.",
+      "source_hash": 358202822338375725,
+      "context_hash": 976022891304511590,
+      "translation": "기존의 ``PyModuleDef``\\ 는 일부 고정 필드와 “슬롯” 배열을 포함하는 구조체입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303937Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:1",
+      "source": "Unlike slots, the fixed fields cannot be individually deprecated and replaced.",
+      "source_hash": 13164924762654061332,
+      "context_hash": 10708937308409350060,
+      "translation": "슬롯과 달리 고정 필드는 개별적으로 사용 중단하고 대체할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303938Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:2",
+      "source": "This proposal does away with fixed fields and proposes using a slots array directly, without a wrapper struct.",
+      "source_hash": 1783244188223086657,
+      "context_hash": 15950203669463787015,
+      "translation": "이 제안은 고정 필드를 없애고 래퍼 구조체 없이 슬롯 배열을 직접 사용할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303938Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "The ``PyModuleDef_Slot`` struct does have some downsides compared to fixed fields.",
+      "source_hash": 737183609707499975,
+      "context_hash": 6400196715121242574,
+      "translation": "``PyModuleDef_Slot`` 구조체에는 고정 필드와 비교할 때 몇 가지 단점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303938Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "We believe these are fixable, but leave that out of scope of this PEP. (Note: this was done in :pep:`820`, still in Python 3.15.)",
+      "source_hash": 6259783772727860534,
+      "context_hash": 14040623599296802434,
+      "translation": "이러한 문제는 해결할 수 있다고 생각하지만, 이 PEP의 범위에서는 제외합니다. (참고: 이는 Python 3.15에서도 여전히 :pep:`820`\\ 에서 수행되었습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303938Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Tokens",
+      "source_hash": 16159949318929487769,
+      "context_hash": 4658699329568213084,
+      "translation": "토큰",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303939Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "A static ``PyModuleDef`` has another purpose besides describing how a module should be created.",
+      "source_hash": 13098493159514369532,
+      "context_hash": 4165812063575649554,
+      "translation": "정적 ``PyModuleDef``\\ 는 모듈을 생성해야 하는 방식을 설명하는 것 외에도 다른 목적을 가집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303939Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "As a statically allocated singleton that remains attached to the module object, it allows extension authors to check whether a given Python module is “theirs”: if a module object has a known ``PyModuleDef``, its module state will have a known memory layout.",
+      "source_hash": 6254612333784646778,
+      "context_hash": 1192843250938290440,
+      "translation": "모듈 객체에 계속 연결된 정적으로 할당된 싱글턴으로서, 확장 모듈 작성자가 주어진 Python 모듈이 “자신의 것”인지 확인할 수 있도록 합니다. 모듈 객체에 알려진 ``PyModuleDef``\\ 가 있으면 해당 모듈 상태에는 알려진 메모리 레이아웃이 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303939Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "An analogous issue was solved for types by adding ``Py_tp_token``.",
+      "source_hash": 14412276780359981526,
+      "context_hash": 13985430259691541848,
+      "translation": "타입에 대해서는 ``Py_tp_token``\\ 을 추가하여 유사한 문제를 해결했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303939Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "This proposal adds the same mechanism to modules.",
+      "source_hash": 6596789630085307981,
+      "context_hash": 2395533032389326451,
+      "translation": "이 제안은 모듈에도 동일한 메커니즘을 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303940Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "Unlike types, the import mechanism often has a pointer that's known to be suitable as a token value; in these cases it can provide a default token.",
+      "source_hash": 9917110910343790204,
+      "context_hash": 12185602640187309118,
+      "translation": "타입과 달리 가져오기 메커니즘에는 토큰 값으로 사용하기에 적합하다고 알려진 포인터가 있는 경우가 많으며, 이러한 경우 기본 토큰을 제공할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303940Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "Thus, module tokens do not need a variant of the inelegant ``Py_TP_USE_SPEC``.",
+      "source_hash": 10279324465140023529,
+      "context_hash": 11821395174165171888,
+      "translation": "따라서 모듈 토큰에는 우아하지 않은 ``Py_TP_USE_SPEC``\\ 의 변형이 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303940Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "To help extensions that straddle Python versions, ``PyModuleDef`` addresses are used as default tokens, and where it's reasonable, they are made interchangeable with tokens.",
+      "source_hash": 1033101372539244549,
+      "context_hash": 5470081803752591598,
+      "translation": "Python 버전에 걸쳐 사용되는 확장을 지원하기 위해 ``PyModuleDef``\\ 주소를 기본 토큰으로 사용하며, 합리적인 경우에는 토큰과 상호 교환 가능하게 만듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303940Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Soft-deprecating the existing export hook",
+      "source_hash": 6499782790757210879,
+      "context_hash": 9529458613731556156,
+      "translation": "기존 내보내기 후크의 소프트 사용 중단",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303941Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "The only reason for authors of *existing* extensions to switch to the API proposed here is that it allows a single module for both free-threaded and non-free-threaded builds.",
+      "source_hash": 13533407890652488467,
+      "context_hash": 3666971206508681967,
+      "translation": "*기존* 확장 모듈 작성자가 여기서 제안하는 API로 전환할 유일한 이유는 이를 통해 자유 스레드 빌드와 비자유 스레드 빌드 모두에서 단일 모듈을 사용할 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303941Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "It is important that Python *allows* that, but for many existing modules, it is nowhere near worth losing compatibility with 3.14 and lower versions.",
+      "source_hash": 670205183833065286,
+      "context_hash": 16584127632387155511,
+      "translation": "Python이 이를 *허용한다*\\ 는 것이 중요하지만, 많은 기존 모듈에서는 3.14 및 이전 버전과의 호환성을 잃을 만큼 가치가 있는 일이 결코 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303941Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "It is much too early to plan deprecation of the old API.",
+      "source_hash": 9388753413905127111,
+      "context_hash": 10439822987426287371,
+      "translation": "기존 API의 사용 중단을 계획하기에는 아직 너무 이릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303941Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Instead, this PEP proposes to stop adding new features to the ``PyInit_*`` scheme.",
+      "source_hash": 14320003427793312975,
+      "context_hash": 1858746225296891044,
+      "translation": "대신 이 PEP는 ``PyInit_*`` 방식에 새로운 기능을 더 이상 추가하지 않을 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303942Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:1",
+      "source": "After all, the perfect time for extension authors to switch is when they want to modify module initialization anyway.",
+      "source_hash": 17556494242315396919,
+      "context_hash": 7675115383599393826,
+      "translation": "결국 확장 모듈 작성자가 전환하기에 가장 적절한 시점은 어차피 모듈 초기화를 수정하려고 할 때입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303942Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 12700019437544781369,
+      "translation": "사양",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303942Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "The export hook",
+      "source_hash": 16942542185583485707,
+      "context_hash": 1470880964007056546,
+      "translation": "내보내기 후크",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303942Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "When importing an extension module, Python will now first look for an export hook like this:",
+      "source_hash": 16174394105524655615,
+      "context_hash": 12135628781096701067,
+      "translation": "확장 모듈을 가져올 때 Python은 이제 다음과 같은 내보내기 후크를 먼저 찾습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.303943Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "where ``<NAME>`` is the name of the module.",
+      "source_hash": 12161300342477336627,
+      "context_hash": 11689106588150277223,
+      "translation": "여기서 ``<NAME>``\\ 은 모듈의 이름입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972081Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:1",
+      "source": "For non-ASCII names, it will instead look for ``PyModExportU_<NAME>``, with ``<NAME>`` encoded as for existing ``PyInitU_*`` hooks (that is, *punycode*-encoded with hyphens replaced by underscores).",
+      "source_hash": 16272875412553652835,
+      "context_hash": 16356419697390181488,
+      "translation": "ASCII가 아닌 이름의 경우에는 대신 ``PyModExportU_<NAME>``\\ 을 찾으며, ``<NAME>``\\ 은 기존 ``PyInitU_*`` 후크와 동일한 방식으로 인코딩됩니다(즉, *punycode*-로 인코딩하고 하이픈을 밑줄로 바꿉니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972085Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "If not found, the import will continue as in previous Python versions (that is, by looking up a ``PyInit_*`` or ``PyInitU_*`` function).",
+      "source_hash": 16735548300966829574,
+      "context_hash": 6796363618864898286,
+      "translation": "찾지 못하면 이전 Python 버전에서와 같이 ``PyInit_*`` 또는 ``PyInitU_*`` 함수를 조회하여 가져오기를 계속합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972085Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:5/seg:0",
+      "source": "If found, Python will call the hook with no arguments.",
+      "source_hash": 1761468966073814012,
+      "context_hash": 8990832321949557905,
+      "translation": "찾으면 Python은 인자 없이 해당 후크를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972086Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:0",
+      "source": "On failure, the export hook must return NULL with an exception set.",
+      "source_hash": 11771368782347611350,
+      "context_hash": 18446709372279658266,
+      "translation": "실패하면 export 후크는 예외가 설정된 상태로 NULL을 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972086Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:6/seg:1",
+      "source": "This will cause the import to fail. (Python will not fall back to ``PyInit_*`` on error.)",
+      "source_hash": 15817655084109261620,
+      "context_hash": 5978064127432705101,
+      "translation": "그러면 가져오기가 실패합니다(Python은 오류 발생 시 ``PyInit_*``\\ 로 대체하지 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972086Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:0",
+      "source": "On success, the hook must return a pointer to an array of ``PyModuleDef_Slot`` structs.",
+      "source_hash": 7277624607854087475,
+      "context_hash": 7188006514862090789,
+      "translation": "성공하면 후크는 ``PyModuleDef_Slot`` 구조체 배열을 가리키는 포인터를 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972087Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:1",
+      "source": "Python will then create a module based on the given slots by calling functions proposed below: ``PyModule_FromSlotsAndSpec`` and ``PyModule_Exec``.",
+      "source_hash": 3215531342206961273,
+      "context_hash": 5448245649822411455,
+      "translation": "그러면 Python은 아래에서 제안하는 함수인 ``PyModule_FromSlotsAndSpec`` 및 ``PyModule_Exec``\\ 을 호출하여 지정된 슬롯을 기반으로 모듈을 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972087Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:7/seg:2",
+      "source": "See their description for requirements on the slots array.",
+      "source_hash": 14228048970593892603,
+      "context_hash": 14525230470480749444,
+      "translation": "슬롯 배열에 필요한 사항은 해당 함수의 설명을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972087Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:0",
+      "source": "The returned array and all data it points to (recursively) must remain valid and constant until runtime shutdown. (We expect functions to export a static constant, or one of several constants chosen depending on, for example, ``Py_Version``.",
+      "source_hash": 14440123205885705833,
+      "context_hash": 6160471101702343557,
+      "translation": "반환된 배열과 배열이 재귀적으로 가리키는 모든 데이터는 런타임이 종료될 때까지 유효하고 변경되지 않은 상태로 유지되어야 합니다. (함수는 정적 상수를 내보내거나, 예를 들어 ``Py_Version``\\ 에 따라 선택되는 여러 상수 중 하나를 내보낼 것으로 예상합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972087Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:8/seg:1",
+      "source": "Dynamic behaviour should generally happen in the ``Py_mod_create`` and ``Py_mod_exec`` functions.)",
+      "source_hash": 4665808373684481669,
+      "context_hash": 17887907019267283407,
+      "translation": "동적 동작은 일반적으로 ``Py_mod_create`` 및 ``Py_mod_exec`` 함수에서 수행해야 합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972088Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Dynamic creation",
+      "source_hash": 2269335865985373337,
+      "context_hash": 6495681956946568930,
+      "translation": "동적 생성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972088Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "A new function will be added to create a module from an array of slots:",
+      "source_hash": 8613023453968974449,
+      "context_hash": 10400717674908761009,
+      "translation": "슬롯 배열에서 모듈을 생성하는 새 함수가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972088Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:0",
+      "source": "The *slots* argument must point to an array of ``PyModuleDef_Slot`` structures, terminated by a slot with ``slot=0`` (typically written as ``{0}`` in C).",
+      "source_hash": 15646828749096905850,
+      "context_hash": 17703901808568926647,
+      "translation": "*slots*\\ 인자는 ``PyModuleDef_Slot`` 구조체 배열을 가리켜야 하며, ``slot=0``\\ 인 슬롯으로 끝나야 합니다(C에서는 일반적으로 ``{0}``\\ 으로 작성합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972088Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:1",
+      "source": "The ``Py_mod_abi`` slot is required (see :pep:`803`); all other slots are optional.",
+      "source_hash": 7945798146070570483,
+      "context_hash": 13924915017431565017,
+      "translation": "``Py_mod_abi`` 슬롯은 필수이며(:pep:`803` 참조), 다른 모든 슬롯은 선택 사항입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972089Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:3/seg:2",
+      "source": "It follows that *slots* must not be ``NULL``.",
+      "source_hash": 12266202483618905287,
+      "context_hash": 7648640289267921837,
+      "translation": "따라서 *slots*\\ 는 ``NULL``\\ 이어서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972089Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:0",
+      "source": "The *spec* argument is a duck-typed ModuleSpec-like object, meaning that any attributes defined for ``importlib.machinery.ModuleSpec`` have matching semantics.",
+      "source_hash": 8115647385181282995,
+      "context_hash": 16373279204940384729,
+      "translation": "*spec*\\ 인자는 덕 타이핑된 ModuleSpec 유사 객체이며, ``importlib.machinery.ModuleSpec``\\ 에 정의된 모든 속성이 동일한 의미를 가집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972089Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:1",
+      "source": "The ``name`` attribute is required, but this limitation may be lifted in the future.",
+      "source_hash": 791002589762838883,
+      "context_hash": 9134171465135903586,
+      "translation": "``name`` 속성은 필수이지만, 이 제한은 향후 해제될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972089Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:4/seg:2",
+      "source": "The ``name`` will be used *instead of* the ``Py_mod_name`` slot (just like ``PyModule_FromDefAndSpec`` ignores ``PyModuleDef.m_name``).",
+      "source_hash": 8529662921572824323,
+      "context_hash": 3542306471791594765,
+      "translation": "``name``\\ 은 ``Py_mod_name``\\ 슬롯 *대신* 사용됩니다(``PyModule_FromDefAndSpec``\\ 이 ``PyModuleDef.m_name``\\ 을 무시하는 것과 마찬가지입니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:00.713188Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:0",
+      "source": "The slots arrays for both ``PyModule_FromSlotsAndSpec`` and the new export hook will only allow up to one ``Py_mod_exec`` slot.",
+      "source_hash": 14660990528923177478,
+      "context_hash": 3319323505586265906,
+      "translation": "``PyModule_FromSlotsAndSpec`` 및 새 export 후크 모두의 슬롯 배열에서는 ``Py_mod_exec`` 슬롯을 최대 하나만 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972090Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:1",
+      "source": "Arrays in ``PyModuleDef.m_slots`` may have more; this will not change.",
+      "source_hash": 9435163200413487945,
+      "context_hash": 17850976979960876057,
+      "translation": "``PyModuleDef.m_slots``\\ 의 배열에는 더 많이 포함될 수 있으며, 이는 변경되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972091Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:5/seg:2",
+      "source": "This limitation is easy to work around and multiple ``exec`` slots are rarely used [#multiexec]_.",
+      "source_hash": 8964737930993814277,
+      "context_hash": 4242580646335354573,
+      "translation": "이 제한은 쉽게 우회할 수 있으며 여러 ``exec`` 슬롯은 거의 사용되지 않습니다 [#multiexec]_.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972091Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:6/seg:0",
+      "source": "For modules created without a ``PyModuleDef``, the ``Py_mod_create`` function will be called with ``NULL`` for the second argument (*def*). (In the future, if we find a use case for passing the input slots array, a new slot with an updated signature can be added.)",
+      "source_hash": 10355544904265015090,
+      "context_hash": 8236561879715344503,
+      "translation": "``PyModuleDef``\\ 없이 생성된 모듈의 경우 ``Py_mod_create`` 함수는 두 번째 인자(*def*)로 ``NULL``\\ 을 전달받아 호출됩니다. (향후 입력 슬롯 배열을 전달할 사용 사례가 발견되면, 시그니처가 갱신된 새 슬롯을 추가할 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972091Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:0",
+      "source": "Unlike the ``PyModExport_*`` hook, the *slots* array may be changed or destroyed after the ``PyModule_FromSlotsAndSpec`` call. (That is, Python must take a copy of all input data.) As an exception, any ``PyMethodDef`` array given by ``Py_mod_methods`` must be statically allocated (or be otherwise guaranteed to outlive the objects created from it).",
+      "source_hash": 11223574137875153117,
+      "context_hash": 16948140801055137768,
+      "translation": "``PyModExport_*`` 후크와 달리 *slots*\\ 배열은 ``PyModule_FromSlotsAndSpec`` 호출 후 변경되거나 소멸될 수 있습니다. (즉, Python은 모든 입력 데이터를 복사해야 합니다.) 예외적으로 ``Py_mod_methods``\\ 가 제공하는 모든 ``PyMethodDef`` 배열은 정적으로 할당되어야 하며(또는 이 배열에서 생성된 객체보다 수명이 길다는 것이 보장되어야 합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972092Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:7/seg:1",
+      "source": "This limitation may be lifted in the future.",
+      "source_hash": 447635123053487286,
+      "context_hash": 15288167608443729779,
+      "translation": "이 제한은 향후 해제될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972092Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:0",
+      "source": "A new function, ``PyModule_Exec``, will be added to run the ``exec`` slot(s) for a module.",
+      "source_hash": 9478487942861814866,
+      "context_hash": 9790852521970969381,
+      "translation": "모듈의 ``exec`` 슬롯을 실행하는 새 함수 ``PyModule_Exec``\\ 이 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972092Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:8/seg:1",
+      "source": "This acts like ``PyModule_ExecDef``, but supports modules created using slots, and does not take an explicit *def*:",
+      "source_hash": 2169084284860609741,
+      "context_hash": 13478545148392216208,
+      "translation": "이 함수는 ``PyModule_ExecDef``\\ 와 같이 동작하지만, 슬롯을 사용하여 생성된 모듈을 지원하며 명시적인 *def*\\ 를 받지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972092Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:10/seg:0",
+      "source": "Calling this is required to fully initialize a module. ``PyModule_FromSlotsAndSpec`` will *not* run it (just like ``PyModule_FromDefAndSpec`` does not call ``PyModule_ExecDef``).",
+      "source_hash": 27710859622027350,
+      "context_hash": 2784985990565113415,
+      "translation": "이를 호출해야 모듈을 완전히 초기화할 수 있습니다. ``PyModule_FromSlotsAndSpec``\\ 는 이를 실행하지 *않습니다* (마찬가지로 ``PyModule_FromDefAndSpec``\\ 는 ``PyModule_ExecDef``\\ 를 호출하지 않습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:00.713194Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:11/seg:0",
+      "source": "For modules created from a *def*, calling this is equivalent to calling ``PyModule_ExecDef(module, PyModule_GetDef(module))``.",
+      "source_hash": 5016727823315769955,
+      "context_hash": 1908376002819289008,
+      "translation": "*def*\\ 에서 생성된 모듈의 경우 이를 호출하는 것은 ``PyModule_ExecDef(module, PyModule_GetDef(module))``\\ 을 호출하는 것과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972093Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Tokens",
+      "source_hash": 16159949318929487769,
+      "context_hash": 1251577967451893526,
+      "translation": "토큰",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972093Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "Module objects will optionally store a “token”: a ``void*`` pointer similar to ``Py_tp_token`` for types.",
+      "source_hash": 1983712584446107035,
+      "context_hash": 12972582275863374006,
+      "translation": "모듈 객체는 선택적으로 타입의 ``Py_tp_token``\\ 과 유사한 ``void*`` 포인터인 “토큰”을 저장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972093Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "This is specialized functionality meant replace the ``PyType_GetModuleByDef`` function; users that don't need ``PyType_GetModuleByDef`` will most likely not need tokens either.",
+      "source_hash": 4262228210803524052,
+      "context_hash": 3240125197073887372,
+      "translation": "이는 ``PyType_GetModuleByDef`` 함수를 대체하기 위한 특수 기능입니다. ``PyType_GetModuleByDef``\\ 이 필요하지 않은 사용자는 토큰도 필요하지 않을 가능성이 큽니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:32.972094Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "This section contains the technical specification; for an example of intended usage, see ``exampletype_repr`` in the :ref:`Example section <pep793-example>`.",
+      "source_hash": 4466663032606694707,
+      "context_hash": 14895750456432791168,
+      "translation": "이 절에는 기술 사양이 포함되어 있습니다. 의도된 사용 예는 :ref:`Example section <pep793-example>`\\ 의 ``exampletype_repr``\\ 에서 확인하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500342Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "If specified, using a new ``Py_mod_token`` slot, the module token must:",
+      "source_hash": 17540199860501488057,
+      "context_hash": 15351345588450181889,
+      "translation": "지정된 경우 새 ``Py_mod_token`` 슬롯을 사용하며, 모듈 토큰은 다음 조건을 충족해야 합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500345Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "outlive the module, so it's not reused for something else while the module exists; and",
+      "source_hash": 5347200497516682996,
+      "context_hash": 15299867554443020606,
+      "translation": "모듈보다 오래 존재해야 하므로, 모듈이 존재하는 동안 다른 용도로 재사용되지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500345Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "\"belong\" to the extension module where the module lives, so it will not clash with other extension modules.",
+      "source_hash": 8268642955149293961,
+      "context_hash": 4296166009474530550,
+      "translation": "모듈이 위치한 확장 모듈에 \"속해야\" 하므로, 다른 확장 모듈과 충돌하지 않아야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500345Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "(Typically, it should be the slots array or ``PyModuleDef`` that a module is created from, or another static constant for dynamically created modules.)",
+      "source_hash": 190749356717696382,
+      "context_hash": 4310792713542941651,
+      "translation": "(일반적으로 모듈을 생성하는 데 사용된 슬롯 배열이나 ``PyModuleDef``, 또는 동적으로 생성된 모듈의 경우 다른 정적 상수여야 합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500346Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:0",
+      "source": "When the address of a ``PyModuleDef`` is used as a module's token, the module should behave as if it was created from that ``PyModuleDef``.",
+      "source_hash": 15900841670520962182,
+      "context_hash": 5462333194197848124,
+      "translation": "``PyModuleDef``\\ 의 주소를 모듈의 토큰으로 사용하는 경우, 해당 모듈은 그 ``PyModuleDef``\\ 에서 생성된 것처럼 동작해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500346Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:1",
+      "source": "In particular, the module state must have matching layout and semantics.",
+      "source_hash": 478801957126107141,
+      "context_hash": 9886681011680426966,
+      "translation": "특히 모듈 상태의 레이아웃과 의미가 일치해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500346Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:9/seg:0",
+      "source": "Modules created using the ``PyModule_FromSlotsAndSpec`` or the ``PyModExport_<NAME>`` export hook can use a new ``Py_mod_token`` slot to set the token.",
+      "source_hash": 1131126781707969393,
+      "context_hash": 4049476036669813979,
+      "translation": "``PyModule_FromSlotsAndSpec`` 또는 ``PyModExport_<NAME>`` 내보내기 훅을 사용하여 생성된 모듈은 새 ``Py_mod_token`` 슬롯으로 토큰을 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500347Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:10/seg:0",
+      "source": "Modules created from a ``PyModuleDef`` will have the token set to that definition.",
+      "source_hash": 8682711021563909182,
+      "context_hash": 8253669314378931910,
+      "translation": "``PyModuleDef``\\ 에서 생성된 모듈은 해당 정의로 토큰이 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500347Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:10/seg:1",
+      "source": "An explicit ``Py_mod_token`` slot will we rejected for these. (This allows implementations to share storage for the token and def.)",
+      "source_hash": 15286730841823035435,
+      "context_hash": 8190602935578544944,
+      "translation": "이러한 모듈에는 명시적인 ``Py_mod_token`` 슬롯이 거부됩니다. (이를 통해 구현에서 토큰과 def에 대한 저장 공간을 공유할 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500347Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:11/seg:0",
+      "source": "For modules created via the new export hook, the token will be set to the address of the slots array by default. (This does **not** apply to modules created by ``PyModule_FromSlotsAndSpec``, as that function's input might not outlive the module.)",
+      "source_hash": 4446064464673034437,
+      "context_hash": 11212772115850716,
+      "translation": "새 내보내기 훅을 통해 생성된 모듈의 경우 기본적으로 토큰이 슬롯 배열의 주소로 설정됩니다. (해당 함수의 입력값이 모듈보다 오래 존재하지 않을 수 있으므로, ``PyModule_FromSlotsAndSpec``\\ 로 생성된 모듈에는 **적용되지** 않습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500348Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:12/seg:0",
+      "source": "The token will not be set for non-``PyModuleType`` instances.",
+      "source_hash": 1449001996050630443,
+      "context_hash": 8356044291550200959,
+      "translation": "``PyModuleType``\\ 이 아닌 인스턴스에는 토큰이 설정되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500348Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:13/seg:0",
+      "source": "A ``PyModule_GetToken`` function will be added to get the token.",
+      "source_hash": 10198170233655312373,
+      "context_hash": 2108975066976357513,
+      "translation": "토큰을 가져오기 위한 ``PyModule_GetToken`` 함수가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500348Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:13/seg:1",
+      "source": "Since the result may be ``NULL``, it will be passed via a pointer; the function will return 0 on success and -1 on failure:",
+      "source_hash": 2350151333958851880,
+      "context_hash": 3064153188640805214,
+      "translation": "결과가 ``NULL``\\ 일 수 있으므로 포인터를 통해 전달하며, 함수는 성공 시 0을, 실패 시 -1을 반환합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500348Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:15/seg:0",
+      "source": "A new ``PyType_GetModuleByToken`` function will be added, with a signature like the existing ``PyType_GetModuleByDef`` but a ``const void *token`` argument, and the same behaviour except matching tokens rather than only defs, and returning a strong reference.",
+      "source_hash": 7231183797033137809,
+      "context_hash": 8820828551864804170,
+      "translation": "기존 ``PyType_GetModuleByDef``\\ 와 유사한 시그니처를 가지되 ``const void *token`` 인자를 사용하고, def만이 아니라 토큰을 일치시키는 것을 제외하면 동일하게 동작하며 강한 참조를 반환하는 새 ``PyType_GetModuleByToken`` 함수가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500348Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:16/seg:0",
+      "source": "For easier backwards compatibility, the existing ``PyType_GetModuleByDef`` will be changed to also allow a token (cast to a ``PyModuleDef *`` pointer) as the *def* argument.",
+      "source_hash": 11810081945694485165,
+      "context_hash": 6892147565682052081,
+      "translation": "하위 호환성을 더욱 쉽게 유지하기 위해 기존 ``PyType_GetModuleByDef``\\ 를 변경하여 토큰을 (``PyModuleDef *`` 포인터로 캐스팅하여) *def* 인자로 사용할 수도 있게 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500349Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:16/seg:1",
+      "source": "That is, ``PyType_GetModuleByToken`` and ``PyType_GetModuleByDef`` will differ only in the formal signature of the second argument and by returning a borrowed vs. strong reference. (The ``PyModule_GetDef`` function will not get a similar change, as users may access members of its result.)",
+      "source_hash": 2171537179059577135,
+      "context_hash": 5812091267565442102,
+      "translation": "즉, ``PyType_GetModuleByToken``\\ 과 ``PyType_GetModuleByDef``\\ 는 두 번째 인자의 형식적 시그니처와 빌린 참조와 강한 참조 중 무엇을 반환하는지만 다릅니다. (사용자가 결과의 멤버에 접근할 수 있으므로 ``PyModule_GetDef`` 함수에는 이와 유사한 변경이 적용되지 않습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500349Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "New slots",
+      "source_hash": 13434496186183079443,
+      "context_hash": 3163207364641420804,
+      "translation": "새 슬롯",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500350Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "For each field of the ``PyModuleDef`` struct, except ones from ``PyModuleDef_HEAD_INIT``, a new slot ID will be provided: ``Py_mod_name``, ``Py_mod_doc``, ``Py_mod_clear``, etc. Slots related to the module state rather than the module object will use a ``Py_mod_state_`` prefix.",
+      "source_hash": 8257415796132208913,
+      "context_hash": 1212343125614356760,
+      "translation": "``PyModuleDef_HEAD_INIT``\\ 에서 가져온 필드를 제외한 ``PyModuleDef`` 구조체의 각 필드에 대해 ``Py_mod_name``, ``Py_mod_doc``, ``Py_mod_clear`` 등의 새 슬롯 ID가 제공됩니다. 모듈 객체가 아니라 모듈 상태와 관련된 슬롯에는 ``Py_mod_state_`` 접두사가 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500350Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "See :ref:`pep793-api-summary` for a full list.",
+      "source_hash": 16120449677017605664,
+      "context_hash": 8975789129158104482,
+      "translation": "전체 목록은 :ref:`pep793-api-summary`\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500350Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "All new slots -- these and ``Py_tp_token`` discussed above -- may not be repeated in the slots array, and may not be used in a ``PyModuleDef.m_slots`` array.",
+      "source_hash": 7177411080813724899,
+      "context_hash": 2650040772938220645,
+      "translation": "새 슬롯은 모두(위에서 논의한 ``Py_tp_token`` 포함) 슬롯 배열에 반복해서 사용할 수 없으며, ``PyModuleDef.m_slots`` 배열에서 사용할 수도 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500350Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:1",
+      "source": "They may not have a ``NULL`` value (instead, the slot can be omitted entirely).",
+      "source_hash": 9685630514144768720,
+      "context_hash": 12272322603074189042,
+      "translation": "이러한 슬롯에는 ``NULL`` 값을 지정할 수 없습니다. (대신 슬롯 자체를 완전히 생략할 수 있습니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500351Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "Note that currently, for modules created from a *spec* (that is, using ``PyModule_FromDefAndSpec``), the ``PyModuleDef.m_name`` member is ignored and the name from the spec is used instead.",
+      "source_hash": 14317058502160702428,
+      "context_hash": 11968851791790991553,
+      "translation": "현재 *spec* (즉, ``PyModule_FromDefAndSpec``\\ 를 사용하여)에서 생성된 모듈에서는 ``PyModuleDef.m_name`` 멤버가 무시되고 spec의 이름이 대신 사용된다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500351Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:1",
+      "source": "All API proposed in this document creates modules from a *spec*, and it will ignore ``Py_mod_name`` in the same way.",
+      "source_hash": 5089443496630014274,
+      "context_hash": 12838874488922427745,
+      "translation": "이 문서에서 제안하는 모든 API는 *spec*\\ 에서 모듈을 생성하며, 동일한 방식으로 ``Py_mod_name``\\ 을 무시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500351Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:2",
+      "source": "The slot will be optional, but extension authors are strongly encouraged to include it for the benefit of future APIs, external tooling, debugging, and introspection.",
+      "source_hash": 3866430134855341864,
+      "context_hash": 12083164706218832253,
+      "translation": "이 슬롯은 선택 사항이지만, 확장 모듈 작성자는 향후 API, 외부 도구, 디버깅 및 인트로스펙션에 도움이 되도록 이를 포함할 것을 강력히 권장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500351Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Bits & Pieces",
+      "source_hash": 6041650481327631919,
+      "context_hash": 5223691420786774457,
+      "translation": "기타 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500352Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "A ``PyMODEXPORT_FUNC`` macro will be added, similar to the ``PyMODINIT_FUNC`` macro but with ``PySlot *`` as the return type.",
+      "source_hash": 13893775374618643874,
+      "context_hash": 16255861286159302431,
+      "translation": "반환 형식으로 ``PySlot *``\\ 를 사용하지만 ``PyMODINIT_FUNC`` 매크로와 유사한 ``PyMODEXPORT_FUNC`` 매크로가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500352Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "A ``PyModule_GetStateSize`` function will be added to retrieve the size set by ``Py_mod_state_size`` or ``PyModuleDef.m_size``.",
+      "source_hash": 3956166257069845398,
+      "context_hash": 278061677882292375,
+      "translation": "``Py_mod_state_size`` 또는 ``PyModuleDef.m_size``\\ 로 설정된 크기를 가져오기 위한 ``PyModule_GetStateSize`` 함수가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500352Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:1",
+      "source": "Since the result may be -1 (for single-phase-init modules), it will be output via a pointer; the function will return 0 on success and -1 on failure:",
+      "source_hash": 6385560561664666601,
+      "context_hash": 5534067387477502343,
+      "translation": "결과가 -1일 수 있으므로(단계별 초기화 모듈의 경우) 포인터를 통해 출력하며, 함수는 성공 시 0을, 실패 시 -1을 반환합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500352Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Soft-deprecating the existing export hook",
+      "source_hash": 6499782790757210879,
+      "context_hash": 18042574738941060058,
+      "translation": "기존 내보내기 훅의 소프트 사용 중단",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500353Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "The ``PyInit_*`` export hook will be :ref:`soft-deprecated <pep387-soft-deprecation>`.",
+      "source_hash": 12323773493638787021,
+      "context_hash": 7641461558553495039,
+      "translation": "``PyInit_*`` 내보내기 훅은 :ref:`soft-deprecated <pep387-soft-deprecation>`\\ 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500353Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "New API summary",
+      "source_hash": 18195037439345512206,
+      "context_hash": 10474080872985970835,
+      "translation": "새 API 요약",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:34.500353Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "Python will load a new module export hook, with two variants:",
+      "source_hash": 15432123393417076080,
+      "context_hash": 5349624527208261418,
+      "translation": "Python은 두 가지 변형을 갖는 새로운 모듈 내보내기 훅을 로드합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550376Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:3/seg:0",
+      "source": "The following functions will be added:",
+      "source_hash": 13880261703731657419,
+      "context_hash": 14860963491758672394,
+      "translation": "다음 함수가 추가됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550380Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:5/seg:0",
+      "source": "A new macro will be added:",
+      "source_hash": 10088155548784418262,
+      "context_hash": 17932249485289487582,
+      "translation": "새로운 매크로가 추가됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550380Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:7/seg:0",
+      "source": "And new slot types (``#define``\\d names for small integers):",
+      "source_hash": 14856733265445268110,
+      "context_hash": 1816161057121760390,
+      "translation": "그리고 새로운 슬롯 유형(작은 정수에 대한 ``#define``\\d 이름)이 추가됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550380Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:8/seg:0",
+      "source": "``Py_mod_name`` (equivalent to ``PyModuleDef.m_name``)",
+      "source_hash": 16791138614294258245,
+      "context_hash": 6297196060313982904,
+      "translation": "``Py_mod_name`` (``PyModuleDef.m_name``\\ 과 동등함)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550381Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:9/seg:0",
+      "source": "``Py_mod_doc`` (equivalent to ``PyModuleDef.m_doc``)",
+      "source_hash": 829862342694877175,
+      "context_hash": 10638942986824869715,
+      "translation": "``Py_mod_doc`` (``PyModuleDef.m_doc``\\ 과 동등함)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550381Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:10/seg:0",
+      "source": "``Py_mod_state_size`` (equivalent to ``PyModuleDef.m_size``)",
+      "source_hash": 18022103384704270823,
+      "context_hash": 14830704665607991139,
+      "translation": "``Py_mod_state_size`` (``PyModuleDef.m_size``\\ 와 동등함)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550381Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:11/seg:0",
+      "source": "``Py_mod_methods`` (equivalent to ``PyModuleDef.m_methods``)",
+      "source_hash": 9136180680692737225,
+      "context_hash": 5715312875209785207,
+      "translation": "``Py_mod_methods`` (``PyModuleDef.m_methods``\\ 와 동등함)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550382Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:12/seg:0",
+      "source": "``Py_mod_state_traverse`` (equivalent to ``PyModuleDef.m_traverse``)",
+      "source_hash": 9634809027462242281,
+      "context_hash": 8200765062902019064,
+      "translation": "``Py_mod_state_traverse`` (``PyModuleDef.m_traverse``\\ 와 동등함)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550382Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:13/seg:0",
+      "source": "``Py_mod_state_clear`` (equivalent to ``PyModuleDef.m_clear``)",
+      "source_hash": 647393286240499852,
+      "context_hash": 5133378627629906851,
+      "translation": "``Py_mod_state_clear`` (``PyModuleDef.m_clear``\\ 와 동등함)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550382Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:14/seg:0",
+      "source": "``Py_mod_state_free`` (equivalent to ``PyModuleDef.m_free``)",
+      "source_hash": 4202442688759220524,
+      "context_hash": 13239682595733073615,
+      "translation": "``Py_mod_state_free`` (``PyModuleDef.m_free``\\ 와 동등함)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550382Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:15/seg:0",
+      "source": "``Py_mod_token`` (see above)",
+      "source_hash": 2256103162564169582,
+      "context_hash": 13725784957788214314,
+      "translation": "``Py_mod_token`` (위 참조)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550383Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:16/seg:0",
+      "source": "All this will be added to the Limited API.",
+      "source_hash": 12520599788241605787,
+      "context_hash": 408534849273718402,
+      "translation": "이 모든 것이 Limited API에 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550383Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 10718307298919566721,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550383Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "If an existing module is ported to use the new mechanism, then ``PyModule_GetDef`` will start returning ``NULL`` for it. (This matches ``PyModule_GetDef``'s current documentation.) We claim that how a module was defined is an implementation detail of that module, so this should not be considered a breaking change.",
+      "source_hash": 13527531357239156196,
+      "context_hash": 6925239855566334694,
+      "translation": "기존 모듈을 새로운 메커니즘을 사용하도록 이식하면 ``PyModule_GetDef``\\ 은 해당 모듈에 대해 ``NULL``\\ 을 반환하기 시작합니다. (이는 ``PyModule_GetDef``\\ 의 현재 문서와 일치합니다.) 모듈이 어떻게 정의되었는지는 해당 모듈의 구현 세부 사항이라고 주장하므로, 이를 호환성을 깨뜨리는 변경으로 간주해서는 안 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550384Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "Similarly, the ``PyType_GetModuleByDef`` function may stop matching modules whose definition changed.",
+      "source_hash": 13284144305143435014,
+      "context_hash": 17212678113076154113,
+      "translation": "마찬가지로 ``PyType_GetModuleByDef`` 함수는 정의가 변경된 모듈과의 일치를 중단할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550384Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:1",
+      "source": "Module authors may avoid this by explicitly setting a *def* as the *token*.",
+      "source_hash": 8074941020054028352,
+      "context_hash": 8268957876388447498,
+      "translation": "모듈 작성자는 *def*\\ 를 *token*\\ 으로 명시적으로 설정하여 이를 방지할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550384Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "``PyType_GetModuleByDef`` will now accept a module token as the *def* argument.",
+      "source_hash": 6585036953395609896,
+      "context_hash": 15105532661033229759,
+      "translation": "이제 ``PyType_GetModuleByDef``\\ 은 모듈 토큰을 *def* 인자로 허용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550385Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:1",
+      "source": "We specify a suitable restriction on using ``PyModuleDef`` addresses as tokens, and non-``PyModuleDef`` pointers were previously invalid input, so this is not a backwards-compatibility issue.",
+      "source_hash": 3118866393351626016,
+      "context_hash": 16276218495799174355,
+      "translation": "``PyModuleDef`` 주소를 토큰으로 사용하는 것에 대한 적절한 제한을 지정하며, ``PyModuleDef``\\ 가 아닌 포인터는 이전에도 유효하지 않은 입력이었으므로 이는 하위 호환성 문제가 아닙니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550385Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:4/seg:0",
+      "source": "The ``Py_mod_create`` function may now be called with ``NULL`` for the second argument.",
+      "source_hash": 10720537417786436686,
+      "context_hash": 9051665966525628933,
+      "translation": "이제 ``Py_mod_create`` 함수는 두 번째 인자로 ``NULL``\\ 을 사용하여 호출할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550385Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:4/seg:1",
+      "source": "This could trip people porting from *def* to *slots*, so it needs to be mentioned in porting notes.",
+      "source_hash": 3345016360346578000,
+      "context_hash": 9242060699078356486,
+      "translation": "이로 인해 *def*\\ 에서 *slots*\\ 로 이식하는 사람들이 문제를 겪을 수 있으므로, 이 내용은 이식 참고 사항에 언급해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550386Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Forward compatibility",
+      "source_hash": 12511678872847638371,
+      "context_hash": 1113523081980552161,
+      "translation": "상위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550386Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "If a module defines the new export hook, CPython versions that implement this PEP will ignore the traditional ``PyInit_*`` hook.",
+      "source_hash": 10789530768670940626,
+      "context_hash": 14362198904310977109,
+      "translation": "모듈이 새로운 내보내기 훅을 정의하면 이 PEP를 구현하는 CPython 버전은 기존의 ``PyInit_*`` 훅을 무시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550386Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "Extensions that straddle Python versions are expected to define both hooks; each build of CPython will “pick” the newest one that it supports.",
+      "source_hash": 2960729249523359996,
+      "context_hash": 14163332565373132616,
+      "translation": "여러 Python 버전에 걸쳐 사용되는 확장 기능은 두 훅을 모두 정의해야 하며, CPython의 각 빌드는 지원하는 것 중 가장 최신 버전을 “선택”합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550386Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Porting guide",
+      "source_hash": 15575602626971469824,
+      "context_hash": 12487023154613522446,
+      "translation": "이식 안내서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550386Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Here is a guide to convert an existing module to the new API, including some tricky edge cases.",
+      "source_hash": 6081439032660818465,
+      "context_hash": 4149235018044177401,
+      "translation": "다음은 까다로운 일부 예외 사례를 포함하여 기존 모듈을 새로운 API로 변환하는 안내서입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550387Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:1",
+      "source": "It should be moved to a HOWTO in the documentation.",
+      "source_hash": 8268640570068611292,
+      "context_hash": 10548314482906111397,
+      "translation": "이 내용은 문서의 HOWTO로 옮겨야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550387Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "The guide is available at :ref:`py3.15:abi3t-howto-modexport`. (It is part of the ``abi3t`` migration HOWTO since switching to ``PyModExport`` doesn't bring benefits in 3.15 if you don't also adopt ``abi3t``.)",
+      "source_hash": 12900303805456709719,
+      "context_hash": 8787771874441395139,
+      "translation": "안내서는 :ref:`py3.15:abi3t-howto-modexport`\\ 에서 확인할 수 있습니다. (``PyModExport``\\ 로 전환해도 ``abi3t``\\ 를 함께 채택하지 않는다면 3.15에서는 이점이 없으므로, 이는 ``abi3t`` 마이그레이션 HOWTO의 일부입니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550387Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "This section contains the original, outdated guide.",
+      "source_hash": 6233384222735338527,
+      "context_hash": 15502352462819421553,
+      "translation": "이 절에는 원래의 오래된 안내서가 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550388Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "This guide is meant for hand-written modules.",
+      "source_hash": 4450652674864872586,
+      "context_hash": 2679485027789307690,
+      "translation": "이 안내서는 손으로 작성한 모듈을 대상으로 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550388Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:1",
+      "source": "For code generators and language wrappers, the :ref:`pep793-shim` below may be more useful.",
+      "source_hash": 1937342393475920636,
+      "context_hash": 11812105121368812897,
+      "translation": "코드 생성기와 언어 래퍼에는 아래의 :ref:`pep793-shim`\\ 이 더 유용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:30.550388Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "Scan your code for uses of ``PyModule_GetDef``.",
+      "source_hash": 7515248373341658168,
+      "context_hash": 5562034235844020762,
+      "translation": "코드에서 ``PyModule_GetDef``\\ 사용을 검색하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566145Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:1",
+      "source": "This function will return ``NULL`` for modules that use the new mechanism.",
+      "source_hash": 1314850985934931396,
+      "context_hash": 6408623309002047457,
+      "translation": "이 함수는 새로운 메커니즘을 사용하는 모듈에 대해 ``NULL``\\ 을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566148Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:2",
+      "source": "Instead:",
+      "source_hash": 11424888114787533187,
+      "context_hash": 4747233984160441866,
+      "translation": "대신:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566148Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:0",
+      "source": "For getting the contents of the module's ``PyModuleDef``, use the C struct directly.",
+      "source_hash": 14928648330888256326,
+      "context_hash": 9557483051463369803,
+      "translation": "모듈의 ``PyModuleDef``\\ 내용을 가져오려면 C 구조체를 직접 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566149Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:1",
+      "source": "Alternatively, get attributes from the module using, for example, ``PyModule_GetNameObject``, the ``__doc__`` attribute, and ``PyModule_GetStateSize``. (Note that Python code can mutate a module's attributes.)",
+      "source_hash": 509751066094586081,
+      "context_hash": 6514787056518570898,
+      "translation": "또는 ``PyModule_GetNameObject``, ``__doc__``\\ 속성 및 ``PyModule_GetStateSize``\\ 등을 사용하여 모듈에서 속성을 가져오십시오. (Python 코드가 모듈의 속성을 변경할 수 있다는 점에 유의하십시오.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566149Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:0",
+      "source": "For testing if a module object is “yours”, use ``PyModule_GetToken`` instead.",
+      "source_hash": 13054716363402582061,
+      "context_hash": 4310450499688811478,
+      "translation": "모듈 객체가 자신의 것인지 테스트하려면 대신 ``PyModule_GetToken``\\ 을 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566149Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:1",
+      "source": "Later in this guide, you'll set the token to *be* the existing ``PyModuleDef`` structure.",
+      "source_hash": 5638371062581541936,
+      "context_hash": 12126940216859338798,
+      "translation": "이 안내서의 뒷부분에서 토큰이 기존 ``PyModuleDef``\\ 구조체가 *되도록* 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566149Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:8/seg:0",
+      "source": "Optionally, scan your code for uses of ``PyType_GetModuleByDef``, and replace them with ``PyType_GetModuleByToken``.",
+      "source_hash": 12150470431757673044,
+      "context_hash": 413190863879521431,
+      "translation": "선택적으로 코드에서 ``PyType_GetModuleByDef``\\ 사용을 검색하고, 이를 ``PyType_GetModuleByToken``\\ 으로 대체하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566150Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:8/seg:1",
+      "source": "Later in this guide, you'll set the token to *be* the existing ``PyModuleDef`` structure.",
+      "source_hash": 5638371062581541936,
+      "context_hash": 9753434976989242601,
+      "translation": "이 안내서의 뒷부분에서 토큰이 기존 ``PyModuleDef``\\ 구조체가 *되도록* 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566150Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:9/seg:0",
+      "source": "(You may skip this step if targetting Python versions that don't expose ``PyType_GetModuleByToken``, since ``PyType_GetModuleByDef`` is backwards-compatible.)",
+      "source_hash": 9821915151158379867,
+      "context_hash": 16747134651918658630,
+      "translation": "``PyType_GetModuleByToken``\\ 을 제공하지 않는 Python 버전을 대상으로 하는 경우에는 이 단계를 건너뛰어도 됩니다. ``PyType_GetModuleByDef``\\ 는 하위 호환성을 가지기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566150Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:10/seg:0",
+      "source": "Look at the function identified by ``Py_mod_create``, if any.",
+      "source_hash": 11087736937513427012,
+      "context_hash": 3393797456286621395,
+      "translation": "``Py_mod_create``\\ 로 식별되는 함수가 있는 경우 이를 살펴보십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566151Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:10/seg:1",
+      "source": "Make sure that it does not use its second argument (``PyModuleDef``), as it will be called with ``NULL``.",
+      "source_hash": 9590644975607821171,
+      "context_hash": 10387219126711497814,
+      "translation": "해당 함수가 두 번째 인자인 (``PyModuleDef``\\ )을 사용하지 않는지 확인하십시오. 해당 함수는 ``NULL``\\ 로 호출되기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566151Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:10/seg:2",
+      "source": "Instead of the argument, use the existing ``PyModuleDef`` struct directly.",
+      "source_hash": 4127608585438109480,
+      "context_hash": 8089469807356181696,
+      "translation": "인자 대신 기존 ``PyModuleDef``\\ 구조체를 직접 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566151Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:11/seg:0",
+      "source": "If using multiple ``Py_mod_exec`` slots, consolidate them: pick one of the functions, or write a new one, and call the others from it.",
+      "source_hash": 12840428269735125770,
+      "context_hash": 8443426618778361316,
+      "translation": "여러 ``Py_mod_exec``\\ 슬롯을 사용하는 경우 이를 통합하십시오. 함수 중 하나를 선택하거나 새 함수를 작성하고, 그 함수에서 나머지 함수를 호출하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566151Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:11/seg:1",
+      "source": "Remove all but one ``Py_mod_exec`` slots.",
+      "source_hash": 1926075858957421463,
+      "context_hash": 2495592142801492799,
+      "translation": "``Py_mod_exec``\\ 슬롯을 하나만 남기고 모두 제거하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566152Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:12/seg:0",
+      "source": "Make a copy of the existing ``PyModuleDef_Slot`` array pointed to by the ``m_slots`` member of your ``PyModuleDef``.",
+      "source_hash": 12825924129242702592,
+      "context_hash": 7966604647590144798,
+      "translation": "``PyModuleDef``\\ 의 ``m_slots``\\ 멤버가 가리키는 기존 ``PyModuleDef_Slot``\\ 배열을 복사하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566152Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:12/seg:1",
+      "source": "If you don't have an existing slots array, create one like this:",
+      "source_hash": 11471894794485456550,
+      "context_hash": 9918715180221723308,
+      "translation": "기존 슬롯 배열이 없다면 다음과 같이 하나를 만드십시오:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566152Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:14/seg:0",
+      "source": "Give this array a unique name.",
+      "source_hash": 3225942470991532267,
+      "context_hash": 10024140074258407001,
+      "translation": "이 배열에 고유한 이름을 지정하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566152Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:14/seg:1",
+      "source": "Further examples will assume that you've named it ``module_slots``.",
+      "source_hash": 2205637463222318399,
+      "context_hash": 3936987017307448554,
+      "translation": "이후 예제에서는 이 배열의 이름을 ``module_slots``\\ 로 지정했다고 가정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566153Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:15/seg:0",
+      "source": "Add slots for all members of the existing ``PyModuleDef`` structure.",
+      "source_hash": 13111392570842800149,
+      "context_hash": 15669183305552675880,
+      "translation": "기존 ``PyModuleDef``\\ 구조체의 모든 멤버에 대한 슬롯을 추가하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566153Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:15/seg:1",
+      "source": "See :ref:`pep793-api-summary` for a list of the new slots.",
+      "source_hash": 14035325294984835897,
+      "context_hash": 5121655701779815132,
+      "translation": "새 슬롯 목록은 :ref:`pep793-api-summary`\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566153Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:15/seg:2",
+      "source": "For example, to add a name and docstring:",
+      "source_hash": 16635380199287410487,
+      "context_hash": 6248089547777285498,
+      "translation": "예를 들어 이름과 독스트링을 추가하려면:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566153Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:17/seg:0",
+      "source": "If you switched from ``PyModule_GetDef`` to ``PyModule_GetToken``, and/or if you use ``PyType_GetModuleByDef`` or ``PyType_GetModuleByToken``, add a ``Py_mod_token`` slot pointing to the existing ``PyModuleDef`` struct:",
+      "source_hash": 10070626549131910811,
+      "context_hash": 7550239873493309064,
+      "translation": "``PyModule_GetDef``\\ 에서 ``PyModule_GetToken``\\ 으로 전환했거나, ``PyType_GetModuleByDef``\\ 또는 ``PyType_GetModuleByToken``\\ 을 사용하는 경우에는 기존 ``PyModuleDef``\\ 구조체를 가리키는 ``Py_mod_token``\\ 슬롯을 추가하십시오:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566154Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:19/seg:0",
+      "source": "Add a new export hook.",
+      "source_hash": 10536712121041477492,
+      "context_hash": 9016810006038372903,
+      "translation": "새 내보내기 훅을 추가하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566154Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:21/seg:0",
+      "source": "The new export hook will be used on Python 3.15 and above.",
+      "source_hash": 3167987254788298305,
+      "context_hash": 14545101312962297962,
+      "translation": "새 내보내기 훅은 Python 3.15 이상에서 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566154Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:21/seg:1",
+      "source": "Once your module no longer supports lower versions:",
+      "source_hash": 11659111070276127565,
+      "context_hash": 13458573171741667653,
+      "translation": "모듈이 더 낮은 버전을 더 이상 지원하지 않게 되면:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566154Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:22/seg:0",
+      "source": "Delete the ``PyInit_`` function.",
+      "source_hash": 18243920327744380781,
+      "context_hash": 15096122786334725276,
+      "translation": "``PyInit_`` 함수를 삭제하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566154Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:23/seg:0",
+      "source": "If the existing ``PyModuleDef`` struct is used *only* for ``Py_mod_token`` and/or ``PyType_GetModuleByToken``, you may remove the ``Py_mod_token`` line and replace ``&your_module_def`` with ``module_slots`` everywhere else.",
+      "source_hash": 8808995669924624510,
+      "context_hash": 1847038105018764372,
+      "translation": "기존 ``PyModuleDef``\\ 구조체가 ``Py_mod_token``\\ 및/또는 ``PyType_GetModuleByToken``\\ 에 *대해서만* 사용되는 경우에는 ``Py_mod_token``\\ 행을 제거하고 다른 모든 곳에서 ``&your_module_def``\\ 를 ``module_slots``\\ 로 바꾸어도 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566155Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:24/seg:0",
+      "source": "Delete any unused data.",
+      "source_hash": 784516979921437696,
+      "context_hash": 9153793162436780440,
+      "translation": "사용되지 않는 데이터를 삭제하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566155Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:24/seg:1",
+      "source": "The ``PyModuleDef`` struct and the original slots array are likely to be unused.",
+      "source_hash": 1654060425832185452,
+      "context_hash": 11187286872054431124,
+      "translation": "``PyModuleDef``\\ 구조체와 원래의 슬롯 배열은 사용되지 않을 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566155Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Backwards compatibility shim",
+      "source_hash": 10390311723483955012,
+      "context_hash": 17124557109427142662,
+      "translation": "하위 호환성 심",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566155Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "It is possible to write a generic function that implements the “old” export hook (``PyInit_``) in terms of the API proposed here.",
+      "source_hash": 16646678908981166129,
+      "context_hash": 10644055959396674524,
+      "translation": "여기서 제안하는 API를 사용하여 “기존” 내보내기 훅(``PyInit_``)을 구현하는 일반 함수를 작성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:49.566156Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "The following implementation can be copied and pasted to a project; only the names ``PyInit_examplemodule`` (twice) and ``PyModExport_examplemodule`` should need adjusting.",
+      "source_hash": 5722329876948192257,
+      "context_hash": 242054593829678161,
+      "translation": "다음 구현은 프로젝트에 복사하여 붙여 넣을 수 있으며, 이름 ``PyInit_examplemodule`` (두 번)과 ``PyModExport_examplemodule``\\ 만 수정하면 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192355Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "This section was updated for :pep:`820`.",
+      "source_hash": 13544332223445824930,
+      "context_hash": 600941801548695535,
+      "translation": "이 섹션은 :pep:`820`\\ 에 맞게 업데이트되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192358Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:4/seg:0",
+      "source": "When compiled together with the :ref:`pep793-example` below on a non-free-threaded build of Python 3.15, the resulting extension is compatible with non-free-threading 3.11+ builds, in addition to a free-threading build of the reference implementation. (The module must be named without a version tag, e.g. ``examplemodule.so``, and be placed on ``sys.path``.)",
+      "source_hash": 17582854405835582077,
+      "context_hash": 16525374640297332503,
+      "translation": "아래의 :ref:`pep793-example`\\ 과 함께 Python 3.15의 비 자유 스레드 빌드에서 컴파일하면, 그 결과로 생성되는 확장 기능은 참조 구현의 자유 스레딩 빌드뿐만 아니라 비 자유 스레딩 3.11 이상 빌드와도 호환됩니다. (모듈 이름은 버전 태그 없이 지정해야 합니다(예: ``examplemodule.so``). 또한 ``sys.path``\\ 에 배치해야 합니다.)",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T19:18:44.192359Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:0",
+      "source": "Full support for creating such modules will require backports of some new API, and support in build/install tools.",
+      "source_hash": 14152417732651334918,
+      "context_hash": 5049577276860437684,
+      "translation": "이러한 모듈을 생성하는 기능을 완전히 지원하려면 일부 새 API의 백포트와 빌드/설치 도구의 지원이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192360Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:1",
+      "source": "This is out of scope of this PEP. (In particular, the demo “cheats” by using a subset of Limited API 3.15 that *happens to work* on 3.11, and includes a few hacks.",
+      "source_hash": 9070428121292167217,
+      "context_hash": 2790857470538134509,
+      "translation": "이는 이 PEP의 범위를 벗어납니다. (특히 이 데모는 3.11에서 *happens to work*\\ 하는 Limited API 3.15의 일부를 사용하고 몇 가지 해킹을 포함하여 “편법을 사용합니다”.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192360Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:5/seg:2",
+      "source": "A proper implementation would use Limited API 3.11 with cleaner backport shims for new API like ``Py_mod_name``.)",
+      "source_hash": 15604693296606651524,
+      "context_hash": 17406659561051299011,
+      "translation": "적절한 구현에서는 새 API인 ``Py_mod_name``\\ 과 같은 항목에 더 깔끔한 백포트 심을 제공하면서 Limited API 3.11을 사용합니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192360Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:6/seg:0",
+      "source": "This implementation places a few additional requirements on the slots array:",
+      "source_hash": 5652331098781380629,
+      "context_hash": 779517689223700170,
+      "translation": "이 구현은 슬롯 배열에 몇 가지 추가 요구 사항을 적용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192361Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:7/seg:0",
+      "source": "``Py_mod_slots`` and ``Py_slot_subslots`` are not supported.",
+      "source_hash": 14415565887838312454,
+      "context_hash": 13372815887955115172,
+      "translation": "``Py_mod_slots`` 및 ``Py_slot_subslots``\\ 는 지원되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192361Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:8/seg:0",
+      "source": "A ``Py_mod_name`` slot is required.",
+      "source_hash": 7846711078887191423,
+      "context_hash": 15642197591671214829,
+      "translation": "``Py_mod_name`` 슬롯은 필수입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192361Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:9/seg:0",
+      "source": "Any ``Py_mod_token`` must be set to the ``MOD_TOKEN`` defined here.",
+      "source_hash": 17456382814436981223,
+      "context_hash": 12534554814762500707,
+      "translation": "모든 ``Py_mod_token``\\ 은 여기에 정의된 ``MOD_TOKEN``\\ 으로 설정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192361Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 5312846810332828459,
+      "translation": "보안 영향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192362Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "None known",
+      "source_hash": 13953642888906057750,
+      "context_hash": 4685212823500510940,
+      "translation": "알려진 바 없음",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192362Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 4508909525879825371,
+      "translation": "이것을 가르치는 방법",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192362Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "In addition to regular reference docs, the :ref:`pep793-porting-notes` should be added as a new HOWTO.",
+      "source_hash": 3281257612657367341,
+      "context_hash": 4089702779203103823,
+      "translation": "일반 참조 문서에 더해 :ref:`pep793-porting-notes`\\ 를 새로운 HOWTO로 추가해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192362Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Example",
+      "source_hash": 1513857641461741027,
+      "context_hash": 9442073863305815619,
+      "translation": "예제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192363Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:1/seg:0",
+      "source": "The example was updated for :pep:`820`.",
+      "source_hash": 7995847821082471226,
+      "context_hash": 8062396171104454653,
+      "translation": "예제는 :pep:`820`\\ 에 맞게 업데이트되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192363Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "Reference Implementation",
+      "source_hash": 9294161050860502574,
+      "context_hash": 10031924832362851423,
+      "translation": "참조 구현",
+      "glossary_snapshot": {
+        "reference implementation": "참조 구현"
+      },
+      "translated_at": "2026-08-28T19:18:44.192363Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "Implementation is tracked in `GitHub issue #140550 <https://github.com/python/cpython/issues/140550>`_.",
+      "source_hash": 12832559792906707693,
+      "context_hash": 816294318913482681,
+      "translation": "구현은 `GitHub issue #140550 <https://github.com/python/cpython/issues/140550>`_\\ 에서 추적됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192364Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:2/seg:0",
+      "source": "A draft implementation was available in a `GitHub branch <https://github.com/python/cpython/compare/main...encukou:cpython:modexport#files_bucket>`_.",
+      "source_hash": 13983526187740342369,
+      "context_hash": 17834755506554057588,
+      "translation": "초안 구현은 `GitHub branch <https://github.com/python/cpython/compare/main...encukou:cpython:modexport#files_bucket>`_\\ 에서 제공되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192364Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 13414699597749888267,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192365Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Exporting a data pointer rather than a function",
+      "source_hash": 17584530453231366381,
+      "context_hash": 13741024800270514049,
+      "translation": "함수 대신 데이터 포인터 내보내기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192365Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "This proposes a new module export *function*, which is expected to return static constant data.",
+      "source_hash": 2578636932869003699,
+      "context_hash": 9342544626632237206,
+      "translation": "이는 정적 상수 데이터를 반환할 것으로 예상되는 새 모듈 내보내기 *function*\\ 을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192365Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:1",
+      "source": "That data could be exported directly as a data pointer.",
+      "source_hash": 2000183266813740961,
+      "context_hash": 678812191291187344,
+      "translation": "해당 데이터는 데이터 포인터로 직접 내보낼 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192365Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:2/seg:0",
+      "source": "With a function, we avoid dealing with a new kind of exported symbol.",
+      "source_hash": 3303549757786718956,
+      "context_hash": 3778643698350885038,
+      "translation": "함수를 사용하면 새로운 종류의 내보낸 심볼을 처리하지 않아도 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192365Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:3/seg:0",
+      "source": "A function also allows the extension to introspect its environment in a limited way -- for example, to tailor the returned data to the current Python version.",
+      "source_hash": 9925168454995580987,
+      "context_hash": 14913049398739629835,
+      "translation": "함수는 확장 기능이 제한된 방식으로 자신의 환경을 검사할 수 있도록 합니다 -- 예를 들어 현재 Python 버전에 맞게 반환 데이터를 조정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192366Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:0/seg:0",
+      "source": "Changing ``PyModuleDef`` to not be ``PyObject``",
+      "source_hash": 4347642610423594986,
+      "context_hash": 16072761279625845748,
+      "translation": "``PyModuleDef``\\ 을 ``PyObject``\\ 가 아니도록 변경하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192366Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:0",
+      "source": "It is possible to change ``PyModuleDef`` to no longer include the ``PyObject`` header, and continue using the current ``PyInit_*`` hook.",
+      "source_hash": 14902553858593041385,
+      "context_hash": 8607717857445809437,
+      "translation": "``PyModuleDef``\\ 가 더 이상 ``PyObject`` 헤더를 포함하지 않도록 변경하고 현재 ``PyInit_*`` 후크를 계속 사용하는 것이 가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192366Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:1",
+      "source": "There are several issues with this approach:",
+      "source_hash": 16171073088177924652,
+      "context_hash": 5394694592093726327,
+      "translation": "이 접근 방식에는 몇 가지 문제가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192366Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:0",
+      "source": "The import machinery would need to examine bit-patterns in the objects to distinguish between different memory layouts:",
+      "source_hash": 5224925815168338186,
+      "context_hash": 5816097722783903661,
+      "translation": "가져오기 메커니즘은 서로 다른 메모리 레이아웃을 구별하기 위해 객체의 비트 패턴을 검사해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192367Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:3/seg:0",
+      "source": "the “old” ``PyObject``-based ``PyModuleDef``, returned by current ``abi3`` extensions,",
+      "source_hash": 392854560991904548,
+      "context_hash": 17656441061909746505,
+      "translation": "현재 ``abi3`` 확장 기능이 반환하는 “이전” ``PyObject`` 기반 ``PyModuleDef``,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192367Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:4/seg:0",
+      "source": "the new ``PyModuleDef``,",
+      "source_hash": 14726571999759711756,
+      "context_hash": 4361441139005941185,
+      "translation": "새로운 ``PyModuleDef``,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192367Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:5/seg:0",
+      "source": "``PyObject``-based module objects, for single-phase initialization.",
+      "source_hash": 9875912938520131699,
+      "context_hash": 8357648534733443112,
+      "translation": "단일 단계 초기화를 위한 ``PyObject`` 기반 모듈 객체.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:18:44.192367Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:6/seg:0",
+      "source": "This is fragile, and places constraints on future changes to ``PyObject``: the memory layouts need to stay *distinguishable* until both single-phase initialization and the current Stable ABI are no longer supported.",
+      "source_hash": 14953321242945669767,
+      "context_hash": 16265102352808912503,
+      "translation": "이는 취약하며, 향후 ``PyObject``\\ 를 변경하는 데 제약을 둡니다. 메모리 레이아웃은 단일 단계 초기화와 현재 Stable ABI가 모두 더 이상 지원되지 않을 때까지 *구별 가능한* 상태로 유지되어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116636Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:7/seg:0",
+      "source": "``PyModuleDef_Init`` is documented to “Ensure a module definition is a properly initialized Python object that correctly reports its type and a reference count.” This would need to change without warning, breaking any user code that treats ``PyModuleDef``\\ s as Python objects.",
+      "source_hash": 9964693747753371251,
+      "context_hash": 14331242552414935766,
+      "translation": "``PyModuleDef_Init``\\ 은 “모듈 정의가 적절히 초기화된 Python 객체이며 해당 형식과 참조 횟수를 올바르게 보고하도록 보장합니다.”라고 문서화되어 있습니다. 이는 경고 없이 변경되어야 하므로, ``PyModuleDef``\\ s를 Python 객체로 취급하는 사용자 코드를 모두 손상시킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116640Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:0/seg:0",
+      "source": "Possible Future Directions",
+      "source_hash": 1188059503879745535,
+      "context_hash": 846145670336894299,
+      "translation": "가능한 향후 방향",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116641Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:0",
+      "source": "These ideas are out of scope for *this* proposal.",
+      "source_hash": 9511256635351856201,
+      "context_hash": 9473503530945876498,
+      "translation": "이러한 아이디어는 *이* 제안의 범위에 포함되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116641Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:0/seg:0",
+      "source": "Improving slots in general",
+      "source_hash": 13271160891144021226,
+      "context_hash": 15685507514846911941,
+      "translation": "일반적인 슬롯 개선",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116641Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:1/seg:0",
+      "source": "This idea was implemented in :pep:`820`.",
+      "source_hash": 7090653021052869069,
+      "context_hash": 3565828747304382089,
+      "translation": "이 아이디어는 :pep:`820`\\ 에서 구현되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116641Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:2/seg:0",
+      "source": "Slots -- and specifically the existing ``PyModuleDef_Slot`` -- do have a few shortcomings.",
+      "source_hash": 12992723273881447300,
+      "context_hash": 15357140671474330240,
+      "translation": "슬롯, 특히 기존의 ``PyModuleDef_Slot``\\ 에는 몇 가지 단점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116642Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:2/seg:1",
+      "source": "The most important are:",
+      "source_hash": 11254694242818080931,
+      "context_hash": 12966259456654633078,
+      "translation": "가장 중요한 사항은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116642Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:3/seg:0",
+      "source": "Type safety: ``void *`` is used for data pointers, function pointers and small integers, requiring casting that is technically undefined behaviour in C -- but works in practice on all relevant architectures. (For example: ``Py_tp_doc`` marks a string; ``Py_mod_gil`` an integer.)",
+      "source_hash": 8653163867574055323,
+      "context_hash": 13359934197251095770,
+      "translation": "형식 안전성: 데이터 포인터, 함수 포인터 및 작은 정수에 ``void *``\\ 를 사용하므로 캐스팅이 필요합니다. 이는 C에서 기술적으로 정의되지 않은 동작이지만, 관련된 모든 아키텍처에서 실제로는 작동합니다. (예를 들어 ``Py_tp_doc``\\ 은 문자열을 나타내고, ``Py_mod_gil``\\ 은 정수를 나타냅니다.)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116642Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:4/seg:0",
+      "source": "Limited forward compatibility: if an extension provides a slot ID that's unknown to the current interpreter, module creation will fail.",
+      "source_hash": 15921964223461680421,
+      "context_hash": 6421682626573428559,
+      "translation": "제한적인 순방향 호환성: 확장 모듈이 현재 인터프리터에서 알 수 없는 슬롯 ID를 제공하면 모듈 생성이 실패합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:22:53.116643Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:4/seg:1",
+      "source": "This makes it cumbersome to use “optional” features -- ones that should only take effect if the interpreter supports them. (The recently added slots ``Py_mod_gil`` and ``Py_mod_multiple_interpreters`` are good examples.)",
+      "source_hash": 8203767776946848050,
+      "context_hash": 11475635187097041368,
+      "translation": "이로 인해 “선택적” 기능, 즉 인터프리터가 지원하는 경우에만 적용되어야 하는 기능을 사용하기가 번거로워집니다. (최근 추가된 ``Py_mod_gil``\\ 및 ``Py_mod_multiple_interpreters``\\ 슬롯이 좋은 예입니다.)",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:22:53.116644Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:5/seg:0",
+      "source": "One workaround is to check ``Py_Version`` in the export function, and return a slot array suitable for the current interpreter.",
+      "source_hash": 9303447698732820658,
+      "context_hash": 7973569020226821975,
+      "translation": "한 가지 해결 방법은 내보내기 함수에서 ``Py_Version``\\ 을 확인하고, 현재 인터프리터에 적합한 슬롯 배열을 반환하는 것입니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T18:22:53.116645Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:0/seg:0",
+      "source": "Updating defaults",
+      "source_hash": 14477761440591971377,
+      "context_hash": 18153503341496828747,
+      "translation": "기본값 업데이트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116646Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:0",
+      "source": "With a new API, we could update defaults for the ``Py_mod_multiple_interpreters`` and ``Py_mod_gil`` slots.",
+      "source_hash": 1872429628346101840,
+      "context_hash": 4829317970435523094,
+      "translation": "새 API를 사용하면 ``Py_mod_multiple_interpreters``\\ 및 ``Py_mod_gil``\\ 슬롯의 기본값을 업데이트할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116646Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:0/seg:0",
+      "source": "The inittab",
+      "source_hash": 11307921480753478211,
+      "context_hash": 10791249174838893028,
+      "translation": "inittab",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116646Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:0",
+      "source": "We'll need to allow ``PyModuleDef``-less slots in the inittab -- that is, add a new variant of ``PyImport_ExtendInittab``.",
+      "source_hash": 6806053574365546225,
+      "context_hash": 10053878918884159439,
+      "translation": "inittab에서 ``PyModuleDef``\\ 가 없는 슬롯을 허용해야 합니다. 즉, ``PyImport_ExtendInittab``\\ 의 새로운 변형을 추가해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116647Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:1",
+      "source": "Should that be part of this PEP?",
+      "source_hash": 10086311095461504298,
+      "context_hash": 10298565752245902870,
+      "translation": "이것을 이 PEP의 일부로 포함해야 합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116647Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:2/seg:0",
+      "source": "The inittab is used for embedding, where a common/stable ABI is not that important.",
+      "source_hash": 15264397378655207946,
+      "context_hash": 2752273115867769350,
+      "translation": "inittab은 임베딩에 사용되며, 이 경우 공통/안정 ABI는 그다지 중요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116647Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:2/seg:1",
+      "source": "So, it might be OK to leave this to a later change.",
+      "source_hash": 15291489887714750429,
+      "context_hash": 16148976978210652127,
+      "translation": "따라서 이는 이후 변경 사항으로 남겨 두어도 괜찮을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116648Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:0/seg:0",
+      "source": "Footnotes",
+      "source_hash": 9125377107251733533,
+      "context_hash": 10041096204877052868,
+      "translation": "각주",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116648Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:0",
+      "source": "A `quick survey`_ of multiple ``Py_mod_exec`` slots found zero",
+      "source_hash": 15097727318018702667,
+      "context_hash": 17328304992746604484,
+      "translation": "여러 ``Py_mod_exec`` 슬롯을 대상으로 한 `quick survey`_\\ 에서는 0건이 발견되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:00.713203Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:2/seg:0",
+      "source": "uses in the top 15,000 PyPI projects, and three in the stardard library (including tests for the feature).",
+      "source_hash": 32919534951885892,
+      "context_hash": 6132620980608680090,
+      "translation": "표준 라이브러리에서는 세 가지가 발견되었습니다(해당 기능에 대한 테스트 포함).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116649Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:2/seg:1",
+      "source": "The easy workaround is consolidating the ``exec`` functions; see :ref:`pep793-porting-notes` for details.",
+      "source_hash": 9570829937606135305,
+      "context_hash": 10099756785057021802,
+      "translation": "간단한 해결 방법은 ``exec``\\ 함수를 통합하는 것입니다. 자세한 내용은 :ref:`pep793-porting-notes`\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:22:53.116649Z",
+      "issues": []
+    }
+  ]
+}

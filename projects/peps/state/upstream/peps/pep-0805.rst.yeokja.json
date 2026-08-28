@@ -1,0 +1,4038 @@
+{
+  "version": 1,
+  "source_hash": 935892768338488268,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Safe Parallel Python",
+      "source_hash": 16713511427404552435,
+      "context_hash": 16530898886277989957,
+      "translation": "안전한 병렬 Python",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422629Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 16291183057327009240,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422632Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP proposes internal changes to CPython and a new API to support safe, parallel execution of Python.",
+      "source_hash": 3877326331387758930,
+      "context_hash": 10760412414684647013,
+      "translation": "이 PEP는 안전한 Python 병렬 실행을 지원하기 위해 CPython의 내부 변경 사항과 새로운 API를 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422632Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "With this PEP, parallel execution of code is race free by default: objects must be explicitly declared to be safe to be shared between parallel threads, or such sharing is prohibited.",
+      "source_hash": 8128867421052001603,
+      "context_hash": 3156864323290173839,
+      "translation": "이 PEP를 사용하면 코드의 병렬 실행은 기본적으로 경쟁 조건이 없습니다. 객체는 병렬 스레드 간에 공유해도 안전하다고 명시적으로 선언해야 하며, 그렇지 않으면 그러한 공유가 금지됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422632Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "This PEP builds on both :pep:`703` and :pep:`734` to provide a unified execution model that offers better safety than :pep:`703`, better sharing than :pep:`734`, and better performance than either of them.",
+      "source_hash": 1926018610300330896,
+      "context_hash": 4911998702242661817,
+      "translation": "이 PEP는 :pep:`703`\\ 과 :pep:`734`\\ 를 모두 기반으로 하여 통합된 실행 모델을 제공합니다. 이 모델은 :pep:`703`\\ 보다 더 나은 안전성, :pep:`734`\\ 보다 더 나은 공유 기능, 그리고 둘 중 어느 것보다도 더 나은 성능을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422633Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "This PEP adds some additional state to each object, so that it is possible to check, at runtime and at low cost, whether an operation is safe and raise an exception when it is not.",
+      "source_hash": 12744585578102438017,
+      "context_hash": 5528064395711472111,
+      "translation": "이 PEP는 각 객체에 추가 상태를 부여하여 런타임에 낮은 비용으로 연산이 안전한지 확인하고, 안전하지 않은 경우 예외를 발생시킬 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422633Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Motivation",
+      "source_hash": 5845298202555182368,
+      "context_hash": 8928906850270107106,
+      "translation": "동기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422633Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Traditionally, CPython has executed in only one thread at a time.",
+      "source_hash": 14554956319578998501,
+      "context_hash": 15107750249409936546,
+      "translation": "전통적으로 CPython은 한 번에 하나의 스레드에서만 실행되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422633Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "This has always been seen as a limitation of Python and there has been a desire for Python to support parallel execution for many years.",
+      "source_hash": 13116234067502759904,
+      "context_hash": 2120632385429837187,
+      "translation": "이는 항상 Python의 한계로 여겨져 왔으며, Python이 병렬 실행을 지원해야 한다는 요구가 수년 동안 있어 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422634Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": ":pep:`703`, Making the Global Interpreter Lock Optional in CPython, and :pep:`554`, Multiple Interpreters in the Stdlib, offer ways to support parallelism.",
+      "source_hash": 1881811003824914977,
+      "context_hash": 5646439778201520654,
+      "translation": "CPython에서 전역 인터프리터 잠금을 선택 사항으로 만들기 위한 :pep:`703`\\ 과 표준 라이브러리의 다중 인터프리터를 다루는 :pep:`554`\\ 는 병렬성을 지원하는 방법을 제공합니다.",
+      "glossary_snapshot": {
+        "global interpreter lock": "전역 인터프리터 잠금",
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:29:47.422634Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "Multiple interpreters are both safe and support parallelism, but they are difficult to use and sharing objects between multiple interpreters without copying is impossible.",
+      "source_hash": 17710070975488906166,
+      "context_hash": 16209959591336249981,
+      "translation": "다중 인터프리터는 안전하면서 병렬성을 지원하지만 사용하기 어렵고, 복사하지 않고 여러 인터프리터 간에 객체를 공유하는 것은 불가능합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422638Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "PEP 703 supports parallel execution and sharing, but is unsafe as it allows race conditions.",
+      "source_hash": 8425602942682601834,
+      "context_hash": 11201466798685717769,
+      "translation": "PEP 703은 병렬 실행과 공유를 지원하지만 경쟁 조건을 허용하므로 안전하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422638Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:3",
+      "source": "Race conditions allow dangerous and hard-to-find bugs.",
+      "source_hash": 17484775836822883420,
+      "context_hash": 3475684910996133407,
+      "translation": "경쟁 조건은 위험하고 발견하기 어려운 버그를 초래합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422639Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:4",
+      "source": "In the most extreme example, `Therac-25 <https://en.wikipedia.org/wiki/Therac-25>`__, a race condition bug resulted in several fatalities.",
+      "source_hash": 15275592443046860641,
+      "context_hash": 1715042888670932724,
+      "translation": "가장 극단적인 예로 `Therac-25 <https://en.wikipedia.org/wiki/Therac-25>`__\\ 에서는 경쟁 조건 버그로 인해 여러 명이 사망했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422639Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:5",
+      "source": "The trouble with race conditions is not that the bugs they introduce are necessarily worse than other bugs, but that they can be very hard to detect and may easily slip through testing.",
+      "source_hash": 6590120935257720749,
+      "context_hash": 16130763113243204408,
+      "translation": "경쟁 조건의 문제는 경쟁 조건이 도입하는 버그가 반드시 다른 버그보다 더 심각하다는 데 있는 것이 아니라, 이러한 버그를 발견하기가 매우 어렵고 테스트를 쉽게 빠져나갈 수 있다는 데 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422639Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Parallelism, without strong support from the language and runtime, is extremely difficult to get right:",
+      "source_hash": 4074603804650102574,
+      "context_hash": 1360499013427711895,
+      "translation": "언어와 런타임의 강력한 지원 없이 병렬성을 올바르게 구현하는 것은 극도로 어렵습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422639Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "A large fraction of the flaws in software development are due to programmers not fully understanding all the possible states their code may execute in.",
+      "source_hash": 12928937222305328406,
+      "context_hash": 1247520880827381543,
+      "translation": "소프트웨어 개발에서 발생하는 결함의 상당 부분은 프로그래머가 자신의 코드가 실행될 수 있는 모든 상태를 충분히 이해하지 못하기 때문에 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422640Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "In a multithreaded environment, the lack of understanding and the resulting problems are greatly amplified, almost to the point of panic if you are paying attention",
+      "source_hash": 471619346795818108,
+      "context_hash": 101054156976135850,
+      "translation": "다중 스레드 환경에서는 이러한 이해 부족과 그로 인한 문제가 크게 증폭되며, 주의를 기울이고 있다면 거의 공황 상태에 이를 정도입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422640Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "-- John Carmack (Functional Programming in C++)",
+      "source_hash": 1003750870647987606,
+      "context_hash": 15921271945520270448,
+      "translation": "-- John Carmack (C++의 함수형 프로그래밍)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422640Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:0",
+      "source": "Python is used by many technologists and widely in education, not just by professional software engineers.",
+      "source_hash": 6965692525148388106,
+      "context_hash": 2902551030785776637,
+      "translation": "Python은 전문 소프트웨어 엔지니어뿐만 아니라 많은 기술 전문가가 사용하며 교육 분야에서도 널리 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422640Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:6/seg:1",
+      "source": "We cannot expect those users to handle the subtleties of parallel programming using a race-prone model like that of Java or PEP 703.",
+      "source_hash": 8035187543666669413,
+      "context_hash": 17500831168439813461,
+      "translation": "우리는 이러한 사용자들이 Java나 PEP 703과 같은 경쟁 조건이 발생하기 쉬운 모델을 사용하면서 병렬 프로그래밍의 미묘한 부분까지 처리할 수 있으리라고 기대할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422641Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "One CPython, not two",
+      "source_hash": 3423603446015193075,
+      "context_hash": 6609902381751611516,
+      "translation": "CPython 하나, 둘은 아닙니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422641Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "CPython is currently split into two: the default build and the free-threading build.",
+      "source_hash": 2554139558006950787,
+      "context_hash": 15075679009725248659,
+      "translation": "CPython은 현재 기본 빌드와 자유 스레딩 빌드의 두 가지로 나뉘어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422641Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "Proponents of free-threading expect that free-threading will become the only version of CPython in a few years.",
+      "source_hash": 2203856219855759305,
+      "context_hash": 12093730636937190707,
+      "translation": "자유 스레딩 지지자들은 몇 년 안에 자유 스레딩이 CPython의 유일한 버전이 되리라고 기대합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422641Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "The authors feel that this will be very challenging to achieve, and may be impossible.",
+      "source_hash": 8156879671292614722,
+      "context_hash": 15847446191018751228,
+      "translation": "저자들은 이를 달성하는 것이 매우 어려우며 불가능할 수도 있다고 생각합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422642Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:3",
+      "source": "Removing the default build would involve breaking vast numbers of applications and libraries that are not safe to use with a free-threading build.",
+      "source_hash": 239678546442801096,
+      "context_hash": 10351152359099587251,
+      "translation": "기본 빌드를 제거하려면 자유 스레딩 빌드에서 사용하기에 안전하지 않은 수많은 애플리케이션과 라이브러리를 중단시켜야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422642Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:4",
+      "source": "Even though many libraries are marked as supporting free-threading, it is unlikely that they are all completely safe to use in a free-threading environment given the difficulty of eliminating race conditions.",
+      "source_hash": 12401409486365034347,
+      "context_hash": 3314375578300261012,
+      "translation": "많은 라이브러리가 자유 스레딩을 지원한다고 표시되어 있더라도, 경쟁 조건을 제거하기 어렵다는 점을 고려하면 자유 스레딩 환경에서 이들 모두를 완전히 안전하게 사용하기는 어려울 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422642Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "The authors fear that without this PEP, or something like it, we will be stuck with two builds of Python forever: Users of free-threading will be unwilling to give up parallelism, and users of the default build will be unable to risk using the free-threading build.",
+      "source_hash": 1573074597722870586,
+      "context_hash": 115732521618354689,
+      "translation": "저자들은 이 PEP 또는 이와 유사한 것이 없다면 Python의 두 빌드에 영원히 갇히게 될 것을 우려합니다. 자유 스레딩 사용자는 병렬성을 포기하지 않으려 할 것이며, 기본 빌드 사용자는 자유 스레딩 빌드를 사용하는 위험을 감수할 수 없을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422643Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "Any program that does not use threads, either by importing the ``threading`` module or by embedding a C/C++ application that uses threads, is trivially safe for free-threading or this PEP, as it cannot create new threads.",
+      "source_hash": 566212738870223637,
+      "context_hash": 13196638413553278600,
+      "translation": "``threading`` 모듈을 가져오거나 스레드를 사용하는 C/C++ 애플리케이션을 임베드하는 방식으로 스레드를 사용하지 않는 모든 프로그램은 새 스레드를 생성할 수 없으므로 자유 스레딩이나 이 PEP에서 사소하게 안전합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422643Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "For those applications, this PEP should offer better performance than the free-threading build, but offers no advantages over the current default build.",
+      "source_hash": 5445970009432109218,
+      "context_hash": 10743509564212616586,
+      "translation": "이러한 애플리케이션에서는 이 PEP가 자유 스레딩 빌드보다 더 나은 성능을 제공해야 하지만, 현재 기본 빌드에 비해서는 아무런 이점도 제공하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422643Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 9158398272591884484,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:47.422643Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "We want to allow a familiar model of parallel execution while retaining safety.",
+      "source_hash": 4803667205533773053,
+      "context_hash": 11131129386532966871,
+      "translation": "안전성을 유지하면서 익숙한 병렬 실행 모델을 사용할 수 있도록 하고자 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080150Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:1",
+      "source": "Threads, locks, queues and immutability are familiar concepts and provide the building blocks for a safe model of execution.",
+      "source_hash": 15721523276886685021,
+      "context_hash": 5495256554503722898,
+      "translation": "스레드, 잠금, 큐 및 불변성은 익숙한 개념이며 안전한 실행 모델을 위한 구성 요소를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080154Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:2",
+      "source": "Objects should either be safe for sharing between threads, or the VM should prevent them from being shared; the C++/Java model, where programs can behave in undefined ways, is not suitable for Python.",
+      "source_hash": 2081649730761672306,
+      "context_hash": 12963179046930002563,
+      "translation": "객체는 스레드 간에 공유해도 안전하거나, VM이 해당 객체의 공유를 방지해야 합니다. 프로그램이 정의되지 않은 방식으로 동작할 수 있는 C++/Java 모델은 Python에 적합하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080155Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "This PEP has two main goals:",
+      "source_hash": 14060814424577645375,
+      "context_hash": 14292780110348128953,
+      "translation": "이 PEP에는 두 가지 주요 목표가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080155Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:3/seg:0",
+      "source": "to provide mechanisms to allow parallel execution in a way that is safe.",
+      "source_hash": 18126627051762396201,
+      "context_hash": 3776657993831622045,
+      "translation": "안전한 방식으로 병렬 실행을 허용하는 메커니즘을 제공하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080156Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "to provide means to move applications gradually from using a single thread to using multiple parallel threads, without sudden breaking changes.",
+      "source_hash": 3516534411825545225,
+      "context_hash": 8987765122801730077,
+      "translation": "갑작스러운 호환성 손상 없이 애플리케이션을 단일 스레드 사용에서 여러 병렬 스레드 사용으로 점진적으로 전환할 수단을 제공하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080156Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "The synchronization quadrant diagram",
+      "source_hash": 15753589468752267771,
+      "context_hash": 14252737902244204787,
+      "translation": "동기화 사분면 다이어그램",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080156Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "The table above shows the four synchronization quadrants.",
+      "source_hash": 9872289450426792620,
+      "context_hash": 5556004783774904888,
+      "translation": "위 표는 네 가지 동기화 사분면을 보여 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080156Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:1",
+      "source": "It is only when objects can be mutated *and* accessed from parallel threads, that race conditions can occur.",
+      "source_hash": 12086382946087068147,
+      "context_hash": 2981718880227745574,
+      "translation": "객체를 변경할 수 *있고* 병렬 스레드에서 접근할 수 있을 때에만 경쟁 조건이 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080157Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:2",
+      "source": "This PEP aims to provide safety by minimizing the amount of code executing in the top-right quadrant, by:",
+      "source_hash": 7985058951192719549,
+      "context_hash": 11284509894296718776,
+      "translation": "이 PEP는 오른쪽 위 사분면에서 실행되는 코드의 양을 최소화하여 안전성을 제공하고자 합니다. 방법은 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080157Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "providing mechanisms to move execution from the dangerous quadrant into either of the adjacent quadrants, and",
+      "source_hash": 15905109063740086832,
+      "context_hash": 8014314881018310865,
+      "translation": "위험한 사분면에서 인접한 두 사분면 중 하나로 실행을 이동할 수 있는 메커니즘을 제공하고,",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080157Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:4/seg:0",
+      "source": "guaranteeing that execution in the dangerous quadrant is properly synchronized.",
+      "source_hash": 15528540163986633928,
+      "context_hash": 10999358608681143931,
+      "translation": "위험한 사분면에서의 실행이 적절하게 동기화되도록 보장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080157Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "Immutability allows safe execution without synchronization, so this PEP provides mechanisms for making objects immutable.",
+      "source_hash": 16210338400985734043,
+      "context_hash": 5528226465408842350,
+      "translation": "불변성은 동기화 없이도 안전한 실행을 가능하게 하므로, 이 PEP는 객체를 불변으로 만드는 메커니즘을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080158Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:1",
+      "source": "Where immutability is not possible, this PEP offers mechanisms for safe execution by ensuring that the object is visible only to one thread of execution (the top-left quadrant), or that it is protected by a mutual exclusion lock (mutex).",
+      "source_hash": 15450993787470003431,
+      "context_hash": 2528966415587270225,
+      "translation": "불변성이 불가능한 경우, 이 PEP는 해당 객체가 하나의 실행 스레드에만 보이도록 하거나(왼쪽 위 사분면), 상호 배제 잠금(뮤텍스)으로 보호되도록 보장하여 안전한 실행을 위한 메커니즘을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080158Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:2",
+      "source": "The PEP also proposes changes to CPython to prevent unsafe execution when mutable objects are shared.",
+      "source_hash": 6914385660122196942,
+      "context_hash": 12570754207973560505,
+      "translation": "또한 이 PEP는 변경 가능한 객체가 공유될 때 안전하지 않은 실행을 방지하도록 CPython을 변경할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080158Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:3",
+      "source": "Finally, the PEP provides a generalization of the GIL to allow incrementally moving to parallel execution.",
+      "source_hash": 15989417414066007562,
+      "context_hash": 6211435504201524807,
+      "translation": "마지막으로 이 PEP는 병렬 실행으로 점진적으로 전환할 수 있도록 GIL을 일반화하는 방안을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080158Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "This PEP is inspired by ideas from OCaml, specifically `Data Freedom à la Mode <https://dl.acm.org/doi/10.1145/3704859>`__, and the `Pyrona project <https://microsoft.github.io/verona/pyrona.html>`__.",
+      "source_hash": 18334350577709489047,
+      "context_hash": 15952003969770963561,
+      "translation": "이 PEP는 OCaml의 아이디어, 구체적으로 `Data Freedom à la Mode <https://dl.acm.org/doi/10.1145/3704859>`__\\ 와 `Pyrona project <https://microsoft.github.io/verona/pyrona.html>`__\\ 에서 영감을 받았습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080159Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:1",
+      "source": "Many of the necessary technologies, such as biased and deferred reference counting, have been developed for :pep:`703`.",
+      "source_hash": 13811156366089879077,
+      "context_hash": 3909592955600848512,
+      "translation": "편향 참조 카운팅과 지연 참조 카운팅을 비롯한 필요한 여러 기술은 :pep:`703`\\ 을 위해 개발되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080159Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Specification",
+      "source_hash": 12978730460824815227,
+      "context_hash": 18443011428858546645,
+      "translation": "명세",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080159Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "This PEP proposes that the VM control access to objects based on whether it is safe to access that object from the current thread of execution.",
+      "source_hash": 6196147051686127432,
+      "context_hash": 3474388564966739008,
+      "translation": "이 PEP는 현재 실행 스레드에서 객체에 접근하는 것이 안전한지에 따라 VM이 객체에 대한 접근을 제어할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080159Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "The core concept is that it is access to objects, rather than operations on those objects, that is controlled.",
+      "source_hash": 3244191491963240068,
+      "context_hash": 10587099887686928214,
+      "translation": "핵심 개념은 객체에 대한 연산이 아니라 객체에 대한 접근을 제어한다는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080160Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "If an object cannot be accessed by a thread, then that thread cannot perform any unsafe operation on that object, since it cannot perform *any* operation on it.",
+      "source_hash": 3588265922345675286,
+      "context_hash": 5263190728384203284,
+      "translation": "스레드가 객체에 접근할 수 없다면 해당 스레드는 그 객체에 대해 안전하지 않은 연산을 수행할 수 없습니다. 그 객체에 대해 *어떤* 연산도 수행할 수 없기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080160Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "The motivation for this is both correctness and performance.",
+      "source_hash": 13330908768757406174,
+      "context_hash": 3340851905453197489,
+      "translation": "이에 대한 동기는 정확성과 성능 모두입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080160Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:1",
+      "source": "Protecting operations would require a detailed model of exactly which operations were race-free and which were not.",
+      "source_hash": 4787051496339717677,
+      "context_hash": 7718053604363010610,
+      "translation": "연산을 보호하려면 어떤 연산이 경쟁 조건 없이 실행되고 어떤 연산이 그렇지 않은지 정확히 설명하는 상세한 모델이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080161Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:2",
+      "source": "While that might be possible for some standard library classes, it is impossible in general and highly error prone.",
+      "source_hash": 5232725116280806860,
+      "context_hash": 2590785882228654443,
+      "translation": "일부 표준 라이브러리 클래스에서는 가능할 수도 있지만, 일반적으로는 불가능하며 오류가 발생하기 매우 쉽습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:29:49.080161Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:3",
+      "source": "Checking every operation on every object would also be prohibitively expensive.",
+      "source_hash": 406667391457986700,
+      "context_hash": 3743208099278793431,
+      "translation": "모든 객체에 대한 모든 연산을 검사하는 것 또한 비용이 지나치게 많이 듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080162Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:4",
+      "source": "By controlling access on a per-object basis, the cost can be kept low.",
+      "source_hash": 11386947746379236298,
+      "context_hash": 6169347424209553638,
+      "translation": "객체별로 접근을 제어하면 비용을 낮게 유지할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080163Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:5",
+      "source": "It is only when a thread reference is created from a heap reference, that the operation needs to be checked, with a few rare exceptions.",
+      "source_hash": 17761713313783580996,
+      "context_hash": 3153851886899489058,
+      "translation": "몇 가지 드문 예외를 제외하면 힙 참조로부터 스레드 참조가 생성될 때에만 해당 연산을 검사할 필요가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080163Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "Correctness is enforced primarily by limiting access to objects, not by checking operations on those objects.",
+      "source_hash": 10532785379608246007,
+      "context_hash": 3820131722373865689,
+      "translation": "정확성은 객체에 대한 연산을 검사하는 것이 아니라 주로 객체에 대한 접근을 제한함으로써 보장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080163Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:1",
+      "source": "This differs from the synchronization techniques used in languages like Java and C#.",
+      "source_hash": 15833731688115067092,
+      "context_hash": 4930438863491177929,
+      "translation": "이는 Java 및 C#과 같은 언어에서 사용되는 동기화 기법과 다릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080163Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Object states",
+      "source_hash": 13738801828497046144,
+      "context_hash": 10522160471876991375,
+      "translation": "객체 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:49.080164Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "All objects will gain a ``__shareable__`` state, which will be used by the Python VM to ensure that objects are used safely.",
+      "source_hash": 14897451549955200861,
+      "context_hash": 12367640466144263570,
+      "translation": "모든 객체는 ``__shareable__`` 상태를 갖게 되며, Python VM은 이 상태를 사용하여 객체가 안전하게 사용되도록 보장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383614Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:1",
+      "source": "The state can be queried by looking at the ``__shareable__`` attribute of an object.",
+      "source_hash": 15196023773253424886,
+      "context_hash": 13175261521383751181,
+      "translation": "객체의 ``__shareable__``\\ 속성을 확인하여 이 상태를 조회할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383616Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "An object's ``__shareable__`` state can be one of the following:",
+      "source_hash": 12050525209571770408,
+      "context_hash": 3646332019372052133,
+      "translation": "객체의 ``__shareable__``\\ 상태는 다음 중 하나일 수 있습니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383617Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "Immutable: Cannot be modified, and can be safely shared between :ref:`ThreadGroup <pep805-ThreadGroup>`\\ s.",
+      "source_hash": 7650607549121642942,
+      "context_hash": 225555477566170958,
+      "translation": "불변(Immutable): 수정할 수 없으며, :ref:`ThreadGroup <pep805-ThreadGroup>`\\ s 사이에서 안전하게 공유할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383617Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:4/seg:0",
+      "source": "Local: Only visible to a single ThreadGroup, and can be freely mutated by threads belonging to that ThreadGroup.",
+      "source_hash": 13852081412772469963,
+      "context_hash": 17064651690692802734,
+      "translation": "로컬(Local): 하나의 ThreadGroup에만 표시되며, 해당 ThreadGroup에 속한 스레드가 자유롭게 변경할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383617Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:5/seg:0",
+      "source": "Protected: Object is mutable, and is protected by a mutex.",
+      "source_hash": 2743165539774109137,
+      "context_hash": 4033802411224238054,
+      "translation": "보호됨(Protected): 객체는 변경 가능하며 뮤텍스로 보호됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383617Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:0",
+      "source": "Synchronized: A special state for some builtin objects.",
+      "source_hash": 11550605634916723960,
+      "context_hash": 6091913509712499166,
+      "translation": "동기화됨(Synchronized): 일부 내장 객체에 대한 특수한 상태입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383618Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:6/seg:1",
+      "source": "All operations on the object are protected internally, so no external synchronization is needed.",
+      "source_hash": 15818572164158490161,
+      "context_hash": 18195711897925333031,
+      "translation": "객체에 대한 모든 연산은 내부적으로 보호되므로 외부 동기화가 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383618Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:7/seg:0",
+      "source": "The ``__shareable__`` attribute is read-only:",
+      "source_hash": 15534299927658779556,
+      "context_hash": 4138474352716523006,
+      "translation": "``__shareable__``\\ 속성은 읽기 전용입니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383618Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Classes, functions and modules",
+      "source_hash": 224068611368319475,
+      "context_hash": 14146184274289878532,
+      "translation": "클래스, 함수 및 모듈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383618Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "All classes will be created *local*, but can be made *synchronized*, or *immutable*.",
+      "source_hash": 1302820499966666812,
+      "context_hash": 6809601547382008339,
+      "translation": "모든 클래스는 *local*\\ 로 생성되지만, *synchronized* 또는 *immutable*\\ 로 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383619Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "For the best safety and performance in parallel programs, classes should be made *immutable* where possible.",
+      "source_hash": 6051696176394071204,
+      "context_hash": 9918863708680460440,
+      "translation": "병렬 프로그램에서 최고의 안전성과 성능을 얻으려면 가능한 경우 클래스를 *immutable*\\ 로 만들어야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383619Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:0",
+      "source": "Functions with modifiable free variables, and functions with variables that can be modified by inner functions will be *local*.",
+      "source_hash": 4438716822181036641,
+      "context_hash": 15068188574176048601,
+      "translation": "수정 가능한 자유 변수가 있는 함수와 내부 함수가 수정할 수 있는 변수가 있는 함수는 *local*\\ 로 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383619Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:1",
+      "source": "All other functions will be *synchronized*.",
+      "source_hash": 14496644730525716144,
+      "context_hash": 3110956208865968855,
+      "translation": "그 외의 모든 함수는 *synchronized*\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383619Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:2",
+      "source": "The ``__kwdefaults__`` attribute becomes a ``frozendict``.",
+      "source_hash": 11578824243469699807,
+      "context_hash": 536038712988526022,
+      "translation": "``__kwdefaults__``\\ 속성은 ``frozendict``\\ 가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383620Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:3",
+      "source": "The ``__kwdefaults__`` attribute can still be changed, but only by re-assigning the whole object, not mutating it.",
+      "source_hash": 14214610803394690445,
+      "context_hash": 15271657878403218630,
+      "translation": "``__kwdefaults__``\\ 속성은 여전히 변경할 수 있지만, 객체 자체를 변경하는 것이 아니라 전체 객체를 다시 할당하는 방식으로만 변경할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383620Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:2/seg:4",
+      "source": "Modifying the ``__code__``, ``__closure__``, ``__defaults__``, or ``__kwdefaults__`` attributes of a function will be deprecated.",
+      "source_hash": 11670169356580949832,
+      "context_hash": 17222395489495361262,
+      "translation": "함수의 ``__code__``, ``__closure__``, ``__defaults__`` 또는 ``__kwdefaults__``\\ 속성을 수정하는 것은 더 이상 권장되지 않을 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383620Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:3/seg:0",
+      "source": "Most functions are *synchronized*, for example",
+      "source_hash": 18022466899012772660,
+      "context_hash": 14437705083755686545,
+      "translation": "대부분의 함수는 *synchronized*\\ 입니다. 예를 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383621Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:5/seg:0",
+      "source": "But inner functions that mutate closures are *local*, for example",
+      "source_hash": 30737504519841314,
+      "context_hash": 17754022230826489341,
+      "translation": "그러나 클로저를 변경하는 내부 함수는 *local*\\ 입니다. 예를 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383621Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:0",
+      "source": "Modules will be created *local*, and, like classes, can be explicitly frozen or made synchronized.",
+      "source_hash": 15551711888362962644,
+      "context_hash": 283864025176313436,
+      "translation": "모듈은 *로컬*\\ 로 생성되며, 클래스와 마찬가지로 명시적으로 동결하거나 동기화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:51.089957Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:7/seg:1",
+      "source": "To assist making modules *synchronized*, or *immutable* in a principled way, all modules gain a global variable ``__module__``.  ``__module__`` refers to the module object and is initialized when the module is created.",
+      "source_hash": 13956368213455764877,
+      "context_hash": 4119431907894232374,
+      "translation": "원칙에 따라 모듈을 *synchronized* 또는 *immutable*\\ 로 만드는 데 도움이 되도록 모든 모듈은 전역 변수 ``__module__``\\ 을 갖습니다.  ``__module__``\\ 은 모듈 객체를 참조하며 모듈이 생성될 때 초기화됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383621Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:8/seg:0",
+      "source": "To freeze a Python module, add this to the end of the code for that module",
+      "source_hash": 2373599298052866625,
+      "context_hash": 8825524438037808069,
+      "translation": "Python 모듈을 동결하려면 해당 모듈 코드의 끝에 다음을 추가하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383621Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:10/seg:0",
+      "source": "To synchronize a Python module, add this code",
+      "source_hash": 5446569973729695160,
+      "context_hash": 6795335789559111008,
+      "translation": "Python 모듈을 동기화하려면 다음 코드를 추가하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383622Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:12/seg:0",
+      "source": "Extension modules can declare themselves *immutable* or *synchronized* using the :ref:`C API <pep805-capi>`.",
+      "source_hash": 8612302064613160591,
+      "context_hash": 14271918090726376773,
+      "translation": "확장 모듈은 :ref:`C API <pep805-capi>`\\ 를 사용하여 자신을 *immutable* 또는 *synchronized*\\ 라고 선언할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383622Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:13/seg:0",
+      "source": "Where possible, modules should be frozen.",
+      "source_hash": 15894791818528346755,
+      "context_hash": 24899205325922069,
+      "translation": "가능한 경우 모듈을 동결해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383622Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Other objects",
+      "source_hash": 17876328605040776113,
+      "context_hash": 6945310242249921727,
+      "translation": "기타 객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383622Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Views, iterators and other objects that depend on the internal state of other mutable objects will inherit the state of those objects.",
+      "source_hash": 13936063056753567931,
+      "context_hash": 9417304517674881801,
+      "translation": "뷰, 이터레이터 및 다른 변경 가능한 객체의 내부 상태에 의존하는 기타 객체는 해당 객체의 상태를 상속합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383623Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "For example, a ``listiterator`` of a *local* ``list`` will be *local*, but a ``listiterator`` of a *protected* ``list`` will be *protected*.",
+      "source_hash": 7780560706697467721,
+      "context_hash": 7213808442408902509,
+      "translation": "예를 들어, *local*\\ 인 ``list``\\ 의 ``listiterator``\\ 는 *local*\\ 로 생성되지만, *protected*\\ 인 ``list``\\ 의 ``listiterator``\\ 는 *protected*\\ 로 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383623Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "Views and iterators of *immutable* objects will be *local* when created.",
+      "source_hash": 11590237187298960129,
+      "context_hash": 17690235237003861262,
+      "translation": "*immutable* 객체의 뷰와 이터레이터는 생성될 때 *local*\\ 로 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383623Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "All other objects that are not inherently immutable (like tuples or strings) will be created as *local*.",
+      "source_hash": 8592573334085976661,
+      "context_hash": 14023887418288713538,
+      "translation": "그 외의 본질적으로 불변이 아닌 모든 객체(튜플이나 문자열과 같은)는 *local*\\ 로 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383623Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "These *local* objects can later be made *immutable* or can be *protected*.",
+      "source_hash": 13472619572590056317,
+      "context_hash": 5067961058356111707,
+      "translation": "이러한 *local* 객체는 나중에 *immutable*\\ 로 만들거나 *protected*\\ 로 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.383624Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:0",
+      "source": "Three new classes will be added, ``SynchronizedList``, ``SynchronizedDict`` and ``SynchronizedSet``.",
+      "source_hash": 17408929595393256037,
+      "context_hash": 3589665372915363322,
+      "translation": "``SynchronizedList``, ``SynchronizedDict`` 및 ``SynchronizedSet``\\ 이라는 세 가지 새 클래스가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341646Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:1",
+      "source": "These are *synchronized* versions of ``list``, ``dict`` and ``set`` respectively.",
+      "source_hash": 275855910043619731,
+      "context_hash": 1538178159809586977,
+      "translation": "이들은 각각 ``list``, ``dict`` 및 ``set``\\ 의 *동기화된* 버전입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341650Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:2",
+      "source": "They will have the same API, both in Python and in C, as the original classes.",
+      "source_hash": 521108043571484079,
+      "context_hash": 732089631389183888,
+      "translation": "이 클래스들은 Python과 C 모두에서 원래 클래스와 동일한 API를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341651Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:3/seg:3",
+      "source": "The ``__dict__`` of a *synchronized* module will be a ``SynchronizedDict``, as will ``sys.modules``. ``sys.path`` will be a ``SynchronizedList``.",
+      "source_hash": 1700646724154306510,
+      "context_hash": 15172339298258221332,
+      "translation": "*동기화된* 모듈의 ``__dict__``\\ 는 ``SynchronizedDict``\\ 가 되며, ``sys.modules``\\ 도 마찬가지입니다. ``sys.path``\\ 는 ``SynchronizedList``\\ 가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341651Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:4/seg:0",
+      "source": "While these *synchronized* classes prevent race conditions in the narrow sense that the object itself will not be corrupted, they are not generally thread safe. *Immutable* or *local* collections should be used where possible.",
+      "source_hash": 16227782941307361956,
+      "context_hash": 10378492511518665442,
+      "translation": "이 *동기화된* 클래스들은 객체 자체가 손상되지 않는다는 좁은 의미에서는 경쟁 조건을 방지하지만, 일반적으로 스레드 안전하지는 않습니다. 가능한 경우 *불변* 또는 *로컬* 컬렉션을 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341651Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Object dictionaries",
+      "source_hash": 11359527831713322727,
+      "context_hash": 17943351171030145917,
+      "translation": "객체 딕셔너리",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341652Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Almost all objects in Python have a ``__dict__`` attribute.",
+      "source_hash": 3445146614982529633,
+      "context_hash": 4210216191821531765,
+      "translation": "Python의 거의 모든 객체에는 ``__dict__`` 속성이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341652Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "Freezing an object will convert its ``__dict__`` into a ``frozendict``.",
+      "source_hash": 3782371802408831337,
+      "context_hash": 18112526588616109076,
+      "translation": "객체를 동결하면 해당 객체의 ``__dict__``\\ 가 ``frozendict``\\ 로 변환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341653Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:2",
+      "source": "Synchronizing a module (or any object that both supports synchronization and has a ``__dict__``) will convert the ``__dict__`` into a ``SynchronizedDict``.",
+      "source_hash": 11870680872546349938,
+      "context_hash": 10585198411038778229,
+      "translation": "모듈(또는 동기화를 지원하면서 ``__dict__``\\ 도 가진 모든 객체)을 동기화하면 해당 객체의 ``__dict__``\\ 가 ``SynchronizedDict``\\ 로 변환됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341653Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "ThreadGroup objects",
+      "source_hash": 12543289767300829393,
+      "context_hash": 1727433582062772290,
+      "translation": "ThreadGroup 객체",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341653Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "A new class, ``threading.ThreadGroup``, will be added to help port applications that are currently relying on the GIL (accidentally or by design), using multi-processing, or using the ``_interpreters`` module, to parallel execution using threads.",
+      "source_hash": 2947766019116302277,
+      "context_hash": 13688718762901956069,
+      "translation": "GIL에 현재 의존하고 있거나(우연히 또는 의도적으로), 다중 프로세싱을 사용하거나, ``_interpreters`` 모듈을 사용하는 애플리케이션을 스레드를 사용한 병렬 실행으로 포팅할 수 있도록 새 클래스인 ``threading.ThreadGroup``\\ 이 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341653Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "All threads sharing a ``ThreadGroup`` object will be serialized, in the same way as all threads are currently serialized by the GIL.",
+      "source_hash": 5451708798572310793,
+      "context_hash": 1179182037234871787,
+      "translation": "``ThreadGroup`` 객체를 공유하는 모든 스레드는 현재 모든 스레드가 GIL에 의해 직렬화되는 것과 동일한 방식으로 직렬화됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341654Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:1",
+      "source": "Using multiple ``ThreadGroup``\\ s offers much the same capabilities as multi-processing, or multiple interpreters, but with lower overhead and with the ability to share objects without copying.",
+      "source_hash": 15445549079731458469,
+      "context_hash": 10708497330845326479,
+      "translation": "여러 ``ThreadGroup``\\ 을 사용하면 다중 프로세싱이나 여러 인터프리터와 거의 동일한 기능을 제공하면서도 오버헤드가 더 낮고 복사 없이 객체를 공유할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341654Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "There is a many-to-one relationship between threads and ``ThreadGroup``\\ s.",
+      "source_hash": 11206264324000708258,
+      "context_hash": 6353052326241643123,
+      "translation": "스레드와 ``ThreadGroup``\\ 사이에는 다대일 관계가 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341654Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "The previously unused ``group`` parameter of the ``Thread`` class will be used to specify the ``ThreadGroup`` that the ``Thread`` belongs to.",
+      "source_hash": 20497114467192755,
+      "context_hash": 18191972426955214472,
+      "translation": "이전에는 사용되지 않던 ``Thread`` 클래스의 ``group`` 매개변수는 해당 ``Thread``\\ 가 속한 ``ThreadGroup``\\ 을 지정하는 데 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341655Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:1",
+      "source": "To create a thread that can run in parallel with other threads, use ``Thread(group = ThreadGroup(), ...)``.",
+      "source_hash": 2563360886868175318,
+      "context_hash": 15182090307775643135,
+      "translation": "다른 스레드와 병렬로 실행할 수 있는 스레드를 만들려면 ``Thread(group = ThreadGroup(), ...)``\\ 을 사용하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341655Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:2",
+      "source": "See :ref:`GIL <pep805-GIL>` below for the behavior when ``group`` is not set or is ``None``.",
+      "source_hash": 3347374105298194361,
+      "context_hash": 43107796408345086,
+      "translation": "``group``\\ 이 설정되지 않았거나 ``None``\\ 일 때의 동작은 아래의 :ref:`GIL <pep805-GIL>`\\ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341655Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:5/seg:0",
+      "source": "While all threads in a ``ThreadGroup`` can access the same *local* objects, each thread is treated as distinct for all locks, and thus for *protected* objects.",
+      "source_hash": 953945069630330986,
+      "context_hash": 3503399636223084714,
+      "translation": "``ThreadGroup``\\ 의 모든 스레드가 동일한 *로컬* 객체에 액세스할 수 있지만, 모든 잠금에 대해서는 각 스레드가 서로 다른 것으로 취급되며, 따라서 *보호된* 객체에 대해서도 서로 다른 것으로 취급됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341656Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:6/seg:0",
+      "source": "The current thread group can be found with ``threading.current_thread().group``.",
+      "source_hash": 1941641360698987922,
+      "context_hash": 14885808142458463505,
+      "translation": "현재 스레드 그룹은 ``threading.current_thread().group``\\ 을 사용하여 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341656Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:7/seg:0",
+      "source": "Using ThreadGroups for parallelism",
+      "source_hash": 10331817209157960622,
+      "context_hash": 8567796978894493074,
+      "translation": "병렬 처리를 위한 ThreadGroup 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341656Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:0",
+      "source": "Starting with a program developed for Python \"with GIL\", parallelism can be added by adding additional ThreadGroups.",
+      "source_hash": 15034889602732739945,
+      "context_hash": 1844949854855081796,
+      "translation": "Python \"with GIL\"용으로 개발된 프로그램을 기반으로 시작하여, 추가 ThreadGroup을 추가하면 병렬 처리를 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341657Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:8/seg:1",
+      "source": "If a program already uses multiple threads, these threads can be moved to new ThreadGroups, allowing code to execute safely and in parallel.",
+      "source_hash": 14104449450261226587,
+      "context_hash": 18279100085359278821,
+      "translation": "프로그램이 이미 여러 스레드를 사용하는 경우, 이러한 스레드를 새 ThreadGroup으로 이동하여 코드가 안전하게 병렬로 실행되도록 할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341657Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Locks and protection",
+      "source_hash": 3789224163808856151,
+      "context_hash": 2358356604738977750,
+      "translation": "잠금 및 보호",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341657Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "Mutable Python objects can be either *local* or *protected*.",
+      "source_hash": 7562763276170186064,
+      "context_hash": 11578469803504270552,
+      "translation": "변경 가능한 Python 객체는 *로컬* 또는 *보호된* 객체일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341657Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "To be shareable between ThreadGroups, a mutable Python object must be *protected*.",
+      "source_hash": 8261954909605324251,
+      "context_hash": 16023375257944966322,
+      "translation": "변경 가능한 Python 객체를 ThreadGroup 간에 공유하려면 해당 객체는 *보호된* 객체여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341658Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:2",
+      "source": "A *protected* object can be made from any *local* object, by calling the ``protect`` method of a ``Lock`` or ``RLock``",
+      "source_hash": 17316788496592599906,
+      "context_hash": 17666551400946630622,
+      "translation": "``Lock`` 또는 ``RLock``\\ 의 ``protect`` 메서드를 호출하면 모든 *로컬* 객체로부터 *보호된* 객체를 만들 수 있습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341658Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "*Protected* objects cannot be accessed outside of a ``with`` statement, or function called from within a ``with`` statement, where the context manager is the protecting mutex.",
+      "source_hash": 14990918780801566111,
+      "context_hash": 10729338732577322542,
+      "translation": "*보호된* 객체는 ``with`` 문 외부에서는 액세스할 수 없으며, 보호하는 뮤텍스가 컨텍스트 관리자인 ``with`` 문 내부에서 호출된 함수에서도 액세스할 수 없습니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:30:03.341658Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "``Lock`` and ``RLock`` classes",
+      "source_hash": 3041005959599693809,
+      "context_hash": 16297030401850646888,
+      "translation": "``Lock`` 및 ``RLock`` 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341660Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "The ``threading.Lock`` and ``threading.RLock`` classes gain a ``protect`` method for protecting objects.",
+      "source_hash": 10649605075344140194,
+      "context_hash": 6609560078017342774,
+      "translation": "``threading.Lock`` 및 ``threading.RLock`` 클래스에는 객체를 보호하기 위한 ``protect`` 메서드가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341660Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:1",
+      "source": "Once ``protect`` has been called, the lock becomes *protective*.",
+      "source_hash": 6930865797726098167,
+      "context_hash": 18223237752757667411,
+      "translation": "``protect``\\ 를 호출하면 해당 잠금은 *보호용* 잠금이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341660Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:0",
+      "source": "Used as context managers, locks provide race-free, serialized, access to *protected* objects",
+      "source_hash": 16376125104718372946,
+      "context_hash": 13960671053417383555,
+      "translation": "컨텍스트 관리자로 사용되는 잠금은 *보호된* 객체에 대한 접근을 경쟁 조건 없이 직렬화하여 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.341660Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:8/seg:0",
+      "source": "In addition, locks can be added to form compound locks.",
+      "source_hash": 946548603562418911,
+      "context_hash": 9711205691520320016,
+      "translation": "또한 잠금을 추가하여 복합 잠금을 구성할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052421Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:8/seg:1",
+      "source": "Addition is commutative, so that",
+      "source_hash": 5135998997735433865,
+      "context_hash": 15288404017996092885,
+      "translation": "덧셈은 교환법칙이 성립하므로",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052425Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:10/seg:0",
+      "source": "will not deadlock should ``func1`` and ``func2`` be called concurrently.",
+      "source_hash": 12826401841602830096,
+      "context_hash": 14647352499745654279,
+      "translation": "``func1``\\ 과 ``func2``\\ 를 동시에 호출해도 데드락이 발생하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052425Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:11/seg:0",
+      "source": "It is an error to call ``acquire`` or ``release``  on a *protective* lock.",
+      "source_hash": 10173853186620781365,
+      "context_hash": 17720944364684132993,
+      "translation": "*protective* 잠금에서 ``acquire`` 또는 ``release``\\ 를 호출하는 것은 오류입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052426Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:11/seg:1",
+      "source": "Such a lock can only get acquired by using a ``with`` statement with that lock, or a compound lock formed from it, as the context manager.",
+      "source_hash": 9499791243792467997,
+      "context_hash": 16104207181981255387,
+      "translation": "이러한 잠금은 해당 잠금 또는 이를 기반으로 구성된 복합 잠금을 컨텍스트 관리자로 사용하는 ``with`` 문을 통해서만 획득할 수 있습니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:30:01.052426Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "New API",
+      "source_hash": 9626464690629045021,
+      "context_hash": 16570984624773486925,
+      "translation": "새로운 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052427Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "This PEP proposes adding the following:",
+      "source_hash": 15375751203975429884,
+      "context_hash": 3831678896014581571,
+      "translation": "이 PEP에서는 다음을 추가할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052428Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "A ``__freeze__()`` method, added to all Python classes, which freezes the object making it immutable (extension classes may implement ``__freeze__()``, but are not obliged to)",
+      "source_hash": 4743482250076292006,
+      "context_hash": 11689393816885838947,
+      "translation": "모든 Python 클래스에 추가되는 ``__freeze__()`` 메서드로, 객체를 동결하여 변경 불가능하게 만듭니다(확장 클래스는 ``__freeze__()``\\ 를 구현할 수 있지만, 반드시 구현해야 하는 것은 아닙니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052428Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:3/seg:0",
+      "source": "A builtin ``freeze(obj)`` function, which calls ``obj.__freeze__()``",
+      "source_hash": 18021547566586292323,
+      "context_hash": 9084200312172944177,
+      "translation": "``obj.__freeze__()``\\ 를 호출하는 내장 ``freeze(obj)`` 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052429Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:4/seg:0",
+      "source": "A ``protect(obj)`` method, added to ``Lock`` and ``RLock``, which returns a *protected* copy of ``obj``.",
+      "source_hash": 6828506744508764298,
+      "context_hash": 3160426325705913844,
+      "translation": "``Lock`` 및 ``RLock``\\ 에 추가되는 ``protect(obj)`` 메서드로, ``obj``\\ 의 *protected* 사본을 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052429Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:5/seg:0",
+      "source": "The ``SynchronizedList``, ``SynchronizedDict`` and ``SynchronizedSet`` classes",
+      "source_hash": 9004972332519683306,
+      "context_hash": 17109199110417543968,
+      "translation": "``SynchronizedList``, ``SynchronizedDict`` 및 ``SynchronizedSet`` 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052429Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:6/seg:0",
+      "source": "A ``synchronize()`` method, added to ``list``, ``set`` and ``dict``, which returns the *synchronized* version of that object and clears the original object.",
+      "source_hash": 2859646138274744792,
+      "context_hash": 6448666838471426165,
+      "translation": "``list``, ``set`` 및 ``dict``\\ 에 추가되는 ``synchronize()`` 메서드로, 해당 객체의 *synchronized* 버전을 반환하고 원래 객체를 비웁니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052429Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:7/seg:0",
+      "source": "A ``__shareable__`` read-only attribute for all objects",
+      "source_hash": 17702633603264270697,
+      "context_hash": 12614996501232767416,
+      "translation": "모든 객체에 대한 읽기 전용 ``__shareable__`` 속성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052430Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:8/seg:0",
+      "source": "The ``Channel`` and ``TransferBox`` classes for passing objects from one ``ThreadGroup`` to another",
+      "source_hash": 9059545486949956307,
+      "context_hash": 15563624110600403845,
+      "translation": "객체를 한 ``ThreadGroup``\\ 에서 다른 곳으로 전달하는 ``Channel`` 및 ``TransferBox`` 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:51.089964Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:9/seg:0",
+      "source": "The ``ThreadGroup`` class",
+      "source_hash": 1186201261293131494,
+      "context_hash": 18386127114178462600,
+      "translation": "``ThreadGroup`` 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052431Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:10/seg:0",
+      "source": "The ``group`` parameter used when creating ``Thread``\\s now has meaning and can be set to a ``ThreadGroup``",
+      "source_hash": 7991372921387633553,
+      "context_hash": 7394184443773504534,
+      "translation": "``Thread``\\s 를 생성할 때 사용되는 ``group`` 매개변자가 이제 의미를 가지며 ``ThreadGroup``\\ 으로 설정할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052431Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:11/seg:0",
+      "source": "A read-only ``group`` attribute for threads",
+      "source_hash": 12509414325167093843,
+      "context_hash": 10552000096883094447,
+      "translation": "스레드에 대한 읽기 전용 ``group`` 속성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052431Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:12/seg:0",
+      "source": "A ``__module__`` global variable set to refer to the module at module creation",
+      "source_hash": 16479380356231886052,
+      "context_hash": 1236590362751382287,
+      "translation": "모듈 생성 시 해당 모듈을 가리키도록 설정되는 ``__module__`` 전역 변수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052432Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:13/seg:0",
+      "source": "A ``sys.monitoring.StopTheWorld`` context manager object for debuggers and similar tools",
+      "source_hash": 14883035188033871256,
+      "context_hash": 7720556537274822911,
+      "translation": "디버거 및 유사한 도구를 위한 ``sys.monitoring.StopTheWorld`` 컨텍스트 관리자 객체",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:30:01.052432Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:14/seg:0",
+      "source": "The ``freeze()`` function can be used as a decorator.",
+      "source_hash": 3426901797633765729,
+      "context_hash": 14809223744890215153,
+      "translation": "``freeze()`` 함수는 데코레이터로 사용할 수 있습니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T19:30:01.052433Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:15/seg:0",
+      "source": "Freezing",
+      "source_hash": 3959207392259656290,
+      "context_hash": 1759248892307134485,
+      "translation": "동결",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052433Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:16/seg:0",
+      "source": "The ``__freeze__()`` method will have the signature ``__freeze__(self: Self) -> Frozen[Self]`` where ``Frozen[T]`` is the frozen class for ``T``.",
+      "source_hash": 10662913055016898159,
+      "context_hash": 806201140974162538,
+      "translation": "``__freeze__()`` 메서드의 시그니처는 ``__freeze__(self: Self) -> Frozen[Self]``\\ 이며, ``Frozen[T]``\\ 는 ``T``\\ 에 대한 동결된 클래스입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052433Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:16/seg:1",
+      "source": "The value returned by ``__freeze__`` is the original object: ``obj.__freeze__() is obj``.",
+      "source_hash": 11220408258599383570,
+      "context_hash": 748755955435165131,
+      "translation": "``__freeze__``\\ 가 반환하는 값은 원래 객체입니다. 즉, ``obj.__freeze__() is obj``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052434Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:16/seg:2",
+      "source": "Having a return value of a different type can assist type checkers in tracking which variables refer to frozen objects.",
+      "source_hash": 13662280575035325614,
+      "context_hash": 10742684824118986058,
+      "translation": "서로 다른 타입의 반환 값을 사용하면 타입 검사기가 어떤 변수가 동결된 객체를 가리키는지 추적하는 데 도움이 될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052434Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:17/seg:0",
+      "source": "The ``__freeze__()`` will be added to all pure Python classes as well as some standard library builtin collections. ``set`` and ``dict`` classes will gain a ``__freeze__()`` method, converting the object into a ``frozenset`` or ``frozendict``, respectively.",
+      "source_hash": 13101513138923171397,
+      "context_hash": 363095252291829986,
+      "translation": "모든 순수 Python 클래스와 일부 표준 라이브러리 내장 컬렉션에 ``__freeze__()``\\ 가 추가됩니다. ``set`` 및 ``dict`` 클래스에는 ``__freeze__()`` 메서드가 추가되어 객체를 각각 ``frozenset`` 또는 ``frozendict``\\ 로 변환합니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T19:30:01.052434Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:18/seg:0",
+      "source": "Note that freezing an object is a shallow operation; ``x.__freeze__()`` only freezes ``x`` and not any of the objects that ``x`` refers to.",
+      "source_hash": 1018524153563817276,
+      "context_hash": 1363918768497320275,
+      "translation": "객체를 동결하는 것은 얕은 연산이라는 점에 유의하십시오. ``x.__freeze__()``\\ 는 ``x``\\ 만 동결하며, ``x``\\ 가 참조하는 객체는 동결하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052435Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:19/seg:0",
+      "source": "Freezing an object also freezes its dictionary:",
+      "source_hash": 7253073533346437788,
+      "context_hash": 7154450613442702501,
+      "translation": "객체를 동결하면 해당 딕셔너리도 동결됩니다.",
+      "glossary_snapshot": {
+        "dictionary": "딕셔너리"
+      },
+      "translated_at": "2026-08-28T19:30:01.052435Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:21/seg:0",
+      "source": "Freezing objects in ad-hoc fashion is likely to confuse both type checkers and other developers.",
+      "source_hash": 1674490172430504176,
+      "context_hash": 8279873278938721422,
+      "translation": "객체를 임의의 방식으로 동결하면 타입 검사기와 다른 개발자 모두를 혼란스럽게 할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052436Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:21/seg:1",
+      "source": "It is therefore recommended that freezing is done in a principled fashion, typically freezing all instances of a class, or none.",
+      "source_hash": 18211778723566297361,
+      "context_hash": 4978230792706871372,
+      "translation": "따라서 일반적으로 클래스의 모든 인스턴스를 동결하거나 하나도 동결하지 않는 등, 원칙에 따른 방식으로 동결하는 것이 권장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052436Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:21/seg:2",
+      "source": "For example",
+      "source_hash": 9117899214634101441,
+      "context_hash": 7183048706990340396,
+      "translation": "예를 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052436Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:23/seg:0",
+      "source": "Freezing can create some difficulties with subclassing, as the superclass's ``__init__`` cannot freeze instances before the subclass's ``__init__`` method has completed initializing instances.",
+      "source_hash": 2450820353197002946,
+      "context_hash": 14895180120381216028,
+      "translation": "서브클래싱에서는 몇 가지 어려움이 발생할 수 있습니다. 슈퍼클래스의 ``__init__``\\ 는 서브클래스의 ``__init__`` 메서드가 인스턴스 초기화를 완료하기 전에 인스턴스를 동결할 수 없기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052436Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:24/seg:0",
+      "source": "To support subclassing, ``__init__`` methods should have a ``freeze`` parameter, so that subclasses can delay freezing until initialization is finished",
+      "source_hash": 9618126610567436594,
+      "context_hash": 16168115501659774400,
+      "translation": "서브클래싱을 지원하려면 ``__init__`` 메서드에 ``freeze`` 매개변수가 있어야 하며, 이를 통해 서브클래스가 초기화가 완료될 때까지 동결을 지연할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:01.052437Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:26/seg:0",
+      "source": "The various ``freeze`` methods have full VM support.",
+      "source_hash": 9662102404296658612,
+      "context_hash": 14906409240929336776,
+      "translation": "다양한 ``freeze`` 메서드는 VM에서 완전히 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202910Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:26/seg:1",
+      "source": "Immutability is not merely a convention, it will be enforced by the VM.",
+      "source_hash": 9084656950774883307,
+      "context_hash": 12277871375355835735,
+      "translation": "불변성은 단순한 관례가 아니며, VM에서 강제됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202913Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:26/seg:2",
+      "source": "Once an object is frozen it cannot be unfrozen.",
+      "source_hash": 17041283924353061728,
+      "context_hash": 14155614965642639823,
+      "translation": "객체가 한 번 동결되면 동결을 해제할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202913Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:27/seg:0",
+      "source": "A ``__deep_freeze__`` method may be added as a :ref:`future enhancement<pep805-future-enhancements>`.",
+      "source_hash": 12141587285877246056,
+      "context_hash": 18020165213377248004,
+      "translation": "``__deep_freeze__`` 메서드는 :ref:`future enhancement<pep805-future-enhancements>`\\ 로 추가될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202913Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:28/seg:0",
+      "source": "The ``freeze`` function can be used as a decorator to freeze classes",
+      "source_hash": 6195441324203539917,
+      "context_hash": 2833733470474037390,
+      "translation": "``freeze`` 함수는 클래스를 동결하는 데코레이터로 사용할 수 있습니다.",
+      "glossary_snapshot": {
+        "decorator": "데코레이터"
+      },
+      "translated_at": "2026-08-28T19:30:07.202914Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:30/seg:0",
+      "source": "Synchronization",
+      "source_hash": 51074875145540079,
+      "context_hash": 15613828088018654469,
+      "translation": "동기화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202915Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:31/seg:0",
+      "source": "The ``synchronized`` state protects the internal state of an object, but is only available for some builtin and extension objects.",
+      "source_hash": 4282566486909027684,
+      "context_hash": 1925793597927622021,
+      "translation": "``synchronized`` 상태는 객체의 내부 상태를 보호하지만, 일부 내장 객체와 확장 객체에서만 사용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202915Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:32/seg:0",
+      "source": "Passing mutable values between parallel threads",
+      "source_hash": 14265078310055441244,
+      "context_hash": 10276391345407669272,
+      "translation": "병렬 스레드 간에 변경 가능한 값 전달",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202916Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:33/seg:0",
+      "source": "Two classes are provided to pass *local* objects between ThreadGroups.",
+      "source_hash": 9691990332965823636,
+      "context_hash": 1038144733752827964,
+      "translation": "ThreadGroup 간에 *local* 객체를 전달하기 위한 두 클래스가 제공됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202916Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:34/seg:0",
+      "source": "The ``TransferBox`` class provides a *synchronized* container for moving objects from one ThreadGroup to another.",
+      "source_hash": 8411167405897293333,
+      "context_hash": 3214682204366094185,
+      "translation": "``TransferBox`` 클래스는 한 ThreadGroup에서 다른 ThreadGroup으로 객체를 이동하기 위한 *synchronized* 컨테이너를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202916Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:35/seg:0",
+      "source": "When creating a ``TransferBox`` from a *local* object, the object is copied before boxing.",
+      "source_hash": 15422880442106388442,
+      "context_hash": 2782650218326353106,
+      "translation": "*local* 객체에서 ``TransferBox``\\ 를 생성할 때 객체가 박싱되기 전에 복사됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202917Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:35/seg:1",
+      "source": "The new *local* object is not attached to any ThreadGroup.",
+      "source_hash": 13502628552659164307,
+      "context_hash": 7853145287928841939,
+      "translation": "새 *local* 객체는 어떤 ThreadGroup에도 연결되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202917Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:36/seg:0",
+      "source": "When claiming the object from the box, the current ThreadGroup becomes the owner of the object, if the box's ``sink`` is ``None`` or the current ThreadGroup.",
+      "source_hash": 16329291456149973110,
+      "context_hash": 1496501986384926677,
+      "translation": "박스에서 객체를 가져올 때, 박스의 ``sink``\\ 가 ``None``\\ 이거나 현재 ThreadGroup인 경우 현재 ThreadGroup이 객체의 소유자가 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202917Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:37/seg:0",
+      "source": "*Immutable*, *protected* and *synchronized* objects are passed uncopied",
+      "source_hash": 17091503433300626311,
+      "context_hash": 14912683992001277043,
+      "translation": "*Immutable*, *protected* 및 *synchronized* 객체는 복사되지 않은 상태로 전달됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202917Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:39/seg:0",
+      "source": "The ``Channel`` class provides a higher level API for passing objects from one ThreadGroup to another.",
+      "source_hash": 8998090957717791219,
+      "context_hash": 17097090699130270829,
+      "translation": "``Channel`` 클래스는 한 ThreadGroup에서 다른 ThreadGroup으로 객체를 전달하기 위한 더 높은 수준의 API를 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202918Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:39/seg:1",
+      "source": "Channel is equivalent to this Python class",
+      "source_hash": 2593020603526090770,
+      "context_hash": 14455998934279971589,
+      "translation": "Channel은 다음 Python 클래스와 동일합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202918Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:41/seg:0",
+      "source": "Adding a \"deep\" ``put`` method might be added as a :ref:`future enhancement<pep805-future-enhancements>`, if there is sufficient demand for it.",
+      "source_hash": 17173814673633711302,
+      "context_hash": 6903798571131254898,
+      "translation": "충분한 수요가 있다면 \"deep\" ``put`` 메서드가 :ref:`future enhancement<pep805-future-enhancements>`\\ 로 추가될 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202918Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:42/seg:0",
+      "source": "The Main ThreadGroup",
+      "source_hash": 1403348658291167765,
+      "context_hash": 6551560322276065933,
+      "translation": "Main ThreadGroup",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202919Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:43/seg:0",
+      "source": "At interpreter startup a ``ThreadGroup`` named \"Main\" will be created and stored in ``sys.main_thread_group``. ``sys.main_thread_group`` is read-only and the \"Main\" ``ThreadGroup`` will outlive all mortal objects even if the ``sys`` module is deleted.",
+      "source_hash": 1461396989083036250,
+      "context_hash": 11077960886363632026,
+      "translation": "인터프리터가 시작될 때 \"Main\"이라는 이름의 ``ThreadGroup``\\ 이 생성되어 ``sys.main_thread_group``\\ 에 저장됩니다. ``sys.main_thread_group``\\ 은 읽기 전용이며, ``sys`` 모듈이 삭제되더라도 \"Main\" ``ThreadGroup``\\ 은 수명이 있는 모든 객체보다 오래 존속합니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:30:07.202919Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:43/seg:1",
+      "source": "The main thread's ``group`` will be ``sys.main_thread_group``:",
+      "source_hash": 18281114849224831154,
+      "context_hash": 17350979262504105566,
+      "translation": "주 스레드의 ``group``\\ 은 ``sys.main_thread_group``\\ 이 됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202920Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:45/seg:0",
+      "source": "The Main ``ThreadGroup`` is analogous to the GIL, in that it serializes execution of all threads.",
+      "source_hash": 12304001341042992244,
+      "context_hash": 8830865033500808002,
+      "translation": "Main ``ThreadGroup``\\ 은 모든 스레드의 실행을 직렬화한다는 점에서 GIL과 유사합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202920Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:45/seg:1",
+      "source": "It is only when threads are explicitly marked as belonging to another ThreadGroup, that there is parallelism.",
+      "source_hash": 1212737883001857929,
+      "context_hash": 9424130319885614448,
+      "translation": "스레드가 다른 ThreadGroup에 속하는 것으로 명시적으로 표시된 경우에만 병렬성이 존재합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202920Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:46/seg:0",
+      "source": "For threads created with ``group=None``, either explicitly or as the default, then the choice of group is determined by the ``PYTHON_PARALLEL`` environment variable:",
+      "source_hash": 3193035761598834861,
+      "context_hash": 9709597458352276770,
+      "translation": "명시적으로 또는 기본값으로 ``group=None``\\ 으로 생성된 스레드의 경우 그룹 선택은 ``PYTHON_PARALLEL``\\ 환경 변수로 결정됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202920Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:47/seg:0",
+      "source": "If ``PYTHON_PARALLEL`` is set to any non-zero value, then a new ``ThreadGroup`` is created for the thread.",
+      "source_hash": 3951822719084778414,
+      "context_hash": 10162288531120370866,
+      "translation": "``PYTHON_PARALLEL``\\ 이 0이 아닌 값으로 설정되면 해당 스레드를 위한 새 ``ThreadGroup``\\ 이 생성됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202921Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:48/seg:0",
+      "source": "Otherwise, the thread's group is ``sys.main_thread_group``.",
+      "source_hash": 1950212020303819682,
+      "context_hash": 1204177156004900238,
+      "translation": "그렇지 않으면 스레드의 그룹은 ``sys.main_thread_group``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202921Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Object states and legal operations",
+      "source_hash": 14663016371646227744,
+      "context_hash": 17031467086886567213,
+      "translation": "객체 상태 및 허용되는 연산",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202921Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "Allowed operations",
+      "source_hash": 3265172757735877105,
+      "context_hash": 9928086178364874721,
+      "translation": "허용되는 연산",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202922Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "Object state",
+      "source_hash": 15410474342786704021,
+      "context_hash": 204174068695139777,
+      "translation": "객체 상태",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202922Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "Immutable",
+      "source_hash": 11933157210782222120,
+      "context_hash": 13959784100384152682,
+      "translation": "불변",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202922Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:5/seg:0",
+      "source": "Local = thread",
+      "source_hash": 8309715434718095580,
+      "context_hash": 12581365223875425218,
+      "translation": "로컬 = 스레드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202922Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:6/seg:0",
+      "source": "Local ≠ thread",
+      "source_hash": 11697355385045503648,
+      "context_hash": 3561695642182829777,
+      "translation": "로컬 ≠ 스레드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202922Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:7/seg:0",
+      "source": "Protected",
+      "source_hash": 15506767030338965975,
+      "context_hash": 12666508668568922212,
+      "translation": "보호됨",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:07.202923Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:8/seg:0",
+      "source": "Synchronized",
+      "source_hash": 3121041757867241037,
+      "context_hash": 7715429216096473113,
+      "translation": "동기화됨",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367884Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:9/seg:0",
+      "source": "Acquire reference",
+      "source_hash": 1948909776228182840,
+      "context_hash": 12874064512832068353,
+      "translation": "참조 획득",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367888Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:10/seg:0",
+      "source": "Yes",
+      "source_hash": 3389992145996609386,
+      "context_hash": 303360226516785830,
+      "translation": "예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367888Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:11/seg:0",
+      "source": "Yes",
+      "source_hash": 3389992145996609386,
+      "context_hash": 16361932622599883170,
+      "translation": "예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367888Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:12/seg:0",
+      "source": "No",
+      "source_hash": 3846534607940335394,
+      "context_hash": 2430994108697996958,
+      "translation": "아니요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367889Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:13/seg:0",
+      "source": "Yes\\ :sup:`1`",
+      "source_hash": 9667962223984361909,
+      "context_hash": 9508013301409225522,
+      "translation": "예\\ :sup:`1`",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367889Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:14/seg:0",
+      "source": "Yes",
+      "source_hash": 3389992145996609386,
+      "context_hash": 1373276696958146344,
+      "translation": "예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367889Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:15/seg:0",
+      "source": "``freeze()``",
+      "source_hash": 14087534569743611370,
+      "context_hash": 5682604163633085199,
+      "translation": "``freeze()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367890Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:16/seg:0",
+      "source": "No effect",
+      "source_hash": 12713110667490545248,
+      "context_hash": 15227465716203422453,
+      "translation": "효과 없음",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367890Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:17/seg:0",
+      "source": "Yes\\ :sup:`2`",
+      "source_hash": 2182150041774505363,
+      "context_hash": 17843934048379200265,
+      "translation": "예\\ :sup:`2`",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367890Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:18/seg:0",
+      "source": "N/A",
+      "source_hash": 1573616554690886611,
+      "context_hash": 10216696951798235480,
+      "translation": "해당 없음",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367890Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:19/seg:0",
+      "source": "No",
+      "source_hash": 3846534607940335394,
+      "context_hash": 6297143168401183319,
+      "translation": "아니요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367891Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:20/seg:0",
+      "source": "Yes\\ :sup:`2`",
+      "source_hash": 2182150041774505363,
+      "context_hash": 13125986473747414368,
+      "translation": "예\\ :sup:`2`",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367891Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:21/seg:0",
+      "source": "``protect()``",
+      "source_hash": 11323876663029963756,
+      "context_hash": 10216696951798235480,
+      "translation": "``protect()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367891Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:22/seg:0",
+      "source": "No",
+      "source_hash": 3846534607940335394,
+      "context_hash": 4789747464227480669,
+      "translation": "아니요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367891Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:23/seg:0",
+      "source": "Yes\\ :sup:`2,3`",
+      "source_hash": 14652363092220617189,
+      "context_hash": 1724952970067240535,
+      "translation": "예\\ :sup:`2,3`",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367892Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:24/seg:0",
+      "source": "N/A",
+      "source_hash": 1573616554690886611,
+      "context_hash": 13213770154553676294,
+      "translation": "해당 없음",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367892Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:25/seg:0",
+      "source": "No",
+      "source_hash": 3846534607940335394,
+      "context_hash": 17252049378668902555,
+      "translation": "아니요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367892Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:26/seg:0",
+      "source": "No",
+      "source_hash": 3846534607940335394,
+      "context_hash": 595600899886577695,
+      "translation": "아니요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367892Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:27/seg:0",
+      "source": "``synchronize()``",
+      "source_hash": 12235115534497188568,
+      "context_hash": 7536943046141488671,
+      "translation": "``synchronize()``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367893Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:28/seg:0",
+      "source": "No",
+      "source_hash": 3846534607940335394,
+      "context_hash": 12817729315556607331,
+      "translation": "아니요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367893Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:29/seg:0",
+      "source": "Yes\\ :sup:`2`",
+      "source_hash": 2182150041774505363,
+      "context_hash": 1724952970067240535,
+      "translation": "예\\ :sup:`2`",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367893Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:30/seg:0",
+      "source": "N/A",
+      "source_hash": 1573616554690886611,
+      "context_hash": 10216696951798235480,
+      "translation": "해당 없음",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367893Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:31/seg:0",
+      "source": "No",
+      "source_hash": 3846534607940335394,
+      "context_hash": 17252049378668902555,
+      "translation": "아니요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367893Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:32/seg:0",
+      "source": "No",
+      "source_hash": 3846534607940335394,
+      "context_hash": 12539084014658209507,
+      "translation": "아니요",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367894Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:33/seg:0",
+      "source": "All other operations",
+      "source_hash": 9364878686901416194,
+      "context_hash": 9508013301409225522,
+      "translation": "기타 모든 연산",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367894Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:34/seg:0",
+      "source": "Yes",
+      "source_hash": 3389992145996609386,
+      "context_hash": 16993965328222984799,
+      "translation": "예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367894Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:35/seg:0",
+      "source": "Yes",
+      "source_hash": 3389992145996609386,
+      "context_hash": 9496219825591595764,
+      "translation": "예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367894Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:36/seg:0",
+      "source": "N/A",
+      "source_hash": 1573616554690886611,
+      "context_hash": 7259753640440472095,
+      "translation": "해당 없음",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367894Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:37/seg:0",
+      "source": "Yes",
+      "source_hash": 3389992145996609386,
+      "context_hash": 1323445386934529655,
+      "translation": "예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367895Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:38/seg:0",
+      "source": "Yes",
+      "source_hash": 3389992145996609386,
+      "context_hash": 2362089469416418306,
+      "translation": "예",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367895Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:39/seg:0",
+      "source": "If the mutex that protects the object is in the set of mutexes held by the thread.",
+      "source_hash": 10380022988499050047,
+      "context_hash": 11372586020741907474,
+      "translation": "객체를 보호하는 뮤텍스가 스레드가 보유한 뮤텍스 집합에 포함된 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:29:46.367895Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:40/seg:0",
+      "source": "If supported for that class.",
+      "source_hash": 12950035986855598593,
+      "context_hash": 17077085771208750298,
+      "translation": "해당 클래스에서 지원되는 경우입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908296Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:41/seg:0",
+      "source": "The argument must be the sole reference to the object.",
+      "source_hash": 17673129311804141175,
+      "context_hash": 13835553012553348721,
+      "translation": "인자는 객체에 대한 유일한 참조여야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908299Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "ABI breakage",
+      "source_hash": 5936701958867344996,
+      "context_hash": 5821496315706443476,
+      "translation": "ABI 호환성 파괴",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908300Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "This PEP will require a one time ABI breakage, much like :pep:`703`, as the ``PyObject`` struct will need to be changed.",
+      "source_hash": 1012149187966701396,
+      "context_hash": 15768878624383896700,
+      "translation": "``PyObject`` 구조체를 변경해야 하므로 이 PEP에서는 :pep:`703`\\ 과 마찬가지로 ABI를 한 번 중단해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908300Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Deferred reclamation",
+      "source_hash": 7507189986488966930,
+      "context_hash": 5328973538823439325,
+      "translation": "지연된 회수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908301Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "Immutable and synchronized objects may have their reclamation deferred.",
+      "source_hash": 12694653135284419344,
+      "context_hash": 4248598051796823328,
+      "translation": "변경 불가능하고 동기화된 객체는 회수를 지연할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908301Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "Objects that have references stored in synchronized lists or dicts may also have their reclamation deferred.",
+      "source_hash": 4565193470359577344,
+      "context_hash": 11809143800277373042,
+      "translation": "동기화된 리스트나 딕셔너리에 참조가 저장된 객체도 회수를 지연할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908301Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:2",
+      "source": "In other words, they may not be reclaimed immediately if there are no more references to them.",
+      "source_hash": 6138043249263570646,
+      "context_hash": 11961111272753056689,
+      "translation": "즉, 해당 객체에 대한 참조가 더 이상 없더라도 즉시 회수되지 않을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908302Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "This is because these objects may be referred to from several threads simultaneously, and the overhead of serializing the reference count operations would be too high.",
+      "source_hash": 12615760604772915194,
+      "context_hash": 9274389653454974728,
+      "translation": "이는 이러한 객체가 여러 스레드에서 동시에 참조될 수 있으며, 참조 카운트 연산을 직렬화하는 오버헤드가 너무 클 수 있기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908302Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:1",
+      "source": "The implementation of :pep:`703` behaves the same way.",
+      "source_hash": 10615963859219768614,
+      "context_hash": 228361678585799191,
+      "translation": "구현은 :pep:`703`\\ 와 동일하게 동작합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:51.089969Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:3/seg:0",
+      "source": "Local objects, visible to only one ThreadGroup, will still be reclaimed immediately once they are no longer referenced.",
+      "source_hash": 16035082227822683352,
+      "context_hash": 4811207028978394662,
+      "translation": "하나의 ThreadGroup에만 표시되는 로컬 객체는 더 이상 참조되지 않게 되면 여전히 즉시 회수됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908303Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "New Exceptions",
+      "source_hash": 11466788981606153805,
+      "context_hash": 7932081468318813384,
+      "translation": "새로운 예외",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908303Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "Two new exception classes will be added:",
+      "source_hash": 11324152338759206101,
+      "context_hash": 5486917460404202664,
+      "translation": "두 개의 새로운 예외 클래스가 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908303Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "``IllegalThreadAccessException`` for when a thread attempts to acquire a reference to a *local* object belonging to another ThreadGroup.",
+      "source_hash": 6386234405360370687,
+      "context_hash": 13716612915287762130,
+      "translation": "다른 ThreadGroup에 속한 *local* 객체에 대한 참조를 획득하려고 스레드가 시도하는 경우의 ``IllegalThreadAccessException``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908304Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:3/seg:0",
+      "source": "``UnprotectedAccessException`` for when a thread attempts to acquire a reference to a *protected* object without holding the necessary lock.",
+      "source_hash": 2600626689990292122,
+      "context_hash": 17859399749939125547,
+      "translation": "필요한 잠금을 보유하지 않은 채 *protected* 객체에 대한 참조를 획득하려고 스레드가 시도하는 경우의 ``UnprotectedAccessException``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908304Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Parallelism and Context Switching",
+      "source_hash": 13633773763759494521,
+      "context_hash": 17102455926266866707,
+      "translation": "병렬 처리 및 컨텍스트 전환",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908304Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Each ThreadGroup is independent and any or all of them can run in parallel with each other.",
+      "source_hash": 1244645231088709762,
+      "context_hash": 6894795878337166943,
+      "translation": "각 ThreadGroup은 독립적이며, 일부 또는 모든 ThreadGroup이 서로 병렬로 실행될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908304Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:1",
+      "source": "Only one thread can be running at any time within a ThreadGroup.",
+      "source_hash": 3139904914673404711,
+      "context_hash": 5717502544095396834,
+      "translation": "ThreadGroup 내에서는 언제든 하나의 스레드만 실행될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908305Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:2/seg:0",
+      "source": "Switching between threads within a ThreadGroup can occur at any of the following locations:",
+      "source_hash": 5859743760218941238,
+      "context_hash": 5226906899307707462,
+      "translation": "ThreadGroup 내 스레드 간 전환은 다음 위치에서 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908305Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "at a call site",
+      "source_hash": 11520280284386247421,
+      "context_hash": 11251169459832814327,
+      "translation": "호출 지점에서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908305Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:4/seg:0",
+      "source": "at the end of any loop body (the back edge)",
+      "source_hash": 4429477921532614250,
+      "context_hash": 15291589838078102798,
+      "translation": "모든 루프 본문의 끝(백 엣지)에서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908305Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "on entry to a function",
+      "source_hash": 17547856024552840584,
+      "context_hash": 5051689050737508090,
+      "translation": "함수 진입 시",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908306Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:6/seg:0",
+      "source": "during a call where any of the above happen",
+      "source_hash": 12009594890965246003,
+      "context_hash": 9508201232389404661,
+      "translation": "위 항목 중 하나가 발생하는 호출 중에",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908306Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:0",
+      "source": "during a call to an extension function",
+      "source_hash": 8467041259102665366,
+      "context_hash": 6203332921544561777,
+      "translation": "확장 함수 호출 중에",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908306Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:8/seg:0",
+      "source": "at the end of any exception handler, including finally blocks",
+      "source_hash": 16983472585013407611,
+      "context_hash": 15333608261812101325,
+      "translation": "finally 블록을 포함한 모든 예외 처리기의 끝에서",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908306Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:9/seg:0",
+      "source": "Many operators in Python make calls.",
+      "source_hash": 825194525189837980,
+      "context_hash": 3533878358542769092,
+      "translation": "Python의 많은 연산자는 호출을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908307Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:9/seg:1",
+      "source": "So, unless operating on `primitive types`_, it is safest to assume that any mathematical operator or indexing can allow a context switch.",
+      "source_hash": 4127369454174526497,
+      "context_hash": 6732077956609501957,
+      "translation": "따라서 `primitive types`_\\ 에 대해 연산하는 경우가 아니라면, 모든 수학 연산자나 인덱싱에서 컨텍스트 전환이 허용될 수 있다고 가정하는 것이 가장 안전합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908307Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:10/seg:0",
+      "source": "The following operators will not allow a context switch:",
+      "source_hash": 10113137185981479214,
+      "context_hash": 15260290053108766858,
+      "translation": "다음 연산자에서는 컨텍스트 전환이 허용되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908307Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:11/seg:0",
+      "source": "math operations on `primitive types`_",
+      "source_hash": 16772359494110568189,
+      "context_hash": 16378581343866084099,
+      "translation": "`primitive types`_\\ 에 대한 수학 연산",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908307Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:12/seg:0",
+      "source": "indexing on ``list`` or ``tuple`` with an ``int`` subscript",
+      "source_hash": 17551572580575438956,
+      "context_hash": 7410765319154831398,
+      "translation": "``list`` 또는 ``tuple``\\ 에서 ``int`` 서첨자를 사용한 인덱싱",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908307Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:13/seg:0",
+      "source": "indexing a ``dict`` using a ``str`` key if all the ``dict``\\'s keys are ``str``\\ s",
+      "source_hash": 1195223389922935433,
+      "context_hash": 13940215373415926588,
+      "translation": "모든 ``dict``\\ 의 키가 ``str``\\ 인 경우 ``str`` 키를 사용한 ``dict`` 인덱싱",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908308Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Introspection and Debuggers",
+      "source_hash": 11765840255629161279,
+      "context_hash": 5636281354251473483,
+      "translation": "인트로스펙션 및 디버거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:03.908308Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "In general, *local* objects cannot be accessed by threads belonging to a different ThreadGroup, nor can *protected* objects be accessed without holding the relevant lock.",
+      "source_hash": 8037960520813955868,
+      "context_hash": 14543852324546165751,
+      "translation": "일반적으로 *local* 객체는 다른 ThreadGroup에 속한 스레드가 액세스할 수 없으며, 관련 잠금을 보유하지 않고는 *protected* 객체에도 액세스할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473287Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "However, this would prevent debuggers and similar tools from being able to introspect multiple threads of execution.",
+      "source_hash": 417398685536674444,
+      "context_hash": 12928955708801698418,
+      "translation": "그러나 이렇게 하면 디버거 및 이와 유사한 도구가 여러 실행 스레드를 introspect할 수 없게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473290Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:0",
+      "source": "To allow this special case, a special context manager ``sys.monitoring.StopTheWorld`` is provided.",
+      "source_hash": 6935207145988604081,
+      "context_hash": 560587814644343304,
+      "translation": "이 특수한 경우를 허용하기 위해 특수 컨텍스트 관리자 ``sys.monitoring.StopTheWorld``\\ 가 제공됩니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:30:13.473290Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:2/seg:1",
+      "source": "Within a ``with`` statement using this context manager, all threads (other than the one entering the context manager) will be stopped at a :ref:`ContextSwitch <pep805-ContextSwitch>` point, and the thread within the context manager will be allowed to access, and modify, all objects.",
+      "source_hash": 3199479376434201611,
+      "context_hash": 18099163984442035774,
+      "translation": "이 컨텍스트 관리자를 사용하는 ``with`` 문 내에서는 컨텍스트 관리자에 진입하는 스레드를 제외한 모든 스레드가 :ref:`ContextSwitch <pep805-ContextSwitch>` 지점에서 중지되며, 컨텍스트 관리자 내부의 스레드는 모든 객체에 액세스하고 수정할 수 있습니다.",
+      "glossary_snapshot": {
+        "context manager": "컨텍스트 관리자"
+      },
+      "translated_at": "2026-08-28T19:30:13.473291Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "Primitive Types",
+      "source_hash": 94157921489008561,
+      "context_hash": 5321006692883274483,
+      "translation": "기본 타입",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473292Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:1/seg:0",
+      "source": "The following types are defined as primitive:",
+      "source_hash": 13914561828433897603,
+      "context_hash": 6195216635660819996,
+      "translation": "다음 타입은 기본 타입으로 정의됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473292Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:2/seg:0",
+      "source": "``bool``",
+      "source_hash": 15362144587184433578,
+      "context_hash": 15532361955679316905,
+      "translation": "``bool``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473292Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:3/seg:0",
+      "source": "``int``",
+      "source_hash": 14555405346182345096,
+      "context_hash": 14387511264310730563,
+      "translation": "``int``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473293Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:4/seg:0",
+      "source": "``float``",
+      "source_hash": 4287187537769514895,
+      "context_hash": 11745808289117596620,
+      "translation": "``float``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473293Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:5/seg:0",
+      "source": "``NoneType``",
+      "source_hash": 2768663327518622577,
+      "context_hash": 14321906494467493611,
+      "translation": "``NoneType``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473293Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:6/seg:0",
+      "source": "``str``",
+      "source_hash": 3053199291252759134,
+      "context_hash": 14309902000178814249,
+      "translation": "``str``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473293Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:7/seg:0",
+      "source": "``bytes``",
+      "source_hash": 7182208889750151674,
+      "context_hash": 2173405598989773394,
+      "translation": "``bytes``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473293Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:8/seg:0",
+      "source": "Primitive types have the following properties:",
+      "source_hash": 1689795897665564410,
+      "context_hash": 7092063892460469041,
+      "translation": "기본 타입에는 다음과 같은 속성이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473293Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:9/seg:0",
+      "source": "They are immutable, so can always be shared between ``ThreadGroup``\\s",
+      "source_hash": 13244718553038025921,
+      "context_hash": 12337433247960375549,
+      "translation": "변경할 수 없으므로 항상 ``ThreadGroup``\\ 들 간에 공유할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473294Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:10/seg:0",
+      "source": "A context switch will not occur during operations on them",
+      "source_hash": 14250966275944439553,
+      "context_hash": 16084597681563111862,
+      "translation": "해당 타입에 대한 연산 중에는 컨텍스트 전환이 발생하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473294Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:11/seg:0",
+      "source": "Their reclamation may be deferred once they are no longer referenced",
+      "source_hash": 16083076547174577085,
+      "context_hash": 13698920733109934445,
+      "translation": "더 이상 참조되지 않게 된 후에도 회수가 지연될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473294Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:0/seg:0",
+      "source": "C Extensions and the C API",
+      "source_hash": 775682928199329669,
+      "context_hash": 18112763748484699484,
+      "translation": "C 확장 및 C API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473294Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:1/seg:0",
+      "source": "In the following section the term \"C extension\" also applies to extensions written in Rust, C++, Fortran or any other natively compiled language",
+      "source_hash": 10182930367355643145,
+      "context_hash": 9804123272809043173,
+      "translation": "다음 절에서 \"C 확장\"이라는 용어는 Rust, C++, Fortran 또는 네이티브로 컴파일되는 기타 언어로 작성된 확장에도 적용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473295Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:0",
+      "source": "By default all C extension modules, classes, and their instances will be *local*.",
+      "source_hash": 10829216580759118371,
+      "context_hash": 15461221523264924161,
+      "translation": "기본적으로 모든 C 확장 모듈, 클래스 및 해당 인스턴스는 *local*\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473295Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:2/seg:1",
+      "source": "Objects can be declared to be *synchronized* or *immutable* by calling ``PyObject_DeclareSynchronized()`` or ``PyObject_DeclareImmutable()``, respectively.",
+      "source_hash": 9691385102401859072,
+      "context_hash": 298207846882722873,
+      "translation": "``PyObject_DeclareSynchronized()`` 또는 ``PyObject_DeclareImmutable()``\\ 를 호출하여 객체를 각각 *synchronized* 또는 *immutable*\\ 로 선언할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473295Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:0",
+      "source": "Take care when declaring an object to be *synchronized*.",
+      "source_hash": 705299809588084885,
+      "context_hash": 508969703911231096,
+      "translation": "객체를 *synchronized*\\ 로 선언할 때는 주의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473296Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:1",
+      "source": "Getting it wrong will introduce race conditions, possibly causing crashes and lost data.",
+      "source_hash": 12291650424279517700,
+      "context_hash": 16922589868569888419,
+      "translation": "잘못 선언하면 경쟁 조건이 발생하여 충돌과 데이터 손실을 일으킬 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473296Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:3/seg:2",
+      "source": "Immutability is **much** easier to get right than synchronization, is safer, and often provides better performance.",
+      "source_hash": 12769491072156413657,
+      "context_hash": 2999085734656090733,
+      "translation": "불변성은 동기화보다 **훨씬** 올바르게 구현하기 쉽고 더 안전하며, 흔히 더 나은 성능을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473296Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:4/seg:0",
+      "source": "C extensions that have been hardened to work with free-threading should mark objects as *synchronized* or *immutable* as appropriate.",
+      "source_hash": 9733040453650887359,
+      "context_hash": 2951897736495682129,
+      "translation": "자유 스레딩에서 작동하도록 강화된 C 확장은 적절한 경우 객체를 *synchronized* 또는 *immutable*\\ 로 표시해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473296Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:5/seg:0",
+      "source": "If it is not certain that an object is race-free, then it should be left as *local*.",
+      "source_hash": 10957018305400892441,
+      "context_hash": 16640302268580794392,
+      "translation": "객체가 경쟁 조건 없이 안전하다는 확신이 없다면 *local*\\ 로 유지해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473297Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:0",
+      "source": "Deliberately choosing to keep certain extension objects as local is an entirely acceptable design choice, which will be enforced by the VM.",
+      "source_hash": 13688076041658832810,
+      "context_hash": 14993924303336022319,
+      "translation": "특정 확장 객체를 의도적으로 로컬로 유지하도록 선택하는 것은 전적으로 허용되는 설계 선택이며, VM이 이를 적용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473297Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:6/seg:1",
+      "source": "For instance, when concurrent access to an object may inevitably produce non-deterministic behavior because of the semantics of the object itself, even after all C-level data races are resolved.",
+      "source_hash": 1646982339624038774,
+      "context_hash": 4111672810514780585,
+      "translation": "예를 들어 모든 C 수준 데이터 경쟁을 해결한 후에도 객체 자체의 의미 체계로 인해 객체에 대한 동시 액세스가 불가피하게 비결정적 동작을 생성할 수 있는 경우가 이에 해당합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473297Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:7/seg:0",
+      "source": "C API functions",
+      "source_hash": 11259049050686474270,
+      "context_hash": 16482098260125518036,
+      "translation": "C API 함수",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473297Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:8/seg:0",
+      "source": "All C API functions will be modified to check that the reference being returned, if any, is safe to be accessed from the current thread.",
+      "source_hash": 12383556392229501843,
+      "context_hash": 15024410325202509240,
+      "translation": "모든 C API 함수는 반환되는 참조가 있는 경우 해당 참조가 현재 스레드에서 안전하게 액세스될 수 있는지 확인하도록 수정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473298Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:9/seg:0",
+      "source": "Extension API",
+      "source_hash": 17529389186074395449,
+      "context_hash": 10429924420751616647,
+      "translation": "확장 API",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473298Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:10/seg:0",
+      "source": "It is the responsibility of the VM to check for accessibility, so C functions implemented by C extensions as part of the extension API will not need to be modified.",
+      "source_hash": 597891590530492989,
+      "context_hash": 13928835482881309685,
+      "translation": "액세스 가능성을 확인하는 것은 VM의 책임이므로, 확장 API의 일부로 C 확장이 구현한 C 함수는 수정할 필요가 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473298Z",
+      "issues": []
+    },
+    {
+      "id": "section:21/block:10/seg:1",
+      "source": "The VM will perform necessary checks on any returned values.",
+      "source_hash": 15015428905458724776,
+      "context_hash": 6598367479266642447,
+      "translation": "VM은 반환되는 모든 값에 대해 필요한 검사를 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:13.473298Z",
+      "issues": []
+    },
+    {
+      "id": "section:22/block:0/seg:0",
+      "source": "Backwards Compatibility",
+      "source_hash": 10657204087101124989,
+      "context_hash": 5679053383473922203,
+      "translation": "하위 호환성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536131Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:0/seg:0",
+      "source": "Default build",
+      "source_hash": 17993157776233661457,
+      "context_hash": 15191536797112001524,
+      "translation": "기본 빌드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536135Z",
+      "issues": []
+    },
+    {
+      "id": "section:23/block:1/seg:0",
+      "source": "Compared to the default build, the only incompatible change is that the lifetimes of some objects (those of :ref:`primitive types<pep805-primitive-types>`) may be extended, possibly increasing memory use.",
+      "source_hash": 10991894752645265803,
+      "context_hash": 1406961725885694514,
+      "translation": "기본 빌드와 비교하면, 호환되지 않는 변경 사항은 일부 객체(:ref:`primitive types<pep805-primitive-types>`\\ 의 객체)의 수명이 연장되어 메모리 사용량이 증가할 수 있다는 점뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536136Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:0/seg:0",
+      "source": "Free-threading build",
+      "source_hash": 12360731754920637076,
+      "context_hash": 7653728113210305355,
+      "translation": "자유 스레딩 빌드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536136Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:1/seg:0",
+      "source": "The most obvious change is that sharing of mutable objects will raise an ``IllegalThreadAccessException`` instead of allowing data races.",
+      "source_hash": 17112169787406379555,
+      "context_hash": 1780484185899518778,
+      "translation": "가장 명확한 변경 사항은 변경 가능한 객체를 공유할 때 데이터 경쟁을 허용하는 대신 ``IllegalThreadAccessException``\\ 을 발생시킨다는 점입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536137Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:0",
+      "source": "This can be resolved on a case-by-case basis.",
+      "source_hash": 11211657738058960835,
+      "context_hash": 7223776251392782973,
+      "translation": "이는 사례별로 해결할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536137Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:1",
+      "source": "If mutable shared objects are already protected by locks, then make them *protected*.",
+      "source_hash": 6695103156998362062,
+      "context_hash": 3116219108348925648,
+      "translation": "변경 가능한 공유 객체가 이미 잠금으로 보호되고 있다면 해당 객체를 *protected*\\ 로 만드십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536137Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:2",
+      "source": "See :ref:`pep805-locks-and-protection`. (This will also help ensure the thread-safety of such applications.) Turn mutable shared lists and dictionaries into their synchronized versions, by using the new ``synchronize()`` method.",
+      "source_hash": 14467494495097634878,
+      "context_hash": 565465985612260853,
+      "translation": "자세한 내용은 :ref:`pep805-locks-and-protection`\\ 를 참조하십시오. (이렇게 하면 이러한 애플리케이션의 스레드 안전성도 보장하는 데 도움이 됩니다.) 새로운 ``synchronize()`` 메서드를 사용하여 변경 가능한 공유 리스트와 딕셔너리를 동기화된 버전으로 변환하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:51.089980Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:2/seg:3",
+      "source": "See :ref:`pep805-new-api`. (Note that synchronized dicts and lists allow certain race conditions, as they also do in free-threading builds; if these were already acceptable then no other changes are needed.) Otherwise, if mutable shared objects already fall into the category of synchronized objects, no changes are needed.",
+      "source_hash": 14763954733550684304,
+      "context_hash": 2243418733209437912,
+      "translation": "자세한 내용은 :ref:`pep805-new-api`\\ 를 참조하십시오. (동기화된 딕셔너리와 리스트는 자유 스레딩 빌드에서도 그러하듯 특정 경쟁 조건을 허용합니다. 이러한 조건이 이미 허용 가능했다면 다른 변경은 필요하지 않습니다.) 그렇지 않다면, 변경 가능한 공유 객체가 이미 동기화된 객체 범주에 속하는 경우 변경이 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:51.089981Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:0",
+      "source": "Moreover, note that this PEP does not prevent a thread from storing a reference to a *local* mutable object to the heap, where it can be seen by multiple threads (e.g. by appending it to a shared list), but an exception will be raised when a non-owning thread attempts to acquire a reference to it (e.g. by popping it from a shared list).",
+      "source_hash": 3590623956505689915,
+      "context_hash": 6427976406880851582,
+      "translation": "또한 이 PEP는 스레드가 *local* 변경 가능한 객체에 대한 참조를 여러 스레드가 볼 수 있는 힙에 저장하는 것을 막지 않습니다(예를 들어 공유 리스트에 추가하는 방식). 그러나 소유하지 않은 스레드가 해당 객체에 대한 참조를 얻으려고 시도하면 예외가 발생합니다(예를 들어 공유 리스트에서 꺼내는 방식).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536139Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:3/seg:1",
+      "source": "Therefore, care must be exercised when transitioning dicts or lists into the synchronized state.",
+      "source_hash": 7864230237672588793,
+      "context_hash": 14590200819618628153,
+      "translation": "따라서 딕셔너리나 리스트를 동기화된 상태로 전환할 때는 주의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536139Z",
+      "issues": []
+    },
+    {
+      "id": "section:24/block:4/seg:0",
+      "source": "To have threads running in parallel, without needing to explicitly set the ``ThreadGroup`` for each new thread, the environment variable ``PYTHON_PARALLEL`` should be set to 1.",
+      "source_hash": 14535712005416560581,
+      "context_hash": 16799897819520687741,
+      "translation": "각 새 스레드에 대해 ``ThreadGroup``\\ 을 명시적으로 설정하지 않고 스레드를 병렬로 실행하려면 환경 변수 ``PYTHON_PARALLEL``\\ 을 1로 설정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536139Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:0/seg:0",
+      "source": "Safety",
+      "source_hash": 17008190269644470911,
+      "context_hash": 10834274554404067026,
+      "translation": "안전성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536139Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:1/seg:0",
+      "source": "*Local* and *immutable* objects are always safe against race conditions, as there can be no concurrent modifications.",
+      "source_hash": 6489573167785969198,
+      "context_hash": 12564704188923889305,
+      "translation": "*Local* 및 *immutable* 객체는 동시에 수정될 수 없으므로 경쟁 조건에 항상 안전합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536140Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:2/seg:0",
+      "source": "However, care must be taken with ``protected`` and ``synchronized`` objects.",
+      "source_hash": 16115688959914664798,
+      "context_hash": 9889342571082260787,
+      "translation": "그러나 ``protected`` 및 ``synchronized`` 객체를 사용할 때는 주의해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536140Z",
+      "issues": []
+    },
+    {
+      "id": "section:25/block:3/seg:0",
+      "source": "See `Examples`_ below for ways to create a Counter class that is race-free and one that is not.",
+      "source_hash": 9244631711780213103,
+      "context_hash": 14076716075984685695,
+      "translation": "아래의 `Examples`_\\ 에서 경쟁 조건이 없는 Counter 클래스와 그렇지 않은 Counter 클래스를 만드는 방법을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536140Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:0/seg:0",
+      "source": "Performance",
+      "source_hash": 1168761202931664327,
+      "context_hash": 16522752606835099833,
+      "translation": "성능",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536140Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:0",
+      "source": "The key to getting good performance out of any dynamic language, including Python, is to specialize code according to the most likely types or values.",
+      "source_hash": 375410545230779543,
+      "context_hash": 3670137590254092112,
+      "translation": "Python을 포함한 모든 동적 언어에서 좋은 성능을 얻는 핵심은 가능성이 가장 높은 타입이나 값에 맞게 코드를 특수화하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536140Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:1/seg:1",
+      "source": "Rather than perform an expensive, general operation, a cheap check is done to see that the expectations are met, then an efficient tailored operation is performed.",
+      "source_hash": 3864732753268916841,
+      "context_hash": 9685672450212436081,
+      "translation": "비용이 많이 드는 일반적인 연산을 수행하는 대신, 예상이 충족되는지 확인하는 저렴한 검사를 수행한 다음 효율적으로 맞춤화된 연산을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536141Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:0",
+      "source": "Take the example of indexing into a list: ``l[x]`` With the GIL, this can be done by first checking that ``l`` is a list, ``x`` is an int, and that ``x`` is in-bounds.",
+      "source_hash": 15482045398796693163,
+      "context_hash": 17348064066984731290,
+      "translation": "리스트를 인덱싱하는 예를 들어 보겠습니다: ``l[x]`` GIL을 사용하는 경우 먼저 ``l``\\ 이 리스트인지, ``x``\\ 가 정수인지, ``x``\\ 가 범위 내에 있는지 확인하여 이를 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536141Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:1",
+      "source": "Then the value can be read out of the list's array directly.",
+      "source_hash": 2579746327421143819,
+      "context_hash": 1831092467014081,
+      "translation": "그러면 리스트의 배열에서 값을 직접 읽을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536141Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:2",
+      "source": "However, in the free-threading build this approach doesn't work as another thread may have mutated the list at the same time as it was being indexed, meaning that additional synchronization is required.",
+      "source_hash": 607119052230080818,
+      "context_hash": 10174602579312166313,
+      "translation": "그러나 자유 스레딩 빌드에서는 인덱싱되는 동시에 다른 스레드가 리스트를 변경했을 수 있으므로 이 방식이 작동하지 않으며, 추가 동기화가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536141Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:2/seg:3",
+      "source": "The additional synchronization impairs performance but does not provide any useful protection against race conditions at the application level.",
+      "source_hash": 6557687584319100918,
+      "context_hash": 2243072562404415786,
+      "translation": "추가 동기화는 성능을 저하시키지만 애플리케이션 수준의 경쟁 조건에 대해 유용한 보호를 제공하지는 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536142Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:3/seg:0",
+      "source": "This PEP allows good performance for parallel code by adding an additional check to the guard: that the list is *local*.",
+      "source_hash": 12973794206291980902,
+      "context_hash": 14318943994508425861,
+      "translation": "이 PEP는 가드에 리스트가 *local*\\ 임을 확인하는 추가 검사를 넣어 병렬 코드에서 좋은 성능을 낼 수 있도록 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536142Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:3/seg:1",
+      "source": "Since the ``l`` is likely stored in a local variable, it must already be *local* and no additional check is needed.",
+      "source_hash": 9135813012641020415,
+      "context_hash": 15815772577033563421,
+      "translation": "``l``\\ 은 로컬 변수에 저장될 가능성이 높으므로 이미 *local*\\ 이어야 하며 추가 검사는 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536142Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:4/seg:0",
+      "source": "However, additional checks will still be needed.",
+      "source_hash": 5667155904350044815,
+      "context_hash": 11316519363080010207,
+      "translation": "그러나 추가 검사는 여전히 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536142Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:4/seg:1",
+      "source": "Whenever a reference owned by a thread is created, then a check will be needed that it is legal.",
+      "source_hash": 13343905124513132473,
+      "context_hash": 4267529250803827650,
+      "translation": "스레드가 소유한 참조가 생성될 때마다 해당 참조가 유효한지 확인하는 검사가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536143Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:4/seg:2",
+      "source": "Since it is necessary to check that an object is *local* to the ThreadGroup, or that it is *immutable*, or that it is *synchronized* or that it is *protected* and the correct lock is held, these checks could be relatively expensive.",
+      "source_hash": 11543353755645643819,
+      "context_hash": 11506608959837695805,
+      "translation": "객체가 ThreadGroup에 대해 *local*\\ 인지, *immutable*\\ 인지, *synchronized*\\ 인지, 또는 *protected*\\ 상태이며 올바른 잠금이 유지되고 있는지를 확인해야 하므로 이러한 검사는 비교적 비용이 많이 들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536143Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:4/seg:3",
+      "source": "However, the specializing adaptive interpreter or JIT can specialize or eliminate these operations.",
+      "source_hash": 5157141815688497345,
+      "context_hash": 14727840222550636187,
+      "translation": "그러나 특수화하는 적응형 인터프리터나 JIT는 이러한 연산을 특수화하거나 제거할 수 있습니다.",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터"
+      },
+      "translated_at": "2026-08-28T19:30:21.536143Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:5/seg:0",
+      "source": "The general check",
+      "source_hash": 7898542160821186000,
+      "context_hash": 2794844023573401370,
+      "translation": "일반적인 검사는",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536144Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:7/seg:0",
+      "source": "is expensive, but by specializing for the expected case, the check can be made cheap.",
+      "source_hash": 14644053299282106428,
+      "context_hash": 3716633895745197804,
+      "translation": "비용이 많이 들지만, 예상되는 경우에 맞게 특수화하면 검사를 저렴하게 만들 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536145Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:7/seg:1",
+      "source": "For example, if we expect a *local* object, we can do a much cheaper check",
+      "source_hash": 14490453172255741603,
+      "context_hash": 16563058793012247488,
+      "translation": "예를 들어 *local* 객체를 예상한다면 훨씬 저렴한 검사를 수행할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:21.536145Z",
+      "issues": []
+    },
+    {
+      "id": "section:26/block:9/seg:0",
+      "source": "Provided we make sure that ThreadGroup IDs and lock IDs are distinct.",
+      "source_hash": 6363296496687290878,
+      "context_hash": 7424289413862111981,
+      "translation": "ThreadGroup ID와 lock ID가 서로 다르도록 보장한다면",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553649Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:0/seg:0",
+      "source": "The impact of parallelism on performance",
+      "source_hash": 18411339911250084000,
+      "context_hash": 16033435324545820362,
+      "translation": "병렬성이 성능에 미치는 영향입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553652Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:1/seg:0",
+      "source": "If all threads belong to a single ``ThreadGroup`` then the JIT can eliminate checks for *local* objects (as these checks will always pass), resulting in performance very close to the current with-gil build.",
+      "source_hash": 10987585141365385682,
+      "context_hash": 10193418330115040355,
+      "translation": "모든 스레드가 하나의 ``ThreadGroup``\\ 에 속한다면 JIT는 *local* 객체에 대한 검사를 제거할 수 있습니다(이러한 검사는 항상 통과하기 때문입니다). 그 결과 현재 with-gil 빌드와 매우 유사한 성능을 얻습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553652Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:2/seg:0",
+      "source": "Depending on the amount of locking required, the performance impact of adding parallelism could range from close to zero, where only immutable objects are shared, and all other objects are local, to several percent due to locking, but still better than the free-threading build.",
+      "source_hash": 13174575871780071531,
+      "context_hash": 5090681393386440464,
+      "translation": "필요한 잠금의 양에 따라 병렬성을 추가했을 때의 성능 영향은 불변 객체만 공유되고 다른 모든 객체가 로컬인 경우처럼 거의 0에 가까울 수도 있고, 잠금으로 인해 수 퍼센트에 이를 수도 있지만, 그래도 free-threading 빌드보다 성능이 좋습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553652Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:3/seg:0",
+      "source": "Many optimizations that the JIT could perform require that the state of objects does not change in a way that is not visible to the optimizer.",
+      "source_hash": 6159028806050581715,
+      "context_hash": 4162305931950652346,
+      "translation": "JIT가 수행할 수 있는 많은 최적화에는 객체의 상태가 최적화기에 보이지 않는 방식으로 변경되지 않아야 한다는 조건이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553652Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:3/seg:1",
+      "source": "The semantics of :pep:`703` are either unclear, or explicitly prevent these kinds of optimizations.",
+      "source_hash": 14219521675314932134,
+      "context_hash": 11008625196836209731,
+      "translation": "PEP :pep:`703`\\ 의 의미는 불명확하거나 이러한 종류의 최적화를 명시적으로 방지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:51.089981Z",
+      "issues": []
+    },
+    {
+      "id": "section:27/block:3/seg:2",
+      "source": "Adding *local* and *immutable* objects re-enables a large group of optimizations.",
+      "source_hash": 499379106888139768,
+      "context_hash": 3814902783363175300,
+      "translation": "*local* 및 *immutable* 객체를 추가하면 많은 최적화를 다시 활성화할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553653Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:0/seg:0",
+      "source": "Security Implications",
+      "source_hash": 6897685656059421539,
+      "context_hash": 1552301432918587546,
+      "translation": "보안 관련 영향입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553653Z",
+      "issues": []
+    },
+    {
+      "id": "section:28/block:1/seg:0",
+      "source": "This PEP provides stronger security for parallel code by reducing or eliminating race conditions.",
+      "source_hash": 2635564980013226403,
+      "context_hash": 4685212823500510940,
+      "translation": "이 PEP는 경쟁 조건을 줄이거나 제거하여 병렬 코드에 더 강력한 보안을 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553653Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:0/seg:0",
+      "source": "How to Teach This",
+      "source_hash": 1274321097503141804,
+      "context_hash": 17240736234580561561,
+      "translation": "이것을 가르치는 방법입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553653Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:0",
+      "source": "While this PEP allows complex approaches to parallelism using *protected* and *synchronized* objects, it encourages a simpler approach like the Sharing Xor Mutability (SXM) model, or the Actor model.",
+      "source_hash": 15892524764593096961,
+      "context_hash": 14128507360583133444,
+      "translation": "이 PEP는 *protected* 및 *synchronized* 객체를 사용하는 복잡한 병렬성 접근 방식을 허용하지만, Sharing Xor Mutability(SXM) 모델이나 Actor 모델과 같은 더 단순한 접근 방식을 권장합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553654Z",
+      "issues": []
+    },
+    {
+      "id": "section:29/block:1/seg:1",
+      "source": "Using these simpler models will assist in adding parallelism without undue complexity.",
+      "source_hash": 6883918806767763030,
+      "context_hash": 311481117434211261,
+      "translation": "이러한 더 단순한 모델을 사용하면 과도한 복잡성 없이 병렬성을 추가하는 데 도움이 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553654Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:0/seg:0",
+      "source": "The Sharing Xor Mutability model",
+      "source_hash": 17666334213794846760,
+      "context_hash": 4007930594169283627,
+      "translation": "Sharing Xor Mutability 모델입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553654Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:0",
+      "source": "In the SXM model all data is either mutable or shared.",
+      "source_hash": 8742384372311205626,
+      "context_hash": 7895634184919607378,
+      "translation": "SXM 모델에서는 모든 데이터가 변경 가능하거나 공유됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553654Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:1",
+      "source": "Only immutable data can be shared.",
+      "source_hash": 10654805198445156656,
+      "context_hash": 16569159126142780163,
+      "translation": "불변 데이터만 공유할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553655Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:2",
+      "source": "This model is safe and easy to understand.",
+      "source_hash": 2819700168415906784,
+      "context_hash": 6535224499676851201,
+      "translation": "이 모델은 안전하고 이해하기 쉽습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553655Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:1/seg:3",
+      "source": "Any application using multiple interpreters, or multi-processing is already using a more restricted form of this model.",
+      "source_hash": 12200752182962912542,
+      "context_hash": 9445254025652169389,
+      "translation": "여러 인터프리터 또는 멀티프로세싱을 사용하는 모든 애플리케이션은 이미 이 모델의 더 제한적인 형태를 사용하고 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553655Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:2/seg:0",
+      "source": "If an application can be implemented using this model, then it should be.",
+      "source_hash": 2142773779338753938,
+      "context_hash": 13696410819768198610,
+      "translation": "애플리케이션을 이 모델을 사용하여 구현할 수 있다면 그렇게 해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553655Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:2/seg:1",
+      "source": "It is safe, it is easy to reason about, and it can provide good performance.",
+      "source_hash": 3542889125521561279,
+      "context_hash": 14487722844358953014,
+      "translation": "안전하고, 추론하기 쉬우며, 우수한 성능을 제공할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553655Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:3/seg:0",
+      "source": "The SXM model can be implemented by making all objects *immutable* (shareable) or *local* (mutable).",
+      "source_hash": 15593705747106646121,
+      "context_hash": 10041298366971084264,
+      "translation": "SXM 모델은 모든 객체를 *immutable*\\ (공유 가능) 또는 *local*\\ (변경 가능)로 만들어 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553656Z",
+      "issues": []
+    },
+    {
+      "id": "section:30/block:4/seg:0",
+      "source": "The SXM model is also known as the AXM for Aliasing Xor Mutability in the academic literature, as aliasing implies shareability in statically compiled languages.",
+      "source_hash": 14475458647748218927,
+      "context_hash": 601755777689577107,
+      "translation": "학술 문헌에서는 SXM 모델을 Aliasing Xor Mutability의 약자인 AXM이라고도 부릅니다. 정적으로 컴파일되는 언어에서는 앨리어싱이 공유 가능성을 의미하기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553656Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:0/seg:0",
+      "source": "Communicating Sequential Processes",
+      "source_hash": 16175719037488258578,
+      "context_hash": 8848211913166100660,
+      "translation": "통신 순차 프로세스입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553656Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:0",
+      "source": "In `this model <https://en.wikipedia.org/wiki/Communicating_sequential_processes>`__ parallel \"processes\" (or Actors) only interact through message passing.",
+      "source_hash": 15233285258568390811,
+      "context_hash": 15020741176525699302,
+      "translation": "`this model <https://en.wikipedia.org/wiki/Communicating_sequential_processes>`__\\ 에서는 병렬 \"프로세스\"(또는 Actor)가 메시지 전달을 통해서만 상호 작용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553656Z",
+      "issues": []
+    },
+    {
+      "id": "section:31/block:1/seg:1",
+      "source": "This can be implemented using ``ThreadGroup``\\s and ``Channel``\\s.",
+      "source_hash": 4800063662835420325,
+      "context_hash": 15031502740894671029,
+      "translation": "이는 ``ThreadGroup``\\ 와 ``Channel``\\ 를 사용하여 구현할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553657Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:0/seg:0",
+      "source": "Other approaches to parallelism",
+      "source_hash": 13748439509099006736,
+      "context_hash": 11863662809253220416,
+      "translation": "병렬성에 대한 다른 접근 방식입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553657Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:1/seg:0",
+      "source": "In order to implement more sophisticated models of parallelism, a clear understanding of the model of execution will be needed.",
+      "source_hash": 5901801935242647335,
+      "context_hash": 17651397048228126074,
+      "translation": "더 정교한 병렬성 모델을 구현하려면 실행 모델을 명확히 이해해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553657Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:1/seg:1",
+      "source": "Writing unsafe code is much harder than under :pep:`703`, but the new exceptions may surprise users.",
+      "source_hash": 2453925502153343941,
+      "context_hash": 14305154994863162462,
+      "translation": "안전하지 않은 코드를 작성하는 일은 :pep:`703`\\ 에서보다 훨씬 어렵지만, 새로운 예외가 사용자를 당황하게 할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553657Z",
+      "issues": []
+    },
+    {
+      "id": "section:32/block:1/seg:2",
+      "source": "Extensive documentation will be provided.",
+      "source_hash": 16350116225531825021,
+      "context_hash": 3784483475560193525,
+      "translation": "광범위한 문서가 제공될 예정입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553657Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:0/seg:0",
+      "source": "Examples",
+      "source_hash": 2926230321239078022,
+      "context_hash": 14152335258896822062,
+      "translation": "예제입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553658Z",
+      "issues": []
+    },
+    {
+      "id": "section:33/block:1/seg:0",
+      "source": "A range of examples, illustrating how to use the new features in this PEP are in  the :ref:`examples appendix <pep805-examples>`.",
+      "source_hash": 1214324528130167543,
+      "context_hash": 14259736108210344614,
+      "translation": "이 PEP의 새로운 기능을 사용하는 방법을 보여 주는 다양한 예제가 :ref:`examples appendix <pep805-examples>`\\ 에 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:22.553658Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:0/seg:0",
+      "source": "Relationship to PEP 703 (Making the Global Interpreter Lock Optional in CPython)",
+      "source_hash": 11701897454988986807,
+      "context_hash": 7592360168465383951,
+      "translation": "PEP 703과의 관계(CPython에서 전역 인터프리터 잠금을 선택 사항으로 만들기)",
+      "glossary_snapshot": {
+        "interpreter": "인터프리터",
+        "global interpreter lock": "전역 인터프리터 잠금"
+      },
+      "translated_at": "2026-08-28T19:30:22.553658Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:1/seg:0",
+      "source": "This PEP should be thought of as building on :pep:`703`, rather than competing with it.",
+      "source_hash": 2795486376194036113,
+      "context_hash": 4101116364338602144,
+      "translation": "이 PEP는 :pep:`703`\\ 와 경쟁하기보다는 이를 기반으로 구축하는 것으로 생각해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860243Z",
+      "issues": []
+    },
+    {
+      "id": "section:34/block:1/seg:1",
+      "source": "Many of the mechanisms needed to implement this PEP have been developed for PEP 703.",
+      "source_hash": 3655752088158383357,
+      "context_hash": 3785636075856123934,
+      "translation": "이 PEP를 구현하는 데 필요한 많은 메커니즘은 PEP 703을 위해 개발되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860251Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:0/seg:0",
+      "source": "Safety",
+      "source_hash": 17008190269644470911,
+      "context_hash": 14918577708176894047,
+      "translation": "안전성",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860252Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:1/seg:0",
+      "source": ":pep:`703` lacks well defined semantics, although a sequential consistency model seems to be the assumed semantics in most cases.",
+      "source_hash": 12381682737290385473,
+      "context_hash": 18133325816012847031,
+      "translation": ":pep:`703`\\ 에는 잘 정의된 의미론이 없지만, 대부분의 경우 순차 일관성 모델이 가정된 의미론인 것으로 보입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860254Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:1/seg:1",
+      "source": "Unfortunately, sequential consistency is too fine grained to prevent many race conditions.",
+      "source_hash": 14188224850952529125,
+      "context_hash": 8288493675402390965,
+      "translation": "안타깝게도 순차 일관성은 많은 경쟁 조건을 방지하기에는 지나치게 세분화되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860254Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:2/seg:0",
+      "source": "PEP 703 attempts to provide good single-threaded performance for lists, dictionaries, and other mutable objects while providing locally race-free behaviour.",
+      "source_hash": 5165483839431446750,
+      "context_hash": 12736392385730802440,
+      "translation": "PEP 703은 리스트, 딕셔너리 및 기타 변경 가능한 객체에 대해 우수한 단일 스레드 성능을 제공하는 동시에 국소적으로 경쟁 조건이 없는 동작을 제공하려고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860255Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:3/seg:0",
+      "source": "Unfortunately, no formal definition of the exact behavior is provided, which leads to issues like these:",
+      "source_hash": 17134224622172413835,
+      "context_hash": 518474304496030421,
+      "translation": "안타깝게도 정확한 동작에 대한 공식적인 정의가 제공되지 않아 다음과 같은 문제가 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860255Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:4/seg:0",
+      "source": "`python/cpython#129619 <https://github.com/python/cpython/issues/129619>`__",
+      "source_hash": 10691850688550701570,
+      "context_hash": 16642924439022051616,
+      "translation": "`python/cpython#129619 <https://github.com/python/cpython/issues/129619>`__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860256Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:5/seg:0",
+      "source": "`python/cpython#129139 <https://github.com/python/cpython/issues/129139>`__",
+      "source_hash": 17702354878041817949,
+      "context_hash": 9994261287134727651,
+      "translation": "`python/cpython#129139 <https://github.com/python/cpython/issues/129139>`__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860256Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:6/seg:0",
+      "source": "`python/cpython#126559 <https://github.com/python/cpython/issues/126559>`__",
+      "source_hash": 8292727418776150086,
+      "context_hash": 2240127248227194134,
+      "translation": "`python/cpython#126559 <https://github.com/python/cpython/issues/126559>`__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860257Z",
+      "issues": []
+    },
+    {
+      "id": "section:35/block:7/seg:0",
+      "source": "`python/cpython#130744 <https://github.com/python/cpython/issues/130744>`__",
+      "source_hash": 14272899036897641438,
+      "context_hash": 14198071491018945473,
+      "translation": "`python/cpython#130744 <https://github.com/python/cpython/issues/130744>`__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860257Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:0/seg:0",
+      "source": "Performance",
+      "source_hash": 1168761202931664327,
+      "context_hash": 949680551052082740,
+      "translation": "성능",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860257Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:1/seg:0",
+      "source": "Synchronization is expensive.",
+      "source_hash": 5517703472927452289,
+      "context_hash": 14050060538450681474,
+      "translation": "동기화에는 많은 비용이 듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860258Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:1/seg:1",
+      "source": "The large physical size of CPUs and memory relative to the high clock speeds of CPUs make synchronization between CPU cores,  and between CPUs and memory, expensive.",
+      "source_hash": 17263128820710151676,
+      "context_hash": 4206035618186978321,
+      "translation": "CPU의 높은 클록 속도에 비해 CPU와 메모리의 물리적 크기가 크기 때문에 CPU 코어 간,  그리고 CPU와 메모리 간의 동기화에는 많은 비용이 듭니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860258Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:1/seg:2",
+      "source": "Requiring synchronization on all accesses to object attributes and collections has a significant performance impact.",
+      "source_hash": 5885114974759248458,
+      "context_hash": 10066940010501688106,
+      "translation": "객체 속성과 컬렉션에 대한 모든 액세스에서 동기화를 요구하면 성능에 상당한 영향을 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860259Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:1/seg:3",
+      "source": "The implementors of :pep:`703` have done an excellent job of keeping that impact as low as they can, but you can't exceed physical limits.",
+      "source_hash": 1498617490376880451,
+      "context_hash": 7698733178914200432,
+      "translation": "PEP :pep:`703`\\ 의 구현자들은 이러한 영향을 가능한 한 낮게 유지하는 데 탁월한 작업을 수행했지만, 물리적 한계를 초과할 수는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:51.089982Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:2/seg:0",
+      "source": "By breaking down accesses into *local* and *immutable* object accesses, which need no synchronization, and *synchronized* and *protected* accesses, which do need synchronization, the cost of synchronization is only paid when it is needed.",
+      "source_hash": 14464520949504039801,
+      "context_hash": 15524198943856219207,
+      "translation": "동기화가 필요하지 않은 *local* 및 *immutable* 객체 액세스와 동기화가 필요한 *synchronized* 및 *protected* 액세스로 액세스를 나누면, 동기화 비용은 필요한 경우에만 지불하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860260Z",
+      "issues": []
+    },
+    {
+      "id": "section:36/block:2/seg:1",
+      "source": "Whereas :pep:`703` must pay the cost of synchronization everywhere, just in case it is needed.",
+      "source_hash": 5965793505769678229,
+      "context_hash": 5792043965773201503,
+      "translation": "반면 :pep:`703`\\ 은 동기화가 필요한 경우에 대비하여 모든 곳에서 동기화 비용을 지불해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860261Z",
+      "issues": []
+    },
+    {
+      "id": "section:37/block:0/seg:0",
+      "source": "Implementation",
+      "source_hash": 14188291987651099077,
+      "context_hash": 7519840947208774018,
+      "translation": "구현",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860261Z",
+      "issues": []
+    },
+    {
+      "id": "section:37/block:1/seg:0",
+      "source": "This is a big change, and there is no implementation as yet.",
+      "source_hash": 5275724412475376087,
+      "context_hash": 5108215400104863333,
+      "translation": "이는 큰 변경 사항이며, 아직 구현은 존재하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860261Z",
+      "issues": []
+    },
+    {
+      "id": "section:37/block:1/seg:1",
+      "source": "A plan of implementation and discussion of some of the more complex details is in the :ref:`implementation appendix <pep805-implementation-details>`.",
+      "source_hash": 7974505481925494995,
+      "context_hash": 17330731459451309557,
+      "translation": "구현 계획과 더 복잡한 세부 사항에 대한 논의는 :ref:`implementation appendix <pep805-implementation-details>`\\ 에 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860262Z",
+      "issues": []
+    },
+    {
+      "id": "section:38/block:0/seg:0",
+      "source": "Possible future enhancements",
+      "source_hash": 9704736585745382801,
+      "context_hash": 5780208735466241725,
+      "translation": "향후 가능한 개선 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860262Z",
+      "issues": []
+    },
+    {
+      "id": "section:39/block:0/seg:0",
+      "source": "Support for third party locks",
+      "source_hash": 2730298241766991683,
+      "context_hash": 5110474337396869336,
+      "translation": "서드파티 잠금 지원",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860262Z",
+      "issues": []
+    },
+    {
+      "id": "section:39/block:1/seg:0",
+      "source": "Currently only ``Lock`` and ``RLock`` support protecting objects.",
+      "source_hash": 10759535725396934351,
+      "context_hash": 12079453979378451086,
+      "translation": "현재는 ``Lock`` 및 ``RLock``\\ 만 객체 보호를 지원합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860263Z",
+      "issues": []
+    },
+    {
+      "id": "section:39/block:1/seg:1",
+      "source": "It would be valuable to provide APIs to allow third party implementations of locks, such as reader-writer locks.",
+      "source_hash": 6145898319690544724,
+      "context_hash": 10869433248303673635,
+      "translation": "리더-라이터 잠금과 같은 서드파티 잠금 구현을 허용하는 API를 제공하면 유용할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860263Z",
+      "issues": []
+    },
+    {
+      "id": "section:39/block:1/seg:2",
+      "source": "However, ensuring their correctness and maintaining the VM in a valid state is complex, so this is left for a future enhancement.",
+      "source_hash": 12158072085946012742,
+      "context_hash": 2772061291394265354,
+      "translation": "그러나 이러한 구현의 정확성을 보장하고 VM을 유효한 상태로 유지하는 일은 복잡하므로, 이는 향후 개선 사항으로 남겨 둡니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860264Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:0/seg:0",
+      "source": "Deep freezing and deep transfers",
+      "source_hash": 10393190323128390394,
+      "context_hash": 15429421454718334689,
+      "translation": "깊은 동결 및 깊은 전송",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860264Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:1/seg:0",
+      "source": "Freezing a single object could leave a frozen object with references to mutable objects, and transferring of single objects could leave an object local to one thread, while other objects that it refers to are local to a different thread.",
+      "source_hash": 16209865155071993017,
+      "context_hash": 5538659730991117097,
+      "translation": "단일 객체를 동결하면 동결된 객체에 변경 가능한 객체에 대한 참조가 남을 수 있으며, 단일 객체를 전송하면 해당 객체는 한 스레드에 로컬로 남아 있는 반면 해당 객체가 참조하는 다른 객체들은 다른 스레드에 로컬로 남을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860264Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:1/seg:1",
+      "source": "Either of these scenarios are likely to lead to runtime errors.",
+      "source_hash": 13996739852350509262,
+      "context_hash": 9254811946378563143,
+      "translation": "이러한 시나리오 중 어느 하나라도 런타임 오류로 이어질 가능성이 높습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860265Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:1/seg:2",
+      "source": "To avoid that problem we need \"deep\" freezing.",
+      "source_hash": 17630623884060436752,
+      "context_hash": 5110491297664199755,
+      "translation": "이 문제를 방지하려면 \"깊은\" 동결이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860265Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:2/seg:0",
+      "source": "Deep freezing an object would freeze that object and the transitive closure of other mutable objects referred to by that object.",
+      "source_hash": 16343051502306306664,
+      "context_hash": 11681779392538294954,
+      "translation": "객체를 깊게 동결하면 해당 객체와 그 객체가 참조하는 다른 변경 가능한 객체들의 추이적 폐포를 동결하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860265Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:2/seg:1",
+      "source": "Deep transferring an object would transfer that object and the transitive closure of other local objects referred to by that object, but would raise an exception if one of those objects belonged to a different thread.",
+      "source_hash": 6521618085561782854,
+      "context_hash": 5651566768112910066,
+      "translation": "객체를 깊게 전송하면 해당 객체와 그 객체가 참조하는 다른 로컬 객체들의 추이적 폐포를 전송하지만, 그 객체들 중 하나라도 다른 스레드에 속해 있으면 예외를 발생시킵니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:30:19.860266Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:3/seg:0",
+      "source": "Similar to freezing, a \"deep\" put mechanism could be added to ``Channel``\\ s to move a whole graph of objects from one thread to another.",
+      "source_hash": 16003643497576502461,
+      "context_hash": 17861260140409296444,
+      "translation": "프리징과 마찬가지로, 한 스레드에서 다른 스레드로 객체의 전체 그래프를 이동하기 위한 \"deep\" put 메커니즘을 ``Channel``\\ 들에 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032691Z",
+      "issues": []
+    },
+    {
+      "id": "section:40/block:4/seg:0",
+      "source": "See also PEP 795, which proposes a deep freezing mechanism, although it is referred to as just \"freezing\" in that PEP.",
+      "source_hash": 6984667860841675745,
+      "context_hash": 17016590140610789143,
+      "translation": "PEP 795도 참조하십시오. 이 PEP에서는 deep freezing 메커니즘을 제안하지만, 해당 PEP에서는 이를 단순히 \"freezing\"이라고 부릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032694Z",
+      "issues": []
+    },
+    {
+      "id": "section:41/block:0/seg:0",
+      "source": "Rejected Ideas",
+      "source_hash": 11022998590859878680,
+      "context_hash": 593431232000171757,
+      "translation": "거부된 아이디어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032695Z",
+      "issues": []
+    },
+    {
+      "id": "section:41/block:1/seg:0",
+      "source": "`The name \"trust me bro\" was suggested for internally synchronized objects. <https://discuss.python.org/t/pre-pep-safe-parallel-python/103636/4>`__ The lead author feels that \"synchronized\" is a better term 😊",
+      "source_hash": 1232834751214612875,
+      "context_hash": 13880477305878365068,
+      "translation": "`내부적으로 동기화된 객체에는 \"trust me bro\"라는 이름이 제안되었습니다. <https://discuss.python.org/t/pre-pep-safe-parallel-python/103636/4>`__ 주 저자는 \"synchronized\"가 더 나은 용어라고 생각합니다 😊",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T20:00:51.089987Z",
+      "issues": []
+    },
+    {
+      "id": "section:42/block:0/seg:0",
+      "source": "Open Issues",
+      "source_hash": 15188361361114285070,
+      "context_hash": 11487098716150505531,
+      "translation": "미해결 문제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032697Z",
+      "issues": []
+    },
+    {
+      "id": "section:43/block:0/seg:0",
+      "source": "Make ``del`` an expression",
+      "source_hash": 6436991028715965045,
+      "context_hash": 5413040879836213771,
+      "translation": "``del``\\ 을 표현식으로 만들기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032697Z",
+      "issues": []
+    },
+    {
+      "id": "section:43/block:1/seg:0",
+      "source": "The functions ``protect``, ``Channel.put`` and creating a ``TransferBox`` create a copy of the object passed as an argument.",
+      "source_hash": 13476023852955615591,
+      "context_hash": 8436255413587768990,
+      "translation": "``protect``, ``Channel.put`` 함수와 ``TransferBox``\\ 를 생성하는 작업은 인자로 전달된 객체의 복사본을 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032697Z",
+      "issues": []
+    },
+    {
+      "id": "section:43/block:2/seg:0",
+      "source": "By making ``del`` an expression, it can be made clearer that the current thread has done with the object.",
+      "source_hash": 8543393467005041053,
+      "context_hash": 10379652416848800617,
+      "translation": "``del``\\ 을 표현식으로 만들면 현재 스레드가 객체에 대한 작업을 마쳤다는 점을 더 명확하게 나타낼 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032698Z",
+      "issues": []
+    },
+    {
+      "id": "section:43/block:3/seg:0",
+      "source": "Using ``del x`` as the argument clears ``x`` making it clear that the current thread has done with the object.",
+      "source_hash": 1274874375514549499,
+      "context_hash": 12508456116933548332,
+      "translation": "인자로 ``del x``\\ 를 사용하면 ``x``\\ 가 지워져 현재 스레드가 객체에 대한 작업을 마쳤다는 점이 명확해집니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032698Z",
+      "issues": []
+    },
+    {
+      "id": "section:43/block:3/seg:1",
+      "source": "For example",
+      "source_hash": 9117899214634101441,
+      "context_hash": 11412144723033947414,
+      "translation": "예를 들어",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032698Z",
+      "issues": []
+    },
+    {
+      "id": "section:43/block:5/seg:0",
+      "source": "Doing this will also boost performance, as the copy can be avoided if the VM can determine, either by static analysis or reference counting, that the reference passed is unique.",
+      "source_hash": 4407082984414953678,
+      "context_hash": 122455304934437388,
+      "translation": "VM이 정적 분석이나 참조 카운팅을 통해 전달된 참조가 유일하다고 판단할 수 있다면 복사를 생략할 수 있으므로, 이렇게 하면 성능도 향상됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032699Z",
+      "issues": []
+    },
+    {
+      "id": "section:43/block:6/seg:0",
+      "source": "The current way to do this is rather clunky",
+      "source_hash": 3941130421351385979,
+      "context_hash": 1053489239133789793,
+      "translation": "현재 이 작업을 수행하는 방식은 다소 번거롭습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032699Z",
+      "issues": []
+    },
+    {
+      "id": "section:44/block:0/seg:0",
+      "source": "Case of names for ``SynchronizedList``, etc.",
+      "source_hash": 17900783741879915163,
+      "context_hash": 15759122490481875846,
+      "translation": "``SynchronizedList``\\ 등의 이름 표기 방식",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032700Z",
+      "issues": []
+    },
+    {
+      "id": "section:44/block:1/seg:0",
+      "source": "Given that ``frozendict``, ``frozenset`` are lower case, should ``SynchronizedList``, ``SynchronizedDict`` and ``SynchronizedSet`` have lowercase names?",
+      "source_hash": 8964885216739396871,
+      "context_hash": 126471300883433101,
+      "translation": "``frozendict``\\ 와 ``frozenset``\\ 이 소문자이므로, ``SynchronizedList``, ``SynchronizedDict`` 및 ``SynchronizedSet``\\ 도 소문자 이름을 사용해야 합니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032700Z",
+      "issues": []
+    },
+    {
+      "id": "section:45/block:0/seg:0",
+      "source": "Additional helper classes",
+      "source_hash": 1535113373200347617,
+      "context_hash": 7686738155590255123,
+      "translation": "추가 헬퍼 클래스",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032700Z",
+      "issues": []
+    },
+    {
+      "id": "section:45/block:1/seg:0",
+      "source": "There are a number of helper classes that might be useful when adding parallelism, that could be added.",
+      "source_hash": 14267814578608804270,
+      "context_hash": 14325763994552050740,
+      "translation": "병렬성을 추가할 때 유용할 수 있는 헬퍼 클래스가 여러 개 있으며, 이러한 클래스를 추가할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032701Z",
+      "issues": []
+    },
+    {
+      "id": "section:45/block:1/seg:1",
+      "source": "But overwhelming developers with new additions to the standard library is not desirable.",
+      "source_hash": 3571951587154332003,
+      "context_hash": 1284944701442500026,
+      "translation": "그러나 표준 라이브러리에 새로운 항목을 추가하여 개발자를 압도하는 것은 바람직하지 않습니다.",
+      "glossary_snapshot": {
+        "standard library": "표준 라이브러리"
+      },
+      "translated_at": "2026-08-28T18:20:45.032701Z",
+      "issues": []
+    },
+    {
+      "id": "section:45/block:1/seg:2",
+      "source": "It is not clear yet which, if any, of these classes should be added:",
+      "source_hash": 4714662696435236143,
+      "context_hash": 8631577485070305265,
+      "translation": "이러한 클래스 중 어떤 것을 추가해야 하는지는 아직 명확하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032702Z",
+      "issues": []
+    },
+    {
+      "id": "section:45/block:2/seg:0",
+      "source": "``frozenlist``",
+      "source_hash": 16274014683256526194,
+      "context_hash": 14935675395719351663,
+      "translation": "``frozenlist``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032702Z",
+      "issues": []
+    },
+    {
+      "id": "section:45/block:3/seg:0",
+      "source": "`AtomicRef <https://dpdani.github.io/cereggii/api/AtomicRef/#cereggii._cereggii.AtomicRef>`__",
+      "source_hash": 5409289930603577428,
+      "context_hash": 6139664631804468007,
+      "translation": "`AtomicRef <https://dpdani.github.io/cereggii/api/AtomicRef/#cereggii._cereggii.AtomicRef>`__",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032703Z",
+      "issues": []
+    },
+    {
+      "id": "section:45/block:4/seg:0",
+      "source": "``SynchronizedProxy``, to proxy a *local* object (making it *protected*)",
+      "source_hash": 2682116405203564245,
+      "context_hash": 11293789854064397380,
+      "translation": "*local* 객체를 프록시하기 위한 ``SynchronizedProxy``\\ (객체를 *protected* 상태로 만듦)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:20:45.032703Z",
+      "issues": []
+    }
+  ]
+}

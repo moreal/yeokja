@@ -1,0 +1,426 @@
+{
+  "version": 1,
+  "source_hash": 13393732297207541303,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "A protocol for delegating datetime methods to their tzinfo implementations",
+      "source_hash": 17709947421461457385,
+      "context_hash": 16530898886277989957,
+      "translation": "datetime 메서드를 해당 tzinfo 구현에 위임하기 위한 프로토콜",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:18:23.623911Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 3324318237939905720,
+      "translation": "추상",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623914Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "This PEP specifies a new protocol (PDDM - \"A Protocol for Delegating Datetime Methods\") that can be used by concrete implementations of the ``datetime.tzinfo`` interface to override aware datetime arithmetics, formatting and parsing.",
+      "source_hash": 5927075692555469185,
+      "context_hash": 7577113813617681648,
+      "translation": "이 PEP는 ``datetime.tzinfo`` 인터페이스의 구체적인 구현에서 aware datetime의 산술 연산, 형식 지정 및 구문 분석을 재정의하는 데 사용할 수 있는 새로운 프로토콜(PDDM - \"datetime 메서드 위임 프로토콜\")을 지정합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:18:23.623915Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "We describe changes to the ``datetime.datetime`` class to support the new protocol and propose a new abstract class ``datetime.tzstrict`` that implements parts of this protocol necessary to make aware datetime instances to follow \"strict\" arithmetic rules.",
+      "source_hash": 16739959945085137704,
+      "context_hash": 4722363001635843423,
+      "translation": "새로운 프로토콜을 지원하도록 ``datetime.datetime`` 클래스를 변경하는 내용을 설명하고, aware datetime 인스턴스가 \"strict\" 산술 규칙을 따르도록 하는 데 필요한 이 프로토콜의 일부를 구현하는 새로운 추상 클래스 ``datetime.tzstrict``\\ 를 제안합니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:18:23.623915Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Rationale",
+      "source_hash": 18339363210720796208,
+      "context_hash": 414754557893898317,
+      "translation": "근거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623916Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "As of Python 3.5, aware datetime instances that share a ``tzinfo`` object follow the rules of arithmetics that are induced by a simple bijection between (year, month, day, hour, minute, second, microsecond) 7-tuples and large integers.",
+      "source_hash": 8067285988219751305,
+      "context_hash": 9140571853216374434,
+      "translation": "Python 3.5부터 동일한 ``tzinfo`` 객체를 공유하는 aware datetime 인스턴스는 (연, 월, 일, 시, 분, 초, 마이크로초) 7-튜플과 큰 정수 사이의 단순한 전단사에 의해 유도되는 산술 연산 규칙을 따릅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623916Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "In this arithmetics, the difference between YEAR-11-02T12:00 and YEAR-11-01T12:00 is always 24 hours, even though in the US/Eastern timezone, for example, there are 25 hours between 2014-11-01T12:00 and 2014-11-02T12:00 because the local clocks were rolled back one hour at 2014-11-02T02:00, introducing an extra hour in the night between 2014-11-01 and 2014-11-02.",
+      "source_hash": 4803746238122212958,
+      "context_hash": 6798405178531102192,
+      "translation": "이 산술 연산에서 YEAR-11-02T12:00과 YEAR-11-01T12:00의 차이는 항상 24시간입니다. 예를 들어 US/Eastern 시간대에서는 2014-11-01T12:00과 2014-11-02T12:00 사이에 25시간이 있는데도 그러합니다. 이는 2014-11-02T02:00에 현지 시계가 한 시간 뒤로 조정되어 2014-11-01과 2014-11-02 사이의 밤에 한 시간이 추가되었기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623916Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "Many business applications require the use of Python's simplified view of local dates.",
+      "source_hash": 9061055687646272420,
+      "context_hash": 14960807101627898504,
+      "translation": "많은 비즈니스 애플리케이션에서는 Python의 단순화된 현지 날짜 관점을 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623916Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "No self-respecting car rental company will charge its customers more for a week that straddles the end of DST than for any other week or require that they return the car an hour early.",
+      "source_hash": 9098519138649590157,
+      "context_hash": 10858009972991025641,
+      "translation": "제대로 운영되는 자동차 렌트 회사라면 DST 종료 시점을 걸치는 일주일에 다른 어떤 일주일보다 더 많이 고객에게 청구하거나, 자동차를 한 시간 일찍 반납하도록 요구하지 않을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623916Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "Therefore, changing the current rules for aware datetime arithmetics will not only create a backward compatibility nightmare, it will eliminate support for legitimate and common use cases.",
+      "source_hash": 10713657137886945120,
+      "context_hash": 10798906509540571137,
+      "translation": "따라서 aware datetime 산술 연산에 대한 현재 규칙을 변경하면 하위 호환성의 악몽을 초래할 뿐만 아니라, 정당하고 흔히 사용되는 사례에 대한 지원도 없애게 됩니다.",
+      "glossary_snapshot": {
+        "backward compatibility": "하위 호환성"
+      },
+      "translated_at": "2026-08-28T18:18:23.623917Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "Since it is impossible to choose universal rules for local time arithmetics, we propose to delegate implementation of those rules to the classes that implement ``datetime.tzinfo`` interface.",
+      "source_hash": 17917565206582109767,
+      "context_hash": 8231867113114378189,
+      "translation": "현지 시간 산술 연산에 보편적으로 적용할 수 있는 규칙을 선택하는 것은 불가능하므로, 그러한 규칙의 구현을 ``datetime.tzinfo`` 인터페이스를 구현하는 클래스에 위임할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623917Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "With such delegation in place, users will be able to choose between different arithmetics by simply picking instances of different classes for the value of ``tzinfo``.",
+      "source_hash": 10101455695465729522,
+      "context_hash": 9213441587541040163,
+      "translation": "이러한 위임을 적용하면 사용자는 ``tzinfo`` 값에 서로 다른 클래스의 인스턴스를 선택하는 것만으로 서로 다른 산술 연산을 선택할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623918Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Protocol",
+      "source_hash": 4142721417948024591,
+      "context_hash": 14596192978321025874,
+      "translation": "프로토콜",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T18:18:23.623918Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Subtraction of datetime",
+      "source_hash": 2960388834478544896,
+      "context_hash": 4798874866816463698,
+      "translation": "datetime 뺄셈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623918Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "A ``tzinfo`` subclass supporting the PDDM, may define a method called ``__datetime_diff__`` that should take two ``datetime.datetime`` instances and return a ``datetime.timedelta`` instance representing the time elapsed from the time represented by the first datetime instance to another.",
+      "source_hash": 14934007157388436709,
+      "context_hash": 2603085940002713611,
+      "translation": "PDDM을 지원하는 ``tzinfo`` 서브클래스는 ``__datetime_diff__``\\ 라는 메서드를 정의할 수 있으며, 이 메서드는 두 ``datetime.datetime`` 인스턴스를 받아 첫 번째 datetime 인스턴스가 나타내는 시점부터 다른 인스턴스가 나타내는 시점까지 경과한 시간을 나타내는 ``datetime.timedelta`` 인스턴스를 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623919Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Addition",
+      "source_hash": 9158830751233084723,
+      "context_hash": 18088882988418884148,
+      "translation": "덧셈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623919Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "A ``tzinfo`` subclass supporting the PDDM, may define a method called ``__datetime_add__`` that should take two arguments--a datetime and a timedelta instances--and return a datetime instance.",
+      "source_hash": 5691564496636748284,
+      "context_hash": 6656441658898233386,
+      "translation": "PDDM을 지원하는 ``tzinfo`` 서브클래스는 ``__datetime_add__``\\ 라는 메서드를 정의할 수 있으며, 이 메서드는 datetime 인스턴스와 timedelta 인스턴스라는 두 인자를 받아 datetime 인스턴스를 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623919Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Subtraction of timedelta",
+      "source_hash": 7741568596261068033,
+      "context_hash": 220019628394035616,
+      "translation": "timedelta 뺄셈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623919Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "A ``tzinfo`` subclass supporting the PDDM, may define a method called ``__datetime_sub__`` that should take two arguments--a datetime and a timedelta instances--and return a datetime instance.",
+      "source_hash": 13417307234987795723,
+      "context_hash": 5318600382243863817,
+      "translation": "PDDM을 지원하는 ``tzinfo`` 서브클래스는 ``__datetime_sub__``\\ 라는 메서드를 정의할 수 있으며, 이 메서드는 datetime 인스턴스와 timedelta 인스턴스라는 두 인자를 받아 datetime 인스턴스를 반환해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623919Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Formatting",
+      "source_hash": 5769237923756802682,
+      "context_hash": 14143298084492354309,
+      "translation": "형식 지정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623920Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "A ``tzinfo`` subclass supporting the PDDM, may define methods called ``__datetime_isoformat__`` and ``__datetime_strftime__``.",
+      "source_hash": 6666118137098395318,
+      "context_hash": 15837728449682658893,
+      "translation": "PDDM을 지원하는 ``tzinfo`` 서브클래스는 ``__datetime_isoformat__`` 및 ``__datetime_strftime__``\\ 이라는 메서드를 정의할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623920Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "The ``__datetime_isoformat__`` method should take a datetime instance and an optional separator and produce a string representation of the given datetime instance.",
+      "source_hash": 8015361937870211971,
+      "context_hash": 2094615578493477618,
+      "translation": "``__datetime_isoformat__`` 메서드는 datetime 인스턴스와 선택적 구분 기호를 받아 지정된 datetime 인스턴스의 문자열 표현을 생성해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623920Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:3/seg:0",
+      "source": "The ``__datetime_strftime__`` method should take a datetime instance and a format string and produce a string representation of the given datetime instance formatted according to the given format.",
+      "source_hash": 9106316095841824811,
+      "context_hash": 18139598404165012695,
+      "translation": "``__datetime_strftime__`` 메서드는 datetime 인스턴스와 형식 문자열을 받아 지정된 형식에 따라 형식화된 datetime 인스턴스의 문자열 표현을 생성해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623920Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Parsing",
+      "source_hash": 15727935523144488763,
+      "context_hash": 8233922677259154195,
+      "translation": "구문 분석",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623921Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "A ``tzinfo`` subclass supporting the PDDM, may define a class method called ``__datetime_strptime__`` and register the \"canonical\" names of the timezones that it implements with a registry. **TODO** Describe a registry.",
+      "source_hash": 6899792383040986572,
+      "context_hash": 5251489476316417334,
+      "translation": "PDDM을 지원하는 ``tzinfo`` 서브클래스는 ``__datetime_strptime__``\\ 이라는 클래스 메서드를 정의하고, 자신이 구현하는 시간대의 \"canonical\" 이름을 레지스트리에 등록해야 합니다. **TODO** 레지스트리를 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623921Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Changes to datetime methods",
+      "source_hash": 13718985638780848551,
+      "context_hash": 11647858918480780935,
+      "translation": "datetime 메서드의 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623921Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Subtraction",
+      "source_hash": 14980013528268826272,
+      "context_hash": 14950189708767683898,
+      "translation": "뺄셈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623921Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Addition",
+      "source_hash": 9158830751233084723,
+      "context_hash": 8264743320590198127,
+      "translation": "덧셈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623922Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "Addition of a timedelta to a datetime instance will be delegated to the ``self.tzinfo.__datetime_add__`` method whenever it is defined.",
+      "source_hash": 2291418605753030447,
+      "context_hash": 6244982195330329930,
+      "translation": "datetime 인스턴스에 timedelta를 더하는 작업은 ``self.tzinfo.__datetime_add__`` 메서드가 정의되어 있는 경우 해당 메서드에 위임됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623922Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Strict arithmetics",
+      "source_hash": 9860662689435251001,
+      "context_hash": 8216974454596303910,
+      "translation": "엄격한 산술 연산",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623922Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "A new abstract subclass of ``datetime.tzinfo`` class called  ``datetime.tzstrict`` will be added to the ``datetime`` module.",
+      "source_hash": 15647898759712399939,
+      "context_hash": 6918973026969680132,
+      "translation": "``datetime.tzinfo`` 클래스의 새로운 추상 서브클래스인 ``datetime.tzstrict``\\ 가 ``datetime`` 모듈에 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623922Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:1",
+      "source": "This subclass will not implement the ``utcoffset()``, ``tzname()`` or ``dst()`` methods, but will implement some of the methods of the PDDM.",
+      "source_hash": 2274610697265708199,
+      "context_hash": 17847580280368945480,
+      "translation": "이 서브클래스는 ``utcoffset()``, ``tzname()`` 또는 ``dst()`` 메서드를 구현하지 않지만, PDDM 메서드의 일부를 구현합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:18:23.623922Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "The PDDM methods implemented by ``tzstrict`` will be equivalent to the following",
+      "source_hash": 11748355443502872262,
+      "context_hash": 5623869276016995385,
+      "translation": "``tzstrict``\\ 가 구현하는 PDDM 메서드는 다음과 동등합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:45.735426Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Parsing and formatting",
+      "source_hash": 16437692204728080668,
+      "context_hash": 9465720947545635172,
+      "translation": "파싱과 서식화",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:45.735432Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:1/seg:0",
+      "source": "Datetime methods ``strftime`` and ``isoformat`` will delegate to the namesake methods of their ``tzinfo`` members whenever those methods are defined.",
+      "source_hash": 10857574562828712555,
+      "context_hash": 16163771291193862973,
+      "translation": "datetime 메서드인 ``strftime``\\ 과 ``isoformat``\\ 은 해당 메서드가 정의되어 있을 때마다 자신의 ``tzinfo`` 멤버의 동명 메서드에 위임합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:45.735433Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:2/seg:0",
+      "source": "When the ``datetime.strptime`` method is given a format string that contains a ``%Z`` instruction, it will lookup the ``tzinfo`` implementation in the registry by the given timezone name and call its ``__datetime_strptime__`` method.",
+      "source_hash": 16625742524829434316,
+      "context_hash": 127652881001532006,
+      "translation": "``datetime.strptime`` 메서드에 ``%Z`` 지시어가 포함된 서식 문자열이 주어지면, 주어진 시간대 이름으로 레지스트리에서 ``tzinfo`` 구현을 조회하여 그 ``__datetime_strptime__`` 메서드를 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:45.735433Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Applications",
+      "source_hash": 18078044642129270595,
+      "context_hash": 15019786963970775821,
+      "translation": "응용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:45.735434Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "This PEP will enable third party implementation of many different timekeeping schemes including:",
+      "source_hash": 14782679744391081501,
+      "context_hash": 6557369481351280809,
+      "translation": "이 PEP는 다음을 포함하여 다양한 시간 기록 방식의 서드파티 구현을 가능하게 합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:45.735435Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "Julian / Microsoft Excel calendar.",
+      "source_hash": 6449499819449177783,
+      "context_hash": 18285981535487608559,
+      "translation": "율리우스력 / Microsoft Excel 달력.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:45.735435Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "\"Right\" timezones with the leap second support.",
+      "source_hash": 2068842408595258066,
+      "context_hash": 2401344951005797055,
+      "translation": "윤초를 지원하는 \"Right\" 시간대.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:45.735435Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "French revolutionary calendar (with a lot of work).",
+      "source_hash": 3573672087842603180,
+      "context_hash": 8681821611292036825,
+      "translation": "프랑스 혁명력(많은 작업이 필요함).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:28:45.735436Z",
+      "issues": []
+    }
+  ]
+}

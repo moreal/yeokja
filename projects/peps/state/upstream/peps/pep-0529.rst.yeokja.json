@@ -1,0 +1,1568 @@
+{
+  "version": 1,
+  "source_hash": 10474825928674483642,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Change Windows filesystem encoding to UTF-8",
+      "source_hash": 1323646710765349509,
+      "context_hash": 16530898886277989957,
+      "translation": "Windows 파일 시스템 인코딩을 UTF-8로 변경합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468887Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "Abstract",
+      "source_hash": 14205428931693966264,
+      "context_hash": 17854816784809781142,
+      "translation": "초록",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468891Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Historically, Python uses the ANSI APIs for interacting with the Windows operating system, often via C Runtime functions.",
+      "source_hash": 2561462291171949559,
+      "context_hash": 4046431990509793263,
+      "translation": "역사적으로 Python은 Windows 운영 체제와 상호 작용하기 위해 ANSI API를 사용하며, 흔히 C 런타임 함수를 통해 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468891Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "However, these have been long discouraged in favor of the UTF-16 APIs.",
+      "source_hash": 13637676122697755543,
+      "context_hash": 7795751228485665034,
+      "translation": "그러나 이러한 API는 오래전부터 UTF-16 API를 사용하는 것이 권장되어 왔습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468891Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "Within the operating system, all text is represented as UTF-16, and the ANSI APIs perform encoding and decoding using the active code page.",
+      "source_hash": 4785674537152910254,
+      "context_hash": 14680419112113325446,
+      "translation": "운영 체제 내에서는 모든 텍스트가 UTF-16으로 표현되며, ANSI API는 활성 코드 페이지를 사용하여 인코딩 및 디코딩을 수행합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468892Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:3",
+      "source": "See `Naming Files, Paths, and Namespaces`_ for more details.",
+      "source_hash": 1407771997941794518,
+      "context_hash": 6264444048137426634,
+      "translation": "자세한 내용은 `Naming Files, Paths, and Namespaces`_\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468892Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:0",
+      "source": "This PEP proposes changing the default filesystem encoding on Windows to utf-8, and changing all filesystem functions to use the Unicode APIs for filesystem paths.",
+      "source_hash": 4642632421251812849,
+      "context_hash": 6844627812437564607,
+      "translation": "이 PEP는 Windows의 기본 파일 시스템 인코딩을 utf-8로 변경하고, 모든 파일 시스템 함수가 파일 시스템 경로에 Unicode API를 사용하도록 변경할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468892Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:1",
+      "source": "This will not affect code that uses strings to represent paths, however those that use bytes for paths will now be able to correctly round-trip all valid paths in Windows filesystems.",
+      "source_hash": 4835621012980076596,
+      "context_hash": 749869978833934089,
+      "translation": "이는 경로를 나타내는 데 문자열을 사용하는 코드에는 영향을 주지 않지만, 경로에 바이트를 사용하는 코드는 이제 Windows 파일 시스템의 모든 유효한 경로를 올바르게 왕복 처리할 수 있게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468892Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:2/seg:2",
+      "source": "Currently, the conversions between Unicode (in the OS) and bytes (in Python) were lossy and would fail to round-trip characters outside of the user's active code page.",
+      "source_hash": 5062277500717117194,
+      "context_hash": 11419517061177167175,
+      "translation": "현재 Unicode(OS 내)와 바이트(Python 내) 간의 변환은 손실이 발생하며 사용자의 활성 코드 페이지 외부에 있는 문자를 왕복 처리하지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468893Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:0",
+      "source": "Notably, this does not impact the encoding of the contents of files.",
+      "source_hash": 14710470838491867230,
+      "context_hash": 28951911173226649,
+      "translation": "특히 이는 파일 내용의 인코딩에는 영향을 주지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468893Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:1",
+      "source": "These will continue to default to ``locale.getpreferredencoding()`` (for text files) or plain bytes (for binary files).",
+      "source_hash": 2430670549411792372,
+      "context_hash": 6368193185495487221,
+      "translation": "파일 내용은 계속해서 ``locale.getpreferredencoding()``\\ 을 기본값으로 사용하고(텍스트 파일의 경우), 바이너리 파일의 경우에는 일반 바이트를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468893Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:3/seg:2",
+      "source": "This only affects the encoding used when users pass a bytes object to Python where it is then passed to the operating system as a path name.",
+      "source_hash": 431655751973284480,
+      "context_hash": 10071280004582229884,
+      "translation": "이는 사용자가 바이트 객체를 Python에 전달하고, Python이 이를 경로 이름으로 운영 체제에 전달할 때 사용되는 인코딩에만 영향을 줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468894Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "Background",
+      "source_hash": 14089390735911585672,
+      "context_hash": 9629427437246509329,
+      "translation": "배경",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468894Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "File system paths are almost universally represented as text with an encoding determined by the file system.",
+      "source_hash": 6798019054295144615,
+      "context_hash": 13767891734954458855,
+      "translation": "파일 시스템 경로는 거의 보편적으로 파일 시스템에 의해 결정되는 인코딩을 사용하는 텍스트로 표현됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468894Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "In Python, we expose these paths via a number of interfaces, such as the ``os`` and ``io`` modules.",
+      "source_hash": 13873102095961722821,
+      "context_hash": 3609524825418714396,
+      "translation": "Python에서는 ``os`` 및 ``io`` 모듈과 같은 여러 인터페이스를 통해 이러한 경로를 노출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468894Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:2",
+      "source": "Paths may be passed either direction across these interfaces, that is, from the filesystem to the application (for example, ``os.listdir()``), or from the application to the filesystem (for example, ``os.unlink()``).",
+      "source_hash": 16278829611686446001,
+      "context_hash": 17664123467642042143,
+      "translation": "경로는 이러한 인터페이스를 통해 양방향으로 전달될 수 있습니다. 즉, 파일 시스템에서 애플리케이션으로 전달될 수도 있고(예: ``os.listdir()``), 애플리케이션에서 파일 시스템으로 전달될 수도 있습니다(예: ``os.unlink()``).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468895Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "When paths are passed between the filesystem and the application, they are either passed through as a bytes blob or converted to/from str using ``os.fsencode()`` and ``os.fsdecode()`` or explicit encoding using ``sys.getfilesystemencoding()``.",
+      "source_hash": 11585198482535103522,
+      "context_hash": 17689787692165855629,
+      "translation": "경로가 파일 시스템과 애플리케이션 사이에서 전달될 때, 바이트 블롭으로 그대로 전달되거나 ``os.fsencode()`` 및 ``os.fsdecode()``\\ 를 사용하여 str로 변환되거나, ``sys.getfilesystemencoding()``\\ 을 사용하여 명시적으로 인코딩됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468895Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "The result of encoding a string with ``sys.getfilesystemencoding()`` is a blob of bytes in the native format for the default file system.",
+      "source_hash": 3120814060348567589,
+      "context_hash": 13286155437490407131,
+      "translation": "``sys.getfilesystemencoding()``\\ 으로 문자열을 인코딩한 결과는 기본 파일 시스템의 네이티브 형식에 해당하는 바이트 블롭입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468895Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "On Windows, the native format for the filesystem is utf-16-le.",
+      "source_hash": 4300610473608999174,
+      "context_hash": 14581612276445004170,
+      "translation": "Windows에서 파일 시스템의 네이티브 형식은 utf-16-le입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468895Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:1",
+      "source": "The recommended platform APIs for accessing the filesystem all accept and return text encoded in this format.",
+      "source_hash": 3587315817246718489,
+      "context_hash": 15728370295979481910,
+      "translation": "파일 시스템에 액세스하는 데 권장되는 플랫폼 API는 모두 이 형식으로 인코딩된 텍스트를 받아들이고 반환합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468896Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:2",
+      "source": "However, prior to Windows NT (and possibly further back), the native format was a configurable machine option and a separate set of APIs existed to accept this format.",
+      "source_hash": 18149123245731174984,
+      "context_hash": 13911629351305073659,
+      "translation": "그러나 Windows NT 이전(그리고 어쩌면 그보다 더 이전)에는 네이티브 형식이 구성 가능한 컴퓨터 옵션이었으며, 이 형식을 받아들이는 별도의 API 집합이 존재했습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468896Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:3",
+      "source": "The option (the \"active code page\") and these APIs (the \"\\*A functions\") still exist in recent versions of Windows for backwards compatibility, though new functionality often only has a utf-16-le API (the \"\\*W functions\").",
+      "source_hash": 7907410208227573543,
+      "context_hash": 16139582654487117013,
+      "translation": "이 옵션(“활성 코드 페이지”)과 이러한 API(“\\*A 함수”)는 하위 호환성을 위해 최신 버전의 Windows에도 여전히 존재하지만, 새로운 기능은 종종 utf-16-le API(“\\*W 함수”)만 제공합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468896Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "In Python, str is recommended because it can correctly round-trip all characters used in paths (on POSIX with surrogateescape handling; on Windows because str maps to the native representation).",
+      "source_hash": 1812606962061067740,
+      "context_hash": 17628916111175565511,
+      "translation": "Python에서는 경로에 사용되는 모든 문자를 올바르게 왕복 처리할 수 있으므로 str을 권장합니다(POSIX에서는 surrogateescape 처리 방식으로, Windows에서는 str이 네이티브 표현에 매핑되므로).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468897Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:1",
+      "source": "On Windows bytes cannot round-trip all characters used in paths, as Python internally uses the \\*A functions and hence the encoding is \"whatever the active code page is\".",
+      "source_hash": 1962490328274668331,
+      "context_hash": 559816028877527134,
+      "translation": "Windows에서 바이트는 경로에 사용되는 모든 문자를 왕복 처리할 수 없습니다. Python이 내부적으로 \\*A 함수를 사용하므로 인코딩이 “활성 코드 페이지가 무엇이든 간에”가 되기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468897Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:2",
+      "source": "Since the active code page cannot represent all Unicode characters, the conversion of a path into bytes can lose information without warning or any available indication.",
+      "source_hash": 956499548024254475,
+      "context_hash": 16819965888744273999,
+      "translation": "활성 코드 페이지는 모든 Unicode 문자를 표현할 수 없으므로, 경로를 바이트로 변환하면 경고나 이를 알릴 수 있는 방법 없이 정보가 손실될 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468897Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "As a demonstration of this",
+      "source_hash": 11660825912406507507,
+      "context_hash": 826650662009358837,
+      "translation": "이를 보여주는 예로",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468897Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:0",
+      "source": "The Unicode character in the second call to glob has been replaced by a '?', which means passing the path back into the filesystem will result in a ``FileNotFoundError``.",
+      "source_hash": 4342604116666854271,
+      "context_hash": 12844449602436327758,
+      "translation": "glob에 대한 두 번째 호출에서 Unicode 문자가 '?'로 대체되었으며, 이는 경로를 다시 파일 시스템에 전달하면 ``FileNotFoundError``\\ 가 발생한다는 의미입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468898Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:7/seg:1",
+      "source": "The same results may be observed with ``os.listdir()`` or any function that matches the return type to the parameter type.",
+      "source_hash": 12374711523434082224,
+      "context_hash": 2379248321964539601,
+      "translation": "``os.listdir()`` 또는 반환 형식을 매개변수 형식에 맞추는 모든 함수에서도 동일한 결과를 관찰할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468898Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:0",
+      "source": "While one user-accessible fix is to use str everywhere, POSIX systems generally do not suffer from data loss when using bytes exclusively as the bytes are the canonical representation.",
+      "source_hash": 15836648816192647060,
+      "context_hash": 7338116199544933691,
+      "translation": "사용자가 접근할 수 있는 한 가지 해결책은 어디서나 str을 사용하는 것이지만, POSIX 시스템에서는 바이트만 사용할 때 일반적으로 데이터 손실이 발생하지 않습니다. 바이트가 표준 표현이기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468898Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:1",
+      "source": "Even if the encoding is \"incorrect\" by some standard, the file system will still map the bytes back to the file.",
+      "source_hash": 11520203304972704123,
+      "context_hash": 10411311542990582854,
+      "translation": "일부 표준에 따르면 인코딩이 “잘못된” 경우에도 파일 시스템은 여전히 해당 바이트를 파일에 다시 매핑합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468898Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:8/seg:2",
+      "source": "Making use of this avoids the cost of decoding and reencoding, such that (theoretically, and only on POSIX), code such as this may be faster because of the use of ``b'.'`` compared to using ``'.'``",
+      "source_hash": 5345046226428318177,
+      "context_hash": 9520431428852198209,
+      "translation": "이를 활용하면 디코딩 및 재인코딩 비용을 피할 수 있으므로(이론적으로, 그리고 POSIX에서만), ``b'.'``\\ 를 사용하는 코드가 ``'.'``\\ 를 사용하는 경우보다 더 빠를 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:03.468899Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:0",
+      "source": "As a result, POSIX-focused library authors prefer to use bytes to represent paths.",
+      "source_hash": 17491676223808548455,
+      "context_hash": 4321503897499750339,
+      "translation": "그 결과, POSIX 중심 라이브러리 작성자는 경로를 나타내는 데 바이트를 사용하는 것을 선호합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699967Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:1",
+      "source": "For some authors it is also a convenience, as their code may receive bytes already known to be encoded correctly, while others are attempting to simplify porting their code from Python 2.",
+      "source_hash": 10335238399567563472,
+      "context_hash": 5021141474360396977,
+      "translation": "일부 작성자에게는 코드가 이미 올바르게 인코딩된 바이트를 받을 수 있다는 점에서 편리하기도 하며, 다른 작성자는 Python 2에서 코드를 포팅하는 작업을 단순화하려고 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699970Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:2",
+      "source": "However, the correctness assumptions do not carry over to Windows where Unicode is the canonical representation, and errors may result.",
+      "source_hash": 16880627498669279371,
+      "context_hash": 14160276802320604569,
+      "translation": "그러나 Unicode가 표준 표현인 Windows에서는 정확성에 대한 가정이 적용되지 않으며 오류가 발생할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699970Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:10/seg:3",
+      "source": "This potential data loss is why the use of bytes paths on Windows was deprecated in Python 3.3 - all of the above code snippets produce deprecation warnings on Windows.",
+      "source_hash": 1986377602382190779,
+      "context_hash": 18019844810673704995,
+      "translation": "이러한 잠재적인 데이터 손실 때문에 Windows에서 바이트 경로를 사용하는 것은 Python 3.3에서 더 이상 사용되지 않도록 지정되었으며, 위의 모든 코드 조각은 Windows에서 사용 중단 경고를 생성합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699971Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Proposal",
+      "source_hash": 17139217736364358932,
+      "context_hash": 12193984728221511950,
+      "translation": "제안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699971Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Currently the default filesystem encoding is 'mbcs', which is a meta-encoder that uses the active code page.",
+      "source_hash": 10610898738021221409,
+      "context_hash": 8017705761300305584,
+      "translation": "현재 기본 파일 시스템 인코딩은 'mbcs'이며, 이는 활성 코드 페이지를 사용하는 메타 인코더입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699971Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:1",
+      "source": "However, when bytes are passed to the filesystem they go through the \\*A APIs and the operating system handles encoding.",
+      "source_hash": 6309483955031139955,
+      "context_hash": 1095659918274836443,
+      "translation": "그러나 바이트가 파일 시스템에 전달되면 \\*A API를 거치고 운영 체제가 인코딩을 처리합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699971Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:2",
+      "source": "In this case, paths are always encoded using the equivalent of 'mbcs:replace' with no opportunity for Python to override or change this.",
+      "source_hash": 14377845050526267038,
+      "context_hash": 15587091269178011400,
+      "translation": "이 경우 경로는 항상 'mbcs:replace'에 해당하는 방식으로 인코딩되며, Python이 이를 재정의하거나 변경할 기회는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699971Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "This proposal would remove all use of the \\*A APIs and only ever call the \\*W APIs.",
+      "source_hash": 15540067163053764342,
+      "context_hash": 3094271498445316862,
+      "translation": "이 제안에서는 \\*A API의 모든 사용을 제거하고 \\*W API만 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699972Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:1",
+      "source": "When Windows returns paths to Python as ``str``, they will be decoded from utf-16-le and returned as text (in whatever the minimal representation is).",
+      "source_hash": 4270843611502235225,
+      "context_hash": 5752989552975262815,
+      "translation": "Windows가 ``str``\\ 로 Python에 경로를 반환할 때 해당 경로는 utf-16-le에서 디코딩되어 텍스트로 반환됩니다(최소 표현이 무엇이든 그 표현으로).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699972Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:2",
+      "source": "When Python code requests paths as ``bytes``, the paths will be transcoded from utf-16-le into utf-8 using surrogatepass (Windows does not validate surrogate pairs, so it is possible to have invalid surrogates in filenames).",
+      "source_hash": 4535313899847673857,
+      "context_hash": 10284846664919477922,
+      "translation": "Python 코드가 경로를 ``bytes``\\ 로 요청하면 해당 경로는 surrogatepass를 사용하여 utf-16-le에서 utf-8로 트랜스코딩됩니다(Windows는 서로게이트 쌍을 검증하지 않으므로 파일 이름에 유효하지 않은 서로게이트가 포함될 수 있습니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699972Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:3",
+      "source": "Equally, when paths are provided as ``bytes``, they are transcoded from utf-8 into utf-16-le and passed to the \\*W APIs.",
+      "source_hash": 8190486395618080322,
+      "context_hash": 6225050539896553118,
+      "translation": "마찬가지로 경로가 ``bytes``\\ 로 제공되면 utf-8에서 utf-16-le로 트랜스코딩되어 \\*W API에 전달됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699973Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "The use of utf-8 will not be configurable, except for the provision of a \"legacy mode\" flag to revert to the previous behaviour.",
+      "source_hash": 9160355995571714396,
+      "context_hash": 14609569404625152637,
+      "translation": "utf-8의 사용은 구성할 수 없으며, 이전 동작으로 되돌리기 위한 \"legacy mode\" 플래그만 제공됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699973Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "The ``surrogateescape`` error mode does not apply here, as the concern is not about retaining nonsensical bytes.",
+      "source_hash": 7569997131535381584,
+      "context_hash": 13063745872679107762,
+      "translation": "``surrogateescape`` 오류 모드는 무의미한 바이트를 보존하는 것이 문제가 아니므로 여기에는 적용되지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699973Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:1",
+      "source": "Any path returned from the operating system will be valid Unicode, while invalid paths created by the user should raise a decoding error (currently these would raise ``OSError`` or a subclass).",
+      "source_hash": 11169642867850787450,
+      "context_hash": 2784457688328093792,
+      "translation": "운영 체제에서 반환되는 모든 경로는 유효한 Unicode인 반면, 사용자가 생성한 유효하지 않은 경로는 디코딩 오류를 발생시켜야 합니다(현재는 이러한 경로에서 ``OSError`` 또는 그 하위 클래스가 발생합니다).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699973Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "The choice of utf-8 bytes (as opposed to utf-16-le bytes) is to ensure the ability to round-trip path names and allow basic manipulation (for example, using the ``os.path`` module) when assuming an ASCII-compatible encoding.",
+      "source_hash": 5514784264270379358,
+      "context_hash": 15643523136002509328,
+      "translation": "utf-16-le 바이트가 아닌 utf-8 바이트를 선택한 이유는 경로 이름을 왕복 변환할 수 있고 ASCII 호환 인코딩을 가정할 때 기본적인 조작(예를 들어 ``os.path`` 모듈 사용)을 할 수 있도록 하기 위해서입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699974Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:1",
+      "source": "Using utf-16-le as the encoding is more pure, but will cause more issues than are resolved.",
+      "source_hash": 16990190392381547598,
+      "context_hash": 10051417489147461559,
+      "translation": "utf-16-le을 인코딩으로 사용하는 것이 더 순수하지만, 해결되는 문제보다 더 많은 문제를 일으킬 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699974Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "This change would also undeprecate the use of bytes paths on Windows.",
+      "source_hash": 12026405695932131780,
+      "context_hash": 4643023342951978440,
+      "translation": "이 변경으로 Windows에서 바이트 경로를 사용하는 것이 다시 허용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699974Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:1",
+      "source": "No change to the semantics of using bytes as a path is required - as before, they must be encoded with the encoding specified by ``sys.getfilesystemencoding()``.",
+      "source_hash": 8796454595691845612,
+      "context_hash": 18317579758338278599,
+      "translation": "바이트를 경로로 사용하는 의미는 변경할 필요가 없으며, 이전과 마찬가지로 ``sys.getfilesystemencoding()``\\ 에 지정된 인코딩으로 인코딩해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699974Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Specific Changes",
+      "source_hash": 15489914679541926166,
+      "context_hash": 13737887853089319084,
+      "translation": "구체적인 변경 사항",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699974Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Update sys.getfilesystemencoding",
+      "source_hash": 10747085858021615055,
+      "context_hash": 12326026609030141222,
+      "translation": "sys.getfilesystemencoding을 업데이트하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:46:52.314964Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Remove the default value for ``Py_FileSystemDefaultEncoding`` and set it in ``initfsencoding()`` to utf-8, or if the legacy-mode switch is enabled to mbcs.",
+      "source_hash": 8519791385925731935,
+      "context_hash": 1533575315427754446,
+      "translation": "``Py_FileSystemDefaultEncoding``\\ 의 기본값을 제거하고 ``initfsencoding()``\\ 에서 이를 utf-8로 설정하거나, 레거시 모드 전환이 활성화된 경우 mbcs로 설정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699975Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:2/seg:0",
+      "source": "Update the implementations of ``PyUnicode_DecodeFSDefaultAndSize()`` and ``PyUnicode_EncodeFSDefault()`` to use the utf-8 codec, or if the legacy-mode switch is enabled the existing mbcs codec.",
+      "source_hash": 13129263072860923298,
+      "context_hash": 13105346831544206669,
+      "translation": "``PyUnicode_DecodeFSDefaultAndSize()`` 및 ``PyUnicode_EncodeFSDefault()``\\ 의 구현을 업데이트하여 utf-8 코덱을 사용하거나, 레거시 모드 전환이 활성화된 경우 기존 mbcs 코덱을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699975Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:0/seg:0",
+      "source": "Add sys.getfilesystemencodeerrors",
+      "source_hash": 4908722891730020612,
+      "context_hash": 18111688921293352969,
+      "translation": "sys.getfilesystemencodeerrors 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699975Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:0",
+      "source": "As the error mode may now change between ``surrogatepass`` and ``replace``, Python code that manually performs encoding also needs access to the current error mode.",
+      "source_hash": 14642425189661914620,
+      "context_hash": 9855048312850902344,
+      "translation": "오류 모드가 이제 ``surrogatepass``\\ 와 ``replace`` 사이에서 변경될 수 있으므로, 인코딩을 수동으로 수행하는 Python 코드에도 현재 오류 모드에 대한 접근이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699976Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:1/seg:1",
+      "source": "This includes the implementation of ``os.fsencode()`` and ``os.fsdecode()``, which currently assume an error mode based on the codec.",
+      "source_hash": 13126560969871738353,
+      "context_hash": 7047528877877827032,
+      "translation": "여기에는 현재 코덱에 기반한 오류 모드를 가정하는 ``os.fsencode()`` 및 ``os.fsdecode()``\\ 의 구현이 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699976Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:0",
+      "source": "Add a public ``Py_FileSystemDefaultEncodeErrors``, similar to the existing ``Py_FileSystemDefaultEncoding``.",
+      "source_hash": 14476975133764880428,
+      "context_hash": 14228911899567439836,
+      "translation": "기존의 ``Py_FileSystemDefaultEncoding``\\ 과 유사한 공개 ``Py_FileSystemDefaultEncodeErrors``\\ 를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699976Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:1",
+      "source": "The default value on Windows will be ``surrogatepass`` or in legacy mode, ``replace``.",
+      "source_hash": 3849460381224638207,
+      "context_hash": 12347074691768523432,
+      "translation": "Windows의 기본값은 ``surrogatepass``\\ 이며, 레거시 모드에서는 ``replace``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699976Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:2/seg:2",
+      "source": "The default value on all other platforms will be ``surrogateescape``.",
+      "source_hash": 8995642383669187952,
+      "context_hash": 2392538523653827180,
+      "translation": "그 밖의 모든 플랫폼에서 기본값은 ``surrogateescape``\\ 입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699976Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:3/seg:0",
+      "source": "Add a public ``sys.getfilesystemencodeerrors()`` function that returns the current error mode.",
+      "source_hash": 9947218397498717902,
+      "context_hash": 4370375307673433541,
+      "translation": "현재 오류 모드를 반환하는 공개 ``sys.getfilesystemencodeerrors()`` 함수를 추가합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699977Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:4/seg:0",
+      "source": "Update the implementations of ``PyUnicode_DecodeFSDefaultAndSize()`` and ``PyUnicode_EncodeFSDefault()`` to use the variable for error mode rather than constant strings.",
+      "source_hash": 9377958384321114722,
+      "context_hash": 16337783554323992003,
+      "translation": "``PyUnicode_DecodeFSDefaultAndSize()`` 및 ``PyUnicode_EncodeFSDefault()``\\ 의 구현을 업데이트하여 상수 문자열 대신 오류 모드에 이 변수를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699977Z",
+      "issues": []
+    },
+    {
+      "id": "section:6/block:5/seg:0",
+      "source": "Update the implementations of ``os.fsencode()`` and ``os.fsdecode()`` to use ``sys.getfilesystemencodeerrors()`` instead of assuming the mode.",
+      "source_hash": 3876917113836076676,
+      "context_hash": 8668373760155221345,
+      "translation": "``os.fsencode()`` 및 ``os.fsdecode()``\\ 의 구현을 업데이트하여 모드를 가정하는 대신 ``sys.getfilesystemencodeerrors()``\\ 를 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:09.699977Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:0/seg:0",
+      "source": "Update path_converter",
+      "source_hash": 15440516287559017222,
+      "context_hash": 10668664062657088269,
+      "translation": "경로 변환기 업데이트",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699427Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:1/seg:0",
+      "source": "Update the path converter to always decode bytes or buffer objects into text using ``PyUnicode_DecodeFSDefaultAndSize()``.",
+      "source_hash": 8930901098855931998,
+      "context_hash": 16749308175989093222,
+      "translation": "경로 변환기를 업데이트하여 바이트 또는 버퍼 객체를 항상 ``PyUnicode_DecodeFSDefaultAndSize()``\\ 를 사용해 텍스트로 디코딩하도록 하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699430Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:0",
+      "source": "Change the ``narrow`` field from a ``char*`` string into a flag that indicates whether the original object was bytes.",
+      "source_hash": 2742089807848105618,
+      "context_hash": 11999436441166685464,
+      "translation": "``narrow``\\ 필드를 ``char*`` 문자열에서 원래 객체가 바이트였는지를 나타내는 플래그로 변경하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699431Z",
+      "issues": []
+    },
+    {
+      "id": "section:7/block:2/seg:1",
+      "source": "This is required for functions that need to return paths using the same type as was originally provided.",
+      "source_hash": 18036337049485002929,
+      "context_hash": 12819391044871033822,
+      "translation": "이는 원래 제공된 경로와 동일한 타입으로 경로를 반환해야 하는 함수에 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699431Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:0/seg:0",
+      "source": "Remove unused ANSI code",
+      "source_hash": 10135499898787864218,
+      "context_hash": 9872646284667437697,
+      "translation": "사용하지 않는 ANSI 코드 제거",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699431Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:0",
+      "source": "Remove all code paths using the ``narrow`` field, as these will no longer be reachable by any caller.",
+      "source_hash": 14539276907225447569,
+      "context_hash": 6508664014235493685,
+      "translation": "``narrow``\\ 필드를 사용하는 모든 코드 경로를 제거하십시오. 이제 어떤 호출자에게도 도달할 수 없기 때문입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699432Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:1",
+      "source": "These are only used within ``posixmodule.c``.",
+      "source_hash": 10304630708126517137,
+      "context_hash": 17361687922119516305,
+      "translation": "이는 ``posixmodule.c``\\ 내부에서만 사용됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699432Z",
+      "issues": []
+    },
+    {
+      "id": "section:8/block:1/seg:2",
+      "source": "Other uses of paths should have use of bytes paths replaced with decoding and use of the \\*W APIs.",
+      "source_hash": 16136312932411775272,
+      "context_hash": 12097984480039981559,
+      "translation": "경로의 다른 사용 부분에서는 바이트 경로 사용을 디코딩으로 대체하고 \\*W API를 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699432Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:0/seg:0",
+      "source": "Add legacy mode",
+      "source_hash": 1710665886097672997,
+      "context_hash": 5828910398464897778,
+      "translation": "레거시 모드 추가",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699433Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:0",
+      "source": "Add a legacy mode flag, enabled by the environment variable ``PYTHONLEGACYWINDOWSFSENCODING`` or by a function call to ``sys._enablelegacywindowsfsencoding()``.",
+      "source_hash": 17722447452060106238,
+      "context_hash": 1682569837832340491,
+      "translation": "환경 변수 ``PYTHONLEGACYWINDOWSFSENCODING`` 또는 ``sys._enablelegacywindowsfsencoding()``\\ 함수 호출로 활성화되는 레거시 모드 플래그를 추가하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699433Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:1",
+      "source": "The function call can only be used to enable the flag and should be used by programs as close to initialization as possible.",
+      "source_hash": 11467412375059456994,
+      "context_hash": 12968057332797972127,
+      "translation": "함수 호출은 플래그를 활성화하는 데만 사용할 수 있으며, 프로그램은 가능한 한 초기화 시점에 가깝게 이를 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699433Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:1/seg:2",
+      "source": "Legacy mode cannot be disabled while Python is running.",
+      "source_hash": 10848246325046870529,
+      "context_hash": 2057156163646684489,
+      "translation": "Python이 실행 중인 동안에는 레거시 모드를 비활성화할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699434Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:0",
+      "source": "When this flag is set, the default filesystem encoding is set to mbcs rather than utf-8, and the error mode is set to ``replace`` rather than ``surrogatepass``.",
+      "source_hash": 11253508021498199990,
+      "context_hash": 16736211113074069034,
+      "translation": "이 플래그가 설정되면 기본 파일 시스템 인코딩은 utf-8이 아닌 mbcs로 설정되고, 오류 모드는 ``surrogatepass``\\ 가 아닌 ``replace``\\ 로 설정됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699434Z",
+      "issues": []
+    },
+    {
+      "id": "section:9/block:2/seg:1",
+      "source": "Paths will continue to decode to wide characters and only \\*W APIs will be called, however, the bytes passed in and received from Python will be encoded the same as prior to this change.",
+      "source_hash": 3013384761662022308,
+      "context_hash": 860150657742439334,
+      "translation": "경로는 계속 와이드 문자로 디코딩되고 \\*W API만 호출되지만, Python에 전달되고 Python에서 반환되는 바이트는 이 변경 이전과 동일하게 인코딩됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699434Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:0/seg:0",
+      "source": "Undeprecate bytes paths on Windows",
+      "source_hash": 1084468842370804149,
+      "context_hash": 14858477532816335867,
+      "translation": "Windows에서 바이트 경로 사용 비권장 해제",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699434Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:0",
+      "source": "Using bytes as paths on Windows is currently deprecated.",
+      "source_hash": 2609823609367852637,
+      "context_hash": 10478296373049903513,
+      "translation": "현재 Windows에서 바이트를 경로로 사용하는 것은 비권장됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699435Z",
+      "issues": []
+    },
+    {
+      "id": "section:10/block:1/seg:1",
+      "source": "We would announce that this is no longer the case, and that paths when encoded as bytes should use whatever is returned from ``sys.getfilesystemencoding()`` rather than the user's active code page.",
+      "source_hash": 6972621710887377088,
+      "context_hash": 13002503271445629834,
+      "translation": "이제 더 이상 그렇지 않으며, 경로를 바이트로 인코딩할 때는 사용자의 활성 코드 페이지가 아니라 ``sys.getfilesystemencoding()``\\ 에서 반환되는 값을 사용해야 한다고 발표합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699435Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:0/seg:0",
+      "source": "Beta experiment",
+      "source_hash": 5322567523020409461,
+      "context_hash": 15211885986894136538,
+      "translation": "베타 실험",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699435Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:1/seg:0",
+      "source": "To assist with determining the impact of this change, we propose applying it to 3.6.0b1 provisionally with the intent being to make a final decision before 3.6.0b4.",
+      "source_hash": 17274441917630022163,
+      "context_hash": 2884640709798753948,
+      "translation": "이 변경의 영향을 파악하는 데 도움을 주기 위해, 최종 결정을 3.6.0b4 이전에 내린다는 전제하에 이를 잠정적으로 3.6.0b1에 적용할 것을 제안합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699435Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:2/seg:0",
+      "source": "During the experiment period, decoding and encoding exception messages will be expanded to include a link to an active online discussion and encourage reporting of problems.",
+      "source_hash": 16649498841062436565,
+      "context_hash": 11937368436527083346,
+      "translation": "실험 기간에는 디코딩 및 인코딩 예외 메시지에 현재 진행 중인 온라인 토론 링크를 포함하고 문제를 보고하도록 권장하는 내용이 추가됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699436Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:3/seg:0",
+      "source": "If it is decided to revert the functionality for 3.6.0b4, the implementation change would be to permanently enable the legacy mode flag, change the environment variable to ``PYTHONWINDOWSUTF8FSENCODING`` and function to ``sys._enablewindowsutf8fsencoding()`` to allow enabling the functionality on a case-by-case basis, as opposed to disabling it.",
+      "source_hash": 10375562390190474763,
+      "context_hash": 12852419776190713331,
+      "translation": "3.6.0b4에서 이 기능을 되돌리기로 결정되면, 구현 변경 사항은 레거시 모드 플래그를 영구적으로 활성화하고, 환경 변수를 ``PYTHONWINDOWSUTF8FSENCODING``\\ 으로 변경하며, 기능을 비활성화하는 대신 경우별로 활성화할 수 있도록 함수를 ``sys._enablewindowsutf8fsencoding()``\\ 으로 변경하는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699436Z",
+      "issues": []
+    },
+    {
+      "id": "section:11/block:4/seg:0",
+      "source": "It is expected that if we cannot feasibly make the change for 3.6 due to compatibility concerns, it will not be possible to make the change at any later time in Python 3.x.",
+      "source_hash": 6497543865708315750,
+      "context_hash": 6791404252487300768,
+      "translation": "호환성 문제로 인해 3.6에서 변경을 실행 가능하게 수행할 수 없다면 Python 3.x의 이후 어떤 시점에도 변경할 수 없을 것으로 예상됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699437Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:0/seg:0",
+      "source": "Affected Modules",
+      "source_hash": 13332644957483092016,
+      "context_hash": 4065400586249236124,
+      "translation": "영향을 받는 모듈",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699437Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:1/seg:0",
+      "source": "This PEP implicitly includes all modules within the Python that either pass path names to the operating system, or otherwise use ``sys.getfilesystemencoding()``.",
+      "source_hash": 14906154606393402857,
+      "context_hash": 3303555566546359317,
+      "translation": "이 PEP에는 경로 이름을 운영 체제에 전달하거나 그 밖에 ``sys.getfilesystemencoding()``\\ 을 사용하는 Python 내의 모든 모듈이 암묵적으로 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699437Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:2/seg:0",
+      "source": "As of 3.6.0a4, the following modules require modification:",
+      "source_hash": 13388328978962541944,
+      "context_hash": 15982199339546781257,
+      "translation": "3.6.0a4 기준으로 다음 모듈을 수정해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699437Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:3/seg:0",
+      "source": "``os``",
+      "source_hash": 5189271097605267945,
+      "context_hash": 3023413926322617089,
+      "translation": "``os``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699438Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:4/seg:0",
+      "source": "``_overlapped``",
+      "source_hash": 5879403933310384682,
+      "context_hash": 15918414591407035065,
+      "translation": "``_overlapped``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699438Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:5/seg:0",
+      "source": "``_socket``",
+      "source_hash": 17324503552543450753,
+      "context_hash": 10908181460998415082,
+      "translation": "``_socket``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699438Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:6/seg:0",
+      "source": "``subprocess``",
+      "source_hash": 11748672969650956611,
+      "context_hash": 4645883635229970304,
+      "translation": "``subprocess``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699438Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:7/seg:0",
+      "source": "``zipimport``",
+      "source_hash": 7267032766523492152,
+      "context_hash": 14004723014340917254,
+      "translation": "``zipimport``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699439Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:8/seg:0",
+      "source": "The following modules use ``sys.getfilesystemencoding()`` but do not need modification:",
+      "source_hash": 15448666876278871336,
+      "context_hash": 9616528986762438392,
+      "translation": "다음 모듈은 ``sys.getfilesystemencoding()``\\ 을 사용하지만 수정할 필요는 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699439Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:9/seg:0",
+      "source": "``gc`` (already assumes bytes are utf-8)",
+      "source_hash": 10219229648789950219,
+      "context_hash": 741712318494800321,
+      "translation": "``gc`` (이미 바이트가 utf-8이라고 가정함)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T19:08:05.699439Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:10/seg:0",
+      "source": "``grp`` (not compiled for Windows)",
+      "source_hash": 623011797046328241,
+      "context_hash": 12901550862482456635,
+      "translation": "``grp`` (Windows용으로 컴파일되지 않습니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484776Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:11/seg:0",
+      "source": "``http.server`` (correctly includes codec name with transmitted data)",
+      "source_hash": 11201395581543795869,
+      "context_hash": 12111563942038405547,
+      "translation": "``http.server`` (전송된 데이터에 코덱 이름을 올바르게 포함합니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484780Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:12/seg:0",
+      "source": "``idlelib.editor`` (should not be needed; has fallback handling)",
+      "source_hash": 12542844522200896913,
+      "context_hash": 3618243092094639437,
+      "translation": "``idlelib.editor`` (필요하지 않아야 하며 폴백 처리를 포함합니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484780Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:13/seg:0",
+      "source": "``nis`` (not compiled for Windows)",
+      "source_hash": 434527171389560187,
+      "context_hash": 4049129062757664436,
+      "translation": "``nis`` (Windows용으로 컴파일되지 않습니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484781Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:14/seg:0",
+      "source": "``pwd`` (not compiled for Windows)",
+      "source_hash": 6073116563853849707,
+      "context_hash": 16621297670058265042,
+      "translation": "``pwd`` (Windows용으로 컴파일되지 않습니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484781Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:15/seg:0",
+      "source": "``spwd`` (not compiled for Windows)",
+      "source_hash": 11726848007241776130,
+      "context_hash": 6389000341065981671,
+      "translation": "``spwd`` (Windows용으로 컴파일되지 않습니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484781Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:16/seg:0",
+      "source": "``_ssl`` (only used for ASCII constants)",
+      "source_hash": 7533427166405461592,
+      "context_hash": 126832834487236197,
+      "translation": "``_ssl`` (ASCII 상수에만 사용됩니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484782Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:17/seg:0",
+      "source": "``tarfile`` (code unused on Windows)",
+      "source_hash": 6954701912379356794,
+      "context_hash": 445943386134311275,
+      "translation": "``tarfile`` (Windows에서는 코드가 사용되지 않습니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484782Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:18/seg:0",
+      "source": "``_tkinter`` (already assumes bytes are utf-8)",
+      "source_hash": 6363365962142413737,
+      "context_hash": 7297740717258715844,
+      "translation": "``_tkinter`` (이미 바이트가 utf-8이라고 가정합니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484782Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:19/seg:0",
+      "source": "``wsgiref`` (assumed as the default encoding for unknown environments)",
+      "source_hash": 1029444567825871650,
+      "context_hash": 10120901057009458875,
+      "translation": "``wsgiref`` (알 수 없는 환경의 기본 인코딩으로 가정됩니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484782Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:20/seg:0",
+      "source": "``zipapp`` (code unused on Windows)",
+      "source_hash": 4503880219386693137,
+      "context_hash": 9658691747253920440,
+      "translation": "``zipapp`` (Windows에서는 코드가 사용되지 않습니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484783Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:21/seg:0",
+      "source": "The following native code uses one of the encoding or decoding functions, but do not require any modification:",
+      "source_hash": 13610036993806614366,
+      "context_hash": 6625296402376245288,
+      "translation": "다음 네이티브 코드는 인코딩 또는 디코딩 함수 중 하나를 사용하지만, 수정이 필요하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484783Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:22/seg:0",
+      "source": "``Parser/parsetok.c`` (docs already specify ``sys.getfilesystemencoding()``)",
+      "source_hash": 13801996424715472737,
+      "context_hash": 4560852933422354226,
+      "translation": "``Parser/parsetok.c`` (문서에서 이미 ``sys.getfilesystemencoding()``\\ 을 지정합니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484783Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:23/seg:0",
+      "source": "``Python/ast.c`` (docs already specify ``sys.getfilesystemencoding()``)",
+      "source_hash": 1742835602384019428,
+      "context_hash": 6668830292589956408,
+      "translation": "``Python/ast.c`` (문서에서 이미 ``sys.getfilesystemencoding()``\\ 을 지정합니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484784Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:24/seg:0",
+      "source": "``Python/compile.c`` (undocumented, but Python filesystem encoding implied)",
+      "source_hash": 7056826691903740000,
+      "context_hash": 8428982942230923426,
+      "translation": "``Python/compile.c`` (문서화되어 있지는 않지만 Python 파일 시스템 인코딩이 암시됩니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484784Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:25/seg:0",
+      "source": "``Python/errors.c`` (docs already specify ``os.fsdecode()``)",
+      "source_hash": 15575241041667249080,
+      "context_hash": 8434400927911348800,
+      "translation": "``Python/errors.c`` (문서에서 이미 ``os.fsdecode()``\\ 를 지정합니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484785Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:26/seg:0",
+      "source": "``Python/fileutils.c`` (code unused on Windows)",
+      "source_hash": 8608937530750979867,
+      "context_hash": 3144862716532832710,
+      "translation": "``Python/fileutils.c`` (Windows에서는 코드가 사용되지 않습니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484785Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:27/seg:0",
+      "source": "``Python/future.c`` (undocumented, but Python filesystem encoding implied)",
+      "source_hash": 14898741512520128268,
+      "context_hash": 3338210677585539854,
+      "translation": "``Python/future.c`` (문서화되어 있지는 않지만 Python 파일 시스템 인코딩이 암시됩니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484785Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:28/seg:0",
+      "source": "``Python/import.c`` (docs already specify utf-8)",
+      "source_hash": 11127230423085405386,
+      "context_hash": 13224346963538605151,
+      "translation": "``Python/import.c`` (문서에서 이미 utf-8을 지정합니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484786Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:29/seg:0",
+      "source": "``Python/importdl.c`` (code unused on Windows)",
+      "source_hash": 4649591926405522505,
+      "context_hash": 3933671176707472849,
+      "translation": "``Python/importdl.c`` (Windows에서는 코드가 사용되지 않습니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484786Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:30/seg:0",
+      "source": "``Python/pythonrun.c`` (docs already specify ``sys.getfilesystemencoding()``)",
+      "source_hash": 11675378668950842075,
+      "context_hash": 15688854503302430941,
+      "translation": "``Python/pythonrun.c`` (문서에서 이미 ``sys.getfilesystemencoding()``\\ 을 지정합니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484786Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:31/seg:0",
+      "source": "``Python/symtable.c`` (undocumented, but Python filesystem encoding implied)",
+      "source_hash": 18270502672293700179,
+      "context_hash": 2903687261869759592,
+      "translation": "``Python/symtable.c`` (문서화되어 있지는 않지만 Python 파일 시스템 인코딩이 암시됩니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484786Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:32/seg:0",
+      "source": "``Python/thread.c`` (code unused on Windows)",
+      "source_hash": 11444610186225623542,
+      "context_hash": 8775672283680042697,
+      "translation": "``Python/thread.c`` (Windows에서는 코드가 사용되지 않습니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484787Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:33/seg:0",
+      "source": "``Python/traceback.c`` (encodes correctly for comparing strings)",
+      "source_hash": 13105166329426589805,
+      "context_hash": 10027664721472886135,
+      "translation": "``Python/traceback.c`` (문자열 비교를 위해 올바르게 인코딩합니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484787Z",
+      "issues": []
+    },
+    {
+      "id": "section:12/block:34/seg:0",
+      "source": "``Python/_warnings.c`` (docs already specify ``os.fsdecode()``)",
+      "source_hash": 17130747912623270062,
+      "context_hash": 5191198637468138379,
+      "translation": "``Python/_warnings.c`` (문서에서 이미 ``os.fsdecode()``\\ 를 지정합니다)",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484787Z",
+      "issues": []
+    },
+    {
+      "id": "section:13/block:0/seg:0",
+      "source": "Rejected Alternatives",
+      "source_hash": 4665383330312454579,
+      "context_hash": 4538073240398335217,
+      "translation": "거부된 대안",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484788Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:0/seg:0",
+      "source": "Use strict mbcs decoding",
+      "source_hash": 924451359273249103,
+      "context_hash": 9673045595353595451,
+      "translation": "엄격한 mbcs 디코딩 사용",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484788Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:1/seg:0",
+      "source": "This is essentially the same as the proposed change, but instead of changing ``sys.getfilesystemencoding()`` to utf-8 it is changed to mbcs (which dynamically maps to the active code page).",
+      "source_hash": 3681908091945678592,
+      "context_hash": 7068080172840012220,
+      "translation": "이는 제안된 변경과 본질적으로 동일하지만, ``sys.getfilesystemencoding()``\\ 을 utf-8로 변경하는 대신 mbcs로 변경하며, mbcs는 활성 코드 페이지에 동적으로 매핑됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484789Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:0",
+      "source": "This approach allows the use of new functionality that is only available as \\*W APIs and also detection of encoding/decoding errors.",
+      "source_hash": 13500495175738712733,
+      "context_hash": 11419431239900269433,
+      "translation": "이 접근 방식을 사용하면 \\*W API로만 사용할 수 있는 새로운 기능을 사용하고 인코딩 또는 디코딩 오류도 감지할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484789Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:2/seg:1",
+      "source": "For example, rather than silently replacing Unicode characters with '?', it would be possible to warn or fail the operation.",
+      "source_hash": 3495608742270053212,
+      "context_hash": 4490052983968591800,
+      "translation": "예를 들어 유니코드 문자를 '?'로 조용히 대체하는 대신 작업에 대해 경고하거나 작업을 실패하게 할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484789Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:0",
+      "source": "Compared to the proposed fix, this could enable some new functionality but does not fix any of the problems described initially.",
+      "source_hash": 3352348419709133352,
+      "context_hash": 13933994219644296554,
+      "translation": "제안된 수정과 비교하면 일부 새로운 기능을 사용할 수 있게 되지만, 처음에 설명한 문제 중 어느 것도 해결하지 못합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484789Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:3/seg:1",
+      "source": "New runtime errors may cause some problems to be more obvious and lead to fixes, provided library maintainers are interested in supporting Windows and adding a separate code path to treat filesystem paths as strings.",
+      "source_hash": 11307569798180188942,
+      "context_hash": 8266398400459093099,
+      "translation": "라이브러리 유지 관리자가 Windows를 지원하고 파일 시스템 경로를 문자열로 처리하는 별도의 코드 경로를 추가하는 데 관심이 있다는 전제하에, 새로운 런타임 오류로 인해 일부 문제가 더 명확해지고 수정으로 이어질 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T18:11:59.484790Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:0",
+      "source": "Making the encoding mbcs without strict errors is equivalent to the legacy-mode switch being enabled by default.",
+      "source_hash": 8355520930666775231,
+      "context_hash": 8976030821741128868,
+      "translation": "인코딩을 엄격한 오류 없이 mbcs로 만드는 것은 레거시 모드 스위치가 기본적으로 활성화되는 것과 동등합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.083974Z",
+      "issues": []
+    },
+    {
+      "id": "section:14/block:4/seg:1",
+      "source": "This is a possible course of action if there is significant breakage of actual code and a need to extend the deprecation period, but still a desire to have the simplifications to the CPython source.",
+      "source_hash": 12238355598200477481,
+      "context_hash": 3910619034110496110,
+      "translation": "실제 코드에서 상당한 손상이 발생하여 지원 중단 기간을 연장할 필요가 있지만, 그럼에도 CPython 소스의 단순화를 원하는 경우 이는 가능한 조치 방향입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.083976Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:0/seg:0",
+      "source": "Make bytes paths an error on Windows",
+      "source_hash": 1440861802782621626,
+      "context_hash": 18233474375583781136,
+      "translation": "Windows에서 바이트 경로를 오류로 만들기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.083977Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:1/seg:0",
+      "source": "By preventing the use of bytes paths on Windows completely we prevent users from hitting encoding issues.",
+      "source_hash": 7184046862104995579,
+      "context_hash": 3029883896883716308,
+      "translation": "Windows에서 바이트 경로 사용을 완전히 방지함으로써 사용자가 인코딩 문제를 겪지 않도록 방지할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.083977Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:0",
+      "source": "However, the motivation for this PEP is to increase the likelihood that code written on POSIX will also work correctly on Windows.",
+      "source_hash": 1251168645313486030,
+      "context_hash": 3080315952747702231,
+      "translation": "그러나 이 PEP의 동기는 POSIX에서 작성된 코드가 Windows에서도 올바르게 작동할 가능성을 높이는 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.083978Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:1",
+      "source": "This alternative would move the other direction and make such code completely incompatible.",
+      "source_hash": 13430192543852734825,
+      "context_hash": 17568015282886740875,
+      "translation": "이 대안은 반대 방향으로 나아가 그러한 코드를 완전히 호환되지 않게 만들 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.083978Z",
+      "issues": []
+    },
+    {
+      "id": "section:15/block:2/seg:2",
+      "source": "As this does not benefit users in any way, we reject it.",
+      "source_hash": 6863954352099317368,
+      "context_hash": 13189226136561668113,
+      "translation": "이는 사용자에게 어떤 식으로도 이득이 되지 않으므로, 저희는 이를 거부합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.083978Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:0/seg:0",
+      "source": "Make bytes paths an error on all platforms",
+      "source_hash": 8652613949117083999,
+      "context_hash": 16654061962303503139,
+      "translation": "모든 플랫폼에서 바이트 경로를 오류로 만들기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.083979Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:0",
+      "source": "By deprecating and then disable the use of bytes paths on all platforms we prevent users from hitting encoding issues regardless of where the code was originally written.",
+      "source_hash": 2465293531979814091,
+      "context_hash": 3502897733217914276,
+      "translation": "모든 플랫폼에서 바이트 경로 사용을 지원 중단한 후 비활성화함으로써, 코드가 원래 어디에서 작성되었는지와 관계없이 사용자가 인코딩 문제를 겪지 않도록 방지합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.083979Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:1/seg:1",
+      "source": "This would require a full deprecation cycle, as there are currently no warnings on platforms other than Windows.",
+      "source_hash": 17206763327351543635,
+      "context_hash": 17928958672456836411,
+      "translation": "Windows 외의 플랫폼에서는 현재 경고가 전혀 없으므로, 이는 완전한 지원 중단 주기를 필요로 할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.083979Z",
+      "issues": []
+    },
+    {
+      "id": "section:16/block:2/seg:0",
+      "source": "This is likely to be seen as a hostile action against Python developers in general, and as such is rejected at this time.",
+      "source_hash": 17471467243440449780,
+      "context_hash": 1329244303417904670,
+      "translation": "이는 일반적으로 Python 개발자에 대한 적대적 행위로 받아들여질 가능성이 높으며, 그런 이유로 현재로서는 거부됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.083980Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:0/seg:0",
+      "source": "Code that may break",
+      "source_hash": 7760653213251875211,
+      "context_hash": 16598022232304059846,
+      "translation": "손상될 수 있는 코드",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:33:13.083980Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:0",
+      "source": "The following code patterns may break or see different behaviour as a result of this change.",
+      "source_hash": 6435269528482877781,
+      "context_hash": 8719351417568217938,
+      "translation": "다음과 같은 코드 패턴은 이 변경으로 인해 깨지거나 다른 동작을 보일 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568893Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:1",
+      "source": "Each of these examples would have been fragile in code intended for cross-platform use.",
+      "source_hash": 12342128580926113282,
+      "context_hash": 12403049421490786306,
+      "translation": "이 예제들은 각각 크로스 플랫폼 용도로 작성된 코드에서 취약했을 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568897Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:1/seg:2",
+      "source": "The suggested fixes demonstrate the most compatible way to handle path encoding issues across all platforms and across multiple Python versions.",
+      "source_hash": 5007266423687738005,
+      "context_hash": 547336207564213624,
+      "translation": "제안된 수정 방법은 모든 플랫폼과 여러 파이썬 버전에 걸쳐 경로 인코딩 문제를 처리하는 가장 호환성 높은 방식을 보여줍니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568898Z",
+      "issues": []
+    },
+    {
+      "id": "section:17/block:2/seg:0",
+      "source": "Note that all of these examples produce deprecation warnings on Python 3.3 and later.",
+      "source_hash": 4744321948111129095,
+      "context_hash": 6453564828287456528,
+      "translation": "이 예제들은 모두 파이썬 3.3 이상에서 사용 중단 경고를 발생시킨다는 점에 유의하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568898Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:0/seg:0",
+      "source": "Not managing encodings across boundaries",
+      "source_hash": 7154619531692284020,
+      "context_hash": 18141446484458038076,
+      "translation": "경계를 넘나들며 인코딩을 관리하지 않는 경우",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568899Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:0",
+      "source": "Code that does not manage encodings when crossing protocol boundaries may currently be working by chance, but could encounter issues when either encoding changes.",
+      "source_hash": 5813935471511293610,
+      "context_hash": 15730728378575788516,
+      "translation": "프로토콜 경계를 넘을 때 인코딩을 관리하지 않는 코드는 현재는 우연히 동작하고 있을 수 있지만, 어느 한쪽의 인코딩이 변경되면 문제가 발생할 수 있습니다.",
+      "glossary_snapshot": {
+        "protocol": "프로토콜"
+      },
+      "translated_at": "2026-08-28T17:26:04.568899Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:1/seg:1",
+      "source": "Note that the source of ``filename`` may be any function that returns a bytes object, as illustrated in a second example below",
+      "source_hash": 12962307423976343524,
+      "context_hash": 2830451408740452524,
+      "translation": "``filename``\\ 의 출처는 아래 두 번째 예제에서 보듯이 bytes 객체를 반환하는 어떤 함수든 될 수 있다는 점에 유의하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568901Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:3/seg:0",
+      "source": "To correct this code, the encoding of the bytes in ``filename`` should be specified, either when reading from the file or before using the value",
+      "source_hash": 10195237862802790409,
+      "context_hash": 768724229177661436,
+      "translation": "이 코드를 바로잡으려면, 파일에서 읽어들일 때든 값을 사용하기 전이든 ``filename``\\ 의 바이트 인코딩을 명시해야 합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568901Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:5/seg:0",
+      "source": "Where the creator of ``filename`` is separated from the user of ``filename``, the encoding is important information to include",
+      "source_hash": 9990780781432128487,
+      "context_hash": 18096727008437993478,
+      "translation": "``filename``\\ 의 생성자와 ``filename``\\ 의 사용자가 분리되어 있는 경우, 인코딩은 반드시 포함해야 할 중요한 정보입니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568901Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:7/seg:0",
+      "source": "To fix this code for best compatibility across operating systems and Python versions, the filename should be exposed as str",
+      "source_hash": 13363027856150662358,
+      "context_hash": 11304633045496765529,
+      "translation": "운영체제와 파이썬 버전 전반에서 최상의 호환성을 위해 이 코드를 수정하려면, 파일 이름을 str\\ 로 노출해야 합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568901Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:9/seg:0",
+      "source": "Alternatively, the encoding used for the path needs to be made available to the user.",
+      "source_hash": 17064861813600631323,
+      "context_hash": 9894513718931870589,
+      "translation": "그 대신, 경로에 사용된 인코딩을 사용자가 사용할 수 있도록 제공해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568902Z",
+      "issues": []
+    },
+    {
+      "id": "section:18/block:9/seg:1",
+      "source": "Specifying ``os.fsencode()`` (or ``sys.getfilesystemencoding()``) is an acceptable choice, or a new attribute could be added with the exact encoding",
+      "source_hash": 14542641402978420318,
+      "context_hash": 95632952499508384,
+      "translation": "``os.fsencode()``\\ (또는 ``sys.getfilesystemencoding()``)를 지정하는 것도 받아들일 만한 선택이며, 정확한 인코딩을 담은 새 속성을 추가할 수도 있습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568902Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:0/seg:0",
+      "source": "Explicitly using 'mbcs'",
+      "source_hash": 12416374795084391519,
+      "context_hash": 16095330065859928469,
+      "translation": "'mbcs'를 명시적으로 사용하는 경우",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568902Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:0",
+      "source": "Code that explicitly encodes text using 'mbcs' before passing to file system APIs is now passing incorrectly encoded bytes.",
+      "source_hash": 18319303662472399781,
+      "context_hash": 17807972146594854570,
+      "translation": "파일 시스템 API에 전달하기 전에 텍스트를 'mbcs'로 명시적으로 인코딩하는 코드는 이제 잘못 인코딩된 바이트를 전달하게 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568903Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:1/seg:1",
+      "source": "Note that the source of ``filename`` in this example is not relevant, provided that it is a str",
+      "source_hash": 1200717296148718436,
+      "context_hash": 8426473057450925583,
+      "translation": "이 예제에서 ``filename``\\ 의 출처는 그것이 str\\ 이기만 하다면 중요하지 않다는 점에 유의하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568903Z",
+      "issues": []
+    },
+    {
+      "id": "section:19/block:3/seg:0",
+      "source": "To correct this code, the string should be passed without explicit encoding, or should use ``os.fsencode()``",
+      "source_hash": 9832328873286961583,
+      "context_hash": 9852719692871926360,
+      "translation": "이 코드를 바로잡으려면, 문자열을 명시적인 인코딩 없이 전달하거나 ``os.fsencode()``\\ 를 사용해야 합니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:26:04.568903Z",
+      "issues": []
+    },
+    {
+      "id": "section:20/block:0/seg:0",
+      "source": "References",
+      "source_hash": 17861670083855418992,
+      "context_hash": 10921024436366714995,
+      "translation": "참고 문헌",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-28T17:13:40.312576Z",
+      "issues": []
+    }
+  ]
+}
