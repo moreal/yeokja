@@ -19,6 +19,8 @@
 # 스테이징 스텝에 각각 항목을 추가해야 합니다.
 name: Deploy Pages
 
+# 신뢰할 수 있는 main push와 수동 실행만 ARC self-hosted runner에서 처리합니다.
+# pull_request 검증은 pr.yml의 GitHub-hosted runner에서 별도로 실행합니다.
 on:
   push:
     branches: [main]
@@ -35,7 +37,8 @@ concurrency:
 
 jobs:
   build-cli:
-    runs-on: ubuntu-latest
+    runs-on: "<RUNNER_LABEL>"
+    container: mcr.microsoft.com/devcontainers/universal:6.1-noble
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -58,7 +61,8 @@ jobs:
 
   rebuild:
     needs: build-cli
-    runs-on: ubuntu-latest
+    runs-on: "<RUNNER_LABEL>"
+    container: mcr.microsoft.com/devcontainers/universal:6.1-noble
     strategy:
       fail-fast: false
       matrix:
@@ -244,7 +248,8 @@ jobs:
 
   stage:
     needs: rebuild
-    runs-on: ubuntu-latest
+    runs-on: "<RUNNER_LABEL>"
+    container: mcr.microsoft.com/devcontainers/universal:6.1-noble
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -282,7 +287,8 @@ jobs:
 
   deploy:
     needs: stage
-    runs-on: ubuntu-latest
+    runs-on: "<RUNNER_LABEL>"
+    container: mcr.microsoft.com/devcontainers/universal:6.1-noble
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
