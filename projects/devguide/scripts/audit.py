@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
@@ -15,6 +16,16 @@ SEGMENT_FIELDS = {
     "translated_at",
     "issues",
 }
+
+DESCRIPTIVE_TAB_TRANSLATIONS = {
+    "Other / pip": "기타 / pip",
+    "Distro package": "배포판 패키지",
+    "Manual systemd": "수동 systemd 설정",
+    "cron job": "cron 작업",
+}
+DIRECTIVE_TITLE_RE = re.compile(r"^\s*\.\.\s+(topic|tab)::\s*(.*?)\s*$")
+TOPIC_TITLE_RE = re.compile(r"^(.*?) \((.*?)\)$")
+HANGUL_RE = re.compile(r"[가-힣]")
 
 
 class _DocumentParser(HTMLParser):
@@ -73,6 +84,8 @@ def audit_translation(
             _audit_state_file(state_path, state_relative, errors)
         if not output_path.is_file():
             _add_error(errors, relative, "", f"missing output: {relative.as_posix()}")
+        else:
+            _audit_reader_metadata(source_path, output_path, relative, errors)
 
     state_files = (
         sorted(state_root.rglob("*.rst.yeokja.json")) if state_root.exists() else []
@@ -99,6 +112,90 @@ def audit_translation(
             _add_error(errors, relative, "", f"orphan output: {relative.as_posix()}")
 
     return [message for _, _, message in sorted(errors)]
+
+
+def _directive_titles(path: Path) -> dict[str, list[str]]:
+    titles: dict[str, list[str]] = {"topic": [], "tab": []}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        match = DIRECTIVE_TITLE_RE.match(line)
+        if match:
+            titles[match.group(1)].append(match.group(2))
+    return titles
+
+
+def _audit_reader_metadata(
+    source_path: Path,
+    output_path: Path,
+    relative: Path,
+    errors: list[tuple[str, str, str]],
+) -> None:
+    try:
+        source_titles = _directive_titles(source_path)
+        output_titles = _directive_titles(output_path)
+    except (OSError, UnicodeDecodeError):
+        return
+
+    source_topics = [title for title in source_titles["topic"] if "<name>" not in title]
+    output_topics = [title for title in output_titles["topic"] if "<name>" not in title]
+    if len(source_topics) != len(output_topics):
+        _add_error(
+            errors,
+            relative,
+            "",
+            f"reader topic count changed: {relative.as_posix()}",
+        )
+    for source_title, output_title in zip(source_topics, output_topics):
+        source_match = TOPIC_TITLE_RE.match(source_title)
+        output_match = TOPIC_TITLE_RE.match(output_title)
+        if source_match is None or output_match is None:
+            _add_error(
+                errors,
+                relative,
+                source_title,
+                f"reader topic shape changed: {relative.as_posix()}: {source_title}",
+            )
+            continue
+        source_name, source_country = source_match.groups()
+        output_name, output_country = output_match.groups()
+        if output_name != source_name:
+            _add_error(
+                errors,
+                relative,
+                source_title,
+                f"reader topic name changed: {relative.as_posix()}: {source_name}",
+            )
+        if not HANGUL_RE.search(output_country):
+            _add_error(
+                errors,
+                relative,
+                source_title,
+                f"reader topic country not Korean: {relative.as_posix()}: {source_country}",
+            )
+
+    source_tabs = source_titles["tab"]
+    output_tabs = output_titles["tab"]
+    if len(source_tabs) != len(output_tabs):
+        _add_error(
+            errors,
+            relative,
+            "",
+            f"reader tab count changed: {relative.as_posix()}",
+        )
+    for source_title, output_title in zip(source_tabs, output_tabs):
+        expected = DESCRIPTIVE_TAB_TRANSLATIONS.get(source_title, source_title)
+        if output_title == expected:
+            continue
+        kind = (
+            "descriptive tab label not translated"
+            if source_title in DESCRIPTIVE_TAB_TRANSLATIONS
+            else "protected tab label changed"
+        )
+        _add_error(
+            errors,
+            relative,
+            source_title,
+            f"{kind}: {relative.as_posix()}: {source_title}",
+        )
 
 
 def _audit_state_file(

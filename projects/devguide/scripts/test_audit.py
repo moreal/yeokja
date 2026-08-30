@@ -206,6 +206,41 @@ class TranslationAuditTests(unittest.TestCase):
             self.assertEqual(errors, sorted(errors))
             self.assertTrue(any("invalid state: index.rst.yeokja.json" in error for error in errors))
 
+    def test_enforces_reader_metadata_translation_and_protected_labels(self):
+        with tempfile.TemporaryDirectory() as root:
+            source, state, output = self.make_tree(root)
+            (source / "index.rst").write_text(
+                ".. topic:: Brett Cannon (Canada)\n\n"
+                ".. tab:: Windows\n\n"
+                ".. tab:: Other / pip\n",
+                encoding="utf-8",
+            )
+            (output / "index.rst").write_text(
+                ".. topic:: 브렛 캐넌 (Canada)\n\n"
+                ".. tab:: 윈도우\n\n"
+                ".. tab:: Other / pip\n",
+                encoding="utf-8",
+            )
+            (state / "index.rst.yeokja.json").write_text(
+                '{"version": 1, "segments": []}', encoding="utf-8"
+            )
+
+            errors = audit_translation(source, state, output)
+
+            self.assertIn(
+                "reader topic name changed: index.rst: Brett Cannon", errors
+            )
+            self.assertIn(
+                "reader topic country not Korean: index.rst: Canada", errors
+            )
+            self.assertIn(
+                "protected tab label changed: index.rst: Windows", errors
+            )
+            self.assertIn(
+                "descriptive tab label not translated: index.rst: Other / pip",
+                errors,
+            )
+
 
 class HtmlAuditTests(unittest.TestCase):
     def test_accepts_supported_local_and_external_links(self):
