@@ -250,7 +250,7 @@ const OPAQUE_DIRECTIVES: [&str; 17] = [
 ];
 
 const INLINE_PROSE_DIRECTIVES: [&str; 4] = ["note", "seealso", "tip", "impl-detail"];
-const TITLED_PROSE_DIRECTIVES: [&str; 3] = ["admonition", "sidebar", "rubric"];
+const TITLED_PROSE_DIRECTIVES: [&str; 5] = ["admonition", "sidebar", "rubric", "topic", "tab"];
 
 /// The punctuation characters docutils accepts as a title adornment.
 const ADORNMENT_CHARS: &str = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
@@ -311,6 +311,13 @@ struct ParseState<'a> {
 }
 
 impl ParseState<'_> {
+    fn has_body_prose(&self) -> bool {
+        self.run.is_some()
+            || self.sections.iter().flat_map(|section| &section.blocks).any(|block| {
+                block.translatable && block.block_type != BlockType::Heading
+            })
+    }
+
     /// Close the current run and emit it as a translatable block. A run whose
     /// text ends with `::` announces a literal block; the marker stays outside
     /// the span so the announcement survives the translation.
@@ -644,13 +651,14 @@ fn is_field_marker(trimmed: &str) -> bool {
 /// Byte offset of reader-facing prose after a standalone field marker.
 /// Indented fields are directive options, while standard bibliographic fields
 /// are document metadata; both remain verbatim.
-fn standalone_field_body_start(content: &str) -> Option<usize> {
+fn standalone_field_body_start(content: &str, has_body_prose: bool) -> Option<usize> {
     if content.starts_with(char::is_whitespace) {
         return None;
     }
     let (name, after) = field_marker(content)?;
+    let lower = name.to_ascii_lowercase();
     if matches!(
-        name.to_ascii_lowercase().as_str(),
+        lower.as_str(),
         "author"
             | "authors"
             | "organization"
@@ -661,9 +669,14 @@ fn standalone_field_body_start(content: &str) -> Option<usize> {
             | "status"
             | "date"
             | "copyright"
-            | "dedication"
-            | "abstract"
+            | "orphan"
+            | "tocdepth"
+            | "nocomments"
+            | "nosearch"
     ) {
+        return None;
+    }
+    if !has_body_prose && !matches!(lower.as_str(), "abstract" | "dedication") {
         return None;
     }
     let leading = after.len() - after.trim_start().len();
@@ -1067,7 +1080,9 @@ impl DocumentParser for RstParser {
 
             // A standalone field keeps its marker exact while exposing its
             // reader-facing body. Continuations belong to the same body span.
-            if let Some(body_start) = standalone_field_body_start(line.content) {
+            if let Some(body_start) =
+                standalone_field_body_start(line.content, state.has_body_prose())
+            {
                 state.flush_run();
                 let mut end = i;
                 while end + 1 < lines.len()
@@ -2315,6 +2330,64 @@ mod tests {
     }
 
     #[test]
+    fn topic_title_is_translatable_while_its_marker_stays_exact() {
+        let source = ".. topic:: Jane Doe (Canada)\n\n   Topic body.\n";
+        let doc = RstParser.parse(source);
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|segment| segment.source.as_str())
+            .collect();
+        assert_eq!(sources, ["Jane Doe (Canada)", "Topic body."]);
+
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[
+                ("Jane Doe (Canada)", "Jane Doe (캐나다)"),
+                ("Topic body.", "토픽 본문입니다."),
+            ],
+        );
+        assert_eq!(output, ".. topic:: Jane Doe (캐나다)\n\n   토픽 본문입니다.\n");
+    }
+
+    #[test]
+    fn tab_title_is_translatable_while_technical_tabs_can_stay_exact() {
+        let source = "\
+.. tab:: Other / pip
+
+   Install with pip.
+
+.. tab:: Python 3.15+
+
+   Run Python.
+";
+        let doc = RstParser.parse(source);
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|segment| segment.source.as_str())
+            .collect();
+        assert_eq!(
+            sources,
+            ["Other / pip", "Install with pip.", "Python 3.15+", "Run Python."]
+        );
+
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[
+                ("Other / pip", "기타 / pip"),
+                ("Install with pip.", "pip로 설치합니다."),
+                ("Python 3.15+", "Python 3.15+"),
+                ("Run Python.", "Python을 실행합니다."),
+            ],
+        );
+        assert!(output.contains(".. tab:: 기타 / pip"));
+        assert!(output.contains(".. tab:: Python 3.15+"));
+    }
+
+    #[test]
     fn image_alt_metadata_is_translatable_while_opaque_content_is_preserved() {
         let source = "\
 .. figure:: chart.svg
@@ -2632,28 +2705,61 @@ mod tests {
     }
 
     #[test]
+    fn structural_sphinx_fields_stay_verbatim() {
+        let source = ":orphan:\n:tocdepth: 2\n:nocomments: true\n:nosearch: yes\n";
+        let doc = RstParser.parse(source);
+        assert!(doc.translatable_segments().is_empty());
+        assert_eq!(RstParser.reconstruct(&doc, &TranslationMap::new()), source);
+    }
+
+    #[test]
+    fn rendered_abstract_and_dedication_bodies_are_translatable() {
+        let source = ":abstract: A concise summary.\n:dedication: For contributors.\n";
+        let doc = RstParser.parse(source);
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|segment| segment.source.as_str())
+            .collect();
+        assert_eq!(sources, ["A concise summary.", "For contributors."]);
+
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[
+                ("A concise summary.", "간결한 요약입니다."),
+                ("For contributors.", "기여자에게 바칩니다."),
+            ],
+        );
+        assert_eq!(
+            output,
+            ":abstract: 간결한 요약입니다.\n:dedication: 기여자에게 바칩니다.\n"
+        );
+    }
+
+    #[test]
     fn standalone_field_body_is_translatable_without_touching_its_name() {
-        let source = ":feature: Ready for readers.\n";
+        let source = "Intro.\n\n:feature: Ready for readers.\n";
         let doc = RstParser.parse(source);
         let segments = doc.translatable_segments();
-        assert_eq!(segments.len(), 1);
-        assert_eq!(segments[0].source, "Ready for readers.");
+        assert_eq!(segments.len(), 2);
+        assert_eq!(segments[1].source, "Ready for readers.");
 
         let output = translate_all(
             &RstParser,
             source,
             &[("Ready for readers.", "독자를 위한 설명입니다.")],
         );
-        assert_eq!(output, ":feature: 독자를 위한 설명입니다.\n");
+        assert_eq!(output, "Intro.\n\n:feature: 독자를 위한 설명입니다.\n");
     }
 
     #[test]
     fn multiline_standalone_field_body_reconstructs_as_one_valid_field() {
-        let source = ":feature: First line\n   and second line.\n\nAfter.\n";
+        let source = "Intro.\n\n:feature: First line\n   and second line.\n\nAfter.\n";
         let doc = RstParser.parse(source);
         let segments = doc.translatable_segments();
-        assert_eq!(segments.len(), 2);
-        assert_eq!(segments[0].source, "First line and second line.");
+        assert_eq!(segments.len(), 3);
+        assert_eq!(segments[1].source, "First line and second line.");
 
         let output = translate_all(
             &RstParser,
@@ -2663,7 +2769,10 @@ mod tests {
                 "두 줄로 작성된 필드 설명입니다.",
             )],
         );
-        assert_eq!(output, ":feature: 두 줄로 작성된 필드 설명입니다.\n\nAfter.\n");
+        assert_eq!(
+            output,
+            "Intro.\n\n:feature: 두 줄로 작성된 필드 설명입니다.\n\nAfter.\n"
+        );
     }
 
     #[test]
@@ -2803,6 +2912,32 @@ mod tests {
         let doc = RstParser.parse(source);
         assert!(doc.all_segments().is_empty());
         assert_eq!(RstParser.reconstruct(&doc, &TranslationMap::new()), source);
+    }
+
+    #[test]
+    fn list_table_with_malformed_post_row_lines_stays_opaque() {
+        for source in [
+            ".. list-table::\n\n   * - Keep me\n   malformed same-level text\n",
+            ".. list-table::\n\n   * - Keep me\n   * malformed row\n",
+        ] {
+            assert!(directive_table::parse_list(source, 0..source.len()).is_none());
+            let doc = RstParser.parse(source);
+            assert!(doc.all_segments().is_empty());
+            assert_eq!(RstParser.reconstruct(&doc, &TranslationMap::new()), source);
+        }
+    }
+
+    #[test]
+    fn empty_or_rowless_list_table_stays_opaque() {
+        for source in [
+            ".. list-table:: Empty\n",
+            ".. list-table::\n   :header-rows: 0\n",
+        ] {
+            assert!(directive_table::parse_list(source, 0..source.len()).is_none());
+            let doc = RstParser.parse(source);
+            assert!(doc.all_segments().is_empty());
+            assert_eq!(RstParser.reconstruct(&doc, &TranslationMap::new()), source);
+        }
     }
 
     #[test]

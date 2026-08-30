@@ -42,25 +42,31 @@ impl Line<'_> {
 
 struct RawCell {
     start: usize,
+    content_indent: usize,
     last_nonblank_end: Option<usize>,
 }
 
 impl RawCell {
-    fn new(source: &str, start: usize, line_end: usize) -> Self {
+    fn new(source: &str, start: usize, line_end: usize, content_indent: usize) -> Self {
         let last_nonblank_end = (!source[start..line_end].trim().is_empty()).then(|| {
             line_end - source[start..line_end].len() + source[start..line_end].trim_end().len()
         });
         Self {
             start,
+            content_indent,
             last_nonblank_end,
         }
     }
 
-    fn include(&mut self, line: &Line<'_>) {
+    fn include(&mut self, line: &Line<'_>) -> bool {
+        if !line.is_blank() && line.indent() < self.content_indent {
+            return false;
+        }
         if !line.is_blank() {
             self.last_nonblank_end =
                 Some(line.end() - line.content.len() + line.content.trim_end().len());
         }
+        true
     }
 
     fn finish(self, source: &str) -> (Range<usize>, String) {
@@ -148,7 +154,7 @@ pub fn parse_list(source: &str, range: Range<usize>) -> Option<DirectiveTable> {
                 rows.push(row);
             }
             current_row = Some(Vec::new());
-            current_cell = Some(RawCell::new(source, start, line.end()));
+            current_cell = Some(RawCell::new(source, start, line.end(), start - line.start));
             continue;
         }
 
@@ -157,12 +163,17 @@ pub fn parse_list(source: &str, range: Range<usize>) -> Option<DirectiveTable> {
             if let Some(cell) = current_cell.take() {
                 row.push(cell.finish(source));
             }
-            current_cell = Some(RawCell::new(source, start, line.end()));
+            current_cell = Some(RawCell::new(source, start, line.end(), start - line.start));
             continue;
         }
 
-        if let Some(cell) = &mut current_cell {
-            cell.include(line);
+        if let Some(cell) = &mut current_cell
+            && cell.include(line)
+        {
+            continue;
+        }
+        if saw_row && !line.is_blank() {
+            return None;
         }
     }
     if let Some(cell) = current_cell {
@@ -172,6 +183,9 @@ pub fn parse_list(source: &str, range: Range<usize>) -> Option<DirectiveTable> {
         rows.push(row);
     }
 
+    if !saw_row || rows.is_empty() || rows.iter().any(Vec::is_empty) {
+        return None;
+    }
     if header_rows > rows.len() {
         return None;
     }
