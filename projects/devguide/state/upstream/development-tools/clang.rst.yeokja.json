@@ -1,0 +1,758 @@
+{
+  "version": 1,
+  "source_hash": 6600688933474280361,
+  "segments": [
+    {
+      "id": "section:0/block:0/seg:0",
+      "source": "Dynamic analysis with Clang",
+      "source_hash": 3891368042267996239,
+      "context_hash": 406727792280317617,
+      "translation": "Clang을 사용한 동적 분석",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861545Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:2/seg:0",
+      "source": "This document describes how to use Clang to perform analysis on Python and its libraries.",
+      "source_hash": 5402260563035802142,
+      "context_hash": 12105495077448702468,
+      "translation": "이 문서는 Clang을 사용하여 Python과 그 라이브러리를 분석하는 방법을 설명합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861550Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:3/seg:0",
+      "source": "This document does not cover interpreting the findings.",
+      "source_hash": 9507361276864220096,
+      "context_hash": 9598700640719135916,
+      "translation": "이 문서에서는 발견 사항을 해석하는 방법을 다루지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861551Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:3/seg:1",
+      "source": "For a discussion of interpreting results, see Marshall Clow's `Testing libc++ with -fsanitize=undefined <https://cplusplusmusings.wordpress.com/tag/clang/>`__.",
+      "source_hash": 8109242825106662399,
+      "context_hash": 11126391951907709685,
+      "translation": "결과 해석에 관한 논의는 Marshall Clow의 `Testing libc++ with -fsanitize=undefined <https://cplusplusmusings.wordpress.com/tag/clang/>`__\\ 를 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861552Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:3/seg:2",
+      "source": "The blog posting is a detailed examinations of issues uncovered by Clang in ``libc++``.",
+      "source_hash": 15286412532217348020,
+      "context_hash": 15833110630508434583,
+      "translation": "이 블로그 게시물에서는 Clang이 ``libc++``\\ 에서 발견한 문제를 자세히 살펴봅니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861552Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:4/seg:0",
+      "source": "The document focuses on Clang, although most techniques should generally apply to GCC's sanitizers as well.",
+      "source_hash": 15216594030046358542,
+      "context_hash": 14723490850252291247,
+      "translation": "이 문서는 Clang에 중점을 두지만, 대부분의 기법은 일반적으로 GCC의 새니타이저에도 적용할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861553Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:5/seg:0",
+      "source": "The instructions were tested on Linux, but they should work on macOS as well.",
+      "source_hash": 15278154043502853530,
+      "context_hash": 4375620448389714186,
+      "translation": "이 지침은 Linux에서 테스트되었지만 macOS에서도 작동할 것입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861553Z",
+      "issues": []
+    },
+    {
+      "id": "section:0/block:5/seg:1",
+      "source": "Instructions for Windows are incomplete.",
+      "source_hash": 5813431372862093780,
+      "context_hash": 12138714208984586773,
+      "translation": "Windows용 지침은 완전하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861554Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:0/seg:0",
+      "source": "What is Clang?",
+      "source_hash": 15526466146461677768,
+      "context_hash": 6344446140781165551,
+      "translation": "Clang이란 무엇입니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861554Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:0",
+      "source": "Clang is the C, C++ and Objective C front-end for the LLVM compiler.",
+      "source_hash": 8215152714455069111,
+      "context_hash": 7873178647261821156,
+      "translation": "Clang은 LLVM 컴파일러용 C, C++ 및 Objective C 프런트엔드입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861555Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:1",
+      "source": "The front-end provides access to LLVM's optimizer and code generator.",
+      "source_hash": 14981643217999355114,
+      "context_hash": 7575465502497439095,
+      "translation": "프런트엔드는 LLVM의 최적화 도구와 코드 제너레이터에 대한 접근을 제공합니다.",
+      "glossary_snapshot": {
+        "generator": "제너레이터"
+      },
+      "translated_at": "2026-08-30T20:43:51.861555Z",
+      "issues": []
+    },
+    {
+      "id": "section:1/block:1/seg:2",
+      "source": "The sanitizers - or checkers - are hooks into the code generation phase to instrument compiled code so suspicious behavior is flagged.",
+      "source_hash": 12834528192819974597,
+      "context_hash": 12361778857590104351,
+      "translation": "새니타이저 또는 검사기는 의심스러운 동작이 표시되도록 컴파일된 코드를 계측하기 위해 코드 생성 단계에 연결되는 훅입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861558Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:0/seg:0",
+      "source": "What are sanitizers?",
+      "source_hash": 6825998954984804499,
+      "context_hash": 7482036857695336541,
+      "translation": "새니타이저란 무엇입니까?",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861558Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:0",
+      "source": "Clang sanitizers are runtime checkers used to identify suspicious and undefined behavior.",
+      "source_hash": 8960658885111356953,
+      "context_hash": 17134477238709946238,
+      "translation": "Clang 새니타이저는 의심스럽거나 정의되지 않은 동작을 식별하는 데 사용되는 런타임 검사기입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861559Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:1/seg:1",
+      "source": "The checking occurs at runtime with actual runtime parameters so false positives are kept to a minimum.",
+      "source_hash": 5009522840471176448,
+      "context_hash": 13318158689585101218,
+      "translation": "검사는 실제 런타임 매개변수를 사용하여 런타임에 수행되므로 거짓 양성이 최소화됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861559Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:0",
+      "source": "There are a number of sanitizers available, but two that should be used on a regular basis are the Address Sanitizer (or ASan) and the Undefined Behavior Sanitizer (or UBSan).",
+      "source_hash": 11945736590564365471,
+      "context_hash": 1945054270940424632,
+      "translation": "사용할 수 있는 새니타이저는 여러 가지이지만, 정기적으로 사용해야 하는 두 가지는 Address Sanitizer(ASan)와 Undefined Behavior Sanitizer(UBSan)입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861560Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:1",
+      "source": "ASan is invoked with the compiler option ``-fsanitize=address``, and UBSan is invoked with ``-fsanitize=undefined``.",
+      "source_hash": 4546892843127225145,
+      "context_hash": 10127287619001676307,
+      "translation": "ASan은 컴파일러 옵션 ``-fsanitize=address``\\ 로 호출하고, UBSan은 ``-fsanitize=undefined``\\ 로 호출합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861560Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:2/seg:2",
+      "source": "The flags are passed through ``CFLAGS`` and ``CXXFLAGS``, and sometimes through ``CC`` and ``CXX`` (in addition to the compiler).",
+      "source_hash": 3260016929619398986,
+      "context_hash": 17694552064720532,
+      "translation": "플래그는 ``CFLAGS``\\ 와 ``CXXFLAGS``\\ 를 통해 전달되며, 때로는 컴파일러와 함께 ``CC``\\ 와 ``CXX``\\ 를 통해서도 전달됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861560Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:3/seg:0",
+      "source": "A complete list of sanitizers can be found at `Controlling Code Generation <https://clang.llvm.org/docs/UsersManual.html#controlling-code-generation>`__.",
+      "source_hash": 1716230545449677197,
+      "context_hash": 9301563785434891403,
+      "translation": "새니타이저의 전체 목록은 `Controlling Code Generation <https://clang.llvm.org/docs/UsersManual.html#controlling-code-generation>`__\\ 에서 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861561Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:4/seg:0",
+      "source": "Because sanitizers operate at runtime on real program parameters, its important to provide a complete set of positive and negative self tests.",
+      "source_hash": 15148639492455415522,
+      "context_hash": 4022455294264237388,
+      "translation": "새니타이저는 실제 프로그램 매개변수를 사용하여 런타임에 작동하므로, 완전한 긍정 및 부정 자체 테스트 모음을 제공하는 것이 중요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861561Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:0",
+      "source": "Clang and its sanitizers have strengths (and weaknesses).",
+      "source_hash": 1114352565610396106,
+      "context_hash": 18240578822770235011,
+      "translation": "Clang과 그 새니타이저에는 강점과 약점이 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861561Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:1",
+      "source": "Its just one tool in the war chest to uncovering bugs and improving code quality.",
+      "source_hash": 5130741540632474864,
+      "context_hash": 14996326001513719170,
+      "translation": "이는 버그를 발견하고 코드 품질을 개선하기 위한 도구 중 하나일 뿐입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861562Z",
+      "issues": []
+    },
+    {
+      "id": "section:2/block:5/seg:2",
+      "source": "Clang should be used to complement other methods, including Code Reviews, `Valgrind`_, etc.",
+      "source_hash": 2296002515746372622,
+      "context_hash": 18087243240753251558,
+      "translation": "Clang은 코드 리뷰, `Valgrind`_\\ 등을 비롯한 다른 방법을 보완하는 데 사용해야 합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861562Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:0/seg:0",
+      "source": "Clang/LLVM setup",
+      "source_hash": 1869308562488641468,
+      "context_hash": 16041588509931958114,
+      "translation": "Clang/LLVM 설정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861562Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:1/seg:0",
+      "source": "Pre-built Clang builds are available for most platforms:",
+      "source_hash": 11190091324400554961,
+      "context_hash": 2919708999664137187,
+      "translation": "미리 빌드된 Clang 빌드는 대부분의 플랫폼에서 제공됩니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861563Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:2/seg:0",
+      "source": "On macOS, Clang is the default compiler.",
+      "source_hash": 14232037740729777176,
+      "context_hash": 16707202788519667858,
+      "translation": "macOS에서는 Clang이 기본 컴파일러입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861563Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:0",
+      "source": "For mainstream Linux distros, you can install a ``clang`` package.",
+      "source_hash": 17057067524113984085,
+      "context_hash": 1258114523044232045,
+      "translation": "주요 Linux 배포판에서는 ``clang`` 패키지를 설치할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861563Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:3/seg:1",
+      "source": "In some cases, you also need to install ``llvm`` separately, otherwise some tools are not available.",
+      "source_hash": 11110499636192645517,
+      "context_hash": 1659742447033578974,
+      "translation": "경우에 따라 ``llvm``\\ 도 별도로 설치해야 하며, 그렇지 않으면 일부 도구를 사용할 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861564Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:4/seg:0",
+      "source": "On Windows, the installer for Visual Studio (not Code) includes the \"C++ clang tools for windows\" feature.",
+      "source_hash": 792043409385624747,
+      "context_hash": 10934996451172813024,
+      "translation": "Windows에서는 Visual Studio(Code가 아님) 설치 프로그램에 \"C++ clang tools for windows\" 기능이 포함되어 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861564Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:5/seg:0",
+      "source": "You can also build ``clang`` from source; refer to `the clang documentation <https://clang.llvm.org/>`__ for details.",
+      "source_hash": 17920943000579401711,
+      "context_hash": 15730260580654637378,
+      "translation": "``clang``\\ 을 소스에서 빌드할 수도 있습니다. 자세한 내용은 `the clang documentation <https://clang.llvm.org/>`__\\ 을 참조하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:51.861565Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:0",
+      "source": "The installer does not install all the components needed on occasion.",
+      "source_hash": 3250043350391027536,
+      "context_hash": 17118977316803046717,
+      "translation": "설치 관리자는 경우에 따라 필요한 모든 구성 요소를 설치하지 않습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426853Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:1",
+      "source": "For example, you might want to run a ``scan-build`` or examine the results with ``scan-view``.",
+      "source_hash": 3708361870201358825,
+      "context_hash": 17583986779641263656,
+      "translation": "예를 들어, ``scan-build``\\ 를 실행하거나 ``scan-view``\\ 로 결과를 살펴보고 싶을 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426858Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:6/seg:2",
+      "source": "If this is your case, you can build Clang from source and copy tools from ``tools/clang/tools`` to a directory on your ``PATH``.",
+      "source_hash": 2463926815002187798,
+      "context_hash": 15153901304617542254,
+      "translation": "이 경우 Clang을 소스에서 빌드하고 ``tools/clang/tools``\\ 의 도구를 ``PATH``\\ 에 있는 디렉터리로 복사할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426858Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:0",
+      "source": "Another reason to build from source is to get the latest version of Clang/LLVM, if your platform's channels don't provide it yet.",
+      "source_hash": 8661433298988216080,
+      "context_hash": 36786062117704463,
+      "translation": "플랫폼의 채널에서 아직 최신 버전을 제공하지 않는 경우, 최신 버전의 Clang/LLVM을 얻는 것도 소스에서 빌드하는 이유입니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426859Z",
+      "issues": []
+    },
+    {
+      "id": "section:3/block:7/seg:1",
+      "source": "Newer versions of Clang/LLVM introduce new sanitizer checks.",
+      "source_hash": 8463546129418376470,
+      "context_hash": 3612064194293931681,
+      "translation": "최신 버전의 Clang/LLVM에는 새로운 새니타이저 검사가 도입됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426860Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:0/seg:0",
+      "source": "Python build setup",
+      "source_hash": 8808968966012636149,
+      "context_hash": 3901193054263751378,
+      "translation": "Python 빌드 설정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426860Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:1/seg:0",
+      "source": "This portion of the document covers invoking Clang and LLVM with the options required so the sanitizers analyze Python with under its test suite.",
+      "source_hash": 3858415981657936332,
+      "context_hash": 4088386684714806284,
+      "translation": "문서의 이 부분에서는 새니타이저가 테스트 스위트에서 Python을 분석하도록 하는 데 필요한 옵션으로 Clang과 LLVM을 호출하는 방법을 다룹니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426860Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:2/seg:0",
+      "source": "Set the compiler to Clang, in case it's not the default",
+      "source_hash": 5828194270604192776,
+      "context_hash": 15274861979136704123,
+      "translation": "컴파일러가 기본적으로 Clang으로 설정되어 있지 않은 경우 Clang으로 설정하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426861Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:0",
+      "source": "If you want to use additional sanitizer options (found in Clang documentation), add them to the ``CFLAGS`` variable.",
+      "source_hash": 15243641575063802875,
+      "context_hash": 16423124628942730820,
+      "translation": "추가 새니타이저 옵션(Clang 문서에서 확인할 수 있음)을 사용하려면 ``CFLAGS`` 변수에 추가하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426861Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:4/seg:1",
+      "source": "For example, you may want the checked process to exit after the first failure",
+      "source_hash": 7024648674250337529,
+      "context_hash": 15876684102761887661,
+      "translation": "예를 들어, 검사 대상 프로세스가 첫 번째 실패 후 종료되도록 할 수 있습니다",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426861Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:6/seg:0",
+      "source": "Then, run ``./configure`` with the relevant flags:",
+      "source_hash": 875249269159421423,
+      "context_hash": 3476788124686981853,
+      "translation": "그런 다음 관련 플래그를 사용하여 ``./configure``\\ 를 실행하십시오:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426862Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:7/seg:0",
+      "source": "ASan: ``--with-address-sanitizer --without-pymalloc``",
+      "source_hash": 3919212341493525716,
+      "context_hash": 6767986145327506469,
+      "translation": "ASan: ``--with-address-sanitizer --without-pymalloc``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426862Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:8/seg:0",
+      "source": "UBsan: ``--with-undefined-behavior-sanitizer``",
+      "source_hash": 8732120186879696542,
+      "context_hash": 14695428531013042833,
+      "translation": "UBsan: ``--with-undefined-behavior-sanitizer``",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426862Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:9/seg:0",
+      "source": "The ``--without-pymalloc`` option is not necessary (tests should pass without it), but disabling pymalloc helps ASan uncover more bugs (ASan does not track individual allocations done by pymalloc).",
+      "source_hash": 15852575709160723675,
+      "context_hash": 10822826745045724957,
+      "translation": "``--without-pymalloc`` 옵션은 필요하지 않지만(이 옵션 없이도 테스트를 통과해야 함), pymalloc을 비활성화하면 ASan이 더 많은 버그를 찾아내는 데 도움이 됩니다(ASan은 pymalloc이 수행한 개별 할당을 추적하지 않음).",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426863Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:10/seg:0",
+      "source": "It is OK to specify both sanitizers.",
+      "source_hash": 2302104860435384550,
+      "context_hash": 12603841360496410903,
+      "translation": "두 새니타이저를 모두 지정해도 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426863Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:0",
+      "source": "After that, run ``make`` and ``make test`` as usual.",
+      "source_hash": 11430896484315996394,
+      "context_hash": 8359736471636841715,
+      "translation": "그 후 평소와 같이 ``make``\\ 와 ``make test``\\ 를 실행하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426864Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:11/seg:1",
+      "source": "Note that ``make`` itself may fail with a sanitizer failure, since the just-compiled Python runs during later stages of the build.",
+      "source_hash": 2716019737499433922,
+      "context_hash": 12336507616325537053,
+      "translation": "빌드 후반 단계에서 방금 컴파일된 Python이 실행되므로, 새니타이저 실패로 인해 ``make`` 자체가 실패할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426864Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:12/seg:0",
+      "source": "Build setup for enabling sanitizers for all code",
+      "source_hash": 4781961090371135415,
+      "context_hash": 10342318446756800243,
+      "translation": "모든 코드에서 새니타이저를 활성화하기 위한 빌드 설정",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426864Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:13/seg:0",
+      "source": "Some parts of Python (for example, ``_testembed``, ``_freeze_importlib``, ``test_cppext``) may not use the variables set by ``configure``, and with the above settings they'll be compiled without sanitization.",
+      "source_hash": 12432649279377548427,
+      "context_hash": 10731924584456900182,
+      "translation": "Python의 일부 구성 요소(예: ``_testembed``, ``_freeze_importlib``, ``test_cppext``)는 ``configure``\\ 에서 설정한 변수를 사용하지 않을 수 있으며, 위 설정에서는 새니타이저 검사 없이 컴파일됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426865Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:0",
+      "source": "As a workaround, you can pass the sanitizer options by way of the *compilers*, ``CC`` (for C) and ``CXX`` (for C++).",
+      "source_hash": 13021280284651633448,
+      "context_hash": 15621023151156792398,
+      "translation": "이 문제를 우회하려면 새니타이저 옵션을 *컴파일러*, 즉 ``CC`` (C용)와 ``CXX`` (C++용)를 통해 전달할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426865Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:1",
+      "source": "This is used below.",
+      "source_hash": 6099375188014553136,
+      "context_hash": 13326902160779827050,
+      "translation": "아래에서는 이 방법을 사용합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426865Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:14/seg:2",
+      "source": "Passing the options through ``LDFLAGS`` is also reported to work.",
+      "source_hash": 16004439745109512281,
+      "context_hash": 5705655984427335313,
+      "translation": "``LDFLAGS``\\ 를 통해 옵션을 전달하는 방법도 작동하는 것으로 보고되었습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426866Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:15/seg:0",
+      "source": "For ASan, use",
+      "source_hash": 9443563955140652296,
+      "context_hash": 3741900707844877777,
+      "translation": "ASan의 경우 다음을 사용하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426866Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:17/seg:0",
+      "source": "And for UBSan",
+      "source_hash": 10032011647060223003,
+      "context_hash": 14906307804186916742,
+      "translation": "UBSan의 경우에는 다음을 사용하십시오",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426866Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:19/seg:0",
+      "source": "It's OK to specify both sanitizers.",
+      "source_hash": 4990198558391402108,
+      "context_hash": 10886163718227128004,
+      "translation": "두 새니타이저를 모두 지정해도 됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426866Z",
+      "issues": []
+    },
+    {
+      "id": "section:4/block:20/seg:0",
+      "source": "After this, run ``./configure``, ``make`` and ``make test`` as usual.",
+      "source_hash": 13749468189464506100,
+      "context_hash": 6621990253709029363,
+      "translation": "그 후 평소와 같이 ``./configure``, ``make``, ``make test``\\ 를 실행하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426867Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:0/seg:0",
+      "source": "Analyzing the output",
+      "source_hash": 362671158710018794,
+      "context_hash": 13222755428228186369,
+      "translation": "출력 분석",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426867Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:1/seg:0",
+      "source": "Sanitizer failures will make the process fail and output a diagnostic, for example:",
+      "source_hash": 8021807056545670426,
+      "context_hash": 13026484884674117343,
+      "translation": "새니타이저 실패가 발생하면 프로세스가 실패하고 다음과 같은 진단 정보를 출력합니다:",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426868Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:0",
+      "source": "If you are using the address sanitizer, an additional tool is needed to get good traces.",
+      "source_hash": 14246952077464103627,
+      "context_hash": 3832213587264249082,
+      "translation": "주소 새니타이저를 사용하는 경우 유용한 추적 정보를 얻으려면 추가 도구가 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426868Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:1",
+      "source": "Usually, this happens automatically through the ``llvm-symbolizer`` tool.",
+      "source_hash": 17332807716203280149,
+      "context_hash": 2899918959953897212,
+      "translation": "일반적으로 ``llvm-symbolizer`` 도구를 통해 자동으로 처리됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426868Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:2",
+      "source": "If this tool is not installed on your ``PATH``, you can set ``ASAN_SYMBOLIZER_PATH`` to the location of the tool, or pipe test output through ``asan_symbolize.py`` script from the Clang distribution.",
+      "source_hash": 13670396111982650118,
+      "context_hash": 5922968088450342647,
+      "translation": "이 도구가 ``PATH``\\ 에 설치되어 있지 않다면 ``ASAN_SYMBOLIZER_PATH``\\ 를 도구의 위치로 설정하거나, 테스트 출력을 Clang 배포판의 ``asan_symbolize.py`` 스크립트로 파이프할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426869Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:3/seg:3",
+      "source": "For example, from Issue 20953 during compile (formatting added for clarity):",
+      "source_hash": 6535952994407354286,
+      "context_hash": 2605431280342355362,
+      "translation": "예를 들어, 다음은 컴파일 중 발생한 이슈 20953의 사례입니다(명확성을 위해 서식 추가):",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:47.426869Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:5/seg:0",
+      "source": "If ``asan_symbolize.py`` is not installed, build Clang from source, then look in the Clang/LLVM build directory for it and use it directly or copy it to a directory on ``PATH``.",
+      "source_hash": 10472122044803664516,
+      "context_hash": 3501360849834561629,
+      "translation": "``asan_symbolize.py``\\ 가 설치되어 있지 않으면 Clang을 소스에서 빌드한 다음, Clang/LLVM 빌드 디렉터리에서 해당 파일을 찾아 직접 사용하거나 ``PATH``\\ 에 있는 디렉터리로 복사하십시오.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:09.092269Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:6/seg:0",
+      "source": "Ignoring findings",
+      "source_hash": 17167107016146822122,
+      "context_hash": 11171233859066836262,
+      "translation": "발견 사항 무시하기",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:09.092273Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:0",
+      "source": "Clang allows you to alter the behavior of sanitizer tools for certain source-level by providing a special ignorelist file at compile-time.",
+      "source_hash": 6231047299254491068,
+      "context_hash": 9992088457408164116,
+      "translation": "Clang에서는 컴파일 시 특수 무시 목록 파일을 제공하여 특정 소스 수준 항목에 대한 새니타이저 도구의 동작을 변경할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:09.092274Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:8/seg:1",
+      "source": "The ignorelist is needed because it reports every instance of an issue, even if the issue is reported 10's of thousands of time in un-managed library code.",
+      "source_hash": 15081514934648078068,
+      "context_hash": 1407026352328700927,
+      "translation": "관리되지 않는 라이브러리 코드에서 문제가 수만 번 보고되더라도 모든 문제 사례를 보고하므로 무시 목록이 필요합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:09.092274Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:0",
+      "source": "You specify the ignorelist with ``-fsanitize-ignorelist=XXX``.",
+      "source_hash": 16859753225841628918,
+      "context_hash": 4313751900203099436,
+      "translation": "``-fsanitize-ignorelist=XXX``\\ 로 무시 목록을 지정합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:09.092275Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:9/seg:1",
+      "source": "For example",
+      "source_hash": 9117899214634101441,
+      "context_hash": 12097968406095723452,
+      "translation": "예를 들면 다음과 같습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:09.092276Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:0",
+      "source": "``my_ignorelist.txt`` would then contain entries such as the following.",
+      "source_hash": 1203178785492723809,
+      "context_hash": 7020904931733354101,
+      "translation": "그러면 ``my_ignorelist.txt``\\ 에는 다음과 같은 항목이 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:09.092277Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:11/seg:1",
+      "source": "The entry will ignore a bug in ``libc++``'s ``ios`` formatting functions",
+      "source_hash": 5000346676989280458,
+      "context_hash": 9945948540613779138,
+      "translation": "이 항목은 ``libc++``\\ 의 ``ios`` 포매팅 함수에 있는 버그를 무시합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:09.092277Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:13/seg:0",
+      "source": "As an example with Python 3.4.0, ``audioop.c`` will produce a number of findings",
+      "source_hash": 13166198062239052751,
+      "context_hash": 16860201509948057852,
+      "translation": "Python 3.4.0을 예로 들면, ``audioop.c``\\ 에서 여러 발견 사항이 발생합니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:09.092277Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:15/seg:0",
+      "source": "One of the function of interest is ``audioop_getsample_impl`` (flagged at line 422), and the ignorelist entry would include",
+      "source_hash": 16136680177707266522,
+      "context_hash": 3967601829786066127,
+      "translation": "주목할 함수 중 하나는 ``audioop_getsample_impl``\\ (422번째 줄에서 표시됨)이며, 무시 목록 항목에는 다음이 포함됩니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:09.092278Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:17/seg:0",
+      "source": "Or, you could ignore the entire file with",
+      "source_hash": 4324072952056862076,
+      "context_hash": 3030291868299314175,
+      "translation": "또는 다음과 같이 파일 전체를 무시할 수도 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:09.092278Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:19/seg:0",
+      "source": "Unfortunately, you won't know what to ignorelist until you run the sanitizer.",
+      "source_hash": 8948850970123595510,
+      "context_hash": 15374227639438355043,
+      "translation": "안타깝게도 새니타이저를 실행하기 전에는 무시 목록에 무엇을 추가해야 하는지 알 수 없습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:09.092278Z",
+      "issues": []
+    },
+    {
+      "id": "section:5/block:20/seg:0",
+      "source": "The documentation is available at `Sanitizer special case list <https://clang.llvm.org/docs/SanitizerSpecialCaseList.html>`__.",
+      "source_hash": 12615558219962015573,
+      "context_hash": 15874042393371646839,
+      "translation": "문서는 `Sanitizer special case list <https://clang.llvm.org/docs/SanitizerSpecialCaseList.html>`__\\ 에서 확인할 수 있습니다.",
+      "glossary_snapshot": {},
+      "translated_at": "2026-08-30T20:43:09.092278Z",
+      "issues": []
+    }
+  ]
+}
