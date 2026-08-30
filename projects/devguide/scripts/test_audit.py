@@ -1,0 +1,148 @@
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from projects.devguide.scripts.audit import audit_html, audit_translation
+
+
+class TranslationAuditTests(unittest.TestCase):
+    def make_tree(self, root: str) -> tuple[Path, Path, Path]:
+        base = Path(root)
+        source = base / "upstream"
+        state = base / "state" / "upstream"
+        output = base / "ko"
+        for path in (source, state, output):
+            path.mkdir(parents=True)
+        return source, state, output
+
+    def write_complete(self, source: Path, state: Path, output: Path) -> None:
+        (source / "index.rst").write_text("Hello.\n", encoding="utf-8")
+        (output / "index.rst").write_text("안녕하세요.\n", encoding="utf-8")
+        payload = {
+            "version": 1,
+            "source_hash": 1,
+            "segments": [{
+                "id": "section:0/block:0/seg:0",
+                "source": "Hello.",
+                "source_hash": 1,
+                "context_hash": 1,
+                "translation": "안녕하세요.",
+                "glossary_snapshot": {},
+                "translated_at": "2026-08-30T00:00:00Z",
+                "issues": [],
+            }],
+        }
+        (state / "index.rst.yeokja.json").write_text(
+            json.dumps(payload), encoding="utf-8"
+        )
+
+    def test_complete_tree_has_no_errors(self):
+        with tempfile.TemporaryDirectory() as root:
+            source, state, output = self.make_tree(root)
+            self.write_complete(source, state, output)
+            self.assertEqual(audit_translation(source, state, output), [])
+
+    def test_reports_missing_state_and_output(self):
+        with tempfile.TemporaryDirectory() as root:
+            source, state, output = self.make_tree(root)
+            (source / "index.rst").write_text("Hello.\n", encoding="utf-8")
+            errors = audit_translation(source, state, output)
+            self.assertIn("missing state: index.rst.yeokja.json", errors)
+            self.assertIn("missing output: index.rst", errors)
+
+    def test_reports_null_translation_and_issues(self):
+        with tempfile.TemporaryDirectory() as root:
+            source, state, output = self.make_tree(root)
+            self.write_complete(source, state, output)
+            path = state / "index.rst.yeokja.json"
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload["segments"][0]["translation"] = None
+            payload["segments"][0]["issues"] = [{"kind": "format"}]
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            errors = audit_translation(source, state, output)
+            self.assertTrue(any("missing translation" in error for error in errors))
+            self.assertTrue(any("unresolved issues" in error for error in errors))
+
+    def test_reports_orphan_state(self):
+        with tempfile.TemporaryDirectory() as root:
+            source, state, output = self.make_tree(root)
+            self.write_complete(source, state, output)
+            (state / "orphan.rst.yeokja.json").write_text(
+                '{"version": 1, "source_hash": 1, "segments": []}',
+                encoding="utf-8",
+            )
+            self.assertIn(
+                "orphan state: orphan.rst.yeokja.json",
+                audit_translation(source, state, output),
+            )
+
+    def test_accepts_zero_segments_and_reports_invalid_state_fields(self):
+        with tempfile.TemporaryDirectory() as root:
+            source, state, output = self.make_tree(root)
+            (source / "nested" / "raw.rst").parent.mkdir()
+            (source / "nested" / "raw.rst").write_text(".. raw:: html\n", encoding="utf-8")
+            (output / "nested").mkdir()
+            (output / "nested" / "raw.rst").write_text(".. raw:: html\n", encoding="utf-8")
+            path = state / "nested" / "raw.rst.yeokja.json"
+            path.parent.mkdir()
+            path.write_text('{"version": 1, "segments": []}', encoding="utf-8")
+            self.assertEqual(audit_translation(source, state, output), [])
+            path.write_text('{"version": 2, "segments": {}}', encoding="utf-8")
+            errors = audit_translation(source, state, output)
+            self.assertIn("invalid version: nested/raw.rst.yeokja.json", errors)
+            self.assertIn("invalid segments: nested/raw.rst.yeokja.json", errors)
+
+
+class HtmlAuditTests(unittest.TestCase):
+    def test_accepts_supported_local_and_external_links(self):
+        with tempfile.TemporaryDirectory() as root:
+            site = Path(root)
+            (site / "guide").mkdir()
+            (site / "_static").mkdir()
+            (site / "_static" / "app.css").write_text("", encoding="utf-8")
+            (site / "guide" / "index.html").write_text(
+                '<h1 id="target">Guide</h1>', encoding="utf-8"
+            )
+            (site / "index.html").write_text(
+                '<h1 id="intro">Index</h1>'
+                '<a href="guide/">guide</a>'
+                '<a href="guide/#target">target</a>'
+                '<a href="#intro">intro</a>'
+                '<a href="/_static/app.css">css</a>'
+                '<a href="https://example.com/">external</a>'
+                '<a href="mailto:docs@example.com">mail</a>',
+                encoding="utf-8",
+            )
+            self.assertEqual(audit_html(site), [])
+
+    def test_reports_missing_file_and_fragment(self):
+        with tempfile.TemporaryDirectory() as root:
+            site = Path(root)
+            (site / "index.html").write_text(
+                '<a href="missing.html">missing</a>'
+                '<a href="#absent">fragment</a>',
+                encoding="utf-8",
+            )
+            errors = audit_html(site)
+            self.assertTrue(any("missing target" in error for error in errors))
+            self.assertTrue(any("missing fragment" in error for error in errors))
+
+    def test_decodes_named_anchors_and_rejects_site_root_escapes(self):
+        with tempfile.TemporaryDirectory() as root:
+            site = Path(root)
+            (site / "target.html").write_text(
+                '<a name="한글 앵커">target</a>', encoding="utf-8"
+            )
+            (site / "index.html").write_text(
+                '<a href="target.html#%ED%95%9C%EA%B8%80%20%EC%95%B5%EC%BB%A4">target</a>'
+                '<a href="../escape.html">escape</a>',
+                encoding="utf-8",
+            )
+            errors = audit_html(site)
+            self.assertEqual(len(errors), 1)
+            self.assertIn("escapes site root", errors[0])
+
+
+if __name__ == "__main__":
+    unittest.main()

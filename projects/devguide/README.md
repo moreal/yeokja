@@ -45,6 +45,9 @@ python3 projects/devguide/scripts/audit.py translation
 python3 projects/devguide/scripts/audit.py html
 ```
 
+두 감사 스크립트는 문제가 있으면 정렬된 진단을 출력하고 0이 아닌 상태로
+종료합니다.
+
 HTML 빌드는 Sphinx 경고를 오류로 취급합니다. 고정된 upstream의 빌드 의존성은
 `projects/devguide/upstream/requirements.txt`에 있습니다.
 
