@@ -97,14 +97,14 @@ def _audit_state_file(
     label = state_relative.as_posix()
     try:
         payload = json.loads(state_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        _add_error(errors, state_relative, "", f"invalid state: {label}: {error}")
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        _add_error(errors, state_relative, "", f"invalid state: {label}")
         return
 
     if not isinstance(payload, dict):
         _add_error(errors, state_relative, "", f"invalid state: {label}")
         return
-    if payload.get("version") != 1:
+    if type(payload.get("version")) is not int or payload["version"] != 1:
         _add_error(errors, state_relative, "", f"invalid version: {label}")
 
     segments = payload.get("segments")
@@ -153,17 +153,44 @@ def audit_html(site_root: Path) -> list[str]:
     """Return deterministic local-link and fragment diagnostics for HTML output."""
     site_root = site_root.resolve()
     documents: dict[Path, _DocumentParser] = {}
-    for path in sorted(site_root.rglob("*.html")) if site_root.exists() else []:
-        parser = _DocumentParser()
-        parser.feed(path.read_text(encoding="utf-8"))
-        parser.close()
-        documents[path.resolve()] = parser
-
+    document_paths: dict[Path, Path] = {}
     errors: list[tuple[str, str, str]] = []
+    for path in sorted(site_root.rglob("*.html")) if site_root.exists() else []:
+        relative = path.relative_to(site_root)
+        try:
+            resolved_path = path.resolve()
+            resolved_path.relative_to(site_root)
+        except (OSError, RuntimeError, ValueError):
+            _add_error(
+                errors,
+                relative,
+                "",
+                f"escapes site root: {relative.as_posix()}",
+            )
+            continue
+        parser = _DocumentParser()
+        try:
+            parser.feed(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError):
+            _add_error(errors, relative, "", f"invalid html: {relative.as_posix()}")
+            continue
+        parser.close()
+        documents[resolved_path] = parser
+        document_paths[resolved_path] = path
+
     for referring_path, parser in documents.items():
-        referring_relative = referring_path.relative_to(site_root)
+        referring_relative = document_paths[referring_path].relative_to(site_root)
         for href in parser.hrefs:
-            parsed = urlsplit(href)
+            try:
+                parsed = urlsplit(href)
+            except ValueError:
+                _add_error(
+                    errors,
+                    referring_relative,
+                    href,
+                    f"invalid URL: {referring_relative.as_posix()}: {href}",
+                )
+                continue
             if parsed.scheme or parsed.netloc:
                 continue
 
@@ -202,8 +229,17 @@ def audit_html(site_root: Path) -> list[str]:
 
 
 def _resolve_target(site_root: Path, referring_path: Path, path: str) -> Path | None:
-    candidate = site_root / path.lstrip("/") if path.startswith("/") else referring_path.parent / path
-    target = candidate.resolve()
+    if not path:
+        return referring_path
+    candidate = (
+        site_root / path.lstrip("/")
+        if path.startswith("/")
+        else referring_path.parent / path
+    )
+    try:
+        target = candidate.resolve()
+    except (OSError, RuntimeError):
+        return None
     try:
         target.relative_to(site_root)
     except ValueError:

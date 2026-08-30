@@ -93,6 +93,29 @@ class TranslationAuditTests(unittest.TestCase):
             self.assertIn("invalid version: nested/raw.rst.yeokja.json", errors)
             self.assertIn("invalid segments: nested/raw.rst.yeokja.json", errors)
 
+    def test_rejects_boolean_version(self):
+        with tempfile.TemporaryDirectory() as root:
+            source, state, output = self.make_tree(root)
+            self.write_complete(source, state, output)
+            path = state / "index.rst.yeokja.json"
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload["version"] = True
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            self.assertIn(
+                "invalid version: index.rst.yeokja.json",
+                audit_translation(source, state, output),
+            )
+
+    def test_reports_invalid_utf8_state(self):
+        with tempfile.TemporaryDirectory() as root:
+            source, state, output = self.make_tree(root)
+            self.write_complete(source, state, output)
+            path = state / "index.rst.yeokja.json"
+            path.write_bytes(b"\xff")
+            errors = audit_translation(source, state, output)
+            self.assertEqual(errors, sorted(errors))
+            self.assertTrue(any("invalid state: index.rst.yeokja.json" in error for error in errors))
+
 
 class HtmlAuditTests(unittest.TestCase):
     def test_accepts_supported_local_and_external_links(self):
@@ -142,6 +165,53 @@ class HtmlAuditTests(unittest.TestCase):
             errors = audit_html(site)
             self.assertEqual(len(errors), 1)
             self.assertIn("escapes site root", errors[0])
+
+    def test_fragment_only_and_query_only_links_target_non_index_document(self):
+        with tempfile.TemporaryDirectory() as root:
+            site = Path(root)
+            (site / "guide").mkdir()
+            (site / "guide" / "topic.html").write_text(
+                '<h1 id="section">Topic</h1>'
+                '<a href="#section">fragment</a>'
+                '<a href="?view=full">query</a>',
+                encoding="utf-8",
+            )
+            self.assertEqual(audit_html(site), [])
+
+    def test_reports_invalid_utf8_html(self):
+        with tempfile.TemporaryDirectory() as root:
+            site = Path(root)
+            (site / "bad.html").write_bytes(b"\xff")
+            errors = audit_html(site)
+            self.assertEqual(errors, sorted(errors))
+            self.assertTrue(any("invalid html: bad.html" in error for error in errors))
+
+    def test_reports_malformed_url(self):
+        with tempfile.TemporaryDirectory() as root:
+            site = Path(root)
+            (site / "index.html").write_text(
+                '<a href="http://[broken">bad url</a>', encoding="utf-8"
+            )
+            errors = audit_html(site)
+            self.assertEqual(errors, sorted(errors))
+            self.assertTrue(any("invalid URL: index.html" in error for error in errors))
+
+    def test_rejects_external_html_symlink_before_reading(self):
+        with tempfile.TemporaryDirectory() as root:
+            base = Path(root)
+            site = base / "site"
+            site.mkdir()
+            outside = base / "outside.html"
+            outside.write_text('<a href="missing.html">outside</a>', encoding="utf-8")
+            linked = site / "linked.html"
+            try:
+                linked.symlink_to(outside)
+            except (NotImplementedError, OSError) as error:
+                self.skipTest(f"symlinks are unavailable: {error}")
+            self.assertEqual(
+                audit_html(site),
+                ["escapes site root: linked.html"],
+            )
 
 
 if __name__ == "__main__":
