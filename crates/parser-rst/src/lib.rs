@@ -626,19 +626,48 @@ fn parse_enumerated_item(content: &str) -> Option<usize> {
 /// `:name: value` field marker → whether this line opens a field. The marker's
 /// closing colon must be followed by a space or end the line; a backtick there
 /// means an inline role (`:ref:`target``), which is prose.
-fn is_field_marker(trimmed: &str) -> bool {
-    let Some(rest) = trimmed.strip_prefix(':') else {
-        return false;
-    };
-    let Some(end) = rest.find(':') else {
-        return false;
-    };
+fn field_marker(trimmed: &str) -> Option<(&str, &str)> {
+    let rest = trimmed.strip_prefix(':')?;
+    let end = rest.find(':')?;
     let name = &rest[..end];
     if name.is_empty() || name.contains(char::is_whitespace) {
-        return false;
+        return None;
     }
     let after = &rest[end + 1..];
-    after.is_empty() || after.starts_with(' ')
+    (after.is_empty() || after.starts_with(' ')).then_some((name, after))
+}
+
+fn is_field_marker(trimmed: &str) -> bool {
+    field_marker(trimmed).is_some()
+}
+
+/// Byte offset of reader-facing prose after a standalone field marker.
+/// Indented fields are directive options, while standard bibliographic fields
+/// are document metadata; both remain verbatim.
+fn standalone_field_body_start(content: &str) -> Option<usize> {
+    if content.starts_with(char::is_whitespace) {
+        return None;
+    }
+    let (name, after) = field_marker(content)?;
+    if matches!(
+        name.to_ascii_lowercase().as_str(),
+        "author"
+            | "authors"
+            | "organization"
+            | "address"
+            | "contact"
+            | "version"
+            | "revision"
+            | "status"
+            | "date"
+            | "copyright"
+            | "dedication"
+            | "abstract"
+    ) {
+        return None;
+    }
+    let leading = after.len() - after.trim_start().len();
+    (!after.trim().is_empty()).then_some(content.len() - after.len() + leading)
 }
 
 /// `.. name:: arguments` → the directive's name.
@@ -1036,8 +1065,28 @@ impl DocumentParser for RstParser {
                 // No closing border: not a table after all; fall through.
             }
 
-            // Field list entry (`:name: value`) or line block (`| text`):
-            // structure and metadata, kept verbatim.
+            // A standalone field keeps its marker exact while exposing its
+            // reader-facing body. Continuations belong to the same body span.
+            if let Some(body_start) = standalone_field_body_start(line.content) {
+                state.flush_run();
+                let mut end = i;
+                while end + 1 < lines.len()
+                    && !lines[end + 1].is_blank()
+                    && lines[end + 1].indent() > line.indent()
+                {
+                    end += 1;
+                }
+                state.push_span_block(
+                    BlockType::Paragraph,
+                    line.start + body_start..lines[end].end(),
+                    BlockRole::None,
+                );
+                i = end + 1;
+                continue;
+            }
+
+            // Directive options, document metadata, empty fields, and line
+            // blocks are structure rather than reader-facing prose.
             if is_field_marker(trimmed) || trimmed == "|" || trimmed.starts_with("| ") {
                 state.flush_run();
                 i += 1;
@@ -2574,12 +2623,62 @@ mod tests {
     }
 
     #[test]
-    fn field_list_stays_verbatim() {
+    fn docinfo_field_list_stays_verbatim() {
         let source = ":author: Someone\n:date: today\n\nBody.\n";
         let doc = RstParser.parse(source);
         let segments = doc.translatable_segments();
         assert_eq!(segments.len(), 1);
         assert_eq!(segments[0].source, "Body.");
+    }
+
+    #[test]
+    fn standalone_field_body_is_translatable_without_touching_its_name() {
+        let source = ":feature: Ready for readers.\n";
+        let doc = RstParser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 1);
+        assert_eq!(segments[0].source, "Ready for readers.");
+
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[("Ready for readers.", "독자를 위한 설명입니다.")],
+        );
+        assert_eq!(output, ":feature: 독자를 위한 설명입니다.\n");
+    }
+
+    #[test]
+    fn multiline_standalone_field_body_reconstructs_as_one_valid_field() {
+        let source = ":feature: First line\n   and second line.\n\nAfter.\n";
+        let doc = RstParser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 2);
+        assert_eq!(segments[0].source, "First line and second line.");
+
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[(
+                "First line and second line.",
+                "두 줄로 작성된 필드 설명입니다.",
+            )],
+        );
+        assert_eq!(output, ":feature: 두 줄로 작성된 필드 설명입니다.\n\nAfter.\n");
+    }
+
+    #[test]
+    fn directive_option_signatures_and_paths_stay_opaque() {
+        let source = "\
+.. code-block:: python
+   :name: Lib/example.py
+   :signature: str(object='')
+   :caption: Lib/example.py
+
+   print('hello')
+";
+        let doc = RstParser.parse(source);
+        assert!(doc.translatable_segments().is_empty());
+        assert_eq!(RstParser.reconstruct(&doc, &TranslationMap::new()), source);
     }
 
     #[test]
