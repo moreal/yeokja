@@ -135,6 +135,18 @@ mod tests {
         )
     }
 
+    fn unlabelled_cell(table: usize, column: usize, text: &str) -> Block {
+        block(
+            text,
+            BlockRole::TableCell {
+                table,
+                column,
+                label_row: false,
+                header: None,
+            },
+        )
+    }
+
     /// A cell of table `table`'s label row.
     fn label(table: usize, column: usize, text: &str) -> Block {
         block(
@@ -185,6 +197,7 @@ mod tests {
                 "Arguments".to_string(),
                 "Explanation".to_string(),
             ],
+            headerless: false,
             translate,
             skip,
         }
@@ -317,5 +330,33 @@ mod tests {
         doc.sections[0].blocks.insert(3, label(1, 3, "Since"));
         let rules = vec![rule(vec![ColumnRef::Header("Explanation".into())], vec![])];
         assert_eq!(apply_table_rules(&mut doc, &rules, Path::new("a.adoc")), 2);
+    }
+
+    #[test]
+    fn headerless_rule_does_not_match_a_labelled_table() {
+        let mut doc = instruction_table();
+        doc.sections[0].blocks.extend([
+            unlabelled_cell(2, 0, "'B'"),
+            unlabelled_cell(2, 1, "unsigned_char"),
+        ]);
+        let rules = vec![TableRule {
+            files: Some("development-tools/clinic/howto.rst".to_string()),
+            headers: vec![],
+            headerless: true,
+            translate: vec![],
+            skip: vec![ColumnRef::Index(0), ColumnRef::Index(1)],
+        }];
+        assert_eq!(
+            apply_table_rules(
+                &mut doc,
+                &rules,
+                Path::new("development-tools/clinic/howto.rst"),
+            ),
+            2,
+        );
+        assert_eq!(
+            kept(&doc),
+            vec!["allocate", "t t", "Allocate stack words"]
+        );
     }
 }

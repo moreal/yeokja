@@ -78,6 +78,20 @@ headers = ["Instruction", "Arguments", "Explanation"]
 skip = ["Arguments", 0]              # 나머지는 전부 번역
 ```
 
+헤더 행이 없는 표는 `headers = []`와 `headerless = true`를 함께 명시하고 인덱스로
+컬럼을 선택합니다:
+
+```toml
+[[tables]]
+files = "upstream/development-tools/clinic/howto.rst"
+headers = []
+headerless = true
+skip = [0, 1]
+```
+
+`headerless = true` 규칙은 파서가 헤더 행을 보고하지 않은 표에만 적용됩니다.
+의도치 않게 여러 표에 적용되지 않도록 반드시 `files`로 좁게 범위를 지정하세요.
+
 기본값은 "전부 번역"이고 규칙은 좁히는 방향으로만 작동합니다. 첫 행은 컬럼
 이름을 정하므로 항상 번역 대상입니다. 제외된 셀은 원문이 그대로 남습니다.
 

@@ -253,6 +253,10 @@ pub struct TableRule {
     /// Header cells identifying the table. A table matches when its first row
     /// contains all of these, in order; extra columns are allowed.
     pub headers: Vec<String>,
+    /// Match a table that has no parser-reported label row. This must be explicit;
+    /// an accidentally empty `headers` list never broadens a rule on its own.
+    #[serde(default)]
+    pub headerless: bool,
     /// Columns to translate, named by header text or by 0-based index. Columns
     /// left out are kept verbatim. Mutually exclusive with `skip`.
     #[serde(default)]
@@ -284,6 +288,9 @@ impl ColumnRef {
 impl TableRule {
     /// Whether `headers` (a table's first row) satisfies this rule's matcher.
     pub fn matches_headers(&self, headers: &[String]) -> bool {
+        if self.headerless {
+            return self.headers.is_empty() && headers.is_empty();
+        }
         if self.headers.is_empty() {
             return false;
         }
@@ -315,6 +322,8 @@ pub enum ConfigError {
     Io(#[from] std::io::Error),
     #[error("Parse error: {0}")]
     Parse(#[from] toml::de::Error),
+    #[error("Invalid config: {0}")]
+    Invalid(String),
 }
 
 impl ProjectConfig {
@@ -328,7 +337,15 @@ impl ProjectConfig {
     }
 
     pub fn from_toml(content: &str) -> Result<Self, ConfigError> {
-        Ok(toml::from_str(content)?)
+        let config: Self = toml::from_str(content)?;
+        for (index, rule) in config.tables.iter().enumerate() {
+            if rule.headerless && !rule.headers.is_empty() {
+                return Err(ConfigError::Invalid(format!(
+                    "table rule {index} sets both headerless = true and headers"
+                )));
+            }
+        }
+        Ok(config)
     }
 }
 
@@ -580,5 +597,55 @@ batch_segments = 12
 "#;
         let config = ProjectConfig::from_toml(toml).unwrap();
         assert_eq!(config.translation.unwrap().batch_segments, 12);
+    }
+
+    #[test]
+    fn parse_explicit_headerless_table_rule() {
+        let config = ProjectConfig::from_toml(
+            r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[provider]
+type = "pi"
+model = "gpt-5.6-sol"
+
+[[tables]]
+files = "upstream/development-tools/clinic/howto.rst"
+headers = []
+headerless = true
+skip = [0, 1]
+"#,
+        )
+        .unwrap();
+        assert!(config.tables[0].headerless);
+        assert!(config.tables[0].headers.is_empty());
+    }
+
+    #[test]
+    fn reject_headerless_rule_with_named_headers() {
+        let error = ProjectConfig::from_toml(
+            r#"
+[project]
+source_lang = "en"
+target_lang = "ko"
+
+[provider]
+type = "pi"
+model = "gpt-5.6-sol"
+
+[[tables]]
+headers = ["Name"]
+headerless = true
+skip = [0]
+"#,
+        )
+        .unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("sets both headerless = true and headers")
+        );
     }
 }
