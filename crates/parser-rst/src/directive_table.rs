@@ -131,12 +131,12 @@ pub fn parse_list(source: &str, range: Range<usize>) -> Option<DirectiveTable> {
     let mut current_cell: Option<RawCell> = None;
 
     for line in lines.iter().skip(1) {
-        if !saw_row && line.indent() == directive_indent + 3 {
-            if let Some(value) = line.content[directive_indent + 3..].strip_prefix(":header-rows:")
-            {
-                header_rows = value.trim().parse().ok()?;
-                continue;
-            }
+        if !saw_row
+            && line.indent() == directive_indent + 3
+            && let Some(value) = line.content[directive_indent + 3..].strip_prefix(":header-rows:")
+        {
+            header_rows = value.trim().parse().ok()?;
+            continue;
         }
 
         if let Some(start) = marker_text_start(line, directive_indent + 3, "* -") {
@@ -179,14 +179,12 @@ pub fn parse_list(source: &str, range: Range<usize>) -> Option<DirectiveTable> {
         .iter()
         .find(|row| row.iter().any(|(_, text)| !text.is_empty()))
         .map(Vec::len)
-    {
-        if rows
+        && rows
             .iter()
             .filter(|row| row.iter().any(|(_, text)| !text.is_empty()))
             .any(|row| row.len() != expected_columns)
-        {
-            return None;
-        }
+    {
+        return None;
     }
 
     let columns = rows.iter().map(Vec::len).max().unwrap_or(0);
