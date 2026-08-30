@@ -1,5 +1,8 @@
+import os
 import re
+import stat
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -14,6 +17,28 @@ nitpick_ignore = [*globals().get("nitpick_ignore", []), ("rst:role", "py:func")]
 PROJECT_ANCHOR = 'project = "Python Developer\'s Guide"'
 HTML_TITLE_ANCHOR = 'html_title = ""'
 LANGUAGE_SETTING = re.compile(r"^\s*language\s*=", re.MULTILINE)
+
+
+def _atomic_write(path: Path, text: str, mode: int) -> None:
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temporary:
+            temporary_path = Path(temporary.name)
+            temporary.write(text)
+            temporary.flush()
+            os.fsync(temporary.fileno())
+        os.chmod(temporary_path, mode)
+        os.replace(temporary_path, path)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 def prepare(conf_path: Path) -> None:
@@ -33,7 +58,8 @@ def prepare(conf_path: Path) -> None:
         raise ValueError(f"missing pinned upstream anchor: {HTML_TITLE_ANCHOR}")
 
     separator = "\n" if text.endswith("\n") else "\n\n"
-    conf_path.write_text(text + separator + MANAGED_BLOCK + "\n", encoding="utf-8")
+    mode = stat.S_IMODE(conf_path.stat().st_mode)
+    _atomic_write(conf_path, text + separator + MANAGED_BLOCK + "\n", mode)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -43,7 +69,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     try:
         prepare(Path(args[0]))
-    except (FileNotFoundError, ValueError) as error:
+    except (OSError, ValueError) as error:
         print(error, file=sys.stderr)
         return 1
     return 0
