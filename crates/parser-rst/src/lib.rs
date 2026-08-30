@@ -2293,6 +2293,59 @@ mod tests {
     }
 
     #[test]
+    fn list_table_with_non_integer_header_rows_stays_opaque() {
+        let source = ".. list-table::\n   :header-rows: one\n\n   * - Avoid\n     - Instead\n";
+        let doc = RstParser.parse(source);
+        assert!(doc.all_segments().is_empty());
+        assert_eq!(RstParser.reconstruct(&doc, &TranslationMap::new()), source);
+    }
+
+    #[test]
+    fn list_table_with_too_many_header_rows_stays_opaque() {
+        let source = ".. list-table::\n   :header-rows: 2\n\n   * - Avoid\n     - Instead\n";
+        let doc = RstParser.parse(source);
+        assert!(doc.all_segments().is_empty());
+        assert_eq!(RstParser.reconstruct(&doc, &TranslationMap::new()), source);
+    }
+
+    #[test]
+    fn list_table_with_inconsistent_nonempty_row_widths_stays_opaque() {
+        let source = ".. list-table::\n\n   * - Avoid\n     - Instead\n   * - whitelist\n";
+        let doc = RstParser.parse(source);
+        assert!(doc.all_segments().is_empty());
+        assert_eq!(RstParser.reconstruct(&doc, &TranslationMap::new()), source);
+    }
+
+    #[test]
+    fn empty_list_table_cells_keep_later_cells_in_their_column() {
+        let source = ".. list-table::\n   :header-rows: 1\n\n   * -\n     - Preferred\n   * - Avoid\n     - allowlist\n";
+        let doc = RstParser.parse(source);
+        let cells: Vec<&Block> = doc.sections.iter().flat_map(|s| &s.blocks)
+            .filter(|block| matches!(block.role, BlockRole::TableCell { .. }))
+            .collect();
+
+        assert_eq!(cells.len(), 3);
+        assert!(matches!(&cells[0].role,
+            BlockRole::TableCell { column: 1, label_row: true, header: None, .. }));
+        assert!(matches!(&cells[1].role,
+            BlockRole::TableCell { column: 0, label_row: false, header: None, .. }));
+        assert!(matches!(&cells[2].role,
+            BlockRole::TableCell { column: 1, label_row: false, header: Some(header), .. }
+            if header == "Preferred"));
+    }
+
+    #[test]
+    fn translated_list_table_title_uses_its_directive_span() {
+        let source = ".. list-table:: Preferred terminology\n\n   * - Avoid\n";
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[("Preferred terminology", "권장 용어"), ("Avoid", "피할 표현")],
+        );
+        assert_eq!(output, ".. list-table:: 권장 용어\n\n   * - 피할 표현\n");
+    }
+
+    #[test]
     fn translated_grid_table_is_redrawn_to_display_width() {
         let source = "+----+----+\n| a  | b  |\n+====+====+\n| c  | d  |\n+----+----+\n\nAfter.\n";
         let output = translate_all(
