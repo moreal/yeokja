@@ -12,6 +12,7 @@
 //! byte-for-byte; title underlines and overlines are redrawn to the
 //! translation's display width, since docutils requires them to cover it.
 
+mod directive_table;
 mod table;
 
 use std::ops::Range;
@@ -228,7 +229,7 @@ fn mask_mil_source(source: &str) -> Result<String, String> {
 /// keeps its body in the document's language — admonitions, `function::` and
 /// friends describe things in prose — so an unknown directive stays
 /// translatable and only its marker line is held back.
-const OPAQUE_DIRECTIVES: [&str; 18] = [
+const OPAQUE_DIRECTIVES: [&str; 17] = [
     "code",
     "code-block",
     "sourcecode",
@@ -244,7 +245,6 @@ const OPAQUE_DIRECTIVES: [&str; 18] = [
     "image",
     "figure",
     "csv-table",
-    "list-table",
     "productionlist",
     "tabularcolumns",
 ];
@@ -419,6 +419,58 @@ impl ParseState<'_> {
                     },
                 });
             }
+        }
+    }
+
+    /// Emit a `list-table` anchor and one independently spliced block for
+    /// each prose cell. Unlike grid and simple tables, this directive keeps
+    /// its markers, indentation, and wrapping verbatim during reconstruction.
+    fn push_list_table(&mut self, range: Range<usize>) {
+        let Some(table_data) = directive_table::parse_list(self.source, range.clone()) else {
+            self.push_opaque_block(BlockType::Table, range);
+            return;
+        };
+        let table = self.table_idx;
+        self.table_idx += 1;
+        self.push_block(Block {
+            block_type: BlockType::Table,
+            segments: Vec::new(),
+            raw_content: self.source[range.clone()].to_string(),
+            heading_level: None,
+            span: Some(range),
+            translatable: false,
+            role: BlockRole::None,
+        });
+
+        if let Some(title) = table_data.title {
+            debug_assert_eq!(&self.source[title.span.clone()], title.text);
+            self.push_span_block(BlockType::Paragraph, title.span, BlockRole::None);
+        }
+        for cell in table_data.cells {
+            if cell.text.is_empty() {
+                continue;
+            }
+            let segments = make_segments(
+                &cell.text,
+                BlockType::Table,
+                self.section_idx,
+                self.block_idx,
+            );
+            debug_assert!(!cell.csv_quoted);
+            self.push_block(Block {
+                block_type: BlockType::Table,
+                segments,
+                raw_content: cell.text,
+                heading_level: None,
+                span: Some(cell.span),
+                translatable: BlockType::Table.is_translatable(),
+                role: BlockRole::TableCell {
+                    table,
+                    column: cell.column,
+                    label_row: cell.label_row,
+                    header: cell.header,
+                },
+            });
         }
     }
 
@@ -770,7 +822,11 @@ impl DocumentParser for RstParser {
             {
                 state.flush_run();
                 if let Some(name) = parse_directive(trimmed) {
-                    if OPAQUE_DIRECTIVES.contains(&name.to_ascii_lowercase().as_str()) {
+                    if name.eq_ignore_ascii_case("list-table") {
+                        let end = consume_while_indented(&lines, i, line.indent());
+                        state.push_list_table(line.start..lines[end].end());
+                        i = end + 1;
+                    } else if OPAQUE_DIRECTIVES.contains(&name.to_ascii_lowercase().as_str()) {
                         let end = consume_while_indented(&lines, i, line.indent());
                         state.push_opaque_block(
                             BlockType::CodeBlock,
@@ -1062,7 +1118,13 @@ fn reconstruct_rst(document: &Document, translations: &TranslationMap) -> String
     // stable while preserving the original target lines byte-for-byte.
     let mut prose_translations = translations.clone();
     rewrite_heading_references(&mut prose_translations, &heading_aliases);
+    let list_table_edits = directive_table_edits(document, translations);
     for block in document.sections.iter().flat_map(|section| &section.blocks) {
+        if matches!(block.role, BlockRole::TableCell { .. }) && block.span.is_some() {
+            for segment in &block.segments {
+                prose_translations.remove(&segment.id);
+            }
+        }
         if let Some(edit) = indented_alpha_enumeration_edit(block, &prose_translations) {
             for segment in &block.segments {
                 prose_translations.remove(&segment.id);
@@ -1081,6 +1143,7 @@ fn reconstruct_rst(document: &Document, translations: &TranslationMap) -> String
         }
     }
     splices.extend(collect_splices(document, &prose_translations));
+    splices.extend(list_table_edits);
     splices.extend(adornment_edits(document, translations));
     splices.extend(table_edits(document, translations));
     let mut output = apply_splices(&document.source, splices);
@@ -1696,6 +1759,50 @@ fn table_edits(
     edits
 }
 
+/// Replace only translated `list-table` cell spans. The directive itself is
+/// never redrawn: its markers, field list, indentation, and unrelated cells
+/// remain byte-for-byte as authored.
+fn directive_table_edits(
+    document: &Document,
+    translations: &TranslationMap,
+) -> Vec<(Range<usize>, String)> {
+    let blocks: Vec<&Block> = document
+        .sections
+        .iter()
+        .flat_map(|section| section.blocks.iter())
+        .collect();
+
+    let mut edits = Vec::new();
+    let mut table_idx = 0usize;
+    for block in &blocks {
+        if block.block_type != BlockType::Table || block.translatable || block.span.is_none() {
+            continue;
+        }
+        let Some(span) = block.span.clone() else { continue };
+        let index = table_idx;
+        table_idx += 1;
+        if directive_table::parse_list(&document.source, span).is_none() {
+            continue;
+        }
+        for cell in blocks.iter().filter(|candidate| {
+            matches!(&candidate.role, BlockRole::TableCell { table, .. } if *table == index)
+                && candidate.span.is_some()
+        }) {
+            if cell
+                .segments
+                .iter()
+                .any(|segment| translations.contains_key(&segment.id))
+            {
+                edits.push((
+                    cell.span.clone().unwrap(),
+                    join_segments_with_translations(&cell.segments, translations),
+                ));
+            }
+        }
+    }
+    edits
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2137,6 +2244,52 @@ mod tests {
             BlockRole::TableCell { table: 0, column: 1, label_row: false, header: Some(h) }
                 if h == "b"
         ));
+    }
+
+    #[test]
+    fn list_table_cells_are_segments_with_headers() {
+        let source = ".. list-table::\n   :header-rows: 1\n\n   * - Avoid\n     - Instead\n   * - whitelist\n     - allowlist\n";
+        let doc = RstParser.parse(source);
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|segment| segment.source.as_str())
+            .collect();
+        assert_eq!(sources, vec!["Avoid", "Instead", "whitelist", "allowlist"]);
+
+        let cells: Vec<&Block> = doc.sections.iter().flat_map(|s| &s.blocks)
+            .filter(|block| matches!(block.role, BlockRole::TableCell { .. }))
+            .collect();
+        assert!(matches!(cells[0].role,
+            BlockRole::TableCell { table: 0, column: 0, label_row: true, .. }));
+        assert!(matches!(&cells[3].role,
+            BlockRole::TableCell { table: 0, column: 1, label_row: false, header: Some(header) }
+            if header == "Instead"));
+    }
+
+    #[test]
+    fn translated_list_table_keeps_directive_structure() {
+        let source = ".. list-table::\n   :header-rows: 1\n\n   * - Avoid\n     - Instead\n   * - whitelist\n     - allowlist\n";
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[("Avoid", "피할 표현"), ("Instead", "대신 사용할 표현"),
+              ("whitelist", "허용 목록"), ("allowlist", "허용 목록")],
+        );
+        assert_eq!(output,
+            ".. list-table::\n   :header-rows: 1\n\n   * - 피할 표현\n     - 대신 사용할 표현\n   * - 허용 목록\n     - 허용 목록\n");
+    }
+
+    #[test]
+    fn translated_wrapped_list_table_cell_collapses_without_touching_next_cell() {
+        let source = ".. list-table::\n\n   * - `Usage <https://example.com>`__,\n       `Limitations <https://example.com/limits>`__\n     - maintainer\n";
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[("`Usage <https://example.com>`__, `Limitations <https://example.com/limits>`__",
+               "`사용법 <https://example.com>`__, `제한 사항 <https://example.com/limits>`__")],
+        );
+        assert!(output.contains("   * - `사용법 <https://example.com>`__, `제한 사항 <https://example.com/limits>`__\n     - maintainer"));
     }
 
     #[test]
