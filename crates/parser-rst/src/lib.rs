@@ -431,7 +431,19 @@ impl ParseState<'_> {
         parse: fn(&str, Range<usize>) -> Option<directive_table::DirectiveTable>,
     ) {
         let Some(table_data) = parse(self.source, range.clone()) else {
-            self.push_opaque_block(BlockType::Table, range);
+            // Keep opaque directive tables in the shared table order. Their
+            // bodies remain wholly verbatim, but a later supported table must
+            // not reuse this table's reconstruction index.
+            self.table_idx += 1;
+            self.push_block(Block {
+                block_type: BlockType::Table,
+                segments: Vec::new(),
+                raw_content: self.source[range.clone()].to_string(),
+                heading_level: None,
+                span: Some(range),
+                translatable: false,
+                role: BlockRole::None,
+            });
             return;
         };
         let table = self.table_idx;
@@ -2422,6 +2434,31 @@ mod tests {
     fn file_backed_csv_table_stays_opaque() {
         let source = ".. csv-table::\n   :header-rows: 1\n   :file: include/branches.csv\n";
         assert!(RstParser.parse(source).translatable_segments().is_empty());
+    }
+
+    #[test]
+    fn malformed_unquoted_csv_quote_stays_opaque() {
+        let source = ".. csv-table::\n   :header: \"Title\", \"Brief\"\n\n    bad\"csv, \"prose\"\n";
+        assert!(RstParser.parse(source).translatable_segments().is_empty());
+    }
+
+    #[test]
+    fn unequal_width_or_url_backed_csv_stays_opaque() {
+        let unequal_widths = ".. csv-table::\n   :header: \"Title\", \"Brief\"\n\n    \"Guide\"\n";
+        let url_backed = ".. csv-table::\n   :url: https://example.com/branches.csv\n";
+        assert!(RstParser.parse(unequal_widths).translatable_segments().is_empty());
+        assert!(RstParser.parse(url_backed).translatable_segments().is_empty());
+    }
+
+    #[test]
+    fn opaque_csv_before_inline_csv_keeps_later_table_translation() {
+        let source = ".. csv-table::\n   :file: include/branches.csv\n\n.. csv-table::\n   :header: \"Title\", \"Brief\"\n\n    \"Guide\", \"Parser docs\"\n";
+        let doc = RstParser.parse(source);
+        let cell = doc.sections.iter().flat_map(|section| &section.blocks)
+            .find(|block| matches!(block.role, BlockRole::TableCell { .. })).unwrap();
+        assert!(matches!(cell.role, BlockRole::TableCell { table: 1, .. }));
+        let output = translate_all(&RstParser, source, &[("Guide", "안내서")]);
+        assert!(output.contains("\"안내서\", \"Parser docs\""));
     }
 
     #[test]

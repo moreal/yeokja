@@ -271,6 +271,9 @@ fn parse_csv_record(source: &str, range: Range<usize>) -> Option<Vec<CsvField>> 
             let end = record[cursor..]
                 .find(',')
                 .map_or(record.len(), |offset| cursor + offset);
+            if record[cursor..end].contains('"') {
+                return None;
+            }
             fields.push(CsvField {
                 text: normalize_inline_text(record[cursor..end].trim()),
                 span: None,
