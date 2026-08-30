@@ -1,6 +1,7 @@
 import importlib
 import io
 import os
+import runpy
 import stat
 import tempfile
 import unittest
@@ -51,6 +52,34 @@ class PrepareTests(unittest.TestCase):
             self.assertEqual(text.count(MANAGED_BLOCK), 1)
             self.assertIn('language = "ko"', text)
             self.assertIn('("rst:role", "py:func")', text)
+
+    def test_appends_include_only_fragments_without_dropping_exclusions(self):
+        with tempfile.TemporaryDirectory() as root:
+            path = self.write_conf(
+                root,
+                "\n".join(
+                    [
+                        'project = "Python Developer\'s Guide"',
+                        'html_title = ""',
+                        'exclude_patterns = ["_build", "README.rst"]',
+                        "",
+                    ]
+                ),
+            )
+
+            prepare(path)
+            config = runpy.run_path(str(path))
+
+            self.assertEqual(
+                config["exclude_patterns"],
+                [
+                    "_build",
+                    "README.rst",
+                    "include/activate-tab.rst",
+                    "include/links.rst",
+                ],
+            )
+            self.assertNotIn("suppress_warnings", config)
 
     def test_second_run_is_idempotent(self):
         with tempfile.TemporaryDirectory() as root:

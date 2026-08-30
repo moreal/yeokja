@@ -9,6 +9,7 @@ from pathlib import Path
 BEGIN_MARKER = "# BEGIN YEOKJA KOREAN CONFIG"
 END_MARKER = "# END YEOKJA KOREAN CONFIG"
 MANAGED_BLOCK = """# BEGIN YEOKJA KOREAN CONFIG
+exclude_patterns = [*globals().get("exclude_patterns", []), "include/activate-tab.rst", "include/links.rst"]
 language = "ko"
 html_title = "Python 개발자 가이드 (비공식 한국어 번역)"
 nitpick_ignore = [*globals().get("nitpick_ignore", []), ("rst:role", "py:func")]
