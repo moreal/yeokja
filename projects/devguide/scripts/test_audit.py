@@ -196,6 +196,17 @@ class HtmlAuditTests(unittest.TestCase):
             self.assertEqual(errors, sorted(errors))
             self.assertTrue(any("invalid URL: index.html" in error for error in errors))
 
+    def test_reports_percent_decoded_nul_path(self):
+        with tempfile.TemporaryDirectory() as root:
+            site = Path(root)
+            (site / "index.html").write_text(
+                '<a href="%00">nul</a>', encoding="utf-8"
+            )
+            self.assertEqual(
+                audit_html(site),
+                ["escapes site root: index.html: %00"],
+            )
+
     def test_rejects_external_html_symlink_before_reading(self):
         with tempfile.TemporaryDirectory() as root:
             base = Path(root)

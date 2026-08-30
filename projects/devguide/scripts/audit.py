@@ -238,7 +238,7 @@ def _resolve_target(site_root: Path, referring_path: Path, path: str) -> Path | 
     )
     try:
         target = candidate.resolve()
-    except (OSError, RuntimeError):
+    except (OSError, RuntimeError, ValueError):
         return None
     try:
         target.relative_to(site_root)
