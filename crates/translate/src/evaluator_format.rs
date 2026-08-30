@@ -949,6 +949,40 @@ fn pair_up(chars: &[char], mark: char) -> Pairing {
 ///
 /// Reference suffixes (`` `name`_ ``, `` `name`__ ``) belong to the closing
 /// marker, so the rule applies after the underscores.
+fn rst_literal_role_spans(text: &str) -> Vec<std::ops::Range<usize>> {
+    let chars = chars(text);
+    let mut spans = Vec::new();
+    let mut at = 2usize;
+    while at < chars.len() {
+        if chars[at] != ':' || chars[at - 2..at] != ['`', '`'] {
+            at += 1;
+            continue;
+        }
+        let Some(open_offset) = chars[at + 1..]
+            .iter()
+            .position(|ch| *ch == '`' || ch.is_whitespace())
+        else {
+            break;
+        };
+        let open = at + 1 + open_offset;
+        if chars[open] != '`' || chars.get(open.wrapping_sub(1)) != Some(&':') {
+            at = open + 1;
+            continue;
+        }
+        let Some(close_offset) = chars[open + 1..].iter().position(|ch| *ch == '`') else {
+            break;
+        };
+        let close = open + 1 + close_offset;
+        if chars.get(close + 1) == Some(&'`') && chars.get(close + 2) == Some(&'`') {
+            spans.push(at - 2..close + 3);
+            at = close + 3;
+        } else {
+            at = close + 1;
+        }
+    }
+    spans
+}
+
 fn rst_broken_pairs(text: &str) -> Vec<String> {
     let chars = chars(text);
     let backtick_mask = rst_backtick_mask(&chars);
@@ -988,7 +1022,13 @@ fn rst_broken_pairs(text: &str) -> Vec<String> {
                 Some((oi, olen)) => {
                     // Only a run of the opener's own length closes it: `` and
                     // ` are different constructs in reStructuredText.
-                    if len != olen || chars[i - 1].is_whitespace() {
+                    if len != olen {
+                        i += len;
+                        continue;
+                    }
+                    if chars[i - 1].is_whitespace() {
+                        found.push(chars[oi..i + len].iter().collect());
+                        open = None;
                         i += len;
                         continue;
                     }
@@ -1013,6 +1053,14 @@ fn rst_broken_pairs(text: &str) -> Vec<String> {
                     i += len;
                 }
             }
+        }
+    }
+    for span in rst_literal_role_spans(text) {
+        if chars
+            .get(span.end)
+            .is_some_and(|ch| is_word(*ch) || matches!(ch, '(' | '[' | '{' | '<'))
+        {
+            found.push(chars[span.start..=span.end].iter().collect());
         }
     }
     found
@@ -1159,6 +1207,7 @@ pub(crate) fn repair_rst_boundaries(source: &str, translation: &str) -> String {
     let chars = chars(translation);
     let backtick_mask = rst_backtick_mask(&chars);
     let mut insertions = std::collections::BTreeSet::new();
+    let mut removals = std::collections::BTreeSet::new();
     let mut spaces = std::collections::BTreeSet::new();
 
     for token in source.split_whitespace() {
@@ -1216,6 +1265,14 @@ pub(crate) fn repair_rst_boundaries(source: &str, translation: &str) -> String {
     }
 
     if rst_broken_pairs(source).is_empty() {
+        for span in rst_literal_role_spans(translation) {
+            if chars
+                .get(span.end)
+                .is_some_and(|ch| is_word(*ch) || matches!(ch, '(' | '[' | '{' | '<'))
+            {
+                insertions.insert(span.end);
+            }
+        }
         let run_len = |at: usize, mark: char| chars[at..].iter().take_while(|c| **c == mark).count();
         for mark in ['`', '*'] {
             let mut open: Option<(usize, usize)> = None;
@@ -1242,7 +1299,20 @@ pub(crate) fn repair_rst_boundaries(source: &str, translation: &str) -> String {
                         at += len;
                     }
                     Some((_, open_len)) => {
-                        if len != open_len || chars[at - 1].is_whitespace() {
+                        if len != open_len {
+                            at += len;
+                            continue;
+                        }
+                        if chars[at - 1].is_whitespace() {
+                            let mut before = at;
+                            while before > 0
+                                && chars[before - 1].is_whitespace()
+                                && chars[before - 1] != '\n'
+                            {
+                                before -= 1;
+                                removals.insert(before);
+                            }
+                            open = None;
                             at += len;
                             continue;
                         }
@@ -1266,7 +1336,7 @@ pub(crate) fn repair_rst_boundaries(source: &str, translation: &str) -> String {
         }
     }
 
-    if insertions.is_empty() && spaces.is_empty() {
+    if insertions.is_empty() && removals.is_empty() && spaces.is_empty() {
         return translation.to_string();
     }
     let mut repaired = String::with_capacity(
@@ -1278,7 +1348,9 @@ pub(crate) fn repair_rst_boundaries(source: &str, translation: &str) -> String {
         } else if insertions.contains(&boundary) {
             repaired.push_str("\\ ");
         }
-        if let Some(ch) = chars.get(boundary) {
+        if let Some(ch) = chars.get(boundary)
+            && !removals.contains(&boundary)
+        {
             repaired.push(*ch);
         }
     }
@@ -1861,6 +1933,24 @@ mod tests {
     }
 
     #[test]
+    fn rst_boundary_repair_handles_literal_roles_and_space_before_a_closer() {
+        assert_eq!(
+            repair_rst_boundaries(
+                "Use ``:role:`target``` as an example.",
+                "예제로 ``:role:`target```을 사용합니다.",
+            ),
+            "예제로 ``:role:`target```\\ 을 사용합니다."
+        );
+        assert_eq!(
+            repair_rst_boundaries(
+                "**Important:** use the generated file.",
+                "**중요: ** ``file`` 대상을 사용합니다.",
+            ),
+            "**중요:** ``file`` 대상을 사용합니다."
+        );
+    }
+
+    #[test]
     fn rst_boundary_repair_keeps_roles_and_dot_names_out_of_column_zero() {
         assert_eq!(
             repair_rst_boundaries(
@@ -1981,7 +2071,25 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn rst_source_preserved_literal_role_is_not_a_malformed_role() {
+    async fn rst_source_preserved_literal_role_accepts_valid_outer_boundaries() {
+        for translation in [
+            "예제: ``:role:`target```.",
+            "예제로 ``:role:`target```\\ 을 사용합니다.",
+        ] {
+            let ctx = context_in(
+                Markup::Rst,
+                "Use ``:role:`target``` as an example.",
+                translation,
+            );
+
+            let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+
+            assert!(result.passed, "{translation:?}: {:?}", result.issues);
+        }
+    }
+
+    #[tokio::test]
+    async fn rst_source_preserved_literal_role_rejects_a_hangul_outer_boundary() {
         let ctx = context_in(
             Markup::Rst,
             "Use ``:role:`target``` as an example.",
@@ -1990,7 +2098,20 @@ mod tests {
 
         let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
 
-        assert!(result.passed, "{:?}", result.issues);
+        assert!(!result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn rst_strong_emphasis_rejects_whitespace_before_its_closer() {
+        let ctx = context_in(
+            Markup::Rst,
+            "**Important:** use the generated file.",
+            "**중요: ** 생성된 파일을 사용합니다.",
+        );
+
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+
+        assert!(!result.passed, "{:?}", result.issues);
     }
 
     #[tokio::test]

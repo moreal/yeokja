@@ -249,6 +249,9 @@ const OPAQUE_DIRECTIVES: [&str; 17] = [
     "tabularcolumns",
 ];
 
+const INLINE_PROSE_DIRECTIVES: [&str; 4] = ["note", "seealso", "tip", "impl-detail"];
+const TITLED_PROSE_DIRECTIVES: [&str; 3] = ["admonition", "sidebar", "rubric"];
+
 /// The punctuation characters docutils accepts as a title adornment.
 const ADORNMENT_CHARS: &str = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
 
@@ -650,6 +653,90 @@ fn parse_directive(trimmed: &str) -> Option<&str> {
     .then_some(name)
 }
 
+fn parse_substitution_image_directive(trimmed: &str) -> Option<&str> {
+    let rest = trimmed.strip_prefix("..")?.strip_prefix(char::is_whitespace)?;
+    let after_open = rest.strip_prefix('|')?;
+    let name_end = after_open.find("| ")?;
+    let directive = &after_open[name_end + 2..];
+    let marker_end = directive.find("::")?;
+    let name = &directive[..marker_end];
+    name.eq_ignore_ascii_case("image").then_some(name)
+}
+
+fn directive_argument_metadata(
+    line: &Line,
+    directive: &str,
+) -> Option<(Range<usize>, BlockType)> {
+    let lower = directive.to_ascii_lowercase();
+    let block_type = if INLINE_PROSE_DIRECTIVES.contains(&lower.as_str()) {
+        BlockType::Paragraph
+    } else if TITLED_PROSE_DIRECTIVES.contains(&lower.as_str()) {
+        BlockType::Heading
+    } else {
+        return None;
+    };
+    let indent = line.indent();
+    let content = &line.content[indent..];
+    let marker_end = content.find("::")? + 2;
+    let after = &content[marker_end..];
+    let leading = after.len() - after.trim_start().len();
+    let value = after[leading..].trim_end();
+    if value.is_empty() {
+        return None;
+    }
+    let start = line.start + indent + marker_end + leading;
+    Some((start..start + value.len(), block_type))
+}
+
+fn directive_option_metadata(
+    lines: &[Line],
+    directive_at: usize,
+    directive_end: usize,
+    directive: &str,
+) -> Vec<Range<usize>> {
+    let lower = directive.to_ascii_lowercase();
+    let option = match lower.as_str() {
+        "image" | "figure" => "alt",
+        "code" | "code-block" => "caption",
+        _ => return Vec::new(),
+    };
+    let directive_indent = lines[directive_at].indent();
+    let option_indent = directive_indent + 3;
+    let marker = format!(":{option}:");
+    let mut spans = Vec::new();
+    let mut at = directive_at + 1;
+    while at <= directive_end {
+        let line = &lines[at];
+        if line.indent() != option_indent {
+            at += 1;
+            continue;
+        }
+        let Some(after_marker) = line.content[option_indent..].strip_prefix(&marker) else {
+            at += 1;
+            continue;
+        };
+        let leading = after_marker.len() - after_marker.trim_start().len();
+        let value = after_marker[leading..].trim_end();
+        if value.is_empty() || (option == "caption" && !value.contains(char::is_whitespace)) {
+            at += 1;
+            continue;
+        }
+        let start = line.start + option_indent + marker.len() + leading;
+        let mut end = start + value.len();
+        let mut continuation = at + 1;
+        while continuation <= directive_end
+            && !lines[continuation].is_blank()
+            && lines[continuation].indent() > option_indent
+        {
+            end = lines[continuation].end();
+            continuation += 1;
+        }
+        spans.push(start..end);
+        at = continuation;
+    }
+    spans
+}
+
 /// `.. [1] text`, `.. [#label] text`, `.. [CIT2002] text` → byte offset of the
 /// footnote or citation text within the line.
 fn parse_footnote(content: &str) -> Option<usize> {
@@ -844,7 +931,9 @@ impl DocumentParser for RstParser {
                 || (trimmed.starts_with("..") && trimmed[2..].starts_with(char::is_whitespace))
             {
                 state.flush_run();
-                if let Some(name) = parse_directive(trimmed) {
+                if let Some(name) = parse_directive(trimmed)
+                    .or_else(|| parse_substitution_image_directive(trimmed))
+                {
                     if name.eq_ignore_ascii_case("list-table") {
                         let end = consume_while_indented(&lines, i, line.indent());
                         state.push_list_table(line.start..lines[end].end());
@@ -859,10 +948,22 @@ impl DocumentParser for RstParser {
                             BlockType::CodeBlock,
                             line.start..lines[end].end(),
                         );
+                        for span in directive_option_metadata(&lines, i, end, name) {
+                            state.push_span_block(
+                                BlockType::Paragraph,
+                                span,
+                                BlockRole::None,
+                            );
+                        }
                         i = end + 1;
                     } else {
                         // The marker line stays verbatim; the indented body
                         // parses as ordinary content.
+                        if let Some((span, block_type)) =
+                            directive_argument_metadata(line, name)
+                        {
+                            state.push_span_block(block_type, span, BlockRole::None);
+                        }
                         i += 1;
                     }
                     continue;
@@ -2047,6 +2148,247 @@ mod tests {
         assert_eq!(segments.len(), 2);
         assert_eq!(segments[0].source, "Before.");
         assert_eq!(segments[1].source, "After.");
+    }
+
+    #[test]
+    fn inline_admonition_metadata_is_translatable() {
+        let source = "\
+.. note:: Remember the first line.
+   Continue the note.
+
+.. seealso:: Read the companion guide.
+
+.. tip:: Prefer the focused command.
+
+.. impl-detail:: This is an implementation detail.
+";
+        let doc = RstParser.parse(source);
+        let sources: Vec<_> = doc
+            .translatable_segments()
+            .iter()
+            .map(|segment| segment.source.as_str())
+            .collect();
+        assert_eq!(
+            sources,
+            [
+                "Remember the first line.",
+                "Continue the note.",
+                "Read the companion guide.",
+                "Prefer the focused command.",
+                "This is an implementation detail.",
+            ]
+        );
+
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[
+                ("Remember the first line.", "첫 줄을 기억하십시오."),
+                ("Continue the note.", "메모를 이어 갑니다."),
+                ("Read the companion guide.", "관련 안내서를 읽으십시오."),
+                ("Prefer the focused command.", "범위가 좁은 명령을 사용하십시오."),
+                (
+                    "This is an implementation detail.",
+                    "이는 구현 세부 사항입니다.",
+                ),
+            ],
+        );
+        assert_eq!(
+            output,
+            "\
+.. note:: 첫 줄을 기억하십시오.
+   메모를 이어 갑니다.
+
+.. seealso:: 관련 안내서를 읽으십시오.
+
+.. tip:: 범위가 좁은 명령을 사용하십시오.
+
+.. impl-detail:: 이는 구현 세부 사항입니다.
+"
+        );
+    }
+
+    #[test]
+    fn titled_directive_metadata_is_translatable() {
+        let source = "\
+.. admonition:: Compiler knowledge is optional.
+
+   Admonition body.
+
+.. sidebar:: Sentence case
+
+   Sidebar body.
+
+.. rubric:: Footnotes
+";
+        let doc = RstParser.parse(source);
+        let sources: Vec<_> = doc
+            .translatable_segments()
+            .iter()
+            .map(|segment| segment.source.as_str())
+            .collect();
+        assert_eq!(
+            sources,
+            [
+                "Compiler knowledge is optional.",
+                "Admonition body.",
+                "Sentence case",
+                "Sidebar body.",
+                "Footnotes",
+            ]
+        );
+
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[
+                ("Compiler knowledge is optional.", "컴파일러 지식은 선택 사항입니다."),
+                ("Admonition body.", "권고문 본문입니다."),
+                ("Sentence case", "문장형 대소문자"),
+                ("Sidebar body.", "사이드바 본문입니다."),
+                ("Footnotes", "각주"),
+            ],
+        );
+        assert_eq!(
+            output,
+            "\
+.. admonition:: 컴파일러 지식은 선택 사항입니다.
+
+   권고문 본문입니다.
+
+.. sidebar:: 문장형 대소문자
+
+   사이드바 본문입니다.
+
+.. rubric:: 각주
+"
+        );
+    }
+
+    #[test]
+    fn image_alt_metadata_is_translatable_while_opaque_content_is_preserved() {
+        let source = "\
+.. figure:: chart.svg
+   :class: only-light
+   :alt: A chart showing translator workload
+         falling with team size.
+
+   Keep this opaque figure body.
+
+.. image:: badge.svg
+   :target: https://example.com/
+   :alt: Documentation status
+";
+        let doc = RstParser.parse(source);
+        let sources: Vec<_> = doc
+            .translatable_segments()
+            .iter()
+            .map(|segment| segment.source.as_str())
+            .collect();
+        assert_eq!(
+            sources,
+            [
+                "A chart showing translator workload falling with team size.",
+                "Documentation status",
+            ]
+        );
+
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[
+                (
+                    "A chart showing translator workload falling with team size.",
+                    "번역가가 늘수록 작업량이 줄어드는 차트.",
+                ),
+                ("Documentation status", "문서 상태"),
+            ],
+        );
+        assert_eq!(
+            output,
+            "\
+.. figure:: chart.svg
+   :class: only-light
+   :alt: 번역가가 늘수록 작업량이 줄어드는 차트.
+
+   Keep this opaque figure body.
+
+.. image:: badge.svg
+   :target: https://example.com/
+   :alt: 문서 상태
+"
+        );
+    }
+
+    #[test]
+    fn substitution_image_alt_is_translatable_while_structure_is_preserved() {
+        let source = "\
+.. |Status| image:: https://example.com/badge.svg
+   :target: https://example.com/status
+   :alt: Documentation status
+";
+        let doc = RstParser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 1);
+        assert_eq!(segments[0].source, "Documentation status");
+
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[("Documentation status", "문서 상태")],
+        );
+        assert_eq!(
+            output,
+            "\
+.. |Status| image:: https://example.com/badge.svg
+   :target: https://example.com/status
+   :alt: 문서 상태
+"
+        );
+    }
+
+    #[test]
+    fn prose_code_caption_is_translatable_while_code_is_byte_identical() {
+        let source = "\
+.. code-block:: python
+   :caption: Rendering a greeting.
+   :emphasize-lines: 1
+
+   print(\"hello\")
+";
+        let doc = RstParser.parse(source);
+        let segments = doc.translatable_segments();
+        assert_eq!(segments.len(), 1);
+        assert_eq!(segments[0].source, "Rendering a greeting.");
+
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[("Rendering a greeting.", "인사말 렌더링.")],
+        );
+        assert_eq!(
+            output,
+            "\
+.. code-block:: python
+   :caption: 인사말 렌더링.
+   :emphasize-lines: 1
+
+   print(\"hello\")
+"
+        );
+    }
+
+    #[test]
+    fn path_code_caption_stays_opaque() {
+        let source = "\
+.. code-block:: python
+   :caption: Lib/example.py
+
+   print(\"hello\")
+";
+        let doc = RstParser.parse(source);
+        assert!(doc.translatable_segments().is_empty());
+        assert_eq!(RstParser.reconstruct(&doc, &TranslationMap::new()), source);
     }
 
     #[test]
