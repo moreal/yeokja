@@ -64,6 +64,96 @@ class TranslationAuditTests(unittest.TestCase):
             self.assertTrue(any("missing translation" in error for error in errors))
             self.assertTrue(any("unresolved issues" in error for error in errors))
 
+    def test_requires_complete_authoritative_segment_schema(self):
+        required = {
+            "id",
+            "source",
+            "source_hash",
+            "context_hash",
+            "translation",
+            "glossary_snapshot",
+            "translated_at",
+            "issues",
+        }
+        with tempfile.TemporaryDirectory() as root:
+            source, state, output = self.make_tree(root)
+            self.write_complete(source, state, output)
+            path = state / "index.rst.yeokja.json"
+            original = json.loads(path.read_text(encoding="utf-8"))
+
+            for field in sorted(required):
+                with self.subTest(field=field):
+                    payload = json.loads(json.dumps(original))
+                    del payload["segments"][0][field]
+                    path.write_text(json.dumps(payload), encoding="utf-8")
+                    diagnostic_id = (
+                        "00000000"
+                        if field == "id"
+                        else "section:0/block:0/seg:0"
+                    )
+                    self.assertEqual(
+                        audit_translation(source, state, output),
+                        [
+                            "invalid segment schema: index.rst.yeokja.json: "
+                            + diagnostic_id
+                        ],
+                    )
+
+            payload = json.loads(json.dumps(original))
+            payload["segments"][0]["unexpected"] = "value"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            self.assertEqual(
+                audit_translation(source, state, output),
+                [
+                    "invalid segment schema: index.rst.yeokja.json: "
+                    "section:0/block:0/seg:0"
+                ],
+            )
+
+    def test_rejects_invalid_segment_field_types_and_boolean_hashes(self):
+        cases = [
+            ("id", 1, "invalid id"),
+            ("source", None, "invalid source"),
+            ("source_hash", True, "invalid source_hash"),
+            ("context_hash", True, "invalid context_hash"),
+            ("translation", 1, "missing translation"),
+            ("glossary_snapshot", [], "invalid glossary_snapshot"),
+            ("translated_at", None, "invalid translated_at"),
+            ("issues", {}, "invalid issues"),
+        ]
+        with tempfile.TemporaryDirectory() as root:
+            source, state, output = self.make_tree(root)
+            self.write_complete(source, state, output)
+            path = state / "index.rst.yeokja.json"
+            original = json.loads(path.read_text(encoding="utf-8"))
+
+            for field, value, message in cases:
+                with self.subTest(field=field):
+                    payload = json.loads(json.dumps(original))
+                    payload["segments"][0][field] = value
+                    path.write_text(json.dumps(payload), encoding="utf-8")
+                    errors = audit_translation(source, state, output)
+                    self.assertTrue(
+                        any(message in error for error in errors),
+                        (field, errors),
+                    )
+
+    def test_rejects_duplicate_segment_ids(self):
+        with tempfile.TemporaryDirectory() as root:
+            source, state, output = self.make_tree(root)
+            self.write_complete(source, state, output)
+            path = state / "index.rst.yeokja.json"
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload["segments"].append(dict(payload["segments"][0]))
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            self.assertEqual(
+                audit_translation(source, state, output),
+                [
+                    "duplicate segment id: index.rst.yeokja.json: "
+                    "section:0/block:0/seg:0"
+                ],
+            )
+
     def test_reports_orphan_state(self):
         with tempfile.TemporaryDirectory() as root:
             source, state, output = self.make_tree(root)

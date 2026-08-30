@@ -5,6 +5,18 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 
+SEGMENT_FIELDS = {
+    "id",
+    "source",
+    "source_hash",
+    "context_hash",
+    "translation",
+    "glossary_snapshot",
+    "translated_at",
+    "issues",
+}
+
+
 class _DocumentParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
@@ -112,6 +124,7 @@ def _audit_state_file(
         _add_error(errors, state_relative, "", f"invalid segments: {label}")
         return
 
+    seen_ids: set[str] = set()
     for index, segment in enumerate(segments):
         if not isinstance(segment, dict):
             _add_error(
@@ -122,8 +135,53 @@ def _audit_state_file(
             )
             continue
         segment_id = segment.get("id")
-        if not isinstance(segment_id, str):
-            segment_id = f"{index:08d}"
+        diagnostic_id = (
+            segment_id
+            if isinstance(segment_id, str) and segment_id
+            else f"{index:08d}"
+        )
+        if set(segment) != SEGMENT_FIELDS:
+            _add_error(
+                errors,
+                state_relative,
+                diagnostic_id,
+                f"invalid segment schema: {label}: {diagnostic_id}",
+            )
+            continue
+        if not isinstance(segment_id, str) or not segment_id:
+            _add_error(
+                errors,
+                state_relative,
+                diagnostic_id,
+                f"invalid id: {label}: {diagnostic_id}",
+            )
+            continue
+        if segment_id in seen_ids:
+            _add_error(
+                errors,
+                state_relative,
+                segment_id,
+                f"duplicate segment id: {label}: {segment_id}",
+            )
+        seen_ids.add(segment_id)
+
+        source = segment.get("source")
+        if not isinstance(source, str) or not source.strip():
+            _add_error(
+                errors,
+                state_relative,
+                segment_id,
+                f"invalid source: {label}: {segment_id}",
+            )
+        for field in ("source_hash", "context_hash"):
+            value = segment.get(field)
+            if type(value) is not int or not 0 <= value < 2**64:
+                _add_error(
+                    errors,
+                    state_relative,
+                    segment_id,
+                    f"invalid {field}: {label}: {segment_id}",
+                )
         translation = segment.get("translation")
         if not isinstance(translation, str) or not translation.strip():
             _add_error(
@@ -131,6 +189,25 @@ def _audit_state_file(
                 state_relative,
                 segment_id,
                 f"missing translation: {label}: {segment_id}",
+            )
+        glossary_snapshot = segment.get("glossary_snapshot")
+        if not isinstance(glossary_snapshot, dict) or not all(
+            isinstance(key, str) and isinstance(value, str)
+            for key, value in glossary_snapshot.items()
+        ):
+            _add_error(
+                errors,
+                state_relative,
+                segment_id,
+                f"invalid glossary_snapshot: {label}: {segment_id}",
+            )
+        translated_at = segment.get("translated_at")
+        if not isinstance(translated_at, str) or not translated_at.strip():
+            _add_error(
+                errors,
+                state_relative,
+                segment_id,
+                f"invalid translated_at: {label}: {segment_id}",
             )
         issues = segment.get("issues")
         if not isinstance(issues, list):

@@ -47,10 +47,15 @@ def prepare(conf_path: Path) -> None:
     begin_count = text.count(BEGIN_MARKER)
     end_count = text.count(END_MARKER)
 
-    if begin_count == 1 and end_count == 1:
-        return
     if begin_count or end_count:
-        raise ValueError("invalid managed block markers")
+        if begin_count != 1 or end_count != 1:
+            raise ValueError("invalid managed block markers")
+        begin_at = text.index(BEGIN_MARKER)
+        end_at = text.index(END_MARKER)
+        managed_end = end_at + len(END_MARKER)
+        if begin_at > end_at or text[begin_at:managed_end] != MANAGED_BLOCK:
+            raise ValueError("invalid managed block content")
+        return
     if LANGUAGE_SETTING.search(text):
         raise ValueError("unmanaged language setting")
     if PROJECT_ANCHOR not in text:

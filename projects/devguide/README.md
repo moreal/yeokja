@@ -45,8 +45,8 @@ python3 projects/devguide/scripts/audit.py translation
 python3 projects/devguide/scripts/audit.py html
 ```
 
-두 감사 스크립트는 문제가 있으면 정렬된 진단을 출력하고 0이 아닌 상태로
-종료합니다.
+하나의 감사 스크립트가 제공하는 두 모드는 문제가 있으면 정렬된 진단을 출력하고
+0이 아닌 상태로 종료합니다.
 
 HTML 빌드는 Sphinx 경고를 오류로 취급합니다. 고정된 upstream의 빌드 의존성은
 `projects/devguide/upstream/requirements.txt`에 있습니다.
@@ -69,6 +69,6 @@ test "$(git -C projects/devguide/upstream rev-list --count HEAD)" -gt 1
 먼저 검토한 뒤 `git -C projects/devguide/upstream fetch origin`과
 `git -C projects/devguide/upstream checkout <검토한-커밋>`으로 gitlink를
 명시적으로 바꿉니다. 이어서 64개였던 RST 파일 범위의 변화를 확인하고,
-`status`, `inspect`, `coverage`, `translate`, `evaluate`, `build`와 두 `audit.py`
-검사를 다시 실행합니다. 모든 결과를 검토한 뒤에만 새 gitlink와 필요한 설정·
+`status`, `inspect`, `coverage`, `translate`, `evaluate`, `build`와 `audit.py`의
+두 검사 모드를 다시 실행합니다. 모든 결과를 검토한 뒤에만 새 gitlink와 필요한 설정·
 번역 상태를 함께 커밋합니다. upstream 작업 트리에는 어떤 변경도 남기지 않습니다.

@@ -8,7 +8,13 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from projects.devguide.scripts.prepare import MANAGED_BLOCK, main, prepare
+from projects.devguide.scripts.prepare import (
+    BEGIN_MARKER,
+    END_MARKER,
+    MANAGED_BLOCK,
+    main,
+    prepare,
+)
 
 
 prepare_module = importlib.import_module("projects.devguide.scripts.prepare")
@@ -91,6 +97,26 @@ class PrepareTests(unittest.TestCase):
             first = path.read_bytes()
             prepare(path)
             self.assertEqual(path.read_bytes(), first)
+
+    def test_altered_or_reordered_managed_block_fails(self):
+        with tempfile.TemporaryDirectory() as root:
+            base = 'project = "Python Developer\'s Guide"\nhtml_title = ""\n'
+            altered_blocks = [
+                MANAGED_BLOCK.replace('language = "ko"', 'language = "ja"'),
+                "\n".join(
+                    [END_MARKER, *MANAGED_BLOCK.splitlines()[1:-1], BEGIN_MARKER]
+                ),
+                MANAGED_BLOCK.replace('html_title = "Python 개발자 가이드 (비공식 한국어 번역)"\n', ""),
+                MANAGED_BLOCK.replace(
+                    'language = "ko"',
+                    'language = "ko"\nextra_setting = True',
+                ),
+            ]
+            for index, block in enumerate(altered_blocks):
+                with self.subTest(index=index):
+                    path = self.write_conf(root, base + block + "\n")
+                    with self.assertRaisesRegex(ValueError, "invalid managed block"):
+                        prepare(path)
 
     def test_existing_unmanaged_language_setting_fails(self):
         with tempfile.TemporaryDirectory() as root:
