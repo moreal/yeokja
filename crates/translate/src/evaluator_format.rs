@@ -129,7 +129,24 @@ impl TranslationEvaluator for FormatEvaluator {
         // there is no doubled form to escape to — the way out is a
         // backslash-escaped space, which renders as nothing.
         if context.markup == Markup::Rst {
-            let malformed_roles = rst_malformed_role_closures(&context.translation);
+            let source_malformed_roles = rst_malformed_role_closures(&context.source);
+            let mut source_role_counts = std::collections::HashMap::<&str, usize>::new();
+            for role in &source_malformed_roles {
+                *source_role_counts.entry(role).or_default() += 1;
+            }
+            let malformed_roles: Vec<String> = rst_malformed_role_closures(&context.translation)
+                .into_iter()
+                .filter(|role| {
+                    let Some(count) = source_role_counts.get_mut(role.as_str()) else {
+                        return true;
+                    };
+                    if *count == 0 {
+                        return true;
+                    }
+                    *count -= 1;
+                    false
+                })
+                .collect();
             if !malformed_roles.is_empty() {
                 issues.push(EvaluationIssue {
                     severity: IssueSeverity::Error,
@@ -1958,6 +1975,40 @@ mod tests {
                 .issues
                 .iter()
                 .any(|issue| issue.message.contains("extra backtick")),
+            "{:?}",
+            result.issues
+        );
+    }
+
+    #[tokio::test]
+    async fn rst_source_preserved_literal_role_is_not_a_malformed_role() {
+        let ctx = context_in(
+            Markup::Rst,
+            "Use ``:role:`target``` as an example.",
+            "예제로 ``:role:`target```을 사용합니다.",
+        );
+
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+
+        assert!(result.passed, "{:?}", result.issues);
+    }
+
+    #[tokio::test]
+    async fn rst_new_extra_role_backtick_is_rejected_beside_a_preserved_literal_role() {
+        let ctx = context_in(
+            Markup::Rst,
+            "Keep ``:role:`source``` and valid :pep:`649` here.",
+            "Keep ``:role:`source``` but corrupt :pep:`649`` here.",
+        );
+
+        let result = FormatEvaluator.evaluate(&ctx).await.unwrap();
+
+        assert!(!result.passed, "{:?}", result.issues);
+        assert!(
+            result
+                .issues
+                .iter()
+                .any(|issue| issue.message.contains(":pep:`649``")),
             "{:?}",
             result.issues
         );
