@@ -422,11 +422,15 @@ impl ParseState<'_> {
         }
     }
 
-    /// Emit a `list-table` anchor and one independently spliced block for
+    /// Emit a directive-table anchor and one independently spliced block for
     /// each prose cell. Unlike grid and simple tables, this directive keeps
     /// its markers, indentation, and wrapping verbatim during reconstruction.
-    fn push_list_table(&mut self, range: Range<usize>) {
-        let Some(table_data) = directive_table::parse_list(self.source, range.clone()) else {
+    fn push_directive_table(
+        &mut self,
+        range: Range<usize>,
+        parse: fn(&str, Range<usize>) -> Option<directive_table::DirectiveTable>,
+    ) {
+        let Some(table_data) = parse(self.source, range.clone()) else {
             self.push_opaque_block(BlockType::Table, range);
             return;
         };
@@ -456,7 +460,6 @@ impl ParseState<'_> {
                 self.section_idx,
                 self.block_idx,
             );
-            debug_assert!(!cell.csv_quoted);
             self.push_block(Block {
                 block_type: BlockType::Table,
                 segments,
@@ -472,6 +475,14 @@ impl ParseState<'_> {
                 },
             });
         }
+    }
+
+    fn push_list_table(&mut self, range: Range<usize>) {
+        self.push_directive_table(range, directive_table::parse_list);
+    }
+
+    fn push_csv_table(&mut self, range: Range<usize>) {
+        self.push_directive_table(range, directive_table::parse_csv);
     }
 
     fn push_block(&mut self, block: Block) {
@@ -825,6 +836,10 @@ impl DocumentParser for RstParser {
                     if name.eq_ignore_ascii_case("list-table") {
                         let end = consume_while_indented(&lines, i, line.indent());
                         state.push_list_table(line.start..lines[end].end());
+                        i = end + 1;
+                    } else if name.eq_ignore_ascii_case("csv-table") {
+                        let end = consume_while_indented(&lines, i, line.indent());
+                        state.push_csv_table(line.start..lines[end].end());
                         i = end + 1;
                     } else if OPAQUE_DIRECTIVES.contains(&name.to_ascii_lowercase().as_str()) {
                         let end = consume_while_indented(&lines, i, line.indent());
@@ -1759,7 +1774,7 @@ fn table_edits(
     edits
 }
 
-/// Replace only translated `list-table` cell spans. The directive itself is
+/// Replace only translated directive-table cell spans. The directive itself is
 /// never redrawn: its markers, field list, indentation, and unrelated cells
 /// remain byte-for-byte as authored.
 fn directive_table_edits(
@@ -1778,24 +1793,45 @@ fn directive_table_edits(
         if block.block_type != BlockType::Table || block.translatable || block.span.is_none() {
             continue;
         }
-        let Some(span) = block.span.clone() else { continue };
+        let Some(span) = block.span.clone() else {
+            continue;
+        };
         let index = table_idx;
         table_idx += 1;
-        if directive_table::parse_list(&document.source, span).is_none() {
+        let Some(table_data) = directive_table::parse_list(&document.source, span.clone())
+            .or_else(|| directive_table::parse_csv(&document.source, span))
+        else {
+            continue;
+        };
+        let parsed_cells: Vec<_> = table_data
+            .cells
+            .into_iter()
+            .filter(|cell| !cell.text.is_empty())
+            .collect();
+        let cell_blocks: Vec<_> = blocks
+            .iter()
+            .filter(|candidate| {
+                matches!(&candidate.role, BlockRole::TableCell { table, .. } if *table == index)
+                    && candidate.span.is_some()
+            })
+            .collect();
+        if parsed_cells.len() != cell_blocks.len() {
             continue;
         }
-        for cell in blocks.iter().filter(|candidate| {
-            matches!(&candidate.role, BlockRole::TableCell { table, .. } if *table == index)
-                && candidate.span.is_some()
-        }) {
+        for (parsed, cell) in parsed_cells.into_iter().zip(cell_blocks) {
             if cell
                 .segments
                 .iter()
                 .any(|segment| translations.contains_key(&segment.id))
             {
+                let translated = join_segments_with_translations(&cell.segments, translations);
                 edits.push((
-                    cell.span.clone().unwrap(),
-                    join_segments_with_translations(&cell.segments, translations),
+                    parsed.span,
+                    if parsed.csv_quoted {
+                        translated.replace('"', "\"\"")
+                    } else {
+                        translated
+                    },
                 ));
             }
         }
@@ -2343,6 +2379,49 @@ mod tests {
             &[("Preferred terminology", "권장 용어"), ("Avoid", "피할 표현")],
         );
         assert_eq!(output, ".. list-table:: 권장 용어\n\n   * - 피할 표현\n");
+    }
+
+    #[test]
+    fn inline_csv_table_offers_title_headers_and_quoted_prose_only() {
+        let source = ".. csv-table:: **Current references**\n   :header: \"Title\", \"Brief\", \"Author\", \"Version\"\n\n    \"Guide\", \"Parser docs\", Louie Lu, 3.15\n";
+        let doc = RstParser.parse(source);
+        let sources: Vec<&str> = doc
+            .translatable_segments()
+            .iter()
+            .map(|segment| segment.source.as_str())
+            .collect();
+        assert_eq!(
+            sources,
+            vec![
+                "**Current references**",
+                "Title",
+                "Brief",
+                "Author",
+                "Version",
+                "Guide",
+                "Parser docs",
+            ]
+        );
+        assert!(!sources.contains(&"Louie Lu"));
+        assert!(!sources.contains(&"3.15"));
+    }
+
+    #[test]
+    fn csv_translation_escapes_ascii_quotes_inside_quoted_field() {
+        let source =
+            ".. csv-table::\n   :header: \"Title\", \"Brief\"\n\n    \"Guide\", \"Parser docs\"\n";
+        let output = translate_all(
+            &RstParser,
+            source,
+            &[("Guide", "안내서"), ("Parser docs", "파서 \"문서\"")],
+        );
+        assert!(output.contains("\"안내서\", \"파서 \"\"문서\"\"\""));
+    }
+
+    #[test]
+    fn file_backed_csv_table_stays_opaque() {
+        let source = ".. csv-table::\n   :header-rows: 1\n   :file: include/branches.csv\n";
+        assert!(RstParser.parse(source).translatable_segments().is_empty());
     }
 
     #[test]

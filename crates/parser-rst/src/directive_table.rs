@@ -88,8 +88,8 @@ fn title_after_marker(
     source: &str,
     line: &Line<'_>,
     indent: usize,
+    marker: &str,
 ) -> Option<Option<DirectiveField>> {
-    let marker = ".. list-table::";
     if line.indent() != indent {
         return None;
     }
@@ -122,7 +122,7 @@ pub fn parse_list(source: &str, range: Range<usize>) -> Option<DirectiveTable> {
         .collect();
     let first = lines.first()?;
     let directive_indent = first.indent();
-    let title = title_after_marker(source, first, directive_indent)?;
+    let title = title_after_marker(source, first, directive_indent, ".. list-table::")?;
 
     let mut header_rows = 0usize;
     let mut saw_row = false;
@@ -217,6 +217,192 @@ pub fn parse_list(source: &str, range: Range<usize>) -> Option<DirectiveTable> {
             })
         })
         .collect();
+
+    Some(DirectiveTable { title, cells })
+}
+
+struct CsvField {
+    text: String,
+    span: Option<Range<usize>>,
+}
+
+/// Parse one RFC 4180-style record without accepting a physical-line break in
+/// a quoted field. Leading and trailing horizontal whitespace around a quoted
+/// field is tolerated because docutils examples commonly align CSV values
+/// after commas that way.
+fn parse_csv_record(source: &str, range: Range<usize>) -> Option<Vec<CsvField>> {
+    let record = &source[range.clone()];
+    let mut cursor = 0usize;
+    let mut fields = Vec::new();
+
+    loop {
+        while record[cursor..].starts_with([' ', '\t']) {
+            cursor += 1;
+        }
+
+        if record[cursor..].starts_with('"') {
+            let inner_start = cursor + 1;
+            cursor += 1;
+            let mut text = String::new();
+            loop {
+                let quote = record[cursor..].find('"')?;
+                text.push_str(&record[cursor..cursor + quote]);
+                cursor += quote;
+                if record[cursor + 1..].starts_with('"') {
+                    text.push('"');
+                    cursor += 2;
+                    continue;
+                }
+                let span = range.start + inner_start..range.start + cursor;
+                cursor += 1;
+                while record[cursor..].starts_with([' ', '\t']) {
+                    cursor += 1;
+                }
+                if !record[cursor..].is_empty() && !record[cursor..].starts_with(',') {
+                    return None;
+                }
+                fields.push(CsvField {
+                    text: normalize_inline_text(&text),
+                    span: Some(span),
+                });
+                break;
+            }
+        } else {
+            let end = record[cursor..]
+                .find(',')
+                .map_or(record.len(), |offset| cursor + offset);
+            fields.push(CsvField {
+                text: normalize_inline_text(record[cursor..end].trim()),
+                span: None,
+            });
+            cursor = end;
+        }
+
+        if cursor == record.len() {
+            return Some(fields);
+        }
+        debug_assert!(record[cursor..].starts_with(','));
+        cursor += 1;
+        if cursor == record.len() {
+            fields.push(CsvField {
+                text: String::new(),
+                span: None,
+            });
+            return Some(fields);
+        }
+    }
+}
+
+fn csv_option<'a>(line: &'a Line<'a>, directive_indent: usize) -> Option<(&'a str, usize)> {
+    if line.indent() <= directive_indent {
+        return None;
+    }
+    let start = line.start + line.indent();
+    let content = &line.content[line.indent()..];
+    let rest = content.strip_prefix(':')?;
+    let end = rest.find(':')?;
+    let name = &rest[..end];
+    (!name.is_empty() && !name.contains(char::is_whitespace)).then_some((name, start + end + 2))
+}
+
+/// Parse an inline `csv-table` directive in an absolute source range. File-
+/// and URL-backed tables intentionally return `None`, retaining the complete
+/// directive verbatim because their data is outside the current document.
+pub fn parse_csv(source: &str, range: Range<usize>) -> Option<DirectiveTable> {
+    let mut offset = range.start;
+    let lines: Vec<Line<'_>> = source[range.clone()]
+        .split_inclusive('\n')
+        .map(|raw| {
+            let start = offset;
+            offset += raw.len();
+            let content = raw.strip_suffix('\n').unwrap_or(raw);
+            let content = content.strip_suffix('\r').unwrap_or(content);
+            Line { start, content }
+        })
+        .collect();
+    let first = lines.first()?;
+    let directive_indent = first.indent();
+    let title = title_after_marker(source, first, directive_indent, ".. csv-table::")?;
+
+    let mut header = None;
+    let mut rows = Vec::new();
+    let mut saw_data = false;
+    for line in lines.iter().skip(1) {
+        if line.is_blank() {
+            continue;
+        }
+        if !saw_data {
+            if let Some((name, value_start)) = csv_option(line, directive_indent) {
+                if name.eq_ignore_ascii_case("file") || name.eq_ignore_ascii_case("url") {
+                    return None;
+                }
+                if name.eq_ignore_ascii_case("header") {
+                    if header.is_some() {
+                        return None;
+                    }
+                    let value_end = value_start + source[value_start..line.end()].trim_end().len();
+                    header = Some(parse_csv_record(source, value_start..value_end)?);
+                }
+                continue;
+            }
+            saw_data = true;
+        }
+
+        if line.indent() <= directive_indent {
+            return None;
+        }
+        let start = line.start + line.indent();
+        rows.push(parse_csv_record(source, start..line.end())?);
+    }
+
+    let expected_columns = header
+        .as_ref()
+        .map(Vec::len)
+        .or_else(|| rows.first().map(Vec::len));
+    if let Some(expected_columns) = expected_columns
+        && rows.iter().any(|row| row.len() != expected_columns)
+    {
+        return None;
+    }
+
+    let headers = header.as_ref().map(|row| {
+        row.iter()
+            .map(|field| (!field.text.is_empty()).then(|| field.text.clone()))
+            .collect::<Vec<_>>()
+    });
+    let mut cells = Vec::new();
+    if let Some(header) = header {
+        for (column, field) in header.into_iter().enumerate() {
+            if let Some(span) = field.span {
+                cells.push(DirectiveCell {
+                    text: field.text,
+                    span,
+                    column,
+                    label_row: true,
+                    header: None,
+                    csv_quoted: true,
+                });
+            }
+        }
+    }
+    for row in rows {
+        for (column, field) in row.into_iter().enumerate() {
+            if let Some(span) = field.span {
+                cells.push(DirectiveCell {
+                    text: field.text,
+                    span,
+                    column,
+                    label_row: false,
+                    header: headers
+                        .as_ref()
+                        .and_then(|headers| headers.get(column))
+                        .cloned()
+                        .flatten(),
+                    csv_quoted: true,
+                });
+            }
+        }
+    }
 
     Some(DirectiveTable { title, cells })
 }
