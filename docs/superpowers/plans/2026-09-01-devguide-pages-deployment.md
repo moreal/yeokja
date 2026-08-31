@@ -144,7 +144,7 @@ Set job-level conditional failure handling:
 continue-on-error: ${{ matrix.project != 'devguide' }}
 ```
 
-Include `python3-devguide` in the Python setup condition, add conditional `astral-sh/setup-uv@v10`, exclude devguide from the legacy per-state reconstruction step, and add a devguide-specific whole-project reconstruction/status step. `v10` is the current official major release verified before implementation.
+Include `python3-devguide` in the Python setup condition, add conditional `astral-sh/setup-uv@v10.0.1`, exclude devguide from the legacy per-state reconstruction step, and add a devguide-specific whole-project reconstruction/status step. `v10.0.1` is the exact current official release verified before implementation; the repository does not expose a moving `v10` tag.
 
 - [ ] **Step 2: Replace direct staging with baseline preservation and the helper**
 
