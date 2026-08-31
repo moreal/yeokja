@@ -62,9 +62,10 @@ Pages 스테이징 목록에 등록되어 있지 않다.
   artifact_path: projects/devguide/dist
 ```
 
-devguide 잡은 고정된 `projects/devguide/upstream` submodule만 받고, Python과
-`uv`를 설치한다. 다른 프로젝트처럼 상태 파일마다 CLI를 반복 호출하지 않고 다음
-두 명령으로 프로젝트 전체를 한 번에 재구성하고 검증한다.
+devguide 잡은 고정된 `projects/devguide/upstream` submodule만 받고, Sphinx의
+Git timestamp 계산에 필요한 전체 이력으로 unshallow한 뒤 Python과 `uv`를
+설치한다. 다른 프로젝트처럼 상태 파일마다 CLI를 반복 호출하지 않고 다음 두
+명령으로 프로젝트 전체를 한 번에 재구성하고 검증한다.
 
 ```bash
 ../../target/release/yeokja translate upstream

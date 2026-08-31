@@ -134,6 +134,7 @@ Modify `.github/workflows/pages.yml` to add:
 - project: devguide
   target: html
   toolchain: python3-devguide
+  unshallow: true
   artifact: dist-devguide
   artifact_path: projects/devguide/dist
 ```
@@ -144,7 +145,7 @@ Set job-level conditional failure handling:
 continue-on-error: ${{ matrix.project != 'devguide' }}
 ```
 
-Include `python3-devguide` in the Python setup condition, add conditional `astral-sh/setup-uv@v10.0.1`, exclude devguide from the legacy per-state reconstruction step, and add a devguide-specific whole-project reconstruction/status step. `v10.0.1` is the exact current official release verified before implementation; the repository does not expose a moving `v10` tag.
+Include `python3-devguide` in the Python setup condition, add conditional `astral-sh/setup-uv@v10.0.1`, fetch the devguide submodule's full history for Sphinx Git timestamps, exclude devguide from the legacy per-state reconstruction step, and add a devguide-specific whole-project reconstruction/status step. `v10.0.1` is the exact current official release verified before implementation; the repository does not expose a moving `v10` tag.
 
 - [ ] **Step 2: Replace direct staging with baseline preservation and the helper**
 
