@@ -61,12 +61,18 @@ jobs:
 
   rebuild:
     needs: build-cli
+    continue-on-error: ${{ matrix.project != 'devguide' }}
     runs-on: yeokja
     container: mcr.microsoft.com/devcontainers/universal:6.1-noble
     strategy:
       fail-fast: false
       matrix:
         include:
+          - project: devguide
+            target: html
+            toolchain: python3-devguide
+            artifact: dist-devguide
+            artifact_path: projects/devguide/dist
           - project: pypy
             target: html
             toolchain: python2
@@ -150,10 +156,14 @@ jobs:
         run: pip install 'sphinx<2' 'docutils==0.11' 'sphinx-issues==1.2.0' 'sphinx_rtd_theme<1' py sphinx-affiliates
 
       - name: Install Python 3
-        if: matrix.toolchain == 'python3-mil' || matrix.toolchain == 'python3-peps'
+        if: matrix.toolchain == 'python3-devguide' || matrix.toolchain == 'python3-mil' || matrix.toolchain == 'python3-peps'
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Install uv for the Python devguide
+        if: matrix.toolchain == 'python3-devguide'
+        uses: astral-sh/setup-uv@v10
 
       - name: Install the Mathematics in Lean Sphinx toolchain
         if: matrix.toolchain == 'python3-mil'
@@ -216,7 +226,7 @@ jobs:
           (cd projects/${{ matrix.project }}/upstream/book && lean --version)
 
       - name: Rebuild translated sources from committed state
-        if: matrix.project != 'peps'
+        if: matrix.project != 'devguide' && matrix.project != 'peps'
         run: |
           cd projects/${{ matrix.project }}
           for s in $(find state -name '*.yeokja.json'); do
@@ -224,6 +234,13 @@ jobs:
             ../../target/release/yeokja translate "$src"
             ../../target/release/yeokja status --check "$src"
           done
+
+      - name: Rebuild and verify the Python devguide
+        if: matrix.project == 'devguide'
+        run: |
+          cd projects/devguide
+          ../../target/release/yeokja translate upstream
+          ../../target/release/yeokja status --check upstream
 
       # PEP는 루트 문서와 appendices를 여러 source 규칙으로 다룹니다. 프로젝트
       # 전체를 한 번에 확인해야 새 PEP가 state 없이 빠지는 경우도 배포를 막습니다.
@@ -254,6 +271,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Preserve the currently deployed Pages tree
+        run: |
+          mkdir -p _site
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget --mirror --no-host-directories --cut-dirs=1 --no-parent \
+            --directory-prefix=_site https://moreal.github.io/yeokja/ || true
+          test -s _site/index.html
+
       - name: Download built sites
         uses: actions/download-artifact@v4
         with:
@@ -261,19 +287,7 @@ jobs:
           path: artifacts
 
       - name: Stage the Pages tree
-        run: |
-          mkdir -p _site
-          cp -r artifacts/dist-thebeambook/site _site/theBeamBook
-          cp -r artifacts/dist-pypy/site _site/pypy
-          cp -r artifacts/dist-pypy/rpython-site _site/rpython
-          cp -r artifacts/dist-fp-lean/site _site/fp-lean
-          cp -r artifacts/dist-tpil/site _site/tpil
-          cp -r artifacts/dist-mil/site _site/mil
-          cp -r artifacts/dist-peps/site _site/peps
-          cp -r artifacts/dist-napkin-html/site _site/napkin
-          cp artifacts/dist-napkin-pdf/Napkin-ko.pdf _site/napkin/
-          cp artifacts/dist-napkin-epub/Napkin-ko.epub _site/napkin/
-          cp site/index.html site/favicon.svg _site/
+        run: .github/scripts/stage-pages.sh artifacts _site site
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

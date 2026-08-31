@@ -144,7 +144,7 @@ Set job-level conditional failure handling:
 continue-on-error: ${{ matrix.project != 'devguide' }}
 ```
 
-Include `python3-devguide` in the Python setup condition, add conditional `astral-sh/setup-uv@v6`, exclude devguide from the legacy per-state reconstruction step, and add a devguide-specific whole-project reconstruction/status step.
+Include `python3-devguide` in the Python setup condition, add conditional `astral-sh/setup-uv@v10`, exclude devguide from the legacy per-state reconstruction step, and add a devguide-specific whole-project reconstruction/status step. `v10` is the current official major release verified before implementation.
 
 - [ ] **Step 2: Replace direct staging with baseline preservation and the helper**
 
@@ -176,11 +176,13 @@ Run:
 ```bash
 python3 .github/scripts/test_stage_pages.py -v
 shellcheck .github/scripts/stage-pages.sh
-ruby -e 'require "yaml"; YAML.load_file(".github/workflows/pages.yml", aliases: true)'
+ruby -e 'require "yaml"; YAML.parse_file(".github/workflows/pages.yml")'
+actionlint -ignore 'label "yeokja" is unknown' -ignore 'SC2044' \
+  .github/workflows/pages.yml
 git diff --check
 ```
 
-Expected: the real staging behavior tests pass, shell syntax is clean, the workflow parses as YAML, and the diff has no whitespace errors. Workflow behavior itself is verified by the production Actions run in Task 3 rather than by brittle source-text assertions.
+Expected: the real staging behavior tests pass, shell syntax is clean, the workflow parses as YAML, actionlint v1.7.12 reports no branch-introduced issue after excluding the existing custom-runner and legacy loop diagnostics, and the diff has no whitespace errors. Workflow behavior itself is verified by the production Actions run in Task 3 rather than by brittle source-text assertions.
 
 - [ ] **Step 5: Run project-wide and devguide gates**
 
