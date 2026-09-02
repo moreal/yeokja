@@ -13,6 +13,7 @@
 //! translation's display width, since docutils requires them to cover it.
 
 mod directive_table;
+pub mod include;
 mod table;
 
 use std::ops::Range;

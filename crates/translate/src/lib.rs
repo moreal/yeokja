@@ -2,6 +2,7 @@ pub mod provider;
 pub mod prompt;
 pub mod factory;
 pub mod orchestrator;
+mod include_lines;
 pub mod rate_limit;
 pub mod openai_types;
 pub mod openai_compatible;

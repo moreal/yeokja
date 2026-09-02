@@ -1087,7 +1087,18 @@ impl FileTranslator {
             }
         }
 
-        let output_text = parser.reconstruct(doc, &translations);
+        let mut output_text = parser.reconstruct(doc, &translations);
+        if parser.markup() == Markup::Rst {
+            // `.. include::` line offsets count lines of the included file,
+            // whose translation is laid out differently from its source.
+            output_text = crate::include_lines::follow_rst_includes(
+                &output_text,
+                file_path,
+                &self.config,
+                &self.glossary,
+                &self.parser_factory,
+            );
+        }
         // Rewriting identical bytes would churn the mtime of every output on
         // every run, and this is called whether or not anything was translated.
         if std::fs::read_to_string(output_path).is_ok_and(|on_disk| on_disk == output_text) {
