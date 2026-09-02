@@ -79,19 +79,40 @@ span에서 영어 단어 slug를 만들어 같은 metadata를 추가합니다. u
 | `directive` | 자식 block 재귀 처리 | `table` 안의 자연어 셀은 `Table` |
 | `footnote_ref` | 현재 문맥의 prose block | 각주 본문 번역 |
 | `role`, `link`, `emph`, `bold` | 상위 prose span 안에 포함 | markup과 대상은 원문 그대로 모델에 전달 |
-| `codeblock`, `metadata_block`, `command`, `link_ref` | 없음 | 원문에 byte 단위로 보존 |
+| `codeblock`(`anchorEqSteps`/`eqSteps`) | 등식 단계의 근거 doc comment를 `Paragraph`로 | 아래 "등식 단계의 근거" 참조 |
+| 그 외 `codeblock`, `metadata_block`, `command`, `link_ref` | 없음 | 원문에 byte 단위로 보존 |
 
 inline code나 수식만 있는 문단·표 셀은 자연어가 없으므로 span을 만들지 않습니다.
 이미지의 대체 텍스트는 자연어로 인식합니다. 저작권 표시는 제공된 attribution을
 그대로 유지하기 위해 번역 span에서 제외합니다.
 
+### 등식 단계의 근거
+
+FP in Lean의 `anchorEqSteps` 코드 블록(`FPLean/Examples.lean`의 `moduleEqSteps`)은
+예제 모듈에서 anchor로 잘라 온 조각을 `={`/`}=` 토큰으로 나누고, 첫 토큰이 doc
+comment인 단계를 산문으로 렌더링합니다. 이때 `/--`와 `-/`를 뗀 본문을 Markdown
+문단으로 파싱하므로 백틱 코드는 그대로 유지해야 하며, 백틱 안의 식은 코드 조각과
+일치해야 합니다. 화면에 보이는 문장은 예제 모듈(`upstream/examples/Examples/…`)의
+doc comment이고, 책 본문의 코드 블록 payload는 그 조각과 줄 단위로 같아야 합니다
+(`Verso.ExpectString.expectString`). 따라서 extractor는 두 사본 모두에서 doc comment
+본문(구분자와 앞뒤 공백 제외)을 `doc_comment` span으로 내보내고, 번역 프로젝트는
+예제 모듈도 `[[sources]]`에 포함해 같은 번역을 두 곳에 splice합니다.
+
+- `#doc` 문서: `anchorEqSteps`·`moduleEqSteps`·`eqSteps` 코드 블록의 payload에서
+  `={` 바로 뒤에 오는 doc comment
+- `#doc`가 없는 Lean 모듈: `equational steps … stop equational steps` 명령 안에서
+  `={` 바로 뒤에 오는 doc comment. 그 외 span은 만들지 않습니다.
+
+이 span은 Verso 파서가 아니라 Lean의 주석 어휘 규칙에만 의존합니다.
+
 ## Manifest 계약
 
 ```json
 {
-  "schema": 1,
+  "schema": 2,
   "generator": "Verso.Parser.document",
   "versoRevision": "aa447141…",
+  "lakeManifest": "upstream/book/lake-manifest.json",
   "documents": [
     {
       "path": "upstream/book/FPLean/Intro.lean",
@@ -99,10 +120,21 @@ inline code나 수식만 있는 문단·표 셀은 자연어가 없으므로 spa
       "spans": [
         {"start": 230, "stop": 242, "kind": "heading", "level": 1}
       ]
+    },
+    {
+      "path": "upstream/examples/Examples/MonadTransformers/Defs.lean",
+      "sourceHash": "12339065780357040274",
+      "spans": [
+        {"start": 2489, "stop": 2535, "kind": "doc_comment"}
+      ]
     }
   ]
 }
 ```
+
+`kind`는 `heading`, `paragraph`, `list_item`, `block_quote`, `table`,
+`doc_comment` 중 하나입니다. `lakeManifest`는 `versoRevision`을 고정한 Lake
+manifest의 경로로, span manifest가 있는 디렉터리를 기준으로 해석합니다.
 
 `sourceHash`는 양쪽 구현이 공유하는 UTF-8 FNV-1a 64-bit 값입니다. 보안용 해시가
 아니라 원문과 range가 같은 판에서 생성됐는지 확인하기 위한 값입니다.
@@ -110,7 +142,10 @@ inline code나 수식만 있는 문단·표 셀은 자연어가 없으므로 spa
 Rust parser는 다음 조건을 모두 강제합니다.
 
 - schema와 generator가 지원하는 값일 것
-- source 위쪽의 `lake-manifest.json`이 고정한 Verso revision과 일치할 것
+- `lakeManifest`가 가리키는 `lake-manifest.json`이 고정한 Verso revision과 일치할 것
+- source를 담은 가장 가까운 Lake 패키지가 Verso를 고정하면 그 revision도 일치할 것.
+  Verso에 의존하지 않는 패키지(책이 조각을 렌더링하는 예제 모듈)의 문서는 공식
+  parser를 거치지 않았으므로 `doc_comment` span만 가질 수 있음
 - 해당 source path가 manifest에 존재할 것
 - source hash가 일치할 것
 - 모든 range가 UTF-8 경계 안에 있고, 정렬되어 있으며, 겹치지 않을 것
@@ -143,7 +178,8 @@ output = "ko/book/{path}"
 - crate 단위 테스트: stale hash, revision 불일치, 누락 문서, 겹치는 range가
   모두 hard error인지 확인
 - FP in Lean 코퍼스 테스트: 공식 manifest가 실제 70개 `#doc` 문서를 모두
-  파싱하고 빈 번역 재구성이 byte identity인지 확인
+  파싱하고 빈 번역 재구성이 byte identity인지 확인. 등식 단계의 근거가 책과 예제
+  모듈 양쪽에서 `doc_comment`로 나오고 예제 모듈 재구성도 byte identity인지 확인
 - 프로젝트 CLI: manifest를 통해서만 상태와 coverage 계산
 - 최종 검증: 번역 overlay를 조립한 뒤 upstream의 `lake exe fp-lean` 실행
 

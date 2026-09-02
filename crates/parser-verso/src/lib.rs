@@ -12,7 +12,7 @@ use yeokja_core::model::*;
 use yeokja_core::parser::{DocumentParseError, DocumentParser, Markup, TranslationMap};
 use yeokja_parser_utils::{apply_splices, collect_splices, make_segments, normalize_inline_text};
 
-const MANIFEST_SCHEMA: u32 = 1;
+const MANIFEST_SCHEMA: u32 = 2;
 const OFFICIAL_GENERATOR: &str = "Verso.Parser.document";
 
 #[derive(Debug, Deserialize)]
@@ -21,6 +21,10 @@ struct SpanManifest {
     schema: u32,
     generator: String,
     verso_revision: String,
+    /// The Lake manifest that pins `verso_revision`, relative to the span
+    /// manifest's directory. Sources outside that Lake package (a Verso book's
+    /// example modules) are checked against it instead of their own pin.
+    lake_manifest: String,
     documents: Vec<ManifestDocument>,
 }
 
@@ -49,13 +53,17 @@ enum SpanKind {
     ListItem,
     BlockQuote,
     Table,
+    /// The body of a `/-- … -/` doc comment that a code-block expander renders
+    /// as prose (FP in Lean's equational-step justifications). The span covers
+    /// the trimmed comment text only; the delimiters stay in the source.
+    DocComment,
 }
 
 impl SpanKind {
     fn block_type(self) -> BlockType {
         match self {
             Self::Heading => BlockType::Heading,
-            Self::Paragraph => BlockType::Paragraph,
+            Self::Paragraph | Self::DocComment => BlockType::Paragraph,
             Self::ListItem => BlockType::ListItem,
             Self::BlockQuote => BlockType::BlockQuote,
             Self::Table => BlockType::Table,
@@ -105,6 +113,8 @@ impl VersoParser {
                 ))
             })?;
 
+        self.validate_revision(&manifest, entry)?;
+
         let actual_hash = fnv1a64(source).to_string();
         if entry.source_hash != actual_hash {
             return Err(self.error(format!(
@@ -132,17 +142,65 @@ impl VersoParser {
                 manifest.generator
             )));
         }
-        let pinned =
-            pinned_verso_revision(&self.source_path).map_err(|message| self.error(message))?;
+        let declared = self
+            .manifest_path
+            .parent()
+            .unwrap_or(Path::new("."))
+            .join(&manifest.lake_manifest);
+        let pinned = verso_revision_in(&declared)
+            .map_err(|message| self.error(message))?
+            .ok_or_else(|| {
+                self.error(format!(
+                    "{} does not pin a verso package",
+                    declared.display()
+                ))
+            })?;
         if pinned != manifest.verso_revision {
             return Err(self.error(format!(
                 "Verso revision mismatch: {} pins {pinned}, but {} was generated with {}; regenerate it",
-                self.source_path.display(),
+                declared.display(),
                 self.manifest_path.display(),
                 manifest.verso_revision
             )));
         }
         Ok(())
+    }
+
+    /// A source inside a Lake package that pins Verso must pin the manifest's
+    /// revision. A source whose own package does not depend on Verso (the
+    /// example modules a book renders fragments of) was never parsed by
+    /// `Verso.Parser.document`, so it may only carry `doc_comment` spans, which
+    /// depend on Lean's comment lexing rather than on the Verso revision.
+    fn validate_revision(
+        &self,
+        manifest: &SpanManifest,
+        entry: &ManifestDocument,
+    ) -> Result<(), DocumentParseError> {
+        match pinned_verso_revision(&self.source_path).map_err(|message| self.error(message))? {
+            Some(pinned) if pinned != manifest.verso_revision => Err(self.error(format!(
+                "Verso revision mismatch: {} pins {pinned}, but {} was generated with {}; regenerate it",
+                self.source_path.display(),
+                self.manifest_path.display(),
+                manifest.verso_revision
+            ))),
+            Some(_) => Ok(()),
+            None => {
+                if let Some(span) = entry
+                    .spans
+                    .iter()
+                    .find(|span| !matches!(span.kind, SpanKind::DocComment))
+                {
+                    return Err(self.error(format!(
+                        "{} is outside any Lake package that pins verso, so only doc_comment spans are allowed; found {:?} at {}..{}",
+                        self.source_path.display(),
+                        span.kind,
+                        span.start,
+                        span.stop
+                    )));
+                }
+                Ok(())
+            }
+        }
     }
 
     fn document_from_spans(
@@ -540,7 +598,9 @@ fn source_manifest_key(source_path: &Path, manifest_path: &Path) -> String {
     normalized_manifest_key(&source_path.to_string_lossy())
 }
 
-fn pinned_verso_revision(source_path: &Path) -> Result<String, String> {
+/// The Verso revision pinned by the nearest Lake package containing the
+/// source. `None` means that package exists but does not depend on Verso.
+fn pinned_verso_revision(source_path: &Path) -> Result<Option<String>, String> {
     let start = if source_path.is_absolute() {
         source_path.parent()
     } else {
@@ -548,30 +608,32 @@ fn pinned_verso_revision(source_path: &Path) -> Result<String, String> {
     };
     for directory in start.into_iter().flat_map(Path::ancestors) {
         let candidate = directory.join("lake-manifest.json");
-        if !candidate.is_file() {
-            continue;
+        if candidate.is_file() {
+            return verso_revision_in(&candidate);
         }
-        let text = std::fs::read_to_string(&candidate)
-            .map_err(|error| format!("cannot read {}: {error}", candidate.display()))?;
-        let manifest: serde_json::Value = serde_json::from_str(&text)
-            .map_err(|error| format!("invalid {}: {error}", candidate.display()))?;
-        let packages = manifest
-            .get("packages")
-            .and_then(serde_json::Value::as_array)
-            .or_else(|| manifest.as_array())
-            .ok_or_else(|| format!("{} has no packages array", candidate.display()))?;
-        let revision = packages.iter().find_map(|package| {
-            (package.get("name").and_then(|value| value.as_str()) == Some("verso"))
-                .then(|| package.get("rev")?.as_str().map(str::to_owned))
-                .flatten()
-        });
-        return revision
-            .ok_or_else(|| format!("{} does not pin a verso package", candidate.display()));
     }
     Err(format!(
         "no lake-manifest.json found above {}; the official Verso revision cannot be verified",
         source_path.display()
     ))
+}
+
+/// The `verso` package revision pinned by one Lake manifest, if it has one.
+fn verso_revision_in(lake_manifest: &Path) -> Result<Option<String>, String> {
+    let text = std::fs::read_to_string(lake_manifest)
+        .map_err(|error| format!("cannot read {}: {error}", lake_manifest.display()))?;
+    let manifest: serde_json::Value = serde_json::from_str(&text)
+        .map_err(|error| format!("invalid {}: {error}", lake_manifest.display()))?;
+    let packages = manifest
+        .get("packages")
+        .and_then(serde_json::Value::as_array)
+        .or_else(|| manifest.as_array())
+        .ok_or_else(|| format!("{} has no packages array", lake_manifest.display()))?;
+    Ok(packages.iter().find_map(|package| {
+        (package.get("name").and_then(|value| value.as_str()) == Some("verso"))
+            .then(|| package.get("rev")?.as_str().map(str::to_owned))
+            .flatten()
+    }))
 }
 
 #[cfg(test)]
@@ -588,16 +650,29 @@ mod tests {
 
     impl Fixture {
         fn new(source: &str, ranges: &[(&str, usize, usize, Option<u8>)]) -> Self {
+            Self::at("upstream/book/FPLean/Chapter.lean", source, ranges)
+        }
+
+        /// A project with a Verso book at `upstream/book` and a Verso-free
+        /// example package at `upstream/examples`; `relative` names the source.
+        fn at(relative: &str, source: &str, ranges: &[(&str, usize, usize, Option<u8>)]) -> Self {
             let temp = tempfile::tempdir().unwrap();
             let book = temp.path().join("upstream/book");
             std::fs::create_dir_all(book.join("FPLean")).unwrap();
-            let source_path = book.join("FPLean/Chapter.lean");
-            std::fs::write(&source_path, source).unwrap();
             std::fs::write(
                 book.join("lake-manifest.json"),
                 r#"[{"name":"verso","rev":"official-revision"}]"#,
             )
             .unwrap();
+            let examples = temp.path().join("upstream/examples");
+            std::fs::create_dir_all(examples.join("Examples")).unwrap();
+            std::fs::write(
+                examples.join("lake-manifest.json"),
+                r#"[{"name":"subverso","rev":"subverso-revision"}]"#,
+            )
+            .unwrap();
+            let source_path = temp.path().join(relative);
+            std::fs::write(&source_path, source).unwrap();
             let manifest_path = temp.path().join("verso-spans.json");
             let spans: Vec<_> = ranges
                 .iter()
@@ -608,11 +683,12 @@ mod tests {
             std::fs::write(
                 &manifest_path,
                 serde_json::to_string(&json!({
-                    "schema": 1,
+                    "schema": MANIFEST_SCHEMA,
                     "generator": OFFICIAL_GENERATOR,
                     "versoRevision": "official-revision",
+                    "lakeManifest": "upstream/book/lake-manifest.json",
                     "documents": [{
-                        "path": "upstream/book/FPLean/Chapter.lean",
+                        "path": relative,
                         "sourceHash": fnv1a64(source).to_string(),
                         "spans": spans,
                     }]
@@ -804,6 +880,72 @@ mod tests {
         assert!(output.contains("file := \"two\""));
         assert!(output.contains("-0\""));
         assert!(output.contains("-1\""));
+    }
+
+    #[test]
+    fn doc_comment_spans_are_prose_and_keep_their_delimiters() {
+        let source = "#doc (Manual) \"Title\" =>\n\n```anchorEqSteps law\nx\n={\n/-- Definition of `seq` -/\n}=\ny\n```\n";
+        let title = source.find("Title").unwrap();
+        let body = source.find("Definition of `seq`").unwrap();
+        let fixture = Fixture::new(
+            source,
+            &[
+                ("heading", title, title + 5, Some(1)),
+                ("doc_comment", body, body + "Definition of `seq`".len(), None),
+            ],
+        );
+        let parser = fixture.parser();
+        let document = parser.parse_checked(&fixture.source).unwrap();
+        let segments = document.translatable_segments();
+        assert_eq!(segments.len(), 2);
+        assert_eq!(segments[1].source, "Definition of `seq`");
+        assert_eq!(segments[1].block_type, BlockType::Paragraph);
+
+        let output = parser.reconstruct(
+            &document,
+            &TranslationMap::from([(segments[1].id.clone(), "`seq`의 정의".to_string())]),
+        );
+        assert!(output.contains("={\n/-- `seq`의 정의 -/\n}="));
+        assert_eq!(parser.reconstruct(&document, &TranslationMap::new()), source);
+    }
+
+    #[test]
+    fn example_modules_outside_the_verso_package_accept_only_doc_comments() {
+        let source = "equational steps {{{ law }}}\nx\n={\n/-- Reduce `match` -/\n}=\ny\nstop equational steps\n";
+        let body = source.find("Reduce `match`").unwrap();
+        let stop = body + "Reduce `match`".len();
+        let fixture = Fixture::at(
+            "upstream/examples/Examples/Law.lean",
+            source,
+            &[("doc_comment", body, stop, None)],
+        );
+        let document = fixture.parser().parse_checked(&fixture.source).unwrap();
+        assert_eq!(document.translatable_segments().len(), 1);
+        assert_eq!(document.translatable_segments()[0].source, "Reduce `match`");
+
+        let prose = Fixture::at(
+            "upstream/examples/Examples/Law.lean",
+            source,
+            &[("paragraph", body, stop, None)],
+        );
+        let error = prose.parser().parse_checked(&prose.source).unwrap_err();
+        assert!(error.to_string().contains("only doc_comment spans are allowed"));
+    }
+
+    #[test]
+    fn the_declared_lake_manifest_must_pin_the_generating_revision() {
+        let fixture = Fixture::new("Body text.", &[("paragraph", 0, 10, None)]);
+        let text = std::fs::read_to_string(&fixture.manifest_path).unwrap();
+        std::fs::write(
+            &fixture.manifest_path,
+            text.replace(
+                "upstream/book/lake-manifest.json",
+                "upstream/examples/lake-manifest.json",
+            ),
+        )
+        .unwrap();
+        let error = fixture.parser().parse_checked(&fixture.source).unwrap_err();
+        assert!(error.to_string().contains("does not pin a verso package"));
     }
 
     #[test]

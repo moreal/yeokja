@@ -83,6 +83,11 @@ fn official_manifest_parses_every_fp_lean_manual() {
                 !segment.source.contains("Copyright Microsoft"),
                 "attribution became prose"
             );
+            assert!(
+                !segment.source.contains("/--") && !segment.source.contains("-/"),
+                "doc comment delimiters leaked in {}",
+                path.display()
+            );
         }
 
         assert_eq!(
@@ -108,11 +113,77 @@ fn manifest_declares_the_official_generator_and_pinned_revision() {
     }
     let manifest: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
-    assert_eq!(manifest["schema"], 1);
+    assert_eq!(manifest["schema"], 2);
     assert_eq!(manifest["generator"], "Verso.Parser.document");
     assert_eq!(
         manifest["versoRevision"],
         "aa44714115e9973999dfdde63130f725c3265a82"
     );
-    assert_eq!(manifest["documents"].as_array().unwrap().len(), 80);
+    assert_eq!(manifest["lakeManifest"], "upstream/book/lake-manifest.json");
+    // 80 book modules plus the 37 example modules whose equational-step
+    // justifications the book renders.
+    assert_eq!(manifest["documents"].as_array().unwrap().len(), 117);
+}
+
+/// `anchorEqSteps` blocks display doc comments from the example modules and
+/// require the book's payload to match them line by line, so the manifest
+/// exports both copies as `doc_comment` spans.
+#[test]
+fn equational_step_justifications_are_exported_from_both_copies() {
+    let root = project_root();
+    if !root.join("upstream/book/FPLean.lean").is_file() {
+        return;
+    }
+    let manifest_path = root.join("verso-spans.json");
+    let manifest: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&manifest_path).unwrap()).unwrap();
+
+    let mut book_justifications = 0;
+    let mut example_justifications = 0;
+    for document in manifest["documents"].as_array().unwrap() {
+        let relative = document["path"].as_str().unwrap();
+        let doc_comments = document["spans"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|span| span["kind"] == "doc_comment")
+            .count();
+        let is_example = relative.starts_with("upstream/examples/");
+        if is_example {
+            example_justifications += doc_comments;
+            let path = root.join(relative);
+            let source = std::fs::read_to_string(&path).unwrap();
+            let parser = VersoParser::new(&path, &manifest_path);
+            let parsed = parser
+                .parse_checked(&source)
+                .unwrap_or_else(|error| panic!("{}: {error}", path.display()));
+            assert_eq!(parsed.translatable_segments().len(), doc_comments);
+            assert_eq!(
+                parser.reconstruct(&parsed, &TranslationMap::new()),
+                source,
+                "{} changed without translations",
+                path.display()
+            );
+        } else {
+            book_justifications += doc_comments;
+        }
+    }
+
+    assert_eq!(book_justifications, 31, "book eq-step justifications");
+    assert_eq!(example_justifications, 32, "example eq-step justifications");
+
+    let contract = root.join("upstream/book/FPLean/FunctorApplicativeMonad/ApplicativeContract.lean");
+    let source = std::fs::read_to_string(&contract).unwrap();
+    let document = VersoParser::new(&contract, &manifest_path)
+        .parse_checked(&source)
+        .unwrap();
+    let sources: Vec<_> = document
+        .translatable_segments()
+        .iter()
+        .map(|segment| segment.source.clone())
+        .collect();
+    assert!(sources.iter().any(|text| text == "Definition of `seq`"));
+    assert!(sources.iter().any(|text| {
+        text == "Clever replacement of one expression by an equivalent one that makes the rule match"
+    }));
 }

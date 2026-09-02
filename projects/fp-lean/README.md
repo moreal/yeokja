@@ -26,7 +26,9 @@ David Thrane Christiansen과 Lean FRO, LLC가 최신 Lean 및 Verso에 맞게
 않습니다. 공식 AST가 보존한 `SourceInfo`에서 번역 가능한 원문 byte range를
 `verso-spans.json`으로 내보내고, Rust `verso` 파서는 이를 검증·소비합니다.
 
-- 번역: `#doc` 제목, 절 제목, 문단, 목록·정의 목록, 인용문, 각주, 표의 자연어 셀
+- 번역: `#doc` 제목, 절 제목, 문단, 목록·정의 목록, 인용문, 각주, 표의 자연어 셀,
+  `anchorEqSteps` 등식 단계의 근거 doc comment(책 본문과 `upstream/examples`의 예제
+  모듈 양쪽에 같은 번역을 splice)
 - 보존: Lean 전처리, metadata, 코드 블록, 명령과 비자연어 payload
 - 검증: manifest schema와 generator, Verso revision, source hash, UTF-8 byte range
 

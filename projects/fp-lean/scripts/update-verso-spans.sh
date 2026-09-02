@@ -25,6 +25,11 @@ sources=("book/FPLean.lean")
 while IFS= read -r source; do
   sources+=("${source#"$upstream_root/"}")
 done < <(find "$upstream_root/book/FPLean" -type f -name '*.lean' | LC_ALL=C sort)
+# The example modules carry the equational-step justifications that
+# `anchorEqSteps` blocks render; the book payload must match them line by line.
+while IFS= read -r source; do
+  sources+=("${source#"$upstream_root/"}")
+done < <(find "$upstream_root/examples/Examples" -type f -name '*.lean' | LC_ALL=C sort)
 
 cleanup() {
   rm -f "$temporary"
@@ -37,6 +42,7 @@ trap cleanup EXIT
   lake env lean --run "$extractor" \
     "$temporary" \
     "$verso_revision" \
+    upstream/book/lake-manifest.json \
     "$upstream_root" \
     upstream \
     "${sources[@]}"

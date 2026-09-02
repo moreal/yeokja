@@ -39,6 +39,7 @@ trap cleanup EXIT
   lake env lean --run "$extractor" \
     "$temporary" \
     "$verso_revision" \
+    upstream/book/lake-manifest.json \
     "$upstream_root" \
     upstream \
     "${sources[@]}"
