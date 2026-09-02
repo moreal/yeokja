@@ -1530,16 +1530,6 @@ fn heading_anchor_edits(
     let mut edits = Vec::new();
     let mut aliases = Vec::new();
     let namespace = document_target_namespace(&document.source);
-    // reStructuredText normalizes implicit target names case-insensitively.
-    // Search the source the same way, otherwise a reference such as
-    // `` `Backward compatibility`_ `` is missed for the heading
-    // ``Backward Compatibility`` and translation breaks the link.
-    let folded_source = document
-        .source
-        .to_ascii_lowercase()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
     for block in document.sections.iter().flat_map(|section| &section.blocks) {
         if !matches!(block.role, BlockRole::AdornedTitle { .. })
             || !block
@@ -1568,21 +1558,19 @@ fn heading_anchor_edits(
         } else {
             strip_emphasis_markup(original)
         };
-        let folded_original = target_name
-            .to_ascii_lowercase()
-            .split_whitespace()
-            .collect::<Vec<_>>()
-            .join(" ");
-        let quoted_reference = format!("`{folded_original}`_");
-        let bare_reference = format!("{folded_original}_");
-        let embedded_reference = format!("<{folded_original}_>");
-        let sphinx_reference = format!(":ref:`{folded_original}`");
-        let referenced = folded_source.contains(&quoted_reference)
-            || (!original.contains(char::is_whitespace)
-                && contains_bare_rst_reference(&folded_source, &bare_reference))
-            || folded_source.contains(&embedded_reference)
-            || folded_source.contains(&sphinx_reference);
-        if !referenced {
+        let Some(span) = &block.span else { continue };
+        let unique_target = format!("yeokja-{namespace}-target-{}", span.start);
+        // The heading is referenced exactly when rewriting its references
+        // changes the source. Reusing the rewriter keeps detection and
+        // rewriting in agreement: a title that only occurs as a substring of
+        // another reference (``<allowed patterns_>`` for the heading
+        // ``Patterns``) is not a reference to it and gets no label.
+        let mut probe = document.source.clone();
+        rewrite_heading_references_in_text(
+            &mut probe,
+            &[(target_name.clone(), unique_target.clone())],
+        );
+        if probe == document.source {
             continue;
         }
         let plain_target = format!(".. _{target_name}:");
@@ -1600,8 +1588,6 @@ fn heading_anchor_edits(
         {
             continue;
         }
-        let Some(span) = &block.span else { continue };
-        let unique_target = format!("yeokja-{namespace}-target-{}", span.start);
         let insertion_start = match &block.role {
             BlockRole::AdornedTitle {
                 overline: Some(overline),
@@ -1656,12 +1642,13 @@ fn rewrite_heading_references(
 
 fn rewrite_heading_references_in_text(text: &mut String, aliases: &[(String, String)]) {
     for (target_name, unique_target) in aliases {
-        let embedded = format!("<{target_name}_>");
-        *text = replace_ascii_case_insensitive(
-            text,
-            &embedded,
-            &format!("<{unique_target}_>"),
-        );
+        // Hyperlink target bodies first: docutils does not parse an embedded
+        // alias there, so they need the bare ``label_`` form rather than the
+        // ``` `Title <label_>`_ ``` form used in running text. Rewriting them
+        // first also keeps the passes below off those lines.
+        *text = rewrite_indirect_targets(text, target_name, unique_target);
+
+        *text = replace_embedded_alias(text, target_name, unique_target);
 
         let sphinx = format!(":ref:`{target_name}`");
         *text = replace_ascii_case_insensitive(
@@ -1670,10 +1657,8 @@ fn rewrite_heading_references_in_text(text: &mut String, aliases: &[(String, Str
             &format!(":ref:`{target_name} <{unique_target}>`"),
         );
 
-        let quoted = format!("`{target_name}`_");
         let quoted_replacement = format!("`{target_name} <{unique_target}_>`_");
         *text = replace_flexible_quoted_reference(text, target_name, &quoted_replacement);
-        *text = replace_ascii_case_insensitive(text, &quoted, &quoted_replacement);
 
         if !target_name.contains(char::is_whitespace) {
             *text = replace_bare_rst_reference(
@@ -1683,6 +1668,113 @@ fn rewrite_heading_references_in_text(text: &mut String, aliases: &[(String, Str
             );
         }
     }
+}
+
+/// docutils' reference-name normalization: case-insensitive with whitespace
+/// runs collapsed to a single space.
+fn fold_reference_name(name: &str) -> String {
+    name.to_ascii_lowercase()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// The body of an explicit hyperlink target line (``.. __: body``,
+/// ``.. _name: body`` or ``.. _`name`: body``), as a byte range of `line`.
+fn hyperlink_target_body(line: &str) -> Option<Range<usize>> {
+    let indent = line.len() - line.trim_start().len();
+    let rest = line[indent..].strip_prefix(".. _")?;
+    let name_start = indent + 4;
+    let body_offset = if rest.starts_with("_:") {
+        2
+    } else if let Some(quoted) = rest.strip_prefix('`') {
+        1 + quoted.find("`:")? + 2
+    } else {
+        // A plain name ends at the first colon that is not escaped or part
+        // of the name (``.. _a:b: url`` is unusual enough to skip).
+        let colon = rest.find(':')?;
+        let name = &rest[..colon];
+        if name.is_empty() || name.starts_with('_') || name.contains('`') {
+            return None;
+        }
+        colon + 1
+    };
+    let body_start = name_start + body_offset;
+    if body_start < line.len() && !line[body_start..].starts_with(char::is_whitespace) {
+        return None;
+    }
+    Some(body_start..line.len())
+}
+
+/// Rewrite ``.. __: `Title`_`` (or ``Title_``) to ``.. __: label_`` when
+/// `Title` is the heading named by `target_name`.
+fn rewrite_indirect_targets(input: &str, target_name: &str, unique_target: &str) -> String {
+    let folded_target = fold_reference_name(target_name);
+    let mut output = String::with_capacity(input.len());
+    for line in input.split_inclusive('\n') {
+        let content = line.trim_end_matches(['\n', '\r']);
+        let line_ending = &line[content.len()..];
+        let Some(body_range) = hyperlink_target_body(content) else {
+            output.push_str(line);
+            continue;
+        };
+        let body = content[body_range.clone()].trim();
+        let reference_name = body
+            .strip_suffix('_')
+            .filter(|name| !name.ends_with('_'))
+            .map(|name| {
+                name.strip_prefix('`')
+                    .and_then(|quoted| quoted.strip_suffix('`'))
+                    .unwrap_or(name)
+            });
+        match reference_name {
+            Some(name) if fold_reference_name(name) == folded_target => {
+                output.push_str(&content[..body_range.start]);
+                output.push(' ');
+                output.push_str(unique_target);
+                output.push('_');
+                output.push_str(line_ending);
+            }
+            _ => output.push_str(line),
+        }
+    }
+    output
+}
+
+/// Rewrite the alias of an embedded-alias reference,
+/// ``` `text <Title_>`_ ```, when the whole alias names the heading.
+/// Only the alias is a candidate: ``<allowed patterns_>`` is not a reference
+/// to a heading called ``Patterns``.
+fn replace_embedded_alias(input: &str, target_name: &str, unique_target: &str) -> String {
+    let folded_target = fold_reference_name(target_name);
+    let mut output = String::with_capacity(input.len());
+    let mut offset = 0usize;
+    while let Some(open) = input[offset..].find('<') {
+        let start = offset + open;
+        let content_start = start + 1;
+        let Some(close) = input[content_start..].find('>') else {
+            break;
+        };
+        let content_end = content_start + close;
+        let content = &input[content_start..content_end];
+        let is_heading_alias = input[content_end + 1..].starts_with('`')
+            && !content.contains(['<', '`'])
+            && content
+                .strip_suffix('_')
+                .is_some_and(|alias| fold_reference_name(alias) == folded_target);
+        if is_heading_alias {
+            output.push_str(&input[offset..start]);
+            output.push('<');
+            output.push_str(unique_target);
+            output.push_str("_>");
+            offset = content_end + 1;
+        } else {
+            output.push_str(&input[offset..content_start]);
+            offset = content_start;
+        }
+    }
+    output.push_str(&input[offset..]);
+    output
 }
 
 fn replace_ascii_case_insensitive(input: &str, needle: &str, replacement: &str) -> String {
@@ -1704,11 +1796,7 @@ fn replace_ascii_case_insensitive(input: &str, needle: &str, replacement: &str) 
 }
 
 fn replace_flexible_quoted_reference(input: &str, target_name: &str, replacement: &str) -> String {
-    let folded_target = target_name
-        .to_ascii_lowercase()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
+    let folded_target = fold_reference_name(target_name);
     let mut output = String::with_capacity(input.len());
     let mut offset = 0usize;
     while let Some(open) = input[offset..].find('`') {
@@ -1718,12 +1806,7 @@ fn replace_flexible_quoted_reference(input: &str, target_name: &str, replacement
             break;
         };
         let content_end = content_start + close;
-        let folded_content = input[content_start..content_end]
-            .to_ascii_lowercase()
-            .split_whitespace()
-            .collect::<Vec<_>>()
-            .join(" ");
-        if folded_content == folded_target {
+        if fold_reference_name(&input[content_start..content_end]) == folded_target {
             output.push_str(&input[offset..start]);
             output.push_str(replacement);
             offset = content_end + 2;
@@ -1736,9 +1819,34 @@ fn replace_flexible_quoted_reference(input: &str, target_name: &str, replacement
     output
 }
 
+/// Byte ranges of backtick-delimited inline markup: inline literals,
+/// interpreted text, roles and phrase references including the ``<alias_>``
+/// part of an embedded reference. A bare ``name_`` inside one of these is
+/// not a standalone reference.
+fn backtick_spans(text: &str) -> Vec<Range<usize>> {
+    let mut spans = Vec::new();
+    let mut offset = 0usize;
+    while let Some(open) = text[offset..].find('`') {
+        let start = offset + open;
+        let (delimiter, content_start) = if text[start..].starts_with("``") {
+            ("``", start + 2)
+        } else {
+            ("`", start + 1)
+        };
+        let Some(close) = text[content_start..].find(delimiter) else {
+            break;
+        };
+        let end = content_start + close + delimiter.len();
+        spans.push(start..end);
+        offset = end;
+    }
+    spans
+}
+
 fn replace_bare_rst_reference(input: &str, reference: &str, replacement: &str) -> String {
     let folded_input = input.to_ascii_lowercase();
     let folded_reference = reference.to_ascii_lowercase();
+    let protected = backtick_spans(input);
     let mut output = String::with_capacity(input.len());
     let mut offset = 0usize;
     while let Some(found) = folded_input[offset..].find(&folded_reference) {
@@ -1749,7 +1857,11 @@ fn replace_bare_rst_reference(input: &str, reference: &str, replacement: &str) -
         let is_name_character = |character: char| {
             character.is_alphanumeric() || matches!(character, '_' | '-')
         };
-        if before.is_none_or(|character| !is_name_character(character))
+        let inside_markup = protected
+            .iter()
+            .any(|span| span.start < end && start < span.end);
+        if !inside_markup
+            && before.is_none_or(|character| !is_name_character(character))
             && after.is_none_or(|character| !is_name_character(character))
         {
             output.push_str(&input[offset..start]);
@@ -1762,18 +1874,6 @@ fn replace_bare_rst_reference(input: &str, reference: &str, replacement: &str) -
     }
     output.push_str(&input[offset..]);
     output
-}
-
-fn contains_bare_rst_reference(source: &str, reference: &str) -> bool {
-    source.match_indices(reference).any(|(start, matched)| {
-        let before = source[..start].chars().next_back();
-        let after = source[start + matched.len()..].chars().next();
-        let is_name_character = |character: char| {
-            character.is_alphanumeric() || matches!(character, '_' | '-')
-        };
-        before.is_none_or(|character| !is_name_character(character))
-            && after.is_none_or(|character| !is_name_character(character))
-    })
 }
 
 /// The last line of the indented block starting under line `at`: lines more
@@ -3448,6 +3548,135 @@ mod tests {
         assert!(rebuilt.contains(".. _yeokja-pep-9999-target-"));
         assert!(rebuilt.contains("\n\n파이썬의 BDFL"));
         assert!(rebuilt.contains("<yeokja-pep-9999-target-"));
+    }
+
+    #[test]
+    fn rst_indirect_target_to_a_translated_heading_uses_the_plain_reference_form() {
+        // docutils does not parse an embedded alias inside a hyperlink
+        // target body, so ``.. __: `Title <label_>`_`` makes the whole string
+        // the refname and Sphinx reports a missing indirect target.
+        let source = "Intro\n=====\n\n* Automatic unlimited stack (must be emulated__ so far)\n\n.. __: `recursion depth limit`_\n\nRecursion depth limit\n~~~~~~~~~~~~~~~~~~~~~\n\nYou can use continulets.\n";
+        let doc = RstParser.parse(source);
+        let heading = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source == "Recursion depth limit")
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(heading.id.clone(), "재귀 깊이 제한".to_string());
+
+        let rebuilt = RstParser.reconstruct(&doc, &translations);
+        let label = rebuilt
+            .lines()
+            .find_map(|line| line.strip_prefix(".. _yeokja-doc-"))
+            .and_then(|rest| rest.strip_suffix(':'))
+            .map(|rest| format!("yeokja-doc-{rest}"))
+            .expect("synthetic label");
+        assert!(rebuilt.contains(&format!("\n.. __: {label}_\n")), "{rebuilt}");
+        assert!(!rebuilt.contains(".. __: `"), "{rebuilt}");
+        assert!(rebuilt.contains("\n재귀 깊이 제한\n"));
+    }
+
+    #[test]
+    fn rst_named_indirect_target_to_a_translated_heading_uses_the_plain_reference_form() {
+        let source = "Intro\n=====\n\nSee `the details`_ and `How do I compile my own interpreters?`_.\n\n.. _the details: `How do I compile my own interpreters?`_\n\nHow do I compile my own interpreters?\n-------------------------------------\n\nLike this.\n";
+        let doc = RstParser.parse(source);
+        let heading = doc
+            .translatable_segments()
+            .into_iter()
+            .find(|segment| segment.source.starts_with("How do I compile"))
+            .unwrap();
+        let mut translations = TranslationMap::new();
+        translations.insert(
+            heading.id.clone(),
+            "인터프리터는 어떻게 컴파일합니까?".to_string(),
+        );
+
+        let rebuilt = RstParser.reconstruct(&doc, &translations);
+        let target_line = rebuilt
+            .lines()
+            .find(|line| line.starts_with(".. _the details: "))
+            .expect("named target line");
+        assert!(
+            target_line.starts_with(".. _the details: yeokja-doc-"),
+            "{target_line}"
+        );
+        assert!(target_line.contains("-target-"), "{target_line}");
+        assert!(target_line.ends_with('_'), "{target_line}");
+        assert!(!target_line.contains('`'), "{target_line}");
+        assert!(!target_line.contains('<'), "{target_line}");
+        assert!(rebuilt.contains(
+            "See `the details`_ and `How do I compile my own interpreters? <yeokja-doc-"
+        ));
+    }
+
+    #[test]
+    fn pep_parser_does_not_rewrite_a_heading_name_inside_an_embedded_alias() {
+        // PEP 622: "Patterns" is a section title, but the only occurrences of
+        // ``patterns_`` are the aliases of other sections. Matching by
+        // substring produced a nested link such as
+        // ``<capture `Patterns <yeokja-pep-0622-target-N_>`_>``.
+        let source = "PEP: 622\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nPatterns\n========\n\nThe allowed patterns are described in detail below in the `patterns\n<allowed patterns_>`_ subsection.\n\nThe wildcard can be used (see the section on `capture_pattern <capture patterns_>`_)\nas a final pattern.\n\nAllowed patterns\n================\n\nDetails.\n\nCapture Patterns\n================\n\nMore details.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let mut translations = TranslationMap::new();
+        for segment in doc.translatable_segments() {
+            let translation = match segment.source.as_str() {
+                "Patterns" => "패턴",
+                "Allowed patterns" => "허용되는 패턴",
+                "Capture Patterns" => "캡처 패턴",
+                _ => continue,
+            };
+            translations.insert(segment.id.clone(), translation.to_string());
+        }
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(!rebuilt.contains("`Patterns <"), "{rebuilt}");
+        assert!(!rebuilt.contains("_>`_>`_"), "{rebuilt}");
+        assert!(
+            rebuilt.contains("`patterns\n<yeokja-pep-0622-target-"),
+            "{rebuilt}"
+        );
+        assert!(
+            rebuilt.contains("`capture_pattern <yeokja-pep-0622-target-"),
+            "{rebuilt}"
+        );
+        // "Patterns" itself is never referenced, so it gets no synthetic label.
+        assert_eq!(
+            rebuilt.matches(".. _yeokja-pep-0622-target-").count(),
+            2,
+            "{rebuilt}"
+        );
+    }
+
+    #[test]
+    fn pep_parser_rewrites_a_translated_embedded_alias_only_when_it_equals_a_heading() {
+        let source = "PEP: 622\nTitle: Example\nAuthor: Jane Example\nStatus: Draft\nType: Process\nCreated: 01-Jan-2026\nPost-History:\n\nPatterns\n========\n\nSee the `patterns <allowed patterns_>`_ subsection and `Patterns`_.\n\nAllowed patterns\n================\n\nDetails.\n";
+        let doc = PepParser.parse_checked(source).unwrap();
+        let mut translations = TranslationMap::new();
+        for segment in doc.translatable_segments() {
+            let translation = match segment.source.as_str() {
+                "Patterns" => "패턴",
+                "Allowed patterns" => "허용되는 패턴",
+                source if source.starts_with("See the") => {
+                    "`패턴 <allowed patterns_>`_ 하위 절과 `Patterns`_\\ 를 보십시오."
+                }
+                _ => continue,
+            };
+            translations.insert(segment.id.clone(), translation.to_string());
+        }
+
+        let rebuilt = PepParser.reconstruct(&doc, &translations);
+        assert!(rebuilt.contains("`패턴 <yeokja-pep-0622-target-"), "{rebuilt}");
+        assert!(
+            rebuilt.contains("`Patterns <yeokja-pep-0622-target-"),
+            "{rebuilt}"
+        );
+        assert!(!rebuilt.contains("_>`_>`_"), "{rebuilt}");
+        assert_eq!(
+            rebuilt.matches(".. _yeokja-pep-0622-target-").count(),
+            2,
+            "{rebuilt}"
+        );
     }
 
     #[test]
