@@ -17,6 +17,16 @@
 #
 # 새 배포 프로젝트나 타깃을 추가하면 아래 rebuild 잡의 matrix.include와 stage 잡의
 # 스테이징 스텝에 각각 항목을 추가해야 합니다.
+#
+# 번역 재구성(항상 실행) 다음에 dist 캐시 게이트가 있습니다: 커밋된 state/에서
+# 재구성한 ko/를 포함해 빌드 산출물을 좌우하는 입력 전체를
+# .github/scripts/build-fingerprint.sh로 지문 내고, 이전 실행과 지문이 같으면
+# 캐시에서 dist를 복원해 툴체인 설치와 빌드 명령을 건너뜁니다. 파서 crate가
+# 바뀌어도 그 파서가 만드는 ko/ 내용이 그대로면 지문도 그대로입니다 — 판단
+# 기준은 결과물이지 파서 버전이 아닙니다. rust-forge는 빌드 중
+# static.rust-lang.org에서 최신 릴리스 채널 정보를 받아오므로 입력이 같아도
+# 결과가 날마다 달라질 수 있어, matrix에 rebuild_daily를 둬 하루에 한 번은
+# 지문에 날짜를 섞어 캐시를 무효화합니다.
 name: Deploy Pages
 
 # 신뢰할 수 있는 main push와 수동 실행만 ARC self-hosted runner에서 처리합니다.
@@ -125,6 +135,7 @@ jobs:
             toolchain: rust-forge
             artifact: dist-rust-forge
             artifact_path: projects/rust-forge/dist
+            rebuild_daily: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -149,102 +160,9 @@ jobs:
       - name: Make yeokja executable
         run: chmod +x target/release/yeokja
 
-      # PyPy 문서의 conf.py는 py2 문법인 pypy.config를 임포트하므로 공식
-      # 환경(.readthedocs.yaml)과 같은 Python 2.7이 필요합니다.
-      - name: Install Python 2.7 for the PyPy docs
-        if: matrix.toolchain == 'python2'
-        uses: actions/setup-python@v5
-        with:
-          python-version: 'pypy2.7'
-
-      - name: Install the PyPy docs Sphinx toolchain
-        if: matrix.toolchain == 'python2'
-        run: pip install 'sphinx<2' 'docutils==0.11' 'sphinx-issues==1.2.0' 'sphinx_rtd_theme<1' py sphinx-affiliates
-
-      - name: Install Python 3
-        if: matrix.toolchain == 'python3-devguide' || matrix.toolchain == 'python3-mil' || matrix.toolchain == 'python3-peps'
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install uv for the Python devguide
-        if: matrix.toolchain == 'python3-devguide'
-        uses: astral-sh/setup-uv@v10.0.1
-
-      - name: Install the Mathematics in Lean Sphinx toolchain
-        if: matrix.toolchain == 'python3-mil'
-        run: pip install -r projects/${{ matrix.project }}/upstream/scripts/requirements.txt
-
-      - name: Install the PEPs Sphinx toolchain
-        if: matrix.toolchain == 'python3-peps'
-        run: pip install -r projects/${{ matrix.project }}/upstream/requirements.txt
-
-      - name: Install Ruby
-        if: matrix.toolchain == 'ruby'
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
-
-      - name: Install the Asciidoctor toolchain
-        if: matrix.toolchain == 'ruby'
-        run: gem install asciidoctor asciidoctor-diagram rouge
-
-      - name: Install Nix for the Napkin build
-        if: matrix.toolchain == 'nix'
-        uses: cachix/install-nix-action@v31
-
-      # Sphinx의 graphviz 확장과 asciidoctor-diagram 둘 다 다이어그램을
-      # 렌더링하려면 dot 바이너리가 있어야 합니다. 없으면 빌드가 실패하는 대신
-      # 경고만 남기고 다이어그램 원본 텍스트를 그대로 페이지에 삽입해버려서,
-      # 깨진 결과물이 조용히 배포되는 문제가 있었습니다.
-      #
-      # 번역된 다이어그램은 노드 라벨이 한글이라 dot이 PNG로 래스터라이즈할 때
-      # (RPython translation.rst의 digraph처럼) CI 러너에 한글 글리프가 있는
-      # 폰트가 없으면 글자가 네모(tofu)로 깨져서 그대로 이미지에 구워집니다.
-      # fonts-noto-cjk를 같이 깔아야 fontconfig가 Sans-Serif 요청을 한글이
-      # 있는 폰트로 대체합니다.
-      - name: Install Graphviz
-        if: matrix.toolchain == 'python2' || matrix.toolchain == 'ruby'
-        run: sudo apt-get update && sudo apt-get install -y graphviz fonts-noto-cjk
-
-      # FP in Lean은 빌드 중 Python 출력을 책에 포함하므로 upstream CI와 같은
-      # 버전을 사용합니다. 같은 Lean 잡인 TPiL에도 일관된 Python을 제공합니다.
-      - name: Install Python for the Lean books
-        if: matrix.toolchain == 'lean'
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10.4'
-
-      # upstream Lean 책 CI와 같은 방식으로 elan을 설치합니다. book과 examples는
-      # 서로 다른 lean-toolchain을 가지며, 첫 lean 호출이 각각을 설치합니다.
-      # rust-forge의 mdbook 전처리기(blacksmith)는 cargo로 빌드되고, 릴리스
-      # 채널 테이블을 채우려면 static.rust-lang.org에서 최신 stable/beta/nightly
-      # 정보를 가져와야 하므로(RUN_BLACKSMITH=1) 네트워크 접근이 필요합니다.
-      - name: Install Rust for rust-forge's blacksmith preprocessor
-        if: matrix.toolchain == 'rust-forge'
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install mdbook for rust-forge
-        if: matrix.toolchain == 'rust-forge'
-        run: |
-          MDBOOK_VERSION=0.5.4
-          curl -sSL "https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK_VERSION}/mdbook-v${MDBOOK_VERSION}-x86_64-unknown-linux-gnu.tar.gz" | tar -xz
-          echo "$PWD" >> "$GITHUB_PATH"
-
-      - name: Install elan for the Lean books
-        if: matrix.toolchain == 'lean'
-        run: |
-          curl -O --location https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh
-          chmod u+x elan-init.sh
-          ./elan-init.sh -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
-
-      - name: Install the Lean book toolchains
-        if: matrix.toolchain == 'lean'
-        run: |
-          (cd projects/${{ matrix.project }}/upstream/examples && lean --version)
-          (cd projects/${{ matrix.project }}/upstream/book && lean --version)
-
+      # 번역 재구성은 순수 Rust 작업이라 툴체인이 필요 없으므로, 툴체인 설치
+      # 이전에 끝내 둡니다 — 그래야 바로 다음 지문 게이트가 툴체인 설치 비용까지
+      # 절약합니다.
       - name: Rebuild translated sources from committed state
         if: matrix.project != 'devguide' && matrix.project != 'peps'
         run: |
@@ -271,10 +189,130 @@ jobs:
           ../../target/release/yeokja translate upstream/peps
           ../../target/release/yeokja status --check upstream/peps
 
+      - name: Compute build fingerprint
+        id: fingerprint
+        run: |
+          args=(projects/${{ matrix.project }} ${{ matrix.target }})
+          if [ "${{ matrix.rebuild_daily == true }}" = "true" ]; then
+            args+=(--daily)
+          fi
+          echo "value=$(.github/scripts/build-fingerprint.sh "${args[@]}")" >> "$GITHUB_OUTPUT"
+
+      - name: Restore cached dist
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          key: dist-${{ matrix.project }}-${{ matrix.target }}-${{ steps.fingerprint.outputs.value }}
+          path: ${{ matrix.artifact_path }}
+
+      # PyPy 문서의 conf.py는 py2 문법인 pypy.config를 임포트하므로 공식
+      # 환경(.readthedocs.yaml)과 같은 Python 2.7이 필요합니다.
+      - name: Install Python 2.7 for the PyPy docs
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.toolchain == 'python2'
+        uses: actions/setup-python@v5
+        with:
+          python-version: 'pypy2.7'
+
+      - name: Install the PyPy docs Sphinx toolchain
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.toolchain == 'python2'
+        run: pip install 'sphinx<2' 'docutils==0.11' 'sphinx-issues==1.2.0' 'sphinx_rtd_theme<1' py sphinx-affiliates
+
+      - name: Install Python 3
+        if: steps.cache.outputs.cache-hit != 'true' && (matrix.toolchain == 'python3-devguide' || matrix.toolchain == 'python3-mil' || matrix.toolchain == 'python3-peps')
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv for the Python devguide
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.toolchain == 'python3-devguide'
+        uses: astral-sh/setup-uv@v10.0.1
+
+      - name: Install the Mathematics in Lean Sphinx toolchain
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.toolchain == 'python3-mil'
+        run: pip install -r projects/${{ matrix.project }}/upstream/scripts/requirements.txt
+
+      - name: Install the PEPs Sphinx toolchain
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.toolchain == 'python3-peps'
+        run: pip install -r projects/${{ matrix.project }}/upstream/requirements.txt
+
+      - name: Install Ruby
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.toolchain == 'ruby'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Install the Asciidoctor toolchain
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.toolchain == 'ruby'
+        run: gem install asciidoctor asciidoctor-diagram rouge
+
+      - name: Install Nix for the Napkin build
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.toolchain == 'nix'
+        uses: cachix/install-nix-action@v31
+
+      # Sphinx의 graphviz 확장과 asciidoctor-diagram 둘 다 다이어그램을
+      # 렌더링하려면 dot 바이너리가 있어야 합니다. 없으면 빌드가 실패하는 대신
+      # 경고만 남기고 다이어그램 원본 텍스트를 그대로 페이지에 삽입해버려서,
+      # 깨진 결과물이 조용히 배포되는 문제가 있었습니다.
+      #
+      # 번역된 다이어그램은 노드 라벨이 한글이라 dot이 PNG로 래스터라이즈할 때
+      # (RPython translation.rst의 digraph처럼) CI 러너에 한글 글리프가 있는
+      # 폰트가 없으면 글자가 네모(tofu)로 깨져서 그대로 이미지에 구워집니다.
+      # fonts-noto-cjk를 같이 깔아야 fontconfig가 Sans-Serif 요청을 한글이
+      # 있는 폰트로 대체합니다.
+      - name: Install Graphviz
+        if: steps.cache.outputs.cache-hit != 'true' && (matrix.toolchain == 'python2' || matrix.toolchain == 'ruby')
+        run: sudo apt-get update && sudo apt-get install -y graphviz fonts-noto-cjk
+
+      # FP in Lean은 빌드 중 Python 출력을 책에 포함하므로 upstream CI와 같은
+      # 버전을 사용합니다. 같은 Lean 잡인 TPiL에도 일관된 Python을 제공합니다.
+      - name: Install Python for the Lean books
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.toolchain == 'lean'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10.4'
+
+      # upstream Lean 책 CI와 같은 방식으로 elan을 설치합니다. book과 examples는
+      # 서로 다른 lean-toolchain을 가지며, 첫 lean 호출이 각각을 설치합니다.
+      # rust-forge의 mdbook 전처리기(blacksmith)는 cargo로 빌드되고, 릴리스
+      # 채널 테이블을 채우려면 static.rust-lang.org에서 최신 stable/beta/nightly
+      # 정보를 가져와야 하므로(RUN_BLACKSMITH=1) 네트워크 접근이 필요합니다.
+      - name: Install Rust for rust-forge's blacksmith preprocessor
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.toolchain == 'rust-forge'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install mdbook for rust-forge
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.toolchain == 'rust-forge'
+        run: |
+          MDBOOK_VERSION=0.5.4
+          curl -sSL "https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK_VERSION}/mdbook-v${MDBOOK_VERSION}-x86_64-unknown-linux-gnu.tar.gz" | tar -xz
+          echo "$PWD" >> "$GITHUB_PATH"
+
+      - name: Install elan for the Lean books
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.toolchain == 'lean'
+        run: |
+          curl -O --location https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh
+          chmod u+x elan-init.sh
+          ./elan-init.sh -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Install the Lean book toolchains
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.toolchain == 'lean'
+        run: |
+          (cd projects/${{ matrix.project }}/upstream/examples && lean --version)
+          (cd projects/${{ matrix.project }}/upstream/book && lean --version)
+
       - name: Build ${{ matrix.target }}
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cd projects/${{ matrix.project }}
           ../../target/release/yeokja build ${{ matrix.target }}
+
+      - name: Save dist to cache
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: dist-${{ matrix.project }}-${{ matrix.target }}-${{ steps.fingerprint.outputs.value }}
+          path: ${{ matrix.artifact_path }}
 
       - name: Upload build output
         uses: actions/upload-artifact@v4
