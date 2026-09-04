@@ -1,0 +1,39 @@
+[project]
+source_lang = "en"
+target_lang = "ko"
+glossary = "glossary.toml"
+state_dir = "state"
+
+[[sources]]
+path = "upstream/src"
+pattern = "**/*.md"
+parser = "markdown"
+output = "ko/src/{path}"
+
+[derive]
+base = "upstream"
+
+[[derive.overlay]]
+path = "ko"
+require_base = true
+
+[build.html]
+command = '''
+set -e
+RUN_BLACKSMITH=1 mdbook build
+mv book/html site
+'''
+outputs = ["site"]
+
+[provider]
+type = "claude_code"
+model = "claude-sonnet-5"
+
+[evaluation]
+auto_evaluate = true
+style_evaluate = false
+max_retries = 3
+
+[translation]
+concurrency = 8
+batch_segments = 32

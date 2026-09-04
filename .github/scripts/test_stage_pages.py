@@ -98,6 +98,20 @@ class StagePagesTests(unittest.TestCase):
             "new",
         )
 
+    def test_rust_forge_artifact_replaces_old_subtree(self) -> None:
+        self.write(self.site / "rust-forge" / "old.html", "old")
+        self.add_site_artifact("dist-rust-forge", "new")
+        self.add_devguide()
+
+        result = self.run_stage()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse((self.site / "rust-forge" / "old.html").exists())
+        self.assertEqual(
+            (self.site / "rust-forge" / "index.html").read_text(encoding="utf-8"),
+            "new",
+        )
+
     def test_pypy_artifact_replaces_pypy_and_rpython_together(self) -> None:
         self.write(self.site / "pypy" / "old.html", "old pypy")
         self.write(self.site / "rpython" / "old.html", "old rpython")

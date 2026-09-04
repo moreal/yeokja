@@ -78,6 +78,7 @@ overlay_site "dist-napkin-html" "site" "napkin"
 overlay_download "dist-napkin-pdf" "Napkin-ko.pdf"
 overlay_download "dist-napkin-epub" "Napkin-ko.epub"
 overlay_site "dist-devguide" "site" "devguide"
+overlay_site "dist-rust-forge" "site" "rust-forge"
 
 cp "$landing_dir/index.html" "$site_dir/index.html"
 cp "$landing_dir/favicon.svg" "$site_dir/favicon.svg"
